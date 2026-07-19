@@ -236,6 +236,24 @@ class HomeFragment : Fragment(), View.OnClickListener, View.OnLongClickListener 
         binding.setDefaultLauncher.setOnLongClickListener(this)
         binding.tvScreenTime.setOnClickListener(this)
         binding.tvScreenTime.setOnLongClickListener(this)
+
+        // These fire only on d-pad/keyboard events; touch is consumed by ViewSwipeTouchListener
+        binding.homeApp1.setOnClickListener(this)
+        binding.homeApp2.setOnClickListener(this)
+        binding.homeApp3.setOnClickListener(this)
+        binding.homeApp4.setOnClickListener(this)
+        binding.homeApp5.setOnClickListener(this)
+        binding.homeApp6.setOnClickListener(this)
+        binding.homeApp7.setOnClickListener(this)
+        binding.homeApp8.setOnClickListener(this)
+        binding.homeApp1.setOnLongClickListener(this)
+        binding.homeApp2.setOnLongClickListener(this)
+        binding.homeApp3.setOnLongClickListener(this)
+        binding.homeApp4.setOnLongClickListener(this)
+        binding.homeApp5.setOnLongClickListener(this)
+        binding.homeApp6.setOnLongClickListener(this)
+        binding.homeApp7.setOnLongClickListener(this)
+        binding.homeApp8.setOnLongClickListener(this)
     }
 
     private fun setHomeAlignment(horizontalGravity: Int = prefs.homeAlignment) {
