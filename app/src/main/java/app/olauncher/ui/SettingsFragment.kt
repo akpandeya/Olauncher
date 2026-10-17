@@ -91,6 +91,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.homeAppsNum.text = prefs.homeAppsNum.toString()
         populatePhotoWallpaperText()
         populateKeyboardText()
+        populateDrawerBottomSearch()
         populateScreenTimeOnOff()
         populateDistractingApps()
         populatePauseBeforeApps()
@@ -122,6 +123,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             // Home button for recents feature disabled
             // R.id.homeButtonRecents -> toggleHomeButtonRecents()
             R.id.autoShowKeyboard -> toggleKeyboardText()
+            R.id.drawerBottomSearch, R.id.drawerBottomSearchTitle, R.id.drawerBottomSearchLayout -> toggleDrawerBottomSearch()
             R.id.homeAppsNum -> showHomeAppsNumMenu(view)
             R.id.alignment -> showAlignmentMenu(view)
             R.id.statusBar -> toggleStatusBar()
@@ -161,6 +163,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.appInfo.setOnClickListener(this)
         binding.setLauncher.setOnClickListener(this)
         binding.autoShowKeyboard.setOnClickListener(this)
+        binding.drawerBottomSearch.setOnClickListener(this)
+        binding.drawerBottomSearchTitle.setOnClickListener(this)
+        binding.drawerBottomSearchLayout.setOnClickListener(this)
         binding.photoWallpaper.setOnClickListener(this)
         binding.photoWallpaperTitle.setOnClickListener(this)
         binding.photoWallpaperLayout.setOnClickListener(this)
@@ -824,6 +829,16 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     private fun populateKeyboardText() {
         if (prefs.autoShowKeyboard) binding.autoShowKeyboard.text = getString(R.string.on)
         else binding.autoShowKeyboard.text = getString(R.string.off)
+    }
+
+    private fun populateDrawerBottomSearch() {
+        if (prefs.drawerBottomSearch) binding.drawerBottomSearch.text = getString(R.string.on)
+        else binding.drawerBottomSearch.text = getString(R.string.off)
+    }
+
+    private fun toggleDrawerBottomSearch() {
+        prefs.drawerBottomSearch = !prefs.drawerBottomSearch
+        populateDrawerBottomSearch()
     }
 
     private fun updateHomeBottomAlignment() {
