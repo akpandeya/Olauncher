@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.view.animation.AnimationUtils
 import android.view.inputmethod.BaseInputConnection
 import android.view.inputmethod.InputMethodManager
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.activityViewModels
@@ -23,6 +24,7 @@ import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
 import app.olauncher.databinding.FragmentAppDrawerBinding
+import app.olauncher.helper.DrawerScrollHelper
 import app.olauncher.helper.deletePinnedShortcut
 import app.olauncher.helper.hideKeyboard
 import app.olauncher.helper.isEinkDisplay
@@ -71,11 +73,42 @@ class AppDrawerFragment : BaseFragment() {
             canRename = it.getBoolean(Constants.Key.RENAME, false)
         }
 
+        setupDrawerLayout()
         initViews()
         initSearch()
         initAdapter()
         initObservers()
         initClickListeners()
+    }
+
+    private fun setupDrawerLayout() {
+        if (!prefs.drawerBottomSearch) return
+
+        val rv = binding.recyclerView
+        val searchContainer = binding.searchContainer
+
+        val transition = binding.root.layoutTransition
+        binding.root.layoutTransition = null
+        binding.root.removeAllViews()
+
+        val rvParams = rv.layoutParams as LinearLayout.LayoutParams
+        rvParams.height = 0
+        rvParams.weight = 1f
+        rvParams.topMargin = (24 * resources.displayMetrics.density).toInt()
+        val originalBottomMargin = rvParams.bottomMargin
+        rvParams.bottomMargin = 0
+        rv.layoutParams = rvParams
+
+        val searchParams = searchContainer.layoutParams as LinearLayout.LayoutParams
+        searchParams.height = ViewGroup.LayoutParams.WRAP_CONTENT
+        searchParams.weight = 0f
+        searchParams.topMargin = 0
+        searchParams.bottomMargin = originalBottomMargin
+        searchContainer.layoutParams = searchParams
+
+        binding.root.addView(rv)
+        binding.root.addView(searchContainer)
+        binding.root.layoutTransition = transition
     }
 
     private fun initViews() {
@@ -108,6 +141,8 @@ class AppDrawerFragment : BaseFragment() {
                 try {
                     adapter.allowAutoLaunch = !isSearchComposing()
                     adapter.filter.filter(newText)
+                    if (prefs.drawerBottomSearch)
+                        binding.recyclerView.scrollToPosition(0)
                     binding.appRename.visibility =
                         if (canRename && newText.isNotBlank()) View.VISIBLE else View.GONE
                     return true
@@ -234,7 +269,7 @@ class AppDrawerFragment : BaseFragment() {
             }
         )
 
-        linearLayoutManager = object : LinearLayoutManager(requireContext()) {
+        linearLayoutManager = object : LinearLayoutManager(requireContext(), RecyclerView.VERTICAL, prefs.drawerBottomSearch) {
             override fun scrollVerticallyBy(
                 dx: Int,
                 recycler: Recycler,
@@ -331,23 +366,33 @@ class AppDrawerFragment : BaseFragment() {
     private fun getRecyclerViewOnScrollListener(): RecyclerView.OnScrollListener {
         return object : RecyclerView.OnScrollListener() {
 
-            var onTop = false
+            var atSearch = false
 
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 super.onScrollStateChanged(recyclerView, newState)
-                when (newState) {
+                val isAtSearch = DrawerScrollHelper.isAtSearch(
+                    prefs.drawerBottomSearch,
+                    canScrollUp = recyclerView.canScrollVertically(-1),
+                    canScrollDown = recyclerView.canScrollVertically(1)
+                )
+                val isAtFarEnd = DrawerScrollHelper.isAtFarEnd(
+                    prefs.drawerBottomSearch,
+                    canScrollUp = recyclerView.canScrollVertically(-1),
+                    canScrollDown = recyclerView.canScrollVertically(1)
+                )
 
+                when (newState) {
                     RecyclerView.SCROLL_STATE_DRAGGING -> {
-                        onTop = !recyclerView.canScrollVertically(-1)
-                        if (onTop)
+                        atSearch = isAtSearch
+                        if (atSearch)
                             binding.search.hideKeyboard()
                     }
 
                     RecyclerView.SCROLL_STATE_IDLE -> {
-                        if (!recyclerView.canScrollVertically(1))
+                        if (isAtFarEnd)
                             binding.search.hideKeyboard()
-                        else if (!recyclerView.canScrollVertically(-1))
-                            if (!onTop && isRemoving.not())
+                        else if (isAtSearch)
+                            if (!atSearch && isRemoving.not())
                                 binding.search.showKeyboard(prefs.autoShowKeyboard)
                     }
                 }

@@ -7,6 +7,10 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.edit
 
 class Prefs(context: Context) {
+    companion object {
+        const val DRAWER_BOTTOM_SEARCH = "DRAWER_BOTTOM_SEARCH"
+    }
+
     private val PREFS_FILENAME = "app.olauncher"
 
     private val FIRST_OPEN = "FIRST_OPEN"
@@ -162,6 +166,10 @@ class Prefs(context: Context) {
     var autoShowKeyboard: Boolean
         get() = prefs.getBoolean(AUTO_SHOW_KEYBOARD, true)
         set(value) = prefs.edit { putBoolean(AUTO_SHOW_KEYBOARD, value).apply() }
+
+    var drawerBottomSearch: Boolean
+        get() = prefs.getBoolean(DRAWER_BOTTOM_SEARCH, true)
+        set(value) = prefs.edit { putBoolean(DRAWER_BOTTOM_SEARCH, value).apply() }
 
     var keyboardMessageShown: Boolean
         get() = prefs.getBoolean(KEYBOARD_MESSAGE, false)
