@@ -14,7 +14,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "app.olauncher"
+        applicationId "app.thumbline"
         minSdkVersion 24
         targetSdkVersion 36
         versionCode 113
