@@ -180,4 +180,12 @@
     <string name="distracting_app_count">%d app</string>
     <string name="cancel">Cancel</string>
     <string name="settings_footer">Thumbline %1$s · based on %2$s · GPLv3</string>
+    <string name="pause_before_distracting_apps">Pause before distracting apps</string>
+    <string name="pause_usage_access_message">Thumbline can show real open counts if you allow usage access</string>
+    <string name="pause_notification_notice">Opens from notifications aren\'t paused</string>
+    <string name="allow">Allow</string>
+    <string name="skip">Skip</string>
+    <string name="pause_open">Open</string>
+    <string name="pause_open_countdown">Open (%d)</string>
+    <string name="stop_pausing_app">Stop pausing %s</string>
 </resources>

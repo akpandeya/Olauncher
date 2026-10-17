@@ -24,6 +24,13 @@
             app:exitAnim="@anim/fade_exit"
             app:popEnterAnim="@anim/fade_enter"
             app:popExitAnim="@anim/fade_exit" />
+        <action
+            android:id="@+id/action_mainFragment_to_pauseFragment"
+            app:destination="@id/pauseFragment"
+            app:enterAnim="@anim/fade_enter"
+            app:exitAnim="@anim/fade_exit"
+            app:popEnterAnim="@anim/fade_enter"
+            app:popExitAnim="@anim/fade_exit" />
     </fragment>
 
     <fragment
@@ -34,6 +41,15 @@
         <action
             android:id="@+id/action_appListFragment_to_settingsFragment2"
             app:destination="@id/settingsFragment"
+            app:enterAnim="@anim/fade_enter"
+            app:exitAnim="@anim/fade_exit"
+            app:popEnterAnim="@anim/fade_enter"
+            app:popExitAnim="@anim/fade_exit"
+            app:popUpTo="@+id/appListFragment"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_appListFragment_to_pauseFragment"
+            app:destination="@id/pauseFragment"
             app:enterAnim="@anim/fade_enter"
             app:exitAnim="@anim/fade_exit"
             app:popEnterAnim="@anim/fade_enter"
@@ -53,6 +69,32 @@
             app:exitAnim="@anim/fade_exit"
             app:popEnterAnim="@anim/fade_enter"
             app:popExitAnim="@anim/fade_exit" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/pauseFragment"
+        android:name="app.olauncher.ui.pause.PauseFragment"
+        android:label="PauseFragment"
+        tools:layout="@layout/fragment_pause">
+        <argument
+            android:name="package"
+            app:argType="string" />
+        <argument
+            android:name="class"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
+        <argument
+            android:name="user"
+            app:argType="string" />
+        <argument
+            android:name="label"
+            app:argType="string" />
+        <argument
+            android:name="shortcutId"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
     </fragment>
 
 </navigation>

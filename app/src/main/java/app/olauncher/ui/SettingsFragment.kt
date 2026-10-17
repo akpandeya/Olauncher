@@ -90,6 +90,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateKeyboardText()
         populateScreenTimeOnOff()
         populateDistractingApps()
+        populatePauseBeforeApps()
         populateLockSettings()
         // Home button for recents feature disabled
         // populateHomeButtonRecents()
@@ -110,6 +111,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         when (view.id) {
             R.id.olauncherHiddenApps -> showHiddenApps()
             R.id.distractingApps, R.id.distractingAppsTitle, R.id.distractingAppsLayout -> showDistractingAppsDialog()
+            R.id.pauseBeforeAppsOnOff, R.id.pauseBeforeAppsTitle, R.id.pauseBeforeAppsLayout -> togglePauseBeforeApps()
             R.id.screenTimeOnOff -> viewModel.showDialog.postValue(Constants.Dialog.DIGITAL_WELLBEING)
             R.id.appInfo -> openAppInfo(requireContext(), Process.myUserHandle(), BuildConfig.APPLICATION_ID)
             R.id.setLauncher -> viewModel.resetLauncherLiveData.call()
@@ -167,6 +169,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.distractingApps.setOnClickListener(this)
         binding.distractingAppsTitle.setOnClickListener(this)
         binding.distractingAppsLayout.setOnClickListener(this)
+        binding.pauseBeforeAppsOnOff.setOnClickListener(this)
+        binding.pauseBeforeAppsTitle.setOnClickListener(this)
+        binding.pauseBeforeAppsLayout.setOnClickListener(this)
         binding.alignment.setOnClickListener(this)
         binding.statusBar.setOnClickListener(this)
         binding.dateTime.setOnClickListener(this)
@@ -591,6 +596,47 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         } else {
             getString(R.string.distracting_apps_count, count)
         }
+    }
+
+    private fun populatePauseBeforeApps() {
+        binding.pauseBeforeAppsOnOff.text = getString(if (prefs.pauseEnabled) R.string.on else R.string.off)
+    }
+
+    private fun togglePauseBeforeApps() {
+        if (prefs.pauseEnabled) {
+            prefs.pauseEnabled = false
+            populatePauseBeforeApps()
+        } else {
+            if (prefs.firstPauseEnable) {
+                prefs.firstPauseEnable = false
+                prefs.pauseEnabled = true
+                populatePauseBeforeApps()
+                if (!requireContext().appUsagePermissionGranted()) {
+                    showFirstTimePausePermissionDialog()
+                }
+            } else {
+                prefs.pauseEnabled = true
+                populatePauseBeforeApps()
+            }
+        }
+    }
+
+    private fun showFirstTimePausePermissionDialog() {
+        val dialog = requireContext().createDialog(
+            title = R.string.distracting_apps,
+            action = R.string.allow,
+            message = R.string.pause_usage_access_message,
+            neutral = R.string.skip,
+            onAction = {
+                try {
+                    startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+                } catch (_: Exception) {
+                    requireContext().showToast(getString(R.string.unable_to_open_app))
+                }
+            },
+            onNeutral = {}
+        )
+        dialog.showRespectingStatusBar()
     }
 
     private fun showDistractingAppsDialog() {

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/pauseRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.pause.PauseFragment">
+
+    <LinearLayout
+        android:id="@+id/pauseContent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingBottom="48dp">
+
+        <TextView
+            android:id="@+id/appName"
+            style="@style/TextLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingVertical="@dimen/home_app_padding_vertical"
+            tools:text="Instagram" />
+
+        <TextView
+            android:id="@+id/usageStats"
+            style="@style/TextSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingVertical="2dp"
+            android:textColor="?attr/primaryColorTrans80"
+            tools:text="Opened 4 times today · 38 min" />
+
+        <TextView
+            android:id="@+id/notice"
+            style="@style/TextSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="2dp"
+            android:paddingBottom="24dp"
+            android:text="@string/pause_notification_notice"
+            android:textColor="?attr/primaryColorTrans80" />
+
+        <FrameLayout
+            android:id="@+id/btnOpenContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/btnOpen"
+                style="@style/TextLarge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:clickable="true"
+                android:focusable="true"
+                android:paddingVertical="@dimen/home_app_padding_vertical"
+                tools:text="Open (5)" />
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/btnNotNow"
+            style="@style/TextLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingVertical="@dimen/home_app_padding_vertical"
+            android:text="@string/not_now" />
+
+    </LinearLayout>
+
+</FrameLayout>

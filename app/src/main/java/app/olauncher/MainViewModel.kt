@@ -24,6 +24,7 @@ import app.olauncher.helper.isPackageInstalled
 import app.olauncher.helper.isPrivateSpaceLocked
 import app.olauncher.helper.showToast
 import app.olauncher.helper.usageStats.EventLogWrapper
+import app.olauncher.wellbeing.DistractingApps
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -57,11 +58,24 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val showDialog = SingleLiveEvent<String>()
     val checkForMessages = SingleLiveEvent<Unit?>()
     val resetLauncherLiveData = SingleLiveEvent<Unit?>()
+    val pauseLaunch = SingleLiveEvent<AppModel>()
+    private var bypassPackage: String? = null
     // Home button for recents feature disabled
     // val showRecentApps = SingleLiveEvent<Unit?>()
 
     fun selectedApp(appModel: AppModel, flag: Int) {
         if (appModel is AppModel.PrivateSpaceHeader) return
+        val appPackage = when (appModel) {
+            is AppModel.App -> appModel.appPackage
+            is AppModel.PinnedShortcut -> appModel.appPackage
+            else -> null
+        }
+        if ((flag == Constants.FLAG_LAUNCH_APP || flag == Constants.FLAG_HIDDEN_APPS) &&
+            DistractingApps.shouldPauseLaunch(appPackage, prefs.pauseEnabled, prefs.distractingApps, bypassPackage)
+        ) {
+            pauseLaunch.postValue(appModel)
+            return
+        }
         when (flag) {
             Constants.FLAG_LAUNCH_APP -> {
                 when (appModel) {
@@ -94,6 +108,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             Constants.FLAG_SET_CALENDAR_APP -> saveCalendarApp(appModel)
             Constants.FLAG_SET_SCREEN_TIME_APP -> saveScreenTimeApp(appModel)
             in Constants.FLAG_SET_SHORTCUT_1..Constants.FLAG_SET_SHORTCUT_6 -> saveShortcutApp(appModel, flag - Constants.FLAG_SET_SHORTCUT_1 + 1)
+        }
+    }
+
+    fun launchAfterPause(appModel: AppModel) {
+        val appPackage = when (appModel) {
+            is AppModel.App -> appModel.appPackage
+            is AppModel.PinnedShortcut -> appModel.appPackage
+            else -> return
+        }
+        bypassPackage = appPackage
+        prefs.incrementOwnOpenCount(appPackage)
+        try {
+            selectedApp(appModel, Constants.FLAG_LAUNCH_APP)
+        } finally {
+            bypassPackage = null
         }
     }
 
