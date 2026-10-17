@@ -27,6 +27,7 @@ class Prefs(context: Context) {
     private val HOME_ALIGNMENT = "HOME_ALIGNMENT"
     private val HOME_BOTTOM_ALIGNMENT = "HOME_BOTTOM_ALIGNMENT"
     private val HOME_SHORTCUTS = "HOME_SHORTCUTS"
+    private val SHORTCUT_COUNT = "SHORTCUT_COUNT"
     private val APP_LABEL_ALIGNMENT = "APP_LABEL_ALIGNMENT"
     private val STATUS_BAR = "STATUS_BAR"
     private val DATE_TIME_VISIBILITY = "DATE_TIME_VISIBILITY"
@@ -202,6 +203,10 @@ class Prefs(context: Context) {
     var homeShortcuts: Boolean
         get() = prefs.getBoolean(HOME_SHORTCUTS, false)
         set(value) = prefs.edit { putBoolean(HOME_SHORTCUTS, value).apply() }
+
+    var shortcutCount: Int
+        get() = SlotCount.clamp(prefs.getInt(SHORTCUT_COUNT, SlotCount.DEFAULT))
+        set(value) = prefs.edit { putInt(SHORTCUT_COUNT, SlotCount.clamp(value)).apply() }
 
     var appLabelAlignment: Int
         get() = prefs.getInt(APP_LABEL_ALIGNMENT, Gravity.START)
@@ -686,12 +691,12 @@ class Prefs(context: Context) {
         if (screenTimeAppPackage == packageName) screenTimeAppClassName = activityClassName
         if (appPackageSwipeLeft == packageName) appActivityClassNameSwipeLeft = activityClassName
         if (appPackageSwipeRight == packageName) appActivityClassNameRight = activityClassName
-        for (slot in 1..Constants.SHORTCUT_SLOTS) {
+        for (slot in 1..Constants.MAX_SHORTCUT_SLOTS) {
             if (getShortcutPackage(slot) == packageName) prefs.edit { putString("SHORTCUT_CLASS_$slot", activityClassName) }
         }
     }
 
-    // Home shortcut icon slots (1..SHORTCUT_SLOTS): default built-in or a chosen app
+    // Home shortcut icon slots (1..MAX_SHORTCUT_SLOTS): default built-in or a chosen app
     fun getShortcutMode(slot: Int): Int = prefs.getInt("SHORTCUT_MODE_$slot", Constants.SHORTCUT_MODE_DEFAULT)
 
     fun getShortcutPackage(slot: Int): String = prefs.getString("SHORTCUT_PACKAGE_$slot", "").toString()

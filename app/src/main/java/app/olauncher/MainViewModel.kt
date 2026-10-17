@@ -107,7 +107,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             Constants.FLAG_SET_CLOCK_APP -> saveClockApp(appModel)
             Constants.FLAG_SET_CALENDAR_APP -> saveCalendarApp(appModel)
             Constants.FLAG_SET_SCREEN_TIME_APP -> saveScreenTimeApp(appModel)
-            in Constants.FLAG_SET_SHORTCUT_1..Constants.FLAG_SET_SHORTCUT_6 -> saveShortcutApp(appModel, flag - Constants.FLAG_SET_SHORTCUT_1 + 1)
+            in Constants.FLAG_SET_SHORTCUT_1..Constants.FLAG_SET_SHORTCUT_8 -> saveShortcutApp(appModel, flag - Constants.FLAG_SET_SHORTCUT_1 + 1)
         }
     }
 
