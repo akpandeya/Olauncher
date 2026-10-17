@@ -4,16 +4,18 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.LauncherApps
 import android.content.res.Configuration
-import android.graphics.drawable.Drawable
 import android.os.BatteryManager
 import android.os.Bundle
+import android.util.TypedValue
 import android.view.Gravity
+import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -75,6 +77,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
         homeAppsPaddingEnd = binding.homeAppsLayout.paddingEnd
         initObservers()
+        setupShortcutViews()
         setHomeAlignment(prefs.homeAlignment)
         initSwipeTouchListener()
         initClickListeners()
@@ -98,8 +101,6 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             R.id.date -> openCalendarApp()
             R.id.setDefaultLauncher -> viewModel.resetLauncherLiveData.call()
             R.id.tvScreenTime -> openScreenTimeDigitalWellbeing()
-            R.id.shortcutSearch, R.id.shortcutGallery, R.id.shortcutCamera,
-            R.id.shortcutMessages, R.id.shortcutPhone, R.id.shortcutMore -> shortcutClicked(view)
 
             else -> {
                 try { // Launch app
@@ -138,8 +139,6 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
     override fun onLongClick(view: View): Boolean {
         when (view.id) {
-            R.id.shortcutSearch, R.id.shortcutGallery, R.id.shortcutCamera,
-            R.id.shortcutMessages, R.id.shortcutPhone, R.id.shortcutMore -> showShortcutMenu(view)
             R.id.homeApp1 -> showAppList(Constants.FLAG_SET_HOME_APP_1, prefs.appName1.isNotEmpty(), true)
             R.id.homeApp2 -> showAppList(Constants.FLAG_SET_HOME_APP_2, prefs.appName2.isNotEmpty(), true)
             R.id.homeApp3 -> showAppList(Constants.FLAG_SET_HOME_APP_3, prefs.appName3.isNotEmpty(), true)
@@ -238,13 +237,6 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         binding.setDefaultLauncher.setOnLongClickListener(this)
         binding.tvScreenTime.setOnClickListener(this)
         binding.tvScreenTime.setOnLongClickListener(this)
-        binding.shortcutSearch.setOnClickListener(this)
-        binding.shortcutGallery.setOnClickListener(this)
-        binding.shortcutCamera.setOnClickListener(this)
-        binding.shortcutMessages.setOnClickListener(this)
-        binding.shortcutPhone.setOnClickListener(this)
-        binding.shortcutMore.setOnClickListener(this)
-        shortcutViews.forEach { it.setOnLongClickListener(this) }
 
         // These fire only on d-pad/keyboard events; touch is consumed by ViewSwipeTouchListener
         binding.homeApp1.setOnClickListener(this)
@@ -287,61 +279,93 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         binding.homeApp8.gravity = horizontalGravity
     }
 
-    private val shortcutViews: List<ImageView>
-        get() = with(binding) {
-            listOf(shortcutSearch, shortcutGallery, shortcutCamera, shortcutMessages, shortcutPhone, shortcutMore)
-        }
-
-    private val defaultShortcutIcons = listOf(
-        R.drawable.ic_shortcut_search,
-        R.drawable.ic_shortcut_gallery,
-        R.drawable.ic_shortcut_camera,
-        R.drawable.ic_shortcut_messages,
-        R.drawable.ic_shortcut_phone,
-        R.drawable.ic_shortcut_more,
-    )
-
-    private fun populateShortcuts() {
-        val launcher = requireContext().getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
-        shortcutViews.forEachIndexed { index, view ->
-            val slot = index + 1
-            var icon: Drawable? = null
-            if (prefs.getShortcutMode(slot) == Constants.SHORTCUT_MODE_APP) {
-                try {
-                    val user = getUserHandleFromString(requireContext(), prefs.getShortcutUser(slot))
-                    val activities = launcher.getActivityList(prefs.getShortcutPackage(slot), user)
-                    val match = activities.find { it.componentName.className == prefs.getShortcutClass(slot) }
-                        ?: activities.firstOrNull()
-                    icon = match?.getBadgedIcon(0)
-                } catch (e: Exception) {
-                    e.printStackTrace()
+    private fun setupShortcutViews() {
+        val context = context ?: return
+        binding.shortcutsLayout.removeAllViews()
+        for (slot in 1..Constants.SHORTCUT_SLOTS) {
+            val imageView = ImageView(context).apply {
+                layoutParams = LinearLayout.LayoutParams(48.dpToPx(), 48.dpToPx())
+                val typedValue = TypedValue()
+                context.theme.resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, typedValue, true)
+                setBackgroundResource(typedValue.resourceId)
+                tag = slot
+                isClickable = true
+                isFocusable = true
+                bindShortcutIcon(context, this, slot)
+                setOnTouchListener(getShortcutSwipeTouchListener(context, this, slot))
+                // These fire only on d-pad/keyboard/accessibility events; touch is consumed by ViewSwipeTouchListener
+                setOnClickListener {
+                    performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                    shortcutClicked(slot)
+                }
+                setOnLongClickListener {
+                    performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                    showShortcutMenu(slot)
+                    true
                 }
             }
-            if (icon != null) {
-                view.setPadding(8.dpToPx())
-                view.setImageDrawable(icon)
-                view.contentDescription = prefs.getShortcutLabel(slot)
-            } else {
-                view.setPadding(12.dpToPx())
-                view.setImageResource(defaultShortcutIcons[index])
-                view.contentDescription = getString(defaultShortcutLabels[index])
+            binding.shortcutsLayout.addView(imageView)
+        }
+    }
+
+    private fun populateShortcuts() {
+        val context = context ?: return
+        if (binding.shortcutsLayout.childCount != Constants.SHORTCUT_SLOTS) {
+            setupShortcutViews()
+            return
+        }
+        for (i in 0 until binding.shortcutsLayout.childCount) {
+            val view = binding.shortcutsLayout.getChildAt(i) as? ImageView ?: continue
+            val slot = (view.tag as? Int) ?: (i + 1)
+            bindShortcutIcon(context, view, slot)
+        }
+    }
+
+    private fun bindShortcutIcon(context: Context, view: ImageView, slot: Int) {
+        val (drawable, paddingPx) = ShortcutIconRenderer.render(context, slot, prefs)
+        view.setPadding(paddingPx, paddingPx, paddingPx, paddingPx)
+        view.setImageDrawable(drawable)
+        view.contentDescription = ShortcutIconRenderer.getLabel(context, slot, prefs, paddingPx)
+    }
+
+    private fun getShortcutSwipeTouchListener(context: Context, view: View, slot: Int): View.OnTouchListener {
+        return object : ViewSwipeTouchListener(context, view) {
+            override fun onSwipeLeft() {
+                super.onSwipeLeft()
+                openSwipeLeftApp()
+            }
+
+            override fun onSwipeRight() {
+                super.onSwipeRight()
+                openSwipeRightApp()
+            }
+
+            override fun onSwipeUp() {
+                super.onSwipeUp()
+                showAppList(Constants.FLAG_LAUNCH_APP)
+            }
+
+            override fun onSwipeDown() {
+                super.onSwipeDown()
+                expandNotificationDrawer(context)
+            }
+
+            override fun onLongClick(view: View) {
+                super.onLongClick(view)
+                view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                showShortcutMenu(slot)
+            }
+
+            override fun onClick(view: View) {
+                super.onClick(view)
+                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                shortcutClicked(slot)
             }
         }
     }
 
-    private val defaultShortcutLabels = listOf(
-        R.string.shortcut_search,
-        R.string.shortcut_gallery,
-        R.string.shortcut_camera,
-        R.string.shortcut_messages,
-        R.string.shortcut_phone,
-        R.string.shortcut_more,
-    )
-
-    private fun shortcutClicked(view: View) {
-        val index = shortcutViews.indexOf(view)
-        if (index < 0) return
-        val slot = index + 1
+    private fun shortcutClicked(slot: Int) {
+        val context = context ?: return
         if (prefs.getShortcutMode(slot) == Constants.SHORTCUT_MODE_APP && prefs.getShortcutPackage(slot).isNotEmpty()) {
             launchApp(
                 appName = prefs.getShortcutLabel(slot),
@@ -351,21 +375,20 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             )
             return
         }
-        when (view.id) {
-            R.id.shortcutSearch -> showAppList(Constants.FLAG_LAUNCH_APP)
-            R.id.shortcutGallery -> openGalleryApp(requireContext())
-            R.id.shortcutCamera -> openCameraApp(requireContext())
-            R.id.shortcutMessages -> openMessagesApp(requireContext())
-            R.id.shortcutPhone -> openDialerApp(requireContext())
-            R.id.shortcutMore -> findNavController().navigate(R.id.action_mainFragment_to_settingsFragment)
+        when (slot) {
+            1 -> showAppList(Constants.FLAG_LAUNCH_APP)
+            2 -> openGalleryApp(context)
+            3 -> openCameraApp(context)
+            4 -> openMessagesApp(context)
+            5 -> openDialerApp(context)
+            6 -> findNavController().navigate(R.id.action_mainFragment_to_settingsFragment)
         }
     }
 
-    private fun showShortcutMenu(view: View) {
-        val slot = shortcutViews.indexOf(view) + 1
-        if (slot < 1) return
+    private fun showShortcutMenu(slot: Int) {
+        val context = context ?: return
         val options = arrayOf(getString(R.string.shortcut_choose_app), getString(R.string.shortcut_reset))
-        AlertDialog.Builder(requireContext())
+        AlertDialog.Builder(context)
             .setItems(options) { _, which ->
                 if (which == 0) {
                     showAppList(Constants.FLAG_SET_SHORTCUT_1 + slot - 1)
