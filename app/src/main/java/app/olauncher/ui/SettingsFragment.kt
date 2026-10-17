@@ -31,6 +31,7 @@ import app.olauncher.data.Prefs
 import app.olauncher.data.SlotCount
 import app.olauncher.data.ShortcutOffset
 import app.olauncher.data.ShortcutIconStyle
+import app.olauncher.ui.today.TodayCards
 import app.olauncher.databinding.DialogTextSizeBinding
 import app.olauncher.databinding.FragmentSettingsBinding
 import app.olauncher.helper.PhotoWallpaper
@@ -105,6 +106,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateStatusBar()
         populateDateTime()
         populateSwipeApps()
+        populateTodayCards()
         populateFooter()
         initClickListeners()
         initObservers()
@@ -134,7 +136,8 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
 
             R.id.photoWallpaper, R.id.photoWallpaperTitle, R.id.photoWallpaperLayout -> openPhotoPicker()
             R.id.swipeLeftApp -> showAppListIfEnabled(Constants.FLAG_SET_SWIPE_LEFT_APP)
-            R.id.swipeRightApp -> showAppListIfEnabled(Constants.FLAG_SET_SWIPE_RIGHT_APP)
+            R.id.swipeRightApp, R.id.swipeRightLayout -> showSwipeRightMenu(binding.swipeRightApp)
+            R.id.todayCards, R.id.todayCardsTitle, R.id.todayCardsLayout -> showTodayCardsDialog()
             R.id.footer -> requireContext().openUrl(Constants.URL_SOURCE)
         }
     }
@@ -152,7 +155,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
 
             R.id.appThemeText -> showAppThemeMenu(view, showSystem = true)
             R.id.swipeLeftApp -> toggleSwipeLeft()
-            R.id.swipeRightApp -> toggleSwipeRight()
+            R.id.swipeRightApp, R.id.swipeRightLayout -> toggleSwipeRight()
             R.id.toggleLock -> startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
         }
         return true
@@ -185,6 +188,10 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.dateTime.setOnClickListener(this)
         binding.swipeLeftApp.setOnClickListener(this)
         binding.swipeRightApp.setOnClickListener(this)
+        binding.swipeRightLayout.setOnClickListener(this)
+        binding.todayCards.setOnClickListener(this)
+        binding.todayCardsTitle.setOnClickListener(this)
+        binding.todayCardsLayout.setOnClickListener(this)
         binding.appThemeText.setOnClickListener(this)
         binding.textSizeValue.setOnClickListener(this)
         binding.boldFont.setOnClickListener(this)
@@ -198,6 +205,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.appThemeText.setOnLongClickListener(this)
         binding.swipeLeftApp.setOnLongClickListener(this)
         binding.swipeRightApp.setOnLongClickListener(this)
+        binding.swipeRightLayout.setOnLongClickListener(this)
         binding.toggleLock.setOnLongClickListener(this)
     }
 
@@ -885,11 +893,84 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
 
     private fun populateSwipeApps() {
         binding.swipeLeftApp.text = prefs.appNameSwipeLeft
-        binding.swipeRightApp.text = prefs.appNameSwipeRight
+        binding.swipeRightApp.text = if (prefs.swipeRightAction == Prefs.SWIPE_RIGHT_ACTION_TODAY) {
+            getString(R.string.today_page)
+        } else {
+            prefs.appNameSwipeRight.ifEmpty { getString(R.string.choose_app) }
+        }
         if (!prefs.swipeLeftEnabled)
             binding.swipeLeftApp.setTextColor(requireContext().getColorFromAttr(R.attr.primaryColorTrans50))
+        else
+            binding.swipeLeftApp.setTextColor(requireContext().getColorFromAttr(R.attr.primaryColor))
         if (!prefs.swipeRightEnabled)
             binding.swipeRightApp.setTextColor(requireContext().getColorFromAttr(R.attr.primaryColorTrans50))
+        else
+            binding.swipeRightApp.setTextColor(requireContext().getColorFromAttr(R.attr.primaryColor))
+    }
+
+    private fun populateTodayCards() {
+        val total = TodayCards.all.size
+        if (total == 0) {
+            binding.todayCards.text = ""
+        } else {
+            val enabled = TodayCards.all.count { prefs.isTodayCardEnabled(it.key) }
+            binding.todayCards.text = "$enabled/$total"
+        }
+    }
+
+    private fun showSwipeRightMenu(anchor: View) {
+        if (!prefs.swipeRightEnabled) {
+            requireContext().showToast(getString(R.string.long_press_to_enable))
+            return
+        }
+        anchor.showPopupMenu(
+            configure = { menu ->
+                menu.add(Menu.NONE, 1, 1, R.string.today_page)
+                menu.add(Menu.NONE, 2, 2, R.string.choose_app)
+            }
+        ) { item ->
+            when (item.itemId) {
+                1 -> {
+                    prefs.swipeRightAction = Prefs.SWIPE_RIGHT_ACTION_TODAY
+                    populateSwipeApps()
+                }
+                2 -> {
+                    showAppListIfEnabled(Constants.FLAG_SET_SWIPE_RIGHT_APP)
+                }
+            }
+        }
+    }
+
+    private fun showTodayCardsDialog() {
+        val cards = TodayCards.all
+        val titles = cards.map { getString(it.titleRes) }.toTypedArray()
+        val checked = BooleanArray(cards.size) { i -> prefs.isTodayCardEnabled(cards[i].key) }
+
+        val builder = AlertDialog.Builder(requireContext())
+            .setTitle(R.string.today_cards)
+            .setMultiChoiceItems(titles, checked) { _, which, isChecked ->
+                checked[which] = isChecked
+            }
+            .setPositiveButton(R.string.okay) { _, _ ->
+                cards.forEachIndexed { i, card ->
+                    prefs.setTodayCardEnabled(card.key, checked[i])
+                }
+                populateTodayCards()
+            }
+            .setNegativeButton(R.string.cancel, null)
+
+        val alertDialog = builder.create()
+        dialog?.dismiss()
+        dialog = alertDialog
+        val window = alertDialog.window
+        if (window != null && !prefs.showStatusBar) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+            alertDialog.show()
+            window.hideStatusBar()
+            window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+        } else {
+            alertDialog.show()
+        }
     }
 
 //    private fun populateDigitalWellbeing() {
