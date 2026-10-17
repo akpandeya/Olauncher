@@ -39,4 +39,16 @@ object DistractingApps {
      * Checks if [pkg] is considered distracting according to [distractingApps].
      */
     fun isDistracting(pkg: String, distractingApps: Set<String>): Boolean = pkg in distractingApps
+
+    /**
+     * Checks whether an app launch should be intercepted by the pause screen.
+     */
+    fun shouldPauseLaunch(
+        pkg: String?,
+        pauseEnabled: Boolean,
+        distractingApps: Set<String>,
+        bypassPackage: String? = null,
+    ): Boolean {
+        return pauseEnabled && pkg != null && pkg in distractingApps && pkg != bypassPackage
+    }
 }

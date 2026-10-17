@@ -61,4 +61,39 @@ class DistractingAppsTest {
         assertTrue(DistractingApps.isDistracting("com.instagram.android", distracting))
         assertFalse(DistractingApps.isDistracting("com.example.notes", distracting))
     }
+
+    @Test
+    fun `shouldPauseLaunch respects pauseEnabled flag`() {
+        val distracting = setOf("com.instagram.android")
+        assertFalse(DistractingApps.shouldPauseLaunch("com.instagram.android", pauseEnabled = false, distracting))
+        assertTrue(DistractingApps.shouldPauseLaunch("com.instagram.android", pauseEnabled = true, distracting))
+    }
+
+    @Test
+    fun `shouldPauseLaunch returns false for null or non-distracting package`() {
+        val distracting = setOf("com.instagram.android")
+        assertFalse(DistractingApps.shouldPauseLaunch(null, pauseEnabled = true, distracting))
+        assertFalse(DistractingApps.shouldPauseLaunch("com.example.notes", pauseEnabled = true, distracting))
+    }
+
+    @Test
+    fun `shouldPauseLaunch bypasses when package matches one-shot bypassPackage`() {
+        val distracting = setOf("com.instagram.android")
+        assertFalse(
+            DistractingApps.shouldPauseLaunch(
+                pkg = "com.instagram.android",
+                pauseEnabled = true,
+                distractingApps = distracting,
+                bypassPackage = "com.instagram.android"
+            )
+        )
+        assertTrue(
+            DistractingApps.shouldPauseLaunch(
+                pkg = "com.instagram.android",
+                pauseEnabled = true,
+                distractingApps = distracting,
+                bypassPackage = "com.other.package"
+            )
+        )
+    }
 }
