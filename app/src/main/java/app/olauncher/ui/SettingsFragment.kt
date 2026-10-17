@@ -29,6 +29,7 @@ import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
 import app.olauncher.data.SlotCount
+import app.olauncher.data.ShortcutOffset
 import app.olauncher.databinding.DialogTextSizeBinding
 import app.olauncher.databinding.FragmentSettingsBinding
 import app.olauncher.helper.PhotoWallpaper
@@ -243,6 +244,15 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                 val countItem = menu.findItem(R.id.alignmentShortcutCount)
                 countItem.isVisible = prefs.homeShortcuts
                 countItem.title = getString(R.string.icons_count, prefs.shortcutCount)
+
+                val sideItem = menu.findItem(R.id.alignmentShortcutSide)
+                sideItem.isVisible = prefs.homeShortcuts
+                sideItem.setTitle(
+                    if (prefs.shortcutSideStart) R.string.icons_on_left else R.string.icons_on_right
+                )
+
+                val heightItem = menu.findItem(R.id.alignmentShortcutHeight)
+                heightItem.isVisible = prefs.homeShortcuts
             }
         ) { item ->
             when (item.itemId) {
@@ -255,6 +265,11 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                     viewModel.updateHomeAlignment(prefs.homeAlignment)
                 }
                 R.id.alignmentShortcutCount -> showShortcutCountDialog()
+                R.id.alignmentShortcutSide -> {
+                    prefs.shortcutSideStart = !prefs.shortcutSideStart
+                    viewModel.updateHomeAlignment(prefs.homeAlignment)
+                }
+                R.id.alignmentShortcutHeight -> showShortcutHeightDialog()
             }
         }
     }
@@ -320,6 +335,21 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             textSizePlus.setOnClickListener { adjustTextSizePreview(0.1f, this) }
         }
         dialog.setOnDismissListener { applyTextSizeScale() }
+        showDialog(dialog)
+    }
+
+    private fun showShortcutHeightDialog() {
+        pendingShortcutOffsetStep = prefs.shortcutOffsetStep
+        var stepper: DialogTextSizeBinding? = null
+        val dialog = requireContext().createDialog(R.string.icons_height, R.string.okay) { container ->
+            DialogTextSizeBinding.inflate(layoutInflater, container, false).also { stepper = it }.root
+        }
+        stepper?.apply {
+            textSizeCurrent.text = ShortcutOffset.format(pendingOrCurrentShortcutOffsetStep())
+            textSizeMinus.setOnClickListener { adjustShortcutHeightPreview(-1, this) }
+            textSizePlus.setOnClickListener { adjustShortcutHeightPreview(1, this) }
+        }
+        dialog.setOnDismissListener { applyShortcutOffsetStep() }
         showDialog(dialog)
     }
 
@@ -453,6 +483,33 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         val activity = activity ?: return
         if (activity.isChangingConfigurations.not())
             activity.recreate()
+    }
+
+    private var pendingShortcutOffsetStep: Int = -1
+
+    private fun pendingOrCurrentShortcutOffsetStep(): Int =
+        if (pendingShortcutOffsetStep in ShortcutOffset.MIN_STEP..ShortcutOffset.MAX_STEP) {
+            pendingShortcutOffsetStep
+        } else {
+            prefs.shortcutOffsetStep
+        }
+
+    private fun adjustShortcutHeightPreview(delta: Int, dialogBinding: DialogTextSizeBinding) {
+        val current = pendingOrCurrentShortcutOffsetStep()
+        val clamped = ShortcutOffset.clamp(current + delta)
+        if (clamped == current) return
+        pendingShortcutOffsetStep = clamped
+        dialogBinding.textSizeCurrent.text = ShortcutOffset.format(clamped)
+    }
+
+    private fun applyShortcutOffsetStep() {
+        if (pendingShortcutOffsetStep < 0 || prefs.shortcutOffsetStep == pendingShortcutOffsetStep) {
+            pendingShortcutOffsetStep = -1
+            return
+        }
+        prefs.shortcutOffsetStep = pendingShortcutOffsetStep
+        pendingShortcutOffsetStep = -1
+        viewModel.updateHomeAlignment(prefs.homeAlignment)
     }
 
     private fun toggleKeyboardText() {
