@@ -93,6 +93,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateStatusBar()
         populateDateTime()
         populateSwipeApps()
+        populateFooter()
         initClickListeners()
         initObservers()
 
@@ -119,6 +120,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.photoWallpaper, R.id.photoWallpaperTitle, R.id.photoWallpaperLayout -> openPhotoPicker()
             R.id.swipeLeftApp -> showAppListIfEnabled(Constants.FLAG_SET_SWIPE_LEFT_APP)
             R.id.swipeRightApp -> showAppListIfEnabled(Constants.FLAG_SET_SWIPE_RIGHT_APP)
+            R.id.footer -> requireContext().openUrl(Constants.URL_SOURCE)
         }
     }
 
@@ -162,6 +164,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.appThemeText.setOnClickListener(this)
         binding.textSizeValue.setOnClickListener(this)
         binding.boldFont.setOnClickListener(this)
+        binding.footer.setOnClickListener(this)
 
 
         binding.photoWallpaper.setOnLongClickListener(this)
@@ -646,6 +649,10 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.action_settingsFragment_to_appListFragment,
             bundleOf(Constants.Key.FLAG to flag)
         )
+    }
+
+    private fun populateFooter() {
+        binding.footer.text = getString(R.string.settings_footer, BuildConfig.VERSION_NAME, "Olauncher")
     }
 
     override fun onDestroyView() {

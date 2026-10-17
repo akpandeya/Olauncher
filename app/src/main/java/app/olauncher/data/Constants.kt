@@ -94,6 +94,7 @@ object Constants {
 
     const val MIN_ANIM_REFRESH_RATE = 30f
 
+    const val URL_SOURCE = "https://github.com/akpandeya/Olauncher"
     const val URL_DOUBLE_TAP = "https://tanujnotes.notion.site/Double-tap-to-lock-Olauncher-0f7fb103ec1f47d7a90cdfdcd7fb86ef"
     const val URL_DUCK_SEARCH = "https://duck.co/?q="
     const val URL_DIGITAL_WELLBEING_LEARN_MORE = "https://tanujnotes.substack.com/p/digital-wellbeing-app-on-android?utm_source=olauncher"

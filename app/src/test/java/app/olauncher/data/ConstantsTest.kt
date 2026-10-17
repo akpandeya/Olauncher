@@ -8,4 +8,9 @@ class ConstantsTest {
     fun `wallpaper worker name is preserved for legacy cancellation`() {
         assertEquals("WALLPAPER_WORKER_NAME", Constants.WALLPAPER_WORKER_NAME)
     }
+
+    @Test
+    fun `source url points to repository`() {
+        assertEquals("https://github.com/akpandeya/Olauncher", Constants.URL_SOURCE)
+    }
 }
