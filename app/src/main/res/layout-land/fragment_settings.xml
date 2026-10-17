@@ -184,6 +184,33 @@
                         android:text="@string/left" />
                 </FrameLayout>
 
+                <FrameLayout
+                    android:id="@+id/distractingAppsLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp">
+
+                    <TextView
+                        android:id="@+id/distractingAppsTitle"
+                        style="@style/TextSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:paddingVertical="8dp"
+                        android:text="@string/distracting_apps"
+                        android:textColor="?attr/primaryColor" />
+
+                    <TextView
+                        android:id="@+id/distractingApps"
+                        style="@style/TextSmallBold"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end|bottom"
+                        android:layout_marginEnd="4dp"
+                        android:padding="8dp"
+                        tools:text="2 apps" />
+                </FrameLayout>
+
             </LinearLayout>
 
             <LinearLayout

@@ -175,5 +175,9 @@
     <string name="home">Home</string>
     <string name="lock">Lock</string>
     <string name="both">Both</string>
+    <string name="distracting_apps">Distracting apps</string>
+    <string name="distracting_apps_count">%d apps</string>
+    <string name="distracting_app_count">%d app</string>
+    <string name="cancel">Cancel</string>
     <string name="settings_footer">Thumbline %1$s · based on %2$s · GPLv3</string>
 </resources>

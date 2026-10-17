@@ -13,8 +13,10 @@ import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import android.view.WindowManager
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.bundleOf
 import androidx.lifecycle.ViewModelProvider
@@ -23,6 +25,7 @@ import androidx.navigation.fragment.findNavController
 import app.olauncher.BuildConfig
 import app.olauncher.MainViewModel
 import app.olauncher.R
+import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
 import app.olauncher.databinding.DialogTextSizeBinding
@@ -31,6 +34,7 @@ import app.olauncher.helper.PhotoWallpaper
 import app.olauncher.helper.WallpaperRotateWorker
 import app.olauncher.helper.appUsagePermissionGranted
 import app.olauncher.helper.createDialog
+import app.olauncher.helper.getAppsList
 import app.olauncher.helper.getColorFromAttr
 import app.olauncher.helper.hideStatusBar
 import app.olauncher.helper.isAccessServiceEnabled
@@ -45,9 +49,11 @@ import app.olauncher.helper.OlDialog
 import app.olauncher.helper.showPopupMenu
 import app.olauncher.helper.showStatusBar
 import app.olauncher.helper.showToast
+import app.olauncher.wellbeing.DistractingApps
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.text.Collator
 
 class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListener {
 
@@ -56,7 +62,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
 
     private var _binding: FragmentSettingsBinding? = null
     private val binding get() = _binding!!
-    private var dialog: OlDialog? = null
+    private var dialog: AlertDialog? = null
 
     private val pickMultipleMedia = registerForActivityResult(
         ActivityResultContracts.PickMultipleVisualMedia(MediaStore.getPickImagesMaxLimit())
@@ -83,6 +89,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populatePhotoWallpaperText()
         populateKeyboardText()
         populateScreenTimeOnOff()
+        populateDistractingApps()
         populateLockSettings()
         // Home button for recents feature disabled
         // populateHomeButtonRecents()
@@ -102,6 +109,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     override fun onClick(view: View) {
         when (view.id) {
             R.id.olauncherHiddenApps -> showHiddenApps()
+            R.id.distractingApps, R.id.distractingAppsTitle, R.id.distractingAppsLayout -> showDistractingAppsDialog()
             R.id.screenTimeOnOff -> viewModel.showDialog.postValue(Constants.Dialog.DIGITAL_WELLBEING)
             R.id.appInfo -> openAppInfo(requireContext(), Process.myUserHandle(), BuildConfig.APPLICATION_ID)
             R.id.setLauncher -> viewModel.resetLauncherLiveData.call()
@@ -156,6 +164,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         // binding.homeButtonRecents.setOnClickListener(this)
         binding.homeAppsNum.setOnClickListener(this)
         binding.screenTimeOnOff.setOnClickListener(this)
+        binding.distractingApps.setOnClickListener(this)
+        binding.distractingAppsTitle.setOnClickListener(this)
+        binding.distractingAppsLayout.setOnClickListener(this)
         binding.alignment.setOnClickListener(this)
         binding.statusBar.setOnClickListener(this)
         binding.dateTime.setOnClickListener(this)
@@ -571,6 +582,66 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     private fun populateScreenTimeOnOff() {
         if (requireContext().appUsagePermissionGranted()) binding.screenTimeOnOff.text = getString(R.string.on)
         else binding.screenTimeOnOff.text = getString(R.string.off)
+    }
+
+    private fun populateDistractingApps() {
+        val count = prefs.distractingApps.size
+        binding.distractingApps.text = if (count == 1) {
+            getString(R.string.distracting_app_count, count)
+        } else {
+            getString(R.string.distracting_apps_count, count)
+        }
+    }
+
+    private fun showDistractingAppsDialog() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val apps = getAppsList(requireContext(), prefs, includeRegularApps = true, includeHiddenApps = true)
+                .filterIsInstance<AppModel.App>()
+                .distinctBy { it.appPackage }
+                .sortedWith(compareBy(Collator.getInstance()) { it.appLabel })
+
+            if (!isAdded) return@launch
+
+            val installedPackages = apps.map { it.appPackage }.toSet()
+            val selectedPackages = DistractingApps.initialSelection(
+                installedPackages = installedPackages,
+                saved = prefs.distractingApps,
+                hasSaved = prefs.hasSavedDistractingApps()
+            ).toMutableSet()
+
+            val labels = apps.map { it.appLabel }.toTypedArray()
+            val checked = BooleanArray(apps.size) { i -> apps[i].appPackage in selectedPackages }
+
+            val builder = AlertDialog.Builder(requireContext())
+                .setTitle(R.string.distracting_apps)
+                .setMultiChoiceItems(labels, checked) { _, which, isChecked ->
+                    checked[which] = isChecked
+                    val pkg = apps[which].appPackage
+                    if (isChecked) {
+                        selectedPackages.add(pkg)
+                    } else {
+                        selectedPackages.remove(pkg)
+                    }
+                }
+                .setPositiveButton(R.string.okay) { _, _ ->
+                    prefs.distractingApps = selectedPackages
+                    populateDistractingApps()
+                }
+                .setNegativeButton(R.string.cancel, null)
+
+            val alertDialog = builder.create()
+            dialog?.dismiss()
+            dialog = alertDialog
+            val window = alertDialog.window
+            if (window != null && !prefs.showStatusBar) {
+                window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+                alertDialog.show()
+                window.hideStatusBar()
+                window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+            } else {
+                alertDialog.show()
+            }
+        }
     }
 
     private fun populateKeyboardText() {
