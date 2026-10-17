@@ -19,12 +19,12 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.Recycler
 import app.olauncher.MainViewModel
-import app.olauncher.helper.DrawerScrollHelper
 import app.olauncher.R
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
 import app.olauncher.databinding.FragmentAppDrawerBinding
+import app.olauncher.helper.DrawerScrollHelper
 import app.olauncher.helper.deletePinnedShortcut
 import app.olauncher.helper.hideKeyboard
 import app.olauncher.helper.isEinkDisplay
@@ -141,7 +141,8 @@ class AppDrawerFragment : BaseFragment() {
                 try {
                     adapter.allowAutoLaunch = !isSearchComposing()
                     adapter.filter.filter(newText)
-                    binding.recyclerView.scrollToPosition(0)
+                    if (prefs.drawerBottomSearch)
+                        binding.recyclerView.scrollToPosition(0)
                     binding.appRename.visibility =
                         if (canRename && newText.isNotBlank()) View.VISIBLE else View.GONE
                     return true
