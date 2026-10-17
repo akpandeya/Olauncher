@@ -3,15 +3,21 @@ package app.olauncher.ui
 import android.content.Context
 import android.content.pm.LauncherApps
 import android.graphics.Color
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
+import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
+import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import app.olauncher.R
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
+import app.olauncher.data.ShortcutIconStyle
 import app.olauncher.helper.dpToPx
+import app.olauncher.helper.getColorFromAttr
 import app.olauncher.helper.getUserHandleFromString
 
 object ShortcutIconRenderer {
@@ -30,9 +36,16 @@ object ShortcutIconRenderer {
                         val activities = launcher.getActivityList(packageName, user)
                         val match = activities.find { it.componentName.className == prefs.getShortcutClass(slot) }
                             ?: activities.firstOrNull()
-                        val icon = match?.getBadgedIcon(0)
+                        val icon = match?.getBadgedIcon(0) ?: match?.getIcon(0)
                         if (icon != null) {
-                            return Pair(icon, APP_ICON_PADDING_DP.dpToPx())
+                            val styledIcon = applyStyle(
+                                icon = icon,
+                                style = prefs.shortcutIconStyle,
+                                primaryColor = context.getColorFromAttr(R.attr.primaryColor),
+                                monochromeLayer = (icon as? AdaptiveIconDrawable)?.monochrome
+                                    ?: (match?.getIcon(0) as? AdaptiveIconDrawable)?.monochrome
+                            )
+                            return Pair(styledIcon, APP_ICON_PADDING_DP.dpToPx())
                         }
                     }
                 } catch (e: Exception) {
@@ -43,10 +56,56 @@ object ShortcutIconRenderer {
         return Pair(getDefaultDrawable(context, slot), DEFAULT_ICON_PADDING_DP.dpToPx())
     }
 
+    fun applyStyle(
+        icon: Drawable,
+        style: Int,
+        @ColorInt primaryColor: Int,
+        monochromeLayer: Drawable? = (icon as? AdaptiveIconDrawable)?.monochrome,
+    ): Drawable {
+        val hasMonochrome = monochromeLayer != null
+        val treatment = ShortcutIconStyle.resolveTreatment(style, hasMonochrome)
+        return when (treatment) {
+            ShortcutIconStyle.Treatment.ORIGINAL -> {
+                icon.mutate().apply {
+                    colorFilter = null
+                    setTintList(null)
+                    alpha = 255
+                }
+            }
+            ShortcutIconStyle.Treatment.MONOCHROME_LAYER -> {
+                monochromeLayer!!.mutate().apply {
+                    colorFilter = null
+                    setTint(primaryColor)
+                    alpha = 255
+                }
+            }
+            ShortcutIconStyle.Treatment.FALLBACK_GRAYSCALE -> {
+                val matrix = ColorMatrix().apply { setSaturation(0f) }
+                icon.mutate().apply {
+                    colorFilter = ColorMatrixColorFilter(matrix)
+                    setTintList(null)
+                    alpha = 255
+                }
+            }
+            ShortcutIconStyle.Treatment.FALLBACK_GRAYSCALE_ALPHA -> {
+                val matrix = ColorMatrix().apply { setSaturation(0f) }
+                icon.mutate().apply {
+                    colorFilter = ColorMatrixColorFilter(matrix)
+                    setTintList(null)
+                    alpha = ShortcutIconStyle.FALLBACK_ALPHA_INT
+                }
+            }
+        }
+    }
+
     fun getDefaultDrawable(context: Context, slot: Int): Drawable {
         val resId = getDefaultIconRes(slot)
-        return ContextCompat.getDrawable(context, resId)?.mutate()
-            ?: ColorDrawable(Color.TRANSPARENT)
+        val primaryColor = context.getColorFromAttr(R.attr.primaryColor)
+        return ContextCompat.getDrawable(context, resId)?.mutate()?.apply {
+            colorFilter = null
+            setTint(primaryColor)
+            alpha = 255
+        } ?: ColorDrawable(Color.TRANSPARENT)
     }
 
     @DrawableRes

@@ -30,6 +30,7 @@ import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
 import app.olauncher.data.SlotCount
 import app.olauncher.data.ShortcutOffset
+import app.olauncher.data.ShortcutIconStyle
 import app.olauncher.databinding.DialogTextSizeBinding
 import app.olauncher.databinding.FragmentSettingsBinding
 import app.olauncher.helper.PhotoWallpaper
@@ -253,6 +254,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
 
                 val heightItem = menu.findItem(R.id.alignmentShortcutHeight)
                 heightItem.isVisible = prefs.homeShortcuts
+
+                val styleItem = menu.findItem(R.id.alignmentShortcutIconStyle)
+                styleItem.isVisible = prefs.homeShortcuts
             }
         ) { item ->
             when (item.itemId) {
@@ -270,6 +274,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                     viewModel.updateHomeAlignment(prefs.homeAlignment)
                 }
                 R.id.alignmentShortcutHeight -> showShortcutHeightDialog()
+                R.id.alignmentShortcutIconStyle -> showShortcutIconStyleDialog()
             }
         }
     }
@@ -283,6 +288,42 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             .setTitle(R.string.icons)
             .setSingleChoiceItems(items, checkedIndex) { dialogInterface, which ->
                 prefs.shortcutCount = counts[which]
+                viewModel.updateHomeAlignment(prefs.homeAlignment)
+                dialogInterface.dismiss()
+            }
+            .setNegativeButton(R.string.cancel, null)
+
+        val alertDialog = builder.create()
+        dialog?.dismiss()
+        dialog = alertDialog
+        val window = alertDialog.window
+        if (window != null && !prefs.showStatusBar) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+            alertDialog.show()
+            window.hideStatusBar()
+            window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+        } else {
+            alertDialog.show()
+        }
+    }
+
+    private fun showShortcutIconStyleDialog() {
+        val styles = listOf(
+            ShortcutIconStyle.ORIGINAL,
+            ShortcutIconStyle.MONOCHROME,
+            ShortcutIconStyle.TEXT_COLOUR,
+        )
+        val items = arrayOf(
+            getString(R.string.icon_style_original),
+            getString(R.string.icon_style_monochrome),
+            getString(R.string.icon_style_text_colour),
+        )
+        val checkedIndex = styles.indexOf(prefs.shortcutIconStyle).coerceAtLeast(0)
+
+        val builder = AlertDialog.Builder(requireContext())
+            .setTitle(R.string.icon_style)
+            .setSingleChoiceItems(items, checkedIndex) { dialogInterface, which ->
+                prefs.shortcutIconStyle = styles[which]
                 viewModel.updateHomeAlignment(prefs.homeAlignment)
                 dialogInterface.dismiss()
             }
