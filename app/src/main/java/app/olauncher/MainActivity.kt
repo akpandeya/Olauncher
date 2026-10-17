@@ -16,11 +16,13 @@ import android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.bundleOf
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.work.WorkManager
+import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
 import app.olauncher.databinding.ActivityMainBinding
@@ -228,6 +230,25 @@ class MainActivity : AppCompatActivity() {
                         startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
                     }
                 }
+            }
+        }
+        viewModel.pauseLaunch.observe(this) { appModel ->
+            if (navController.currentDestination?.id == R.id.pauseFragment) return@observe
+            val bundle = bundleOf(
+                "package" to appModel.appPackage,
+                "class" to (appModel as? AppModel.App)?.activityClassName,
+                "user" to appModel.user.toString(),
+                "label" to appModel.appLabel,
+                "shortcutId" to (appModel as? AppModel.PinnedShortcut)?.shortcutId
+            )
+            try {
+                when (navController.currentDestination?.id) {
+                    R.id.appListFragment -> navController.navigate(R.id.action_appListFragment_to_pauseFragment, bundle)
+                    R.id.mainFragment -> navController.navigate(R.id.action_mainFragment_to_pauseFragment, bundle)
+                    else -> navController.navigate(R.id.pauseFragment, bundle)
+                }
+            } catch (_: Exception) {
+                navController.navigate(R.id.pauseFragment, bundle)
             }
         }
     }

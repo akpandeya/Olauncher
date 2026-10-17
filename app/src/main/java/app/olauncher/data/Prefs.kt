@@ -49,6 +49,7 @@ class Prefs(context: Context) {
     private val SHOWN_ON_DAY_OF_YEAR = "SHOWN_ON_DAY_OF_YEAR"
     private val DISTRACTING_APPS = "DISTRACTING_APPS"
     private val PAUSE_ENABLED = "PAUSE_ENABLED"
+    private val FIRST_PAUSE_ENABLE = "FIRST_PAUSE_ENABLE"
     private val PAUSE_SECONDS = "PAUSE_SECONDS"
     private val OWN_OPENS_DAY = "OWN_OPENS_DAY"
     private val OWN_OPENS_PREFIX = "OWN_OPENS_"
@@ -274,6 +275,10 @@ class Prefs(context: Context) {
     var pauseEnabled: Boolean
         get() = prefs.getBoolean(PAUSE_ENABLED, false)
         set(value) = prefs.edit { putBoolean(PAUSE_ENABLED, value).apply() }
+
+    var firstPauseEnable: Boolean
+        get() = prefs.getBoolean(FIRST_PAUSE_ENABLE, true)
+        set(value) = prefs.edit { putBoolean(FIRST_PAUSE_ENABLE, value).apply() }
 
     var pauseSeconds: Int
         get() = prefs.getInt(PAUSE_SECONDS, 5)
