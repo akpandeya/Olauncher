@@ -244,6 +244,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                 menu.findItem(R.id.alignmentBottom).setTitle(
                     if (prefs.homeBottomAlignment) R.string.bottom_on else R.string.bottom_off
                 )
+                menu.findItem(R.id.alignmentShortcuts).setTitle(
+                    if (prefs.homeShortcuts) R.string.shortcuts_on else R.string.shortcuts_off
+                )
             }
         ) { item ->
             when (item.itemId) {
@@ -251,6 +254,10 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                 R.id.alignmentCenter -> viewModel.updateHomeAlignment(Gravity.CENTER)
                 R.id.alignmentRight -> viewModel.updateHomeAlignment(Gravity.END)
                 R.id.alignmentBottom -> updateHomeBottomAlignment()
+                R.id.alignmentShortcuts -> {
+                    prefs.homeShortcuts = !prefs.homeShortcuts
+                    viewModel.updateHomeAlignment(prefs.homeAlignment)
+                }
             }
         }
     }

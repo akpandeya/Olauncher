@@ -492,6 +492,26 @@ fun openCameraApp(context: Context) {
     }
 }
 
+fun openGalleryApp(context: Context) {
+    try {
+        val intent = Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_GALLERY)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent)
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+}
+
+fun openMessagesApp(context: Context) {
+    try {
+        val intent = Intent.makeMainSelectorActivity(Intent.ACTION_MAIN, Intent.CATEGORY_APP_MESSAGING)
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent)
+    } catch (e: Exception) {
+        e.printStackTrace()
+    }
+}
+
 fun openAlarmApp(context: Context) {
     try {
         val intent = Intent(AlarmClock.ACTION_SHOW_ALARMS)

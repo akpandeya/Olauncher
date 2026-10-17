@@ -40,6 +40,8 @@ import app.olauncher.helper.openAlarmApp
 import app.olauncher.helper.openCalendar
 import app.olauncher.helper.openCameraApp
 import app.olauncher.helper.openDialerApp
+import app.olauncher.helper.openGalleryApp
+import app.olauncher.helper.openMessagesApp
 import app.olauncher.helper.setPlainWallpaperByTheme
 import app.olauncher.helper.showToast
 import app.olauncher.listener.OnSwipeTouchListener
@@ -54,6 +56,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     private lateinit var viewModel: MainViewModel
     private lateinit var deviceManager: DevicePolicyManager
 
+    private var homeAppsPaddingEnd = 0
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
 
@@ -71,6 +74,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
         deviceManager = context?.getSystemService(Context.DEVICE_POLICY_SERVICE) as DevicePolicyManager
 
+        homeAppsPaddingEnd = binding.homeAppsLayout.paddingEnd
         initObservers()
         setHomeAlignment(prefs.homeAlignment)
         initSwipeTouchListener()
@@ -94,6 +98,12 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             R.id.date -> openCalendarApp()
             R.id.setDefaultLauncher -> viewModel.resetLauncherLiveData.call()
             R.id.tvScreenTime -> openScreenTimeDigitalWellbeing()
+            R.id.shortcutSearch -> showAppList(Constants.FLAG_LAUNCH_APP)
+            R.id.shortcutGallery -> openGalleryApp(requireContext())
+            R.id.shortcutCamera -> openCameraApp(requireContext())
+            R.id.shortcutMessages -> openMessagesApp(requireContext())
+            R.id.shortcutPhone -> openDialerApp(requireContext())
+            R.id.shortcutMore -> findNavController().navigate(R.id.action_mainFragment_to_settingsFragment)
 
             else -> {
                 try { // Launch app
@@ -234,6 +244,12 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         binding.setDefaultLauncher.setOnLongClickListener(this)
         binding.tvScreenTime.setOnClickListener(this)
         binding.tvScreenTime.setOnLongClickListener(this)
+        binding.shortcutSearch.setOnClickListener(this)
+        binding.shortcutGallery.setOnClickListener(this)
+        binding.shortcutCamera.setOnClickListener(this)
+        binding.shortcutMessages.setOnClickListener(this)
+        binding.shortcutPhone.setOnClickListener(this)
+        binding.shortcutMore.setOnClickListener(this)
 
         // These fire only on d-pad/keyboard events; touch is consumed by ViewSwipeTouchListener
         binding.homeApp1.setOnClickListener(this)
@@ -255,6 +271,13 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     }
 
     private fun setHomeAlignment(horizontalGravity: Int = prefs.homeAlignment) {
+        binding.shortcutsLayout.isVisible = prefs.homeShortcuts
+        binding.homeAppsLayout.setPaddingRelative(
+            binding.homeAppsLayout.paddingStart,
+            binding.homeAppsLayout.paddingTop,
+            homeAppsPaddingEnd + if (prefs.homeShortcuts) 56.dpToPx() else 0,
+            binding.homeAppsLayout.paddingBottom
+        )
         val verticalGravity = if (prefs.homeBottomAlignment) Gravity.BOTTOM else Gravity.CENTER_VERTICAL
         binding.homeAppsLayout.gravity = horizontalGravity or verticalGravity
         binding.dateTimeLayout.gravity = horizontalGravity
