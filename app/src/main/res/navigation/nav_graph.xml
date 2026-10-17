@@ -31,6 +31,13 @@
             app:exitAnim="@anim/fade_exit"
             app:popEnterAnim="@anim/fade_enter"
             app:popExitAnim="@anim/fade_exit" />
+        <action
+            android:id="@+id/action_mainFragment_to_todayFragment"
+            app:destination="@id/todayFragment"
+            app:enterAnim="@anim/slide_in_left"
+            app:exitAnim="@anim/fade_exit"
+            app:popEnterAnim="@anim/fade_enter"
+            app:popExitAnim="@anim/slide_out_left" />
     </fragment>
 
     <fragment
@@ -96,5 +103,11 @@
             app:nullable="true"
             android:defaultValue="@null" />
     </fragment>
+
+    <fragment
+        android:id="@+id/todayFragment"
+        android:name="app.olauncher.ui.today.TodayFragment"
+        android:label="TodayFragment"
+        tools:layout="@layout/fragment_today" />
 
 </navigation>

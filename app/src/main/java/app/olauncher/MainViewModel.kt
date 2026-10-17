@@ -329,6 +329,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     prefs.appActivityClassNameRight = appModel.activityClassName
                     prefs.isShortcutSwipeRight = false
                     prefs.shortcutIdSwipeRight = ""
+                    prefs.swipeRightAction = Prefs.SWIPE_RIGHT_ACTION_APP
                 }
             }
 
@@ -347,6 +348,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     prefs.appActivityClassNameRight = null
                     prefs.isShortcutSwipeRight = true
                     prefs.shortcutIdSwipeRight = appModel.shortcutId
+                    prefs.swipeRightAction = Prefs.SWIPE_RIGHT_ACTION_APP
                 }
             }
         }

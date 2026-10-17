@@ -9,6 +9,10 @@ import androidx.core.content.edit
 class Prefs(context: Context) {
     companion object {
         const val DRAWER_BOTTOM_SEARCH = "DRAWER_BOTTOM_SEARCH"
+        const val SWIPE_RIGHT_ACTION_TODAY = 0
+        const val SWIPE_RIGHT_ACTION_APP = 1
+        const val SWIPE_RIGHT_ACTION = "SWIPE_RIGHT_ACTION"
+        const val TODAY_CARD_PREFIX = "TODAY_CARD_"
     }
 
     private val PREFS_FILENAME = "app.olauncher"
@@ -250,6 +254,10 @@ class Prefs(context: Context) {
     var swipeRightEnabled: Boolean
         get() = prefs.getBoolean(SWIPE_RIGHT_ENABLED, true)
         set(value) = prefs.edit { putBoolean(SWIPE_RIGHT_ENABLED, value).apply() }
+
+    var swipeRightAction: Int
+        get() = prefs.getInt(SWIPE_RIGHT_ACTION, SWIPE_RIGHT_ACTION_TODAY)
+        set(value) = prefs.edit { putInt(SWIPE_RIGHT_ACTION, value).apply() }
 
     var appTheme: Int
         get() = prefs.getInt(APP_THEME, AppCompatDelegate.MODE_NIGHT_YES)
@@ -772,5 +780,11 @@ class Prefs(context: Context) {
         val count = prefs.getInt(key, 0) + 1
         prefs.edit { putInt(key, count).apply() }
         return count
+    }
+
+    fun isTodayCardEnabled(key: String): Boolean = prefs.getBoolean("$TODAY_CARD_PREFIX$key", true)
+
+    fun setTodayCardEnabled(key: String, enabled: Boolean) = prefs.edit {
+        putBoolean("$TODAY_CARD_PREFIX$key", enabled).apply()
     }
 }
