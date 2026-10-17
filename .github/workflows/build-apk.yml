@@ -2,7 +2,7 @@ name: Build APK
 
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
   workflow_dispatch:
 
@@ -11,6 +11,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Verify debug keystore checksum
+        run: |
+          EXPECTED="a9fe19d27688ada8e7f158cd02f8a8e74ccd7bdff65f45011dce1f67bdd93e26"
+          ACTUAL=$(sha256sum app/debug.keystore | awk '{print $1}')
+          if [ "$ACTUAL" != "$EXPECTED" ]; then
+            echo "Checksum mismatch for app/debug.keystore: expected $EXPECTED, got $ACTUAL"
+            exit 1
+          fi
 
       - uses: actions/setup-java@v4
         with:
@@ -27,3 +36,28 @@ jobs:
           name: thumbline-debug-apk
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+  release:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: thumbline-debug-apk
+          path: apk
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp apk/*.apk thumbline.apk
+          gh release create "build-${{ github.run_number }}" thumbline.apk \
+            --title "build-${{ github.run_number }}" \
+            --generate-notes \
+            --latest
+
