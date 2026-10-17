@@ -38,6 +38,7 @@ import app.olauncher.helper.isSystemAnimationsDisabled
 import app.olauncher.helper.isTablet
 import app.olauncher.helper.openUrl
 import app.olauncher.helper.resetLauncherViaFakeActivity
+import app.olauncher.helper.PhotoWallpaper
 import app.olauncher.helper.setPlainWallpaper
 import app.olauncher.helper.showLauncherSelector
 import app.olauncher.helper.showMessageDialog
@@ -188,7 +189,11 @@ class MainActivity : AppCompatActivity() {
         super.onConfigurationChanged(newConfig)
         AppCompatDelegate.setDefaultNightMode(prefs.appTheme)
         if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM) {
-            setPlainWallpaper()
+            if (prefs.photoWallpaperCount > 0) {
+                PhotoWallpaper.applyCurrent(this, prefs)
+            } else {
+                setPlainWallpaper()
+            }
             recreate()
         }
     }

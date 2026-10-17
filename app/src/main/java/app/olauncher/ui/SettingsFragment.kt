@@ -2,8 +2,10 @@ package app.olauncher.ui
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.os.Process
+import android.provider.MediaStore
 import android.provider.Settings
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -11,9 +13,12 @@ import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.bundleOf
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import app.olauncher.BuildConfig
 import app.olauncher.MainViewModel
@@ -22,6 +27,8 @@ import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
 import app.olauncher.databinding.DialogTextSizeBinding
 import app.olauncher.databinding.FragmentSettingsBinding
+import app.olauncher.helper.PhotoWallpaper
+import app.olauncher.helper.WallpaperRotateWorker
 import app.olauncher.helper.appUsagePermissionGranted
 import app.olauncher.helper.createDialog
 import app.olauncher.helper.getColorFromAttr
@@ -38,6 +45,9 @@ import app.olauncher.helper.OlDialog
 import app.olauncher.helper.showPopupMenu
 import app.olauncher.helper.showStatusBar
 import app.olauncher.helper.showToast
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListener {
 
@@ -47,6 +57,14 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     private var _binding: FragmentSettingsBinding? = null
     private val binding get() = _binding!!
     private var dialog: OlDialog? = null
+
+    private val pickMultipleMedia = registerForActivityResult(
+        ActivityResultContracts.PickMultipleVisualMedia(MediaStore.getPickImagesMaxLimit())
+    ) { uris ->
+        if (uris.isNotEmpty()) {
+            handlePickedPhotos(uris)
+        }
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentSettingsBinding.inflate(inflater, container, false)
@@ -62,6 +80,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         viewModel.isOlauncherDefault()
 
         binding.homeAppsNum.text = prefs.homeAppsNum.toString()
+        populatePhotoWallpaperText()
         populateKeyboardText()
         populateScreenTimeOnOff()
         populateLockSettings()
@@ -97,6 +116,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.textSizeValue -> showTextSizeDialog()
             R.id.boldFont -> toggleBoldFont()
 
+            R.id.photoWallpaper, R.id.photoWallpaperTitle, R.id.photoWallpaperLayout -> openPhotoPicker()
             R.id.swipeLeftApp -> showAppListIfEnabled(Constants.FLAG_SET_SWIPE_LEFT_APP)
             R.id.swipeRightApp -> showAppListIfEnabled(Constants.FLAG_SET_SWIPE_RIGHT_APP)
         }
@@ -104,6 +124,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
 
     override fun onLongClick(view: View): Boolean {
         when (view.id) {
+            R.id.photoWallpaper, R.id.photoWallpaperTitle, R.id.photoWallpaperLayout -> {
+                showPhotoWallpaperMenu(binding.photoWallpaper)
+            }
             R.id.alignment -> {
                 prefs.appLabelAlignment = prefs.homeAlignment
                 findNavController().navigate(R.id.action_settingsFragment_to_appListFragment)
@@ -123,6 +146,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.appInfo.setOnClickListener(this)
         binding.setLauncher.setOnClickListener(this)
         binding.autoShowKeyboard.setOnClickListener(this)
+        binding.photoWallpaper.setOnClickListener(this)
+        binding.photoWallpaperTitle.setOnClickListener(this)
+        binding.photoWallpaperLayout.setOnClickListener(this)
         binding.toggleLock.setOnClickListener(this)
         // Home button for recents feature disabled
         // binding.homeButtonRecents.setOnClickListener(this)
@@ -138,6 +164,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.boldFont.setOnClickListener(this)
 
 
+        binding.photoWallpaper.setOnLongClickListener(this)
+        binding.photoWallpaperTitle.setOnLongClickListener(this)
+        binding.photoWallpaperLayout.setOnLongClickListener(this)
         binding.alignment.setOnLongClickListener(this)
         binding.appThemeText.setOnLongClickListener(this)
         binding.swipeLeftApp.setOnLongClickListener(this)
@@ -393,8 +422,113 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
 
     private fun setAppTheme(theme: Int) {
         if (AppCompatDelegate.getDefaultNightMode() == theme) return
-        setPlainWallpaper(theme)
+        if (prefs.photoWallpaperCount > 0) {
+            PhotoWallpaper.applyCurrent(requireContext(), prefs)
+        } else {
+            setPlainWallpaper(theme)
+        }
         requireActivity().recreate()
+    }
+
+    private fun openPhotoPicker() {
+        pickMultipleMedia.launch(
+            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+        )
+    }
+
+    private fun handlePickedPhotos(uris: List<Uri>) {
+        if (uris.size == 1) {
+            requireContext().showToast(getString(R.string.saving_photo))
+        } else {
+            requireContext().showToast(getString(R.string.saving_photos, uris.size))
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            val savedCount = PhotoWallpaper.savePickedPhotos(requireContext(), uris)
+            if (savedCount > 0) {
+                prefs.photoWallpaperCount = savedCount
+                prefs.photoWallpaperIndex = 0
+                prefs.photoWallpaperLastDay = PhotoWallpaper.today()
+                populatePhotoWallpaperText()
+
+                WallpaperRotateWorker.schedulePeriodic(requireContext())
+                WallpaperRotateWorker.runOnce(requireContext())
+                withContext(Dispatchers.IO) {
+                    PhotoWallpaper.applyCurrent(requireContext(), prefs)
+                }
+            }
+        }
+    }
+
+    private fun populatePhotoWallpaperText() {
+        val count = prefs.photoWallpaperCount
+        binding.photoWallpaper.text = when {
+            count == 0 -> getString(R.string.off)
+            count == 1 -> getString(R.string.wallpaper_photo_count, 1)
+            else -> getString(R.string.wallpaper_photos_count, count)
+        }
+    }
+
+    private fun showPhotoWallpaperMenu(anchor: View) {
+        if (prefs.photoWallpaperCount == 0) {
+            openPhotoPicker()
+            return
+        }
+        anchor.showPopupMenu(
+            R.menu.photo_wallpaper,
+            configure = { menu ->
+                val targetTitle = when (prefs.photoWallpaperTarget) {
+                    PhotoWallpaper.TARGET_HOME -> R.string.set_on_home
+                    PhotoWallpaper.TARGET_LOCK -> R.string.set_on_lock
+                    PhotoWallpaper.TARGET_BOTH -> R.string.set_on_both
+                    else -> R.string.set_on_home
+                }
+                menu.findItem(R.id.photoWallpaperTarget).setTitle(targetTitle)
+            }
+        ) { item ->
+            when (item.itemId) {
+                R.id.photoWallpaperChange -> openPhotoPicker()
+                R.id.photoWallpaperTarget -> cyclePhotoWallpaperTarget()
+                R.id.photoWallpaperNext -> nextPhotoNow()
+                R.id.photoWallpaperOff -> turnOffPhotoWallpaper()
+            }
+        }
+    }
+
+    private fun cyclePhotoWallpaperTarget() {
+        prefs.photoWallpaperTarget = when (prefs.photoWallpaperTarget) {
+            PhotoWallpaper.TARGET_HOME -> PhotoWallpaper.TARGET_LOCK
+            PhotoWallpaper.TARGET_LOCK -> PhotoWallpaper.TARGET_BOTH
+            else -> PhotoWallpaper.TARGET_HOME
+        }
+        val targetRes = when (prefs.photoWallpaperTarget) {
+            PhotoWallpaper.TARGET_HOME -> R.string.set_on_home
+            PhotoWallpaper.TARGET_LOCK -> R.string.set_on_lock
+            PhotoWallpaper.TARGET_BOTH -> R.string.set_on_both
+            else -> R.string.set_on_home
+        }
+        requireContext().showToast(targetRes)
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            PhotoWallpaper.applyCurrent(requireContext(), prefs)
+        }
+    }
+
+    private fun nextPhotoNow() {
+        if (prefs.photoWallpaperCount <= 0) return
+        val nextIndex = (prefs.photoWallpaperIndex + 1) % prefs.photoWallpaperCount
+        prefs.photoWallpaperIndex = nextIndex
+        prefs.photoWallpaperLastDay = PhotoWallpaper.today()
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            PhotoWallpaper.applyCurrent(requireContext(), prefs)
+        }
+    }
+
+    private fun turnOffPhotoWallpaper() {
+        WallpaperRotateWorker.cancel(requireContext())
+        PhotoWallpaper.deleteAll(requireContext())
+        prefs.photoWallpaperCount = 0
+        prefs.photoWallpaperIndex = 0
+        setPlainWallpaper(prefs.appTheme)
+        populatePhotoWallpaperText()
     }
 
     private fun setPlainWallpaper(appTheme: Int) {

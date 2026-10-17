@@ -162,4 +162,17 @@
     <string name="invalid_shortcut">Invalid shortcut</string>
     <string name="shortcut_not_found">Shortcut not found</string>
     <string name="unable_to_open_shortcut">Unable to open shortcut</string>
+    <string name="wallpaper_photos">Wallpaper photos</string>
+    <string name="wallpaper_photos_count">%d photos</string>
+    <string name="wallpaper_photo_count">%d photo</string>
+    <string name="saving_photos">Saving %d photos…</string>
+    <string name="saving_photo">Saving 1 photo…</string>
+    <string name="change_photos">Change photos</string>
+    <string name="set_on_home">Set on: Home</string>
+    <string name="set_on_lock">Set on: Lock</string>
+    <string name="set_on_both">Set on: Both</string>
+    <string name="next_photo_now">Next photo now</string>
+    <string name="home">Home</string>
+    <string name="lock">Lock</string>
+    <string name="both">Both</string>
 </resources>
