@@ -282,7 +282,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     private fun setupShortcutViews() {
         val context = context ?: return
         binding.shortcutsLayout.removeAllViews()
-        for (slot in 1..Constants.SHORTCUT_SLOTS) {
+        for (slot in 1..prefs.shortcutCount) {
             val imageView = ImageView(context).apply {
                 layoutParams = LinearLayout.LayoutParams(48.dpToPx(), 48.dpToPx())
                 val typedValue = TypedValue()
@@ -310,7 +310,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
     private fun populateShortcuts() {
         val context = context ?: return
-        if (binding.shortcutsLayout.childCount != Constants.SHORTCUT_SLOTS) {
+        if (binding.shortcutsLayout.childCount != prefs.shortcutCount) {
             setupShortcutViews()
             return
         }
@@ -326,6 +326,8 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         view.setPadding(paddingPx, paddingPx, paddingPx, paddingPx)
         view.setImageDrawable(drawable)
         view.contentDescription = ShortcutIconRenderer.getLabel(context, slot, prefs, paddingPx)
+        val hasApp = prefs.getShortcutMode(slot) == Constants.SHORTCUT_MODE_APP && prefs.getShortcutPackage(slot).isNotEmpty()
+        view.alpha = if (slot in 7..8 && !hasApp) 0.4f else 1.0f
     }
 
     private fun getShortcutSwipeTouchListener(context: Context, view: View, slot: Int): View.OnTouchListener {
@@ -382,6 +384,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             4 -> openMessagesApp(context)
             5 -> openDialerApp(context)
             6 -> findNavController().navigate(R.id.action_mainFragment_to_settingsFragment)
+            else -> showLongPressToast()
         }
     }
 

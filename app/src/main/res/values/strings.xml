@@ -93,6 +93,8 @@
     <string name="bottom_off">Bottom: Off</string>
     <string name="shortcuts_on">Shortcuts: On</string>
     <string name="shortcuts_off">Shortcuts: Off</string>
+    <string name="icons">Icons</string>
+    <string name="icons_count">Icons: %1$d</string>
     <string name="shortcut_search">Search apps</string>
     <string name="shortcut_gallery">Gallery</string>
     <string name="shortcut_camera">Camera</string>
