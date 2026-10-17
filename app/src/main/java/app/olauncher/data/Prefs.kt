@@ -28,6 +28,8 @@ class Prefs(context: Context) {
     private val HOME_BOTTOM_ALIGNMENT = "HOME_BOTTOM_ALIGNMENT"
     private val HOME_SHORTCUTS = "HOME_SHORTCUTS"
     private val SHORTCUT_COUNT = "SHORTCUT_COUNT"
+    private val SHORTCUT_SIDE_START = "SHORTCUT_SIDE_START"
+    private val SHORTCUT_OFFSET_STEP = "SHORTCUT_OFFSET_STEP"
     private val APP_LABEL_ALIGNMENT = "APP_LABEL_ALIGNMENT"
     private val STATUS_BAR = "STATUS_BAR"
     private val DATE_TIME_VISIBILITY = "DATE_TIME_VISIBILITY"
@@ -207,6 +209,14 @@ class Prefs(context: Context) {
     var shortcutCount: Int
         get() = SlotCount.clamp(prefs.getInt(SHORTCUT_COUNT, SlotCount.DEFAULT))
         set(value) = prefs.edit { putInt(SHORTCUT_COUNT, SlotCount.clamp(value)).apply() }
+
+    var shortcutSideStart: Boolean
+        get() = prefs.getBoolean(SHORTCUT_SIDE_START, false)
+        set(value) = prefs.edit { putBoolean(SHORTCUT_SIDE_START, value).apply() }
+
+    var shortcutOffsetStep: Int
+        get() = ShortcutOffset.clamp(prefs.getInt(SHORTCUT_OFFSET_STEP, ShortcutOffset.DEFAULT_STEP))
+        set(value) = prefs.edit { putInt(SHORTCUT_OFFSET_STEP, ShortcutOffset.clamp(value)).apply() }
 
     var appLabelAlignment: Int
         get() = prefs.getInt(APP_LABEL_ALIGNMENT, Gravity.START)

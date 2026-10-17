@@ -31,6 +31,7 @@ import app.olauncher.R
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
+import app.olauncher.data.ShortcutOffset
 import app.olauncher.databinding.FragmentHomeBinding
 import app.olauncher.helper.appUsagePermissionGranted
 import app.olauncher.helper.dpToPx
@@ -58,6 +59,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     private lateinit var prefs: Prefs
     private lateinit var viewModel: MainViewModel
 
+    private var homeAppsPaddingStart = 0
     private var homeAppsPaddingEnd = 0
     private var _binding: FragmentHomeBinding? = null
     private val binding get() = _binding!!
@@ -75,6 +77,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         } ?: throw Exception("Invalid Activity")
 
 
+        homeAppsPaddingStart = binding.homeAppsLayout.paddingStart
         homeAppsPaddingEnd = binding.homeAppsLayout.paddingEnd
         initObservers()
         setupShortcutViews()
@@ -85,6 +88,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
     override fun onResume() {
         super.onResume()
+        setHomeAlignment()
         populateHomeScreen(false)
         populateShortcuts()
         viewModel.isOlauncherDefault()
@@ -259,13 +263,31 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
     private fun setHomeAlignment(horizontalGravity: Int = prefs.homeAlignment) {
         binding.shortcutsLayout.isVisible = prefs.homeShortcuts
+        val sideGravity = if (prefs.shortcutSideStart) Gravity.START else Gravity.END
+        (binding.shortcutsLayout.layoutParams as? FrameLayout.LayoutParams)?.let { params ->
+            params.gravity = Gravity.BOTTOM or sideGravity
+            params.marginStart = if (prefs.shortcutSideStart) 12.dpToPx() else 0
+            params.marginEnd = if (prefs.shortcutSideStart) 0 else 12.dpToPx()
+            params.bottomMargin = ShortcutOffset.bottomMarginDp(prefs.shortcutOffsetStep).dpToPx()
+            binding.shortcutsLayout.layoutParams = params
+        }
         populateShortcuts()
+
+        val extraPadding = if (prefs.homeShortcuts) 56.dpToPx() else 0
+        val paddingStart = homeAppsPaddingStart + if (prefs.shortcutSideStart) extraPadding else 0
+        val paddingEnd = homeAppsPaddingEnd + if (prefs.shortcutSideStart) 0 else extraPadding
         binding.homeAppsLayout.setPaddingRelative(
-            binding.homeAppsLayout.paddingStart,
+            paddingStart,
             binding.homeAppsLayout.paddingTop,
-            homeAppsPaddingEnd + if (prefs.homeShortcuts) 56.dpToPx() else 0,
+            paddingEnd,
             binding.homeAppsLayout.paddingBottom
         )
+
+        (binding.firstRunTips.layoutParams as? FrameLayout.LayoutParams)?.let { tipsParams ->
+            tipsParams.marginStart = 24.dpToPx() + if (prefs.homeShortcuts && prefs.shortcutSideStart) 56.dpToPx() else 0
+            binding.firstRunTips.layoutParams = tipsParams
+        }
+
         val verticalGravity = if (prefs.homeBottomAlignment) Gravity.BOTTOM else Gravity.CENTER_VERTICAL
         binding.homeAppsLayout.gravity = horizontalGravity or verticalGravity
         binding.dateTimeLayout.gravity = horizontalGravity
@@ -277,6 +299,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         binding.homeApp6.gravity = horizontalGravity
         binding.homeApp7.gravity = horizontalGravity
         binding.homeApp8.gravity = horizontalGravity
+        populateScreenTime()
     }
 
     private fun setupShortcutViews() {
@@ -435,14 +458,16 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         } else {
             if (prefs.dateTimeVisibility == Constants.DateTime.DATE_ONLY) 45.dpToPx() else 72.dpToPx()
         }
+        val targetGravity = if (prefs.homeAlignment == Gravity.END) Gravity.START else Gravity.END
+        val extraStartMargin = if (prefs.homeShortcuts && prefs.shortcutSideStart && targetGravity == Gravity.START) 56.dpToPx() else 0
         val params = FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.WRAP_CONTENT,
             FrameLayout.LayoutParams.WRAP_CONTENT
         ).apply {
             topMargin = marginTop
-            marginStart = horizontalMargin
+            marginStart = horizontalMargin + extraStartMargin
             marginEnd = horizontalMargin
-            gravity = if (prefs.homeAlignment == Gravity.END) Gravity.START else Gravity.END
+            gravity = targetGravity
         }
         binding.tvScreenTime.layoutParams = params
         binding.tvScreenTime.setPadding(10.dpToPx())
