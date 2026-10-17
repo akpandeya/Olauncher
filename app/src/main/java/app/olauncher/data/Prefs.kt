@@ -20,6 +20,10 @@ class Prefs(context: Context) {
     private val KEYBOARD_MESSAGE = "KEYBOARD_MESSAGE"
     private val DAILY_WALLPAPER = "DAILY_WALLPAPER"
     private val DAILY_WALLPAPER_URL = "DAILY_WALLPAPER_URL"
+    private val PHOTO_WALLPAPER_COUNT = "PHOTO_WALLPAPER_COUNT"
+    private val PHOTO_WALLPAPER_INDEX = "PHOTO_WALLPAPER_INDEX"
+    private val PHOTO_WALLPAPER_TARGET = "PHOTO_WALLPAPER_TARGET"
+    private val PHOTO_WALLPAPER_LAST_DAY = "PHOTO_WALLPAPER_LAST_DAY"
     private val HOME_ALIGNMENT = "HOME_ALIGNMENT"
     private val HOME_BOTTOM_ALIGNMENT = "HOME_BOTTOM_ALIGNMENT"
     private val HOME_SHORTCUTS = "HOME_SHORTCUTS"
@@ -160,6 +164,22 @@ class Prefs(context: Context) {
     var dailyWallpaperUrl: String
         get() = prefs.getString(DAILY_WALLPAPER_URL, "").toString()
         set(value) = prefs.edit { putString(DAILY_WALLPAPER_URL, value).apply() }
+
+    var photoWallpaperCount: Int
+        get() = prefs.getInt(PHOTO_WALLPAPER_COUNT, 0)
+        set(value) = prefs.edit { putInt(PHOTO_WALLPAPER_COUNT, value).apply() }
+
+    var photoWallpaperIndex: Int
+        get() = prefs.getInt(PHOTO_WALLPAPER_INDEX, 0)
+        set(value) = prefs.edit { putInt(PHOTO_WALLPAPER_INDEX, value).apply() }
+
+    var photoWallpaperTarget: Int
+        get() = prefs.getInt(PHOTO_WALLPAPER_TARGET, 0)
+        set(value) = prefs.edit { putInt(PHOTO_WALLPAPER_TARGET, value).apply() }
+
+    var photoWallpaperLastDay: Int
+        get() = prefs.getInt(PHOTO_WALLPAPER_LAST_DAY, 0)
+        set(value) = prefs.edit { putInt(PHOTO_WALLPAPER_LAST_DAY, value).apply() }
 
     var homeAppsNum: Int
         get() = prefs.getInt(HOME_APPS_NUM, 4)
