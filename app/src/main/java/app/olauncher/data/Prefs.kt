@@ -47,6 +47,11 @@ class Prefs(context: Context) {
     private val SCREEN_TIME_LAST_UPDATED = "SCREEN_TIME_LAST_UPDATED"
     private val LAUNCHER_RESTART_TIMESTAMP = "LAUNCHER_RECREATE_TIMESTAMP"
     private val SHOWN_ON_DAY_OF_YEAR = "SHOWN_ON_DAY_OF_YEAR"
+    private val DISTRACTING_APPS = "DISTRACTING_APPS"
+    private val PAUSE_ENABLED = "PAUSE_ENABLED"
+    private val PAUSE_SECONDS = "PAUSE_SECONDS"
+    private val OWN_OPENS_DAY = "OWN_OPENS_DAY"
+    private val OWN_OPENS_PREFIX = "OWN_OPENS_"
     // Home button for recents feature disabled
     // private val HOME_BUTTON_SHOW_RECENTS = "HOME_BUTTON_SHOW_RECENTS"
 
@@ -261,6 +266,18 @@ class Prefs(context: Context) {
     var hiddenAppsUpdated: Boolean
         get() = prefs.getBoolean(HIDDEN_APPS_UPDATED, false)
         set(value) = prefs.edit { putBoolean(HIDDEN_APPS_UPDATED, value).apply() }
+
+    var distractingApps: Set<String>
+        get() = prefs.getStringSet(DISTRACTING_APPS, emptySet())?.toSet() ?: emptySet()
+        set(value) = prefs.edit { putStringSet(DISTRACTING_APPS, value).apply() }
+
+    var pauseEnabled: Boolean
+        get() = prefs.getBoolean(PAUSE_ENABLED, false)
+        set(value) = prefs.edit { putBoolean(PAUSE_ENABLED, value).apply() }
+
+    var pauseSeconds: Int
+        get() = prefs.getInt(PAUSE_SECONDS, 5)
+        set(value) = prefs.edit { putInt(PAUSE_SECONDS, value).apply() }
 
     var toShowHintCounter: Int
         get() = prefs.getInt(SHOW_HINT_COUNTER, 1)
@@ -693,4 +710,34 @@ class Prefs(context: Context) {
     fun getAppRenameLabel(appPackage: String): String = prefs.getString(appPackage, "").toString()
 
     fun setAppRenameLabel(appPackage: String, renameLabel: String) = prefs.edit { putString(appPackage, renameLabel) }
+
+    fun hasSavedDistractingApps(): Boolean = prefs.contains(DISTRACTING_APPS)
+
+    internal var epochDaySupplier: () -> Long = { java.time.LocalDate.now().toEpochDay() }
+
+    private fun checkAndResetOwnOpensDay() {
+        val today = epochDaySupplier()
+        val savedDay = prefs.getLong(OWN_OPENS_DAY, 0L)
+        if (savedDay != today) {
+            prefs.edit {
+                prefs.all.keys
+                    .filter { it.startsWith(OWN_OPENS_PREFIX) && it != OWN_OPENS_DAY }
+                    .forEach { remove(it) }
+                putLong(OWN_OPENS_DAY, today)
+            }
+        }
+    }
+
+    fun ownOpenCount(pkg: String): Int {
+        checkAndResetOwnOpensDay()
+        return prefs.getInt("$OWN_OPENS_PREFIX$pkg", 0)
+    }
+
+    fun incrementOwnOpenCount(pkg: String): Int {
+        checkAndResetOwnOpensDay()
+        val key = "$OWN_OPENS_PREFIX$pkg"
+        val count = prefs.getInt(key, 0) + 1
+        prefs.edit { putInt(key, count).apply() }
+        return count
+    }
 }
