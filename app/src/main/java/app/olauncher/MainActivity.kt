@@ -10,7 +10,6 @@ import android.content.pm.ActivityInfo
 import android.content.pm.LauncherApps
 import android.content.pm.ShortcutInfo
 import android.content.res.Configuration
-import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
@@ -108,19 +107,17 @@ class MainActivity : AppCompatActivity() {
 
         window.addFlags(FLAG_LAYOUT_NO_LIMITS)
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM) {
-            profileReceiver = object : BroadcastReceiver() {
-                override fun onReceive(context: Context?, intent: Intent?) {
-                    viewModel.isPrivateSpaceToggling = false
-                    viewModel.getPrivateSpaceAppList()
-                }
+        profileReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                viewModel.isPrivateSpaceToggling = false
+                viewModel.getPrivateSpaceAppList()
             }
-            val filter = IntentFilter().apply {
-                addAction(Intent.ACTION_PROFILE_AVAILABLE)
-                addAction(Intent.ACTION_PROFILE_UNAVAILABLE)
-            }
-            registerReceiver(profileReceiver, filter)
         }
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_PROFILE_AVAILABLE)
+            addAction(Intent.ACTION_PROFILE_UNAVAILABLE)
+        }
+        registerReceiver(profileReceiver, filter)
     }
 
     override fun onStart() {
@@ -199,7 +196,7 @@ class MainActivity : AppCompatActivity() {
             openLauncherChooser(it)
         }
         viewModel.resetLauncherLiveData.observe(this) {
-            if (isDefaultLauncher() || Build.VERSION.SDK_INT < Build.VERSION_CODES.Q)
+            if (isDefaultLauncher())
                 resetLauncherViaFakeActivity()
             else
                 showLauncherSelector(Constants.REQUEST_CODE_LAUNCHER_SELECTOR)
@@ -252,9 +249,8 @@ class MainActivity : AppCompatActivity() {
 
     @SuppressLint("SourceLockedOrientationActivity")
     private fun setupOrientation() {
-        if (isTablet(this) || Build.VERSION.SDK_INT == Build.VERSION_CODES.O)
+        if (isTablet(this))
             return
-        // In Android 8.0, windowIsTranslucent cannot be used with screenOrientation=portrait
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
     }
 

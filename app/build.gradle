@@ -16,7 +16,7 @@ android {
     defaultConfig {
         applicationId "app.thumbline"
         setProperty("archivesBaseName", "thumbline")
-        minSdkVersion 24
+        minSdkVersion 36
         targetSdkVersion 36
         def runNumber = (System.getenv("GITHUB_RUN_NUMBER") ?: "0").toInteger()
         versionCode 113 + (System.getenv("GITHUB_RUN_NUMBER") ?: "0").toInteger()
