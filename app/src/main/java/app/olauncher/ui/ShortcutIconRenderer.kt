@@ -75,10 +75,12 @@ object ShortcutIconRenderer {
         return context.getString(getDefaultLabelRes(slot))
     }
 
+    /** [paddingPx] is the value returned by [render]; true when an app icon was resolved. */
+    fun isAppIcon(paddingPx: Int): Boolean = paddingPx == APP_ICON_PADDING_DP.dpToPx()
+
     /** [paddingPx] is the value returned by [render]; it tells whether an app icon was resolved. */
     fun getLabel(context: Context, slot: Int, prefs: Prefs, paddingPx: Int): String {
-        val isAppIcon = paddingPx == APP_ICON_PADDING_DP.dpToPx()
-        if (isAppIcon && prefs.getShortcutMode(slot) == Constants.SHORTCUT_MODE_APP) {
+        if (isAppIcon(paddingPx) && prefs.getShortcutMode(slot) == Constants.SHORTCUT_MODE_APP) {
             val label = prefs.getShortcutLabel(slot)
             if (label.isNotEmpty()) return label
         }

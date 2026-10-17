@@ -17,4 +17,8 @@
     <item
         android:id="@+id/alignmentShortcuts"
         android:title="@string/shortcuts_off" />
+    <!-- Title is set at runtime to icons_count (Icons: n), shown only when shortcuts are on -->
+    <item
+        android:id="@+id/alignmentShortcutCount"
+        android:title="@string/icons" />
 </menu>

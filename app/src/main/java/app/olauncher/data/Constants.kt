@@ -77,7 +77,9 @@ object Constants {
 
     const val FLAG_SET_SHORTCUT_1 = 21
     const val FLAG_SET_SHORTCUT_6 = 26
+    const val FLAG_SET_SHORTCUT_8 = 28
     const val SHORTCUT_SLOTS = 6
+    const val MAX_SHORTCUT_SLOTS = 8
 
     const val SHORTCUT_MODE_DEFAULT = 0
     const val SHORTCUT_MODE_APP = 1

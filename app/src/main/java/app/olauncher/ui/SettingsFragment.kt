@@ -28,6 +28,7 @@ import app.olauncher.R
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
+import app.olauncher.data.SlotCount
 import app.olauncher.databinding.DialogTextSizeBinding
 import app.olauncher.databinding.FragmentSettingsBinding
 import app.olauncher.helper.PhotoWallpaper
@@ -239,6 +240,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                 menu.findItem(R.id.alignmentShortcuts).setTitle(
                     if (prefs.homeShortcuts) R.string.shortcuts_on else R.string.shortcuts_off
                 )
+                val countItem = menu.findItem(R.id.alignmentShortcutCount)
+                countItem.isVisible = prefs.homeShortcuts
+                countItem.title = getString(R.string.icons_count, prefs.shortcutCount)
             }
         ) { item ->
             when (item.itemId) {
@@ -250,7 +254,36 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                     prefs.homeShortcuts = !prefs.homeShortcuts
                     viewModel.updateHomeAlignment(prefs.homeAlignment)
                 }
+                R.id.alignmentShortcutCount -> showShortcutCountDialog()
             }
+        }
+    }
+
+    private fun showShortcutCountDialog() {
+        val counts = (SlotCount.MIN..SlotCount.MAX).toList()
+        val items = counts.map { it.toString() }.toTypedArray()
+        val checkedIndex = counts.indexOf(prefs.shortcutCount)
+
+        val builder = AlertDialog.Builder(requireContext())
+            .setTitle(R.string.icons)
+            .setSingleChoiceItems(items, checkedIndex) { dialogInterface, which ->
+                prefs.shortcutCount = counts[which]
+                viewModel.updateHomeAlignment(prefs.homeAlignment)
+                dialogInterface.dismiss()
+            }
+            .setNegativeButton(R.string.cancel, null)
+
+        val alertDialog = builder.create()
+        dialog?.dismiss()
+        dialog = alertDialog
+        val window = alertDialog.window
+        if (window != null && !prefs.showStatusBar) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+            alertDialog.show()
+            window.hideStatusBar()
+            window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+        } else {
+            alertDialog.show()
         }
     }
 
