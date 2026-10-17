@@ -198,4 +198,8 @@
     <string name="pause_open">Open</string>
     <string name="pause_open_countdown">Open (%d)</string>
     <string name="stop_pausing_app">Stop pausing %s</string>
+    <string name="today_page">Today page</string>
+    <string name="today_cards">Today cards</string>
+    <string name="choose_app">Choose app…</string>
+    <string name="nothing_here_yet">Nothing here yet</string>
 </resources>
