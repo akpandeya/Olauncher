@@ -102,6 +102,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             Constants.FLAG_SET_CLOCK_APP -> saveClockApp(appModel)
             Constants.FLAG_SET_CALENDAR_APP -> saveCalendarApp(appModel)
             Constants.FLAG_SET_SCREEN_TIME_APP -> saveScreenTimeApp(appModel)
+            in Constants.FLAG_SET_SHORTCUT_1..Constants.FLAG_SET_SHORTCUT_6 -> saveShortcutApp(appModel, flag - Constants.FLAG_SET_SHORTCUT_1 + 1)
         }
     }
 
@@ -280,6 +281,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             }
         }
         refreshHome(false)
+    }
+
+    private fun saveShortcutApp(appModel: AppModel, slot: Int) {
+        if (appModel !is AppModel.App) {
+            appContext.showToast("Please pick an app")
+            return
+        }
+        prefs.setShortcutApp(slot, appModel.appLabel, appModel.appPackage, appModel.activityClassName, appModel.user.toString())
     }
 
     private fun saveSwipeApp(appModel: AppModel, isLeft: Boolean) {

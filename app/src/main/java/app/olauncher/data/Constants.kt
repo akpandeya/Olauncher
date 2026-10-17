@@ -78,6 +78,13 @@ object Constants {
     const val FLAG_SET_CALENDAR_APP = 14
     const val FLAG_SET_SCREEN_TIME_APP = 15
 
+    const val FLAG_SET_SHORTCUT_1 = 21
+    const val FLAG_SET_SHORTCUT_6 = 26
+    const val SHORTCUT_SLOTS = 6
+
+    const val SHORTCUT_MODE_DEFAULT = 0
+    const val SHORTCUT_MODE_APP = 1
+
     const val REQUEST_CODE_ENABLE_ADMIN = 666
     const val REQUEST_CODE_LAUNCHER_SELECTOR = 678
 
