@@ -53,9 +53,6 @@ object Constants {
         "com.miui.clock", //Xiaomi Clock
     )
 
-    const val WALL_TYPE_LIGHT = "light"
-    const val WALL_TYPE_DARK = "dark"
-
 //    const val THEME_MODE_DARK = 0
 //    const val THEME_MODE_LIGHT = 1
 //    const val THEME_MODE_SYSTEM = 2
@@ -98,9 +95,6 @@ object Constants {
     const val MIN_ANIM_REFRESH_RATE = 30f
 
     const val URL_DOUBLE_TAP = "https://tanujnotes.notion.site/Double-tap-to-lock-Olauncher-0f7fb103ec1f47d7a90cdfdcd7fb86ef"
-    const val URL_WALLPAPERS = "https://gist.githubusercontent.com/tanujnotes/85e2d0343ace71e76615ac346fbff82b/raw"
-    const val URL_DEFAULT_DARK_WALLPAPER = "https://images.unsplash.com/photo-1512551980832-13df02babc9e"
-    const val URL_DEFAULT_LIGHT_WALLPAPER = "https://images.unsplash.com/photo-1515549832467-8783363e19b6"
     const val URL_DUCK_SEARCH = "https://duck.co/?q="
     const val URL_DIGITAL_WELLBEING_LEARN_MORE = "https://tanujnotes.substack.com/p/digital-wellbeing-app-on-android?utm_source=olauncher"
 
