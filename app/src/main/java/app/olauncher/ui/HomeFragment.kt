@@ -42,6 +42,7 @@ import app.olauncher.helper.openCameraApp
 import app.olauncher.helper.openDialerApp
 import app.olauncher.helper.openGalleryApp
 import app.olauncher.helper.openMessagesApp
+import app.olauncher.helper.PhotoWallpaper
 import app.olauncher.helper.setPlainWallpaperByTheme
 import app.olauncher.helper.showToast
 import app.olauncher.listener.OnSwipeTouchListener
@@ -672,7 +673,11 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     private fun changeAppTheme() {
         val changedAppTheme = getChangedAppTheme(requireContext(), prefs.appTheme)
         prefs.appTheme = changedAppTheme
-        setPlainWallpaperByTheme(requireContext(), changedAppTheme)
+        if (prefs.photoWallpaperCount > 0) {
+            PhotoWallpaper.applyCurrent(requireContext(), prefs)
+        } else {
+            setPlainWallpaperByTheme(requireContext(), changedAppTheme)
+        }
         requireActivity().recreate()
     }
 
