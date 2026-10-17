@@ -1,7 +1,8 @@
 ![Olauncher](https://repository-images.githubusercontent.com/278638069/db0acb80-661b-11eb-803e-926cae5dccb4)
 
 
-# Olauncher | Minimal AF Launcher
+# Thumbline
+Based on [Olauncher](https://github.com/tanujnotes/Olauncher) by Tanuj, licensed under GPLv3. Modified: bottom-aligned home apps, icon shortcuts, promotional content removed, renamed.
 AF stands for Ad-Free! :D
 
 [<img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
