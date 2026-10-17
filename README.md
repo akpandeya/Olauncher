@@ -5,6 +5,8 @@
 Based on [Olauncher](https://github.com/tanujnotes/Olauncher) by Tanuj, licensed under GPLv3. Modified: bottom-aligned home apps, icon shortcuts, promotional content removed, renamed.
 AF stands for Ad-Free! :D
 
+Download the latest APK: [thumbline.apk](https://github.com/akpandeya/Olauncher/releases/latest/download/thumbline.apk) (install/update via Obtainium).
+
 [<img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png"
     alt="Get it on Play Store"
     height="80" align="middle">](https://play.google.com/store/apps/details?id=app.olauncher)

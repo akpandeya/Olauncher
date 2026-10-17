@@ -18,8 +18,9 @@ android {
         setProperty("archivesBaseName", "thumbline")
         minSdkVersion 24
         targetSdkVersion 36
-        versionCode 113
-        versionName "v6.9.17"
+        def runNumber = (System.getenv("GITHUB_RUN_NUMBER") ?: "0").toInteger()
+        versionCode 113 + (System.getenv("GITHUB_RUN_NUMBER") ?: "0").toInteger()
+        versionName "v6.9.17-tl." + runNumber
 
         resourceConfigurations += ["en", "ar", "cs", "da", "de", "el", "es-rES", "es-rUS", "fi", "fr", "he", "hi", "hr", "hu", "in", "it", "ja", "ko", "nb", "nl", "pl", "pt-rBR", "ro", "ru-rRU", "sv", "th", "tr", "uk", "vi", "zh"]
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
