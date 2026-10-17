@@ -644,7 +644,31 @@ class Prefs(context: Context) {
         if (screenTimeAppPackage == packageName) screenTimeAppClassName = activityClassName
         if (appPackageSwipeLeft == packageName) appActivityClassNameSwipeLeft = activityClassName
         if (appPackageSwipeRight == packageName) appActivityClassNameRight = activityClassName
+        for (slot in 1..Constants.SHORTCUT_SLOTS) {
+            if (getShortcutPackage(slot) == packageName) prefs.edit { putString("SHORTCUT_CLASS_$slot", activityClassName) }
+        }
     }
+
+    // Home shortcut icon slots (1..SHORTCUT_SLOTS): default built-in or a chosen app
+    fun getShortcutMode(slot: Int): Int = prefs.getInt("SHORTCUT_MODE_$slot", Constants.SHORTCUT_MODE_DEFAULT)
+
+    fun getShortcutPackage(slot: Int): String = prefs.getString("SHORTCUT_PACKAGE_$slot", "").toString()
+
+    fun getShortcutClass(slot: Int): String = prefs.getString("SHORTCUT_CLASS_$slot", "").toString()
+
+    fun getShortcutUser(slot: Int): String = prefs.getString("SHORTCUT_USER_$slot", "").toString()
+
+    fun getShortcutLabel(slot: Int): String = prefs.getString("SHORTCUT_LABEL_$slot", "").toString()
+
+    fun setShortcutApp(slot: Int, label: String, packageName: String, className: String?, user: String) = prefs.edit {
+        putInt("SHORTCUT_MODE_$slot", Constants.SHORTCUT_MODE_APP)
+        putString("SHORTCUT_LABEL_$slot", label)
+        putString("SHORTCUT_PACKAGE_$slot", packageName)
+        putString("SHORTCUT_CLASS_$slot", className.orEmpty())
+        putString("SHORTCUT_USER_$slot", user)
+    }
+
+    fun setShortcutMode(slot: Int, mode: Int) = prefs.edit { putInt("SHORTCUT_MODE_$slot", mode) }
 
     fun getAppRenameLabel(appPackage: String): String = prefs.getString(appPackage, "").toString()
 
