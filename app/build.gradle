@@ -15,6 +15,7 @@ android {
 
     defaultConfig {
         applicationId "app.thumbline"
+        setProperty("archivesBaseName", "thumbline")
         minSdkVersion 24
         targetSdkVersion 36
         versionCode 113
