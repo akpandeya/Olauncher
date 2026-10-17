@@ -13,4 +13,8 @@
     <item
         android:id="@+id/alignmentBottom"
         android:title="@string/bottom_off" />
+    <!-- Title is set at runtime to shortcuts_on / shortcuts_off -->
+    <item
+        android:id="@+id/alignmentShortcuts"
+        android:title="@string/shortcuts_off" />
 </menu>
