@@ -29,4 +29,8 @@
     <item
         android:id="@+id/alignmentShortcutHeight"
         android:title="@string/icons_height" />
+    <!-- Shown only when shortcuts are on -->
+    <item
+        android:id="@+id/alignmentShortcutIconStyle"
+        android:title="@string/icon_style" />
 </menu>
