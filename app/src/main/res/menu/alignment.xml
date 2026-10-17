@@ -21,4 +21,12 @@
     <item
         android:id="@+id/alignmentShortcutCount"
         android:title="@string/icons" />
+    <!-- Title is set at runtime to icons_on_left / icons_on_right, shown only when shortcuts are on -->
+    <item
+        android:id="@+id/alignmentShortcutSide"
+        android:title="@string/icons_on_right" />
+    <!-- Shown only when shortcuts are on -->
+    <item
+        android:id="@+id/alignmentShortcutHeight"
+        android:title="@string/icons_height" />
 </menu>

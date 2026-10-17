@@ -95,6 +95,9 @@
     <string name="shortcuts_off">Shortcuts: Off</string>
     <string name="icons">Icons</string>
     <string name="icons_count">Icons: %1$d</string>
+    <string name="icons_on_left">Icons on left</string>
+    <string name="icons_on_right">Icons on right</string>
+    <string name="icons_height">Icons height</string>
     <string name="shortcut_search">Search apps</string>
     <string name="shortcut_gallery">Gallery</string>
     <string name="shortcut_camera">Camera</string>
