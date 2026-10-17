@@ -181,6 +181,72 @@
 
     </LinearLayout>
 
+    <!-- Shortcut icons-->
+    <LinearLayout
+        android:id="@+id/shortcutsLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="12dp"
+        android:layout_marginBottom="48dp"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/shortcutSearch"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/shortcut_search"
+            android:padding="12dp"
+            android:src="@drawable/ic_shortcut_search" />
+
+        <ImageView
+            android:id="@+id/shortcutGallery"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/shortcut_gallery"
+            android:padding="12dp"
+            android:src="@drawable/ic_shortcut_gallery" />
+
+        <ImageView
+            android:id="@+id/shortcutCamera"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/shortcut_camera"
+            android:padding="12dp"
+            android:src="@drawable/ic_shortcut_camera" />
+
+        <ImageView
+            android:id="@+id/shortcutMessages"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/shortcut_messages"
+            android:padding="12dp"
+            android:src="@drawable/ic_shortcut_messages" />
+
+        <ImageView
+            android:id="@+id/shortcutPhone"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/shortcut_phone"
+            android:padding="12dp"
+            android:src="@drawable/ic_shortcut_phone" />
+
+        <ImageView
+            android:id="@+id/shortcutMore"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/shortcut_more"
+            android:padding="12dp"
+            android:src="@drawable/ic_shortcut_more" />
+    </LinearLayout>
+
     <TextView
         android:id="@+id/firstRunTips"
         style="@style/TextSmall"
