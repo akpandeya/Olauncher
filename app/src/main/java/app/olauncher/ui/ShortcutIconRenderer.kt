@@ -16,6 +16,9 @@ import app.olauncher.helper.getUserHandleFromString
 
 object ShortcutIconRenderer {
 
+    private const val APP_ICON_PADDING_DP = 8
+    private const val DEFAULT_ICON_PADDING_DP = 12
+
     fun render(context: Context, slot: Int, prefs: Prefs): Pair<Drawable, Int /*paddingPx*/> {
         if (prefs.getShortcutMode(slot) == Constants.SHORTCUT_MODE_APP) {
             val packageName = prefs.getShortcutPackage(slot)
@@ -29,7 +32,7 @@ object ShortcutIconRenderer {
                             ?: activities.firstOrNull()
                         val icon = match?.getBadgedIcon(0)
                         if (icon != null) {
-                            return Pair(icon, 8.dpToPx())
+                            return Pair(icon, APP_ICON_PADDING_DP.dpToPx())
                         }
                     }
                 } catch (e: Exception) {
@@ -37,7 +40,7 @@ object ShortcutIconRenderer {
                 }
             }
         }
-        return Pair(getDefaultDrawable(context, slot), 12.dpToPx())
+        return Pair(getDefaultDrawable(context, slot), DEFAULT_ICON_PADDING_DP.dpToPx())
     }
 
     fun getDefaultDrawable(context: Context, slot: Int): Drawable {
@@ -72,7 +75,9 @@ object ShortcutIconRenderer {
         return context.getString(getDefaultLabelRes(slot))
     }
 
-    fun getLabel(context: Context, slot: Int, prefs: Prefs, isAppIcon: Boolean): String {
+    /** [paddingPx] is the value returned by [render]; it tells whether an app icon was resolved. */
+    fun getLabel(context: Context, slot: Int, prefs: Prefs, paddingPx: Int): String {
+        val isAppIcon = paddingPx == APP_ICON_PADDING_DP.dpToPx()
         if (isAppIcon && prefs.getShortcutMode(slot) == Constants.SHORTCUT_MODE_APP) {
             val label = prefs.getShortcutLabel(slot)
             if (label.isNotEmpty()) return label

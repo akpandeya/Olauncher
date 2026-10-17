@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.LauncherApps
 import android.content.res.Configuration
-import android.graphics.drawable.Drawable
 import android.os.BatteryManager
 import android.os.Bundle
 import android.util.TypedValue
@@ -292,16 +291,9 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
                 tag = slot
                 isClickable = true
                 isFocusable = true
-                val (drawable, paddingPx) = ShortcutIconRenderer.render(context, slot, prefs)
-                setPadding(paddingPx, paddingPx, paddingPx, paddingPx)
-                setImageDrawable(drawable)
-                contentDescription = ShortcutIconRenderer.getLabel(
-                    context,
-                    slot,
-                    prefs,
-                    isAppIcon = (paddingPx == 8.dpToPx())
-                )
+                bindShortcutIcon(context, this, slot)
                 setOnTouchListener(getShortcutSwipeTouchListener(context, this, slot))
+                // These fire only on d-pad/keyboard/accessibility events; touch is consumed by ViewSwipeTouchListener
                 setOnClickListener {
                     performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                     shortcutClicked(slot)
@@ -325,16 +317,15 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         for (i in 0 until binding.shortcutsLayout.childCount) {
             val view = binding.shortcutsLayout.getChildAt(i) as? ImageView ?: continue
             val slot = (view.tag as? Int) ?: (i + 1)
-            val (drawable, paddingPx) = ShortcutIconRenderer.render(context, slot, prefs)
-            view.setPadding(paddingPx, paddingPx, paddingPx, paddingPx)
-            view.setImageDrawable(drawable)
-            view.contentDescription = ShortcutIconRenderer.getLabel(
-                context,
-                slot,
-                prefs,
-                isAppIcon = (paddingPx == 8.dpToPx())
-            )
+            bindShortcutIcon(context, view, slot)
         }
+    }
+
+    private fun bindShortcutIcon(context: Context, view: ImageView, slot: Int) {
+        val (drawable, paddingPx) = ShortcutIconRenderer.render(context, slot, prefs)
+        view.setPadding(paddingPx, paddingPx, paddingPx, paddingPx)
+        view.setImageDrawable(drawable)
+        view.contentDescription = ShortcutIconRenderer.getLabel(context, slot, prefs, paddingPx)
     }
 
     private fun getShortcutSwipeTouchListener(context: Context, view: View, slot: Int): View.OnTouchListener {
