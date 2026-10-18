@@ -237,5 +237,12 @@
     <string name="nudge_social_notification_no_apps">%1$d min on distracting apps today. Put it down?</string>
     <string name="nudge_social_usage_access_message">Allow usage access so Thumbline can measure distracting-app time</string>
     <string name="usage_access_off_for_thumbline">Usage access is off for Thumbline</string>
+    <string name="wellbeing">Wellbeing</string>
+    <string name="wellbeing_water">Water %d</string>
+    <string name="wellbeing_walk">Walk %d</string>
+    <string name="wellbeing_distracting_stats">%1$s %2$s · %3$s</string>
+    <string name="wellbeing_open_single">1 open</string>
+    <string name="wellbeing_open_plural">%d opens</string>
+    <string name="wellbeing_separator" translatable="false">" · "</string>
 </resources>
 
