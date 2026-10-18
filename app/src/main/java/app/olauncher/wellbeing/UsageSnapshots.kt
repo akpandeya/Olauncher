@@ -288,15 +288,41 @@ class UsageSnapshotStore(
 
     private val file = File(filesDir, FILE_NAME)
 
+    /** Result of reading the file: good entries, how many were skipped, and whether the file was unreadable. */
+    data class LoadResult(
+        val snapshots: List<DaySnapshot>,
+        val skippedEntries: Int,
+        val unparseable: Boolean,
+    )
+
     @Synchronized
-    fun getAll(): List<DaySnapshot> {
-        if (!file.exists()) return emptyList()
-        return try {
-            DaySnapshotCodec.decode(file.readText(Charsets.UTF_8))
+    fun load(): LoadResult {
+        if (!file.exists()) return LoadResult(emptyList(), 0, false)
+        val raw = try {
+            file.readText(Charsets.UTF_8)
         } catch (_: Exception) {
-            emptyList()
+            return LoadResult(emptyList(), 0, true)
         }
+        if (raw.isBlank()) return LoadResult(emptyList(), 0, false)
+        val array = try {
+            JSONArray(raw)
+        } catch (_: Exception) {
+            return LoadResult(emptyList(), 0, true)
+        }
+        val good = ArrayList<DaySnapshot>(array.length())
+        var skipped = 0
+        for (i in 0 until array.length()) {
+            try {
+                good.add(DaySnapshotCodec.decodeSnapshot(array.getJSONObject(i), i))
+            } catch (_: Exception) {
+                skipped++
+            }
+        }
+        return LoadResult(good, skipped, false)
     }
+
+    @Synchronized
+    fun getAll(): List<DaySnapshot> = load().snapshots
 
     @Synchronized
     fun get(epochDay: Long): DaySnapshot? {
@@ -309,9 +335,15 @@ class UsageSnapshotStore(
         return getAll().filter { it.epochDay in fromDay..toDay }.sortedBy { it.epochDay }
     }
 
+    /**
+     * Returns false (and leaves the file untouched) when the existing file cannot be parsed,
+     * so a corrupt file is never replaced by a file holding only the new day.
+     */
     @Synchronized
-    fun upsert(snapshot: DaySnapshot) {
-        val all = getAll().toMutableList()
+    fun upsert(snapshot: DaySnapshot): Boolean {
+        val loaded = load()
+        if (loaded.unparseable) return false
+        val all = loaded.snapshots.toMutableList()
         val index = all.indexOfFirst { it.epochDay == snapshot.epochDay }
         val merged = if (index != -1) {
             val existing = all.removeAt(index)
@@ -322,6 +354,7 @@ class UsageSnapshotStore(
         all.add(merged)
         val trimmed = trim(all)
         saveAll(trimmed)
+        return true
     }
 
     private fun trim(snapshots: List<DaySnapshot>): List<DaySnapshot> {
