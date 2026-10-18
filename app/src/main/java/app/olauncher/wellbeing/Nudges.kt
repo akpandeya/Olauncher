@@ -26,11 +26,13 @@ object Nudges {
     const val WATER = "water"
     const val WALK = "walk"
     const val SOCIAL = "social"
+    const val QUIET = "quiet"
 
     fun notificationId(type: String): Int = when (type) {
         WATER -> 1001
         WALK -> 1002
         SOCIAL -> 1003
+        QUIET -> 1004
         else -> type.hashCode()
     }
 
