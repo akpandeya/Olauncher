@@ -16,6 +16,7 @@ class NudgeActionReceiver : BroadcastReceiver() {
         if (action == ACTION_DONE || action == "ACTION_DONE") {
             val type = intent.getStringExtra(EXTRA_TYPE) ?: intent.getStringExtra("type") ?: return
             val prefs = Prefs(context)
+            prefs.checkRollovers()
             prefs.incrementNudgeDone(type)
             Nudges.cancel(context, type)
         } else if (action == ACTION_DISMISS || action == "ACTION_DISMISS") {

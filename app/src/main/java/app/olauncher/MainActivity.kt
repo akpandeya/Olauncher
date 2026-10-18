@@ -26,6 +26,7 @@ import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
 import app.olauncher.wellbeing.NudgeScheduler
+import app.olauncher.wellbeing.UsageSnapshotWorker
 import app.olauncher.databinding.ActivityMainBinding
 import app.olauncher.helper.HomeReturnPolicy
 import app.olauncher.helper.getColorFromAttr
@@ -78,6 +79,10 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         prefs = Prefs(this)
+        prefs.checkRollovers()
+        if (prefs.distractingApps.isNotEmpty()) {
+            UsageSnapshotWorker.enqueue(this)
+        }
         WorkManager.getInstance(this).cancelUniqueWork(Constants.WALLPAPER_WORKER_NAME)
         prefs.dailyWallpaper = false
         NudgeScheduler.ensureAll(this)
@@ -136,6 +141,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        prefs.checkRollovers()
         isResumed = true
         viewModel.isPrivateSpaceToggling = false
         viewModel.isAwaitingActivityResult = false

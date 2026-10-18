@@ -9,8 +9,12 @@ import androidx.core.content.edit
 import java.util.Locale
 import app.olauncher.ui.today.TodayCard
 import app.olauncher.ui.today.TodayCards
+import app.olauncher.wellbeing.DaySnapshot
+import app.olauncher.wellbeing.Nudges
+import app.olauncher.wellbeing.PauseDay
 import app.olauncher.wellbeing.PauseLog
 import app.olauncher.wellbeing.PauseLogStorage
+import app.olauncher.wellbeing.UsageSnapshotStore
 
 class Prefs(context: Context) : PauseLogStorage {
     companion object {
@@ -71,6 +75,9 @@ class Prefs(context: Context) : PauseLogStorage {
         const val COMMIT_LOCK = "COMMIT_LOCK"
 
         fun nudgeDoneKey(type: String): String = "$NUDGE_DONE_PREFIX${type.uppercase()}"
+
+        var onNudgeDoneRollover: ((epochDay: Long, water: Int, walk: Int) -> Unit)? = null
+        var onPauseLogRollover: ((previous: PauseDay) -> Unit)? = null
     }
 
     private val PREFS_FILENAME = "app.olauncher"
@@ -201,6 +208,15 @@ class Prefs(context: Context) : PauseLogStorage {
     private val IS_SHORTCUT_SWIPE_RIGHT = "IS_SHORTCUT_SWIPE_RIGHT"
 
     private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_FILENAME, 0)
+
+    var usageSnapshotStore: UsageSnapshotStore? = try {
+        UsageSnapshotStore(context.filesDir)
+    } catch (_: Exception) {
+        null
+    }
+
+    var onNudgeDoneRollover: ((epochDay: Long, water: Int, walk: Int) -> Unit)? = null
+    var onPauseLogRollover: ((previous: PauseDay) -> Unit)? = null
 
     var firstOpen: Boolean
         get() = prefs.getBoolean(FIRST_OPEN, true)
@@ -462,7 +478,37 @@ class Prefs(context: Context) : PauseLogStorage {
         get() = prefs.getInt(PAUSE_WHY_BORED_TODAY, 0)
         set(value) = prefs.edit { putInt(PAUSE_WHY_BORED_TODAY, value).apply() }
 
-    val pauseLog: PauseLog by lazy { PauseLog(this, { epochDaySupplier() }) }
+    val pauseLog: PauseLog by lazy {
+        PauseLog(
+            storage = this,
+            daySupplier = { epochDaySupplier() },
+            onDayRollover = { previous ->
+                handlePauseLogRollover(previous)
+            }
+        )
+    }
+
+    private fun handlePauseLogRollover(previous: PauseDay) {
+        val why = mutableMapOf<String, Int>()
+        if (previous.whyReply > 0) why["reply"] = previous.whyReply
+        if (previous.whyLookup > 0) why["lookup"] = previous.whyLookup
+        if (previous.whyBored > 0) why["bored"] = previous.whyBored
+
+        val snapshot = DaySnapshot(
+            epochDay = previous.epochDay,
+            notNow = previous.notNow,
+            opened = previous.opened,
+            why = why,
+        )
+        try {
+            usageSnapshotStore?.upsert(snapshot)
+        } catch (_: Exception) {}
+
+        onPauseLogRollover?.invoke(previous)
+        if (onPauseLogRollover !== Companion.onPauseLogRollover) {
+            Companion.onPauseLogRollover?.invoke(previous)
+        }
+    }
 
     var toShowHintCounter: Int
         get() = prefs.getInt(SHOW_HINT_COUNTER, 1)
@@ -966,10 +1012,31 @@ class Prefs(context: Context) : PauseLogStorage {
         get() = prefs.getInt(NUDGE_WALK_INTERVAL_MIN, 0)
         set(value) = prefs.edit { putInt(NUDGE_WALK_INTERVAL_MIN, value).apply() }
 
-    private fun checkAndResetNudgeDoneDay() {
+    fun checkAndResetNudgeDoneDay() {
         val today = epochDaySupplier()
         val savedDay = prefs.getLong(NUDGE_DONE_DAY, 0L)
+        if (savedDay == 0L) {
+            prefs.edit { putLong(NUDGE_DONE_DAY, today) }
+            return
+        }
         if (savedDay != today) {
+            val water = prefs.getInt(nudgeDoneKey(Nudges.WATER), 0)
+            val walk = prefs.getInt(nudgeDoneKey(Nudges.WALK), 0)
+
+            val snapshot = DaySnapshot(
+                epochDay = savedDay,
+                water = water,
+                walk = walk,
+            )
+            try {
+                usageSnapshotStore?.upsert(snapshot)
+            } catch (_: Exception) {}
+
+            onNudgeDoneRollover?.invoke(savedDay, water, walk)
+            if (onNudgeDoneRollover !== Companion.onNudgeDoneRollover) {
+                Companion.onNudgeDoneRollover?.invoke(savedDay, water, walk)
+            }
+
             prefs.edit {
                 prefs.all.keys
                     .filter { it.startsWith(NUDGE_DONE_PREFIX) && it != NUDGE_DONE_DAY }
@@ -977,6 +1044,11 @@ class Prefs(context: Context) : PauseLogStorage {
                 putLong(NUDGE_DONE_DAY, today)
             }
         }
+    }
+
+    fun checkRollovers() {
+        pauseLog.checkRollover()
+        checkAndResetNudgeDoneDay()
     }
 
     fun nudgeDone(type: String): Int {
