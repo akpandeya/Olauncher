@@ -219,6 +219,8 @@
     <string name="pause_allowance_min">%d min</string>
     <string name="pause_usage_access_message">Thumbline can show real open counts if you allow usage access</string>
     <string name="pause_notification_notice">Opens from notifications aren\'t paused</string>
+    <string name="hold_notifications_from_distracting_apps">Hold notifications from distracting apps</string>
+    <string name="hold_notifications_access_message">Thumbline holds notifications from your distracting apps and shows them later. Nothing leaves your phone.</string>
     <string name="allow">Allow</string>
     <string name="skip">Skip</string>
     <string name="pause_open">Open</string>

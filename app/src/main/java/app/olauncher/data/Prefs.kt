@@ -77,6 +77,7 @@ class Prefs(context: Context) : PauseLogStorage {
         const val SEARCH_ENGINE = "SEARCH_ENGINE"
         const val SEARCH_ENGINE_CUSTOM_URL = "SEARCH_ENGINE_CUSTOM_URL"
         const val DRAWER_NEW_FIRST = "DRAWER_NEW_FIRST"
+        const val QUIET_ENABLED = "QUIET_ENABLED"
 
         fun nudgeDoneKey(type: String): String = "$NUDGE_DONE_PREFIX${type.uppercase()}"
 
@@ -402,6 +403,10 @@ class Prefs(context: Context) : PauseLogStorage {
     var pauseEnabled: Boolean
         get() = prefs.getBoolean(PAUSE_ENABLED, false)
         set(value) = prefs.edit { putBoolean(PAUSE_ENABLED, value).apply() }
+
+    var quietEnabled: Boolean
+        get() = prefs.getBoolean(QUIET_ENABLED, false)
+        set(value) = prefs.edit { putBoolean(QUIET_ENABLED, value).apply() }
 
     var germanEnabled: Boolean
         get() = prefs.getBoolean(GERMAN_ENABLED, false)
