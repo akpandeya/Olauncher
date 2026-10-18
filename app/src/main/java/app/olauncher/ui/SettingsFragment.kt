@@ -17,6 +17,7 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.Toast
 import android.view.WindowManager
+import android.Manifest
 import androidx.activity.result.PickVisualMediaRequest
 import android.text.InputType
 import android.view.inputmethod.EditorInfo
@@ -29,6 +30,7 @@ import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.os.bundleOf
 import app.olauncher.glance.Place
 import app.olauncher.glance.WeatherApi
+import app.olauncher.glance.WeatherLocation
 import app.olauncher.glance.WeatherWorker
 import java.util.Locale
 import androidx.lifecycle.ViewModelProvider
@@ -57,6 +59,7 @@ import app.olauncher.helper.PhotoWallpaper
 import app.olauncher.helper.WallpaperRotateWorker
 import app.olauncher.helper.appUsagePermissionGranted
 import app.olauncher.helper.createDialog
+import app.olauncher.helper.showMessageDialog
 import app.olauncher.helper.getAppsList
 import app.olauncher.helper.getColorFromAttr
 import app.olauncher.helper.hideStatusBar
@@ -110,6 +113,16 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     ) { uri ->
         if (uri != null) {
             handleImportBackup(uri)
+        }
+    }
+
+    private val locationPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            enableUseMyLocation()
+        } else {
+            requireContext().showToast(R.string.location_off_for_thumbline)
         }
     }
 
@@ -654,11 +667,34 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     }
 
     private fun populateWeather() {
-        binding.weather.text = if (prefs.weatherEnabled && prefs.weatherPlaceName.isNotBlank()) {
-            prefs.weatherPlaceName
+        binding.weather.text = if (prefs.weatherEnabled) {
+            val place = WeatherLocation.placeName(requireContext())
+            if (place.isNotBlank()) place else getString(R.string.off)
         } else {
             getString(R.string.off)
         }
+    }
+
+    private fun handleUseMyLocation() {
+        if (WeatherLocation.hasPermission(requireContext())) {
+            enableUseMyLocation()
+        } else {
+            requireContext().showMessageDialog(
+                title = R.string.weather,
+                message = R.string.weather_location_permission_message,
+                action = R.string.allow,
+            ) {
+                locationPermissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+            }
+        }
+    }
+
+    private fun enableUseMyLocation() {
+        prefs.weatherUseLocation = true
+        prefs.weatherEnabled = true
+        WeatherWorker.schedulePeriodic(requireContext())
+        WeatherLocation.refreshIfStale(requireContext(), force = true)
+        populateWeather()
     }
 
     private fun showWeatherMenu(anchor: View) {
@@ -703,6 +739,10 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         val dialog = requireContext().createDialog(
             title = R.string.weather,
             action = R.string.search,
+            neutral = R.string.use_my_location,
+            onNeutral = {
+                handleUseMyLocation()
+            },
             onAction = {
                 val query = dialogEditText?.text?.toString()?.trim().orEmpty()
                 if (query.isNotEmpty()) {
@@ -779,6 +819,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                 prefs.weatherPlaceName = place.name
                 prefs.weatherLat = String.format(Locale.US, "%.2f", place.lat)
                 prefs.weatherLon = String.format(Locale.US, "%.2f", place.lon)
+                prefs.weatherUseLocation = false
                 prefs.weatherEnabled = true
                 WeatherWorker.schedulePeriodic(requireContext())
                 WeatherWorker.runOnce(requireContext())

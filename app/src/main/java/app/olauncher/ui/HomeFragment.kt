@@ -40,6 +40,7 @@ import app.olauncher.data.SlotCount
 import app.olauncher.databinding.FragmentHomeBinding
 import app.olauncher.glance.WeatherCache
 import app.olauncher.glance.WeatherFormatting
+import app.olauncher.glance.WeatherLocation
 import app.olauncher.helper.BatteryFormatting
 import app.olauncher.helper.DefaultLauncherCheck
 import app.olauncher.helper.GermanTime
@@ -107,6 +108,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         populateHomeScreen(false)
         populateShortcuts()
         populateWeather()
+        WeatherLocation.refreshIfStale(requireContext())
         viewModel.isOlauncherDefault()
         if (prefs.showStatusBar) showStatusBar()
         else hideStatusBar()

@@ -19,6 +19,7 @@ import app.olauncher.glance.RainOutlook
 import app.olauncher.glance.RainOutlookLabels
 import app.olauncher.glance.WeatherCache
 import app.olauncher.glance.WeatherCodes
+import app.olauncher.glance.WeatherLocation
 import app.olauncher.helper.getUserHandleFromString
 import app.olauncher.ui.today.TodayCard
 import java.time.Instant
@@ -184,7 +185,7 @@ internal class WeatherCardView(
             now,
         )
         binding.tvLine3.text = WeatherCardLogic.formatLine3(
-            placeName = prefs.weatherPlaceName,
+            placeName = WeatherLocation.placeName(context),
             fetchedAt = fetchedAt,
             asOfTemplate = context.getString(R.string.weather_as_of),
         )

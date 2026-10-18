@@ -326,5 +326,9 @@
     <string name="weather_rain_until">Rain until %1$s</string>
     <string name="weather_rain_from">Rain from %1$s</string>
     <string name="weather_as_of">as of %1$s · Open-Meteo</string>
+    <string name="use_my_location">Use my location</string>
+    <string name="weather_location_permission_message">Thumbline uses your approximate location for the weather</string>
+    <string name="weather_near_you">Near you</string>
+    <string name="location_off_for_thumbline">Location is off for Thumbline</string>
 </resources>
 

@@ -16,6 +16,8 @@ class Prefs(context: Context) {
         const val WEATHER_LON = "WEATHER_LON"
         const val WEATHER_UNIT = "WEATHER_UNIT"
         const val WEATHER_FETCHED_AT = "WEATHER_FETCHED_AT"
+        const val WEATHER_USE_LOCATION = "WEATHER_USE_LOCATION"
+        const val WEATHER_LOCATION_AT = "WEATHER_LOCATION_AT"
         const val WEATHER_APP_PACKAGE = "WEATHER_APP_PACKAGE"
         const val WEATHER_APP_USER = "WEATHER_APP_USER"
         const val WEATHER_APP_CLASS_NAME = "WEATHER_APP_CLASS_NAME"
@@ -982,6 +984,14 @@ class Prefs(context: Context) {
     var weatherFetchedAt: Long
         get() = prefs.getLong(WEATHER_FETCHED_AT, 0L)
         set(value) = prefs.edit { putLong(WEATHER_FETCHED_AT, value).apply() }
+
+    var weatherUseLocation: Boolean
+        get() = prefs.getBoolean(WEATHER_USE_LOCATION, false)
+        set(value) = prefs.edit { putBoolean(WEATHER_USE_LOCATION, value).apply() }
+
+    var weatherLocationAt: Long
+        get() = prefs.getLong(WEATHER_LOCATION_AT, 0L)
+        set(value) = prefs.edit { putLong(WEATHER_LOCATION_AT, value).apply() }
 
     fun registerPreferenceChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
         prefs.registerOnSharedPreferenceChangeListener(listener)

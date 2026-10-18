@@ -15,6 +15,8 @@ class WeatherPrefsTest {
         assertEquals("WEATHER_LON", Prefs.WEATHER_LON)
         assertEquals("WEATHER_UNIT", Prefs.WEATHER_UNIT)
         assertEquals("WEATHER_FETCHED_AT", Prefs.WEATHER_FETCHED_AT)
+        assertEquals("WEATHER_USE_LOCATION", Prefs.WEATHER_USE_LOCATION)
+        assertEquals("WEATHER_LOCATION_AT", Prefs.WEATHER_LOCATION_AT)
         assertEquals("WEATHER_APP_PACKAGE", Prefs.WEATHER_APP_PACKAGE)
         assertEquals("WEATHER_APP_USER", Prefs.WEATHER_APP_USER)
         assertEquals("WEATHER_APP_CLASS_NAME", Prefs.WEATHER_APP_CLASS_NAME)
