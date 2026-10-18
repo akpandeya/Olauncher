@@ -64,6 +64,34 @@ class NudgeFormattingTest {
     fun `interval options contain the specified values`() {
         assertEquals(listOf(0, 60, 90, 120, 180), NudgeFormatting.WATER_INTERVAL_OPTIONS_MIN)
         assertEquals(listOf(0, 120, 180, 240), NudgeFormatting.WALK_INTERVAL_OPTIONS_MIN)
+        assertEquals(listOf(0, 15, 30, 45, 60, 90), NudgeFormatting.SOCIAL_THRESHOLD_OPTIONS_MIN)
+    }
+
+    @Test
+    fun `formatSocialThreshold formats all choices`() {
+        assertEquals("Off", NudgeFormatting.formatSocialThreshold(0))
+        assertEquals("after 15 min of distracting apps", NudgeFormatting.formatSocialThreshold(15))
+        assertEquals("after 30 min of distracting apps", NudgeFormatting.formatSocialThreshold(30))
+        assertEquals("after 45 min of distracting apps", NudgeFormatting.formatSocialThreshold(45))
+        assertEquals("after 60 min of distracting apps", NudgeFormatting.formatSocialThreshold(60))
+        assertEquals("after 90 min of distracting apps", NudgeFormatting.formatSocialThreshold(90))
+        assertEquals("Off", NudgeFormatting.formatSocialThreshold(-1))
+    }
+
+    @Test
+    fun `socialNotificationText matches specification format`() {
+        assertEquals(
+            "38 min on Instagram, YouTube today. Put it down?",
+            NudgeFormatting.socialNotificationText(38, "Instagram, YouTube")
+        )
+        assertEquals(
+            "16 min on Instagram today. Put it down?",
+            NudgeFormatting.socialNotificationText(16, "Instagram")
+        )
+        assertEquals(
+            "30 min on distracting apps today. Put it down?",
+            NudgeFormatting.socialNotificationText(30, "")
+        )
     }
 
     @Test

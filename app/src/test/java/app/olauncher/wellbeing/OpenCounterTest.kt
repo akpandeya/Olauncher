@@ -72,4 +72,32 @@ class OpenCounterTest {
     fun `companion object delegates to countOpens`() {
         assertEquals(2, UsageRepository.countOpens(listOf(1000L, 4000L), 2000L))
     }
+
+    @Test
+    fun `hasRecentResumeEvent detects matching resumed package`() {
+        val events = listOf(
+            "com.example.calculator" to android.app.usage.UsageEvents.Event.ACTIVITY_RESUMED,
+            "com.instagram.android" to android.app.usage.UsageEvents.Event.ACTIVITY_PAUSED,
+        )
+        val distracting = setOf("com.instagram.android")
+        // Only paused for instagram, so false
+        org.junit.Assert.assertFalse(hasRecentResumeEvent(events, distracting))
+
+        val eventsWithResume = listOf(
+            "com.example.calculator" to android.app.usage.UsageEvents.Event.ACTIVITY_RESUMED,
+            "com.instagram.android" to android.app.usage.UsageEvents.Event.ACTIVITY_RESUMED,
+        )
+        org.junit.Assert.assertTrue(hasRecentResumeEvent(eventsWithResume, distracting))
+    }
+
+    @Test
+    fun `hasRecentResumeEvent returns false for empty packages or events`() {
+        org.junit.Assert.assertFalse(hasRecentResumeEvent(emptyList(), setOf("com.instagram.android")))
+        org.junit.Assert.assertFalse(
+            hasRecentResumeEvent(
+                listOf("com.instagram.android" to android.app.usage.UsageEvents.Event.ACTIVITY_RESUMED),
+                emptySet()
+            )
+        )
+    }
 }

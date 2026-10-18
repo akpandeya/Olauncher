@@ -47,4 +47,12 @@ class NudgePlumbingTest {
         assertEquals("app.olauncher.action.NUDGE_DISMISS", NudgeActionReceiver.ACTION_DISMISS)
         assertEquals("type", NudgeActionReceiver.EXTRA_TYPE)
     }
+
+    @Test
+    fun `social nudge preference keys match specification`() {
+        assertEquals("NUDGE_SOCIAL_THRESHOLD_MIN", Prefs.NUDGE_SOCIAL_THRESHOLD_MIN)
+        assertEquals("NUDGE_SOCIAL_REPEAT_MIN", Prefs.NUDGE_SOCIAL_REPEAT_MIN)
+        assertEquals("NUDGE_SOCIAL_LAST_BUCKET", Prefs.NUDGE_SOCIAL_LAST_BUCKET)
+        assertEquals("NUDGE_SOCIAL_DAY", Prefs.NUDGE_SOCIAL_DAY)
+    }
 }

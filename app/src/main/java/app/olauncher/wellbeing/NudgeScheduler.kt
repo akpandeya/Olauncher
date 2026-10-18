@@ -2,8 +2,10 @@ package app.olauncher.wellbeing
 
 import android.content.Context
 import androidx.work.CoroutineWorker
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
@@ -35,6 +37,11 @@ object NudgeScheduler {
         nowMillis: Long = System.currentTimeMillis(),
         intervalMin: Int? = null,
     ) {
+        if (type == Nudges.SOCIAL) {
+            scheduleSocial(context)
+            return
+        }
+
         val prefs = Prefs(context)
         val interval = intervalMin ?: intervalMinForType(prefs, type)
         if (interval <= 0) {
@@ -71,6 +78,27 @@ object NudgeScheduler {
     }
 
     /**
+     * Enqueues unique 15-min periodic work for the social nudge.
+     * Uses [ExistingPeriodicWorkPolicy.KEEP] by default.
+     */
+    fun scheduleSocial(
+        context: Context,
+        policy: ExistingPeriodicWorkPolicy = ExistingPeriodicWorkPolicy.KEEP,
+    ) {
+        val prefs = Prefs(context)
+        if (prefs.nudgeSocialThresholdMin <= 0) {
+            cancel(context, Nudges.SOCIAL)
+            return
+        }
+        val request = PeriodicWorkRequestBuilder<SocialTimeWorker>(15, TimeUnit.MINUTES).build()
+        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+            workName(Nudges.SOCIAL),
+            policy,
+            request,
+        )
+    }
+
+    /**
      * Ensures all enabled nudge types are scheduled using [ExistingWorkPolicy.KEEP].
      */
     fun ensureAll(context: Context) {
@@ -80,6 +108,9 @@ object NudgeScheduler {
             if (intervalMinForType(prefs, type) > 0) {
                 schedule(context, type, policy = ExistingWorkPolicy.KEEP)
             }
+        }
+        if (prefs.nudgeSocialThresholdMin > 0) {
+            scheduleSocial(context, ExistingPeriodicWorkPolicy.KEEP)
         }
     }
 
@@ -94,11 +125,15 @@ object NudgeScheduler {
                 schedule(context, type, policy = ExistingWorkPolicy.REPLACE)
             }
         }
+        if (prefs.nudgeSocialThresholdMin > 0) {
+            scheduleSocial(context, ExistingPeriodicWorkPolicy.KEEP)
+        }
     }
 
     fun intervalMinForType(prefs: Prefs, type: String): Int = when (type) {
         Nudges.WATER -> prefs.nudgeWaterIntervalMin
         Nudges.WALK -> prefs.nudgeWalkIntervalMin
+        Nudges.SOCIAL -> prefs.nudgeSocialThresholdMin
         else -> 0
     }
 }

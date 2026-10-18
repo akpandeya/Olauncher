@@ -19,6 +19,10 @@ class Prefs(context: Context) {
         const val NUDGE_WALK_INTERVAL_MIN = "NUDGE_WALK_INTERVAL_MIN"
         const val NUDGE_DONE_DAY = "NUDGE_DONE_DAY"
         const val NUDGE_DONE_PREFIX = "NUDGE_DONE_"
+        const val NUDGE_SOCIAL_THRESHOLD_MIN = "NUDGE_SOCIAL_THRESHOLD_MIN"
+        const val NUDGE_SOCIAL_REPEAT_MIN = "NUDGE_SOCIAL_REPEAT_MIN"
+        const val NUDGE_SOCIAL_LAST_BUCKET = "NUDGE_SOCIAL_LAST_BUCKET"
+        const val NUDGE_SOCIAL_DAY = "NUDGE_SOCIAL_DAY"
 
         fun nudgeDoneKey(type: String): String = "$NUDGE_DONE_PREFIX${type.uppercase()}"
     }
@@ -842,4 +846,29 @@ class Prefs(context: Context) {
         checkAndResetNudgeDoneDay()
         prefs.edit { putInt(nudgeDoneKey(type), count).apply() }
     }
+
+    var nudgeSocialThresholdMin: Int
+        get() = prefs.getInt(NUDGE_SOCIAL_THRESHOLD_MIN, 0)
+        set(value) = prefs.edit { putInt(NUDGE_SOCIAL_THRESHOLD_MIN, value).apply() }
+
+    var nudgeSocialRepeatMin: Int
+        get() = prefs.getInt(NUDGE_SOCIAL_REPEAT_MIN, 15)
+        set(value) = prefs.edit { putInt(NUDGE_SOCIAL_REPEAT_MIN, value).apply() }
+
+    var nudgeSocialDay: Long
+        get() = prefs.getLong(NUDGE_SOCIAL_DAY, 0L)
+        set(value) = prefs.edit { putLong(NUDGE_SOCIAL_DAY, value).apply() }
+
+    var nudgeSocialLastBucket: Int
+        get() {
+            val today = epochDaySupplier()
+            if (prefs.getLong(NUDGE_SOCIAL_DAY, 0L) != today) {
+                return -1
+            }
+            return prefs.getInt(NUDGE_SOCIAL_LAST_BUCKET, -1)
+        }
+        set(value) = prefs.edit {
+            putLong(NUDGE_SOCIAL_DAY, epochDaySupplier())
+            putInt(NUDGE_SOCIAL_LAST_BUCKET, value).apply()
+        }
 }
