@@ -33,6 +33,7 @@ import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
 import app.olauncher.data.ShortcutOffset
 import app.olauncher.databinding.FragmentHomeBinding
+import app.olauncher.helper.DefaultLauncherCheck
 import app.olauncher.helper.appUsagePermissionGranted
 import app.olauncher.helper.dpToPx
 import app.olauncher.helper.expandNotificationDrawer
@@ -194,10 +195,9 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             populateHomeScreen(it)
         }
         viewModel.isOlauncherDefault.observe(viewLifecycleOwner, Observer {
-            if (it != true) {
-                prefs.homeBottomAlignment = false
-                setHomeAlignment()
-            }
+            // Do not clear the saved Bottom preference here; setHomeAlignment() only
+            // stops applying it while Thumbline is not the default launcher.
+            setHomeAlignment()
             if (binding.firstRunTips.isVisible) return@Observer
             binding.setDefaultLauncher.isVisible = it.not() && prefs.hideSetDefaultLauncher.not()
         })
@@ -288,7 +288,8 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             binding.firstRunTips.layoutParams = tipsParams
         }
 
-        val verticalGravity = if (prefs.homeBottomAlignment) Gravity.BOTTOM else Gravity.CENTER_VERTICAL
+        val useBottom = DefaultLauncherCheck.useBottomAlignment(prefs.homeBottomAlignment, viewModel.isOlauncherDefault.value)
+        val verticalGravity = if (useBottom) Gravity.BOTTOM else Gravity.CENTER_VERTICAL
         binding.homeAppsLayout.gravity = horizontalGravity or verticalGravity
         binding.dateTimeLayout.gravity = horizontalGravity
         binding.homeApp1.gravity = horizontalGravity

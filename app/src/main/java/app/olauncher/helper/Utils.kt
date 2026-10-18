@@ -2,12 +2,14 @@ package app.olauncher.helper
 
 import android.annotation.SuppressLint
 import android.app.WallpaperManager
+import android.app.role.RoleManager
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherApps
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
 import android.graphics.Bitmap
@@ -259,8 +261,16 @@ fun getUserHandleFromString(context: Context, userHandleString: String): UserHan
 }
 
 fun isOlauncherDefault(context: Context): Boolean {
-    val launcherPackageName = getDefaultLauncherPackage(context)
-    return BuildConfig.APPLICATION_ID == launcherPackageName
+    val roleHeld = try {
+        val roleManager = context.getSystemService(RoleManager::class.java)
+        if (roleManager != null && roleManager.isRoleAvailable(RoleManager.ROLE_HOME))
+            roleManager.isRoleHeld(RoleManager.ROLE_HOME)
+        else null
+    } catch (e: Exception) {
+        null
+    }
+    val resolvedPackage = if (roleHeld == null) getDefaultLauncherPackage(context) else null
+    return DefaultLauncherCheck.isDefault(roleHeld, resolvedPackage, BuildConfig.APPLICATION_ID) == true
 }
 
 fun getDefaultLauncherPackage(context: Context): String {
@@ -268,7 +278,7 @@ fun getDefaultLauncherPackage(context: Context): String {
     intent.action = Intent.ACTION_MAIN
     intent.addCategory(Intent.CATEGORY_HOME)
     val packageManager = context.packageManager
-    val result = packageManager.resolveActivity(intent, 0)
+    val result = packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
     return if (result?.activityInfo != null) {
         result.activityInfo.packageName
     } else "android"

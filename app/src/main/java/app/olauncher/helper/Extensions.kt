@@ -20,7 +20,6 @@ import android.view.Window
 import android.view.WindowInsets
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
-import app.olauncher.BuildConfig
 import app.olauncher.R
 import app.olauncher.data.Constants
 import java.util.Calendar
@@ -80,10 +79,7 @@ fun Context.resetDefaultLauncher() {
     }
 }
 
-fun Context.isDefaultLauncher(): Boolean {
-    val launcherPackageName = getDefaultLauncherPackage(this)
-    return BuildConfig.APPLICATION_ID == launcherPackageName
-}
+fun Context.isDefaultLauncher(): Boolean = isOlauncherDefault(this)
 
 fun Context.resetLauncherViaFakeActivity() {
     resetDefaultLauncher()
