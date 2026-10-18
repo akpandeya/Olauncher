@@ -183,6 +183,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populatePauseBeforeApps()
         populatePauseAllowance()
         populatePauseEscalate()
+        populatePauseAskWhy()
         populateLockSettings()
         // Home button for recents feature disabled
         // populateHomeButtonRecents()
@@ -221,6 +222,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.pauseBeforeAppsOnOff, R.id.pauseBeforeAppsTitle, R.id.pauseBeforeAppsLayout -> togglePauseBeforeApps()
             R.id.pauseAllowance, R.id.pauseAllowanceTitle, R.id.pauseAllowanceLayout -> showPauseAllowanceMenu(binding.pauseAllowance)
             R.id.pauseEscalateOnOff, R.id.pauseEscalateTitle, R.id.pauseEscalateLayout -> togglePauseEscalate()
+            R.id.pauseAskWhyOnOff, R.id.pauseAskWhyTitle, R.id.pauseAskWhyLayout -> togglePauseAskWhy()
             R.id.screenTimeOnOff -> viewModel.showDialog.postValue(Constants.Dialog.DIGITAL_WELLBEING)
             R.id.appInfo -> openAppInfo(requireContext(), Process.myUserHandle(), BuildConfig.APPLICATION_ID)
             R.id.setLauncher -> viewModel.resetLauncherLiveData.call()
@@ -321,6 +323,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.pauseEscalateOnOff.setOnClickListener(this)
         binding.pauseEscalateTitle.setOnClickListener(this)
         binding.pauseEscalateLayout.setOnClickListener(this)
+        binding.pauseAskWhyOnOff.setOnClickListener(this)
+        binding.pauseAskWhyTitle.setOnClickListener(this)
+        binding.pauseAskWhyLayout.setOnClickListener(this)
         binding.alignment.setOnClickListener(this)
         binding.shortcutIconsOnOff.setOnClickListener(this)
         binding.shortcutIconsOnOffTitle.setOnClickListener(this)
@@ -1251,6 +1256,15 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     private fun togglePauseEscalate() {
         prefs.pauseEscalate = !prefs.pauseEscalate
         populatePauseEscalate()
+    }
+
+    private fun populatePauseAskWhy() {
+        binding.pauseAskWhyOnOff.text = getString(if (prefs.pauseAskWhy) R.string.on else R.string.off)
+    }
+
+    private fun togglePauseAskWhy() {
+        prefs.pauseAskWhy = !prefs.pauseAskWhy
+        populatePauseAskWhy()
     }
 
     private fun showDistractingAppsDialog() {
