@@ -207,6 +207,7 @@
     <string name="settings_footer">Thumbline %1$s · based on %2$s · GPLv3</string>
     <string name="pause_before_distracting_apps">Pause before distracting apps</string>
     <string name="pause_daily_allowance">Daily allowance</string>
+    <string name="pause_daily_allowance_needs_access">Daily allowance (needs usage access)</string>
     <string name="pause_longer_with_each_open">Longer pause with each open</string>
     <string name="pause_ask_why">Ask why before opening</string>
     <string name="pause_why_reply">Reply to someone</string>

@@ -122,7 +122,10 @@ class PauseFragment : Fragment() {
 
             val context = context ?: return@launch
             val baseSeconds = prefs.pauseSeconds
-            val allowanceMin = prefs.pauseAllowanceMin
+            val allowanceMin = PausePolicy.effectiveAllowanceMin(
+                savedMin = prefs.pauseAllowanceMin,
+                usageAccessGranted = context.appUsagePermissionGranted(),
+            )
             val escalate = prefs.pauseEscalate
             val distractingPkgs = if (prefs.hasSavedDistractingApps()) {
                 prefs.distractingApps

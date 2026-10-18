@@ -30,7 +30,7 @@ class UsageSnapshotWorker(
             usageRepo = usageRepo,
             hasUsageAccess = hasUsageAccess,
             distractingPkgs = prefs.distractingApps,
-            allowanceMin = prefs.pauseAllowanceMin,
+            allowanceMin = PausePolicy.effectiveAllowanceMin(prefs.pauseAllowanceMin, hasUsageAccess),
             resolveAppLabel = { pkg ->
                 val renamed = prefs.getAppRenameLabel(pkg)
                 if (renamed.isNotBlank()) renamed else SocialTimeWorker.getAppLabel(applicationContext, pkg)

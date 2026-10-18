@@ -258,4 +258,21 @@ class PausePolicyTest {
         assertEquals(1, PausePolicy.opensIncludingThisOne(-2))
         assertEquals(12, PausePolicy.opensIncludingThisOne(11))
     }
+
+    @Test
+    fun `effective allowance is off without usage access and keeps the saved value with it`() {
+        assertEquals(0, PausePolicy.effectiveAllowanceMin(savedMin = 45, usageAccessGranted = false))
+        assertEquals(45, PausePolicy.effectiveAllowanceMin(savedMin = 45, usageAccessGranted = true))
+        assertEquals(0, PausePolicy.effectiveAllowanceMin(savedMin = -3, usageAccessGranted = true))
+    }
+
+    @Test
+    fun `revoked usage access means the saved allowance does not push the pause over allowance`() {
+        val effective = PausePolicy.effectiveAllowanceMin(savedMin = 15, usageAccessGranted = false)
+        val decision = PausePolicy.delaySeconds(
+            base = 5, opensToday = 1, minutesToday = 200, allowanceMin = effective, escalate = false,
+        )
+        assertFalse(decision.overAllowance)
+        assertEquals(5, decision.seconds)
+    }
 }

@@ -84,6 +84,7 @@ import app.olauncher.helper.showWaitDialog
 import app.olauncher.wellbeing.CommitLock
 import app.olauncher.wellbeing.DistractingApps
 import app.olauncher.wellbeing.FrictionChange
+import app.olauncher.wellbeing.PausePolicy
 import app.olauncher.wellbeing.UsageSnapshotWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -1232,8 +1233,11 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     }
 
     private fun populatePauseAllowance() {
-        val min = prefs.pauseAllowanceMin
-        binding.pauseAllowance.text = if (min <= 0 || !requireContext().appUsagePermissionGranted()) {
+        val min = PausePolicy.effectiveAllowanceMin(
+            savedMin = prefs.pauseAllowanceMin,
+            usageAccessGranted = requireContext().appUsagePermissionGranted(),
+        )
+        binding.pauseAllowance.text = if (min <= 0) {
             getString(R.string.off)
         } else {
             getString(R.string.pause_allowance_min, min)
@@ -1254,7 +1258,10 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         ) { item ->
             val chosen = items.getOrNull(item.itemId)?.first ?: return@showPopupMenu
             val change = FrictionChange.Allowance(
-                currentMin = prefs.pauseAllowanceMin,
+                currentMin = PausePolicy.effectiveAllowanceMin(
+                    savedMin = prefs.pauseAllowanceMin,
+                    usageAccessGranted = requireContext().appUsagePermissionGranted(),
+                ),
                 updatedMin = chosen,
             )
             val applyAllowance = {
@@ -1262,7 +1269,8 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                     prefs.pauseAllowanceMin = 0
                     populatePauseAllowance()
                 } else if (!requireContext().appUsagePermissionGranted()) {
-                    prefs.pauseAllowanceMin = 0
+                    // Keep the chosen value; it only applies once usage access is granted.
+                    prefs.pauseAllowanceMin = chosen
                     populatePauseAllowance()
                     showFirstTimePausePermissionDialog()
                 } else {
