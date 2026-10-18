@@ -82,8 +82,6 @@ class AppDrawerAdapter(
     val hasResultRow: Boolean
         get() = appFilteredList.any { it is AppModel.Result }
 
-    fun hasResultRow(): Boolean = hasResultRow
-
     var appsList: MutableList<AppModel> = mutableListOf()
     var appFilteredList: MutableList<AppModel> = mutableListOf()
 
@@ -192,7 +190,7 @@ class AppDrawerAdapter(
 
                 val resultRows = mutableListOf<AppModel.Result>()
                 if (flag == Constants.FLAG_LAUNCH_APP) {
-                    val calcResult = Calc.evaluate(query)
+                    val calcResult = if (DialMatch.showCalcRow(query)) Calc.evaluate(query) else null
                     if (calcResult != null) {
                         resultRows.add(
                             AppModel.Result(
@@ -201,7 +199,7 @@ class AppDrawerAdapter(
                             )
                         )
                     }
-                    val dialNumber = DialMatch.number(query)
+                    val dialNumber = if (DialMatch.showDialRow(query)) DialMatch.number(query) else null
                     if (dialNumber != null) {
                         val ctx = context ?: adapterContext
                         val callText = ctx?.getString(R.string.call_number, dialNumber) ?: "Call $dialNumber"
@@ -239,7 +237,7 @@ class AppDrawerAdapter(
 
     private fun autoLaunch() {
         try {
-            val strongMatches = appFilteredScores.count { it >= 60 }
+            val strongMatches = appFilteredScores.count { it >= AppMatcher.SCORE_SUBSTRING }
             val first = appFilteredList.firstOrNull()
             if (ArchivedAppsHelper.canAutoLaunch(
                     hasResultRow = hasResultRow,
