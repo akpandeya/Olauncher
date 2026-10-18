@@ -23,7 +23,7 @@ import app.olauncher.databinding.AdapterPrivateSpaceHeaderBinding
 import app.olauncher.helper.hideKeyboard
 import app.olauncher.helper.isSystemApp
 import app.olauncher.helper.showKeyboard
-import java.text.Normalizer
+import app.olauncher.helper.AppMatcher
 
 class AppDrawerAdapter(
     private var flag: Int,
@@ -62,8 +62,11 @@ class AppDrawerAdapter(
     private var autoLaunch = true
     private var isBangSearch = false
     var allowAutoLaunch = true
-    private val diacriticsRegex = Regex("\\p{InCombiningDiacriticalMarks}+")
-    private val separatorsRegex = Regex("[-_+,.`'\\s\\p{Z}]")
+    private var appFilteredScores: List<Int> = emptyList()
+    private data class FilterPayload(
+        val items: MutableList<AppModel>,
+        val scores: List<Int>,
+    )
     private val appFilter = createAppFilter()
     private val myUserHandle = android.os.Process.myUserHandle()
 
@@ -135,24 +138,40 @@ class AppDrawerAdapter(
                 isBangSearch = charSearch?.startsWith("!") ?: false
                 autoLaunch = allowAutoLaunch && (charSearch?.startsWith(" ")?.not() ?: true)
 
-                val appFilteredList = (if (charSearch.isNullOrBlank()) appsList
-                else appsList.filter { app ->
-                    app !is AppModel.PrivateSpaceHeader && appLabelMatches(app.appLabel, charSearch)
-                } as MutableList<AppModel>)
-
                 val filterResults = FilterResults()
-                filterResults.values = appFilteredList
+                if (charSearch.isNullOrBlank()) {
+                    filterResults.values = FilterPayload(appsList, emptyList())
+                    return filterResults
+                }
+
+                val query = charSearch.toString()
+                val scoredApps = appsList.mapNotNull { app ->
+                    if (app is AppModel.PrivateSpaceHeader) return@mapNotNull null
+                    val score = AppMatcher.score(app.appLabel, query) ?: return@mapNotNull null
+                    app to score
+                }.sortedWith(
+                    compareByDescending<Pair<AppModel, Int>> { it.second }
+                        .thenBy(String.CASE_INSENSITIVE_ORDER) { it.first.appLabel }
+                )
+
+                val items = scoredApps.map { it.first }.toMutableList()
+                val scores = scoredApps.map { it.second }
+                filterResults.values = FilterPayload(items, scores)
                 return filterResults
             }
 
             @Suppress("UNCHECKED_CAST")
             override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
-                results?.values?.let {
-                    val items = it as MutableList<AppModel>
-                    appFilteredList = items
-                    submitList(appFilteredList) {
-                        autoLaunch()
-                    }
+                val payload = results?.values as? FilterPayload
+                if (payload != null) {
+                    appFilteredList = payload.items
+                    appFilteredScores = payload.scores
+                } else {
+                    appFilteredList = (results?.values as? MutableList<AppModel>) ?: mutableListOf()
+                    appFilteredScores = emptyList()
+                }
+                submitList(appFilteredList) {
+                    autoLaunch()
                 }
             }
         }
@@ -160,7 +179,8 @@ class AppDrawerAdapter(
 
     private fun autoLaunch() {
         try {
-            if (itemCount == 1
+            val strongMatches = appFilteredScores.count { it >= 60 }
+            if (strongMatches == 1
                 && autoLaunch
                 && isBangSearch.not()
                 && flag == Constants.FLAG_LAUNCH_APP
@@ -171,17 +191,6 @@ class AppDrawerAdapter(
             e.printStackTrace()
         }
     }
-
-    private fun appLabelMatches(appLabel: String, charSearch: CharSequence): Boolean {
-        if (appLabel.contains(charSearch.trim(), true)) return true
-        val query = charSearch.normalizeForSearch()
-        return query.isNotEmpty() && appLabel.normalizeForSearch().contains(query, true)
-    }
-
-    private fun CharSequence.normalizeForSearch(): String =
-        Normalizer.normalize(this, Normalizer.Form.NFD)
-            .replace(diacriticsRegex, "")
-            .replace(separatorsRegex, "")
 
     fun setAppList(appsList: MutableList<AppModel>) {
         // Add empty app for bottom padding in recyclerview and assign to list
@@ -197,6 +206,7 @@ class AppDrawerAdapter(
         )
         this.appsList = appsList
         this.appFilteredList = appsList
+        this.appFilteredScores = emptyList()
         submitList(appsList)
     }
 
