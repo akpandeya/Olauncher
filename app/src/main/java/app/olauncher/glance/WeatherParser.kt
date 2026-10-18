@@ -2,6 +2,8 @@ package app.olauncher.glance
 
 import org.json.JSONObject
 import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
 
 data class Place(
     val name: String,
@@ -25,7 +27,23 @@ data class Forecast(
     val todayMax: Double,
     val todayMin: Double,
     val hours: List<Hour>,
-)
+    /** City's UTC offset from Open-Meteo; null for caches written before it was parsed. */
+    val utcOffsetSeconds: Int? = null,
+) {
+    /**
+     * Converts the phone's local [phoneNow] to the city's local time, since [hours] are in the
+     * city's zone. Falls back to [phoneNow] unchanged when the offset is unknown.
+     */
+    fun cityNow(phoneNow: LocalDateTime, phoneZone: ZoneId = ZoneId.systemDefault()): LocalDateTime {
+        val offsetSeconds = utcOffsetSeconds ?: return phoneNow
+        val offset = try {
+            ZoneOffset.ofTotalSeconds(offsetSeconds)
+        } catch (e: Exception) {
+            return phoneNow
+        }
+        return phoneNow.atZone(phoneZone).withZoneSameInstant(offset).toLocalDateTime()
+    }
+}
 
 data class Hour(
     val time: LocalDateTime,
@@ -101,6 +119,7 @@ object WeatherParser {
                 todayMax = todayMax,
                 todayMin = todayMin,
                 hours = hours,
+                utcOffsetSeconds = if (root.has("utc_offset_seconds")) root.optInt("utc_offset_seconds") else null,
             )
         } catch (e: Exception) {
             null

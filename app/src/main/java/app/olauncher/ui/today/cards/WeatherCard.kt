@@ -173,7 +173,7 @@ internal class WeatherCardView(
         val (forecast, fetchedAt) = cached
 
         binding.tvLine1.text = WeatherCardLogic.formatLine1(forecast)
-        val now = WeatherCard.nowSupplier()
+        val now = forecast.cityNow(WeatherCard.nowSupplier())
         val rainLine = RainOutlook.summary(
             forecast.hours,
             RainOutlookLabels(

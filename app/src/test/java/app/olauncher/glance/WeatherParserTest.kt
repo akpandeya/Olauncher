@@ -92,4 +92,34 @@ class WeatherParserTest {
         assertNull(WeatherParser.parseForecast("{}"))
         assertNull(WeatherParser.parseForecast("""{"current": {"temperature_2m": 20.0}}"""))
     }
+
+    @Test
+    fun `parseForecast reads utc_offset_seconds from fixture`() {
+        val forecast = WeatherParser.parseForecast(loadResource("openmeteo_forecast.json"))
+        assertEquals(7200, forecast?.utcOffsetSeconds)
+    }
+
+    @Test
+    fun `parseForecast without utc_offset_seconds still parses with null offset`() {
+        val json = org.json.JSONObject(loadResource("openmeteo_forecast.json"))
+        json.remove("utc_offset_seconds")
+        val forecast = WeatherParser.parseForecast(json.toString())
+        assertNotNull(forecast)
+        assertNull(forecast?.utcOffsetSeconds)
+    }
+
+    @Test
+    fun `cityNow converts phone time to the city zone`() {
+        val forecast = Forecast(0.0, 0, true, 0.0, 0.0, emptyList(), utcOffsetSeconds = -5 * 3600)
+        val phoneNow = LocalDateTime.of(2024, 5, 18, 20, 30) // Berlin, UTC+2
+        val berlin = java.time.ZoneId.of("Europe/Berlin")
+        assertEquals(LocalDateTime.of(2024, 5, 18, 13, 30), forecast.cityNow(phoneNow, berlin))
+    }
+
+    @Test
+    fun `cityNow falls back to phone time when offset is missing`() {
+        val forecast = Forecast(0.0, 0, true, 0.0, 0.0, emptyList())
+        val phoneNow = LocalDateTime.of(2024, 5, 18, 20, 30)
+        assertEquals(phoneNow, forecast.cityNow(phoneNow, java.time.ZoneId.of("Europe/Berlin")))
+    }
 }
