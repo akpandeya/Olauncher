@@ -34,6 +34,25 @@ sealed class AppModel : Comparable<AppModel> {
             get() = shortcutIdentity(appPackage, shortcutId, user.toString())
     }
 
+    data class Result(
+        val text: String,
+        val action: Action,
+    ) : AppModel() {
+        sealed interface Action {
+            data class Copy(val value: String) : Action {
+                val textToCopy: String get() = value
+            }
+            data class Dial(val number: String) : Action
+        }
+
+        override val appLabel: String get() = text
+        override val key: CollationKey? get() = null
+        override val appPackage: String get() = ""
+        override val isNew: Boolean get() = false
+        override val user: UserHandle get() = defaultUser
+        override val firstInstallTime: Long get() = 0L
+    }
+
     data class PrivateSpaceHeader(
         val isLocked: Boolean = true,
         override val user: UserHandle = android.os.Process.myUserHandle(),
@@ -45,8 +64,25 @@ sealed class AppModel : Comparable<AppModel> {
         override val firstInstallTime: Long = 0L
     }
 
+    companion object {
+        internal val defaultUser: UserHandle by lazy {
+            try {
+                android.os.Process.myUserHandle()
+            } catch (_: Throwable) {
+                val unsafeClass = Class.forName("sun.misc.Unsafe")
+                val theUnsafeField = unsafeClass.getDeclaredField("theUnsafe")
+                theUnsafeField.isAccessible = true
+                val unsafe = theUnsafeField.get(null)
+                val allocateInstance = unsafeClass.getMethod("allocateInstance", Class::class.java)
+                allocateInstance.invoke(unsafe, UserHandle::class.java) as UserHandle
+            }
+        }
+    }
+
     override fun compareTo(other: AppModel): Int = when {
         key != null && other.key != null -> key!!.compareTo(other.key)
         else -> appLabel.compareTo(other.appLabel, true)
     }
 }
+
+typealias ResultAction = AppModel.Result.Action

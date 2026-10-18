@@ -24,6 +24,8 @@ import app.olauncher.helper.hideKeyboard
 import app.olauncher.helper.isSystemApp
 import app.olauncher.helper.showKeyboard
 import app.olauncher.helper.AppMatcher
+import app.olauncher.helper.Calc
+import app.olauncher.helper.DialMatch
 
 class AppDrawerAdapter(
     private var flag: Int,
@@ -35,11 +37,13 @@ class AppDrawerAdapter(
     private val appRenameListener: (AppModel, String) -> Unit,
     private val privateSpaceToggleListener: () -> Unit = {},
     private val privateSpaceSettingsListener: () -> Unit = {},
+    private val context: Context? = null,
 ) : ListAdapter<AppModel, RecyclerView.ViewHolder>(DIFF_CALLBACK), Filterable {
 
     companion object {
         const val VIEW_TYPE_APP = 0
         const val VIEW_TYPE_PRIVATE_HEADER = 1
+        const val VIEW_TYPE_RESULT = 2
 
         val DIFF_CALLBACK = object : DiffUtil.ItemCallback<AppModel>() {
             override fun areItemsTheSame(oldItem: AppModel, newItem: AppModel): Boolean = when {
@@ -50,6 +54,9 @@ class AppDrawerAdapter(
                     oldItem.identity == newItem.identity
 
                 oldItem is AppModel.PrivateSpaceHeader && newItem is AppModel.PrivateSpaceHeader -> true
+
+                oldItem is AppModel.Result && newItem is AppModel.Result ->
+                    oldItem.text == newItem.text && oldItem.action == newItem.action
 
                 else -> false
             }
@@ -69,6 +76,12 @@ class AppDrawerAdapter(
     )
     private val appFilter = createAppFilter()
     private val myUserHandle = android.os.Process.myUserHandle()
+    private var adapterContext: Context? = context
+
+    val hasResultRow: Boolean
+        get() = appFilteredList.any { it is AppModel.Result }
+
+    fun hasResultRow(): Boolean = hasResultRow
 
     var appsList: MutableList<AppModel> = mutableListOf()
     var appFilteredList: MutableList<AppModel> = mutableListOf()
@@ -76,14 +89,26 @@ class AppDrawerAdapter(
     override fun getItemViewType(position: Int): Int {
         return when (appFilteredList.getOrNull(position)) {
             is AppModel.PrivateSpaceHeader -> VIEW_TYPE_PRIVATE_HEADER
+            is AppModel.Result -> VIEW_TYPE_RESULT
             else -> VIEW_TYPE_APP
         }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        if (adapterContext == null) {
+            adapterContext = parent.context
+        }
         return when (viewType) {
             VIEW_TYPE_PRIVATE_HEADER -> PrivateSpaceHeaderViewHolder(
                 AdapterPrivateSpaceHeaderBinding.inflate(
+                    LayoutInflater.from(parent.context),
+                    parent,
+                    false
+                )
+            )
+
+            VIEW_TYPE_RESULT -> ResultViewHolder(
+                AdapterAppDrawerBinding.inflate(
                     LayoutInflater.from(parent.context),
                     parent,
                     false
@@ -111,6 +136,16 @@ class AppDrawerAdapter(
                         privateSpaceToggleListener,
                         privateSpaceSettingsListener,
                     )
+                }
+
+                is ResultViewHolder -> {
+                    if (appModel is AppModel.Result) {
+                        holder.bind(
+                            appLabelGravity,
+                            appModel,
+                            appClickListener
+                        )
+                    }
                 }
 
                 is ViewHolder -> holder.bind(
@@ -146,7 +181,7 @@ class AppDrawerAdapter(
 
                 val query = charSearch.toString()
                 val scoredApps = appsList.mapNotNull { app ->
-                    if (app is AppModel.PrivateSpaceHeader) return@mapNotNull null
+                    if (app is AppModel.PrivateSpaceHeader || app is AppModel.Result) return@mapNotNull null
                     val score = AppMatcher.score(app.appLabel, query) ?: return@mapNotNull null
                     app to score
                 }.sortedWith(
@@ -154,7 +189,31 @@ class AppDrawerAdapter(
                         .thenBy(String.CASE_INSENSITIVE_ORDER) { it.first.appLabel }
                 )
 
-                val items = scoredApps.map { it.first }.toMutableList()
+                val resultRows = mutableListOf<AppModel.Result>()
+                if (flag == Constants.FLAG_LAUNCH_APP) {
+                    val calcResult = Calc.evaluate(query)
+                    if (calcResult != null) {
+                        resultRows.add(
+                            AppModel.Result(
+                                text = "= $calcResult",
+                                action = AppModel.Result.Action.Copy(calcResult)
+                            )
+                        )
+                    }
+                    val dialNumber = DialMatch.number(query)
+                    if (dialNumber != null) {
+                        val ctx = context ?: adapterContext
+                        val callText = ctx?.getString(R.string.call_number, dialNumber) ?: "Call $dialNumber"
+                        resultRows.add(
+                            AppModel.Result(
+                                text = callText,
+                                action = AppModel.Result.Action.Dial(dialNumber)
+                            )
+                        )
+                    }
+                }
+
+                val items = (resultRows + scoredApps.map { it.first }).toMutableList()
                 val scores = scoredApps.map { it.second }
                 filterResults.values = FilterPayload(items, scores)
                 return filterResults
@@ -179,6 +238,7 @@ class AppDrawerAdapter(
 
     private fun autoLaunch() {
         try {
+            if (hasResultRow) return
             val strongMatches = appFilteredScores.count { it >= 60 }
             if (strongMatches == 1
                 && autoLaunch
@@ -186,6 +246,7 @@ class AppDrawerAdapter(
                 && flag == Constants.FLAG_LAUNCH_APP
                 && appFilteredList.isNotEmpty()
                 && appFilteredList[0] !is AppModel.PrivateSpaceHeader
+                && appFilteredList[0] !is AppModel.Result
             ) appClickListener(appFilteredList[0])
         } catch (e: Exception) {
             e.printStackTrace()
@@ -211,8 +272,28 @@ class AppDrawerAdapter(
     }
 
     fun launchFirstInList() {
-        val first = appFilteredList.firstOrNull { it !is AppModel.PrivateSpaceHeader }
+        val first = appFilteredList.firstOrNull { it !is AppModel.PrivateSpaceHeader && it !is AppModel.Result }
         if (first != null) appClickListener(first)
+    }
+
+    class ResultViewHolder(private val binding: AdapterAppDrawerBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+        fun bind(
+            appLabelGravity: Int,
+            result: AppModel.Result,
+            clickListener: (AppModel) -> Unit,
+        ) = with(binding) {
+            appHideLayout.visibility = View.GONE
+            renameLayout.visibility = View.GONE
+            otherProfileIndicator.visibility = View.GONE
+            appTitle.visibility = View.VISIBLE
+            appTitle.text = result.text
+            appTitle.gravity = appLabelGravity
+            appTitle.setOnClickListener { clickListener(result) }
+            appTitle.setOnLongClickListener(null)
+            root.setOnClickListener { clickListener(result) }
+            root.setOnLongClickListener(null)
+        }
     }
 
     class PrivateSpaceHeaderViewHolder(private val binding: AdapterPrivateSpaceHeaderBinding) :
