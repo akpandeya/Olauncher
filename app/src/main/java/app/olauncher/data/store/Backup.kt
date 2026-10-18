@@ -21,7 +21,8 @@ object Backup {
 
     val EXPORTED_FILES = listOf(
         "saved_items.json",
-        "word_progress.json"
+        "word_progress.json",
+        "words.json"
     )
 
     fun isVolatileKey(key: String): Boolean {

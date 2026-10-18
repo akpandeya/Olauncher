@@ -254,5 +254,7 @@
     <string name="backup_restore_confirm">Replace all Thumbline settings with this backup from %1$s?\n\nDevice admin and accessibility grants are not restored.</string>
     <string name="backup_restore_confirm_no_version">Replace all Thumbline settings with this backup?\n\nDevice admin and accessibility grants are not restored.</string>
     <string name="replace">Replace</string>
+    <string name="deutsch_de" translatable="false">Deutsch</string>
+    <string name="german">German</string>
 </resources>
 

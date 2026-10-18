@@ -4,12 +4,14 @@
         <include domain="sharedpref" path="app.olauncher.xml" />
         <include domain="file" path="saved_items.json" />
         <include domain="file" path="word_progress.json" />
+        <include domain="file" path="words.json" />
         <exclude domain="file" path="wallpapers/" />
     </cloud-backup>
     <device-transfer>
         <include domain="sharedpref" path="app.olauncher.xml" />
         <include domain="file" path="saved_items.json" />
         <include domain="file" path="word_progress.json" />
+        <include domain="file" path="words.json" />
         <exclude domain="file" path="wallpapers/" />
     </device-transfer>
 </data-extraction-rules>

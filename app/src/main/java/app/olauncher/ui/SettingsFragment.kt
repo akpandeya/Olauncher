@@ -142,6 +142,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateNudgeWalk()
         populateNudgeSocial()
         populateActiveHours()
+        populateGerman()
         populateFooter()
         initClickListeners()
         initObservers()
@@ -177,6 +178,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.nudgeWalk, R.id.nudgeWalkTitle, R.id.nudgeWalkLayout -> showNudgeWalkMenu(binding.nudgeWalk)
             R.id.nudgeSocial, R.id.nudgeSocialTitle, R.id.nudgeSocialLayout -> showNudgeSocialMenu(binding.nudgeSocial)
             R.id.nudgeActiveHours, R.id.nudgeActiveHoursTitle, R.id.nudgeActiveHoursLayout -> showActiveHoursDialog()
+            R.id.germanOnOff, R.id.germanTitle, R.id.germanLayout -> toggleGerman()
             R.id.exportBackup, R.id.exportBackupLayout -> launchExportBackup()
             R.id.importBackup, R.id.importBackupLayout -> launchImportBackup()
             R.id.footer -> requireContext().openUrl(Constants.URL_SOURCE)
@@ -245,6 +247,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.nudgeActiveHours.setOnClickListener(this)
         binding.nudgeActiveHoursTitle.setOnClickListener(this)
         binding.nudgeActiveHoursLayout.setOnClickListener(this)
+        binding.germanOnOff.setOnClickListener(this)
+        binding.germanTitle.setOnClickListener(this)
+        binding.germanLayout.setOnClickListener(this)
         binding.exportBackup.setOnClickListener(this)
         binding.exportBackupLayout.setOnClickListener(this)
         binding.importBackup.setOnClickListener(this)
@@ -1394,6 +1399,15 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                 activity?.recreate()
             }
         }
+    }
+
+    private fun toggleGerman() {
+        prefs.germanEnabled = !prefs.germanEnabled
+        populateGerman()
+    }
+
+    private fun populateGerman() {
+        binding.germanOnOff.text = getString(if (prefs.germanEnabled) R.string.on else R.string.off)
     }
 
     private fun populateFooter() {
