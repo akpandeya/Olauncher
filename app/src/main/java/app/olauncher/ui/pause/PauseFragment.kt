@@ -25,7 +25,9 @@ import app.olauncher.helper.getUserHandleFromString
 import app.olauncher.helper.showPopupMenu
 import app.olauncher.ui.today.WordReveal
 import app.olauncher.wellbeing.DistractingApps
+import app.olauncher.wellbeing.PauseLog
 import app.olauncher.wellbeing.PausePolicy
+import app.olauncher.wellbeing.PauseWhy
 import app.olauncher.wellbeing.UsageRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -39,6 +41,7 @@ class PauseFragment : Fragment() {
     companion object {
         var storeProvider: ((Context) -> WordsStore)? = null
         var usageRepositoryProvider: ((Context) -> UsageRepository)? = null
+        var pauseLogProvider: ((Context) -> PauseLog)? = null
         var epochDaySupplier: () -> Long = { LocalDate.now().toEpochDay() }
     }
 
@@ -49,6 +52,8 @@ class PauseFragment : Fragment() {
     private lateinit var prefs: Prefs
     private var countdownJob: Job? = null
     private var wordReveal: WordReveal? = null
+    private var countdownRemaining: Int = -1
+    private var selectedWhy: PauseWhy? = null
 
     private val appPackage: String by lazy { arguments?.getString("package").orEmpty() }
     private val activityClassName: String? by lazy { arguments?.getString("class") }
@@ -75,16 +80,14 @@ class PauseFragment : Fragment() {
             viewLifecycleOwner,
             object : OnBackPressedCallback(true) {
                 override fun handleOnBackPressed() {
-                    popToHome()
+                    onNotNow()
                 }
             }
         )
 
-        binding.btnNotNow.text = getString(
-            if (prefs.isGermanUi) R.string.not_now_de else R.string.not_now
-        )
+        updateNotNowLabel()
         binding.btnNotNow.setOnClickListener {
-            popToHome()
+            onNotNow()
         }
 
         binding.btnOpen.setOnClickListener {
@@ -101,6 +104,7 @@ class PauseFragment : Fragment() {
             true
         }
 
+        setupWhyChoices()
         setupPauseWord()
         startDecisionAndCountdown()
     }
@@ -174,26 +178,118 @@ class PauseFragment : Fragment() {
         }
     }
 
+    private fun setupWhyChoices() {
+        if (!prefs.pauseAskWhy) {
+            binding.whyChoicesContainer.isVisible = false
+            return
+        }
+
+        binding.whyChoicesContainer.isVisible = true
+        updateWhyChoicesVisuals()
+
+        binding.choiceReply.setOnClickListener {
+            selectWhy(PauseWhy.REPLY)
+        }
+        binding.choiceLookup.setOnClickListener {
+            selectWhy(PauseWhy.LOOKUP)
+        }
+        binding.choiceBored.setOnClickListener {
+            selectWhy(PauseWhy.BORED)
+        }
+    }
+
+    private fun selectWhy(why: PauseWhy) {
+        selectedWhy = why
+        updateWhyChoicesVisuals()
+        updateNotNowLabel()
+        updateOpenButtonState()
+    }
+
+    private fun updateWhyChoicesVisuals() {
+        if (_binding == null) return
+        val selected = selectedWhy
+        val reply = binding.choiceReply
+        val lookup = binding.choiceLookup
+        val bored = binding.choiceBored
+
+        if (selected == null) {
+            reply.alpha = 0.7f
+            reply.isSelected = false
+            lookup.alpha = 0.7f
+            lookup.isSelected = false
+            bored.alpha = 0.7f
+            bored.isSelected = false
+        } else {
+            reply.alpha = if (selected == PauseWhy.REPLY) 1.0f else 0.4f
+            reply.isSelected = (selected == PauseWhy.REPLY)
+            lookup.alpha = if (selected == PauseWhy.LOOKUP) 1.0f else 0.4f
+            lookup.isSelected = (selected == PauseWhy.LOOKUP)
+            bored.alpha = if (selected == PauseWhy.BORED) 1.0f else 0.4f
+            bored.isSelected = (selected == PauseWhy.BORED)
+        }
+    }
+
+    private fun updateNotNowLabel() {
+        if (_binding == null) return
+        if (selectedWhy == PauseWhy.BORED) {
+            binding.btnNotNow.text = getString(R.string.pause_not_now_bored)
+        } else {
+            binding.btnNotNow.text = getString(
+                if (prefs.isGermanUi) R.string.not_now_de else R.string.not_now
+            )
+        }
+    }
+
     private fun updateOpenButton(remaining: Int) {
+        countdownRemaining = remaining
+        updateOpenButtonState()
+    }
+
+    private fun updateOpenButtonState() {
         if (_binding == null) return
         val useGerman = prefs.isGermanUi
-        if (remaining > 0) {
-            binding.btnOpen.isEnabled = false
-            binding.btnOpen.alpha = 0.5f
-            binding.btnOpen.text = getString(
+        val countdownActive = countdownRemaining > 0
+        val whyRequired = prefs.pauseAskWhy
+        val whySelected = selectedWhy != null
+
+        val isReady = !countdownActive && (!whyRequired || whySelected)
+
+        binding.btnOpen.isEnabled = isReady
+        binding.btnOpen.alpha = if (isReady) 1.0f else 0.5f
+
+        binding.btnOpen.text = if (countdownActive) {
+            getString(
                 if (useGerman) R.string.pause_open_countdown_de else R.string.pause_open_countdown,
-                remaining
+                countdownRemaining
             )
         } else {
-            binding.btnOpen.isEnabled = true
-            binding.btnOpen.alpha = 1.0f
-            binding.btnOpen.text = getString(
+            getString(
                 if (useGerman) R.string.pause_open_de else R.string.pause_open
             )
         }
     }
 
-    private fun openApp() {
+    private fun getPauseLog(): PauseLog {
+        val context = requireContext()
+        return pauseLogProvider?.invoke(context) ?: PauseLog(
+            storage = prefs,
+            daySupplier = epochDaySupplier,
+        )
+    }
+
+    private fun onNotNow() {
+        countdownJob?.cancel()
+        getPauseLog().recordNotNow()
+        popToHome()
+    }
+
+    private fun openApp(bypassGating: Boolean = false) {
+        if (!bypassGating) {
+            if (prefs.pauseAskWhy && selectedWhy == null) return
+            if (countdownRemaining > 0) return
+        }
+        countdownJob?.cancel()
+        getPauseLog().recordOpen(selectedWhy)
         val appModel = buildAppModel()
         viewModel.launchAfterPause(appModel)
         popToHome()
@@ -212,7 +308,7 @@ class PauseFragment : Fragment() {
         ) { item ->
             if (item.itemId == 1) {
                 prefs.distractingApps = prefs.distractingApps - appPackage
-                openApp()
+                openApp(bypassGating = true)
             }
         }
     }
@@ -312,6 +408,8 @@ class PauseFragment : Fragment() {
     override fun onDestroyView() {
         countdownJob?.cancel()
         wordReveal = null
+        selectedWhy = null
+        countdownRemaining = -1
         _binding = null
         super.onDestroyView()
     }
