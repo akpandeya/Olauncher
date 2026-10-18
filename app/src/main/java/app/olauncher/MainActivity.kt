@@ -249,7 +249,8 @@ class MainActivity : AppCompatActivity() {
                 "class" to (appModel as? AppModel.App)?.activityClassName,
                 "user" to appModel.user.toString(),
                 "label" to appModel.appLabel,
-                "shortcutId" to (appModel as? AppModel.PinnedShortcut)?.shortcutId
+                "shortcutId" to (appModel as? AppModel.PinnedShortcut)?.shortcutId,
+                "isArchived" to appModel.isArchived
             )
             try {
                 when (navController.currentDestination?.id) {

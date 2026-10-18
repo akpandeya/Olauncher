@@ -30,6 +30,7 @@ import app.olauncher.data.Prefs
 import app.olauncher.data.SearchEngine
 import app.olauncher.data.SearchTarget
 import app.olauncher.databinding.FragmentAppDrawerBinding
+import app.olauncher.helper.ArchivedAppsHelper
 import app.olauncher.helper.DrawerOrdering
 import app.olauncher.helper.DrawerScrollHelper
 import app.olauncher.helper.copyToClipboard
@@ -303,6 +304,9 @@ class AppDrawerFragment : BaseFragment() {
                 viewModel.getAppList()
             },
             appHideListener = { appModel, position ->
+                if (appModel.isArchived) {
+                    return@AppDrawerAdapter
+                }
                 if (appModel is AppModel.PinnedShortcut) {
                     requireContext().showToast("Hiding pinned shortcuts is not supported")
                     return@AppDrawerAdapter
@@ -334,6 +338,9 @@ class AppDrawerFragment : BaseFragment() {
                 viewModel.getHiddenApps()
             },
             appRenameListener = { appModel, renameLabel ->
+                if (appModel.isArchived) {
+                    return@AppDrawerAdapter
+                }
                 val identifier = when (appModel) {
                     is AppModel.PinnedShortcut -> appModel.identity
                     is AppModel.App -> appModel.appPackage
@@ -419,7 +426,8 @@ class AppDrawerFragment : BaseFragment() {
             }
         }
 
-        val ordered = DrawerOrdering.order(combined, prefs.drawerNewFirst)
+        val filtered = ArchivedAppsHelper.filterForPicker(combined, flag)
+        val ordered = DrawerOrdering.order(filtered, prefs.drawerNewFirst)
         adapter.setAppList(ordered.toMutableList())
         adapter.filter.filter(binding.search.query)
     }
