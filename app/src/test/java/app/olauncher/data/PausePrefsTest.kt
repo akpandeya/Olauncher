@@ -16,5 +16,6 @@ class PausePrefsTest {
         assertEquals("PAUSE_WHY_REPLY_TODAY", Prefs.PAUSE_WHY_REPLY_TODAY)
         assertEquals("PAUSE_WHY_LOOKUP_TODAY", Prefs.PAUSE_WHY_LOOKUP_TODAY)
         assertEquals("PAUSE_WHY_BORED_TODAY", Prefs.PAUSE_WHY_BORED_TODAY)
+        assertEquals("COMMIT_LOCK", Prefs.COMMIT_LOCK)
     }
 }

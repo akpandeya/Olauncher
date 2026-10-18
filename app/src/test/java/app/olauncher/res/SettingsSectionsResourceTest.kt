@@ -246,6 +246,7 @@ class SettingsSectionsResourceTest {
             assertTrue(sectionIds[4].contains("pauseAllowanceLayout"))
             assertTrue(sectionIds[4].contains("pauseEscalateLayout"))
             assertTrue(sectionIds[4].contains("pauseAskWhyLayout"))
+            assertTrue(sectionIds[4].contains("commitLockLayout"))
             assertTrue(sectionIds[4].contains("screenTimeLayout"))
             assertTrue(sectionIds[4].contains("nudgesSection"))
             assertTrue(sectionIds[4].contains("nudgeWaterLayout"))
@@ -323,6 +324,10 @@ class SettingsSectionsResourceTest {
             "batteryModeLayout",
             "batteryModeTitle",
             "boldFont",
+            "commitLockLayout",
+            "commitLockOnOff",
+            "commitLockSubtitle",
+            "commitLockTitle",
             "dateTime",
             "deutschSection",
             "distractingApps",

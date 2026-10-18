@@ -23,8 +23,11 @@ import app.olauncher.databinding.FragmentPauseBinding
 import app.olauncher.helper.appUsagePermissionGranted
 import app.olauncher.helper.getUserHandleFromString
 import app.olauncher.helper.showPopupMenu
+import app.olauncher.helper.showWaitDialog
 import app.olauncher.ui.today.WordReveal
+import app.olauncher.wellbeing.CommitLock
 import app.olauncher.wellbeing.DistractingApps
+import app.olauncher.wellbeing.FrictionChange
 import app.olauncher.wellbeing.PauseLog
 import app.olauncher.wellbeing.PausePolicy
 import app.olauncher.wellbeing.PauseWhy
@@ -307,8 +310,19 @@ class PauseFragment : Fragment() {
             }
         ) { item ->
             if (item.itemId == 1) {
-                prefs.distractingApps = prefs.distractingApps - appPackage
-                openApp(bypassGating = true)
+                val change = FrictionChange.RemoveDistractingApp(appPackage)
+                if (CommitLock.needsWait(prefs.commitLock, change)) {
+                    val context = context ?: return@showPopupMenu
+                    context.showWaitDialog(
+                        message = getString(R.string.commit_lock_desc)
+                    ) {
+                        prefs.distractingApps = prefs.distractingApps - appPackage
+                        openApp(bypassGating = true)
+                    }
+                } else {
+                    prefs.distractingApps = prefs.distractingApps - appPackage
+                    openApp(bypassGating = true)
+                }
             }
         }
     }
