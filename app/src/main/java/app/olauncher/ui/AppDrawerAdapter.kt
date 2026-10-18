@@ -24,6 +24,7 @@ import app.olauncher.helper.hideKeyboard
 import app.olauncher.helper.isSystemApp
 import app.olauncher.helper.showKeyboard
 import app.olauncher.helper.AppMatcher
+import app.olauncher.helper.ArchivedAppsHelper
 import app.olauncher.helper.Calc
 import app.olauncher.helper.DialMatch
 
@@ -238,16 +239,19 @@ class AppDrawerAdapter(
 
     private fun autoLaunch() {
         try {
-            if (hasResultRow) return
             val strongMatches = appFilteredScores.count { it >= 60 }
-            if (strongMatches == 1
-                && autoLaunch
-                && isBangSearch.not()
-                && flag == Constants.FLAG_LAUNCH_APP
-                && appFilteredList.isNotEmpty()
-                && appFilteredList[0] !is AppModel.PrivateSpaceHeader
-                && appFilteredList[0] !is AppModel.Result
-            ) appClickListener(appFilteredList[0])
+            val first = appFilteredList.firstOrNull()
+            if (ArchivedAppsHelper.canAutoLaunch(
+                    hasResultRow = hasResultRow,
+                    strongMatches = strongMatches,
+                    autoLaunch = autoLaunch,
+                    isBangSearch = isBangSearch,
+                    flag = flag,
+                    firstItem = first
+                )
+            ) {
+                appClickListener(first!!)
+            }
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -330,10 +334,7 @@ class AppDrawerAdapter(
             appTitle.visibility = View.VISIBLE
 
             // Show indicators in title based on app type and state
-            appTitle.text = buildString {
-                append(appModel.appLabel)
-                if (appModel.isNew) append(" ✦")
-            }
+            appTitle.text = ArchivedAppsHelper.formatAppTitle(appModel)
             appTitle.gravity = appLabelGravity
             otherProfileIndicator.isVisible = appModel.user != myUserHandle
 
@@ -357,8 +358,13 @@ class AppDrawerAdapter(
                         false -> 1.0f
                     }
                     appHideLayout.visibility = View.VISIBLE
-                    // Only allow renaming non hidden apps
-                    appRename.isVisible = flag != Constants.FLAG_HIDDEN_APPS
+                    if (appModel.isArchived) {
+                        appRename.isVisible = false
+                        appHide.isVisible = false
+                    } else {
+                        appHide.isVisible = true
+                        appRename.isVisible = flag != Constants.FLAG_HIDDEN_APPS
+                    }
                 }
                 true
             }

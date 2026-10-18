@@ -79,14 +79,16 @@ suspend fun getAppsList(
                 for (app in launcherApps.getActivityList(null, profile)) {
                     val appLabelShown = prefs.getAppRenameLabel(app.applicationInfo.packageName)
                         .ifBlank { app.label.toString() }
+                    val isArchived = app.applicationInfo.isArchived
                     val appModel = AppModel.App(
                         appLabel = appLabelShown,
                         key = collator.getCollationKey(app.label.toString()),
                         appPackage = app.applicationInfo.packageName,
                         activityClassName = app.componentName.className,
-                        isNew = (System.currentTimeMillis() - app.firstInstallTime) < Constants.NEW_APP_WINDOW_MILLIS,
+                        isNew = !isArchived && (System.currentTimeMillis() - app.firstInstallTime) < Constants.NEW_APP_WINDOW_MILLIS,
                         user = profile,
-                        firstInstallTime = app.firstInstallTime
+                        firstInstallTime = app.firstInstallTime,
+                        isArchived = isArchived,
                     )
 
                     // if the current app is not OLauncher
@@ -232,6 +234,7 @@ suspend fun getPrivateSpaceApps(
                 if (app.applicationInfo.packageName == BuildConfig.APPLICATION_ID) continue
                 val appLabelShown = prefs.getAppRenameLabel(app.applicationInfo.packageName)
                     .ifBlank { app.label.toString() }
+                val isArchived = app.applicationInfo.isArchived
                 appList.add(
                     AppModel.App(
                         appLabel = appLabelShown,
@@ -240,7 +243,8 @@ suspend fun getPrivateSpaceApps(
                         activityClassName = app.componentName.className,
                         isNew = false,
                         user = privateSpaceHandle,
-                        firstInstallTime = app.firstInstallTime
+                        firstInstallTime = app.firstInstallTime,
+                        isArchived = isArchived,
                     )
                 )
             }

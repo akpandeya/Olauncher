@@ -66,6 +66,7 @@ class PauseFragment : Fragment() {
     private val userString: String by lazy { arguments?.getString("user").orEmpty() }
     private val appLabel: String by lazy { arguments?.getString("label").orEmpty() }
     private val shortcutId: String? by lazy { arguments?.getString("shortcutId") }
+    private val isArchived: Boolean by lazy { arguments?.getBoolean("isArchived", false) ?: false }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -351,7 +352,8 @@ class PauseFragment : Fragment() {
                 user = userHandle,
                 key = null,
                 appPackage = appPackage,
-                isNew = false
+                isNew = false,
+                isArchived = isArchived
             )
         } else {
             AppModel.App(
@@ -360,7 +362,8 @@ class PauseFragment : Fragment() {
                 appPackage = appPackage,
                 activityClassName = activityClassName,
                 isNew = false,
-                user = userHandle
+                user = userHandle,
+                isArchived = isArchived
             )
         }
     }

@@ -15,7 +15,7 @@ object DrawerOrdering {
             return apps
         }
 
-        val (newApps, restApps) = mainApps.partition { it.isNew }
+        val (newApps, restApps) = mainApps.partition { it.isNew && !it.isArchived }
         if (newApps.isEmpty()) {
             return apps
         }
