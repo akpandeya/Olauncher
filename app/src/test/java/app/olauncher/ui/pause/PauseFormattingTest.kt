@@ -87,4 +87,18 @@ class PauseFormattingTest {
             PauseFormatting.formatThumblineOpensLine(0)
         )
     }
+
+    @Test
+    fun `openLabel formats open button with countdown and without`() {
+        assertEquals("Open", PauseFormatting.openLabel(0, german = false))
+        assertEquals("Open (5)", PauseFormatting.openLabel(5, german = false))
+        assertEquals("Öffnen", PauseFormatting.openLabel(0, german = true))
+        assertEquals("Öffnen (5)", PauseFormatting.openLabel(5, german = true))
+    }
+
+    @Test
+    fun `notNowLabel returns correct text for German and English`() {
+        assertEquals("Not now", PauseFormatting.notNowLabel(german = false))
+        assertEquals("Jetzt nicht", PauseFormatting.notNowLabel(german = true))
+    }
 }

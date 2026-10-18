@@ -24,6 +24,7 @@ class Prefs(context: Context) {
         const val NUDGE_SOCIAL_LAST_BUCKET = "NUDGE_SOCIAL_LAST_BUCKET"
         const val NUDGE_SOCIAL_DAY = "NUDGE_SOCIAL_DAY"
         const val GERMAN_ENABLED = "GERMAN_ENABLED"
+        const val GERMAN_UI = "GERMAN_UI"
         const val GERMAN_LOOKUP = "GERMAN_LOOKUP"
         const val GERMAN_PAUSE_WORD = "GERMAN_PAUSE_WORD"
         const val GERMAN_PAUSE_LAST_WORD_ID = "GERMAN_PAUSE_LAST_WORD_ID"
@@ -359,6 +360,13 @@ class Prefs(context: Context) {
                 }
             }
         }
+
+    var germanUi: Boolean
+        get() = prefs.getBoolean(GERMAN_UI, false)
+        set(value) = prefs.edit { putBoolean(GERMAN_UI, value).apply() }
+
+    val isGermanUi: Boolean
+        get() = germanEnabled && germanUi
 
     var firstPauseEnable: Boolean
         get() = prefs.getBoolean(FIRST_PAUSE_ENABLE, true)
