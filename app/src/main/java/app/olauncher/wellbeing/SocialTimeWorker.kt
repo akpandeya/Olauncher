@@ -69,7 +69,7 @@ class SocialTimeWorker(
 
             val statsByPkg = usageRepo.foregroundMillisByPackageToday(distractingPkgs)
             val appNames = resolveDistractingAppNames(applicationContext, distractingPkgs, statsByPkg)
-            val useGerman = prefs.germanEnabled && prefs.germanUi
+            val useGerman = prefs.isGermanUi
             val text = if (appNames.isNotBlank()) {
                 applicationContext.getString(
                     if (useGerman) R.string.nudge_social_notification_de else R.string.nudge_social_notification,
