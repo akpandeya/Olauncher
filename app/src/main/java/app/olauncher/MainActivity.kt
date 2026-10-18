@@ -27,6 +27,7 @@ import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
 import app.olauncher.wellbeing.NudgeScheduler
 import app.olauncher.databinding.ActivityMainBinding
+import app.olauncher.helper.HomeReturnPolicy
 import app.olauncher.helper.getColorFromAttr
 import app.olauncher.helper.hasBeenDays
 import app.olauncher.helper.hasBeenHours
@@ -137,6 +138,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         isResumed = true
         viewModel.isPrivateSpaceToggling = false
+        viewModel.isAwaitingActivityResult = false
         viewModel.getAppList()
     }
 
@@ -183,6 +185,8 @@ class MainActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent?) {
         // Home button for recents feature disabled
         // val alreadyHome = navController.currentDestination?.id == R.id.mainFragment
+        // Home was pressed: leave any open picker behind and go home
+        viewModel.isAwaitingActivityResult = false
         backToHomeScreen()
         // if (alreadyHome && isResumed && prefs.homeButtonShowRecents)
         //     viewModel.showRecentApps.call()
@@ -285,9 +289,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun backToHomeScreen() {
-        if (viewModel.isPrivateSpaceToggling) return
+        if (viewModel.isPrivateSpaceToggling || viewModel.isAwaitingActivityResult) return
         messageDialog?.dismiss()
-        if (navController.currentDestination?.id != R.id.mainFragment)
+        if (HomeReturnPolicy.shouldPopToHome(
+                isOnHome = navController.currentDestination?.id == R.id.mainFragment,
+                privateSpaceToggling = viewModel.isPrivateSpaceToggling,
+                awaitingActivityResult = viewModel.isAwaitingActivityResult,
+            )
+        )
             navController.popBackStack(R.id.mainFragment, false)
     }
 
