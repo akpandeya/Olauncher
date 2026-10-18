@@ -99,12 +99,13 @@ object NudgeScheduler {
     }
 
     /**
-     * Ensures all nudge types match current preferences (re-schedules enabled nudges
-     * using [ExistingWorkPolicy.REPLACE] and cancels disabled nudges).
+     * Ensures all nudge types match current preferences (schedules enabled nudges with
+     * [policy] and cancels disabled nudges). Defaults to [ExistingWorkPolicy.KEEP] so
+     * app launches do not push pending nudge timers back.
      */
     fun ensureAll(
         context: Context,
-        policy: ExistingWorkPolicy = ExistingWorkPolicy.REPLACE,
+        policy: ExistingWorkPolicy = ExistingWorkPolicy.KEEP,
     ) {
         val prefs = Prefs(context)
         val supportedTypes = listOf(Nudges.WATER, Nudges.WALK)
@@ -117,7 +118,11 @@ object NudgeScheduler {
             }
         }
         if (prefs.nudgeSocialThresholdMin > 0) {
-            scheduleSocial(context, ExistingPeriodicWorkPolicy.UPDATE)
+            scheduleSocial(
+                context,
+                if (policy == ExistingWorkPolicy.REPLACE) ExistingPeriodicWorkPolicy.UPDATE
+                else ExistingPeriodicWorkPolicy.KEEP,
+            )
         } else {
             cancel(context, Nudges.SOCIAL)
             Nudges.cancel(context, Nudges.SOCIAL)

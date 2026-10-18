@@ -1383,7 +1383,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             }
             withContext(Dispatchers.Main) {
                 if (!isAdded) return@withContext
-                NudgeScheduler.ensureAll(appContext)
+                NudgeScheduler.rescheduleAll(appContext)
                 activity?.recreate()
             }
         }
