@@ -734,6 +734,55 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/deutschSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="12dp"
+                android:background="@drawable/rounded_rect_shade_color"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <TextView
+                    style="@style/TextLarge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="4dp"
+                    android:text="@string/deutsch_de"
+                    android:textColor="?attr/primaryColor" />
+
+                <FrameLayout
+                    android:id="@+id/germanLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="4dp">
+
+                    <TextView
+                        android:id="@+id/germanTitle"
+                        style="@style/TextSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:paddingVertical="8dp"
+                        android:text="@string/german"
+                        android:textColor="?attr/primaryColor" />
+
+                    <TextView
+                        android:id="@+id/germanOnOff"
+                        style="@style/TextSmallBold"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end|bottom"
+                        android:layout_marginEnd="4dp"
+                        android:padding="8dp"
+                        tools:text="@string/off" />
+                </FrameLayout>
+
+            </LinearLayout>
+
+            <LinearLayout
                 android:id="@+id/backupSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
