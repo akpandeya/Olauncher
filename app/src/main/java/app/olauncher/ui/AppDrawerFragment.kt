@@ -2,6 +2,8 @@ package app.olauncher.ui
 
 import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.os.Process
 import android.text.Spannable
@@ -30,6 +32,7 @@ import app.olauncher.data.SearchTarget
 import app.olauncher.databinding.FragmentAppDrawerBinding
 import app.olauncher.helper.DrawerOrdering
 import app.olauncher.helper.DrawerScrollHelper
+import app.olauncher.helper.copyToClipboard
 import app.olauncher.helper.deletePinnedShortcut
 import app.olauncher.helper.hideKeyboard
 import app.olauncher.helper.isEinkDisplay
@@ -176,6 +179,8 @@ class AppDrawerFragment : BaseFragment() {
 
                 if (query?.startsWith("!") == true)
                     openSearchTarget()
+                else if (adapter.hasResultRow)
+                    openSearchTarget()
                 else if (adapter.itemCount == 0)
                     openSearchTarget()
                 else
@@ -232,11 +237,38 @@ class AppDrawerFragment : BaseFragment() {
             flag,
             prefs.appLabelAlignment,
             appClickListener = { appModel ->
-                viewModel.selectedApp(appModel, flag)
-                if (flag == Constants.FLAG_LAUNCH_APP || flag == Constants.FLAG_HIDDEN_APPS)
-                    findNavController().popBackStack(R.id.mainFragment, false)
-                else
-                    findNavController().popBackStack()
+                when (appModel) {
+                    is AppModel.Result -> {
+                        when (val action = appModel.action) {
+                            is AppModel.Result.Action.Copy -> {
+                                requireContext().copyToClipboard(action.value)
+                                requireContext().showToast(R.string.copied)
+                                findNavController().popBackStack(R.id.mainFragment, false)
+                            }
+
+                            is AppModel.Result.Action.Dial -> {
+                                try {
+                                    val intent = Intent(Intent.ACTION_DIAL).apply {
+                                        data = Uri.fromParts("tel", action.number, null)
+                                    }
+                                    startActivity(intent)
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                                findNavController().popBackStack(R.id.mainFragment, false)
+                            }
+                        }
+                    }
+
+                    is AppModel.PrivateSpaceHeader -> {}
+                    else -> {
+                        viewModel.selectedApp(appModel, flag)
+                        if (flag == Constants.FLAG_LAUNCH_APP || flag == Constants.FLAG_HIDDEN_APPS)
+                            findNavController().popBackStack(R.id.mainFragment, false)
+                        else
+                            findNavController().popBackStack()
+                    }
+                }
             },
             appInfoListener = {
                 openAppInfo(
@@ -248,6 +280,7 @@ class AppDrawerFragment : BaseFragment() {
             },
             appDeleteListener = { appModel ->
                 when (appModel) {
+                    is AppModel.Result -> {}
                     is AppModel.PrivateSpaceHeader -> {}
                     is AppModel.PinnedShortcut ->
                         requireContext().deletePinnedShortcut(
@@ -272,6 +305,9 @@ class AppDrawerFragment : BaseFragment() {
             appHideListener = { appModel, position ->
                 if (appModel is AppModel.PinnedShortcut) {
                     requireContext().showToast("Hiding pinned shortcuts is not supported")
+                    return@AppDrawerAdapter
+                }
+                if (appModel is AppModel.Result) {
                     return@AppDrawerAdapter
                 }
                 adapter.appFilteredList.removeAt(position)
@@ -312,7 +348,8 @@ class AppDrawerFragment : BaseFragment() {
             privateSpaceSettingsListener = {
                 viewModel.openPrivateSpaceSettings()
                 findNavController().popBackStack(R.id.mainFragment, false)
-            }
+            },
+            context = requireContext(),
         )
 
         linearLayoutManager = object : LinearLayoutManager(requireContext(), RecyclerView.VERTICAL, prefs.drawerBottomSearch) {
