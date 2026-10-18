@@ -174,7 +174,7 @@ internal class WeatherCardView(
 
         binding.tvLine1.text = WeatherCardLogic.formatLine1(forecast)
         val now = WeatherCard.nowSupplier()
-        binding.tvLine2.text = RainOutlook.summary(
+        val rainLine = RainOutlook.summary(
             forecast.hours,
             RainOutlookLabels(
                 dryNext12h = context.getString(R.string.weather_dry_12h),
@@ -184,6 +184,8 @@ internal class WeatherCardView(
             ),
             now,
         )
+        binding.tvLine2.text = rainLine ?: ""
+        binding.tvLine2.visibility = if (rainLine == null) View.GONE else View.VISIBLE
         binding.tvLine3.text = WeatherCardLogic.formatLine3(
             placeName = WeatherLocation.placeName(context),
             fetchedAt = fetchedAt,
