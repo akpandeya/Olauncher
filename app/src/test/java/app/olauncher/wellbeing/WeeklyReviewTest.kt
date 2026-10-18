@@ -95,22 +95,22 @@ class WeeklyReviewTest {
 
         val review = WeeklyReview.summarise(snapshots, today)
 
-        assertEquals("Distracting apps 4 h 12 min · 46 opens", review.distractingAppsLine)
-        assertEquals("18% less than the week before", review.weekComparisonLine)
-        assertEquals("Most: Instagram 2 h 30 min, YouTube 1 h 10 min", review.topAppsLine)
-        assertEquals("Over allowance on 2 of 7 days", review.overAllowanceLine)
-        assertEquals("Pause: 31 × not now · 15 × opened (mostly: Just bored)", review.pauseLine)
-        assertEquals("Water 34 · Walk 12", review.nudgesLine)
+        assertEquals(ReviewLine.Distracting(252, 46), review.distractingAppsLine)
+        assertEquals(ReviewLine.LessThanWeekBefore(18), review.weekComparisonLine)
+        assertEquals(ReviewLine.TopApps(listOf(AppMinutes("Instagram", 150), AppMinutes("YouTube", 70))), review.topAppsLine)
+        assertEquals(ReviewLine.OverAllowance(2, 7), review.overAllowanceLine)
+        assertEquals(ReviewLine.Pause(31, 15, WhyChoice.Bored), review.pauseLine)
+        assertEquals(ReviewLine.Nudges(34, 12), review.nudgesLine)
 
         assertEquals(6, review.lines.size)
         assertEquals(
             listOf(
-                "Distracting apps 4 h 12 min · 46 opens",
-                "18% less than the week before",
-                "Most: Instagram 2 h 30 min, YouTube 1 h 10 min",
-                "Over allowance on 2 of 7 days",
-                "Pause: 31 × not now · 15 × opened (mostly: Just bored)",
-                "Water 34 · Walk 12",
+                ReviewLine.Distracting(252, 46),
+                ReviewLine.LessThanWeekBefore(18),
+                ReviewLine.TopApps(listOf(AppMinutes("Instagram", 150), AppMinutes("YouTube", 70))),
+                ReviewLine.OverAllowance(2, 7),
+                ReviewLine.Pause(31, 15, WhyChoice.Bored),
+                ReviewLine.Nudges(34, 12),
             ),
             review.lines
         )
@@ -129,7 +129,7 @@ class WeeklyReviewTest {
         }
 
         val review = WeeklyReview.summarise(snapshots, today)
-        assertEquals("9% more than the week before", review.weekComparisonLine)
+        assertEquals(ReviewLine.MoreThanWeekBefore(9), review.weekComparisonLine)
         assertEquals(9, review.weekChangePercent)
     }
 
@@ -148,13 +148,13 @@ class WeeklyReviewTest {
 
         val review = WeeklyReview.summarise(snapshots, today)
 
-        assertEquals("Distracting apps 1 h 30 min · 6 opens", review.distractingAppsLine)
+        assertEquals(ReviewLine.Distracting(90, 6), review.distractingAppsLine)
         // Crucial requirement: "nothing when the earlier week has under 3 days of data"
         assertNull(review.weekComparisonLine)
         assertNull(review.weekChangePercent)
-        assertEquals("Over allowance on 1 of 7 days", review.overAllowanceLine)
-        assertEquals("Pause: 4 × not now · 2 × opened", review.pauseLine)
-        assertEquals("Water 5 · Walk 3", review.nudgesLine)
+        assertEquals(ReviewLine.OverAllowance(1, 7), review.overAllowanceLine)
+        assertEquals(ReviewLine.Pause(4, 2, null), review.pauseLine)
+        assertEquals(ReviewLine.Nudges(5, 3), review.nudgesLine)
     }
 
     @Test
@@ -173,7 +173,7 @@ class WeeklyReviewTest {
         snapshots.add(DaySnapshot(epochDay = 99L, distractingMinutes = 82, distractingOpens = 5))
 
         val review = WeeklyReview.summarise(snapshots, today)
-        assertEquals("18% less than the week before", review.weekComparisonLine)
+        assertEquals(ReviewLine.LessThanWeekBefore(18), review.weekComparisonLine)
         assertEquals(-18, review.weekChangePercent)
     }
 
@@ -188,7 +188,7 @@ class WeeklyReviewTest {
 
         val review = WeeklyReview.summarise(snapshots, today)
         assertNull(review.weekComparisonLine)
-        assertEquals("Distracting apps 2 h 20 min · 21 opens", review.distractingAppsLine)
+        assertEquals(ReviewLine.Distracting(140, 21), review.distractingAppsLine)
     }
 
     @Test
@@ -221,14 +221,14 @@ class WeeklyReviewTest {
         assertNull(review.overAllowanceLine)
 
         // Counters must still be shown
-        assertEquals("Pause: 28 × not now · 14 × opened (mostly: Reply to someone)", review.pauseLine)
-        assertEquals("Water 35 · Walk 14", review.nudgesLine)
+        assertEquals(ReviewLine.Pause(28, 14, WhyChoice.Reply), review.pauseLine)
+        assertEquals(ReviewLine.Nudges(35, 14), review.nudgesLine)
 
         assertEquals(2, review.lines.size)
         assertEquals(
             listOf(
-                "Pause: 28 × not now · 14 × opened (mostly: Reply to someone)",
-                "Water 35 · Walk 14",
+                ReviewLine.Pause(28, 14, WhyChoice.Reply),
+                ReviewLine.Nudges(35, 14),
             ),
             review.lines
         )
@@ -241,30 +241,37 @@ class WeeklyReviewTest {
         for (day in 86L..92L) s1.add(DaySnapshot(epochDay = day, distractingMinutes = 55))
         for (day in 93L..99L) s1.add(DaySnapshot(epochDay = day, distractingMinutes = 45))
         val r1 = WeeklyReview.summarise(s1, today)
-        assertEquals("18% less than the week before", r1.weekComparisonLine)
+        assertEquals(ReviewLine.LessThanWeekBefore(18), r1.weekComparisonLine)
 
         // Percentage rounding: 8.7% rounds to 9%
         val s2 = mutableListOf<DaySnapshot>()
         for (day in 86L..92L) s2.add(DaySnapshot(epochDay = day, distractingMinutes = 23))
         for (day in 93L..99L) s2.add(DaySnapshot(epochDay = day, distractingMinutes = 25))
         val r2 = WeeklyReview.summarise(s2, today)
-        assertEquals("9% more than the week before", r2.weekComparisonLine)
+        assertEquals(ReviewLine.MoreThanWeekBefore(9), r2.weekComparisonLine)
 
-        // Duration formatting edge cases
-        assertEquals("0 min", WeeklyReview.formatDuration(0))
-        assertEquals("45 min", WeeklyReview.formatDuration(45))
-        assertEquals("59 min", WeeklyReview.formatDuration(59))
-        assertEquals("1 h", WeeklyReview.formatDuration(60))
-        assertEquals("1 h 1 min", WeeklyReview.formatDuration(61))
-        assertEquals("1 h 10 min", WeeklyReview.formatDuration(70))
-        assertEquals("2 h", WeeklyReview.formatDuration(120))
-        assertEquals("2 h 30 min", WeeklyReview.formatDuration(150))
-        assertEquals("4 h 12 min", WeeklyReview.formatDuration(252))
+        // Duration split edge cases
+        assertEquals(DurationParts(0, 0), WeeklyReview.durationParts(0))
+        assertEquals(DurationParts(0, 0), WeeklyReview.durationParts(-5))
+        assertEquals(DurationParts(0, 45), WeeklyReview.durationParts(45))
+        assertEquals(DurationParts(0, 59), WeeklyReview.durationParts(59))
+        assertEquals(DurationParts(1, 0), WeeklyReview.durationParts(60))
+        assertEquals(DurationParts(1, 1), WeeklyReview.durationParts(61))
+        assertEquals(DurationParts(1, 10), WeeklyReview.durationParts(70))
+        assertEquals(DurationParts(2, 0), WeeklyReview.durationParts(120))
+        assertEquals(DurationParts(2, 30), WeeklyReview.durationParts(150))
+        assertEquals(DurationParts(4, 12), WeeklyReview.durationParts(252))
+    }
 
-        // Opens formatting
-        assertEquals("1 open", WeeklyReview.formatOpens(1))
-        assertEquals("0 opens", WeeklyReview.formatOpens(0))
-        assertEquals("46 opens", WeeklyReview.formatOpens(46))
+    @Test
+    fun `why keys resolve to known choices or are kept raw`() {
+        assertEquals(WhyChoice.Bored, WeeklyReview.resolveWhy("bored"))
+        assertEquals(WhyChoice.Bored, WeeklyReview.resolveWhy(" Just Bored "))
+        assertEquals(WhyChoice.Reply, WeeklyReview.resolveWhy("reply"))
+        assertEquals(WhyChoice.Reply, WeeklyReview.resolveWhy("Reply to someone"))
+        assertEquals(WhyChoice.Lookup, WeeklyReview.resolveWhy("lookup"))
+        assertEquals(WhyChoice.Lookup, WeeklyReview.resolveWhy("look something up"))
+        assertEquals(WhyChoice.Other("Meeting Prep"), WeeklyReview.resolveWhy("Meeting Prep"))
     }
 
     @Test
@@ -296,7 +303,7 @@ class WeeklyReviewTest {
         // Instagram: 60 min (1 h)
         // Reddit: 10 min (excluded because only top 2 are taken)
         // Unused: 0 min (excluded)
-        assertEquals("Most: YouTube 1 h 10 min, Instagram 1 h", review.topAppsLine)
+        assertEquals(ReviewLine.TopApps(listOf(AppMinutes("YouTube", 70), AppMinutes("Instagram", 60))), review.topAppsLine)
     }
 
     @Test
@@ -311,7 +318,7 @@ class WeeklyReviewTest {
         )
 
         val review = WeeklyReview.summarise(snapshots, today)
-        assertEquals("Most: Instagram 1 h", review.topAppsLine)
+        assertEquals(ReviewLine.TopApps(listOf(AppMinutes("Instagram", 60))), review.topAppsLine)
     }
 
     @Test
@@ -326,7 +333,7 @@ class WeeklyReviewTest {
         )
 
         val review = WeeklyReview.summarise(snapshots, today)
-        assertEquals("Pause: 5 × not now · 3 × opened (mostly: Look something up)", review.pauseLine)
+        assertEquals(ReviewLine.Pause(5, 3, WhyChoice.Lookup), review.pauseLine)
     }
 
     @Test
@@ -341,16 +348,16 @@ class WeeklyReviewTest {
         )
 
         val review = WeeklyReview.summarise(snapshots, today)
-        assertEquals("Pause: 5 × not now · 3 × opened", review.pauseLine)
+        assertEquals(ReviewLine.Pause(5, 3, null), review.pauseLine)
     }
 
     @Test
     fun `nudges line formats single nudge when only one has count`() {
         val snapshotsWaterOnly = listOf(DaySnapshot(epochDay = 95L, water = 12, walk = 0))
-        assertEquals("Water 12", WeeklyReview.summarise(snapshotsWaterOnly, today).nudgesLine)
+        assertEquals(ReviewLine.Nudges(12, 0), WeeklyReview.summarise(snapshotsWaterOnly, today).nudgesLine)
 
         val snapshotsWalkOnly = listOf(DaySnapshot(epochDay = 95L, water = 0, walk = 8))
-        assertEquals("Walk 8", WeeklyReview.summarise(snapshotsWalkOnly, today).nudgesLine)
+        assertEquals(ReviewLine.Nudges(0, 8), WeeklyReview.summarise(snapshotsWalkOnly, today).nudgesLine)
 
         val snapshotsNeither = listOf(DaySnapshot(epochDay = 95L, water = 0, walk = 0))
         assertNull(WeeklyReview.summarise(snapshotsNeither, today).nudgesLine)
@@ -368,7 +375,7 @@ class WeeklyReviewTest {
         )
 
         val review = WeeklyReview.summarise(snapshots, today)
-        assertEquals("Distracting apps 30 min · 5 opens", review.distractingAppsLine)
+        assertEquals(ReviewLine.Distracting(30, 5), review.distractingAppsLine)
     }
 
     @Test

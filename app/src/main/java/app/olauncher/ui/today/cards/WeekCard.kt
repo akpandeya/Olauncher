@@ -75,24 +75,25 @@ object WeekCard : TodayCard {
     fun render(review: Review) {
         currentReview = review
         val b = binding ?: return
+        val context = b.root.context
 
         b.tvDistractingApps.isVisible = review.distractingAppsLine != null
-        b.tvDistractingApps.text = review.distractingAppsLine
+        b.tvDistractingApps.text = review.distractingAppsLine?.let { WeekCardText.format(context, it) }
 
         b.tvWeekComparison.isVisible = review.weekComparisonLine != null
-        b.tvWeekComparison.text = review.weekComparisonLine
+        b.tvWeekComparison.text = review.weekComparisonLine?.let { WeekCardText.format(context, it) }
 
         b.tvTopApps.isVisible = review.topAppsLine != null
-        b.tvTopApps.text = review.topAppsLine
+        b.tvTopApps.text = review.topAppsLine?.let { WeekCardText.format(context, it) }
 
         b.tvOverAllowance.isVisible = review.overAllowanceLine != null
-        b.tvOverAllowance.text = review.overAllowanceLine
+        b.tvOverAllowance.text = review.overAllowanceLine?.let { WeekCardText.format(context, it) }
 
         b.tvPause.isVisible = review.pauseLine != null
-        b.tvPause.text = review.pauseLine
+        b.tvPause.text = review.pauseLine?.let { WeekCardText.format(context, it) }
 
         b.tvNudges.isVisible = review.nudgesLine != null
-        b.tvNudges.text = review.nudgesLine
+        b.tvNudges.text = review.nudgesLine?.let { WeekCardText.format(context, it) }
     }
 
     fun render() {

@@ -350,5 +350,24 @@
     <string name="next_up_now">Now · %1$s (until %2$s)</string>
     <string name="next_up_tomorrow_event">Tomorrow %1$s %2$s</string>
     <string name="last_7_days">Last 7 days</string>
+    <string name="week_review_duration_hours_minutes">%1$d h %2$d min</string>
+    <string name="week_review_duration_hours">%1$d h</string>
+    <string name="week_review_duration_minutes">%1$d min</string>
+    <plurals name="week_review_opens">
+        <item quantity="one">%d open</item>
+        <item quantity="other">%d opens</item>
+    </plurals>
+    <string name="week_review_distracting">Distracting apps %1$s · %2$s</string>
+    <string name="week_review_less_than_week_before">%1$d%% less than the week before</string>
+    <string name="week_review_more_than_week_before">%1$d%% more than the week before</string>
+    <string name="week_review_top_apps">Most: %1$s</string>
+    <string name="week_review_top_app_item">%1$s %2$s</string>
+    <string name="week_review_list_separator">", "</string>
+    <string name="week_review_over_allowance">Over allowance on %1$d of %2$d days</string>
+    <string name="week_review_pause">Pause: %1$d × not now · %2$d × opened</string>
+    <string name="week_review_pause_mostly">%1$s (mostly: %2$s)</string>
+    <string name="week_review_nudges_water_walk">Water %1$d · Walk %2$d</string>
+    <string name="week_review_nudges_water">Water %1$d</string>
+    <string name="week_review_nudges_walk">Walk %1$d</string>
 </resources>
 
