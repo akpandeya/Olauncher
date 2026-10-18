@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import app.olauncher.R
 import app.olauncher.data.Prefs
 import app.olauncher.data.store.Leitner
@@ -37,12 +38,8 @@ object WordsCardLogic {
         )
     }
 
-    fun formatAllDone(context: Context, total: Int, learned: Int): String {
-        return context.getString(
-            R.string.words_all_done,
-            formatWordsCount(context, total),
-            learned
-        )
+    fun formatAllDone(context: Context, total: Int): String {
+        return context.getString(R.string.words_all_done, formatWordsCount(context, total))
     }
 
     fun formatMeaning(context: Context, meaning: String, meaningSource: String): String {
@@ -81,7 +78,12 @@ object WordsCard : TodayCard {
     }
 
     override fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View {
-        val cardView = WordsCardView(CardWordsBinding.inflate(inflater, parent, false))
+        val cardView = WordsCardView(CardWordsBinding.inflate(inflater, parent, false)) {
+            val navController = fragment.findNavController()
+            if (navController.currentDestination?.id == R.id.todayFragment) {
+                navController.navigate(R.id.action_todayFragment_to_wordsFragment)
+            }
+        }
         cardView.binding.root.tag = cardView
         cardView.render()
         return cardView.binding.root
@@ -93,9 +95,18 @@ object WordsCard : TodayCard {
 }
 
 /** Holds the state of one Words card view. */
-internal class WordsCardView(val binding: CardWordsBinding) {
+internal class WordsCardView(
+    val binding: CardWordsBinding,
+    private val onOpenWords: () -> Unit = {},
+) {
 
     private var wordReveal: WordReveal? = null
+
+    init {
+        // The summary lines lead to the Words page, where every word and meaning can be edited.
+        binding.tvFooter.setOnClickListener { onOpenWords() }
+        binding.tvEmpty.setOnClickListener { onOpenWords() }
+    }
 
     fun render() {
         val b = binding
@@ -137,10 +148,11 @@ internal class WordsCardView(val binding: CardWordsBinding) {
             b.wordReveal.root.isVisible = false
             b.tvFooter.isVisible = false
             b.tvEmpty.isVisible = true
+            b.tvEmpty.isClickable = stats.total > 0
             b.tvEmpty.text = if (stats.total == 0) {
                 context.getString(R.string.words_empty_state)
             } else {
-                WordsCardLogic.formatAllDone(context, stats.total, stats.learned)
+                WordsCardLogic.formatAllDone(context, stats.total)
             }
         }
     }

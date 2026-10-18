@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp"
+    android:orientation="vertical">
+
+    <androidx.appcompat.widget.AppCompatEditText
+        android:id="@+id/etWord"
+        style="@style/TextMedium"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@null"
+        android:cursorVisible="true"
+        android:hint="@string/words_word_hint"
+        android:inputType="text"
+        android:maxLines="1"
+        android:paddingVertical="8dp"
+        android:shadowColor="@android:color/transparent"
+        android:textColor="?attr/primaryColor"
+        android:textColorHint="?attr/primaryColorTrans80" />
+
+    <androidx.appcompat.widget.AppCompatEditText
+        android:id="@+id/etMeaning"
+        style="@style/TextSmall"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@null"
+        android:cursorVisible="true"
+        android:hint="@string/words_meaning_hint"
+        android:inputType="textCapSentences|textMultiLine"
+        android:maxLines="6"
+        android:paddingVertical="8dp"
+        android:shadowColor="@android:color/transparent"
+        android:textColor="?attr/primaryColor"
+        android:textColorHint="?attr/primaryColorTrans80" />
+
+    <TextView
+        android:id="@+id/tvSource"
+        style="@style/TextSmallLight"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingVertical="4dp"
+        android:shadowColor="@android:color/transparent"
+        android:visibility="gone" />
+
+</LinearLayout>

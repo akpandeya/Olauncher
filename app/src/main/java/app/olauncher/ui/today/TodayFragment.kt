@@ -78,14 +78,18 @@ class TodayFragment : BaseFragment() {
             for (card in enabledCards) {
 
                 val titleView = TextView(context).apply {
-                    setTextAppearance(R.style.TextSmall)
+                    // Quiet, spaced-out headers so the content, not the labels, carries each section.
+                    setTextAppearance(R.style.TextSmallLight)
+                    setAllCaps(true)
+                    letterSpacing = 0.1f
+                    textSize = 12f
                     text = getString(card.titleRes)
                     layoutParams = LinearLayout.LayoutParams(
                         LinearLayout.LayoutParams.MATCH_PARENT,
                         LinearLayout.LayoutParams.WRAP_CONTENT
                     ).apply {
-                        topMargin = 16.dpToPx()
-                        bottomMargin = 8.dpToPx()
+                        topMargin = 28.dpToPx()
+                        bottomMargin = 4.dpToPx()
                     }
                 }
                 binding.cardsContainer.addView(titleView)

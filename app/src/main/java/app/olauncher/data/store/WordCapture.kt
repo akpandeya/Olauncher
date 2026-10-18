@@ -24,6 +24,8 @@ object WordLookup {
     fun isLookupAllowed(germanEnabled: Boolean, germanLookup: Boolean): Boolean =
         germanEnabled && germanLookup
 
+    fun uniqueWorkName(wordId: Long): String = "word_lookup_$wordId"
+
     fun enqueue(context: Context, wordId: Long) {
         val prefs = Prefs(context)
         if (!isLookupAllowed(prefs.germanEnabled, prefs.germanLookup)) return
@@ -50,7 +52,7 @@ object WordLookup {
             .build()
 
         WorkManager.getInstance(context).enqueueUniqueWork(
-            "word_lookup_$wordId",
+            uniqueWorkName(wordId),
             ExistingWorkPolicy.KEEP,
             request
         )
