@@ -174,7 +174,7 @@ object SavedCard : TodayCard {
             itemBinding.tvTitle.text = item.title.ifBlank { SavedCardLogic.formatHost(item.url) }
             itemBinding.tvSubtitle.text = SavedCardLogic.formatSubtitle(item.url, item.savedAt)
             itemBinding.root.setOnClickListener {
-                context.openUrl(item.url)
+                openItem(context, item)
             }
             itemBinding.root.setOnLongClickListener {
                 showActiveItemDialog(context, item)
@@ -200,7 +200,7 @@ object SavedCard : TodayCard {
                 itemBinding.tvTitle.text = item.title.ifBlank { SavedCardLogic.formatHost(item.url) }
                 itemBinding.tvSubtitle.text = SavedCardLogic.formatSubtitle(item.url, item.savedAt)
                 itemBinding.root.setOnClickListener {
-                    context.openUrl(item.url)
+                    openItem(context, item)
                 }
                 itemBinding.root.setOnLongClickListener {
                     showArchivedItemDialog(context, item)
@@ -208,6 +208,14 @@ object SavedCard : TodayCard {
                 }
                 b.archivedContainer.addView(itemBinding.root)
             }
+        }
+    }
+
+    private fun openItem(context: Context, item: SavedItem) {
+        try {
+            context.openUrl(item.url)
+        } catch (e: Exception) {
+            context.showToast(R.string.saved_unable_to_open)
         }
     }
 
