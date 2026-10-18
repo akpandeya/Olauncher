@@ -57,7 +57,7 @@ class WeekCardTest {
 
         // Exactly 2 snapshots in last 7 days (93..99)
         val twoSnapshots = listOf(
-            DaySnapshot(epochDay = 93L),
+            DaySnapshot(epochDay = 93L, notNow = 1),
             DaySnapshot(epochDay = 99L),
         )
         assertTrue(WeekCard.isAvailable(twoSnapshots, today))
@@ -65,7 +65,7 @@ class WeekCardTest {
         // 3 snapshots in last 7 days + 1 outside
         val multipleSnapshots = listOf(
             DaySnapshot(epochDay = 80L),
-            DaySnapshot(epochDay = 94L),
+            DaySnapshot(epochDay = 94L, distractingMinutes = 5),
             DaySnapshot(epochDay = 95L),
             DaySnapshot(epochDay = 96L),
         )
@@ -73,11 +73,31 @@ class WeekCardTest {
     }
 
     @Test
+    fun `isAvailable is false when every day in the window is empty`() {
+        val today = 100L
+        val emptyDays = listOf(
+            DaySnapshot(epochDay = 94L),
+            DaySnapshot(epochDay = 95L),
+            DaySnapshot(epochDay = 96L, distractingMinutes = 0, distractingOpens = 0),
+        )
+        assertFalse(WeekCard.isAvailable(emptyDays, today))
+    }
+
+    @Test
+    fun `isAvailable is true when one of two days has a non-zero counter`() {
+        val today = 100L
+        assertTrue(WeekCard.isAvailable(listOf(DaySnapshot(epochDay = 94L), DaySnapshot(epochDay = 95L, walk = 1)), today))
+        assertTrue(WeekCard.isAvailable(listOf(DaySnapshot(epochDay = 94L), DaySnapshot(epochDay = 95L, distractingOpens = 3)), today))
+        // Real data outside the window does not count
+        assertFalse(WeekCard.isAvailable(listOf(DaySnapshot(epochDay = 94L), DaySnapshot(epochDay = 95L), DaySnapshot(epochDay = 90L, notNow = 9)), today))
+    }
+
+    @Test
     fun `isAvailable LocalDate overload delegates correctly`() {
         val date = LocalDate.of(2026, 10, 18)
         val epochDay = date.toEpochDay()
         val snapshots = listOf(
-            DaySnapshot(epochDay = epochDay - 1),
+            DaySnapshot(epochDay = epochDay - 1, opened = 2),
             DaySnapshot(epochDay = epochDay - 2),
         )
         assertTrue(WeekCard.isAvailable(snapshots, date))
