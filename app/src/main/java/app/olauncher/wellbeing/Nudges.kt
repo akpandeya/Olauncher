@@ -62,6 +62,7 @@ object Nudges {
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setAutoCancel(true)
+            .setContentIntent(NudgeActionReceiver.createDismissPendingIntent(context, type))
 
         for (action in actions) {
             builder.addAction(action)
