@@ -100,4 +100,28 @@ class OpenCounterTest {
             )
         )
     }
+
+    @Test
+    fun `countOpensForPackages returns 0 for empty pkgs or empty events`() {
+        assertEquals(0, countOpensForPackages(emptyList(), setOf("pkg.a")))
+        assertEquals(0, countOpensForPackages(listOf("pkg.a" to 1000L), emptySet()))
+    }
+
+    @Test
+    fun `countOpensForPackages counts opens per package and sums them`() {
+        val events = listOf(
+            // Pkg A: 1000L, 1500L (deduped -> 1 open), 5000L (open 2) => 2 opens
+            "pkg.a" to 1000L,
+            "pkg.a" to 1500L,
+            "pkg.a" to 5000L,
+            // Pkg B: 1200L, 6000L => 2 opens (1200L is not deduped against pkg.a)
+            "pkg.b" to 1200L,
+            "pkg.b" to 6000L,
+            // Pkg C: not in target pkgs
+            "pkg.c" to 7000L,
+        )
+        val targetPkgs = setOf("pkg.a", "pkg.b")
+        val totalOpens = countOpensForPackages(events, targetPkgs, 2000L)
+        assertEquals(4, totalOpens)
+    }
 }
