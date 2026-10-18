@@ -2,6 +2,15 @@ package app.olauncher.data.store
 
 import android.content.Context
 
+import androidx.work.Constraints
+import androidx.work.Data
+import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import app.olauncher.data.Prefs
+import app.olauncher.wellbeing.WordLookupWorker
+
 sealed interface Capture {
     data class Word(val text: String) : Capture
     data class Sentence(val text: String, val tokens: List<String>) : Capture
@@ -9,9 +18,38 @@ sealed interface Capture {
 }
 
 object WordLookup {
-    @Suppress("UNUSED_PARAMETER")
+    internal var workEnqueuer: ((Context, Long) -> Unit)? = null
+
     fun enqueue(context: Context, wordId: Long) {
-        // No-op stub until task-03 lands
+        val prefs = Prefs(context)
+        if (!prefs.germanLookup) return
+
+        val word = WordsStore(context).get(wordId) ?: return
+        if (word.meaning.isNotBlank()) return
+
+        workEnqueuer?.let {
+            it(context, wordId)
+            return
+        }
+
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+
+        val inputData = Data.Builder()
+            .putLong(WordLookupWorker.KEY_WORD_ID, wordId)
+            .build()
+
+        val request = OneTimeWorkRequestBuilder<WordLookupWorker>()
+            .setConstraints(constraints)
+            .setInputData(inputData)
+            .build()
+
+        WorkManager.getInstance(context).enqueueUniqueWork(
+            "word_lookup_$wordId",
+            ExistingWorkPolicy.KEEP,
+            request
+        )
     }
 }
 

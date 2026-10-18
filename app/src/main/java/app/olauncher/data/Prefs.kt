@@ -24,6 +24,7 @@ class Prefs(context: Context) {
         const val NUDGE_SOCIAL_LAST_BUCKET = "NUDGE_SOCIAL_LAST_BUCKET"
         const val NUDGE_SOCIAL_DAY = "NUDGE_SOCIAL_DAY"
         const val GERMAN_ENABLED = "GERMAN_ENABLED"
+        const val GERMAN_LOOKUP = "GERMAN_LOOKUP"
 
         fun nudgeDoneKey(type: String): String = "$NUDGE_DONE_PREFIX${type.uppercase()}"
     }
@@ -328,6 +329,10 @@ class Prefs(context: Context) {
     var germanEnabled: Boolean
         get() = prefs.getBoolean(GERMAN_ENABLED, false)
         set(value) = prefs.edit { putBoolean(GERMAN_ENABLED, value).apply() }
+
+    var germanLookup: Boolean
+        get() = prefs.getBoolean(GERMAN_LOOKUP, true)
+        set(value) = prefs.edit { putBoolean(GERMAN_LOOKUP, value).apply() }
 
     var firstPauseEnable: Boolean
         get() = prefs.getBoolean(FIRST_PAUSE_ENABLE, true)

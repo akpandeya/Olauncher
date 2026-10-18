@@ -168,6 +168,11 @@ class WordsStore(
     }
 
     @Synchronized
+    fun get(id: Long): Word? {
+        return loadAll().firstOrNull { it.id == id }
+    }
+
+    @Synchronized
     fun all(): List<Word> {
         return loadAll()
     }
