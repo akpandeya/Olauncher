@@ -13,15 +13,23 @@ import java.util.Calendar
  * Repository for querying application usage and open counts today.
  * Methods return null when usage stats permission has not been granted.
  */
-class UsageRepository(private val context: Context) {
+open class UsageRepository(private val context: Context) {
 
     /**
      * Returns the number of times [pkg] was opened today using UsageEvents ACTIVITY_RESUMED,
      * de-duplicating resumes less than 2 seconds apart.
      * Returns null if usage stats permission is not granted.
      */
-    suspend fun openCountToday(pkg: String): Int? = withContext(Dispatchers.IO) {
+    open suspend fun openCountToday(pkg: String): Int? = openCountToday(setOf(pkg))
+
+    /**
+     * Returns total number of times [pkgs] were opened today using UsageEvents ACTIVITY_RESUMED,
+     * de-duplicating resumes less than 2 seconds apart per package.
+     * Returns null if usage stats permission is not granted.
+     */
+    open suspend fun openCountToday(pkgs: Set<String>): Int? = withContext(Dispatchers.IO) {
         if (!context.appUsagePermissionGranted()) return@withContext null
+        if (pkgs.isEmpty()) return@withContext 0
 
         val startTime = startOfTodayMillis()
         val endTime = System.currentTimeMillis()
@@ -31,23 +39,23 @@ class UsageRepository(private val context: Context) {
 
         val events = usageStatsManager.queryEvents(startTime, endTime)
         val event = UsageEvents.Event()
-        val timestamps = mutableListOf<Long>()
+        val eventList = mutableListOf<Pair<String, Long>>()
 
         while (events.hasNextEvent()) {
             events.getNextEvent(event)
-            if (event.packageName == pkg && event.eventType == UsageEvents.Event.ACTIVITY_RESUMED) {
-                timestamps.add(event.timeStamp)
+            if (event.packageName in pkgs && event.eventType == UsageEvents.Event.ACTIVITY_RESUMED) {
+                eventList.add(event.packageName to event.timeStamp)
             }
         }
 
-        countOpens(timestamps, RESUME_GAP_MS)
+        countOpensForPackages(eventList, pkgs, RESUME_GAP_MS)
     }
 
     /**
      * Returns total foreground time in milliseconds for [pkgs] today using [EventLogWrapper].
      * Returns null if usage stats permission is not granted.
      */
-    suspend fun foregroundMillisToday(pkgs: Set<String>): Long? = withContext(Dispatchers.IO) {
+    open suspend fun foregroundMillisToday(pkgs: Set<String>): Long? = withContext(Dispatchers.IO) {
         if (!context.appUsagePermissionGranted()) return@withContext null
         if (pkgs.isEmpty()) return@withContext 0L
 
@@ -123,6 +131,12 @@ class UsageRepository(private val context: Context) {
 
         fun countOpens(timestamps: List<Long>, gapMs: Long = RESUME_GAP_MS): Int =
             app.olauncher.wellbeing.countOpens(timestamps, gapMs)
+
+        fun countOpensForPackages(
+            events: List<Pair<String, Long>>,
+            pkgs: Set<String>,
+            gapMs: Long = RESUME_GAP_MS,
+        ): Int = app.olauncher.wellbeing.countOpensForPackages(events, pkgs, gapMs)
     }
 }
 
@@ -142,6 +156,25 @@ fun countOpens(timestamps: List<Long>, gapMs: Long = UsageRepository.RESUME_GAP_
         }
     }
     return count
+}
+
+/**
+ * Pure function to count total opens for [pkgs] from event pairs of (packageName, timestamp),
+ * de-duplicating resumes less than [gapMs] apart per package.
+ */
+fun countOpensForPackages(
+    events: List<Pair<String, Long>>,
+    pkgs: Set<String>,
+    gapMs: Long = UsageRepository.RESUME_GAP_MS,
+): Int {
+    if (pkgs.isEmpty() || events.isEmpty()) return 0
+    val byPkg = mutableMapOf<String, MutableList<Long>>()
+    for ((pkg, time) in events) {
+        if (pkg in pkgs) {
+            byPkg.getOrPut(pkg) { mutableListOf() }.add(time)
+        }
+    }
+    return byPkg.values.sumOf { countOpens(it, gapMs) }
 }
 
 /**
