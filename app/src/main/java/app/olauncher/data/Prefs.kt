@@ -68,6 +68,7 @@ class Prefs(context: Context) : PauseLogStorage {
         const val PAUSE_WHY_REPLY_TODAY = "PAUSE_WHY_REPLY_TODAY"
         const val PAUSE_WHY_LOOKUP_TODAY = "PAUSE_WHY_LOOKUP_TODAY"
         const val PAUSE_WHY_BORED_TODAY = "PAUSE_WHY_BORED_TODAY"
+        const val COMMIT_LOCK = "COMMIT_LOCK"
 
         fun nudgeDoneKey(type: String): String = "$NUDGE_DONE_PREFIX${type.uppercase()}"
     }
@@ -432,6 +433,10 @@ class Prefs(context: Context) : PauseLogStorage {
     var pauseAskWhy: Boolean
         get() = prefs.getBoolean(PAUSE_ASK_WHY, false)
         set(value) = prefs.edit { putBoolean(PAUSE_ASK_WHY, value).apply() }
+
+    var commitLock: Boolean
+        get() = prefs.getBoolean(COMMIT_LOCK, false)
+        set(value) = prefs.edit { putBoolean(COMMIT_LOCK, value).apply() }
 
     var pauseLogDay: Long
         get() = prefs.getLong(PAUSE_LOG_DAY, 0L)

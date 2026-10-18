@@ -221,6 +221,10 @@
     <string name="pause_open">Open</string>
     <string name="pause_open_countdown">Open (%d)</string>
     <string name="stop_pausing_app">Stop pausing %s</string>
+    <string name="commit_lock">Lock these settings</string>
+    <string name="commit_lock_desc">Turning friction down takes a 30 s wait</string>
+    <string name="confirm">Confirm</string>
+    <string name="confirm_countdown">Confirm (%d)</string>
     <string name="today_page">Today page</string>
     <string name="today_section">Today</string>
     <string name="today_cards">Today cards</string>
