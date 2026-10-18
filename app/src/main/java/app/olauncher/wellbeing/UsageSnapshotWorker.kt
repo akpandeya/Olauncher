@@ -30,7 +30,7 @@ class UsageSnapshotWorker(
             usageRepo = usageRepo,
             hasUsageAccess = hasUsageAccess,
             distractingPkgs = prefs.distractingApps,
-            allowanceMin = prefs.pauseAllowanceMin,
+            allowanceMin = PausePolicy.effectiveAllowanceMin(prefs.pauseAllowanceMin, hasUsageAccess),
             resolveAppLabel = { pkg ->
                 val renamed = prefs.getAppRenameLabel(pkg)
                 if (renamed.isNotBlank()) renamed else SocialTimeWorker.getAppLabel(applicationContext, pkg)
@@ -42,6 +42,15 @@ class UsageSnapshotWorker(
 
     companion object {
         const val WORK_NAME = "usage_snapshot"
+
+        /** Runs the daily worker only while there are distracting apps; cancels it when the list is empty. */
+        fun syncWithDistractingApps(context: Context, distractingApps: Set<String>) {
+            if (distractingApps.isNotEmpty()) {
+                enqueue(context)
+            } else {
+                WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
+            }
+        }
 
         fun enqueue(context: Context) {
             val request = PeriodicWorkRequestBuilder<UsageSnapshotWorker>(24, TimeUnit.HOURS).build()

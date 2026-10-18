@@ -41,8 +41,18 @@ object WeekCard : TodayCard {
 
     fun isAvailable(snapshots: List<DaySnapshot>, today: Long = todaySupplier()): Boolean {
         val last7Days = (today - 7)..(today - 1)
-        return snapshots.count { it.epochDay in last7Days } >= 2
+        val inWindow = snapshots.filter { it.epochDay in last7Days }
+        return inWindow.size >= 2 && inWindow.any { hasRealData(it) }
     }
+
+    /** True when the day holds usage or a non-zero pause/nudge counter, not just an empty row. */
+    internal fun hasRealData(snapshot: DaySnapshot): Boolean =
+        (snapshot.distractingMinutes ?: 0) > 0 ||
+            (snapshot.distractingOpens ?: 0) > 0 ||
+            snapshot.notNow > 0 ||
+            snapshot.opened > 0 ||
+            snapshot.water > 0 ||
+            snapshot.walk > 0
 
     fun isAvailable(snapshots: List<DaySnapshot>, today: LocalDate): Boolean =
         isAvailable(snapshots, today.toEpochDay())

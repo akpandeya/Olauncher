@@ -94,3 +94,51 @@ object CommitLock {
         return isLoosening(change)
     }
 }
+
+/** The friction settings the commit lock protects, read from live prefs or from a backup. */
+data class FrictionSettings(
+    val pauseEnabled: Boolean,
+    val distractingApps: Set<String>,
+    val allowanceMin: Int,
+    val escalate: Boolean,
+    val askWhy: Boolean,
+    val commitLock: Boolean,
+) {
+    companion object {
+        const val KEY_PAUSE_ENABLED = "PAUSE_ENABLED"
+        const val KEY_DISTRACTING_APPS = "DISTRACTING_APPS"
+        const val KEY_ALLOWANCE_MIN = "PAUSE_ALLOWANCE_MIN"
+        const val KEY_ESCALATE = "PAUSE_ESCALATE"
+        const val KEY_ASK_WHY = "PAUSE_ASK_WHY"
+        const val KEY_COMMIT_LOCK = "COMMIT_LOCK"
+
+        /** A restore clears prefs first, so keys missing from the backup fall back to the defaults. */
+        fun fromPrefsMap(prefs: Map<String, Any?>): FrictionSettings = FrictionSettings(
+            pauseEnabled = prefs[KEY_PAUSE_ENABLED] as? Boolean ?: false,
+            distractingApps = (prefs[KEY_DISTRACTING_APPS] as? Set<*>)
+                ?.mapNotNull { it?.toString() }?.toSet() ?: emptySet(),
+            allowanceMin = (prefs[KEY_ALLOWANCE_MIN] as? Number)?.toInt() ?: 0,
+            escalate = prefs[KEY_ESCALATE] as? Boolean ?: false,
+            askWhy = prefs[KEY_ASK_WHY] as? Boolean ?: false,
+            commitLock = prefs[KEY_COMMIT_LOCK] as? Boolean ?: false,
+        )
+    }
+}
+
+/** Reuses [CommitLock.needsWait] for every friction setting a backup restore would change. */
+fun CommitLock.restoreNeedsWait(
+    lockOn: Boolean,
+    before: FrictionSettings,
+    after: FrictionSettings,
+): Boolean {
+    // A flag only counts as a change when it actually flips off from on.
+    val changes = buildList {
+        if (before.pauseEnabled != after.pauseEnabled) add(FrictionChange.Pause(after.pauseEnabled))
+        add(FrictionChange.DistractingApps(before.distractingApps, after.distractingApps))
+        add(FrictionChange.Allowance(before.allowanceMin, after.allowanceMin))
+        if (before.escalate != after.escalate) add(FrictionChange.Escalate(after.escalate))
+        if (before.askWhy != after.askWhy) add(FrictionChange.AskWhy(after.askWhy))
+        if (before.commitLock != after.commitLock) add(FrictionChange.Lock(after.commitLock))
+    }
+    return changes.any { needsWait(lockOn, it) }
+}

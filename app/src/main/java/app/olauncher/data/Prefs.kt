@@ -12,6 +12,7 @@ import app.olauncher.ui.today.TodayCards
 import app.olauncher.wellbeing.DaySnapshot
 import app.olauncher.wellbeing.Nudges
 import app.olauncher.wellbeing.PauseDay
+import app.olauncher.wellbeing.toDaySnapshot
 import app.olauncher.wellbeing.PauseLog
 import app.olauncher.wellbeing.PauseLogStorage
 import app.olauncher.wellbeing.UsageSnapshotStore
@@ -489,17 +490,7 @@ class Prefs(context: Context) : PauseLogStorage {
     }
 
     private fun handlePauseLogRollover(previous: PauseDay) {
-        val why = mutableMapOf<String, Int>()
-        if (previous.whyReply > 0) why["reply"] = previous.whyReply
-        if (previous.whyLookup > 0) why["lookup"] = previous.whyLookup
-        if (previous.whyBored > 0) why["bored"] = previous.whyBored
-
-        val snapshot = DaySnapshot(
-            epochDay = previous.epochDay,
-            notNow = previous.notNow,
-            opened = previous.opened,
-            why = why,
-        )
+        val snapshot = previous.toDaySnapshot()
         try {
             usageSnapshotStore?.upsert(snapshot)
         } catch (_: Exception) {}

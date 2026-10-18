@@ -80,9 +80,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         prefs = Prefs(this)
         prefs.checkRollovers()
-        if (prefs.distractingApps.isNotEmpty()) {
-            UsageSnapshotWorker.enqueue(this)
-        }
+        UsageSnapshotWorker.syncWithDistractingApps(this, prefs.distractingApps)
         WorkManager.getInstance(this).cancelUniqueWork(Constants.WALLPAPER_WORKER_NAME)
         prefs.dailyWallpaper = false
         NudgeScheduler.ensureAll(this)

@@ -606,5 +606,40 @@ class UsageSnapshotsTest {
         assertEquals(2, saved.opened)
         assertEquals(mapOf("reply" to 1, "bored" to 1), saved.why)
     }
-}
 
+    @Test
+    fun `store skips a corrupted entry and keeps the good days`() {
+        val dir = tempFolder.newFolder("partial")
+        val store = UsageSnapshotStore(dir)
+        store.upsert(DaySnapshot(epochDay = 100L, notNow = 1))
+        store.upsert(DaySnapshot(epochDay = 102L, notNow = 3))
+        val file = File(dir, UsageSnapshotStore.FILE_NAME)
+        val array = org.json.JSONArray(file.readText())
+        val bad = org.json.JSONObject().put("epochDay", "not-a-number")
+        val withBad = org.json.JSONArray()
+        withBad.put(array.get(0)); withBad.put(bad); withBad.put(array.get(1))
+        file.writeText(withBad.toString())
+
+        val loaded = store.load()
+        assertEquals(listOf(100L, 102L), loaded.snapshots.map { it.epochDay })
+        assertEquals(1, loaded.skippedEntries)
+        assertFalse(loaded.unparseable)
+
+        assertTrue(store.upsert(DaySnapshot(epochDay = 103L, notNow = 4)))
+        assertEquals(listOf(100L, 102L, 103L), store.getAll().map { it.epochDay })
+    }
+
+    @Test
+    fun `upsert leaves an unparseable file untouched and reports failure`() {
+        val dir = tempFolder.newFolder("broken")
+        val file = File(dir, UsageSnapshotStore.FILE_NAME)
+        val garbage = "[{\"epochDay\": 100, "
+        file.writeText(garbage)
+        val store = UsageSnapshotStore(dir)
+
+        assertTrue(store.load().unparseable)
+        assertTrue(store.getAll().isEmpty())
+        assertFalse(store.upsert(DaySnapshot(epochDay = 200L, notNow = 9)))
+        assertEquals(garbage, file.readText())
+    }
+}
