@@ -57,6 +57,8 @@ class Prefs(context: Context) {
         const val BATTERY_MODE_AUTO = 0
         const val BATTERY_MODE_ALWAYS = 1
         const val BATTERY_MODE_OFF = 2
+        const val PAUSE_ALLOWANCE_MIN = "PAUSE_ALLOWANCE_MIN"
+        const val PAUSE_ESCALATE = "PAUSE_ESCALATE"
 
         fun nudgeDoneKey(type: String): String = "$NUDGE_DONE_PREFIX${type.uppercase()}"
     }
@@ -409,6 +411,14 @@ class Prefs(context: Context) {
     var pauseSeconds: Int
         get() = prefs.getInt(PAUSE_SECONDS, 5)
         set(value) = prefs.edit { putInt(PAUSE_SECONDS, value).apply() }
+
+    var pauseAllowanceMin: Int
+        get() = prefs.getInt(PAUSE_ALLOWANCE_MIN, 0)
+        set(value) = prefs.edit { putInt(PAUSE_ALLOWANCE_MIN, value).apply() }
+
+    var pauseEscalate: Boolean
+        get() = prefs.getBoolean(PAUSE_ESCALATE, false)
+        set(value) = prefs.edit { putBoolean(PAUSE_ESCALATE, value).apply() }
 
     var toShowHintCounter: Int
         get() = prefs.getInt(SHOW_HINT_COUNTER, 1)

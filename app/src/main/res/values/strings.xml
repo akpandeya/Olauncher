@@ -206,6 +206,9 @@
     <string name="cancel">Cancel</string>
     <string name="settings_footer">Thumbline %1$s · based on %2$s · GPLv3</string>
     <string name="pause_before_distracting_apps">Pause before distracting apps</string>
+    <string name="pause_daily_allowance">Daily allowance</string>
+    <string name="pause_longer_with_each_open">Longer pause with each open</string>
+    <string name="pause_allowance_min">%d min</string>
     <string name="pause_usage_access_message">Thumbline can show real open counts if you allow usage access</string>
     <string name="pause_notification_notice">Opens from notifications aren\'t paused</string>
     <string name="allow">Allow</string>

@@ -24,16 +24,21 @@ import app.olauncher.helper.appUsagePermissionGranted
 import app.olauncher.helper.getUserHandleFromString
 import app.olauncher.helper.showPopupMenu
 import app.olauncher.ui.today.WordReveal
+import app.olauncher.wellbeing.DistractingApps
+import app.olauncher.wellbeing.PausePolicy
 import app.olauncher.wellbeing.UsageRepository
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 
 class PauseFragment : Fragment() {
 
     companion object {
         var storeProvider: ((Context) -> WordsStore)? = null
+        var usageRepositoryProvider: ((Context) -> UsageRepository)? = null
         var epochDaySupplier: () -> Long = { LocalDate.now().toEpochDay() }
     }
 
@@ -96,35 +101,71 @@ class PauseFragment : Fragment() {
             true
         }
 
-        loadUsageStats()
         setupPauseWord()
-        startCountdown()
+        startDecisionAndCountdown()
     }
 
-    private fun loadUsageStats() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            val context = context ?: return@launch
-            if (context.appUsagePermissionGranted()) {
-                val repository = UsageRepository(context)
-                val opens = repository.openCountToday(appPackage) ?: 0
-                val millis = repository.foregroundMillisToday(setOf(appPackage)) ?: 0L
-                binding.usageStats.text = PauseFormatting.formatUsageStatsLine(opens, millis)
-            } else {
-                val opens = prefs.ownOpenCount(appPackage)
-                binding.usageStats.text = PauseFormatting.formatThumblineOpensLine(opens)
-            }
-        }
-    }
-
-    private fun startCountdown() {
-        val totalSeconds = prefs.pauseSeconds
-        if (totalSeconds <= 0) {
-            updateOpenButton(0)
-            return
-        }
-
+    private fun startDecisionAndCountdown() {
         countdownJob?.cancel()
         countdownJob = viewLifecycleOwner.lifecycleScope.launch {
+            updateOpenButton(prefs.pauseSeconds)
+
+            val context = context ?: return@launch
+            val baseSeconds = prefs.pauseSeconds
+            val allowanceMin = prefs.pauseAllowanceMin
+            val escalate = prefs.pauseEscalate
+            val distractingPkgs = if (prefs.hasSavedDistractingApps()) {
+                prefs.distractingApps
+            } else {
+                DistractingApps.DEFAULT_PACKAGES
+            }
+
+            val (usageLine, decision) = withContext(Dispatchers.IO) {
+                if (context.appUsagePermissionGranted()) {
+                    val repository = usageRepositoryProvider?.invoke(context) ?: UsageRepository(context)
+                    val opens = repository.openCountToday(appPackage) ?: 0
+                    val appMillis = repository.foregroundMillisToday(setOf(appPackage)) ?: 0L
+                    val sharedMillis = repository.foregroundMillisToday(distractingPkgs)
+                    val minutesToday = sharedMillis?.let { (it / 60_000L).toInt() }
+                    val decision = PausePolicy.delaySeconds(
+                        base = baseSeconds,
+                        opensToday = opens,
+                        minutesToday = minutesToday,
+                        allowanceMin = allowanceMin,
+                        escalate = escalate,
+                    )
+                    val line = PauseFormatting.formatUsageStatsLine(opens, appMillis)
+                    line to decision
+                } else {
+                    val opens = prefs.ownOpenCount(appPackage)
+                    val decision = PausePolicy.delaySeconds(
+                        base = baseSeconds,
+                        opensToday = opens,
+                        minutesToday = null,
+                        allowanceMin = allowanceMin,
+                        escalate = escalate,
+                    )
+                    val line = PauseFormatting.formatThumblineOpensLine(opens)
+                    line to decision
+                }
+            }
+
+            if (_binding == null) return@launch
+            binding.usageStats.text = usageLine
+
+            if (decision.overAllowance && allowanceMin > 0) {
+                binding.overAllowance.text = PauseFormatting.formatOverAllowanceLine(allowanceMin)
+                binding.overAllowance.isVisible = true
+            } else {
+                binding.overAllowance.isVisible = false
+            }
+
+            val totalSeconds = decision.seconds
+            if (totalSeconds <= 0) {
+                updateOpenButton(0)
+                return@launch
+            }
+
             for (remaining in totalSeconds downTo 1) {
                 updateOpenButton(remaining)
                 delay(1000L)

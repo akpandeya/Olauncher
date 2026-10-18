@@ -181,6 +181,8 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateScreenTimeOnOff()
         populateDistractingApps()
         populatePauseBeforeApps()
+        populatePauseAllowance()
+        populatePauseEscalate()
         populateLockSettings()
         // Home button for recents feature disabled
         // populateHomeButtonRecents()
@@ -206,11 +208,19 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
 
     }
 
+    override fun onResume() {
+        super.onResume()
+        populateScreenTimeOnOff()
+        populatePauseAllowance()
+    }
+
     override fun onClick(view: View) {
         when (view.id) {
             R.id.olauncherHiddenApps -> showHiddenApps()
             R.id.distractingApps, R.id.distractingAppsTitle, R.id.distractingAppsLayout -> showDistractingAppsDialog()
             R.id.pauseBeforeAppsOnOff, R.id.pauseBeforeAppsTitle, R.id.pauseBeforeAppsLayout -> togglePauseBeforeApps()
+            R.id.pauseAllowance, R.id.pauseAllowanceTitle, R.id.pauseAllowanceLayout -> showPauseAllowanceMenu(binding.pauseAllowance)
+            R.id.pauseEscalateOnOff, R.id.pauseEscalateTitle, R.id.pauseEscalateLayout -> togglePauseEscalate()
             R.id.screenTimeOnOff -> viewModel.showDialog.postValue(Constants.Dialog.DIGITAL_WELLBEING)
             R.id.appInfo -> openAppInfo(requireContext(), Process.myUserHandle(), BuildConfig.APPLICATION_ID)
             R.id.setLauncher -> viewModel.resetLauncherLiveData.call()
@@ -305,6 +315,12 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.pauseBeforeAppsOnOff.setOnClickListener(this)
         binding.pauseBeforeAppsTitle.setOnClickListener(this)
         binding.pauseBeforeAppsLayout.setOnClickListener(this)
+        binding.pauseAllowance.setOnClickListener(this)
+        binding.pauseAllowanceTitle.setOnClickListener(this)
+        binding.pauseAllowanceLayout.setOnClickListener(this)
+        binding.pauseEscalateOnOff.setOnClickListener(this)
+        binding.pauseEscalateTitle.setOnClickListener(this)
+        binding.pauseEscalateLayout.setOnClickListener(this)
         binding.alignment.setOnClickListener(this)
         binding.shortcutIconsOnOff.setOnClickListener(this)
         binding.shortcutIconsOnOffTitle.setOnClickListener(this)
@@ -1186,6 +1202,55 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             onNeutral = {}
         )
         dialog.showRespectingStatusBar()
+    }
+
+    private fun populatePauseAllowance() {
+        val min = prefs.pauseAllowanceMin
+        binding.pauseAllowance.text = if (min <= 0 || !requireContext().appUsagePermissionGranted()) {
+            getString(R.string.off)
+        } else {
+            getString(R.string.pause_allowance_min, min)
+        }
+    }
+
+    private fun showPauseAllowanceMenu(anchor: View) {
+        val choices = listOf(0, 15, 30, 45, 60, 90, 120)
+        val items = choices.map { min ->
+            min to if (min == 0) getString(R.string.off) else getString(R.string.pause_allowance_min, min)
+        }
+        anchor.showPopupMenu(
+            configure = { menu ->
+                items.forEachIndexed { index, pair ->
+                    menu.add(Menu.NONE, index, index, pair.second)
+                }
+            }
+        ) { item ->
+            val chosen = items.getOrNull(item.itemId)?.first ?: return@showPopupMenu
+            if (chosen <= 0) {
+                prefs.pauseAllowanceMin = 0
+                populatePauseAllowance()
+                return@showPopupMenu
+            }
+
+            if (!requireContext().appUsagePermissionGranted()) {
+                prefs.pauseAllowanceMin = 0
+                populatePauseAllowance()
+                showFirstTimePausePermissionDialog()
+                return@showPopupMenu
+            }
+
+            prefs.pauseAllowanceMin = chosen
+            populatePauseAllowance()
+        }
+    }
+
+    private fun populatePauseEscalate() {
+        binding.pauseEscalateOnOff.text = getString(if (prefs.pauseEscalate) R.string.on else R.string.off)
+    }
+
+    private fun togglePauseEscalate() {
+        prefs.pauseEscalate = !prefs.pauseEscalate
+        populatePauseEscalate()
     }
 
     private fun showDistractingAppsDialog() {

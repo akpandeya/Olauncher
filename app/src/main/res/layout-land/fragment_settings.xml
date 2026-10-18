@@ -516,6 +516,60 @@
                 </FrameLayout>
 
                 <FrameLayout
+                    android:id="@+id/pauseAllowanceLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp">
+
+                    <TextView
+                        android:id="@+id/pauseAllowanceTitle"
+                        style="@style/TextSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:paddingVertical="8dp"
+                        android:text="@string/pause_daily_allowance"
+                        android:textColor="?attr/primaryColor" />
+
+                    <TextView
+                        android:id="@+id/pauseAllowance"
+                        style="@style/TextSmallBold"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end|bottom"
+                        android:layout_marginEnd="4dp"
+                        android:padding="8dp"
+                        tools:text="Off" />
+                </FrameLayout>
+
+                <FrameLayout
+                    android:id="@+id/pauseEscalateLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp">
+
+                    <TextView
+                        android:id="@+id/pauseEscalateTitle"
+                        style="@style/TextSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:paddingVertical="8dp"
+                        android:text="@string/pause_longer_with_each_open"
+                        android:textColor="?attr/primaryColor" />
+
+                    <TextView
+                        android:id="@+id/pauseEscalateOnOff"
+                        style="@style/TextSmallBold"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end|bottom"
+                        android:layout_marginEnd="4dp"
+                        android:padding="8dp"
+                        tools:text="Off" />
+                </FrameLayout>
+
+                <FrameLayout
                     android:id="@+id/screenTimeLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

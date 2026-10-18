@@ -32,4 +32,8 @@ object PauseFormatting {
         val times = formatTimes(openCount)
         return "Opened $times from Thumbline today"
     }
+
+    fun formatOverAllowanceLine(allowanceMin: Int): String {
+        return "Over today's $allowanceMin min allowance"
+    }
 }

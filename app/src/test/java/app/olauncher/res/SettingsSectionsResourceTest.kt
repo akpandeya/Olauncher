@@ -243,6 +243,8 @@ class SettingsSectionsResourceTest {
             // Section 4: Wellbeing
             assertTrue(sectionIds[4].contains("distractingAppsLayout"))
             assertTrue(sectionIds[4].contains("pauseBeforeAppsLayout"))
+            assertTrue(sectionIds[4].contains("pauseAllowanceLayout"))
+            assertTrue(sectionIds[4].contains("pauseEscalateLayout"))
             assertTrue(sectionIds[4].contains("screenTimeLayout"))
             assertTrue(sectionIds[4].contains("nudgesSection"))
             assertTrue(sectionIds[4].contains("nudgeWaterLayout"))
@@ -365,9 +367,15 @@ class SettingsSectionsResourceTest {
             "nudgeWaterTitle",
             "nudgesSection",
             "olauncherHiddenApps",
+            "pauseAllowance",
+            "pauseAllowanceLayout",
+            "pauseAllowanceTitle",
             "pauseBeforeAppsLayout",
             "pauseBeforeAppsOnOff",
             "pauseBeforeAppsTitle",
+            "pauseEscalateLayout",
+            "pauseEscalateOnOff",
+            "pauseEscalateTitle",
             "photoWallpaper",
             "photoWallpaperLayout",
             "photoWallpaperTitle",
