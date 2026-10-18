@@ -76,6 +76,7 @@ class Prefs(context: Context) : PauseLogStorage {
         const val COMMIT_LOCK = "COMMIT_LOCK"
         const val SEARCH_ENGINE = "SEARCH_ENGINE"
         const val SEARCH_ENGINE_CUSTOM_URL = "SEARCH_ENGINE_CUSTOM_URL"
+        const val DRAWER_NEW_FIRST = "DRAWER_NEW_FIRST"
 
         fun nudgeDoneKey(type: String): String = "$NUDGE_DONE_PREFIX${type.uppercase()}"
 
@@ -252,6 +253,10 @@ class Prefs(context: Context) : PauseLogStorage {
     var drawerBottomSearch: Boolean
         get() = prefs.getBoolean(DRAWER_BOTTOM_SEARCH, true)
         set(value) = prefs.edit { putBoolean(DRAWER_BOTTOM_SEARCH, value).apply() }
+
+    var drawerNewFirst: Boolean
+        get() = prefs.getBoolean(DRAWER_NEW_FIRST, true)
+        set(value) = prefs.edit { putBoolean(DRAWER_NEW_FIRST, value).apply() }
 
     var keyboardMessageShown: Boolean
         get() = prefs.getBoolean(KEYBOARD_MESSAGE, false)

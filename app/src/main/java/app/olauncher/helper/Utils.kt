@@ -84,8 +84,9 @@ suspend fun getAppsList(
                         key = collator.getCollationKey(app.label.toString()),
                         appPackage = app.applicationInfo.packageName,
                         activityClassName = app.componentName.className,
-                        isNew = (System.currentTimeMillis() - app.firstInstallTime) < Constants.ONE_HOUR_IN_MILLIS,
-                        user = profile
+                        isNew = (System.currentTimeMillis() - app.firstInstallTime) < Constants.NEW_APP_WINDOW_MILLIS,
+                        user = profile,
+                        firstInstallTime = app.firstInstallTime
                     )
 
                     // if the current app is not OLauncher
@@ -238,7 +239,8 @@ suspend fun getPrivateSpaceApps(
                         appPackage = app.applicationInfo.packageName,
                         activityClassName = app.componentName.className,
                         isNew = false,
-                        user = privateSpaceHandle
+                        user = privateSpaceHandle,
+                        firstInstallTime = app.firstInstallTime
                     )
                 )
             }

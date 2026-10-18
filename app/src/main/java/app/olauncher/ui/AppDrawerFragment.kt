@@ -28,6 +28,7 @@ import app.olauncher.data.Prefs
 import app.olauncher.data.SearchEngine
 import app.olauncher.data.SearchTarget
 import app.olauncher.databinding.FragmentAppDrawerBinding
+import app.olauncher.helper.DrawerOrdering
 import app.olauncher.helper.DrawerScrollHelper
 import app.olauncher.helper.deletePinnedShortcut
 import app.olauncher.helper.hideKeyboard
@@ -381,7 +382,8 @@ class AppDrawerFragment : BaseFragment() {
             }
         }
 
-        adapter.setAppList(combined)
+        val ordered = DrawerOrdering.order(combined, prefs.drawerNewFirst)
+        adapter.setAppList(ordered.toMutableList())
         adapter.filter.filter(binding.search.query)
     }
 
@@ -454,6 +456,7 @@ class AppDrawerFragment : BaseFragment() {
     override fun onStart() {
         super.onStart()
         cachedIsCjkKeyboard = null
+        if (currentAppList != null) updateCombinedAppList()
         binding.search.showKeyboard(prefs.autoShowKeyboard)
     }
 
