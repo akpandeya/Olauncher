@@ -99,18 +99,33 @@ object NudgeScheduler {
     }
 
     /**
-     * Ensures all enabled nudge types are scheduled using [ExistingWorkPolicy.KEEP].
+     * Ensures all nudge types match current preferences (schedules enabled nudges with
+     * [policy] and cancels disabled nudges). Defaults to [ExistingWorkPolicy.KEEP] so
+     * app launches do not push pending nudge timers back.
      */
-    fun ensureAll(context: Context) {
+    fun ensureAll(
+        context: Context,
+        policy: ExistingWorkPolicy = ExistingWorkPolicy.KEEP,
+    ) {
         val prefs = Prefs(context)
         val supportedTypes = listOf(Nudges.WATER, Nudges.WALK)
         for (type in supportedTypes) {
             if (intervalMinForType(prefs, type) > 0) {
-                schedule(context, type, policy = ExistingWorkPolicy.KEEP)
+                schedule(context, type, policy = policy)
+            } else {
+                cancel(context, type)
+                Nudges.cancel(context, type)
             }
         }
         if (prefs.nudgeSocialThresholdMin > 0) {
-            scheduleSocial(context, ExistingPeriodicWorkPolicy.KEEP)
+            scheduleSocial(
+                context,
+                if (policy == ExistingWorkPolicy.REPLACE) ExistingPeriodicWorkPolicy.UPDATE
+                else ExistingPeriodicWorkPolicy.KEEP,
+            )
+        } else {
+            cancel(context, Nudges.SOCIAL)
+            Nudges.cancel(context, Nudges.SOCIAL)
         }
     }
 
@@ -118,16 +133,7 @@ object NudgeScheduler {
      * Re-schedules all enabled nudge types using [ExistingWorkPolicy.REPLACE].
      */
     fun rescheduleAll(context: Context) {
-        val prefs = Prefs(context)
-        val supportedTypes = listOf(Nudges.WATER, Nudges.WALK)
-        for (type in supportedTypes) {
-            if (intervalMinForType(prefs, type) > 0) {
-                schedule(context, type, policy = ExistingWorkPolicy.REPLACE)
-            }
-        }
-        if (prefs.nudgeSocialThresholdMin > 0) {
-            scheduleSocial(context, ExistingPeriodicWorkPolicy.KEEP)
-        }
+        ensureAll(context, ExistingWorkPolicy.REPLACE)
     }
 
     fun intervalMinForType(prefs: Prefs, type: String): Int = when (type) {

@@ -1,0 +1,46 @@
+{
+  "appVersion": "v6.9.17-tl.113",
+  "format": "thumbline-backup",
+  "files": {
+    "word_progress.json": "{\"day\":1,\"streak\":5}",
+    "saved_items.json": "[{\"id\":1,\"url\":\"https://example.com\",\"title\":\"Example\"}]"
+  },
+  "version": 1,
+  "prefs": {
+    "app_theme": {
+      "t": "i",
+      "v": 2
+    },
+    "first_open_time": {
+      "t": "l",
+      "v": 1700000000000
+    },
+    "home_apps_num": {
+      "t": "i",
+      "v": 6
+    },
+    "text_size_scale": {
+      "t": "f",
+      "v": 1.5
+    },
+    "auto_show_keyboard": {
+      "t": "b",
+      "v": true
+    },
+    "alignment": {
+      "t": "i",
+      "v": 8388611
+    },
+    "app_name_1": {
+      "t": "s",
+      "v": "Phone"
+    },
+    "hidden_apps": {
+      "t": "ss",
+      "v": [
+        "com.example.hidden1",
+        "com.example.hidden2"
+      ]
+    }
+  }
+}

@@ -73,6 +73,7 @@ fun Context.createDialog(
     @StringRes title: Int,
     @StringRes action: Int,
     @StringRes message: Int = 0,
+    messageText: CharSequence? = null,
     @StringRes neutral: Int = 0,
     onNeutral: () -> Unit = {},
     onAction: () -> Unit = {},
@@ -84,6 +85,9 @@ fun Context.createDialog(
     binding.tvAction.setText(action)
     if (message != 0) {
         binding.tvMessage.setText(message)
+        binding.tvMessage.isVisible = true
+    } else if (messageText != null) {
+        binding.tvMessage.text = messageText
         binding.tvMessage.isVisible = true
     }
     if (neutral != 0) {
@@ -115,6 +119,18 @@ fun Context.showMessageDialog(
     onAction: () -> Unit,
 ): OlDialog {
     val dialog = createDialog(title, action, message = message, onAction = onAction)
+    dialog.showRespectingStatusBar()
+    return dialog
+}
+
+/** Title with a close icon, a dynamic text message and a single action. */
+fun Context.showMessageDialog(
+    @StringRes title: Int,
+    message: CharSequence,
+    @StringRes action: Int,
+    onAction: () -> Unit,
+): OlDialog {
+    val dialog = createDialog(title, action, messageText = message, onAction = onAction)
     dialog.showRespectingStatusBar()
     return dialog
 }
