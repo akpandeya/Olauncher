@@ -308,7 +308,10 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         binding.shortcutsLayout.removeAllViews()
         for (slot in 1..prefs.shortcutCount) {
             val imageView = ImageView(context).apply {
-                layoutParams = LinearLayout.LayoutParams(48.dpToPx(), 48.dpToPx())
+                layoutParams = LinearLayout.LayoutParams(
+                    ShortcutIconRenderer.VIEW_SIZE_DP.dpToPx(),
+                    ShortcutIconRenderer.VIEW_SIZE_DP.dpToPx(),
+                )
                 val typedValue = TypedValue()
                 context.theme.resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, typedValue, true)
                 setBackgroundResource(typedValue.resourceId)
@@ -346,12 +349,12 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     }
 
     private fun bindShortcutIcon(context: Context, view: ImageView, slot: Int) {
-        val (drawable, paddingPx) = ShortcutIconRenderer.render(context, slot, prefs)
+        val (drawable, paddingPx, isAppIcon) = ShortcutIconRenderer.render(context, slot, prefs)
         view.setPadding(paddingPx, paddingPx, paddingPx, paddingPx)
         view.setImageDrawable(drawable)
-        view.contentDescription = ShortcutIconRenderer.getLabel(context, slot, prefs, paddingPx)
+        view.contentDescription = ShortcutIconRenderer.getLabel(context, slot, prefs, isAppIcon)
         // Extra slots (7..MAX_SHORTCUT_SLOTS) show a faint placeholder until an app icon resolves
-        val isPlaceholder = slot > Constants.SHORTCUT_SLOTS && !ShortcutIconRenderer.isAppIcon(paddingPx)
+        val isPlaceholder = slot > Constants.SHORTCUT_SLOTS && !isAppIcon
         view.alpha = if (isPlaceholder) 0.4f else 1.0f
     }
 
