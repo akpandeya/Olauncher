@@ -51,6 +51,24 @@ class TodayCardTest {
         assertEquals(R.string.words, words?.titleRes)
     }
 
+    @Test
+    fun `today cards list contains next up card`() {
+        val nextUp = TodayCards.all.firstOrNull { it.key == app.olauncher.ui.today.cards.NextUpCard.KEY }
+        assertNotNull(nextUp)
+        assertEquals("next_up", nextUp?.key)
+        assertEquals(R.string.next_up, nextUp?.titleRes)
+        assertEquals(false, nextUp?.defaultEnabled)
+    }
+
+    @Test
+    fun `all other today cards default to enabled true`() {
+        val otherCards = TodayCards.all.filter { it.key != app.olauncher.ui.today.cards.NextUpCard.KEY }
+        assertTrue(otherCards.isNotEmpty())
+        for (card in otherCards) {
+            assertTrue("Expected ${card.key} defaultEnabled to be true", card.defaultEnabled)
+        }
+    }
+
 
     @Test
     fun `swipe right action constants match spec`() {
@@ -80,6 +98,7 @@ class TodayCardTest {
 
         assertEquals("test_card", card.key)
         assertEquals(0, card.titleRes)
+        assertEquals(true, card.defaultEnabled)
         card.onResume()
         assertTrue(resumed)
     }

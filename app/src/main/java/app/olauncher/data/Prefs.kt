@@ -7,6 +7,8 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.edit
 
 import java.util.Locale
+import app.olauncher.ui.today.TodayCard
+import app.olauncher.ui.today.TodayCards
 
 class Prefs(context: Context) {
     companion object {
@@ -883,7 +885,12 @@ class Prefs(context: Context) {
         return count
     }
 
-    fun isTodayCardEnabled(key: String): Boolean = prefs.getBoolean("$TODAY_CARD_PREFIX$key", true)
+    fun isTodayCardEnabled(key: String): Boolean {
+        val default = TodayCards.all.firstOrNull { it.key == key }?.defaultEnabled ?: true
+        return prefs.getBoolean("$TODAY_CARD_PREFIX$key", default)
+    }
+
+    fun isTodayCardEnabled(card: TodayCard): Boolean = isTodayCardEnabled(card.key)
 
     fun setTodayCardEnabled(key: String, enabled: Boolean) = prefs.edit {
         putBoolean("$TODAY_CARD_PREFIX$key", enabled).apply()

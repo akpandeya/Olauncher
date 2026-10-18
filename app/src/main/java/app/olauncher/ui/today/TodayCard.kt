@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import app.olauncher.ui.today.cards.NextUpCard
 import app.olauncher.ui.today.cards.SavedCard
 import app.olauncher.ui.today.cards.WeatherCard
 import app.olauncher.ui.today.cards.WellbeingCard
@@ -18,6 +19,7 @@ import app.olauncher.ui.today.cards.WordsCard
 interface TodayCard {
     val key: String
     val titleRes: Int
+    val defaultEnabled: Boolean get() = true
     fun isAvailable(context: Context): Boolean = true
     fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View
     fun onResume() {}
@@ -27,6 +29,6 @@ interface TodayCard {
 }
 
 object TodayCards {
-    val all: List<TodayCard> = listOf(WeatherCard, SavedCard, WellbeingCard, WordsCard)
+    val all: List<TodayCard> = listOf(WeatherCard, NextUpCard, SavedCard, WellbeingCard, WordsCard)
 }
 
