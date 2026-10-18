@@ -61,6 +61,15 @@ class TodayCardTest {
     }
 
     @Test
+    fun `today cards list contains held card`() {
+        val held = TodayCards.all.firstOrNull { it.key == app.olauncher.ui.today.cards.HeldCard.KEY }
+        assertNotNull(held)
+        assertEquals("held", held?.key)
+        assertEquals(R.string.held, held?.titleRes)
+        assertEquals(true, held?.defaultEnabled)
+    }
+
+    @Test
     fun `today cards list contains week card`() {
         val week = TodayCards.all.firstOrNull { it.key == app.olauncher.ui.today.cards.WeekCard.KEY }
         assertNotNull(week)
