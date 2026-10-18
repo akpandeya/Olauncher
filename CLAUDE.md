@@ -19,7 +19,7 @@ Thumbline is a minimalist Android launcher forked from Olauncher (licensed under
 - Never regenerate or modify `app/debug.keystore`. Never change `applicationId`, `applicationIdSuffix` or `namespace`.
 - Never rename or remove existing SharedPreferences keys, or the prefs file name `app.olauncher`. Add new keys only.
 - Keep the GPLv3 licence and the Olauncher credit.
-- No new network access, no analytics, no new third-party runtime dependencies without the epic saying so.
+- No analytics, no new third-party runtime dependencies without the epic saying so.
 - Runtime permissions are requested only when the feature is first switched on, with a one-line explanation. A denial must leave the app working.
 - New user-facing strings go in `app/src/main/res/values/strings.xml` only (other locales fall back to English).
 - Put logic in Context-free Kotlin where possible and cover it with JUnit tests in `app/src/test/java/app/olauncher/`.
