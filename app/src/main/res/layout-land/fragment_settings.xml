@@ -756,8 +756,7 @@
                     android:id="@+id/exportBackupLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:layout_marginBottom="4dp">
+                    android:layout_marginTop="12dp">
 
                     <TextView
                         android:id="@+id/exportBackup"
@@ -767,6 +766,24 @@
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/export_backup"
+                        android:textColor="?attr/primaryColor" />
+                </FrameLayout>
+
+                <FrameLayout
+                    android:id="@+id/importBackupLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="4dp">
+
+                    <TextView
+                        android:id="@+id/importBackup"
+                        style="@style/TextSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:paddingVertical="8dp"
+                        android:text="@string/import_backup"
                         android:textColor="?attr/primaryColor" />
                 </FrameLayout>
 

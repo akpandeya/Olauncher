@@ -30,6 +30,7 @@ import app.olauncher.wellbeing.NudgeScheduler
 import app.olauncher.wellbeing.Nudges
 import app.olauncher.wellbeing.NotificationPermission
 import app.olauncher.data.store.Backup
+import app.olauncher.data.store.BackupData
 import app.olauncher.BuildConfig
 import app.olauncher.MainViewModel
 import app.olauncher.R
@@ -90,6 +91,14 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     ) { uri ->
         if (uri != null) {
             exportBackup(uri)
+        }
+    }
+
+    private val importBackupLauncher = registerForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            handleImportBackup(uri)
         }
     }
 
@@ -169,6 +178,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.nudgeSocial, R.id.nudgeSocialTitle, R.id.nudgeSocialLayout -> showNudgeSocialMenu(binding.nudgeSocial)
             R.id.nudgeActiveHours, R.id.nudgeActiveHoursTitle, R.id.nudgeActiveHoursLayout -> showActiveHoursDialog()
             R.id.exportBackup, R.id.exportBackupLayout -> launchExportBackup()
+            R.id.importBackup, R.id.importBackupLayout -> launchImportBackup()
             R.id.footer -> requireContext().openUrl(Constants.URL_SOURCE)
         }
     }
@@ -237,6 +247,8 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.nudgeActiveHoursLayout.setOnClickListener(this)
         binding.exportBackup.setOnClickListener(this)
         binding.exportBackupLayout.setOnClickListener(this)
+        binding.importBackup.setOnClickListener(this)
+        binding.importBackupLayout.setOnClickListener(this)
         binding.appThemeText.setOnClickListener(this)
         binding.textSizeValue.setOnClickListener(this)
         binding.boldFont.setOnClickListener(this)
@@ -1311,6 +1323,68 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             }
             withContext(Dispatchers.Main) {
                 appContext.showToast(if (success) R.string.backup_exported else R.string.backup_export_failed)
+            }
+        }
+    }
+
+    private fun launchImportBackup() {
+        importBackupLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
+    }
+
+    private fun handleImportBackup(uri: Uri) {
+        val appContext = context?.applicationContext ?: return
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            val backupData = try {
+                Backup.readBackup(appContext, uri)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                null
+            }
+            withContext(Dispatchers.Main) {
+                if (!isAdded) return@withContext
+                if (backupData == null) {
+                    appContext.showToast(R.string.not_a_thumbline_backup)
+                    return@withContext
+                }
+                showImportConfirmationDialog(backupData)
+            }
+        }
+    }
+
+    private fun showImportConfirmationDialog(backupData: BackupData) {
+        val message = if (backupData.appVersion.isNotBlank()) {
+            getString(R.string.backup_restore_confirm, backupData.appVersion)
+        } else {
+            getString(R.string.backup_restore_confirm_no_version)
+        }
+        dialog?.dismiss()
+        dialog = requireContext().showMessageDialog(
+            title = R.string.import_backup,
+            message = message,
+            action = R.string.replace,
+        ) {
+            confirmImportBackup(backupData)
+        }
+    }
+
+    private fun confirmImportBackup(backupData: BackupData) {
+        val appContext = context?.applicationContext ?: return
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                Backup.restore(appContext, backupData)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                withContext(Dispatchers.Main) {
+                    if (isAdded) {
+                        appContext.showToast(R.string.not_a_thumbline_backup)
+                    }
+                }
+                return@launch
+            }
+            withContext(Dispatchers.Main) {
+                if (!isAdded) return@withContext
+                NudgeScheduler.ensureAll(appContext)
+                activity?.recreate()
             }
         }
     }

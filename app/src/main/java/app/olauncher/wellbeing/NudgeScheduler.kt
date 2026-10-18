@@ -99,18 +99,28 @@ object NudgeScheduler {
     }
 
     /**
-     * Ensures all enabled nudge types are scheduled using [ExistingWorkPolicy.KEEP].
+     * Ensures all nudge types match current preferences (re-schedules enabled nudges
+     * using [ExistingWorkPolicy.REPLACE] and cancels disabled nudges).
      */
-    fun ensureAll(context: Context) {
+    fun ensureAll(
+        context: Context,
+        policy: ExistingWorkPolicy = ExistingWorkPolicy.REPLACE,
+    ) {
         val prefs = Prefs(context)
         val supportedTypes = listOf(Nudges.WATER, Nudges.WALK)
         for (type in supportedTypes) {
             if (intervalMinForType(prefs, type) > 0) {
-                schedule(context, type, policy = ExistingWorkPolicy.KEEP)
+                schedule(context, type, policy = policy)
+            } else {
+                cancel(context, type)
+                Nudges.cancel(context, type)
             }
         }
         if (prefs.nudgeSocialThresholdMin > 0) {
-            scheduleSocial(context, ExistingPeriodicWorkPolicy.KEEP)
+            scheduleSocial(context, ExistingPeriodicWorkPolicy.UPDATE)
+        } else {
+            cancel(context, Nudges.SOCIAL)
+            Nudges.cancel(context, Nudges.SOCIAL)
         }
     }
 
@@ -118,16 +128,7 @@ object NudgeScheduler {
      * Re-schedules all enabled nudge types using [ExistingWorkPolicy.REPLACE].
      */
     fun rescheduleAll(context: Context) {
-        val prefs = Prefs(context)
-        val supportedTypes = listOf(Nudges.WATER, Nudges.WALK)
-        for (type in supportedTypes) {
-            if (intervalMinForType(prefs, type) > 0) {
-                schedule(context, type, policy = ExistingWorkPolicy.REPLACE)
-            }
-        }
-        if (prefs.nudgeSocialThresholdMin > 0) {
-            scheduleSocial(context, ExistingPeriodicWorkPolicy.KEEP)
-        }
+        ensureAll(context, ExistingWorkPolicy.REPLACE)
     }
 
     fun intervalMinForType(prefs: Prefs, type: String): Int = when (type) {
