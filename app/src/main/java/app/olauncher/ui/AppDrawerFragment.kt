@@ -7,6 +7,7 @@ import android.text.Spannable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowInsets
 import android.view.animation.AnimationUtils
 import android.view.inputmethod.BaseInputConnection
 import android.view.inputmethod.InputMethodManager
@@ -109,6 +110,21 @@ class AppDrawerFragment : BaseFragment() {
         binding.root.addView(rv)
         binding.root.addView(searchContainer)
         binding.root.layoutTransition = transition
+
+        // The activity is edge-to-edge, so the window is not resized for the keyboard.
+        // Pad the drawer by the IME inset to keep the bottom search row above the keyboard.
+        binding.root.setOnApplyWindowInsetsListener { root, insets ->
+            val imeBottom = insets.getInsets(WindowInsets.Type.ime()).bottom
+            val padding = DrawerScrollHelper.imeBottomPadding(
+                drawerBottomSearch = true,
+                imeBottom = imeBottom,
+                searchBottomMargin = originalBottomMargin,
+            )
+            if (root.paddingBottom != padding)
+                root.setPadding(root.paddingLeft, root.paddingTop, root.paddingRight, padding)
+            insets
+        }
+        binding.root.requestApplyInsets()
     }
 
     private fun initViews() {
