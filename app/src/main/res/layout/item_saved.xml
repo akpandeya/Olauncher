@@ -15,12 +15,12 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ellipsize="end"
-        android:maxLines="2"
+        android:maxLines="1"
         tools:text="Example Article Title" />
 
     <TextView
         android:id="@+id/tvSubtitle"
-        style="@style/TextSmall"
+        style="@style/TextSmallLight"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"

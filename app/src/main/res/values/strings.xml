@@ -275,7 +275,7 @@
     <string name="not_now_de" translatable="false">Jetzt nicht</string>
     <string name="words">Words</string>
     <string name="words_empty_state">Select a word in any app, then Save word</string>
-    <string name="words_all_done">All done for today · %1$s · %2$d learned</string>
+    <string name="words_all_done">All done for today · %1$s</string>
     <string name="words_footer">%1$s · %2$d due · %3$d learned</string>
     <string name="words_count_single">1 word</string>
     <string name="words_count_plural">%d words</string>
@@ -287,6 +287,16 @@
     <string name="words_delete">Delete</string>
     <string name="words_delete_confirm">Delete “%s”?</string>
     <string name="words_meaning_hint">Meaning</string>
+    <string name="words_edit">Edit word</string>
+    <string name="words_word_hint">Word</string>
+    <string name="words_look_up_again">Look up again</string>
+    <string name="words_looking_up">Looking it up on Wiktionary</string>
+    <string name="words_open_wiktionary">Open on Wiktionary</string>
+    <string name="words_status_due">Due today</string>
+    <string name="words_status_due_in">Due in %d d</string>
+    <string name="words_status_learned">Learned</string>
+    <string name="words_source_wiktionary">From Wiktionary. Edit it to make it yours.</string>
+    <string name="words_source_user">Your own meaning. Clear it to look it up again.</string>
     <string name="save">Save</string>
 </resources>
 

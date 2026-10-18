@@ -1,0 +1,109 @@
+package app.olauncher.data.store
+
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class WordEditTest {
+
+    private val wiktionaryWord = Word(
+        id = 1L,
+        text = "ging",
+        meaning = "simple past of gehen",
+        meaningSource = "wiktionary",
+        dueDay = 100L,
+        addedAt = 10L
+    )
+
+    @Test
+    fun `editing the meaning makes it the user's own`() {
+        val outcome = WordEdit.apply(wiktionaryWord, "ging", "went")
+        assertEquals("went", outcome.word.meaning)
+        assertEquals("user", outcome.word.meaningSource)
+        assertFalse(outcome.needsLookup)
+    }
+
+    @Test
+    fun `new spelling with untouched Wiktionary meaning asks for a fresh lookup`() {
+        val outcome = WordEdit.apply(wiktionaryWord, " gehen ", "simple past of gehen")
+        assertEquals("gehen", outcome.word.text)
+        assertEquals("", outcome.word.meaning)
+        assertEquals("", outcome.word.meaningSource)
+        assertTrue(outcome.needsLookup)
+    }
+
+    @Test
+    fun `new spelling keeps a meaning the user wrote`() {
+        val own = wiktionaryWord.copy(meaning = "went", meaningSource = "user")
+        val outcome = WordEdit.apply(own, "gehen", "went")
+        assertEquals("gehen", outcome.word.text)
+        assertEquals("went", outcome.word.meaning)
+        assertEquals("user", outcome.word.meaningSource)
+        assertFalse(outcome.needsLookup)
+    }
+
+    @Test
+    fun `clearing the meaning hands it back to Wiktionary`() {
+        val own = wiktionaryWord.copy(meaning = "went", meaningSource = "user")
+        val outcome = WordEdit.apply(own, "ging", "  ")
+        assertEquals("", outcome.word.meaning)
+        assertEquals("", outcome.word.meaningSource)
+        assertTrue(outcome.needsLookup)
+    }
+
+    @Test
+    fun `blank text keeps the old word and unchanged edit changes nothing`() {
+        val outcome = WordEdit.apply(wiktionaryWord, "", "simple past of gehen")
+        assertEquals(wiktionaryWord, outcome.word)
+        assertFalse(outcome.needsLookup)
+    }
+
+    @Test
+    fun `edits keep the learning progress`() {
+        val progressed = wiktionaryWord.copy(box = 3, dueDay = 120L)
+        val outcome = WordEdit.apply(progressed, "gehen", "to go")
+        assertEquals(3, outcome.word.box)
+        assertEquals(120L, outcome.word.dueDay)
+        assertEquals(progressed.id, outcome.word.id)
+    }
+
+    @Test
+    fun `reset clears meaning and source`() {
+        val reset = WordEdit.resetMeaning(wiktionaryWord.copy(meaningSource = "user"))
+        assertEquals("", reset.meaning)
+        assertEquals("", reset.meaningSource)
+        assertEquals("ging", reset.text)
+    }
+
+    @Test
+    fun `wiktionary url points at the German section`() {
+        assertEquals("https://en.wiktionary.org/wiki/ging#German", WordEdit.wiktionaryUrl("ging"))
+        assertEquals(
+            "https://en.wiktionary.org/wiki/Gr%C3%BC%C3%9F_Gott#German",
+            WordEdit.wiktionaryUrl(" Grüß Gott ")
+        )
+    }
+
+    @Test
+    fun `status reports due, due in days and learned`() {
+        val today = 100L
+        assertEquals(WordsListLogic.Status.Due, WordsListLogic.status(wiktionaryWord.copy(dueDay = 99L), today))
+        assertEquals(WordsListLogic.Status.Due, WordsListLogic.status(wiktionaryWord, today))
+        assertEquals(WordsListLogic.Status.DueIn(4), WordsListLogic.status(wiktionaryWord.copy(dueDay = 104L), today))
+        assertEquals(
+            WordsListLogic.Status.Learned,
+            WordsListLogic.status(wiktionaryWord.copy(dueDay = 50L, learnedAt = 90L), today)
+        )
+    }
+
+    @Test
+    fun `sort puts due words first and learned words last`() {
+        val learned = wiktionaryWord.copy(id = 1, text = "a", dueDay = 10L, learnedAt = 90L)
+        val later = wiktionaryWord.copy(id = 2, text = "b", dueDay = 108L)
+        val due = wiktionaryWord.copy(id = 3, text = "c", dueDay = 100L)
+        val dueNewer = wiktionaryWord.copy(id = 4, text = "d", dueDay = 100L, addedAt = 20L)
+        val sorted = WordsListLogic.sort(listOf(learned, later, due, dueNewer))
+        assertEquals(listOf("d", "c", "b", "a"), sorted.map { it.text })
+    }
+}

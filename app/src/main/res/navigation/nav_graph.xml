@@ -108,6 +108,20 @@
         android:id="@+id/todayFragment"
         android:name="app.olauncher.ui.today.TodayFragment"
         android:label="TodayFragment"
-        tools:layout="@layout/fragment_today" />
+        tools:layout="@layout/fragment_today">
+        <action
+            android:id="@+id/action_todayFragment_to_wordsFragment"
+            app:destination="@id/wordsFragment"
+            app:enterAnim="@anim/fade_enter"
+            app:exitAnim="@anim/fade_exit"
+            app:popEnterAnim="@anim/fade_enter"
+            app:popExitAnim="@anim/fade_exit" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/wordsFragment"
+        android:name="app.olauncher.ui.words.WordsFragment"
+        android:label="WordsFragment"
+        tools:layout="@layout/fragment_words" />
 
 </navigation>
