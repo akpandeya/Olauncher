@@ -58,6 +58,7 @@ import app.olauncher.helper.isTablet
 import app.olauncher.helper.openAppInfo
 import app.olauncher.helper.openUrl
 import app.olauncher.helper.setPlainWallpaper
+import app.olauncher.helper.WordCaptureActivity
 import app.olauncher.helper.OlDialog
 import app.olauncher.helper.showMessageDialog
 import app.olauncher.helper.showPopupMenu
@@ -1395,6 +1396,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             }
             withContext(Dispatchers.Main) {
                 if (!isAdded) return@withContext
+                WordCaptureActivity.setEnabled(appContext, prefs.germanEnabled)
                 NudgeScheduler.rescheduleAll(appContext)
                 activity?.recreate()
             }
@@ -1403,6 +1405,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
 
     private fun toggleGerman() {
         prefs.germanEnabled = !prefs.germanEnabled
+        WordCaptureActivity.setEnabled(requireContext(), prefs.germanEnabled)
         populateGerman()
     }
 
