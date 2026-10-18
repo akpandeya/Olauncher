@@ -333,7 +333,6 @@
     <string name="next_up">Next up</string>
     <string name="calendar_permission_message">Thumbline reads your calendar on this phone to show what\'s next</string>
     <string name="calendar_off_for_thumbline">Calendar is off for Thumbline</string>
-    <string name="next_up_empty">Nothing in the next two days</string>
     <string name="nothing_in_the_next_two_days">Nothing in the next two days</string>
     <string name="next_up_tomorrow">Tomorrow</string>
     <string name="next_up_now">Now · %1$s (until %2$s)</string>
