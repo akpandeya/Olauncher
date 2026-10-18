@@ -231,5 +231,11 @@
     <string name="nudge_start_time">Start time</string>
     <string name="nudge_end_time">End time</string>
     <string name="nudge_active_hours_invalid">Start time must be before end time</string>
+    <string name="nudge_social">Put the phone down</string>
+    <string name="nudge_social_after_min">after %d min of distracting apps</string>
+    <string name="nudge_social_notification">%1$d min on %2$s today. Put it down?</string>
+    <string name="nudge_social_notification_no_apps">%1$d min on distracting apps today. Put it down?</string>
+    <string name="nudge_social_usage_access_message">Allow usage access so Thumbline can measure distracting-app time</string>
+    <string name="usage_access_off_for_thumbline">Usage access is off for Thumbline</string>
 </resources>
 

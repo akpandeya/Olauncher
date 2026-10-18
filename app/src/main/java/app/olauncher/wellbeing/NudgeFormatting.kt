@@ -9,6 +9,7 @@ object NudgeFormatting {
 
     val WATER_INTERVAL_OPTIONS_MIN = listOf(0, 60, 90, 120, 180)
     val WALK_INTERVAL_OPTIONS_MIN = listOf(0, 120, 180, 240)
+    val SOCIAL_THRESHOLD_OPTIONS_MIN = listOf(0, 15, 30, 45, 60, 90)
 
     fun formatWaterInterval(intervalMin: Int): String = when (intervalMin) {
         60 -> "every 1 h"
@@ -23,6 +24,19 @@ object NudgeFormatting {
         180 -> "every 3 h"
         240 -> "every 4 h"
         else -> "Off"
+    }
+
+    fun formatSocialThreshold(thresholdMin: Int): String = when (thresholdMin) {
+        15, 30, 45, 60, 90 -> "after $thresholdMin min of distracting apps"
+        else -> "Off"
+    }
+
+    fun socialNotificationText(minutes: Int, appNames: String = ""): String {
+        return if (appNames.isNotBlank()) {
+            "$minutes min on $appNames today. Put it down?"
+        } else {
+            "$minutes min on distracting apps today. Put it down?"
+        }
     }
 
     fun formatActiveHours(startMin: Int, endMin: Int): String {

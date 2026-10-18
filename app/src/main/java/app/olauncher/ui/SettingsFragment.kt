@@ -57,6 +57,7 @@ import app.olauncher.helper.openAppInfo
 import app.olauncher.helper.openUrl
 import app.olauncher.helper.setPlainWallpaper
 import app.olauncher.helper.OlDialog
+import app.olauncher.helper.showMessageDialog
 import app.olauncher.helper.showPopupMenu
 import app.olauncher.helper.showStatusBar
 import app.olauncher.helper.showToast
@@ -121,6 +122,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateTodayCards()
         populateNudgeWater()
         populateNudgeWalk()
+        populateNudgeSocial()
         populateActiveHours()
         populateFooter()
         initClickListeners()
@@ -155,6 +157,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.todayCards, R.id.todayCardsTitle, R.id.todayCardsLayout -> showTodayCardsDialog()
             R.id.nudgeWater, R.id.nudgeWaterTitle, R.id.nudgeWaterLayout -> showNudgeWaterMenu(binding.nudgeWater)
             R.id.nudgeWalk, R.id.nudgeWalkTitle, R.id.nudgeWalkLayout -> showNudgeWalkMenu(binding.nudgeWalk)
+            R.id.nudgeSocial, R.id.nudgeSocialTitle, R.id.nudgeSocialLayout -> showNudgeSocialMenu(binding.nudgeSocial)
             R.id.nudgeActiveHours, R.id.nudgeActiveHoursTitle, R.id.nudgeActiveHoursLayout -> showActiveHoursDialog()
             R.id.footer -> requireContext().openUrl(Constants.URL_SOURCE)
         }
@@ -216,6 +219,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.nudgeWalk.setOnClickListener(this)
         binding.nudgeWalkTitle.setOnClickListener(this)
         binding.nudgeWalkLayout.setOnClickListener(this)
+        binding.nudgeSocial.setOnClickListener(this)
+        binding.nudgeSocialTitle.setOnClickListener(this)
+        binding.nudgeSocialLayout.setOnClickListener(this)
         binding.nudgeActiveHours.setOnClickListener(this)
         binding.nudgeActiveHoursTitle.setOnClickListener(this)
         binding.nudgeActiveHoursLayout.setOnClickListener(this)
@@ -1141,6 +1147,86 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                     }
                 }
                 requireContext().showToast(R.string.notifications_off_for_thumbline)
+            }
+        }
+    }
+
+    private fun populateNudgeSocial() {
+        binding.nudgeSocial.text = formatSocialThreshold(prefs.nudgeSocialThresholdMin)
+    }
+
+    private fun formatSocialThreshold(thresholdMin: Int): String = when (thresholdMin) {
+        15, 30, 45, 60, 90 -> getString(R.string.nudge_social_after_min, thresholdMin)
+        else -> getString(R.string.off)
+    }
+
+    private fun showNudgeSocialMenu(anchor: View) {
+        val thresholds = listOf(0, 15, 30, 45, 60, 90)
+        val items = thresholds.map { min ->
+            min to if (min == 0) getString(R.string.off) else getString(R.string.nudge_social_after_min, min)
+        }
+        anchor.showPopupMenu(
+            configure = { menu ->
+                items.forEachIndexed { index, pair ->
+                    menu.add(Menu.NONE, index, index, pair.second)
+                }
+            }
+        ) { item ->
+            val chosen = items.getOrNull(item.itemId)?.first ?: return@showPopupMenu
+            updateSocialNudgeThreshold(chosen)
+        }
+    }
+
+    private fun updateSocialNudgeThreshold(thresholdMin: Int) {
+        if (thresholdMin <= 0) {
+            prefs.nudgeSocialThresholdMin = 0
+            prefs.nudgeSocialLastBucket = -1
+            NudgeScheduler.cancel(requireContext(), Nudges.SOCIAL)
+            Nudges.cancel(requireContext(), Nudges.SOCIAL)
+            populateNudgeSocial()
+            return
+        }
+
+        NotificationPermission.request(this) { isGranted ->
+            if (!isAdded) return@request
+            if (!isGranted) {
+                prefs.nudgeSocialThresholdMin = 0
+                prefs.nudgeSocialLastBucket = -1
+                NudgeScheduler.cancel(requireContext(), Nudges.SOCIAL)
+                Nudges.cancel(requireContext(), Nudges.SOCIAL)
+                populateNudgeSocial()
+                requireContext().showToast(R.string.notifications_off_for_thumbline)
+                return@request
+            }
+
+            if (!requireContext().appUsagePermissionGranted()) {
+                prefs.nudgeSocialThresholdMin = 0
+                prefs.nudgeSocialLastBucket = -1
+                NudgeScheduler.cancel(requireContext(), Nudges.SOCIAL)
+                Nudges.cancel(requireContext(), Nudges.SOCIAL)
+                populateNudgeSocial()
+                requireContext().showToast(R.string.usage_access_off_for_thumbline)
+                showSocialNudgeUsageAccessDialog()
+                return@request
+            }
+
+            prefs.nudgeSocialThresholdMin = thresholdMin
+            prefs.nudgeSocialLastBucket = -1
+            NudgeScheduler.scheduleSocial(requireContext())
+            populateNudgeSocial()
+        }
+    }
+
+    private fun showSocialNudgeUsageAccessDialog() {
+        requireContext().showMessageDialog(
+            R.string.nudge_social,
+            R.string.nudge_social_usage_access_message,
+            R.string.allow,
+        ) {
+            try {
+                startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
+            } catch (_: Exception) {
+                requireContext().showToast(getString(R.string.unable_to_open_app))
             }
         }
     }

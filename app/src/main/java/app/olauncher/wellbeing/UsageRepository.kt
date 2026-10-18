@@ -61,6 +61,53 @@ class UsageRepository(private val context: Context) {
         eventLogWrapper.aggregateSimpleUsageStats(matchingStats)
     }
 
+    /**
+     * Checks if any of the given [pkgs] had an ACTIVITY_RESUMED event in the last [withinMillis] ms.
+     * Returns false if usage access is not granted or if [pkgs] is empty.
+     */
+    suspend fun hasRecentResume(
+        pkgs: Set<String>,
+        withinMillis: Long = RECENT_RESUME_WINDOW_MS,
+    ): Boolean = withContext(Dispatchers.IO) {
+        if (!context.appUsagePermissionGranted()) return@withContext false
+        if (pkgs.isEmpty()) return@withContext false
+
+        val endTime = System.currentTimeMillis()
+        val startTime = endTime - withinMillis
+
+        val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as? UsageStatsManager
+            ?: return@withContext false
+
+        val events = usageStatsManager.queryEvents(startTime, endTime)
+        val event = UsageEvents.Event()
+
+        while (events.hasNextEvent()) {
+            events.getNextEvent(event)
+            if (event.packageName in pkgs && event.eventType == UsageEvents.Event.ACTIVITY_RESUMED) {
+                return@withContext true
+            }
+        }
+        false
+    }
+
+    /**
+     * Returns a map of package name to foreground time in milliseconds for [pkgs] today.
+     * Returns null if usage stats permission is not granted.
+     */
+    suspend fun foregroundMillisByPackageToday(pkgs: Set<String>): Map<String, Long>? = withContext(Dispatchers.IO) {
+        if (!context.appUsagePermissionGranted()) return@withContext null
+        if (pkgs.isEmpty()) return@withContext emptyMap()
+
+        val startTime = startOfTodayMillis()
+        val endTime = System.currentTimeMillis()
+
+        val eventLogWrapper = EventLogWrapper(context)
+        val foregroundStats = eventLogWrapper.getForegroundStatsByTimestamps(startTime, endTime)
+        val aggregated = eventLogWrapper.aggregateForegroundStats(foregroundStats)
+        val matchingStats = aggregated.filter { it.applicationId in pkgs }
+        matchingStats.associate { it.applicationId to it.timeUsed }
+    }
+
     private fun startOfTodayMillis(): Long {
         return Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, 0)
@@ -72,6 +119,7 @@ class UsageRepository(private val context: Context) {
 
     companion object {
         const val RESUME_GAP_MS: Long = 2000L
+        const val RECENT_RESUME_WINDOW_MS: Long = 5 * 60 * 1000L
 
         fun countOpens(timestamps: List<Long>, gapMs: Long = RESUME_GAP_MS): Int =
             app.olauncher.wellbeing.countOpens(timestamps, gapMs)
@@ -95,3 +143,17 @@ fun countOpens(timestamps: List<Long>, gapMs: Long = UsageRepository.RESUME_GAP_
     }
     return count
 }
+
+/**
+ * Pure function to check whether any event matches an ACTIVITY_RESUMED for one of [pkgs].
+ */
+fun hasRecentResumeEvent(
+    events: List<Pair<String, Int>>,
+    pkgs: Set<String>,
+): Boolean {
+    if (pkgs.isEmpty()) return false
+    return events.any { (pkg, eventType) ->
+        pkg in pkgs && eventType == UsageEvents.Event.ACTIVITY_RESUMED
+    }
+}
+
