@@ -34,6 +34,8 @@ import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
 import app.olauncher.data.ShortcutOffset
+import app.olauncher.data.ShortcutSize
+import app.olauncher.data.SlotCount
 import app.olauncher.databinding.FragmentHomeBinding
 import app.olauncher.helper.DefaultLauncherCheck
 import app.olauncher.helper.GermanTime
@@ -286,7 +288,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         }
         populateShortcuts()
 
-        val extraPadding = if (prefs.homeShortcuts) 56.dpToPx() else 0
+        val extraPadding = if (prefs.homeShortcuts) ShortcutSize.columnAllowanceDp(prefs.shortcutSizeStep).dpToPx() else 0
         val paddingStart = homeAppsPaddingStart + if (prefs.shortcutSideStart) extraPadding else 0
         val paddingEnd = homeAppsPaddingEnd + if (prefs.shortcutSideStart) 0 else extraPadding
         binding.homeAppsLayout.setPaddingRelative(
@@ -297,7 +299,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         )
 
         (binding.firstRunTips.layoutParams as? FrameLayout.LayoutParams)?.let { tipsParams ->
-            tipsParams.marginStart = 24.dpToPx() + if (prefs.homeShortcuts && prefs.shortcutSideStart) 56.dpToPx() else 0
+            tipsParams.marginStart = 24.dpToPx() + if (prefs.homeShortcuts && prefs.shortcutSideStart) ShortcutSize.columnAllowanceDp(prefs.shortcutSizeStep).dpToPx() else 0
             binding.firstRunTips.layoutParams = tipsParams
         }
 
@@ -317,14 +319,26 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         populateScreenTime()
     }
 
+    private fun getFittingShortcutCount(): Int {
+        val displayMetrics = resources.displayMetrics
+        val density = displayMetrics.density.takeIf { it > 0f } ?: 1f
+        val columnHeightDp = (displayMetrics.heightPixels / density).toInt()
+        val viewSizeDp = ShortcutSize.viewSizeDp(prefs.shortcutSizeStep)
+        val bottomMarginDp = ShortcutOffset.bottomMarginDp(prefs.shortcutOffsetStep)
+        return SlotCount.fitting(prefs.shortcutCount, columnHeightDp, viewSizeDp, bottomMarginDp)
+    }
+
     private fun setupShortcutViews() {
         val context = context ?: return
+        val count = getFittingShortcutCount()
+        val viewSizeDp = ShortcutSize.viewSizeDp(prefs.shortcutSizeStep)
+        val viewSizePx = viewSizeDp.dpToPx()
         binding.shortcutsLayout.removeAllViews()
-        for (slot in 1..prefs.shortcutCount) {
+        for (slot in 1..count) {
             val imageView = ImageView(context).apply {
                 layoutParams = LinearLayout.LayoutParams(
-                    ShortcutIconRenderer.VIEW_SIZE_DP.dpToPx(),
-                    ShortcutIconRenderer.VIEW_SIZE_DP.dpToPx(),
+                    viewSizePx,
+                    viewSizePx,
                 )
                 val typedValue = TypedValue()
                 context.theme.resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, typedValue, true)
@@ -351,7 +365,11 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
     private fun populateShortcuts() {
         val context = context ?: return
-        if (binding.shortcutsLayout.childCount != prefs.shortcutCount) {
+        val count = getFittingShortcutCount()
+        val expectedViewSizePx = ShortcutSize.viewSizeDp(prefs.shortcutSizeStep).dpToPx()
+        val firstChild = binding.shortcutsLayout.getChildAt(0)
+        val currentViewSizePx = firstChild?.layoutParams?.width ?: 0
+        if (binding.shortcutsLayout.childCount != count || (count > 0 && currentViewSizePx != expectedViewSizePx)) {
             setupShortcutViews()
             return
         }
@@ -363,7 +381,8 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     }
 
     private fun bindShortcutIcon(context: Context, view: ImageView, slot: Int) {
-        val (drawable, paddingPx, isAppIcon) = ShortcutIconRenderer.render(context, slot, prefs)
+        val viewSizeDp = ShortcutSize.viewSizeDp(prefs.shortcutSizeStep)
+        val (drawable, paddingPx, isAppIcon) = ShortcutIconRenderer.render(context, slot, prefs, viewSizeDp)
         view.setPadding(paddingPx, paddingPx, paddingPx, paddingPx)
         view.setImageDrawable(drawable)
         view.contentDescription = ShortcutIconRenderer.getLabel(context, slot, prefs, isAppIcon)
@@ -525,7 +544,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             if (prefs.dateTimeVisibility == Constants.DateTime.DATE_ONLY) 45.dpToPx() else 72.dpToPx()
         }
         val targetGravity = if (prefs.homeAlignment == Gravity.END) Gravity.START else Gravity.END
-        val extraStartMargin = if (prefs.homeShortcuts && prefs.shortcutSideStart && targetGravity == Gravity.START) 56.dpToPx() else 0
+        val extraStartMargin = if (prefs.homeShortcuts && prefs.shortcutSideStart && targetGravity == Gravity.START) ShortcutSize.columnAllowanceDp(prefs.shortcutSizeStep).dpToPx() else 0
         val params = FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.WRAP_CONTENT,
             FrameLayout.LayoutParams.WRAP_CONTENT

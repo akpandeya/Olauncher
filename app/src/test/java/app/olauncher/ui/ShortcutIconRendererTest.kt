@@ -22,6 +22,7 @@ class ShortcutIconRendererTest {
         assertEquals(R.drawable.ic_shortcut_more, ShortcutIconRenderer.getDefaultIconRes(0))
         assertEquals(R.drawable.ic_shortcut_more, ShortcutIconRenderer.getDefaultIconRes(7))
         assertEquals(R.drawable.ic_shortcut_more, ShortcutIconRenderer.getDefaultIconRes(8))
+        assertEquals(R.drawable.ic_shortcut_more, ShortcutIconRenderer.getDefaultIconRes(12))
     }
 
     @Test
@@ -39,24 +40,34 @@ class ShortcutIconRendererTest {
         assertEquals(R.string.shortcut_more, ShortcutIconRenderer.getDefaultLabelRes(0))
         assertEquals(R.string.shortcut_more, ShortcutIconRenderer.getDefaultLabelRes(7))
         assertEquals(R.string.shortcut_more, ShortcutIconRenderer.getDefaultLabelRes(8))
+        assertEquals(R.string.shortcut_more, ShortcutIconRenderer.getDefaultLabelRes(12))
     }
 
     @Test
-    fun `default icons keep their 12dp padding`() {
+    fun `default icons keep their 12dp padding in 48dp view and scale with viewSize`() {
         assertEquals(12, ShortcutIconRenderer.paddingDp(isAppIcon = false, treatment = null))
+        assertEquals(12, ShortcutIconRenderer.paddingDp(isAppIcon = false, treatment = null, viewSizeDp = 48))
+        assertEquals(10, ShortcutIconRenderer.paddingDp(isAppIcon = false, treatment = null, viewSizeDp = 40))
+        assertEquals(14, ShortcutIconRenderer.paddingDp(isAppIcon = false, treatment = null, viewSizeDp = 56))
     }
 
     @Test
-    fun `full app icons fill a 32dp box in the 48dp view`() {
+    fun `full app icons fill a 32dp box in the 48dp view and scale with viewSize`() {
         assertEquals(8, ShortcutIconRenderer.paddingDp(isAppIcon = true, treatment = Treatment.ORIGINAL))
         assertEquals(8, ShortcutIconRenderer.paddingDp(isAppIcon = true, treatment = Treatment.FALLBACK_GRAYSCALE))
         assertEquals(8, ShortcutIconRenderer.paddingDp(isAppIcon = true, treatment = Treatment.FALLBACK_GRAYSCALE_ALPHA))
+        assertEquals(8, ShortcutIconRenderer.paddingDp(isAppIcon = true, treatment = Treatment.ORIGINAL, viewSizeDp = 48))
+        assertEquals(7, ShortcutIconRenderer.paddingDp(isAppIcon = true, treatment = Treatment.ORIGINAL, viewSizeDp = 40))
+        assertEquals(9, ShortcutIconRenderer.paddingDp(isAppIcon = true, treatment = Treatment.ORIGINAL, viewSizeDp = 56))
     }
 
     @Test
-    fun `monochrome layer is drawn at adaptive layer scale`() {
+    fun `monochrome layer is drawn at adaptive layer scale and scales with viewSize`() {
         // 32dp mask box x 1.5 = 48dp layer, which fills the 48dp view
         assertEquals(0, ShortcutIconRenderer.paddingDp(isAppIcon = true, treatment = Treatment.MONOCHROME_LAYER))
+        assertEquals(0, ShortcutIconRenderer.paddingDp(isAppIcon = true, treatment = Treatment.MONOCHROME_LAYER, viewSizeDp = 48))
+        assertEquals(1, ShortcutIconRenderer.paddingDp(isAppIcon = true, treatment = Treatment.MONOCHROME_LAYER, viewSizeDp = 40))
+        assertEquals(0, ShortcutIconRenderer.paddingDp(isAppIcon = true, treatment = Treatment.MONOCHROME_LAYER, viewSizeDp = 56))
     }
 
     @Test

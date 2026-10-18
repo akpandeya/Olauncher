@@ -16,6 +16,7 @@ import app.olauncher.R
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
 import app.olauncher.data.ShortcutIconStyle
+import app.olauncher.data.ShortcutSize
 import app.olauncher.helper.dpToPx
 import app.olauncher.helper.getColorFromAttr
 import app.olauncher.helper.getUserHandleFromString
@@ -49,14 +50,27 @@ object ShortcutIconRenderer {
      * with its glyph in the centre, so it is drawn at layer scale instead of inside the
      * [APP_ICON_BOX_DP] box; otherwise its glyph shows at two thirds of the intended size.
      */
-    fun paddingDp(isAppIcon: Boolean, treatment: ShortcutIconStyle.Treatment?): Int = when {
-        !isAppIcon -> DEFAULT_ICON_PADDING_DP
-        treatment == ShortcutIconStyle.Treatment.MONOCHROME_LAYER ->
-            layerPaddingDp(VIEW_SIZE_DP, APP_ICON_BOX_DP)
-        else -> ((VIEW_SIZE_DP - APP_ICON_BOX_DP) / 2).coerceAtLeast(0)
+    fun paddingDp(
+        isAppIcon: Boolean,
+        treatment: ShortcutIconStyle.Treatment?,
+        viewSizeDp: Int = VIEW_SIZE_DP,
+    ): Int {
+        val appIconBoxDp = viewSizeDp * 2 / 3
+        val defaultIconPaddingDp = viewSizeDp / 4
+        return when {
+            !isAppIcon -> defaultIconPaddingDp
+            treatment == ShortcutIconStyle.Treatment.MONOCHROME_LAYER ->
+                layerPaddingDp(viewSizeDp, appIconBoxDp)
+            else -> ((viewSizeDp - appIconBoxDp) / 2).coerceAtLeast(0)
+        }
     }
 
-    fun render(context: Context, slot: Int, prefs: Prefs): RenderedShortcutIcon {
+    fun render(
+        context: Context,
+        slot: Int,
+        prefs: Prefs,
+        viewSizeDp: Int = ShortcutSize.viewSizeDp(prefs.shortcutSizeStep),
+    ): RenderedShortcutIcon {
         if (prefs.getShortcutMode(slot) == Constants.SHORTCUT_MODE_APP) {
             val packageName = prefs.getShortcutPackage(slot)
             if (packageName.isNotEmpty()) {
@@ -81,7 +95,7 @@ object ShortcutIconRenderer {
                             val treatment = ShortcutIconStyle.resolveTreatment(style, monochromeLayer != null)
                             return RenderedShortcutIcon(
                                 drawable = styledIcon,
-                                paddingPx = paddingDp(isAppIcon = true, treatment = treatment).dpToPx(),
+                                paddingPx = paddingDp(isAppIcon = true, treatment = treatment, viewSizeDp = viewSizeDp).dpToPx(),
                                 isAppIcon = true,
                             )
                         }
@@ -93,7 +107,7 @@ object ShortcutIconRenderer {
         }
         return RenderedShortcutIcon(
             drawable = getDefaultDrawable(context, slot),
-            paddingPx = paddingDp(isAppIcon = false, treatment = null).dpToPx(),
+            paddingPx = paddingDp(isAppIcon = false, treatment = null, viewSizeDp = viewSizeDp).dpToPx(),
             isAppIcon = false,
         )
     }

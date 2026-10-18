@@ -71,9 +71,14 @@ class ShortcutIconsResourceTest {
         val strings = loadStrings()
         assertEquals("Shortcut icons", strings["shortcut_icons"])
         assertEquals("Icons", strings["icons"])
+        assertEquals("Size", strings["size"])
         assertEquals("Side", strings["side"])
         assertEquals("Height", strings["height"])
         assertEquals("Style", strings["style"])
+        assertEquals("Icon size", strings["icon_size"])
+        assertEquals("Small", strings["icon_size_small"])
+        assertEquals("Medium", strings["icon_size_medium"])
+        assertEquals("Large", strings["icon_size_large"])
         assertEquals("Original", strings["icon_style_original"])
         assertEquals("Monochrome", strings["icon_style_monochrome"])
         assertEquals("Text colour", strings["icon_style_text_colour"])
@@ -103,6 +108,10 @@ class ShortcutIconsResourceTest {
             assertTrue(
                 "shortcutCountLayout must be in ${file.name}",
                 content.contains("android:id=\"@+id/shortcutCountLayout\"")
+            )
+            assertTrue(
+                "shortcutSizeLayout must be in ${file.name}",
+                content.contains("android:id=\"@+id/shortcutSizeLayout\"")
             )
             assertTrue(
                 "shortcutSideLayout must be in ${file.name}",
