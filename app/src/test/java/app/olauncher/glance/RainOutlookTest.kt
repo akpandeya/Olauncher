@@ -158,4 +158,27 @@ class RainOutlookTest {
 
         assertNull(RainOutlook.summary(hours, labels, now))
     }
+
+    @Test
+    fun `city in a different zone compares hours in city time`() {
+        // Phone in Berlin at 20:30; city is UTC-5, so city time is 13:30.
+        val forecast = Forecast(
+            nowTemp = 20.0, nowCode = 1, isDay = true, todayMax = 22.0, todayMin = 12.0,
+            hours = listOf(
+                hour(LocalDateTime.of(2024, 5, 18, 13, 0), code = 1, precipProb = 10),
+                hour(LocalDateTime.of(2024, 5, 18, 14, 0), code = 1, precipProb = 10),
+                hour(LocalDateTime.of(2024, 5, 18, 15, 0), code = 61, precipProb = 80),
+            ),
+            utcOffsetSeconds = -5 * 3600,
+        )
+        val phoneNow = LocalDateTime.of(2024, 5, 18, 20, 30)
+        val berlin = java.time.ZoneId.of("Europe/Berlin")
+
+        // Naive phone-time comparison would find every hour in the past.
+        assertNull(RainOutlook.summary(forecast.hours, labels, phoneNow))
+        assertEquals(
+            "Rain from 15:00",
+            RainOutlook.summary(forecast.hours, labels, forecast.cityNow(phoneNow, berlin)),
+        )
+    }
 }
