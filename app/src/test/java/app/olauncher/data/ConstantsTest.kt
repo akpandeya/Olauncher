@@ -20,4 +20,9 @@ class ConstantsTest {
         assertEquals(32, Constants.FLAG_SET_SHORTCUT_12)
         assertEquals(21, Constants.FLAG_SET_SHORTCUT_1)
     }
+
+    @Test
+    fun `weather app flag matches expected value`() {
+        assertEquals(16, Constants.FLAG_SET_WEATHER_APP)
+    }
 }
