@@ -1,6 +1,8 @@
 package app.olauncher.glance
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -309,5 +311,38 @@ class NextUpFormattingTest {
 
         assertEquals("14:30 Dentist", NextUpFormatting.line(event, nowZdt, labels = TEST_LABELS))
         assertEquals("14:30 Dentist", NextUpFormatting.line(event, nowZdt.toInstant().toEpochMilli(), zoneBerlin, labels = TEST_LABELS))
+    }
+
+    @Test
+    fun `all-day event ends at local midnight, not UTC midnight`() {
+        val zoneNewYork = ZoneId.of("America/New_York")
+        val sunday = CalendarEvent(
+            id = 20L,
+            title = "Mum's birthday",
+            start = LocalDate.of(2026, 10, 18).atStartOfDay(ZoneOffset.UTC).toInstant(),
+            end = LocalDate.of(2026, 10, 19).atStartOfDay(ZoneOffset.UTC).toInstant(),
+            allDay = true,
+        )
+
+        // Berlin, 00:30 Monday: UTC end (02:00 local) not reached yet, but the day is over.
+        val berlinMonday = ZonedDateTime.of(LocalDate.of(2026, 10, 19), LocalTime.of(0, 30), zoneBerlin).toInstant()
+        assertTrue(NextUpFormatting.hasEnded(sunday, berlinMonday, zoneBerlin))
+        val berlinSundayLate = ZonedDateTime.of(LocalDate.of(2026, 10, 18), LocalTime.of(23, 30), zoneBerlin).toInstant()
+        assertFalse(NextUpFormatting.hasEnded(sunday, berlinSundayLate, zoneBerlin))
+
+        // New York, 21:00 Sunday: UTC end (20:00 local) already passed, but it is still Sunday.
+        val newYorkSundayEvening = ZonedDateTime.of(LocalDate.of(2026, 10, 18), LocalTime.of(21, 0), zoneNewYork).toInstant()
+        assertFalse(NextUpFormatting.hasEnded(sunday, newYorkSundayEvening, zoneNewYork))
+        val newYorkMonday = ZonedDateTime.of(LocalDate.of(2026, 10, 19), LocalTime.of(0, 0), zoneNewYork).toInstant()
+        assertTrue(NextUpFormatting.hasEnded(sunday, newYorkMonday, zoneNewYork))
+    }
+
+    @Test
+    fun `timed event has ended exactly at its end time`() {
+        val start = ZonedDateTime.of(LocalDate.of(2026, 10, 18), LocalTime.of(9, 0), zoneBerlin).toInstant()
+        val end = ZonedDateTime.of(LocalDate.of(2026, 10, 18), LocalTime.of(10, 15), zoneBerlin).toInstant()
+        val event = CalendarEvent(id = 21L, title = "Standup", start = start, end = end)
+        assertFalse(NextUpFormatting.hasEnded(event, end.minusSeconds(1), zoneBerlin))
+        assertTrue(NextUpFormatting.hasEnded(event, end, zoneBerlin))
     }
 }
