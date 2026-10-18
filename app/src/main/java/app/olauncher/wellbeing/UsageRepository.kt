@@ -7,13 +7,15 @@ import app.olauncher.helper.appUsagePermissionGranted
 import app.olauncher.helper.usageStats.EventLogWrapper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.time.LocalDate
+import java.time.ZoneId
 import java.util.Calendar
 
 /**
  * Repository for querying application usage and open counts today.
  * Methods return null when usage stats permission has not been granted.
  */
-open class UsageRepository(private val context: Context) {
+open class UsageRepository(private val context: Context? = null) {
 
     /**
      * Returns the number of times [pkg] was opened today using UsageEvents ACTIVITY_RESUMED,
@@ -28,7 +30,8 @@ open class UsageRepository(private val context: Context) {
      * Returns null if usage stats permission is not granted.
      */
     open suspend fun openCountToday(pkgs: Set<String>): Int? = withContext(Dispatchers.IO) {
-        if (!context.appUsagePermissionGranted()) return@withContext null
+        val ctx = context ?: return@withContext null
+        if (!ctx.appUsagePermissionGranted()) return@withContext null
         if (pkgs.isEmpty()) return@withContext 0
 
         val startTime = startOfTodayMillis()
@@ -56,13 +59,14 @@ open class UsageRepository(private val context: Context) {
      * Returns null if usage stats permission is not granted.
      */
     open suspend fun foregroundMillisToday(pkgs: Set<String>): Long? = withContext(Dispatchers.IO) {
-        if (!context.appUsagePermissionGranted()) return@withContext null
+        val ctx = context ?: return@withContext null
+        if (!ctx.appUsagePermissionGranted()) return@withContext null
         if (pkgs.isEmpty()) return@withContext 0L
 
         val startTime = startOfTodayMillis()
         val endTime = System.currentTimeMillis()
 
-        val eventLogWrapper = EventLogWrapper(context)
+        val eventLogWrapper = EventLogWrapper(ctx)
         val foregroundStats = eventLogWrapper.getForegroundStatsByTimestamps(startTime, endTime)
         val aggregated = eventLogWrapper.aggregateForegroundStats(foregroundStats)
         val matchingStats = aggregated.filter { it.applicationId in pkgs }
@@ -77,13 +81,14 @@ open class UsageRepository(private val context: Context) {
         pkgs: Set<String>,
         withinMillis: Long = RECENT_RESUME_WINDOW_MS,
     ): Boolean = withContext(Dispatchers.IO) {
-        if (!context.appUsagePermissionGranted()) return@withContext false
+        val ctx = context ?: return@withContext false
+        if (!ctx.appUsagePermissionGranted()) return@withContext false
         if (pkgs.isEmpty()) return@withContext false
 
         val endTime = System.currentTimeMillis()
         val startTime = endTime - withinMillis
 
-        val usageStatsManager = context.getSystemService(Context.USAGE_STATS_SERVICE) as? UsageStatsManager
+        val usageStatsManager = ctx.getSystemService(Context.USAGE_STATS_SERVICE) as? UsageStatsManager
             ?: return@withContext false
 
         val events = usageStatsManager.queryEvents(startTime, endTime)
@@ -103,13 +108,72 @@ open class UsageRepository(private val context: Context) {
      * Returns null if usage stats permission is not granted.
      */
     suspend fun foregroundMillisByPackageToday(pkgs: Set<String>): Map<String, Long>? = withContext(Dispatchers.IO) {
-        if (!context.appUsagePermissionGranted()) return@withContext null
+        val ctx = context ?: return@withContext null
+        if (!ctx.appUsagePermissionGranted()) return@withContext null
         if (pkgs.isEmpty()) return@withContext emptyMap()
 
         val startTime = startOfTodayMillis()
         val endTime = System.currentTimeMillis()
 
-        val eventLogWrapper = EventLogWrapper(context)
+        val eventLogWrapper = EventLogWrapper(ctx)
+        val foregroundStats = eventLogWrapper.getForegroundStatsByTimestamps(startTime, endTime)
+        val aggregated = eventLogWrapper.aggregateForegroundStats(foregroundStats)
+        val matchingStats = aggregated.filter { it.applicationId in pkgs }
+        matchingStats.associate { it.applicationId to it.timeUsed }
+    }
+
+    /**
+     * Returns total number of times [pkgs] were opened on [epochDay] using UsageEvents ACTIVITY_RESUMED,
+     * de-duplicating resumes less than 2 seconds apart per package.
+     * Returns null if usage stats permission is not granted.
+     */
+    open suspend fun openCountForDay(pkgs: Set<String>, epochDay: Long): Int? = withContext(Dispatchers.IO) {
+        val ctx = context ?: return@withContext null
+        if (!ctx.appUsagePermissionGranted()) return@withContext null
+        if (pkgs.isEmpty()) return@withContext 0
+
+        val (startTime, dayEnd) = dayStartAndEndMillis(epochDay)
+        val now = System.currentTimeMillis()
+        if (startTime > now) return@withContext 0
+        val endTime = minOf(dayEnd, now)
+
+        val usageStatsManager = ctx.getSystemService(Context.USAGE_STATS_SERVICE) as? UsageStatsManager
+            ?: return@withContext null
+
+        val events = usageStatsManager.queryEvents(startTime, endTime)
+        val event = UsageEvents.Event()
+        val eventList = mutableListOf<Pair<String, Long>>()
+
+        while (events.hasNextEvent()) {
+            events.getNextEvent(event)
+            if (event.packageName in pkgs && event.eventType == UsageEvents.Event.ACTIVITY_RESUMED) {
+                eventList.add(event.packageName to event.timeStamp)
+            }
+        }
+
+        countOpensForPackages(eventList, pkgs, RESUME_GAP_MS)
+    }
+
+    open suspend fun openCountForDay(pkg: String, epochDay: Long): Int? = openCountForDay(setOf(pkg), epochDay)
+
+    /**
+     * Returns a map of package name to foreground time in milliseconds for [pkgs] on [epochDay].
+     * Returns null if usage stats permission is not granted.
+     */
+    open suspend fun foregroundMillisByPackageForDay(
+        pkgs: Set<String>,
+        epochDay: Long,
+    ): Map<String, Long>? = withContext(Dispatchers.IO) {
+        val ctx = context ?: return@withContext null
+        if (!ctx.appUsagePermissionGranted()) return@withContext null
+        if (pkgs.isEmpty()) return@withContext emptyMap()
+
+        val (startTime, dayEnd) = dayStartAndEndMillis(epochDay)
+        val now = System.currentTimeMillis()
+        if (startTime > now) return@withContext emptyMap()
+        val endTime = minOf(dayEnd, now)
+
+        val eventLogWrapper = EventLogWrapper(ctx)
         val foregroundStats = eventLogWrapper.getForegroundStatsByTimestamps(startTime, endTime)
         val aggregated = eventLogWrapper.aggregateForegroundStats(foregroundStats)
         val matchingStats = aggregated.filter { it.applicationId in pkgs }
@@ -188,5 +252,15 @@ fun hasRecentResumeEvent(
     return events.any { (pkg, eventType) ->
         pkg in pkgs && eventType == UsageEvents.Event.ACTIVITY_RESUMED
     }
+}
+
+/**
+ * Pure function to return the start and end timestamps in milliseconds for [epochDay] in [zone].
+ */
+fun dayStartAndEndMillis(epochDay: Long, zone: ZoneId = ZoneId.systemDefault()): Pair<Long, Long> {
+    val date = LocalDate.ofEpochDay(epochDay)
+    val startTime = date.atStartOfDay(zone).toInstant().toEpochMilli()
+    val endTime = date.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
+    return startTime to endTime
 }
 
