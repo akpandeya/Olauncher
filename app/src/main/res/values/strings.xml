@@ -61,6 +61,7 @@
     <string name="app_drawer_tips">Tip: Start typing an app name to auto-launch it</string>
     <string name="okay">Okay</string>
     <string name="cool">Cool!</string>
+    <string name="drawer">Drawer</string>
     <string name="auto_show_keyboard">Auto show keyboard</string>
     <string name="search_at_bottom">Search at bottom</string>
     <string name="hide">Hide</string>
@@ -210,6 +211,7 @@
     <string name="pause_open_countdown">Open (%d)</string>
     <string name="stop_pausing_app">Stop pausing %s</string>
     <string name="today_page">Today page</string>
+    <string name="today_section">Today</string>
     <string name="today_cards">Today cards</string>
     <string name="choose_app">Choose app…</string>
     <string name="nothing_here_yet">Nothing here yet</string>
