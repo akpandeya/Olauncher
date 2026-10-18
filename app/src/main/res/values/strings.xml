@@ -349,5 +349,6 @@
     <string name="next_up_tomorrow">Tomorrow</string>
     <string name="next_up_now">Now · %1$s (until %2$s)</string>
     <string name="next_up_tomorrow_event">Tomorrow %1$s %2$s</string>
+    <string name="last_7_days">Last 7 days</string>
 </resources>
 

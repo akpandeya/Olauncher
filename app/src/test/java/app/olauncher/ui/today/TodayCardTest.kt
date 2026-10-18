@@ -61,6 +61,15 @@ class TodayCardTest {
     }
 
     @Test
+    fun `today cards list contains week card`() {
+        val week = TodayCards.all.firstOrNull { it.key == app.olauncher.ui.today.cards.WeekCard.KEY }
+        assertNotNull(week)
+        assertEquals("week", week?.key)
+        assertEquals(R.string.last_7_days, week?.titleRes)
+        assertEquals(true, week?.defaultEnabled)
+    }
+
+    @Test
     fun `all other today cards default to enabled true`() {
         val otherCards = TodayCards.all.filter { it.key != app.olauncher.ui.today.cards.NextUpCard.KEY }
         assertTrue(otherCards.isNotEmpty())
