@@ -380,5 +380,6 @@
     <string name="search_engine_custom">Custom</string>
     <string name="search_engine_custom_hint" formatted="false">https://example.com/search?q=%s</string>
     <string name="search_engine_custom_invalid" formatted="false">Enter an http(s) link with %s where the search goes</string>
+    <string name="call_number">Call %s</string>
 </resources>
 
