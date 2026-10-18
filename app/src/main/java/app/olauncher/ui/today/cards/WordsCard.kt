@@ -103,6 +103,7 @@ object WordsCard : TodayCard {
     override fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View {
         val viewBinding = CardWordsBinding.inflate(inflater, parent, false)
         binding = viewBinding
+        wordReveal = null
 
         viewBinding.root.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
             override fun onViewAttachedToWindow(v: View) {}

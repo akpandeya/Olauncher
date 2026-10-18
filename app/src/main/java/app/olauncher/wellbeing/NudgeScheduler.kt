@@ -159,7 +159,7 @@ class NudgeWorker(
         val interval = NudgeScheduler.intervalMinForType(prefs, type)
         if (interval > 0) {
             val count = prefs.nudgeDone(type)
-            val useGerman = prefs.germanEnabled && prefs.germanUi
+            val useGerman = prefs.isGermanUi
             val text = when (type) {
                 Nudges.WATER -> applicationContext.getString(
                     if (useGerman) R.string.nudge_water_notification_de else R.string.nudge_water_notification,
