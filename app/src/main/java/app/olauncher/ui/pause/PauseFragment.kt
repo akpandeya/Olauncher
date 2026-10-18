@@ -33,6 +33,7 @@ import app.olauncher.wellbeing.PauseLog
 import app.olauncher.wellbeing.PausePolicy
 import app.olauncher.wellbeing.PauseWhy
 import app.olauncher.wellbeing.UsageRepository
+import app.olauncher.wellbeing.UsageSnapshotWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -314,21 +315,28 @@ class PauseFragment : Fragment() {
                 val change = FrictionChange.RemoveDistractingApp(appPackage)
                 if (CommitLock.needsWait(prefs.commitLock, change)) {
                     val context = context ?: return@showPopupMenu
+                    val appContext = context.applicationContext
                     waitDialog?.dismiss()
                     waitDialog = context.showWaitDialog(
                         message = getString(R.string.commit_lock_desc)
                     ) {
                         // The removal is the confirmed change: never lose it.
-                        prefs.distractingApps = prefs.distractingApps - appPackage
+                        removeThisAppFromDistracting(appContext)
                         if (!isAdded || _binding == null) return@showWaitDialog
                         openApp(bypassGating = true)
                     }
                 } else {
-                    prefs.distractingApps = prefs.distractingApps - appPackage
+                    removeThisAppFromDistracting(context?.applicationContext ?: return@showPopupMenu)
                     openApp(bypassGating = true)
                 }
             }
         }
+    }
+
+    private fun removeThisAppFromDistracting(appContext: Context) {
+        val remaining = prefs.distractingApps - appPackage
+        prefs.distractingApps = remaining
+        UsageSnapshotWorker.syncWithDistractingApps(appContext, remaining)
     }
 
     private fun buildAppModel(appContext: Context): AppModel {

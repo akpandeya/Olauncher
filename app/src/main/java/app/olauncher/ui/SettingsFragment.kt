@@ -84,6 +84,7 @@ import app.olauncher.helper.showWaitDialog
 import app.olauncher.wellbeing.CommitLock
 import app.olauncher.wellbeing.DistractingApps
 import app.olauncher.wellbeing.FrictionChange
+import app.olauncher.wellbeing.UsageSnapshotWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -1395,14 +1396,17 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                     )
                     if (CommitLock.needsWait(prefs.commitLock, change)) {
                         dialog?.dismiss()
+                        val appContext = requireContext().applicationContext
                         dialog = requireContext().showWaitDialog(
                             message = getString(R.string.commit_lock_desc)
                         ) {
                             prefs.distractingApps = selectedPackages
-                            populateDistractingApps()
+                            UsageSnapshotWorker.syncWithDistractingApps(appContext, selectedPackages)
+                            if (_binding != null) populateDistractingApps()
                         }
                     } else {
                         prefs.distractingApps = selectedPackages
+                        UsageSnapshotWorker.syncWithDistractingApps(requireContext().applicationContext, selectedPackages)
                         populateDistractingApps()
                     }
                 }
