@@ -6,6 +6,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import app.olauncher.ui.today.cards.SavedCard
+import app.olauncher.ui.today.cards.WeatherCard
 import app.olauncher.ui.today.cards.WellbeingCard
 import app.olauncher.ui.today.cards.WordsCard
 
@@ -26,6 +27,6 @@ interface TodayCard {
 }
 
 object TodayCards {
-    val all: List<TodayCard> = listOf(SavedCard, WellbeingCard, WordsCard)
+    val all: List<TodayCard> = listOf(WeatherCard, SavedCard, WellbeingCard, WordsCard)
 }
 

@@ -15,8 +15,17 @@ import org.junit.Test
 
 import app.olauncher.R
 import app.olauncher.ui.today.cards.SavedCard
+import app.olauncher.ui.today.cards.WeatherCard
 
 class TodayCardTest {
+
+    @Test
+    fun `today cards list contains weather card`() {
+        val weather = TodayCards.all.firstOrNull { it.key == WeatherCard.KEY }
+        assertNotNull(weather)
+        assertEquals("weather", weather?.key)
+        assertEquals(R.string.weather, weather?.titleRes)
+    }
 
     @Test
     fun `today cards list contains saved card`() {
