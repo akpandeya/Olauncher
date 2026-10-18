@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.SharedPreferences
 import android.content.pm.LauncherApps
 import android.content.res.Configuration
 import android.os.BatteryManager
@@ -37,6 +38,8 @@ import app.olauncher.data.ShortcutOffset
 import app.olauncher.data.ShortcutSize
 import app.olauncher.data.SlotCount
 import app.olauncher.databinding.FragmentHomeBinding
+import app.olauncher.glance.WeatherCache
+import app.olauncher.glance.WeatherFormatting
 import app.olauncher.helper.BatteryFormatting
 import app.olauncher.helper.DefaultLauncherCheck
 import app.olauncher.helper.GermanTime
@@ -69,6 +72,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
     private var timeTickReceiver: BroadcastReceiver? = null
     private var batteryReceiver: BroadcastReceiver? = null
+    private var weatherPrefsListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
     private var homeAppsPaddingStart = 0
     private var homeAppsPaddingEnd = 0
     private var _binding: FragmentHomeBinding? = null
@@ -94,6 +98,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         setHomeAlignment(prefs.homeAlignment)
         initSwipeTouchListener()
         initClickListeners()
+        initWeatherListener()
     }
 
     override fun onResume() {
@@ -101,6 +106,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         setHomeAlignment()
         populateHomeScreen(false)
         populateShortcuts()
+        populateWeather()
         viewModel.isOlauncherDefault()
         if (prefs.showStatusBar) showStatusBar()
         else hideStatusBar()
@@ -121,6 +127,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             // R.id.recents -> {}
             R.id.clock, R.id.clockWords -> openClockApp()
             R.id.date -> openCalendarApp()
+            R.id.weather -> openWeatherApp()
             R.id.setDefaultLauncher -> viewModel.resetLauncherLiveData.call()
             R.id.tvScreenTime -> openScreenTimeDigitalWellbeing()
 
@@ -159,6 +166,18 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             )
     }
 
+    private fun openWeatherApp() {
+        if (prefs.weatherAppPackage.isBlank())
+            showAppList(Constants.FLAG_SET_WEATHER_APP)
+        else
+            launchApp(
+                getString(R.string.weather),
+                prefs.weatherAppPackage,
+                prefs.weatherAppClassName,
+                prefs.weatherAppUser
+            )
+    }
+
     override fun onLongClick(view: View): Boolean {
         when (view.id) {
             R.id.homeApp1 -> showAppList(Constants.FLAG_SET_HOME_APP_1, prefs.appName1.isNotEmpty(), true)
@@ -181,6 +200,13 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
                 prefs.calendarAppPackage = ""
                 prefs.calendarAppClassName = ""
                 prefs.calendarAppUser = ""
+            }
+
+            R.id.weather -> {
+                showAppList(Constants.FLAG_SET_WEATHER_APP)
+                prefs.weatherAppPackage = ""
+                prefs.weatherAppClassName = ""
+                prefs.weatherAppUser = ""
             }
 
             R.id.tvScreenTime -> {
@@ -253,9 +279,11 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         binding.clock.setOnClickListener(this)
         binding.clockWords.setOnClickListener(this)
         binding.date.setOnClickListener(this)
+        binding.weather.setOnClickListener(this)
         binding.clock.setOnLongClickListener(this)
         binding.clockWords.setOnLongClickListener(this)
         binding.date.setOnLongClickListener(this)
+        binding.weather.setOnLongClickListener(this)
         binding.setDefaultLauncher.setOnClickListener(this)
         binding.setDefaultLauncher.setOnLongClickListener(this)
         binding.tvScreenTime.setOnClickListener(this)
@@ -312,6 +340,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         binding.homeAppsLayout.gravity = horizontalGravity or verticalGravity
         binding.dateTimeLayout.gravity = horizontalGravity
         binding.clockWords.gravity = horizontalGravity
+        binding.weather.gravity = horizontalGravity
         binding.homeApp1.gravity = horizontalGravity
         binding.homeApp2.gravity = horizontalGravity
         binding.homeApp3.gravity = horizontalGravity
@@ -507,6 +536,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             statusBarShown = prefs.showStatusBar
         )
         binding.date.isVisible = isDateVisible
+        populateWeather()
     }
 
     private fun updateClockWords() {
@@ -980,9 +1010,48 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         }
     }
 
+    private fun initWeatherListener() {
+        weatherPrefsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+            if (key == Prefs.WEATHER_FETCHED_AT || key == Prefs.WEATHER_ENABLED) {
+                activity?.runOnUiThread {
+                    if (_binding != null) {
+                        populateWeather()
+                    }
+                }
+            }
+        }
+        prefs.registerPreferenceChangeListener(weatherPrefsListener!!)
+    }
+
+    private fun populateWeather() {
+        val binding = _binding ?: return
+        val context = context ?: return
+        if (!prefs.weatherEnabled || prefs.dateTimeVisibility == Constants.DateTime.OFF) {
+            binding.weather.isVisible = false
+            return
+        }
+        val cached = WeatherCache(context).read()
+        val line = if (cached != null) {
+            WeatherFormatting.homeLine(cached.first, cached.second)
+        } else {
+            null
+        }
+
+        if (line != null) {
+            binding.weather.text = line
+            binding.weather.isVisible = true
+        } else {
+            binding.weather.isVisible = false
+        }
+    }
+
     override fun onDestroyView() {
         unregisterTimeTickReceiver()
         unregisterBatteryReceiver()
+        weatherPrefsListener?.let {
+            prefs.unregisterPreferenceChangeListener(it)
+            weatherPrefsListener = null
+        }
         super.onDestroyView()
         _binding = null
     }

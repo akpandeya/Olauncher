@@ -16,6 +16,9 @@ class Prefs(context: Context) {
         const val WEATHER_LON = "WEATHER_LON"
         const val WEATHER_UNIT = "WEATHER_UNIT"
         const val WEATHER_FETCHED_AT = "WEATHER_FETCHED_AT"
+        const val WEATHER_APP_PACKAGE = "WEATHER_APP_PACKAGE"
+        const val WEATHER_APP_USER = "WEATHER_APP_USER"
+        const val WEATHER_APP_CLASS_NAME = "WEATHER_APP_CLASS_NAME"
         const val WEATHER_UNIT_C = "C"
         const val WEATHER_UNIT_F = "F"
 
@@ -619,6 +622,18 @@ class Prefs(context: Context) {
         get() = prefs.getString(SCREEN_TIME_APP_CLASS_NAME, "").toString()
         set(value) = prefs.edit { putString(SCREEN_TIME_APP_CLASS_NAME, value).apply() }
 
+    var weatherAppPackage: String
+        get() = prefs.getString(WEATHER_APP_PACKAGE, "").toString()
+        set(value) = prefs.edit { putString(WEATHER_APP_PACKAGE, value).apply() }
+
+    var weatherAppUser: String
+        get() = prefs.getString(WEATHER_APP_USER, "").toString()
+        set(value) = prefs.edit { putString(WEATHER_APP_USER, value).apply() }
+
+    var weatherAppClassName: String?
+        get() = prefs.getString(WEATHER_APP_CLASS_NAME, "").toString()
+        set(value) = prefs.edit { putString(WEATHER_APP_CLASS_NAME, value).apply() }
+
     var isShortcut1: Boolean
         get() = prefs.getBoolean(IS_SHORTCUT_1, false)
         set(value) = prefs.edit { putBoolean(IS_SHORTCUT_1, value) }
@@ -803,6 +818,7 @@ class Prefs(context: Context) {
         if (clockAppPackage == packageName) clockAppClassName = activityClassName
         if (calendarAppPackage == packageName) calendarAppClassName = activityClassName
         if (screenTimeAppPackage == packageName) screenTimeAppClassName = activityClassName
+        if (weatherAppPackage == packageName) weatherAppClassName = activityClassName
         if (appPackageSwipeLeft == packageName) appActivityClassNameSwipeLeft = activityClassName
         if (appPackageSwipeRight == packageName) appActivityClassNameRight = activityClassName
         for (slot in 1..Constants.MAX_SHORTCUT_SLOTS) {
@@ -966,4 +982,12 @@ class Prefs(context: Context) {
     var weatherFetchedAt: Long
         get() = prefs.getLong(WEATHER_FETCHED_AT, 0L)
         set(value) = prefs.edit { putLong(WEATHER_FETCHED_AT, value).apply() }
+
+    fun registerPreferenceChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
+        prefs.registerOnSharedPreferenceChangeListener(listener)
+    }
+
+    fun unregisterPreferenceChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
+        prefs.unregisterOnSharedPreferenceChangeListener(listener)
+    }
 }
