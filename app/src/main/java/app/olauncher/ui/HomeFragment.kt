@@ -797,6 +797,9 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     }
 
     private fun launchApp(appName: String, packageName: String, activityClassName: String?, userString: String) {
+        val userHandle = getUserHandleFromString(requireContext(), userString)
+        val launcher = requireContext().getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
+        val isArchived = launcher.getActivityList(packageName, userHandle).firstOrNull()?.applicationInfo?.isArchived == true
         viewModel.selectedApp(
             AppModel.App(
                 appLabel = appName,
@@ -804,7 +807,8 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
                 appPackage = packageName,
                 activityClassName = activityClassName,
                 isNew = false,
-                user = getUserHandleFromString(requireContext(), userString)
+                user = userHandle,
+                isArchived = isArchived,
             ),
             Constants.FLAG_LAUNCH_APP
         )

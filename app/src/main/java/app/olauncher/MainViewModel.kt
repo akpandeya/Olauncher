@@ -83,8 +83,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             Constants.FLAG_LAUNCH_APP -> {
                 when (appModel) {
                     is AppModel.PinnedShortcut -> launchShortcut(appModel)
-                    is AppModel.App ->
+                    is AppModel.App -> {
+                        if (appModel.isArchived) {
+                            appContext.showToast(appContext.getString(R.string.restoring_app, appModel.appLabel))
+                        }
                         launchApp(appModel.appPackage, appModel.activityClassName, appModel.user)
+                    }
 
                     else -> {}
                 }
@@ -92,6 +96,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
             Constants.FLAG_HIDDEN_APPS -> {
                 if (appModel is AppModel.App) {
+                    if (appModel.isArchived) {
+                        appContext.showToast(appContext.getString(R.string.restoring_app, appModel.appLabel))
+                    }
                     launchApp(appModel.appPackage, appModel.activityClassName, appModel.user)
                 }
             }
@@ -150,6 +157,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun saveHomeApp(appModel: AppModel, position: Int) {
+        if (appModel.isArchived) return
         when (appModel) {
             is AppModel.PrivateSpaceHeader, is AppModel.Result -> return
             is AppModel.App -> {
@@ -308,7 +316,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun saveShortcutApp(appModel: AppModel, slot: Int) {
-        if (appModel !is AppModel.App) {
+        if (appModel !is AppModel.App || appModel.isArchived) {
             appContext.showToast("Please pick an app")
             return
         }

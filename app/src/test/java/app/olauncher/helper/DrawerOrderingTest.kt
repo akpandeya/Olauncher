@@ -21,6 +21,7 @@ class DrawerOrderingTest {
         label: String,
         isNew: Boolean = false,
         firstInstallTime: Long = 0L,
+        isArchived: Boolean = false,
         packageName: String = "pkg.$label"
     ): AppModel.App = AppModel.App(
         appLabel = label,
@@ -29,7 +30,8 @@ class DrawerOrderingTest {
         activityClassName = null,
         isNew = isNew,
         user = dummyUser,
-        firstInstallTime = firstInstallTime
+        firstInstallTime = firstInstallTime,
+        isArchived = isArchived
     )
 
     private fun createPinnedShortcut(
@@ -218,5 +220,18 @@ class DrawerOrderingTest {
         val ordered = DrawerOrdering.order(input, newFirst = true)
 
         assertEquals(listOf("Beta", "Alpha", "Chat with Alice"), ordered.map { it.appLabel })
+    }
+
+    @Test
+    fun `archived apps are not moved to top even if marked isNew`() {
+        val appA = createApp("Calculator", isNew = false, isArchived = true, firstInstallTime = 900L)
+        val appB = createApp("Camera", isNew = true, isArchived = false, firstInstallTime = 500L)
+        val appC = createApp("Clock", isNew = false, isArchived = false, firstInstallTime = 200L)
+
+        val input = listOf(appA, appB, appC)
+        val ordered = DrawerOrdering.order(input, newFirst = true)
+
+        // Only Camera is isNew. Calculator is archived so it stays in restApps in its original place.
+        assertEquals(listOf("Camera", "Calculator", "Clock"), ordered.map { it.appLabel })
     }
 }

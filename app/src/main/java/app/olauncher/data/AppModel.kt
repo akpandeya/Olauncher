@@ -9,6 +9,7 @@ sealed class AppModel : Comparable<AppModel> {
     abstract val appPackage: String
     abstract val user: UserHandle
     abstract val isNew: Boolean
+    open val isArchived: Boolean = false
     open val firstInstallTime: Long = 0L
 
     data class App(
@@ -19,6 +20,7 @@ sealed class AppModel : Comparable<AppModel> {
         override val isNew: Boolean = false,
         override val user: UserHandle,
         override val firstInstallTime: Long = 0L,
+        override val isArchived: Boolean = false,
     ) : AppModel()
 
     data class PinnedShortcut(
@@ -29,6 +31,7 @@ sealed class AppModel : Comparable<AppModel> {
         override val isNew: Boolean = false,
         override val user: UserHandle,
         override val firstInstallTime: Long = 0L,
+        override val isArchived: Boolean = false,
     ) : AppModel() {
         val identity: String
             get() = shortcutIdentity(appPackage, shortcutId, user.toString())
