@@ -202,4 +202,7 @@
     <string name="today_cards">Today cards</string>
     <string name="choose_app">Choose app…</string>
     <string name="nothing_here_yet">Nothing here yet</string>
+    <string name="save_for_later">Save for later</string>
+    <string name="saved_for_later">Saved for later</string>
+    <string name="no_link_found">No link found</string>
 </resources>
