@@ -4,5 +4,6 @@
     <include domain="file" path="saved_items.json" />
     <include domain="file" path="word_progress.json" />
     <include domain="file" path="words.json" />
+    <include domain="file" path="usage_days.json" />
     <exclude domain="file" path="wallpapers/" />
 </full-backup-content>
