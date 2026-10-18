@@ -1,6 +1,7 @@
 package app.olauncher.glance
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -146,5 +147,15 @@ class RainOutlookTest {
         val summary = RainOutlook.summary(hours, labels, now)
         // At 14:30, current hour is 14:00 (dry), next rain is at 16:00
         assertEquals("Rain from 16:00", summary)
+    }
+
+    @Test
+    fun `all cached hours in the past returns null`() {
+        val now = LocalDateTime.of(2024, 5, 18, 23, 30)
+        val hours = (0 until 12).map { i ->
+            hour(LocalDateTime.of(2024, 5, 18, 4, 0).plusHours(i.toLong()), code = 61, precipProb = 90)
+        }
+
+        assertNull(RainOutlook.summary(hours, labels, now))
     }
 }

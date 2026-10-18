@@ -22,13 +22,14 @@ object RainOutlook {
         hours: List<Hour>,
         labels: RainOutlookLabels,
         now: LocalDateTime = LocalDateTime.now(),
-    ): String {
+    ): String? {
         if (hours.isEmpty()) return labels.dryNext12h
 
         val currentHourTime = now.truncatedTo(ChronoUnit.HOURS)
-        val window = hours.filter { !it.time.isBefore(currentHourTime) }.ifEmpty { hours }.take(12)
+        val window = hours.filter { !it.time.isBefore(currentHourTime) }.take(12)
 
-        if (window.isEmpty()) return labels.dryNext12h
+        // Every cached hour is in the past (stale cache): show no rain line.
+        if (window.isEmpty()) return null
 
         val rainingNow = isRainy(window.first())
 
