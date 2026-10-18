@@ -34,6 +34,14 @@ class TodayCardTest {
         assertEquals(R.string.wellbeing, wellbeing?.titleRes)
     }
 
+    @Test
+    fun `today cards list contains words card`() {
+        val words = TodayCards.all.firstOrNull { it.key == app.olauncher.ui.today.cards.WordsCard.KEY }
+        assertNotNull(words)
+        assertEquals("words", words?.key)
+        assertEquals(R.string.words, words?.titleRes)
+    }
+
 
     @Test
     fun `swipe right action constants match spec`() {
