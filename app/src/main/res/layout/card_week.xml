@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/tvDistractingApps"
+        style="@style/TextSmallLight"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingVertical="2dp"
+        android:visibility="gone"
+        tools:text="Distracting apps 4 h 12 min · 46 opens"
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/tvWeekComparison"
+        style="@style/TextSmallLight"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingVertical="2dp"
+        android:visibility="gone"
+        tools:text="18% less than the week before"
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/tvTopApps"
+        style="@style/TextSmallLight"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingVertical="2dp"
+        android:visibility="gone"
+        tools:text="Most: Instagram 2 h 30 min, YouTube 1 h 10 min"
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/tvOverAllowance"
+        style="@style/TextSmallLight"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingVertical="2dp"
+        android:visibility="gone"
+        tools:text="Over allowance on 2 of 7 days"
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/tvPause"
+        style="@style/TextSmallLight"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingVertical="2dp"
+        android:visibility="gone"
+        tools:text="Pause: 31 × not now · 15 × opened (mostly: Just bored)"
+        tools:visibility="visible" />
+
+    <TextView
+        android:id="@+id/tvNudges"
+        style="@style/TextSmallLight"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingVertical="2dp"
+        android:visibility="gone"
+        tools:text="Water 34 · Walk 12"
+        tools:visibility="visible" />
+
+</LinearLayout>
