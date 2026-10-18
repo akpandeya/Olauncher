@@ -181,6 +181,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.nudgeActiveHours, R.id.nudgeActiveHoursTitle, R.id.nudgeActiveHoursLayout -> showActiveHoursDialog()
             R.id.germanOnOff, R.id.germanTitle, R.id.germanLayout -> toggleGerman()
             R.id.germanLookupOnOff, R.id.germanLookupTitle, R.id.germanLookupSubtitle, R.id.germanLookupLayout -> toggleGermanLookup()
+            R.id.germanPauseWordOnOff, R.id.germanPauseWordTitle, R.id.germanPauseWordLayout -> toggleGermanPauseWord()
             R.id.exportBackup, R.id.exportBackupLayout -> launchExportBackup()
             R.id.importBackup, R.id.importBackupLayout -> launchImportBackup()
             R.id.footer -> requireContext().openUrl(Constants.URL_SOURCE)
@@ -256,6 +257,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.germanLookupTitle.setOnClickListener(this)
         binding.germanLookupSubtitle.setOnClickListener(this)
         binding.germanLookupLayout.setOnClickListener(this)
+        binding.germanPauseWordOnOff.setOnClickListener(this)
+        binding.germanPauseWordTitle.setOnClickListener(this)
+        binding.germanPauseWordLayout.setOnClickListener(this)
         binding.exportBackup.setOnClickListener(this)
         binding.exportBackupLayout.setOnClickListener(this)
         binding.importBackup.setOnClickListener(this)
@@ -1419,10 +1423,17 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateGerman()
     }
 
+    private fun toggleGermanPauseWord() {
+        prefs.germanPauseWord = !prefs.germanPauseWord
+        populateGerman()
+    }
+
     private fun populateGerman() {
         binding.germanOnOff.text = getString(if (prefs.germanEnabled) R.string.on else R.string.off)
         binding.germanLookupLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
         binding.germanLookupOnOff.text = getString(if (prefs.germanLookup) R.string.on else R.string.off)
+        binding.germanPauseWordLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
+        binding.germanPauseWordOnOff.text = getString(if (prefs.germanPauseWord) R.string.on else R.string.off)
     }
 
     private fun populateFooter() {
