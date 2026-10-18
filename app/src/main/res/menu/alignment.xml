@@ -13,24 +13,4 @@
     <item
         android:id="@+id/alignmentBottom"
         android:title="@string/bottom_off" />
-    <!-- Title is set at runtime to shortcuts_on / shortcuts_off -->
-    <item
-        android:id="@+id/alignmentShortcuts"
-        android:title="@string/shortcuts_off" />
-    <!-- Title is set at runtime to icons_count (Icons: n), shown only when shortcuts are on -->
-    <item
-        android:id="@+id/alignmentShortcutCount"
-        android:title="@string/icons" />
-    <!-- Title is set at runtime to icons_on_left / icons_on_right, shown only when shortcuts are on -->
-    <item
-        android:id="@+id/alignmentShortcutSide"
-        android:title="@string/icons_on_right" />
-    <!-- Shown only when shortcuts are on -->
-    <item
-        android:id="@+id/alignmentShortcutHeight"
-        android:title="@string/icons_height" />
-    <!-- Shown only when shortcuts are on -->
-    <item
-        android:id="@+id/alignmentShortcutIconStyle"
-        android:title="@string/icon_style" />
 </menu>
