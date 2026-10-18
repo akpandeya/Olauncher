@@ -18,11 +18,14 @@ import android.widget.LinearLayout
 import android.widget.Toast
 import android.view.WindowManager
 import android.Manifest
-import androidx.activity.result.PickVisualMediaRequest
+import android.content.pm.PackageManager
 import android.text.InputType
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import app.olauncher.ui.today.cards.NextUpCard
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
@@ -123,6 +126,33 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             enableUseMyLocation()
         } else {
             requireContext().showToast(R.string.location_off_for_thumbline)
+        }
+    }
+
+    private var pendingCalendarCardIndex: Int? = null
+    private var todayCardsDialog: AlertDialog? = null
+    private var todayCardsCheckedState: BooleanArray? = null
+
+    private val calendarPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        val idx = pendingCalendarCardIndex
+        pendingCalendarCardIndex = null
+        val alert = todayCardsDialog
+        if (isGranted) {
+            if (idx != null && alert != null && alert.isShowing) {
+                alert.listView?.setItemChecked(idx, true)
+                todayCardsCheckedState?.set(idx, true)
+            } else {
+                prefs.setTodayCardEnabled(NextUpCard.KEY, true)
+                populateTodayCards()
+            }
+        } else {
+            if (idx != null && alert != null && alert.isShowing) {
+                alert.listView?.setItemChecked(idx, false)
+                todayCardsCheckedState?.set(idx, false)
+            }
+            requireContext().showToast(R.string.calendar_off_for_thumbline)
         }
     }
 
@@ -1370,10 +1400,27 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         val cards = TodayCards.all
         val titles = cards.map { getString(it.titleRes) }.toTypedArray()
         val checked = BooleanArray(cards.size) { i -> prefs.isTodayCardEnabled(cards[i].key) }
+        todayCardsCheckedState = checked
 
         val builder = AlertDialog.Builder(requireContext())
             .setTitle(R.string.today_cards)
-            .setMultiChoiceItems(titles, checked) { _, which, isChecked ->
+            .setMultiChoiceItems(titles, checked) { dialogInterface, which, isChecked ->
+                val card = cards[which]
+                if (card.key == NextUpCard.KEY && isChecked) {
+                    if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
+                        (dialogInterface as? AlertDialog)?.listView?.setItemChecked(which, false)
+                        checked[which] = false
+                        requireContext().showMessageDialog(
+                            title = R.string.next_up,
+                            message = R.string.calendar_permission_message,
+                            action = R.string.allow,
+                        ) {
+                            pendingCalendarCardIndex = which
+                            calendarPermissionLauncher.launch(Manifest.permission.READ_CALENDAR)
+                        }
+                        return@setMultiChoiceItems
+                    }
+                }
                 checked[which] = isChecked
             }
             .setPositiveButton(R.string.okay) { _, _ ->
@@ -1385,8 +1432,15 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             .setNegativeButton(R.string.cancel, null)
 
         val alertDialog = builder.create()
+        alertDialog.setOnDismissListener {
+            if (todayCardsDialog === alertDialog) {
+                todayCardsDialog = null
+                todayCardsCheckedState = null
+            }
+        }
         dialog?.dismiss()
         dialog = alertDialog
+        todayCardsDialog = alertDialog
         val window = alertDialog.window
         if (window != null && !prefs.showStatusBar) {
             window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
@@ -1821,6 +1875,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
 
     override fun onDestroyView() {
         // Dismissing the text size dialog applies any pending scale via its dismiss listener
+        todayCardsDialog = null
+        todayCardsCheckedState = null
+        pendingCalendarCardIndex = null
         dialog?.dismiss()
         dialog = null
         applyTextSizeScale()
