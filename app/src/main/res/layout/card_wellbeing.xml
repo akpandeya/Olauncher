@@ -34,7 +34,7 @@
             android:clickable="false"
             android:focusable="false"
             android:paddingVertical="4dp"
-            android:text=" · "
+            android:text="@string/wellbeing_separator"
             android:visibility="gone"
             tools:visibility="visible" />
 

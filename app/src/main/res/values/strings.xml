@@ -243,5 +243,6 @@
     <string name="wellbeing_distracting_stats">%1$s %2$s · %3$s</string>
     <string name="wellbeing_open_single">1 open</string>
     <string name="wellbeing_open_plural">%d opens</string>
+    <string name="wellbeing_separator" translatable="false">" · "</string>
 </resources>
 
