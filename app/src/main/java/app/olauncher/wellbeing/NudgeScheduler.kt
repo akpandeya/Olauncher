@@ -7,6 +7,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
+import app.olauncher.R
 import app.olauncher.data.Prefs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -82,6 +83,19 @@ object NudgeScheduler {
         }
     }
 
+    /**
+     * Re-schedules all enabled nudge types using [ExistingWorkPolicy.REPLACE].
+     */
+    fun rescheduleAll(context: Context) {
+        val prefs = Prefs(context)
+        val supportedTypes = listOf(Nudges.WATER, Nudges.WALK)
+        for (type in supportedTypes) {
+            if (intervalMinForType(prefs, type) > 0) {
+                schedule(context, type, policy = ExistingWorkPolicy.REPLACE)
+            }
+        }
+    }
+
     fun intervalMinForType(prefs: Prefs, type: String): Int = when (type) {
         Nudges.WATER -> prefs.nudgeWaterIntervalMin
         Nudges.WALK -> prefs.nudgeWalkIntervalMin
@@ -100,24 +114,27 @@ class NudgeWorker(
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val type = inputData.getString(NudgeScheduler.KEY_TYPE) ?: return@withContext Result.success()
 
-        // Hook for posting notifications per type (to be connected in task-02)
-        when (type) {
-            Nudges.WATER -> {
-                // Hook: water nudge
+        val prefs = Prefs(applicationContext)
+        val interval = NudgeScheduler.intervalMinForType(prefs, type)
+        if (interval > 0) {
+            val count = prefs.nudgeDone(type)
+            val text = when (type) {
+                Nudges.WATER -> applicationContext.getString(R.string.nudge_water_notification, count)
+                Nudges.WALK -> applicationContext.getString(R.string.nudge_walk_notification, count)
+                else -> null
             }
-            Nudges.WALK -> {
-                // Hook: walk nudge
+            if (text != null) {
+                val doneAction = androidx.core.app.NotificationCompat.Action.Builder(
+                    0,
+                    applicationContext.getString(app.olauncher.R.string.done),
+                    NudgeActionReceiver.createDonePendingIntent(applicationContext, type),
+                ).build()
+                Nudges.post(applicationContext, type, text, doneAction)
             }
-            Nudges.SOCIAL -> {
-                // Hook: social nudge
-            }
-            else -> {
-                // No types yet
-            }
-        }
 
-        // Reschedule self for the next interval
-        NudgeScheduler.schedule(applicationContext, type)
+            // Reschedule self for the next interval
+            NudgeScheduler.schedule(applicationContext, type)
+        }
         Result.success()
     }
 }

@@ -44,6 +44,7 @@ class NudgePlumbingTest {
     @Test
     fun `action and extra constants match specification`() {
         assertEquals("app.olauncher.action.NUDGE_DONE", NudgeActionReceiver.ACTION_DONE)
+        assertEquals("app.olauncher.action.NUDGE_DISMISS", NudgeActionReceiver.ACTION_DISMISS)
         assertEquals("type", NudgeActionReceiver.EXTRA_TYPE)
     }
 }
