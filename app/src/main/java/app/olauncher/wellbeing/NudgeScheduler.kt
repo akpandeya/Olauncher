@@ -159,15 +159,24 @@ class NudgeWorker(
         val interval = NudgeScheduler.intervalMinForType(prefs, type)
         if (interval > 0) {
             val count = prefs.nudgeDone(type)
+            val useGerman = prefs.germanEnabled && prefs.germanUi
             val text = when (type) {
-                Nudges.WATER -> applicationContext.getString(R.string.nudge_water_notification, count)
-                Nudges.WALK -> applicationContext.getString(R.string.nudge_walk_notification, count)
+                Nudges.WATER -> applicationContext.getString(
+                    if (useGerman) R.string.nudge_water_notification_de else R.string.nudge_water_notification,
+                    count
+                )
+                Nudges.WALK -> applicationContext.getString(
+                    if (useGerman) R.string.nudge_walk_notification_de else R.string.nudge_walk_notification,
+                    count
+                )
                 else -> null
             }
             if (text != null) {
                 val doneAction = androidx.core.app.NotificationCompat.Action.Builder(
                     0,
-                    applicationContext.getString(app.olauncher.R.string.done),
+                    applicationContext.getString(
+                        if (useGerman) R.string.done_de else R.string.done
+                    ),
                     NudgeActionReceiver.createDonePendingIntent(applicationContext, type),
                 ).build()
                 Nudges.post(applicationContext, type, text, doneAction)

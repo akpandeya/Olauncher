@@ -69,10 +69,18 @@ class SocialTimeWorker(
 
             val statsByPkg = usageRepo.foregroundMillisByPackageToday(distractingPkgs)
             val appNames = resolveDistractingAppNames(applicationContext, distractingPkgs, statsByPkg)
+            val useGerman = prefs.germanEnabled && prefs.germanUi
             val text = if (appNames.isNotBlank()) {
-                applicationContext.getString(R.string.nudge_social_notification, minutesToday, appNames)
+                applicationContext.getString(
+                    if (useGerman) R.string.nudge_social_notification_de else R.string.nudge_social_notification,
+                    minutesToday,
+                    appNames,
+                )
             } else {
-                applicationContext.getString(R.string.nudge_social_notification_no_apps, minutesToday)
+                applicationContext.getString(
+                    if (useGerman) R.string.nudge_social_notification_no_apps_de else R.string.nudge_social_notification_no_apps,
+                    minutesToday,
+                )
             }
 
             // Post nudge notification with no action buttons

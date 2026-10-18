@@ -183,6 +183,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.germanClock, R.id.germanClockTitle, R.id.germanClockLayout -> showGermanClockMenu(binding.germanClock)
             R.id.germanLookupOnOff, R.id.germanLookupTitle, R.id.germanLookupSubtitle, R.id.germanLookupLayout -> toggleGermanLookup()
             R.id.germanPauseWordOnOff, R.id.germanPauseWordTitle, R.id.germanPauseWordLayout -> toggleGermanPauseWord()
+            R.id.germanUiOnOff, R.id.germanUiTitle, R.id.germanUiLayout -> toggleGermanUi()
             R.id.exportBackup, R.id.exportBackupLayout -> launchExportBackup()
             R.id.importBackup, R.id.importBackupLayout -> launchImportBackup()
             R.id.footer -> requireContext().openUrl(Constants.URL_SOURCE)
@@ -264,6 +265,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.germanPauseWordOnOff.setOnClickListener(this)
         binding.germanPauseWordTitle.setOnClickListener(this)
         binding.germanPauseWordLayout.setOnClickListener(this)
+        binding.germanUiOnOff.setOnClickListener(this)
+        binding.germanUiTitle.setOnClickListener(this)
+        binding.germanUiLayout.setOnClickListener(this)
         binding.exportBackup.setOnClickListener(this)
         binding.exportBackupLayout.setOnClickListener(this)
         binding.importBackup.setOnClickListener(this)
@@ -1432,6 +1436,11 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateGerman()
     }
 
+    private fun toggleGermanUi() {
+        prefs.germanUi = !prefs.germanUi
+        populateGerman()
+    }
+
     private fun populateGerman() {
         binding.germanOnOff.text = getString(if (prefs.germanEnabled) R.string.on else R.string.off)
         binding.germanClockLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
@@ -1444,6 +1453,8 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.germanLookupOnOff.text = getString(if (prefs.germanLookup) R.string.on else R.string.off)
         binding.germanPauseWordLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
         binding.germanPauseWordOnOff.text = getString(if (prefs.germanPauseWord) R.string.on else R.string.off)
+        binding.germanUiLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
+        binding.germanUiOnOff.text = getString(if (prefs.germanUi) R.string.on else R.string.off)
     }
 
     private fun showGermanClockMenu(anchor: View) {

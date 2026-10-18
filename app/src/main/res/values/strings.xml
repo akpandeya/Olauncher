@@ -264,6 +264,15 @@
     <string name="german_lookup">Look up meanings online</string>
     <string name="german_lookup_subtitle">Sends the saved word to Wiktionary</string>
     <string name="german_pause_word">Word on the pause screen</string>
+    <string name="german_ui">Nudges and pause in German</string>
+    <string name="nudge_water_notification_de" translatable="false">Zeit für ein Glas Wasser · heute %d</string>
+    <string name="nudge_walk_notification_de" translatable="false">Steh auf und geh ein paar Minuten · heute %d</string>
+    <string name="nudge_social_notification_de" translatable="false">Heute %1$d Min. auf %2$s. Leg es weg?</string>
+    <string name="nudge_social_notification_no_apps_de" translatable="false">Heute %1$d Min. auf ablenkenden Apps. Leg es weg?</string>
+    <string name="done_de" translatable="false">Erledigt</string>
+    <string name="pause_open_de" translatable="false">Öffnen</string>
+    <string name="pause_open_countdown_de" translatable="false">Öffnen (%d)</string>
+    <string name="not_now_de" translatable="false">Jetzt nicht</string>
     <string name="words">Words</string>
     <string name="words_empty_state">Select a word in any app, then Save word</string>
     <string name="words_all_done">All done for today · %1$s · %2$d learned</string>
