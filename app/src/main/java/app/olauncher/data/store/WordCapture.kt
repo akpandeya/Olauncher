@@ -20,9 +20,13 @@ sealed interface Capture {
 object WordLookup {
     internal var workEnqueuer: ((Context, Long) -> Unit)? = null
 
+    /** Lookups run only when both the master German switch and the lookup switch are on. */
+    fun isLookupAllowed(germanEnabled: Boolean, germanLookup: Boolean): Boolean =
+        germanEnabled && germanLookup
+
     fun enqueue(context: Context, wordId: Long) {
         val prefs = Prefs(context)
-        if (!prefs.germanLookup) return
+        if (!isLookupAllowed(prefs.germanEnabled, prefs.germanLookup)) return
 
         val word = WordsStore(context).get(wordId) ?: return
         if (word.meaning.isNotBlank()) return

@@ -20,20 +20,12 @@ object WordsCardLogic {
 
     fun isAvailable(germanEnabled: Boolean): Boolean = germanEnabled
 
-    fun formatWordsCount(total: Int): String {
-        return if (total == 1) "1 word" else "$total words"
-    }
-
     fun formatWordsCount(context: Context, total: Int): String {
         return if (total == 1) {
             context.getString(R.string.words_count_single)
         } else {
             context.getString(R.string.words_count_plural, total)
         }
-    }
-
-    fun formatFooter(total: Int, due: Int, learned: Int): String {
-        return "${formatWordsCount(total)} · $due due · $learned learned"
     }
 
     fun formatFooter(context: Context, total: Int, due: Int, learned: Int): String {
@@ -45,25 +37,12 @@ object WordsCardLogic {
         )
     }
 
-    fun formatAllDone(total: Int, learned: Int): String {
-        return "All done for today · ${formatWordsCount(total)} · $learned learned"
-    }
-
     fun formatAllDone(context: Context, total: Int, learned: Int): String {
         return context.getString(
             R.string.words_all_done,
             formatWordsCount(context, total),
             learned
         )
-    }
-
-    fun formatMeaning(meaning: String, meaningSource: String): String {
-        if (meaning.isBlank()) return "No meaning yet"
-        return if (meaningSource.equals("wiktionary", ignoreCase = true)) {
-            "$meaning · Wiktionary"
-        } else {
-            meaning
-        }
     }
 
     fun formatMeaning(context: Context, meaning: String, meaningSource: String): String {
@@ -78,6 +57,10 @@ object WordsCardLogic {
     }
 }
 
+/**
+ * Stateless card entry. Per-view state (binding and [WordReveal]) lives in [WordsCardView],
+ * which is stored on the card's root view, so it goes away with the view.
+ */
 object WordsCard : TodayCard {
 
     const val KEY = "words"
@@ -89,9 +72,6 @@ object WordsCard : TodayCard {
     var storeProvider: ((Context) -> WordsStore)? = null
     var epochDaySupplier: () -> Long = { LocalDate.now().toEpochDay() }
 
-    internal var binding: CardWordsBinding? = null
-    private var wordReveal: WordReveal? = null
-
     fun getStore(context: Context): WordsStore {
         return storeProvider?.invoke(context) ?: WordsStore(context)
     }
@@ -101,36 +81,30 @@ object WordsCard : TodayCard {
     }
 
     override fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View {
-        val viewBinding = CardWordsBinding.inflate(inflater, parent, false)
-        binding = viewBinding
-        wordReveal = null
-
-        viewBinding.root.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
-            override fun onViewAttachedToWindow(v: View) {}
-            override fun onViewDetachedFromWindow(v: View) {
-                if (binding === viewBinding) {
-                    binding = null
-                    wordReveal = null
-                }
-            }
-        })
-
-        render()
-        return viewBinding.root
+        val cardView = WordsCardView(CardWordsBinding.inflate(inflater, parent, false))
+        cardView.binding.root.tag = cardView
+        cardView.render()
+        return cardView.binding.root
     }
 
-    override fun onResume() {
-        render()
+    override fun onResume(view: View) {
+        (view.tag as? WordsCardView)?.render()
     }
+}
+
+/** Holds the state of one Words card view. */
+internal class WordsCardView(val binding: CardWordsBinding) {
+
+    private var wordReveal: WordReveal? = null
 
     fun render() {
-        val b = binding ?: return
+        val b = binding
         val context = b.root.context ?: return
-        val store = getStore(context)
-        val today = epochDaySupplier()
+        val store = WordsCard.getStore(context)
+        val today = WordsCard.epochDaySupplier()
 
         val stats = store.stats(today)
-        val dueWords = store.due(today, DUE_LIMIT)
+        val dueWords = store.due(today, WordsCard.DUE_LIMIT)
 
         if (dueWords.isNotEmpty()) {
             val dueWord = dueWords.first()
@@ -142,18 +116,18 @@ object WordsCard : TodayCard {
             val helper = wordReveal ?: WordReveal(
                 binding = b.wordReveal,
                 onAnswer = { word, knewIt ->
-                    val s = getStore(context)
-                    val currentToday = epochDaySupplier()
+                    val s = WordsCard.getStore(context)
+                    val currentToday = WordsCard.epochDaySupplier()
                     val updated = if (knewIt) Leitner.knowIt(word, currentToday) else Leitner.again(word, currentToday)
                     s.update(updated)
                     render()
                 },
                 onWordUpdated = { updated ->
-                    getStore(context).update(updated)
+                    WordsCard.getStore(context).update(updated)
                     render()
                 },
                 onWordDeleted = { word ->
-                    getStore(context).delete(word.id)
+                    WordsCard.getStore(context).delete(word.id)
                     render()
                 }
             ).also { wordReveal = it }

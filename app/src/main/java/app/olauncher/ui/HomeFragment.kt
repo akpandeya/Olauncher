@@ -100,7 +100,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         viewModel.isOlauncherDefault()
         if (prefs.showStatusBar) showStatusBar()
         else hideStatusBar()
-        registerTimeTickReceiver()
+        if (GermanTime.isWordsClockOn(prefs.germanEnabled, prefs.germanClock)) registerTimeTickReceiver()
     }
 
     override fun onPause() {
@@ -451,7 +451,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         val isDateVisible = Constants.DateTime.isDateVisible(prefs.dateTimeVisibility)
 
         val isGerman = prefs.germanEnabled && prefs.germanClock != Prefs.GERMAN_CLOCK_SYSTEM
-        val isWordsClock = prefs.germanEnabled && prefs.germanClock == Prefs.GERMAN_CLOCK_IN_WORTEN
+        val isWordsClock = GermanTime.isWordsClockOn(prefs.germanEnabled, prefs.germanClock)
 
         if (isWordsClock) {
             binding.clock.isVisible = false

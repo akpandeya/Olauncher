@@ -31,36 +31,12 @@ object NudgeFormatting {
         else -> "Off"
     }
 
-    fun doneActionLabel(german: Boolean = false): String = if (german) "Erledigt" else "Done"
-
-    fun socialNotificationText(minutes: Int, appNames: String = "", german: Boolean = false): String {
-        return if (german) {
-            if (appNames.isNotBlank()) {
-                "Heute $minutes Min. auf $appNames. Leg es weg?"
-            } else {
-                "Heute $minutes Min. auf ablenkenden Apps. Leg es weg?"
-            }
-        } else {
-            if (appNames.isNotBlank()) {
-                "$minutes min on $appNames today. Put it down?"
-            } else {
-                "$minutes min on distracting apps today. Put it down?"
-            }
-        }
-    }
-
     fun formatActiveHours(startMin: Int, endMin: Int): String {
         val startHour = startMin / 60
         val startMinute = startMin % 60
         val endHour = endMin / 60
         val endMinute = endMin % 60
         return String.format(Locale.ROOT, "%02d:%02d\u2013%02d:%02d", startHour, startMinute, endHour, endMinute)
-    }
-
-    fun notificationText(type: String, count: Int, german: Boolean = false): String = when (type) {
-        Nudges.WATER -> if (german) "Zeit für ein Glas Wasser · heute $count" else "Time for some water · $count today"
-        Nudges.WALK -> if (german) "Steh auf und geh ein paar Minuten · heute $count" else "Stand up and walk for a few minutes · $count today"
-        else -> ""
     }
 
     fun isValidActiveHours(startMin: Int, endMin: Int): Boolean {

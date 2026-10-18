@@ -1,6 +1,12 @@
 package app.olauncher.helper
 
+import app.olauncher.data.Prefs
+
 object GermanTime {
+
+    /** True when Home shows the "In Worten" clock, which needs a once-a-minute refresh. */
+    fun isWordsClockOn(germanEnabled: Boolean, germanClock: Int): Boolean =
+        germanEnabled && germanClock == Prefs.GERMAN_CLOCK_IN_WORTEN
 
     fun words(hour: Int, minute: Int): String {
         val h24 = ((hour % 24) + 24) % 24
