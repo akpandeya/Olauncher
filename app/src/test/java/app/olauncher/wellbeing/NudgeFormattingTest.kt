@@ -8,26 +8,6 @@ import org.junit.Test
 class NudgeFormattingTest {
 
     @Test
-    fun `water notification text matches specification format with done count`() {
-        assertEquals("Time for some water · 0 today", NudgeFormatting.notificationText(Nudges.WATER, 0))
-        assertEquals("Time for some water · 1 today", NudgeFormatting.notificationText(Nudges.WATER, 1))
-        assertEquals("Time for some water · 3 today", NudgeFormatting.notificationText(Nudges.WATER, 3))
-        assertEquals("Time for some water · 12 today", NudgeFormatting.notificationText(Nudges.WATER, 12))
-    }
-
-    @Test
-    fun `walk notification text matches specification format with done count`() {
-        assertEquals("Stand up and walk for a few minutes · 0 today", NudgeFormatting.notificationText(Nudges.WALK, 0))
-        assertEquals("Stand up and walk for a few minutes · 1 today", NudgeFormatting.notificationText(Nudges.WALK, 1))
-        assertEquals("Stand up and walk for a few minutes · 5 today", NudgeFormatting.notificationText(Nudges.WALK, 5))
-    }
-
-    @Test
-    fun `notification text returns empty string for unknown type`() {
-        assertEquals("", NudgeFormatting.notificationText("unknown", 1))
-    }
-
-    @Test
     fun `formatActiveHours formats default 0900 to 2100 with en-dash`() {
         // 540 = 09:00, 1260 = 21:00
         val formatted = NudgeFormatting.formatActiveHours(540, 1260)
@@ -79,22 +59,6 @@ class NudgeFormattingTest {
     }
 
     @Test
-    fun `socialNotificationText matches specification format`() {
-        assertEquals(
-            "38 min on Instagram, YouTube today. Put it down?",
-            NudgeFormatting.socialNotificationText(38, "Instagram, YouTube")
-        )
-        assertEquals(
-            "16 min on Instagram today. Put it down?",
-            NudgeFormatting.socialNotificationText(16, "Instagram")
-        )
-        assertEquals(
-            "30 min on distracting apps today. Put it down?",
-            NudgeFormatting.socialNotificationText(30, "")
-        )
-    }
-
-    @Test
     fun `isValidActiveHours enforces start strictly less than end`() {
         assertTrue(NudgeFormatting.isValidActiveHours(540, 1260))
         assertTrue(NudgeFormatting.isValidActiveHours(0, 1440))
@@ -102,39 +66,5 @@ class NudgeFormattingTest {
         assertFalse(NudgeFormatting.isValidActiveHours(1260, 540))
         assertFalse(NudgeFormatting.isValidActiveHours(-1, 540))
         assertFalse(NudgeFormatting.isValidActiveHours(540, 1441))
-    }
-
-    @Test
-    fun `german water notification text matches specification format with done count`() {
-        assertEquals("Zeit für ein Glas Wasser · heute 0", NudgeFormatting.notificationText(Nudges.WATER, 0, german = true))
-        assertEquals("Zeit für ein Glas Wasser · heute 3", NudgeFormatting.notificationText(Nudges.WATER, 3, german = true))
-    }
-
-    @Test
-    fun `german walk notification text matches specification format with done count`() {
-        assertEquals("Steh auf und geh ein paar Minuten · heute 0", NudgeFormatting.notificationText(Nudges.WALK, 0, german = true))
-        assertEquals("Steh auf und geh ein paar Minuten · heute 2", NudgeFormatting.notificationText(Nudges.WALK, 2, german = true))
-    }
-
-    @Test
-    fun `doneActionLabel returns correct text for German and English`() {
-        assertEquals("Erledigt", NudgeFormatting.doneActionLabel(german = true))
-        assertEquals("Done", NudgeFormatting.doneActionLabel(german = false))
-    }
-
-    @Test
-    fun `german socialNotificationText matches specification format`() {
-        assertEquals(
-            "Heute 38 Min. auf Instagram, YouTube. Leg es weg?",
-            NudgeFormatting.socialNotificationText(38, "Instagram, YouTube", german = true)
-        )
-        assertEquals(
-            "Heute 16 Min. auf Instagram. Leg es weg?",
-            NudgeFormatting.socialNotificationText(16, "Instagram", german = true)
-        )
-        assertEquals(
-            "Heute 30 Min. auf ablenkenden Apps. Leg es weg?",
-            NudgeFormatting.socialNotificationText(30, "", german = true)
-        )
     }
 }

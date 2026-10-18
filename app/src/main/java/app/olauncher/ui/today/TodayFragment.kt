@@ -20,7 +20,7 @@ class TodayFragment : BaseFragment() {
     private var _binding: FragmentTodayBinding? = null
     private val binding get() = _binding!!
     private lateinit var prefs: Prefs
-    private val activeCards = mutableListOf<TodayCard>()
+    private val activeCards = mutableListOf<Pair<TodayCard, View>>()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -41,7 +41,7 @@ class TodayFragment : BaseFragment() {
     override fun onResume() {
         super.onResume()
         populateCards()
-        activeCards.forEach { it.onResume() }
+        activeCards.forEach { (card, cardView) -> card.onResume(cardView) }
     }
 
     private fun initSwipeTouchListener() {
@@ -76,7 +76,6 @@ class TodayFragment : BaseFragment() {
             binding.todayScrollView.isVisible = true
 
             for (card in enabledCards) {
-                activeCards.add(card)
 
                 val titleView = TextView(context).apply {
                     setTextAppearance(R.style.TextSmall)
@@ -95,6 +94,7 @@ class TodayFragment : BaseFragment() {
                 if (cardView.parent == null) {
                     binding.cardsContainer.addView(cardView)
                 }
+                activeCards.add(card to cardView)
             }
         }
     }

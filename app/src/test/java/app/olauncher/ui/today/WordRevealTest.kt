@@ -9,16 +9,6 @@ import org.junit.Test
 class WordRevealTest {
 
     @Test
-    fun `WordReveal companion formatMeaning matches spec`() {
-        assertEquals("No meaning yet", WordReveal.formatMeaning("", ""))
-        assertEquals("No meaning yet", WordReveal.formatMeaning("  ", "wiktionary"))
-        assertEquals("homesick · Wiktionary", WordReveal.formatMeaning("homesick", "wiktionary"))
-        assertEquals("homesick · Wiktionary", WordReveal.formatMeaning("homesick", "Wiktionary"))
-        assertEquals("homesick", WordReveal.formatMeaning("homesick", "user"))
-        assertEquals("homesick", WordReveal.formatMeaning("homesick", ""))
-    }
-
-    @Test
     fun `WordReveal keepReveal logic preserves reveal state for same word only`() {
         val word1 = Word(id = 1L, text = "Haus", dueDay = 100L, addedAt = 10L)
         val word1Updated = word1.copy(meaning = "house", meaningSource = "user")

@@ -20,6 +20,9 @@ interface TodayCard {
     fun isAvailable(context: Context): Boolean = true
     fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View
     fun onResume() {}
+
+    /** Called on resume with the view this card returned from [createView]. */
+    fun onResume(view: View) = onResume()
 }
 
 object TodayCards {
