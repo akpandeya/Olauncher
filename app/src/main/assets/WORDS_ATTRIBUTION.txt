@@ -1,0 +1,29 @@
+Thumbline German Word List Attribution
+
+The German word list (`words_de.tsv`) is compiled from high-quality open data sources and is released as a derived work under the Creative Commons Attribution-ShareAlike 4.0 International License (CC BY-SA 4.0):
+https://creativecommons.org/licenses/by-sa/4.0/
+
+Sources & Credits:
+
+1. English Wiktionary (German Entries)
+   - Authors: Wiktionary contributors
+   - URL: https://en.wiktionary.org/
+   - License: Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
+     https://creativecommons.org/licenses/by-sa/4.0/
+
+2. Kaikki.org / Wiktextract
+   - Author: Tatu Ylonen
+   - URL: https://kaikki.org/dictionary/German/
+   - Project: https://github.com/tatuylonen/wiktextract
+   - Description: Machine-readable JSONL dictionary extracts of Wiktionary.
+   - License: Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
+
+3. Hermit Dave FrequencyWords (German Corpus)
+   - Author: Hermit Dave
+   - URL: https://github.com/hermitdave/FrequencyWords
+   - Derived from: OpenSubtitles 2018 corpus (http://opus.nlpl.eu/OpenSubtitles2018.php)
+   - License: Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
+     https://creativecommons.org/licenses/by-sa/4.0/
+
+Derived Work Notice:
+This compiled dataset (`words_de.tsv`) is a derived work produced by filtering, ranking, and synthesizing entries from the sources above. In accordance with the ShareAlike provisions of CC BY-SA 4.0, `words_de.tsv` is distributed under the Creative Commons Attribution-ShareAlike 4.0 International License (CC BY-SA 4.0).
