@@ -261,5 +261,20 @@
     <string name="select_word_or_sentence">Select a word or a sentence</string>
     <string name="german_lookup">Look up meanings online</string>
     <string name="german_lookup_subtitle">Sends the saved word to Wiktionary</string>
+    <string name="words">Words</string>
+    <string name="words_empty_state">Select a word in any app, then Save word</string>
+    <string name="words_all_done">All done for today · %1$s · %2$d learned</string>
+    <string name="words_footer">%1$s · %2$d due · %3$d learned</string>
+    <string name="words_count_single">1 word</string>
+    <string name="words_count_plural">%d words</string>
+    <string name="words_no_meaning">No meaning yet</string>
+    <string name="words_wiktionary_suffix">" · Wiktionary"</string>
+    <string name="words_know_it">Know it</string>
+    <string name="words_again">Again</string>
+    <string name="words_edit_meaning">Edit meaning</string>
+    <string name="words_delete">Delete</string>
+    <string name="words_delete_confirm">Delete “%s”?</string>
+    <string name="words_meaning_hint">Meaning</string>
+    <string name="save">Save</string>
 </resources>
 
