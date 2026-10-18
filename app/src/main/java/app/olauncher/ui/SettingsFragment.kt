@@ -180,6 +180,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.nudgeSocial, R.id.nudgeSocialTitle, R.id.nudgeSocialLayout -> showNudgeSocialMenu(binding.nudgeSocial)
             R.id.nudgeActiveHours, R.id.nudgeActiveHoursTitle, R.id.nudgeActiveHoursLayout -> showActiveHoursDialog()
             R.id.germanOnOff, R.id.germanTitle, R.id.germanLayout -> toggleGerman()
+            R.id.germanClock, R.id.germanClockTitle, R.id.germanClockLayout -> showGermanClockMenu(binding.germanClock)
             R.id.germanLookupOnOff, R.id.germanLookupTitle, R.id.germanLookupSubtitle, R.id.germanLookupLayout -> toggleGermanLookup()
             R.id.germanPauseWordOnOff, R.id.germanPauseWordTitle, R.id.germanPauseWordLayout -> toggleGermanPauseWord()
             R.id.exportBackup, R.id.exportBackupLayout -> launchExportBackup()
@@ -253,6 +254,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.germanOnOff.setOnClickListener(this)
         binding.germanTitle.setOnClickListener(this)
         binding.germanLayout.setOnClickListener(this)
+        binding.germanClock.setOnClickListener(this)
+        binding.germanClockTitle.setOnClickListener(this)
+        binding.germanClockLayout.setOnClickListener(this)
         binding.germanLookupOnOff.setOnClickListener(this)
         binding.germanLookupTitle.setOnClickListener(this)
         binding.germanLookupSubtitle.setOnClickListener(this)
@@ -1430,10 +1434,34 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
 
     private fun populateGerman() {
         binding.germanOnOff.text = getString(if (prefs.germanEnabled) R.string.on else R.string.off)
+        binding.germanClockLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
+        binding.germanClock.text = when (prefs.germanClock) {
+            Prefs.GERMAN_CLOCK_DEUTSCH -> getString(R.string.deutsch_de)
+            Prefs.GERMAN_CLOCK_IN_WORTEN -> getString(R.string.in_worten_de)
+            else -> getString(R.string.system_default)
+        }
         binding.germanLookupLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
         binding.germanLookupOnOff.text = getString(if (prefs.germanLookup) R.string.on else R.string.off)
         binding.germanPauseWordLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
         binding.germanPauseWordOnOff.text = getString(if (prefs.germanPauseWord) R.string.on else R.string.off)
+    }
+
+    private fun showGermanClockMenu(anchor: View) {
+        val options = listOf(
+            Prefs.GERMAN_CLOCK_SYSTEM to getString(R.string.system_default),
+            Prefs.GERMAN_CLOCK_DEUTSCH to getString(R.string.deutsch_de),
+            Prefs.GERMAN_CLOCK_IN_WORTEN to getString(R.string.in_worten_de),
+        )
+        anchor.showPopupMenu(
+            configure = { menu ->
+                options.forEach { (id, label) ->
+                    menu.add(Menu.NONE, id, id, label)
+                }
+            }
+        ) { item ->
+            prefs.germanClock = item.itemId
+            populateGerman()
+        }
     }
 
     private fun populateFooter() {
