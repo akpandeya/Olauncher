@@ -240,6 +240,7 @@ class SettingsSectionsResourceTest {
             assertTrue(sectionIds[3].contains("autoShowKeyboard"))
             assertTrue(sectionIds[3].contains("drawerBottomSearchLayout"))
             assertTrue(sectionIds[3].contains("searchEngineLayout"))
+            assertTrue(sectionIds[3].contains("drawerNewFirstLayout"))
 
             // Section 4: Wellbeing
             assertTrue(sectionIds[4].contains("distractingAppsLayout"))
@@ -337,6 +338,9 @@ class SettingsSectionsResourceTest {
             "drawerBottomSearch",
             "drawerBottomSearchLayout",
             "drawerBottomSearchTitle",
+            "drawerNewFirst",
+            "drawerNewFirstLayout",
+            "drawerNewFirstTitle",
             "exportBackup",
             "exportBackupLayout",
             "footer",

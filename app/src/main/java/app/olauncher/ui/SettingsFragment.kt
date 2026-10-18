@@ -186,6 +186,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populatePhotoWallpaperText()
         populateKeyboardText()
         populateDrawerBottomSearch()
+        populateDrawerNewFirst()
         populateScreenTimeOnOff()
         populateDistractingApps()
         populatePauseBeforeApps()
@@ -243,6 +244,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             // R.id.homeButtonRecents -> toggleHomeButtonRecents()
             R.id.autoShowKeyboard -> toggleKeyboardText()
             R.id.drawerBottomSearch, R.id.drawerBottomSearchTitle, R.id.drawerBottomSearchLayout -> toggleDrawerBottomSearch()
+            R.id.drawerNewFirst, R.id.drawerNewFirstTitle, R.id.drawerNewFirstLayout -> toggleDrawerNewFirst()
             R.id.searchEngine, R.id.searchEngineTitle, R.id.searchEngineLayout -> showSearchEngineMenu(binding.searchEngine)
             R.id.homeAppsNum -> showHomeAppsNumMenu(view)
             R.id.alignment -> showAlignmentMenu(view)
@@ -316,6 +318,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.drawerBottomSearch.setOnClickListener(this)
         binding.drawerBottomSearchTitle.setOnClickListener(this)
         binding.drawerBottomSearchLayout.setOnClickListener(this)
+        binding.drawerNewFirst.setOnClickListener(this)
+        binding.drawerNewFirstTitle.setOnClickListener(this)
+        binding.drawerNewFirstLayout.setOnClickListener(this)
         binding.searchEngine.setOnClickListener(this)
         binding.searchEngineTitle.setOnClickListener(this)
         binding.searchEngineLayout.setOnClickListener(this)
@@ -1560,6 +1565,16 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     private fun toggleDrawerBottomSearch() {
         prefs.drawerBottomSearch = !prefs.drawerBottomSearch
         populateDrawerBottomSearch()
+    }
+
+    private fun populateDrawerNewFirst() {
+        if (prefs.drawerNewFirst) binding.drawerNewFirst.text = getString(R.string.on)
+        else binding.drawerNewFirst.text = getString(R.string.off)
+    }
+
+    private fun toggleDrawerNewFirst() {
+        prefs.drawerNewFirst = !prefs.drawerNewFirst
+        populateDrawerNewFirst()
     }
 
     private fun updateHomeBottomAlignment() {
