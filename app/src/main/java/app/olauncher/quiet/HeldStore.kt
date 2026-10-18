@@ -65,43 +65,49 @@ class HeldStore(
     companion object {
         const val FILE_NAME = "held.json"
         const val FORTY_EIGHT_HOURS_MS = 48L * 60 * 60 * 1000
+        private val LOCK = Any()
     }
 
     private val file = File(filesDir, FILE_NAME)
 
-    @Synchronized
     fun add(item: HeldItem) {
-        val all = loadAll().toMutableList()
-        val sanitized = if (item.text.length > 120) item.copy(text = item.text.take(120)) else item
-        val index = all.indexOfFirst { it.key == item.key }
-        if (index != -1) {
-            all[index] = sanitized
-        } else {
-            all.add(sanitized)
+        synchronized(LOCK) {
+            val all = loadAll().toMutableList()
+            val sanitized = if (item.text.length > 120) item.copy(text = item.text.take(120)) else item
+            val index = all.indexOfFirst { it.key == item.key }
+            if (index != -1) {
+                all[index] = sanitized
+            } else {
+                all.add(sanitized)
+            }
+            saveAll(all)
         }
-        saveAll(all)
     }
 
-    @Synchronized
     fun all(): List<HeldItem> {
-        return loadAll()
+        synchronized(LOCK) {
+            return loadAll()
+        }
     }
 
-    @Synchronized
     fun clear(pkg: String) {
-        val remaining = loadAll().filter { it.pkg != pkg }
-        saveAll(remaining)
+        synchronized(LOCK) {
+            val remaining = loadAll().filter { it.pkg != pkg }
+            saveAll(remaining)
+        }
     }
 
-    @Synchronized
     fun clearAll() {
-        saveAll(emptyList())
+        synchronized(LOCK) {
+            saveAll(emptyList())
+        }
     }
 
-    @Synchronized
     fun pruneOlderThan(cutoffMillis: Long = System.currentTimeMillis() - FORTY_EIGHT_HOURS_MS) {
-        val remaining = loadAll().filter { it.postTime >= cutoffMillis }
-        saveAll(remaining)
+        synchronized(LOCK) {
+            val remaining = loadAll().filter { it.postTime >= cutoffMillis }
+            saveAll(remaining)
+        }
     }
 
     private fun loadAll(): List<HeldItem> {

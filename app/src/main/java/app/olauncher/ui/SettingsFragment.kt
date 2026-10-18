@@ -44,6 +44,9 @@ import app.olauncher.wellbeing.NudgeFormatting
 import app.olauncher.wellbeing.NudgeScheduler
 import app.olauncher.wellbeing.Nudges
 import app.olauncher.wellbeing.NotificationPermission
+import androidx.work.ExistingWorkPolicy
+import app.olauncher.quiet.QuietRelease
+import app.olauncher.quiet.ReleaseWorker
 import app.olauncher.data.store.Backup
 import app.olauncher.data.store.BackupData
 import app.olauncher.BuildConfig
@@ -196,6 +199,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populatePauseAskWhy()
         populateCommitLock()
         populateHoldNotifications()
+        populateQuietReleaseTimes()
         populateLockSettings()
         // Home button for recents feature disabled
         // populateHomeButtonRecents()
@@ -228,6 +232,10 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populatePauseAllowance()
         populateCommitLock()
         populateHoldNotifications()
+        populateQuietReleaseTimes()
+        if (prefs.quietEnabled && isNotificationAccessGranted()) {
+            ReleaseWorker.schedule(requireContext(), ExistingWorkPolicy.KEEP)
+        }
     }
 
     override fun onClick(view: View) {
@@ -240,6 +248,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.pauseAskWhyOnOff, R.id.pauseAskWhyTitle, R.id.pauseAskWhyLayout -> togglePauseAskWhy()
             R.id.commitLockOnOff, R.id.commitLockTitle, R.id.commitLockSubtitle, R.id.commitLockLayout -> toggleCommitLock()
             R.id.holdNotificationsOnOff, R.id.holdNotificationsTitle, R.id.holdNotificationsLayout -> toggleHoldNotifications()
+            R.id.quietReleaseTimes, R.id.quietReleaseTimesTitle, R.id.quietReleaseTimesLayout -> showReleaseTimesEditor()
             R.id.screenTimeOnOff -> viewModel.showDialog.postValue(Constants.Dialog.DIGITAL_WELLBEING)
             R.id.appInfo -> openAppInfo(requireContext(), Process.myUserHandle(), BuildConfig.APPLICATION_ID)
             R.id.setLauncher -> viewModel.resetLauncherLiveData.call()
@@ -358,6 +367,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.holdNotificationsOnOff.setOnClickListener(this)
         binding.holdNotificationsTitle.setOnClickListener(this)
         binding.holdNotificationsLayout.setOnClickListener(this)
+        binding.quietReleaseTimes.setOnClickListener(this)
+        binding.quietReleaseTimesTitle.setOnClickListener(this)
+        binding.quietReleaseTimesLayout.setOnClickListener(this)
         binding.alignment.setOnClickListener(this)
         binding.shortcutIconsOnOff.setOnClickListener(this)
         binding.shortcutIconsOnOffTitle.setOnClickListener(this)
@@ -1507,6 +1519,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         if (currentlyActive) {
             prefs.quietEnabled = false
             populateHoldNotifications()
+            ReleaseWorker.cancel(requireContext())
         } else {
             prefs.quietEnabled = true
             if (!accessGranted) {
@@ -1514,7 +1527,132 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                 showHoldNotificationsAccessDialog()
             } else {
                 populateHoldNotifications()
+                ReleaseWorker.schedule(requireContext())
             }
+        }
+    }
+
+    private fun populateQuietReleaseTimes() {
+        val times = QuietRelease.parseTimes(prefs.quietReleaseTimes)
+        binding.quietReleaseTimes.text = QuietRelease.formatReleaseTimesRow(times)
+    }
+
+    private fun showReleaseTimesEditor() {
+        val times = QuietRelease.parseTimes(prefs.quietReleaseTimes).toMutableList()
+        val items = mutableListOf<String>()
+        for (time in times) {
+            items.add(QuietRelease.formatTime(time))
+        }
+        if (times.size < 3) {
+            items.add(getString(R.string.quiet_release_add_time))
+        }
+
+        val builder = AlertDialog.Builder(requireContext())
+            .setTitle(R.string.quiet_release_times)
+            .setItems(items.toTypedArray()) { _, which ->
+                if (which == times.size && times.size < 3) {
+                    showTimePicker(
+                        title = R.string.quiet_release_add_time,
+                        initialHour = 12,
+                        initialMinute = 0,
+                    ) { hour, minute ->
+                        val newTime = hour * 60 + minute
+                        if (newTime !in times) {
+                            times.add(newTime)
+                            val sorted = times.sorted()
+                            prefs.quietReleaseTimes = QuietRelease.formatTimes(sorted)
+                            populateQuietReleaseTimes()
+                            if (prefs.quietEnabled) {
+                                ReleaseWorker.schedule(requireContext())
+                            }
+                        }
+                    }
+                } else if (which in times.indices) {
+                    val selectedTime = times[which]
+                    if (times.size == 1) {
+                        showTimePicker(
+                            title = R.string.quiet_release_edit_time,
+                            initialHour = selectedTime / 60,
+                            initialMinute = selectedTime % 60,
+                        ) { hour, minute ->
+                            times[which] = hour * 60 + minute
+                            val sorted = times.distinct().sorted()
+                            prefs.quietReleaseTimes = QuietRelease.formatTimes(sorted)
+                            populateQuietReleaseTimes()
+                            if (prefs.quietEnabled) {
+                                ReleaseWorker.schedule(requireContext())
+                            }
+                        }
+                    } else {
+                        showTimeOptionsDialog(times, which)
+                    }
+                }
+            }
+            .setNegativeButton(R.string.cancel, null)
+
+        val alertDialog = builder.create()
+        dialog?.dismiss()
+        dialog = alertDialog
+        val window = alertDialog.window
+        if (window != null && !prefs.showStatusBar) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+            alertDialog.show()
+            window.hideStatusBar()
+            window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+        } else {
+            alertDialog.show()
+        }
+    }
+
+    private fun showTimeOptionsDialog(times: MutableList<Int>, index: Int) {
+        val selectedTime = times[index]
+        val options = arrayOf(
+            getString(R.string.quiet_release_edit_time),
+            getString(R.string.quiet_release_remove_time),
+        )
+        val builder = AlertDialog.Builder(requireContext())
+            .setTitle(QuietRelease.formatTime(selectedTime))
+            .setItems(options) { _, whichOption ->
+                when (whichOption) {
+                    0 -> {
+                        showTimePicker(
+                            title = R.string.quiet_release_edit_time,
+                            initialHour = selectedTime / 60,
+                            initialMinute = selectedTime % 60,
+                        ) { hour, minute ->
+                            times[index] = hour * 60 + minute
+                            val sorted = times.distinct().sorted()
+                            prefs.quietReleaseTimes = QuietRelease.formatTimes(sorted)
+                            populateQuietReleaseTimes()
+                            if (prefs.quietEnabled) {
+                                ReleaseWorker.schedule(requireContext())
+                            }
+                        }
+                    }
+                    1 -> {
+                        times.removeAt(index)
+                        val sorted = times.distinct().sorted()
+                        prefs.quietReleaseTimes = QuietRelease.formatTimes(sorted)
+                        populateQuietReleaseTimes()
+                        if (prefs.quietEnabled) {
+                            ReleaseWorker.schedule(requireContext())
+                        }
+                    }
+                }
+            }
+            .setNegativeButton(R.string.cancel, null)
+
+        val alertDialog = builder.create()
+        dialog?.dismiss()
+        dialog = alertDialog
+        val window = alertDialog.window
+        if (window != null && !prefs.showStatusBar) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+            alertDialog.show()
+            window.hideStatusBar()
+            window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+        } else {
+            alertDialog.show()
         }
     }
 

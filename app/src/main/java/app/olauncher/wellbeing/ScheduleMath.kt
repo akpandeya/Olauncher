@@ -64,7 +64,7 @@ object ScheduleMath {
         return slotToEpochMillis(tomorrow, windowStartMin, zone)
     }
 
-    private fun slotToEpochMillis(date: LocalDate, minuteOfDay: Int, zone: ZoneId): Long {
+    internal fun slotToEpochMillis(date: LocalDate, minuteOfDay: Int, zone: ZoneId): Long {
         val hours = minuteOfDay / 60
         val minutes = minuteOfDay % 60
         val localDateTime = if (hours >= 24) {
