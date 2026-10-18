@@ -17,6 +17,13 @@ object PausePolicy {
     const val OVER_ALLOWANCE_FLOOR_SECONDS: Int = 15
     const val OVER_ALLOWANCE_CAP_SECONDS: Int = 60
 
+    /** The saved allowance only applies while usage access is granted; otherwise it is off. */
+    fun effectiveAllowanceMin(savedMin: Int, usageAccessGranted: Boolean): Int =
+        if (usageAccessGranted) savedMin.coerceAtLeast(0) else 0
+
+    /** [earlierOpensToday] counts opens before this one; [delaySeconds] wants the Nth open. */
+    fun opensIncludingThisOne(earlierOpensToday: Int): Int = earlierOpensToday.coerceAtLeast(0) + 1
+
     fun delaySeconds(
         base: Int,
         opensToday: Int,

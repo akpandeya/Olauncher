@@ -2,6 +2,9 @@ package app.olauncher.ui.pause
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import org.w3c.dom.Element
+import java.io.File
+import javax.xml.parsers.DocumentBuilderFactory
 
 class PauseFormattingTest {
 
@@ -89,14 +92,35 @@ class PauseFormattingTest {
     }
 
     @Test
-    fun `formatOverAllowanceLine formats expected acceptance string`() {
+    fun `over allowance line renders expected English text from strings xml`() {
+        val template = loadString("pause_over_allowance")
         assertEquals(
             "Over today's 30 min allowance",
-            PauseFormatting.formatOverAllowanceLine(30)
+            String.format(template, PauseFormatting.overAllowanceMinutes(30))
         )
         assertEquals(
             "Over today's 15 min allowance",
-            PauseFormatting.formatOverAllowanceLine(15)
+            String.format(template, PauseFormatting.overAllowanceMinutes(15))
         )
+    }
+
+    @Test
+    fun `overAllowanceMinutes never returns a negative number`() {
+        assertEquals(0, PauseFormatting.overAllowanceMinutes(-4))
+        assertEquals(45, PauseFormatting.overAllowanceMinutes(45))
+    }
+
+    private fun loadString(name: String): String {
+        val file = listOf(
+            File("src/main/res/values/strings.xml"),
+            File("app/src/main/res/values/strings.xml"),
+        ).firstOrNull { it.isFile } ?: error("strings.xml not found")
+        val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file)
+        val nodes = doc.getElementsByTagName("string")
+        for (i in 0 until nodes.length) {
+            val e = nodes.item(i) as Element
+            if (e.getAttribute("name") == name) return e.textContent.replace("\\'", "'")
+        }
+        throw AssertionError("missing string: $name")
     }
 }

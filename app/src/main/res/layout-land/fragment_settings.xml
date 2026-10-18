@@ -528,7 +528,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
-                        android:text="@string/pause_daily_allowance"
+                        android:text="@string/pause_daily_allowance_needs_access"
                         android:textColor="?attr/primaryColor" />
 
                     <TextView
