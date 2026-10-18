@@ -135,6 +135,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateTextSize()
         populateBoldFont()
         populateAlignment()
+        populateShortcutIcons()
         populateStatusBar()
         populateDateTime()
         populateSwipeApps()
@@ -165,6 +166,11 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.drawerBottomSearch, R.id.drawerBottomSearchTitle, R.id.drawerBottomSearchLayout -> toggleDrawerBottomSearch()
             R.id.homeAppsNum -> showHomeAppsNumMenu(view)
             R.id.alignment -> showAlignmentMenu(view)
+            R.id.shortcutIconsOnOff, R.id.shortcutIconsOnOffTitle, R.id.shortcutIconsOnOffLayout -> toggleShortcutIcons()
+            R.id.shortcutCount, R.id.shortcutCountTitle, R.id.shortcutCountLayout -> showShortcutCountDialog()
+            R.id.shortcutSide, R.id.shortcutSideTitle, R.id.shortcutSideLayout -> toggleShortcutSide()
+            R.id.shortcutHeight, R.id.shortcutHeightTitle, R.id.shortcutHeightLayout -> showShortcutHeightDialog()
+            R.id.shortcutIconStyle, R.id.shortcutIconStyleTitle, R.id.shortcutIconStyleLayout -> showShortcutIconStyleDialog()
             R.id.statusBar -> toggleStatusBar()
             R.id.dateTime -> showDateTimeMenu(view)
             R.id.appThemeText -> showAppThemeMenu(view, showSystem = false)
@@ -232,6 +238,21 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.pauseBeforeAppsTitle.setOnClickListener(this)
         binding.pauseBeforeAppsLayout.setOnClickListener(this)
         binding.alignment.setOnClickListener(this)
+        binding.shortcutIconsOnOff.setOnClickListener(this)
+        binding.shortcutIconsOnOffTitle.setOnClickListener(this)
+        binding.shortcutIconsOnOffLayout.setOnClickListener(this)
+        binding.shortcutCount.setOnClickListener(this)
+        binding.shortcutCountTitle.setOnClickListener(this)
+        binding.shortcutCountLayout.setOnClickListener(this)
+        binding.shortcutSide.setOnClickListener(this)
+        binding.shortcutSideTitle.setOnClickListener(this)
+        binding.shortcutSideLayout.setOnClickListener(this)
+        binding.shortcutHeight.setOnClickListener(this)
+        binding.shortcutHeightTitle.setOnClickListener(this)
+        binding.shortcutHeightLayout.setOnClickListener(this)
+        binding.shortcutIconStyle.setOnClickListener(this)
+        binding.shortcutIconStyleTitle.setOnClickListener(this)
+        binding.shortcutIconStyleLayout.setOnClickListener(this)
         binding.statusBar.setOnClickListener(this)
         binding.dateTime.setOnClickListener(this)
         binding.swipeLeftApp.setOnClickListener(this)
@@ -299,6 +320,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         }
         viewModel.homeAppAlignment.observe(viewLifecycleOwner) {
             populateAlignment()
+            populateShortcutIcons()
         }
         viewModel.updateSwipeApps.observe(viewLifecycleOwner) {
             populateSwipeApps()
@@ -332,24 +354,6 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                 menu.findItem(R.id.alignmentBottom).setTitle(
                     if (prefs.homeBottomAlignment) R.string.bottom_on else R.string.bottom_off
                 )
-                menu.findItem(R.id.alignmentShortcuts).setTitle(
-                    if (prefs.homeShortcuts) R.string.shortcuts_on else R.string.shortcuts_off
-                )
-                val countItem = menu.findItem(R.id.alignmentShortcutCount)
-                countItem.isVisible = prefs.homeShortcuts
-                countItem.title = getString(R.string.icons_count, prefs.shortcutCount)
-
-                val sideItem = menu.findItem(R.id.alignmentShortcutSide)
-                sideItem.isVisible = prefs.homeShortcuts
-                sideItem.setTitle(
-                    if (prefs.shortcutSideStart) R.string.icons_on_left else R.string.icons_on_right
-                )
-
-                val heightItem = menu.findItem(R.id.alignmentShortcutHeight)
-                heightItem.isVisible = prefs.homeShortcuts
-
-                val styleItem = menu.findItem(R.id.alignmentShortcutIconStyle)
-                styleItem.isVisible = prefs.homeShortcuts
             }
         ) { item ->
             when (item.itemId) {
@@ -357,17 +361,6 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                 R.id.alignmentCenter -> viewModel.updateHomeAlignment(Gravity.CENTER)
                 R.id.alignmentRight -> viewModel.updateHomeAlignment(Gravity.END)
                 R.id.alignmentBottom -> updateHomeBottomAlignment()
-                R.id.alignmentShortcuts -> {
-                    prefs.homeShortcuts = !prefs.homeShortcuts
-                    viewModel.updateHomeAlignment(prefs.homeAlignment)
-                }
-                R.id.alignmentShortcutCount -> showShortcutCountDialog()
-                R.id.alignmentShortcutSide -> {
-                    prefs.shortcutSideStart = !prefs.shortcutSideStart
-                    viewModel.updateHomeAlignment(prefs.homeAlignment)
-                }
-                R.id.alignmentShortcutHeight -> showShortcutHeightDialog()
-                R.id.alignmentShortcutIconStyle -> showShortcutIconStyleDialog()
             }
         }
     }
@@ -381,6 +374,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             .setTitle(R.string.icons)
             .setSingleChoiceItems(items, checkedIndex) { dialogInterface, which ->
                 prefs.shortcutCount = counts[which]
+                populateShortcutIcons()
                 viewModel.updateHomeAlignment(prefs.homeAlignment)
                 dialogInterface.dismiss()
             }
@@ -417,6 +411,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             .setTitle(R.string.icon_style)
             .setSingleChoiceItems(items, checkedIndex) { dialogInterface, which ->
                 prefs.shortcutIconStyle = styles[which]
+                populateShortcutIcons()
                 viewModel.updateHomeAlignment(prefs.homeAlignment)
                 dialogInterface.dismiss()
             }
@@ -633,16 +628,19 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         val clamped = ShortcutOffset.clamp(current + delta)
         if (clamped == current) return
         pendingShortcutOffsetStep = clamped
+        binding.shortcutHeight.text = ShortcutOffset.format(clamped)
         dialogBinding.textSizeCurrent.text = ShortcutOffset.format(clamped)
     }
 
     private fun applyShortcutOffsetStep() {
         if (pendingShortcutOffsetStep < 0 || prefs.shortcutOffsetStep == pendingShortcutOffsetStep) {
             pendingShortcutOffsetStep = -1
+            populateShortcutIcons()
             return
         }
         prefs.shortcutOffsetStep = pendingShortcutOffsetStep
         pendingShortcutOffsetStep = -1
+        populateShortcutIcons()
         viewModel.updateHomeAlignment(prefs.homeAlignment)
     }
 
@@ -949,6 +947,37 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             Gravity.START -> binding.alignment.text = getString(R.string.left)
             Gravity.CENTER -> binding.alignment.text = getString(R.string.center)
             Gravity.END -> binding.alignment.text = getString(R.string.right)
+        }
+    }
+
+    private fun toggleShortcutIcons() {
+        prefs.homeShortcuts = !prefs.homeShortcuts
+        populateShortcutIcons()
+        viewModel.updateHomeAlignment(prefs.homeAlignment)
+    }
+
+    private fun toggleShortcutSide() {
+        prefs.shortcutSideStart = !prefs.shortcutSideStart
+        populateShortcutIcons()
+        viewModel.updateHomeAlignment(prefs.homeAlignment)
+    }
+
+    private fun populateShortcutIcons() {
+        val shortcutsOn = prefs.homeShortcuts
+        binding.shortcutIconsOnOff.text = getString(if (shortcutsOn) R.string.on else R.string.off)
+        binding.shortcutCountLayout.visibility = if (shortcutsOn) View.VISIBLE else View.GONE
+        binding.shortcutSideLayout.visibility = if (shortcutsOn) View.VISIBLE else View.GONE
+        binding.shortcutHeightLayout.visibility = if (shortcutsOn) View.VISIBLE else View.GONE
+        binding.shortcutIconStyleLayout.visibility = if (shortcutsOn) View.VISIBLE else View.GONE
+
+        binding.shortcutCount.text = prefs.shortcutCount.toString()
+        binding.shortcutSide.text = getString(if (prefs.shortcutSideStart) R.string.left else R.string.right)
+        binding.shortcutHeight.text = ShortcutOffset.format(prefs.shortcutOffsetStep)
+        binding.shortcutIconStyle.text = when (prefs.shortcutIconStyle) {
+            ShortcutIconStyle.ORIGINAL -> getString(R.string.icon_style_original)
+            ShortcutIconStyle.MONOCHROME -> getString(R.string.icon_style_monochrome)
+            ShortcutIconStyle.TEXT_COLOUR -> getString(R.string.icon_style_text_colour)
+            else -> getString(R.string.icon_style_original)
         }
     }
 
