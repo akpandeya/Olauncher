@@ -13,6 +13,14 @@ class Prefs(context: Context) {
         const val SWIPE_RIGHT_ACTION_APP = 1
         const val SWIPE_RIGHT_ACTION = "SWIPE_RIGHT_ACTION"
         const val TODAY_CARD_PREFIX = "TODAY_CARD_"
+        const val NUDGE_WINDOW_START_MIN = "NUDGE_WINDOW_START_MIN"
+        const val NUDGE_WINDOW_END_MIN = "NUDGE_WINDOW_END_MIN"
+        const val NUDGE_WATER_INTERVAL_MIN = "NUDGE_WATER_INTERVAL_MIN"
+        const val NUDGE_WALK_INTERVAL_MIN = "NUDGE_WALK_INTERVAL_MIN"
+        const val NUDGE_DONE_DAY = "NUDGE_DONE_DAY"
+        const val NUDGE_DONE_PREFIX = "NUDGE_DONE_"
+
+        fun nudgeDoneKey(type: String): String = "$NUDGE_DONE_PREFIX${type.uppercase()}"
     }
 
     private val PREFS_FILENAME = "app.olauncher"
@@ -786,5 +794,52 @@ class Prefs(context: Context) {
 
     fun setTodayCardEnabled(key: String, enabled: Boolean) = prefs.edit {
         putBoolean("$TODAY_CARD_PREFIX$key", enabled).apply()
+    }
+
+    var nudgeWindowStartMin: Int
+        get() = prefs.getInt(NUDGE_WINDOW_START_MIN, 540)
+        set(value) = prefs.edit { putInt(NUDGE_WINDOW_START_MIN, value).apply() }
+
+    var nudgeWindowEndMin: Int
+        get() = prefs.getInt(NUDGE_WINDOW_END_MIN, 1260)
+        set(value) = prefs.edit { putInt(NUDGE_WINDOW_END_MIN, value).apply() }
+
+    var nudgeWaterIntervalMin: Int
+        get() = prefs.getInt(NUDGE_WATER_INTERVAL_MIN, 0)
+        set(value) = prefs.edit { putInt(NUDGE_WATER_INTERVAL_MIN, value).apply() }
+
+    var nudgeWalkIntervalMin: Int
+        get() = prefs.getInt(NUDGE_WALK_INTERVAL_MIN, 0)
+        set(value) = prefs.edit { putInt(NUDGE_WALK_INTERVAL_MIN, value).apply() }
+
+    private fun checkAndResetNudgeDoneDay() {
+        val today = epochDaySupplier()
+        val savedDay = prefs.getLong(NUDGE_DONE_DAY, 0L)
+        if (savedDay != today) {
+            prefs.edit {
+                prefs.all.keys
+                    .filter { it.startsWith(NUDGE_DONE_PREFIX) && it != NUDGE_DONE_DAY }
+                    .forEach { remove(it) }
+                putLong(NUDGE_DONE_DAY, today)
+            }
+        }
+    }
+
+    fun nudgeDone(type: String): Int {
+        checkAndResetNudgeDoneDay()
+        return prefs.getInt(nudgeDoneKey(type), 0)
+    }
+
+    fun incrementNudgeDone(type: String): Int {
+        checkAndResetNudgeDoneDay()
+        val key = nudgeDoneKey(type)
+        val count = prefs.getInt(key, 0) + 1
+        prefs.edit { putInt(key, count).apply() }
+        return count
+    }
+
+    fun setNudgeDone(type: String, count: Int) {
+        checkAndResetNudgeDoneDay()
+        prefs.edit { putInt(nudgeDoneKey(type), count).apply() }
     }
 }
