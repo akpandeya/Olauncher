@@ -33,7 +33,8 @@ import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
 import app.olauncher.data.ShortcutOffset
 import app.olauncher.databinding.FragmentHomeBinding
-import app.olauncher.helper.DefaultLauncherCheck import app.olauncher.helper.appUsagePermissionGranted
+import app.olauncher.helper.DefaultLauncherCheck
+import app.olauncher.helper.appUsagePermissionGranted
 import app.olauncher.helper.dpToPx
 import app.olauncher.helper.expandNotificationDrawer
 import app.olauncher.helper.getChangedAppTheme
