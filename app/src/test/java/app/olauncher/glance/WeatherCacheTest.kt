@@ -8,6 +8,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 import java.nio.file.Files
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 class WeatherCacheTest {
 
@@ -80,6 +84,50 @@ class WeatherCacheTest {
             assertFalse(File(tempDir, "weather.json").exists())
             assertNull(cache.read())
         } finally {
+            tempDir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun `concurrent writes from separate instances never lose or corrupt the cache`() {
+        val tempDir = Files.createTempDirectory("weather_cache_concurrent_test").toFile()
+        val pool = Executors.newFixedThreadPool(3)
+        try {
+            val json = loadResource("openmeteo_forecast.json")
+            WeatherCache(tempDir).write(json, 1L)
+            val rounds = 300
+            val start = CountDownLatch(1)
+            val badReads = AtomicInteger(0)
+            val writeErrors = AtomicInteger(0)
+            repeat(2) { writer ->
+                pool.execute {
+                    // Each worker builds its own cache instance, as WeatherWorker does.
+                    val cache = WeatherCache(tempDir)
+                    start.await()
+                    repeat(rounds) { i ->
+                        try {
+                            cache.write(json, 1000L * writer + i)
+                        } catch (e: Exception) {
+                            writeErrors.incrementAndGet()
+                        }
+                    }
+                }
+            }
+            pool.execute {
+                val reader = WeatherCache(tempDir)
+                start.await()
+                repeat(rounds) { if (reader.read() == null) badReads.incrementAndGet() }
+            }
+            start.countDown()
+            pool.shutdown()
+            assertTrue(pool.awaitTermination(60, TimeUnit.SECONDS))
+
+            assertEquals(0, writeErrors.get())
+            assertEquals(0, badReads.get())
+            assertNotNull(WeatherCache(tempDir).read())
+            assertEquals(listOf("weather.json"), tempDir.list()!!.sorted())
+        } finally {
+            pool.shutdownNow()
             tempDir.deleteRecursively()
         }
     }
