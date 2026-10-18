@@ -28,6 +28,25 @@ object NextUpFormatting {
         return time.format(DateTimeFormatter.ofPattern(pattern, Locale.US))
     }
 
+    /**
+     * True when [event] is over at [now] in [zone]. All-day events are stored with UTC-midnight
+     * bounds, so their end is moved to local midnight of the same date; otherwise a finished
+     * all-day event lingers (east of UTC) or a current one drops out early (west of UTC).
+     */
+    fun hasEnded(event: CalendarEvent, now: Instant, zone: ZoneId): Boolean {
+        val end = if (event.allDay) {
+            val utcEnd = Instant.ofEpochMilli(event.endMillis).atZone(ZoneOffset.UTC)
+            if (utcEnd.hour == 0 && utcEnd.minute == 0) {
+                utcEnd.toLocalDate().atStartOfDay(zone).toInstant()
+            } else {
+                event.end
+            }
+        } else {
+            event.end
+        }
+        return !now.isBefore(end)
+    }
+
     fun line(
         event: CalendarEvent,
         now: Instant,
