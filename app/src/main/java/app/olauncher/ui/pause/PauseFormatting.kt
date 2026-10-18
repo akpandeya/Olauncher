@@ -33,7 +33,6 @@ object PauseFormatting {
         return "Opened $times from Thumbline today"
     }
 
-    fun formatOverAllowanceLine(allowanceMin: Int): String {
-        return "Over today's $allowanceMin min allowance"
-    }
+    /** Argument for R.string.pause_over_allowance; the text itself lives in strings.xml. */
+    fun overAllowanceMinutes(allowanceMin: Int): Int = allowanceMin.coerceAtLeast(0)
 }

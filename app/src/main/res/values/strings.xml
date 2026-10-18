@@ -213,6 +213,7 @@
     <string name="pause_why_lookup">Look something up</string>
     <string name="pause_why_bored">Just bored</string>
     <string name="pause_not_now_bored">Not now · go do something else</string>
+    <string name="pause_over_allowance">Over today\'s %d min allowance</string>
     <string name="pause_allowance_min">%d min</string>
     <string name="pause_usage_access_message">Thumbline can show real open counts if you allow usage access</string>
     <string name="pause_notification_notice">Opens from notifications aren\'t paused</string>

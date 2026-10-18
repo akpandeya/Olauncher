@@ -236,4 +236,26 @@ class PausePolicyTest {
         assertEquals(11, decisionWithEscalate.seconds)
         assertFalse(decisionWithEscalate.overAllowance)
     }
+
+    @Test
+    fun `fragment path feeds the Nth open so the 4th open escalates`() {
+        val earlierOpens = 3
+        val nth = PausePolicy.opensIncludingThisOne(earlierOpens)
+        assertEquals(4, nth)
+        val viaFragmentPath = PausePolicy.delaySeconds(
+            base = 5, opensToday = nth, minutesToday = null, allowanceMin = 0, escalate = true,
+        )
+        assertEquals(7, viaFragmentPath.seconds)
+        val rawEarlierCount = PausePolicy.delaySeconds(
+            base = 5, opensToday = earlierOpens, minutesToday = null, allowanceMin = 0, escalate = true,
+        )
+        assertEquals(5, rawEarlierCount.seconds)
+    }
+
+    @Test
+    fun `opensIncludingThisOne is one for the first open and ignores negatives`() {
+        assertEquals(1, PausePolicy.opensIncludingThisOne(0))
+        assertEquals(1, PausePolicy.opensIncludingThisOne(-2))
+        assertEquals(12, PausePolicy.opensIncludingThisOne(11))
+    }
 }

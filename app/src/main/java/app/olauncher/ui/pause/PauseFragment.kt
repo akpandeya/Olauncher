@@ -20,6 +20,7 @@ import app.olauncher.data.store.Leitner
 import app.olauncher.data.store.PauseWordPicker
 import app.olauncher.data.store.WordsStore
 import app.olauncher.databinding.FragmentPauseBinding
+import app.olauncher.helper.OlDialog
 import app.olauncher.helper.appUsagePermissionGranted
 import app.olauncher.helper.getUserHandleFromString
 import app.olauncher.helper.showPopupMenu
@@ -57,6 +58,7 @@ class PauseFragment : Fragment() {
     private var wordReveal: WordReveal? = null
     private var countdownRemaining: Int = -1
     private var selectedWhy: PauseWhy? = null
+    private var waitDialog: OlDialog? = null
 
     private val appPackage: String by lazy { arguments?.getString("package").orEmpty() }
     private val activityClassName: String? by lazy { arguments?.getString("class") }
@@ -136,7 +138,7 @@ class PauseFragment : Fragment() {
                     val minutesToday = sharedMillis?.let { (it / 60_000L).toInt() }
                     val decision = PausePolicy.delaySeconds(
                         base = baseSeconds,
-                        opensToday = opens,
+                        opensToday = PausePolicy.opensIncludingThisOne(opens),
                         minutesToday = minutesToday,
                         allowanceMin = allowanceMin,
                         escalate = escalate,
@@ -147,7 +149,7 @@ class PauseFragment : Fragment() {
                     val opens = prefs.ownOpenCount(appPackage)
                     val decision = PausePolicy.delaySeconds(
                         base = baseSeconds,
-                        opensToday = opens,
+                        opensToday = PausePolicy.opensIncludingThisOne(opens),
                         minutesToday = null,
                         allowanceMin = allowanceMin,
                         escalate = escalate,
@@ -161,7 +163,7 @@ class PauseFragment : Fragment() {
             binding.usageStats.text = usageLine
 
             if (decision.overAllowance && allowanceMin > 0) {
-                binding.overAllowance.text = PauseFormatting.formatOverAllowanceLine(allowanceMin)
+                binding.overAllowance.text = getString(R.string.pause_over_allowance, PauseFormatting.overAllowanceMinutes(allowanceMin))
                 binding.overAllowance.isVisible = true
             } else {
                 binding.overAllowance.isVisible = false
@@ -273,11 +275,9 @@ class PauseFragment : Fragment() {
     }
 
     private fun getPauseLog(): PauseLog {
-        val context = requireContext()
-        return pauseLogProvider?.invoke(context) ?: PauseLog(
-            storage = prefs,
-            daySupplier = epochDaySupplier,
-        )
+        // Shared log: day rollover writes the previous day to usage_days.json.
+        val appContext = context?.applicationContext
+        return (appContext?.let { pauseLogProvider?.invoke(it) }) ?: prefs.pauseLog
     }
 
     private fun onNotNow() {
@@ -291,9 +291,10 @@ class PauseFragment : Fragment() {
             if (prefs.pauseAskWhy && selectedWhy == null) return
             if (countdownRemaining > 0) return
         }
+        val appContext = context?.applicationContext ?: return
         countdownJob?.cancel()
         getPauseLog().recordOpen(selectedWhy)
-        val appModel = buildAppModel()
+        val appModel = buildAppModel(appContext)
         viewModel.launchAfterPause(appModel)
         popToHome()
     }
@@ -313,10 +314,13 @@ class PauseFragment : Fragment() {
                 val change = FrictionChange.RemoveDistractingApp(appPackage)
                 if (CommitLock.needsWait(prefs.commitLock, change)) {
                     val context = context ?: return@showPopupMenu
-                    context.showWaitDialog(
+                    waitDialog?.dismiss()
+                    waitDialog = context.showWaitDialog(
                         message = getString(R.string.commit_lock_desc)
                     ) {
+                        // The removal is the confirmed change: never lose it.
                         prefs.distractingApps = prefs.distractingApps - appPackage
+                        if (!isAdded || _binding == null) return@showWaitDialog
                         openApp(bypassGating = true)
                     }
                 } else {
@@ -327,8 +331,8 @@ class PauseFragment : Fragment() {
         }
     }
 
-    private fun buildAppModel(): AppModel {
-        val userHandle = getUserHandleFromString(requireContext(), userString)
+    private fun buildAppModel(appContext: Context): AppModel {
+        val userHandle = getUserHandleFromString(appContext, userString)
         return if (!shortcutId.isNullOrEmpty()) {
             AppModel.PinnedShortcut(
                 shortcutId = shortcutId!!,
@@ -420,6 +424,8 @@ class PauseFragment : Fragment() {
     }
 
     override fun onDestroyView() {
+        waitDialog?.dismiss()
+        waitDialog = null
         countdownJob?.cancel()
         wordReveal = null
         selectedWhy = null

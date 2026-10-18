@@ -167,3 +167,12 @@ class PauseLog(
         )
     }
 }
+
+/** Snapshot written to usage_days.json when a pause day rolls over. */
+fun PauseDay.toDaySnapshot(): DaySnapshot {
+    val why = mutableMapOf<String, Int>()
+    if (whyReply > 0) why["reply"] = whyReply
+    if (whyLookup > 0) why["lookup"] = whyLookup
+    if (whyBored > 0) why["bored"] = whyBored
+    return DaySnapshot(epochDay = epochDay, notNow = notNow, opened = opened, why = why)
+}
