@@ -651,6 +651,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     }
 
     private fun openPhotoPicker() {
+        viewModel.isAwaitingActivityResult = true
         pickMultipleMedia.launch(
             PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
         )
@@ -662,19 +663,23 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         } else {
             requireContext().showToast(getString(R.string.saving_photos, uris.size))
         }
-        viewLifecycleOwner.lifecycleScope.launch {
-            val savedCount = PhotoWallpaper.savePickedPhotos(requireContext(), uris)
+        // Use the activity scope and app context so leaving Settings mid-save does not cancel it
+        val appContext = requireContext().applicationContext
+        requireActivity().lifecycleScope.launch {
+            val savedCount = PhotoWallpaper.savePickedPhotos(appContext, uris)
             if (savedCount > 0) {
                 prefs.photoWallpaperCount = savedCount
                 prefs.photoWallpaperIndex = 0
                 prefs.photoWallpaperLastDay = PhotoWallpaper.today()
-                populatePhotoWallpaperText()
+                if (_binding != null) populatePhotoWallpaperText()
 
-                WallpaperRotateWorker.schedulePeriodic(requireContext())
-                WallpaperRotateWorker.runOnce(requireContext())
+                WallpaperRotateWorker.schedulePeriodic(appContext)
+                WallpaperRotateWorker.runOnce(appContext)
                 withContext(Dispatchers.IO) {
-                    PhotoWallpaper.applyCurrent(requireContext(), prefs)
+                    PhotoWallpaper.applyCurrent(appContext, prefs)
                 }
+            } else {
+                appContext.showToast(R.string.wallpaper_photos_save_failed)
             }
         }
     }
@@ -1308,6 +1313,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     }
 
     private fun launchExportBackup() {
+        viewModel.isAwaitingActivityResult = true
         exportBackupLauncher.launch(Backup.defaultBackupFileName())
     }
 
@@ -1328,6 +1334,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     }
 
     private fun launchImportBackup() {
+        viewModel.isAwaitingActivityResult = true
         importBackupLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
     }
 
