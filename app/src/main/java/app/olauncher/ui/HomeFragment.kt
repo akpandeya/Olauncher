@@ -37,6 +37,7 @@ import app.olauncher.data.ShortcutOffset
 import app.olauncher.data.ShortcutSize
 import app.olauncher.data.SlotCount
 import app.olauncher.databinding.FragmentHomeBinding
+import app.olauncher.helper.BatteryFormatting
 import app.olauncher.helper.DefaultLauncherCheck
 import app.olauncher.helper.GermanTime
 import app.olauncher.helper.appUsagePermissionGranted
@@ -67,6 +68,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     private lateinit var viewModel: MainViewModel
 
     private var timeTickReceiver: BroadcastReceiver? = null
+    private var batteryReceiver: BroadcastReceiver? = null
     private var homeAppsPaddingStart = 0
     private var homeAppsPaddingEnd = 0
     private var _binding: FragmentHomeBinding? = null
@@ -103,11 +105,13 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         if (prefs.showStatusBar) showStatusBar()
         else hideStatusBar()
         if (GermanTime.isWordsClockOn(prefs.germanEnabled, prefs.germanClock)) registerTimeTickReceiver()
+        registerBatteryReceiver()
     }
 
     override fun onPause() {
         super.onPause()
         unregisterTimeTickReceiver()
+        unregisterBatteryReceiver()
     }
 
     override fun onClick(view: View) {
@@ -486,15 +490,22 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         } else {
             SimpleDateFormat("EEE, d MMM", Locale.getDefault())
         }
-        var dateText = dateFormat.format(Date())
+        val dateText = dateFormat.format(Date())
 
-        if (!prefs.showStatusBar) {
-            val battery = (requireContext().getSystemService(Context.BATTERY_SERVICE) as BatteryManager)
-                .getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
-            if (battery > 0)
-                dateText = getString(R.string.day_battery, dateText, battery)
-        }
-        binding.date.text = dateText.replace(".,", ",")
+        val batteryIntent = context?.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        val level = batteryIntent?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
+        val scale = batteryIntent?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1
+        val percent = if (level >= 0 && scale > 0) (level * 100) / scale else -1
+        val plugged = batteryIntent?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0
+        val charging = plugged != 0
+
+        binding.date.text = BatteryFormatting.dateLine(
+            date = dateText,
+            percent = percent,
+            charging = charging,
+            mode = prefs.batteryMode,
+            statusBarShown = prefs.showStatusBar
+        )
         binding.date.isVisible = isDateVisible
     }
 
@@ -527,6 +538,33 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
                 e.printStackTrace()
             }
             timeTickReceiver = null
+        }
+    }
+
+    private fun registerBatteryReceiver() {
+        if (batteryReceiver == null) {
+            batteryReceiver = object : BroadcastReceiver() {
+                override fun onReceive(context: Context?, intent: Intent?) {
+                    populateDateTime()
+                }
+            }
+            val filter = IntentFilter().apply {
+                addAction(Intent.ACTION_BATTERY_CHANGED)
+                addAction(Intent.ACTION_POWER_CONNECTED)
+                addAction(Intent.ACTION_POWER_DISCONNECTED)
+            }
+            requireContext().registerReceiver(batteryReceiver, filter)
+        }
+    }
+
+    private fun unregisterBatteryReceiver() {
+        batteryReceiver?.let {
+            try {
+                requireContext().unregisterReceiver(it)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            batteryReceiver = null
         }
     }
 
@@ -944,6 +982,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
     override fun onDestroyView() {
         unregisterTimeTickReceiver()
+        unregisterBatteryReceiver()
         super.onDestroyView()
         _binding = null
     }

@@ -32,6 +32,10 @@ class Prefs(context: Context) {
         const val GERMAN_CLOCK_SYSTEM = 0
         const val GERMAN_CLOCK_DEUTSCH = 1
         const val GERMAN_CLOCK_IN_WORTEN = 2
+        const val BATTERY_MODE = "BATTERY_MODE"
+        const val BATTERY_MODE_AUTO = 0
+        const val BATTERY_MODE_ALWAYS = 1
+        const val BATTERY_MODE_OFF = 2
 
         fun nudgeDoneKey(type: String): String = "$NUDGE_DONE_PREFIX${type.uppercase()}"
     }
@@ -272,6 +276,10 @@ class Prefs(context: Context) {
     var dateTimeVisibility: Int
         get() = prefs.getInt(DATE_TIME_VISIBILITY, Constants.DateTime.ON)
         set(value) = prefs.edit { putInt(DATE_TIME_VISIBILITY, value).apply() }
+
+    var batteryMode: Int
+        get() = prefs.getInt(BATTERY_MODE, BATTERY_MODE_AUTO)
+        set(value) = prefs.edit { putInt(BATTERY_MODE, value).apply() }
 
     var swipeLeftEnabled: Boolean
         get() = prefs.getBoolean(SWIPE_LEFT_ENABLED, true)
