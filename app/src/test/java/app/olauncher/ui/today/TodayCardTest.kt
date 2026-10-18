@@ -13,12 +13,19 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
+import app.olauncher.R
+import app.olauncher.ui.today.cards.SavedCard
+
 class TodayCardTest {
 
     @Test
-    fun `today cards list defaults to empty`() {
-        assertTrue(TodayCards.all.isEmpty())
+    fun `today cards list contains saved card`() {
+        val saved = TodayCards.all.firstOrNull { it.key == SavedCard.KEY }
+        assertNotNull(saved)
+        assertEquals("saved", saved?.key)
+        assertEquals(R.string.saved_for_later, saved?.titleRes)
     }
+
 
     @Test
     fun `swipe right action constants match spec`() {

@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import app.olauncher.ui.today.cards.SavedCard
 
 /**
  * Today card contract.
@@ -20,5 +21,6 @@ interface TodayCard {
 }
 
 object TodayCards {
-    val all: List<TodayCard> = emptyList()
+    val all: List<TodayCard> = listOf(SavedCard)
 }
+
