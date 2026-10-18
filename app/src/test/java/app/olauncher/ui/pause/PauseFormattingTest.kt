@@ -87,4 +87,16 @@ class PauseFormattingTest {
             PauseFormatting.formatThumblineOpensLine(0)
         )
     }
+
+    @Test
+    fun `formatOverAllowanceLine formats expected acceptance string`() {
+        assertEquals(
+            "Over today's 30 min allowance",
+            PauseFormatting.formatOverAllowanceLine(30)
+        )
+        assertEquals(
+            "Over today's 15 min allowance",
+            PauseFormatting.formatOverAllowanceLine(15)
+        )
+    }
 }
