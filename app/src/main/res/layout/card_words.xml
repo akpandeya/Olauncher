@@ -7,9 +7,11 @@
 
     <TextView
         android:id="@+id/tvEmpty"
-        style="@style/TextSmall"
+        style="@style/TextSmallLight"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="?android:attr/selectableItemBackground"
+        android:focusable="true"
         android:paddingVertical="8dp"
         android:visibility="gone"
         tools:text="@string/words_empty_state"
@@ -25,9 +27,11 @@
 
     <TextView
         android:id="@+id/tvFooter"
-        style="@style/TextSmall"
+        style="@style/TextSmallLight"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="?android:attr/selectableItemBackground"
+        android:focusable="true"
         android:paddingVertical="8dp"
         android:visibility="gone"
         tools:text="12 words · 3 due · 4 learned"
