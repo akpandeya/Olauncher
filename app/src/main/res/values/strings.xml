@@ -213,5 +213,9 @@
     <string name="saved_restore">Restore</string>
     <string name="saved_more">+%d more</string>
     <string name="saved_unable_to_open">Unable to open link</string>
+    <string name="nudges">Nudges</string>
+    <string name="nudges_channel_name">Gentle nudges</string>
+    <string name="notification_permission_message">Allow notifications so Thumbline can send gentle nudges</string>
+    <string name="done">Done</string>
 </resources>
 
