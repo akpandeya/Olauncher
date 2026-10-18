@@ -94,7 +94,11 @@
     <string name="bottom_off">Bottom: Off</string>
     <string name="shortcuts_on">Shortcuts: On</string>
     <string name="shortcuts_off">Shortcuts: Off</string>
+    <string name="shortcut_icons">Shortcut icons</string>
     <string name="icons">Icons</string>
+    <string name="side">Side</string>
+    <string name="height">Height</string>
+    <string name="style">Style</string>
     <string name="icons_count">Icons: %1$d</string>
     <string name="icons_on_left">Icons on left</string>
     <string name="icons_on_right">Icons on right</string>
