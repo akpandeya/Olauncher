@@ -6,8 +6,22 @@ import android.view.Gravity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.edit
 
+import java.util.Locale
+
 class Prefs(context: Context) {
     companion object {
+        const val WEATHER_ENABLED = "WEATHER_ENABLED"
+        const val WEATHER_PLACE_NAME = "WEATHER_PLACE_NAME"
+        const val WEATHER_LAT = "WEATHER_LAT"
+        const val WEATHER_LON = "WEATHER_LON"
+        const val WEATHER_UNIT = "WEATHER_UNIT"
+        const val WEATHER_FETCHED_AT = "WEATHER_FETCHED_AT"
+        const val WEATHER_UNIT_C = "C"
+        const val WEATHER_UNIT_F = "F"
+
+        fun defaultWeatherUnit(country: String = Locale.getDefault().country): String =
+            if (country == "US") WEATHER_UNIT_F else WEATHER_UNIT_C
+
         const val DRAWER_BOTTOM_SEARCH = "DRAWER_BOTTOM_SEARCH"
         const val SWIPE_RIGHT_ACTION_TODAY = 0
         const val SWIPE_RIGHT_ACTION_APP = 1
@@ -928,4 +942,28 @@ class Prefs(context: Context) {
             putLong(NUDGE_SOCIAL_DAY, epochDaySupplier())
             putInt(NUDGE_SOCIAL_LAST_BUCKET, value).apply()
         }
+
+    var weatherEnabled: Boolean
+        get() = prefs.getBoolean(WEATHER_ENABLED, false)
+        set(value) = prefs.edit { putBoolean(WEATHER_ENABLED, value).apply() }
+
+    var weatherPlaceName: String
+        get() = prefs.getString(WEATHER_PLACE_NAME, "") ?: ""
+        set(value) = prefs.edit { putString(WEATHER_PLACE_NAME, value).apply() }
+
+    var weatherLat: String
+        get() = prefs.getString(WEATHER_LAT, "") ?: ""
+        set(value) = prefs.edit { putString(WEATHER_LAT, value).apply() }
+
+    var weatherLon: String
+        get() = prefs.getString(WEATHER_LON, "") ?: ""
+        set(value) = prefs.edit { putString(WEATHER_LON, value).apply() }
+
+    var weatherUnit: String
+        get() = prefs.getString(WEATHER_UNIT, defaultWeatherUnit()) ?: defaultWeatherUnit()
+        set(value) = prefs.edit { putString(WEATHER_UNIT, value).apply() }
+
+    var weatherFetchedAt: Long
+        get() = prefs.getLong(WEATHER_FETCHED_AT, 0L)
+        set(value) = prefs.edit { putLong(WEATHER_FETCHED_AT, value).apply() }
 }

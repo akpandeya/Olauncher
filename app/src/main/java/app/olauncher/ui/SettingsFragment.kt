@@ -14,14 +14,23 @@ import android.view.LayoutInflater
 import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.Toast
 import android.view.WindowManager
 import androidx.activity.result.PickVisualMediaRequest
+import android.text.InputType
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.os.bundleOf
+import app.olauncher.glance.Place
+import app.olauncher.glance.WeatherApi
+import app.olauncher.glance.WeatherWorker
+import java.util.Locale
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -142,6 +151,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateBatteryMode()
         populateSwipeApps()
         populateTodayCards()
+        populateWeather()
         populateNudgeWater()
         populateNudgeWalk()
         populateNudgeSocial()
@@ -185,6 +195,14 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.swipeLeftApp -> showAppListIfEnabled(Constants.FLAG_SET_SWIPE_LEFT_APP)
             R.id.swipeRightApp, R.id.swipeRightLayout -> showSwipeRightMenu(binding.swipeRightApp)
             R.id.todayCards, R.id.todayCardsTitle, R.id.todayCardsLayout -> showTodayCardsDialog()
+            R.id.weatherTitle, R.id.weatherLayout -> showCitySearchDialog()
+            R.id.weather -> {
+                if (prefs.weatherEnabled) {
+                    showWeatherMenu(binding.weather)
+                } else {
+                    showCitySearchDialog()
+                }
+            }
             R.id.nudgeWater, R.id.nudgeWaterTitle, R.id.nudgeWaterLayout -> showNudgeWaterMenu(binding.nudgeWater)
             R.id.nudgeWalk, R.id.nudgeWalkTitle, R.id.nudgeWalkLayout -> showNudgeWalkMenu(binding.nudgeWalk)
             R.id.nudgeSocial, R.id.nudgeSocialTitle, R.id.nudgeSocialLayout -> showNudgeSocialMenu(binding.nudgeSocial)
@@ -211,6 +229,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                 requireContext().showToast(getString(R.string.alignment_changed))
             }
 
+            R.id.weather, R.id.weatherTitle, R.id.weatherLayout -> {
+                showWeatherMenu(binding.weather)
+            }
             R.id.appThemeText -> showAppThemeMenu(view, showSystem = true)
             R.id.swipeLeftApp -> toggleSwipeLeft()
             R.id.swipeRightApp, R.id.swipeRightLayout -> toggleSwipeRight()
@@ -271,6 +292,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.todayCards.setOnClickListener(this)
         binding.todayCardsTitle.setOnClickListener(this)
         binding.todayCardsLayout.setOnClickListener(this)
+        binding.weather.setOnClickListener(this)
+        binding.weatherTitle.setOnClickListener(this)
+        binding.weatherLayout.setOnClickListener(this)
         binding.nudgeWater.setOnClickListener(this)
         binding.nudgeWaterTitle.setOnClickListener(this)
         binding.nudgeWaterLayout.setOnClickListener(this)
@@ -313,6 +337,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.photoWallpaperTitle.setOnLongClickListener(this)
         binding.photoWallpaperLayout.setOnLongClickListener(this)
         binding.alignment.setOnLongClickListener(this)
+        binding.weather.setOnLongClickListener(this)
+        binding.weatherTitle.setOnLongClickListener(this)
+        binding.weatherLayout.setOnLongClickListener(this)
         binding.appThemeText.setOnLongClickListener(this)
         binding.swipeLeftApp.setOnLongClickListener(this)
         binding.swipeRightApp.setOnLongClickListener(this)
@@ -624,6 +651,154 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                 else -> R.string.auto
             }
         )
+    }
+
+    private fun populateWeather() {
+        binding.weather.text = if (prefs.weatherEnabled && prefs.weatherPlaceName.isNotBlank()) {
+            prefs.weatherPlaceName
+        } else {
+            getString(R.string.off)
+        }
+    }
+
+    private fun showWeatherMenu(anchor: View) {
+        anchor.showPopupMenu(
+            configure = { menu ->
+                menu.add(Menu.NONE, 1, 1, getString(R.string.celsius))
+                menu.add(Menu.NONE, 2, 2, getString(R.string.fahrenheit))
+                if (prefs.weatherEnabled) {
+                    menu.add(Menu.NONE, 3, 3, getString(R.string.off))
+                }
+            }
+        ) { item ->
+            when (item.itemId) {
+                1 -> {
+                    if (prefs.weatherUnit != Prefs.WEATHER_UNIT_C) {
+                        prefs.weatherUnit = Prefs.WEATHER_UNIT_C
+                        if (prefs.weatherEnabled) {
+                            WeatherWorker.runOnce(requireContext())
+                        }
+                    }
+                }
+                2 -> {
+                    if (prefs.weatherUnit != Prefs.WEATHER_UNIT_F) {
+                        prefs.weatherUnit = Prefs.WEATHER_UNIT_F
+                        if (prefs.weatherEnabled) {
+                            WeatherWorker.runOnce(requireContext())
+                        }
+                    }
+                }
+                3 -> {
+                    prefs.weatherEnabled = false
+                    WeatherWorker.cancel(requireContext())
+                    populateWeather()
+                }
+            }
+        }
+    }
+
+    private fun showCitySearchDialog() {
+        var dialogEditText: AppCompatEditText? = null
+        var cityDialog: OlDialog? = null
+        val dialog = requireContext().createDialog(
+            title = R.string.weather,
+            action = R.string.search,
+            onAction = {
+                val query = dialogEditText?.text?.toString()?.trim().orEmpty()
+                if (query.isNotEmpty()) {
+                    searchCity(query)
+                }
+            }
+        ) { container ->
+            val context = container.context
+            val layout = LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                )
+            }
+            val editText = AppCompatEditText(context).apply {
+                hint = context.getString(R.string.city)
+                setText(if (prefs.weatherEnabled) prefs.weatherPlaceName else "")
+                setSingleLine(true)
+                imeOptions = EditorInfo.IME_ACTION_SEARCH
+                inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS
+                setTextColor(context.getColorFromAttr(R.attr.primaryColor))
+                setHintTextColor(context.getColorFromAttr(R.attr.primaryColorTrans80))
+                background = null
+                setOnEditorActionListener { _, actionId, _ ->
+                    if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE) {
+                        val q = text?.toString()?.trim().orEmpty()
+                        if (q.isNotEmpty()) {
+                            cityDialog?.dismiss()
+                            searchCity(q)
+                        }
+                        true
+                    } else false
+                }
+            }
+            dialogEditText = editText
+            layout.addView(editText)
+            layout
+        }
+        cityDialog = dialog
+        dialog.showRespectingStatusBar()
+        dialogEditText?.apply {
+            setSelection(text?.length ?: 0)
+            post {
+                requestFocus()
+                val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+                imm?.showSoftInput(this, InputMethodManager.SHOW_IMPLICIT)
+            }
+        }
+    }
+
+    private fun searchCity(query: String) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val places = withContext(Dispatchers.IO) {
+                WeatherApi.searchPlaces(query)
+            }
+            if (!isAdded) return@launch
+            if (places.isEmpty()) {
+                requireContext().showToast(getString(R.string.weather_no_results))
+                return@launch
+            }
+            showPlaceSelectionDialog(places)
+        }
+    }
+
+    private fun showPlaceSelectionDialog(places: List<Place>) {
+        val items = places.map { it.displayName() }.toTypedArray()
+        val checkedIndex = 0
+
+        val builder = AlertDialog.Builder(requireContext())
+            .setTitle(R.string.weather)
+            .setSingleChoiceItems(items, checkedIndex) { dialogInterface, which ->
+                val place = places[which]
+                prefs.weatherPlaceName = place.name
+                prefs.weatherLat = String.format(Locale.US, "%.2f", place.lat)
+                prefs.weatherLon = String.format(Locale.US, "%.2f", place.lon)
+                prefs.weatherEnabled = true
+                WeatherWorker.schedulePeriodic(requireContext())
+                WeatherWorker.runOnce(requireContext())
+                populateWeather()
+                dialogInterface.dismiss()
+            }
+            .setNegativeButton(R.string.cancel, null)
+
+        val alertDialog = builder.create()
+        dialog?.dismiss()
+        dialog = alertDialog
+        val window = alertDialog.window
+        if (window != null && !prefs.showStatusBar) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+            alertDialog.show()
+            window.hideStatusBar()
+            window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+        } else {
+            alertDialog.show()
+        }
     }
 
     private fun showHiddenApps() {
