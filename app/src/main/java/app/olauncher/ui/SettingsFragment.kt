@@ -51,6 +51,7 @@ import app.olauncher.R
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
+import app.olauncher.data.SearchEngine
 import app.olauncher.data.SlotCount
 import app.olauncher.data.ShortcutOffset
 import app.olauncher.data.ShortcutIconStyle
@@ -203,6 +204,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateStatusBar()
         populateDateTime()
         populateBatteryMode()
+        populateSearchEngine()
         populateSwipeApps()
         populateTodayCards()
         populateWeather()
@@ -241,6 +243,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             // R.id.homeButtonRecents -> toggleHomeButtonRecents()
             R.id.autoShowKeyboard -> toggleKeyboardText()
             R.id.drawerBottomSearch, R.id.drawerBottomSearchTitle, R.id.drawerBottomSearchLayout -> toggleDrawerBottomSearch()
+            R.id.searchEngine, R.id.searchEngineTitle, R.id.searchEngineLayout -> showSearchEngineMenu(binding.searchEngine)
             R.id.homeAppsNum -> showHomeAppsNumMenu(view)
             R.id.alignment -> showAlignmentMenu(view)
             R.id.shortcutIconsOnOff, R.id.shortcutIconsOnOffTitle, R.id.shortcutIconsOnOffLayout -> toggleShortcutIcons()
@@ -313,6 +316,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.drawerBottomSearch.setOnClickListener(this)
         binding.drawerBottomSearchTitle.setOnClickListener(this)
         binding.drawerBottomSearchLayout.setOnClickListener(this)
+        binding.searchEngine.setOnClickListener(this)
+        binding.searchEngineTitle.setOnClickListener(this)
+        binding.searchEngineLayout.setOnClickListener(this)
         binding.photoWallpaper.setOnClickListener(this)
         binding.photoWallpaperTitle.setOnClickListener(this)
         binding.photoWallpaperLayout.setOnClickListener(this)
@@ -729,6 +735,110 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                 else -> R.string.auto
             }
         )
+    }
+
+    private fun showSearchEngineMenu(anchor: View) {
+        val options = listOf(
+            SearchEngine.PHONE_DEFAULT to getString(R.string.search_engine_phone_default),
+            SearchEngine.GOOGLE to getString(R.string.search_engine_google),
+            SearchEngine.DUCKDUCKGO to getString(R.string.search_engine_duckduckgo),
+            SearchEngine.BING to getString(R.string.search_engine_bing),
+            SearchEngine.CUSTOM to getString(R.string.search_engine_custom),
+        )
+        anchor.showPopupMenu(
+            configure = { menu ->
+                options.forEachIndexed { index, (_, label) ->
+                    menu.add(Menu.NONE, index, index, label)
+                }
+            }
+        ) { item ->
+            val (engineId, _) = options.getOrNull(item.itemId) ?: return@showPopupMenu
+            if (engineId == SearchEngine.CUSTOM) {
+                showCustomSearchEngineDialog()
+            } else {
+                prefs.searchEngine = engineId
+                populateSearchEngine()
+            }
+        }
+    }
+
+    private fun populateSearchEngine() {
+        binding.searchEngine.text = getString(
+            when (prefs.searchEngine) {
+                SearchEngine.GOOGLE -> R.string.search_engine_google
+                SearchEngine.DUCKDUCKGO -> R.string.search_engine_duckduckgo
+                SearchEngine.BING -> R.string.search_engine_bing
+                SearchEngine.CUSTOM -> R.string.search_engine_custom
+                else -> R.string.search_engine_phone_default
+            }
+        )
+    }
+
+    private fun showCustomSearchEngineDialog() {
+        var dialogEditText: AppCompatEditText? = null
+        var customDialog: OlDialog? = null
+
+        fun save() {
+            val text = dialogEditText?.text?.toString().orEmpty()
+            if (SearchEngine.isValidTemplate(text)) {
+                prefs.searchEngineCustomUrl = text.trim()
+                prefs.searchEngine = SearchEngine.CUSTOM
+                populateSearchEngine()
+            } else {
+                showToast(R.string.search_engine_custom_invalid)
+            }
+        }
+
+        val dialog = requireContext().createDialog(
+            title = R.string.search_engine,
+            action = R.string.save,
+            onAction = {
+                save()
+            }
+        ) { container ->
+            val context = container.context
+            val layout = LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                )
+            }
+            val editText = AppCompatEditText(context).apply {
+                hint = context.getString(R.string.search_engine_custom_hint)
+                setText(prefs.searchEngineCustomUrl)
+                setSingleLine(true)
+                imeOptions = EditorInfo.IME_ACTION_DONE
+                inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
+                setTextColor(context.getColorFromAttr(R.attr.primaryColor))
+                setHintTextColor(context.getColorFromAttr(R.attr.primaryColorTrans80))
+                background = null
+                setOnEditorActionListener { _, actionId, _ ->
+                    if (actionId == EditorInfo.IME_ACTION_DONE) {
+                        customDialog?.dismiss()
+                        save()
+                        true
+                    } else false
+                }
+            }
+            dialogEditText = editText
+            layout.addView(editText)
+            layout
+        }
+        customDialog = dialog
+        dialog.showRespectingStatusBar()
+        dialogEditText?.apply {
+            setSelection(text?.length ?: 0)
+            post {
+                requestFocus()
+                val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+                imm?.showSoftInput(this, InputMethodManager.SHOW_IMPLICIT)
+            }
+        }
+    }
+
+    private fun showToast(@StringRes resId: Int) {
+        requireContext().showToast(resId)
     }
 
     private fun populateWeather() {
