@@ -1111,6 +1111,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         }
 
         NotificationPermission.request(this) { isGranted ->
+            if (!isAdded) return@request
             if (isGranted) {
                 when (type) {
                     Nudges.WATER -> {
@@ -1159,7 +1160,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                 initialMinute = currentEnd % 60,
             ) { endHour, endMinute ->
                 val chosenEnd = endHour * 60 + endMinute
-                if (chosenStart < chosenEnd) {
+                if (NudgeFormatting.isValidActiveHours(chosenStart, chosenEnd)) {
                     prefs.nudgeWindowStartMin = chosenStart
                     prefs.nudgeWindowEndMin = chosenEnd
                     populateActiveHours()
