@@ -205,4 +205,13 @@
     <string name="save_for_later">Save for later</string>
     <string name="saved_for_later">Saved for later</string>
     <string name="no_link_found">No link found</string>
+    <string name="saved_empty_state">Share a link to Thumbline to save it here</string>
+    <string name="saved_archived">Archived (%d)</string>
+    <string name="saved_archive">Archive</string>
+    <string name="saved_delete">Delete</string>
+    <string name="saved_copy_link">Copy link</string>
+    <string name="saved_restore">Restore</string>
+    <string name="saved_more">+%d more</string>
+    <string name="saved_unable_to_open">Unable to open link</string>
 </resources>
+
