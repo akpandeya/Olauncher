@@ -107,6 +107,20 @@ class SavedItemsStoreTest {
     }
 
     @Test
+    fun `unarchive does not duplicate a url that was re-added while archived`() {
+        val original = store.add("https://dup.com", "Old")
+        store.archive(original.id)
+        store.add("https://dup.com", "New")
+
+        store.unarchive(original.id)
+
+        val active = store.active()
+        assertEquals(1, active.size)
+        assertEquals(original.id, active[0].id)
+        assertTrue(store.archived().isEmpty())
+    }
+
+    @Test
     fun `delete removes item permanently`() {
         val item = store.add("https://delete.me", "Delete Me")
         store.delete(item.id)

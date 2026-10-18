@@ -148,6 +148,7 @@ class SavedItemsStore(
         val index = all.indexOfFirst { it.id == id }
         if (index != -1) {
             val item = all.removeAt(index)
+            all.removeAll { it.url == item.url && it.archivedAt == null }
             all.add(0, item.copy(archivedAt = null))
             saveAll(all)
         }
