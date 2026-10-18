@@ -180,6 +180,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.nudgeSocial, R.id.nudgeSocialTitle, R.id.nudgeSocialLayout -> showNudgeSocialMenu(binding.nudgeSocial)
             R.id.nudgeActiveHours, R.id.nudgeActiveHoursTitle, R.id.nudgeActiveHoursLayout -> showActiveHoursDialog()
             R.id.germanOnOff, R.id.germanTitle, R.id.germanLayout -> toggleGerman()
+            R.id.germanLookupOnOff, R.id.germanLookupTitle, R.id.germanLookupSubtitle, R.id.germanLookupLayout -> toggleGermanLookup()
             R.id.exportBackup, R.id.exportBackupLayout -> launchExportBackup()
             R.id.importBackup, R.id.importBackupLayout -> launchImportBackup()
             R.id.footer -> requireContext().openUrl(Constants.URL_SOURCE)
@@ -251,6 +252,10 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.germanOnOff.setOnClickListener(this)
         binding.germanTitle.setOnClickListener(this)
         binding.germanLayout.setOnClickListener(this)
+        binding.germanLookupOnOff.setOnClickListener(this)
+        binding.germanLookupTitle.setOnClickListener(this)
+        binding.germanLookupSubtitle.setOnClickListener(this)
+        binding.germanLookupLayout.setOnClickListener(this)
         binding.exportBackup.setOnClickListener(this)
         binding.exportBackupLayout.setOnClickListener(this)
         binding.importBackup.setOnClickListener(this)
@@ -1409,8 +1414,15 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateGerman()
     }
 
+    private fun toggleGermanLookup() {
+        prefs.germanLookup = !prefs.germanLookup
+        populateGerman()
+    }
+
     private fun populateGerman() {
         binding.germanOnOff.text = getString(if (prefs.germanEnabled) R.string.on else R.string.off)
+        binding.germanLookupLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
+        binding.germanLookupOnOff.text = getString(if (prefs.germanLookup) R.string.on else R.string.off)
     }
 
     private fun populateFooter() {
