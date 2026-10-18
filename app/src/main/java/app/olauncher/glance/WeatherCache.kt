@@ -12,8 +12,9 @@ class WeatherCache(private val filesDir: File) {
 
     private val file = File(filesDir, "weather.json")
 
-    @Synchronized
-    fun write(rawForecastJson: String, fetchedAt: Long = System.currentTimeMillis()) {
+    // The periodic and the one-time worker each build their own WeatherCache, so the lock and
+    // the temp file must be shared across instances, not per instance.
+    fun write(rawForecastJson: String, fetchedAt: Long = System.currentTimeMillis()) = synchronized(LOCK) {
         if (!filesDir.exists()) {
             filesDir.mkdirs()
         }
@@ -45,8 +46,7 @@ class WeatherCache(private val filesDir: File) {
         }
     }
 
-    @Synchronized
-    fun read(): Pair<Forecast, Long>? {
+    fun read(): Pair<Forecast, Long>? = synchronized(LOCK) {
         if (!file.exists()) return null
         return try {
             val text = file.readText()
@@ -60,8 +60,11 @@ class WeatherCache(private val filesDir: File) {
         }
     }
 
-    @Synchronized
-    fun clear() {
+    fun clear() = synchronized(LOCK) {
         if (file.exists()) file.delete()
+    }
+
+    private companion object {
+        val LOCK = Any()
     }
 }
