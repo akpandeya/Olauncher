@@ -45,6 +45,17 @@
             tools:text="02:34" />
 
         <TextView
+            android:id="@+id/clockWords"
+            style="@style/TextDefault"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-light"
+            android:maxLines="2"
+            android:textSize="@dimen/time_words_size"
+            android:visibility="gone"
+            tools:text="Viertel nach drei" />
+
+        <TextView
             android:id="@+id/date"
             style="@style/TextDefault"
             android:layout_width="wrap_content"

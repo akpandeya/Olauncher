@@ -27,6 +27,10 @@ class Prefs(context: Context) {
         const val GERMAN_LOOKUP = "GERMAN_LOOKUP"
         const val GERMAN_PAUSE_WORD = "GERMAN_PAUSE_WORD"
         const val GERMAN_PAUSE_LAST_WORD_ID = "GERMAN_PAUSE_LAST_WORD_ID"
+        const val GERMAN_CLOCK = "GERMAN_CLOCK"
+        const val GERMAN_CLOCK_SYSTEM = 0
+        const val GERMAN_CLOCK_DEUTSCH = 1
+        const val GERMAN_CLOCK_IN_WORTEN = 2
 
         fun nudgeDoneKey(type: String): String = "$NUDGE_DONE_PREFIX${type.uppercase()}"
     }
@@ -331,6 +335,10 @@ class Prefs(context: Context) {
     var germanEnabled: Boolean
         get() = prefs.getBoolean(GERMAN_ENABLED, false)
         set(value) = prefs.edit { putBoolean(GERMAN_ENABLED, value).apply() }
+
+    var germanClock: Int
+        get() = prefs.getInt(GERMAN_CLOCK, GERMAN_CLOCK_SYSTEM)
+        set(value) = prefs.edit { putInt(GERMAN_CLOCK, value).apply() }
 
     var germanLookup: Boolean
         get() = prefs.getBoolean(GERMAN_LOOKUP, true)

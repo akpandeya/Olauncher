@@ -1,7 +1,9 @@
 package app.olauncher.ui
 
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.LauncherApps
 import android.content.res.Configuration
 import android.os.BatteryManager
@@ -34,6 +36,7 @@ import app.olauncher.data.Prefs
 import app.olauncher.data.ShortcutOffset
 import app.olauncher.databinding.FragmentHomeBinding
 import app.olauncher.helper.DefaultLauncherCheck
+import app.olauncher.helper.GermanTime
 import app.olauncher.helper.appUsagePermissionGranted
 import app.olauncher.helper.dpToPx
 import app.olauncher.helper.expandNotificationDrawer
@@ -52,6 +55,7 @@ import app.olauncher.helper.showToast
 import app.olauncher.listener.OnSwipeTouchListener
 import app.olauncher.listener.ViewSwipeTouchListener
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
@@ -60,6 +64,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     private lateinit var prefs: Prefs
     private lateinit var viewModel: MainViewModel
 
+    private var timeTickReceiver: BroadcastReceiver? = null
     private var homeAppsPaddingStart = 0
     private var homeAppsPaddingEnd = 0
     private var _binding: FragmentHomeBinding? = null
@@ -95,6 +100,12 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         viewModel.isOlauncherDefault()
         if (prefs.showStatusBar) showStatusBar()
         else hideStatusBar()
+        registerTimeTickReceiver()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        unregisterTimeTickReceiver()
     }
 
     override fun onClick(view: View) {
@@ -102,7 +113,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             R.id.lock -> {}
             // Home button for recents feature disabled
             // R.id.recents -> {}
-            R.id.clock -> openClockApp()
+            R.id.clock, R.id.clockWords -> openClockApp()
             R.id.date -> openCalendarApp()
             R.id.setDefaultLauncher -> viewModel.resetLauncherLiveData.call()
             R.id.tvScreenTime -> openScreenTimeDigitalWellbeing()
@@ -152,7 +163,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             R.id.homeApp6 -> showAppList(Constants.FLAG_SET_HOME_APP_6, prefs.appName6.isNotEmpty(), true)
             R.id.homeApp7 -> showAppList(Constants.FLAG_SET_HOME_APP_7, prefs.appName7.isNotEmpty(), true)
             R.id.homeApp8 -> showAppList(Constants.FLAG_SET_HOME_APP_8, prefs.appName8.isNotEmpty(), true)
-            R.id.clock -> {
+            R.id.clock, R.id.clockWords -> {
                 showAppList(Constants.FLAG_SET_CLOCK_APP)
                 prefs.clockAppPackage = ""
                 prefs.clockAppClassName = ""
@@ -234,8 +245,10 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         // Home button for recents feature disabled
         // binding.recents.setOnClickListener(this)
         binding.clock.setOnClickListener(this)
+        binding.clockWords.setOnClickListener(this)
         binding.date.setOnClickListener(this)
         binding.clock.setOnLongClickListener(this)
+        binding.clockWords.setOnLongClickListener(this)
         binding.date.setOnLongClickListener(this)
         binding.setDefaultLauncher.setOnClickListener(this)
         binding.setDefaultLauncher.setOnLongClickListener(this)
@@ -292,6 +305,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         val verticalGravity = if (useBottom) Gravity.BOTTOM else Gravity.CENTER_VERTICAL
         binding.homeAppsLayout.gravity = horizontalGravity or verticalGravity
         binding.dateTimeLayout.gravity = horizontalGravity
+        binding.clockWords.gravity = horizontalGravity
         binding.homeApp1.gravity = horizontalGravity
         binding.homeApp2.gravity = horizontalGravity
         binding.homeApp3.gravity = horizontalGravity
@@ -433,11 +447,26 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
     private fun populateDateTime() {
         binding.dateTimeLayout.isVisible = prefs.dateTimeVisibility != Constants.DateTime.OFF
-        binding.clock.isVisible = Constants.DateTime.isTimeVisible(prefs.dateTimeVisibility)
-        binding.date.isVisible = Constants.DateTime.isDateVisible(prefs.dateTimeVisibility)
+        val isTimeVisible = Constants.DateTime.isTimeVisible(prefs.dateTimeVisibility)
+        val isDateVisible = Constants.DateTime.isDateVisible(prefs.dateTimeVisibility)
 
-//        var dateText = SimpleDateFormat("EEE, d MMM", Locale.getDefault()).format(Date())
-        val dateFormat = SimpleDateFormat("EEE, d MMM", Locale.getDefault())
+        val isGerman = prefs.germanEnabled && prefs.germanClock != Prefs.GERMAN_CLOCK_SYSTEM
+        val isWordsClock = prefs.germanEnabled && prefs.germanClock == Prefs.GERMAN_CLOCK_IN_WORTEN
+
+        if (isWordsClock) {
+            binding.clock.isVisible = false
+            binding.clockWords.isVisible = isTimeVisible
+            updateClockWords()
+        } else {
+            binding.clockWords.isVisible = false
+            binding.clock.isVisible = isTimeVisible
+        }
+
+        val dateFormat = if (isGerman) {
+            SimpleDateFormat("EEEE, d. MMMM", Locale.GERMAN)
+        } else {
+            SimpleDateFormat("EEE, d MMM", Locale.getDefault())
+        }
         var dateText = dateFormat.format(Date())
 
         if (!prefs.showStatusBar) {
@@ -447,6 +476,39 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
                 dateText = getString(R.string.day_battery, dateText, battery)
         }
         binding.date.text = dateText.replace(".,", ",")
+        binding.date.isVisible = isDateVisible
+    }
+
+    private fun updateClockWords() {
+        if (_binding == null) return
+        val calendar = Calendar.getInstance()
+        val hour = calendar.get(Calendar.HOUR_OF_DAY)
+        val minute = calendar.get(Calendar.MINUTE)
+        binding.clockWords.text = GermanTime.words(hour, minute)
+    }
+
+    private fun registerTimeTickReceiver() {
+        if (timeTickReceiver == null) {
+            timeTickReceiver = object : BroadcastReceiver() {
+                override fun onReceive(context: Context?, intent: Intent?) {
+                    if (intent?.action == Intent.ACTION_TIME_TICK) {
+                        updateClockWords()
+                    }
+                }
+            }
+            requireContext().registerReceiver(timeTickReceiver, IntentFilter(Intent.ACTION_TIME_TICK))
+        }
+    }
+
+    private fun unregisterTimeTickReceiver() {
+        timeTickReceiver?.let {
+            try {
+                requireContext().unregisterReceiver(it)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            timeTickReceiver = null
+        }
     }
 
     private fun populateScreenTime() {
@@ -862,6 +924,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     }
 
     override fun onDestroyView() {
+        unregisterTimeTickReceiver()
         super.onDestroyView()
         _binding = null
     }
