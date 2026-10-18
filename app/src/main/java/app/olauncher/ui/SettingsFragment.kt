@@ -84,7 +84,9 @@ import app.olauncher.helper.showWaitDialog
 import app.olauncher.wellbeing.CommitLock
 import app.olauncher.wellbeing.DistractingApps
 import app.olauncher.wellbeing.FrictionChange
+import app.olauncher.wellbeing.FrictionSettings
 import app.olauncher.wellbeing.PausePolicy
+import app.olauncher.wellbeing.restoreNeedsWait
 import app.olauncher.wellbeing.UsageSnapshotWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -1988,6 +1990,28 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     }
 
     private fun confirmImportBackup(backupData: BackupData) {
+        val before = FrictionSettings(
+            pauseEnabled = prefs.pauseEnabled,
+            distractingApps = prefs.distractingApps,
+            allowanceMin = prefs.pauseAllowanceMin,
+            escalate = prefs.pauseEscalate,
+            askWhy = prefs.pauseAskWhy,
+            commitLock = prefs.commitLock,
+        )
+        val after = FrictionSettings.fromPrefsMap(backupData.prefs)
+        if (CommitLock.restoreNeedsWait(prefs.commitLock, before, after)) {
+            dialog?.dismiss()
+            dialog = requireContext().showWaitDialog(
+                message = getString(R.string.commit_lock_desc)
+            ) {
+                restoreBackupNow(backupData)
+            }
+        } else {
+            restoreBackupNow(backupData)
+        }
+    }
+
+    private fun restoreBackupNow(backupData: BackupData) {
         val appContext = context?.applicationContext ?: return
         viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
             try {
@@ -2005,6 +2029,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                 if (!isAdded) return@withContext
                 WordCaptureActivity.setEnabled(appContext, prefs.germanEnabled)
                 NudgeScheduler.rescheduleAll(appContext)
+                UsageSnapshotWorker.syncWithDistractingApps(appContext, prefs.distractingApps)
                 activity?.recreate()
             }
         }

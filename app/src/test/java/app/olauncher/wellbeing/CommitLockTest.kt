@@ -160,3 +160,68 @@ class CommitLockTest {
         assertTrue(CommitLock.isTightening(FrictionChange.Allowance(30, 15)))
     }
 }
+
+class CommitLockRestoreTest {
+
+    private val strict = FrictionSettings(
+        pauseEnabled = true,
+        distractingApps = setOf("com.a", "com.b"),
+        allowanceMin = 45,
+        escalate = true,
+        askWhy = true,
+        commitLock = true,
+    )
+
+    @Test
+    fun `restore that loosens any friction setting needs a wait when lock is on`() {
+        val loosened = listOf(
+            strict.copy(pauseEnabled = false),
+            strict.copy(distractingApps = setOf("com.a")),
+            strict.copy(allowanceMin = 0),
+            strict.copy(allowanceMin = 60),
+            strict.copy(escalate = false),
+            strict.copy(askWhy = false),
+            strict.copy(commitLock = false),
+        )
+        for (after in loosened) {
+            assertTrue("expected wait for $after", CommitLock.restoreNeedsWait(true, strict, after))
+        }
+    }
+
+    @Test
+    fun `restore needs no wait when lock is off or friction is unchanged or tightened`() {
+        val off = strict.copy(pauseEnabled = false, allowanceMin = 0, escalate = false)
+        assertFalse(CommitLock.restoreNeedsWait(false, strict, off))
+        assertFalse(CommitLock.restoreNeedsWait(true, strict, strict))
+        assertFalse(CommitLock.restoreNeedsWait(true, off, strict))
+        assertFalse(CommitLock.restoreNeedsWait(true, off, off))
+        assertFalse(CommitLock.restoreNeedsWait(true, strict, strict.copy(distractingApps = setOf("com.a", "com.b", "com.c"), allowanceMin = 30)))
+    }
+
+    @Test
+    fun `settings parsed from backup prefs use distinguishing values and defaults for missing keys`() {
+        val parsed = FrictionSettings.fromPrefsMap(
+            mapOf(
+                "PAUSE_ENABLED" to true,
+                "DISTRACTING_APPS" to setOf("x.y", "z.w"),
+                "PAUSE_ALLOWANCE_MIN" to 75L,
+                "PAUSE_ASK_WHY" to true,
+            )
+        )
+        assertEquals(FrictionSettings(true, setOf("x.y", "z.w"), 75, escalate = false, askWhy = true, commitLock = false), parsed)
+        assertEquals(FrictionSettings(false, emptySet(), 0, false, false, false), FrictionSettings.fromPrefsMap(emptyMap()))
+    }
+
+    @Test
+    fun `backup restoring an empty prefs map loosens a strict setup`() {
+        assertTrue(CommitLock.restoreNeedsWait(true, strict, FrictionSettings.fromPrefsMap(emptyMap())))
+    }
+
+    @Test
+    fun `friction keys match Prefs constants`() {
+        assertEquals(app.olauncher.data.Prefs.PAUSE_ALLOWANCE_MIN, FrictionSettings.KEY_ALLOWANCE_MIN)
+        assertEquals(app.olauncher.data.Prefs.PAUSE_ESCALATE, FrictionSettings.KEY_ESCALATE)
+        assertEquals(app.olauncher.data.Prefs.PAUSE_ASK_WHY, FrictionSettings.KEY_ASK_WHY)
+        assertEquals(app.olauncher.data.Prefs.COMMIT_LOCK, FrictionSettings.KEY_COMMIT_LOCK)
+    }
+}
