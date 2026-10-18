@@ -9,6 +9,7 @@ import androidx.core.content.ContextCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.Instant
+import java.time.ZoneId
 
 data class CalendarEvent(
     val id: Long,
@@ -63,6 +64,8 @@ open class CalendarRepository(private val context: Context) {
         val sortOrder = "${CalendarContract.Instances.BEGIN} ASC, ${CalendarContract.Instances.END} ASC"
 
         val events = mutableListOf<CalendarEvent>()
+        val nowInstant = Instant.ofEpochMilli(now)
+        val zone = ZoneId.systemDefault()
 
         try {
             val cursor = try {
@@ -91,18 +94,17 @@ open class CalendarRepository(private val context: Context) {
 
                     if (visible == 0) continue
                     if (status == CalendarContract.Attendees.ATTENDEE_STATUS_DECLINED) continue
-                    if (end <= now) continue
                     if (begin >= windowEndMillis) continue
 
-                    events.add(
-                        CalendarEvent(
-                            id = eventId,
-                            title = title,
-                            startMillis = begin,
-                            endMillis = end,
-                            allDay = allDay,
-                        )
+                    val event = CalendarEvent(
+                        id = eventId,
+                        title = title,
+                        startMillis = begin,
+                        endMillis = end,
+                        allDay = allDay,
                     )
+                    if (NextUpFormatting.hasEnded(event, nowInstant, zone)) continue
+                    events.add(event)
                 }
             }
         } catch (_: Exception) {
