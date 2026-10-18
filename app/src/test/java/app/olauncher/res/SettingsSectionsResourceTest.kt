@@ -239,6 +239,7 @@ class SettingsSectionsResourceTest {
             // Section 3: Drawer
             assertTrue(sectionIds[3].contains("autoShowKeyboard"))
             assertTrue(sectionIds[3].contains("drawerBottomSearchLayout"))
+            assertTrue(sectionIds[3].contains("searchEngineLayout"))
 
             // Section 4: Wellbeing
             assertTrue(sectionIds[4].contains("distractingAppsLayout"))
@@ -392,6 +393,9 @@ class SettingsSectionsResourceTest {
             "screenTimeOnOff",
             "scrollLayout",
             "scrollView",
+            "searchEngine",
+            "searchEngineLayout",
+            "searchEngineTitle",
             "setLauncher",
             "shortcutCount",
             "shortcutCountLayout",
