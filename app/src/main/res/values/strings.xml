@@ -321,5 +321,10 @@
     <string name="celsius">°C</string>
     <string name="fahrenheit">°F</string>
     <string name="weather_no_results">No places found</string>
+    <string name="weather_dry_12h">Dry for the next 12 h</string>
+    <string name="weather_rain_all_day">Rain all day</string>
+    <string name="weather_rain_until">Rain until %1$s</string>
+    <string name="weather_rain_from">Rain from %1$s</string>
+    <string name="weather_as_of">as of %1$s · Open-Meteo</string>
 </resources>
 
