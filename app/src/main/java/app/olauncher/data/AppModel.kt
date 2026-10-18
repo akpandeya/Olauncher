@@ -87,5 +87,3 @@ sealed class AppModel : Comparable<AppModel> {
         else -> appLabel.compareTo(other.appLabel, true)
     }
 }
-
-typealias ResultAction = AppModel.Result.Action
