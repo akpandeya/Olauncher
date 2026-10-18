@@ -217,5 +217,19 @@
     <string name="nudges_channel_name">Gentle nudges</string>
     <string name="notification_permission_message">Allow notifications so Thumbline can send gentle nudges</string>
     <string name="done">Done</string>
+    <string name="nudge_water">Water</string>
+    <string name="nudge_walk">Walk</string>
+    <string name="nudge_active_hours">Active hours</string>
+    <string name="nudge_every_1_h">every 1 h</string>
+    <string name="nudge_every_1_5_h">every 1.5 h</string>
+    <string name="nudge_every_2_h">every 2 h</string>
+    <string name="nudge_every_3_h">every 3 h</string>
+    <string name="nudge_every_4_h">every 4 h</string>
+    <string name="notifications_off_for_thumbline">Notifications are off for Thumbline</string>
+    <string name="nudge_water_notification">Time for some water · %d today</string>
+    <string name="nudge_walk_notification">Stand up and walk for a few minutes · %d today</string>
+    <string name="nudge_start_time">Start time</string>
+    <string name="nudge_end_time">End time</string>
+    <string name="nudge_active_hours_invalid">Start time must be before end time</string>
 </resources>
 

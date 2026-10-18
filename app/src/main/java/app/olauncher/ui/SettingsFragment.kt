@@ -1,5 +1,6 @@
 package app.olauncher.ui
 
+import android.app.TimePickerDialog
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -7,6 +8,7 @@ import android.os.Bundle
 import android.os.Process
 import android.provider.MediaStore
 import android.provider.Settings
+import android.text.format.DateFormat
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.Menu
@@ -16,12 +18,17 @@ import android.widget.Toast
 import android.view.WindowManager
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.bundleOf
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import app.olauncher.wellbeing.NudgeFormatting
+import app.olauncher.wellbeing.NudgeScheduler
+import app.olauncher.wellbeing.Nudges
+import app.olauncher.wellbeing.NotificationPermission
 import app.olauncher.BuildConfig
 import app.olauncher.MainViewModel
 import app.olauncher.R
@@ -76,6 +83,11 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         }
     }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        NotificationPermission.register(this)
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentSettingsBinding.inflate(inflater, container, false)
         return binding.root
@@ -107,6 +119,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateDateTime()
         populateSwipeApps()
         populateTodayCards()
+        populateNudgeWater()
+        populateNudgeWalk()
+        populateActiveHours()
         populateFooter()
         initClickListeners()
         initObservers()
@@ -138,6 +153,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.swipeLeftApp -> showAppListIfEnabled(Constants.FLAG_SET_SWIPE_LEFT_APP)
             R.id.swipeRightApp, R.id.swipeRightLayout -> showSwipeRightMenu(binding.swipeRightApp)
             R.id.todayCards, R.id.todayCardsTitle, R.id.todayCardsLayout -> showTodayCardsDialog()
+            R.id.nudgeWater, R.id.nudgeWaterTitle, R.id.nudgeWaterLayout -> showNudgeWaterMenu(binding.nudgeWater)
+            R.id.nudgeWalk, R.id.nudgeWalkTitle, R.id.nudgeWalkLayout -> showNudgeWalkMenu(binding.nudgeWalk)
+            R.id.nudgeActiveHours, R.id.nudgeActiveHoursTitle, R.id.nudgeActiveHoursLayout -> showActiveHoursDialog()
             R.id.footer -> requireContext().openUrl(Constants.URL_SOURCE)
         }
     }
@@ -192,6 +210,15 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.todayCards.setOnClickListener(this)
         binding.todayCardsTitle.setOnClickListener(this)
         binding.todayCardsLayout.setOnClickListener(this)
+        binding.nudgeWater.setOnClickListener(this)
+        binding.nudgeWaterTitle.setOnClickListener(this)
+        binding.nudgeWaterLayout.setOnClickListener(this)
+        binding.nudgeWalk.setOnClickListener(this)
+        binding.nudgeWalkTitle.setOnClickListener(this)
+        binding.nudgeWalkLayout.setOnClickListener(this)
+        binding.nudgeActiveHours.setOnClickListener(this)
+        binding.nudgeActiveHoursTitle.setOnClickListener(this)
+        binding.nudgeActiveHoursLayout.setOnClickListener(this)
         binding.appThemeText.setOnClickListener(this)
         binding.textSizeValue.setOnClickListener(this)
         binding.boldFont.setOnClickListener(this)
@@ -993,6 +1020,181 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.action_settingsFragment_to_appListFragment,
             bundleOf(Constants.Key.FLAG to flag)
         )
+    }
+
+    private fun populateNudgeWater() {
+        binding.nudgeWater.text = formatWaterInterval(prefs.nudgeWaterIntervalMin)
+    }
+
+    private fun populateNudgeWalk() {
+        binding.nudgeWalk.text = formatWalkInterval(prefs.nudgeWalkIntervalMin)
+    }
+
+    private fun populateActiveHours() {
+        binding.nudgeActiveHours.text = NudgeFormatting.formatActiveHours(
+            prefs.nudgeWindowStartMin,
+            prefs.nudgeWindowEndMin,
+        )
+    }
+
+    private fun formatWaterInterval(intervalMin: Int): String = when (intervalMin) {
+        60 -> getString(R.string.nudge_every_1_h)
+        90 -> getString(R.string.nudge_every_1_5_h)
+        120 -> getString(R.string.nudge_every_2_h)
+        180 -> getString(R.string.nudge_every_3_h)
+        else -> getString(R.string.off)
+    }
+
+    private fun formatWalkInterval(intervalMin: Int): String = when (intervalMin) {
+        120 -> getString(R.string.nudge_every_2_h)
+        180 -> getString(R.string.nudge_every_3_h)
+        240 -> getString(R.string.nudge_every_4_h)
+        else -> getString(R.string.off)
+    }
+
+    private fun showNudgeWaterMenu(anchor: View) {
+        val intervals = listOf(
+            0 to getString(R.string.off),
+            60 to getString(R.string.nudge_every_1_h),
+            90 to getString(R.string.nudge_every_1_5_h),
+            120 to getString(R.string.nudge_every_2_h),
+            180 to getString(R.string.nudge_every_3_h),
+        )
+        anchor.showPopupMenu(
+            configure = { menu ->
+                intervals.forEachIndexed { index, pair ->
+                    menu.add(Menu.NONE, index, index, pair.second)
+                }
+            }
+        ) { item ->
+            val chosen = intervals.getOrNull(item.itemId)?.first ?: return@showPopupMenu
+            updateNudgeInterval(Nudges.WATER, chosen)
+        }
+    }
+
+    private fun showNudgeWalkMenu(anchor: View) {
+        val intervals = listOf(
+            0 to getString(R.string.off),
+            120 to getString(R.string.nudge_every_2_h),
+            180 to getString(R.string.nudge_every_3_h),
+            240 to getString(R.string.nudge_every_4_h),
+        )
+        anchor.showPopupMenu(
+            configure = { menu ->
+                intervals.forEachIndexed { index, pair ->
+                    menu.add(Menu.NONE, index, index, pair.second)
+                }
+            }
+        ) { item ->
+            val chosen = intervals.getOrNull(item.itemId)?.first ?: return@showPopupMenu
+            updateNudgeInterval(Nudges.WALK, chosen)
+        }
+    }
+
+    private fun updateNudgeInterval(type: String, intervalMin: Int) {
+        if (intervalMin <= 0) {
+            when (type) {
+                Nudges.WATER -> {
+                    prefs.nudgeWaterIntervalMin = 0
+                    NudgeScheduler.cancel(requireContext(), Nudges.WATER)
+                    Nudges.cancel(requireContext(), Nudges.WATER)
+                    populateNudgeWater()
+                }
+                Nudges.WALK -> {
+                    prefs.nudgeWalkIntervalMin = 0
+                    NudgeScheduler.cancel(requireContext(), Nudges.WALK)
+                    Nudges.cancel(requireContext(), Nudges.WALK)
+                    populateNudgeWalk()
+                }
+            }
+            return
+        }
+
+        NotificationPermission.request(this) { isGranted ->
+            if (!isAdded) return@request
+            if (isGranted) {
+                when (type) {
+                    Nudges.WATER -> {
+                        prefs.nudgeWaterIntervalMin = intervalMin
+                        NudgeScheduler.schedule(requireContext(), Nudges.WATER)
+                        populateNudgeWater()
+                    }
+                    Nudges.WALK -> {
+                        prefs.nudgeWalkIntervalMin = intervalMin
+                        NudgeScheduler.schedule(requireContext(), Nudges.WALK)
+                        populateNudgeWalk()
+                    }
+                }
+            } else {
+                when (type) {
+                    Nudges.WATER -> {
+                        prefs.nudgeWaterIntervalMin = 0
+                        NudgeScheduler.cancel(requireContext(), Nudges.WATER)
+                        Nudges.cancel(requireContext(), Nudges.WATER)
+                        populateNudgeWater()
+                    }
+                    Nudges.WALK -> {
+                        prefs.nudgeWalkIntervalMin = 0
+                        NudgeScheduler.cancel(requireContext(), Nudges.WALK)
+                        Nudges.cancel(requireContext(), Nudges.WALK)
+                        populateNudgeWalk()
+                    }
+                }
+                requireContext().showToast(R.string.notifications_off_for_thumbline)
+            }
+        }
+    }
+
+    private fun showActiveHoursDialog() {
+        val currentStart = prefs.nudgeWindowStartMin
+        val currentEnd = prefs.nudgeWindowEndMin
+        showTimePicker(
+            title = R.string.nudge_start_time,
+            initialHour = currentStart / 60,
+            initialMinute = currentStart % 60,
+        ) { startHour, startMinute ->
+            val chosenStart = startHour * 60 + startMinute
+            showTimePicker(
+                title = R.string.nudge_end_time,
+                initialHour = currentEnd / 60,
+                initialMinute = currentEnd % 60,
+            ) { endHour, endMinute ->
+                val chosenEnd = endHour * 60 + endMinute
+                if (NudgeFormatting.isValidActiveHours(chosenStart, chosenEnd)) {
+                    prefs.nudgeWindowStartMin = chosenStart
+                    prefs.nudgeWindowEndMin = chosenEnd
+                    populateActiveHours()
+                    NudgeScheduler.rescheduleAll(requireContext())
+                } else {
+                    requireContext().showToast(R.string.nudge_active_hours_invalid)
+                }
+            }
+        }
+    }
+
+    private fun showTimePicker(
+        @StringRes title: Int,
+        initialHour: Int,
+        initialMinute: Int,
+        onTimeSet: (Int, Int) -> Unit,
+    ) {
+        val picker = TimePickerDialog(
+            requireContext(),
+            { _, hour, minute -> onTimeSet(hour, minute) },
+            initialHour,
+            initialMinute,
+            DateFormat.is24HourFormat(requireContext()),
+        )
+        picker.setTitle(getString(title))
+        val window = picker.window
+        if (window != null && !prefs.showStatusBar) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+            picker.show()
+            window.hideStatusBar()
+            window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+        } else {
+            picker.show()
+        }
     }
 
     private fun populateFooter() {
