@@ -96,9 +96,15 @@
     <string name="shortcuts_off">Shortcuts: Off</string>
     <string name="shortcut_icons">Shortcut icons</string>
     <string name="icons">Icons</string>
+    <string name="size">Size</string>
     <string name="side">Side</string>
     <string name="height">Height</string>
     <string name="style">Style</string>
+    <string name="icon_size">Icon size</string>
+    <string name="icon_size_small">Small</string>
+    <string name="icon_size_medium">Medium</string>
+    <string name="icon_size_large">Large</string>
+    <string name="icons_fit">%1$d (%2$d fit)</string>
     <string name="icons_count">Icons: %1$d</string>
     <string name="icons_on_left">Icons on left</string>
     <string name="icons_on_right">Icons on right</string>
