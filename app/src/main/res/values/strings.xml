@@ -29,6 +29,9 @@
     <string name="about">About</string>
     <string name="off">Off</string>
     <string name="on">On</string>
+    <string name="battery">Battery</string>
+    <string name="auto">Auto</string>
+    <string name="always">Always</string>
     <string name="black">Black</string>
     <string name="white">White</string>
     <string name="change_default_launcher">Change default launcher</string>

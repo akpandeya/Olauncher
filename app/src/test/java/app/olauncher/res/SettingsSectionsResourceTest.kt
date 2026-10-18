@@ -217,6 +217,9 @@ class SettingsSectionsResourceTest {
             // Section 1: Home screen
             assertTrue(sectionIds[1].contains("homeAppsNum"))
             assertTrue(sectionIds[1].contains("dateTime"))
+            assertTrue(sectionIds[1].contains("batteryMode"))
+            assertTrue(sectionIds[1].contains("batteryModeLayout"))
+            assertTrue(sectionIds[1].contains("batteryModeTitle"))
             assertTrue(sectionIds[1].contains("alignment"))
             assertFalse("distractingApps must not be in Home screen", sectionIds[1].contains("distractingAppsLayout"))
             assertFalse("pauseBeforeApps must not be in Home screen", sectionIds[1].contains("pauseBeforeAppsLayout"))
@@ -306,6 +309,9 @@ class SettingsSectionsResourceTest {
             "appThemeText",
             "autoShowKeyboard",
             "backupSection",
+            "batteryMode",
+            "batteryModeLayout",
+            "batteryModeTitle",
             "boldFont",
             "dateTime",
             "deutschSection",
