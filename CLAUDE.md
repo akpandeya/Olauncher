@@ -7,7 +7,7 @@ Thumbline is a minimalist Android launcher forked from Olauncher (licensed under
 - **Build debug APK**: `./gradlew assembleDebug`
 - **Run unit tests**: `./gradlew testDebugUnitTest`
 - **Full verification**: `JAVA_HOME=$(/usr/libexec/java_home -v 17) ./gradlew assembleDebug testDebugUnitTest --no-daemon`
-- **Note**: Do NOT run instrumented or emulator tests — run only build and JVM unit tests.
+- **Note**: By default run only build and JVM unit tests. Instrumented or emulator tests (Android Studio emulator, `connectedAndroidTest`) run only when the user asks for them in the current request, for example to check a bug on the emulator. Never start an emulator on your own initiative.
 
 ## Release Configuration
 
