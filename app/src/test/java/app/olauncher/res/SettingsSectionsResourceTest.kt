@@ -245,6 +245,7 @@ class SettingsSectionsResourceTest {
             assertTrue(sectionIds[4].contains("pauseBeforeAppsLayout"))
             assertTrue(sectionIds[4].contains("pauseAllowanceLayout"))
             assertTrue(sectionIds[4].contains("pauseEscalateLayout"))
+            assertTrue(sectionIds[4].contains("pauseAskWhyLayout"))
             assertTrue(sectionIds[4].contains("screenTimeLayout"))
             assertTrue(sectionIds[4].contains("nudgesSection"))
             assertTrue(sectionIds[4].contains("nudgeWaterLayout"))
@@ -370,6 +371,9 @@ class SettingsSectionsResourceTest {
             "pauseAllowance",
             "pauseAllowanceLayout",
             "pauseAllowanceTitle",
+            "pauseAskWhyLayout",
+            "pauseAskWhyOnOff",
+            "pauseAskWhyTitle",
             "pauseBeforeAppsLayout",
             "pauseBeforeAppsOnOff",
             "pauseBeforeAppsTitle",

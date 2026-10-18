@@ -9,8 +9,10 @@ import androidx.core.content.edit
 import java.util.Locale
 import app.olauncher.ui.today.TodayCard
 import app.olauncher.ui.today.TodayCards
+import app.olauncher.wellbeing.PauseLog
+import app.olauncher.wellbeing.PauseLogStorage
 
-class Prefs(context: Context) {
+class Prefs(context: Context) : PauseLogStorage {
     companion object {
         const val WEATHER_ENABLED = "WEATHER_ENABLED"
         const val WEATHER_PLACE_NAME = "WEATHER_PLACE_NAME"
@@ -59,6 +61,13 @@ class Prefs(context: Context) {
         const val BATTERY_MODE_OFF = 2
         const val PAUSE_ALLOWANCE_MIN = "PAUSE_ALLOWANCE_MIN"
         const val PAUSE_ESCALATE = "PAUSE_ESCALATE"
+        const val PAUSE_ASK_WHY = "PAUSE_ASK_WHY"
+        const val PAUSE_LOG_DAY = "PAUSE_LOG_DAY"
+        const val PAUSE_NOT_NOW_TODAY = "PAUSE_NOT_NOW_TODAY"
+        const val PAUSE_OPENED_TODAY = "PAUSE_OPENED_TODAY"
+        const val PAUSE_WHY_REPLY_TODAY = "PAUSE_WHY_REPLY_TODAY"
+        const val PAUSE_WHY_LOOKUP_TODAY = "PAUSE_WHY_LOOKUP_TODAY"
+        const val PAUSE_WHY_BORED_TODAY = "PAUSE_WHY_BORED_TODAY"
 
         fun nudgeDoneKey(type: String): String = "$NUDGE_DONE_PREFIX${type.uppercase()}"
     }
@@ -419,6 +428,36 @@ class Prefs(context: Context) {
     var pauseEscalate: Boolean
         get() = prefs.getBoolean(PAUSE_ESCALATE, false)
         set(value) = prefs.edit { putBoolean(PAUSE_ESCALATE, value).apply() }
+
+    var pauseAskWhy: Boolean
+        get() = prefs.getBoolean(PAUSE_ASK_WHY, false)
+        set(value) = prefs.edit { putBoolean(PAUSE_ASK_WHY, value).apply() }
+
+    var pauseLogDay: Long
+        get() = prefs.getLong(PAUSE_LOG_DAY, 0L)
+        set(value) = prefs.edit { putLong(PAUSE_LOG_DAY, value).apply() }
+
+    var pauseNotNowToday: Int
+        get() = prefs.getInt(PAUSE_NOT_NOW_TODAY, 0)
+        set(value) = prefs.edit { putInt(PAUSE_NOT_NOW_TODAY, value).apply() }
+
+    var pauseOpenedToday: Int
+        get() = prefs.getInt(PAUSE_OPENED_TODAY, 0)
+        set(value) = prefs.edit { putInt(PAUSE_OPENED_TODAY, value).apply() }
+
+    var pauseWhyReplyToday: Int
+        get() = prefs.getInt(PAUSE_WHY_REPLY_TODAY, 0)
+        set(value) = prefs.edit { putInt(PAUSE_WHY_REPLY_TODAY, value).apply() }
+
+    var pauseWhyLookupToday: Int
+        get() = prefs.getInt(PAUSE_WHY_LOOKUP_TODAY, 0)
+        set(value) = prefs.edit { putInt(PAUSE_WHY_LOOKUP_TODAY, value).apply() }
+
+    var pauseWhyBoredToday: Int
+        get() = prefs.getInt(PAUSE_WHY_BORED_TODAY, 0)
+        set(value) = prefs.edit { putInt(PAUSE_WHY_BORED_TODAY, value).apply() }
+
+    val pauseLog: PauseLog by lazy { PauseLog(this, { epochDaySupplier() }) }
 
     var toShowHintCounter: Int
         get() = prefs.getInt(SHOW_HINT_COUNTER, 1)
@@ -1017,4 +1056,18 @@ class Prefs(context: Context) {
     fun unregisterPreferenceChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
         prefs.unregisterOnSharedPreferenceChangeListener(listener)
     }
+
+    override fun getLong(key: String, defValue: Long): Long = prefs.getLong(key, defValue)
+
+    override fun getInt(key: String, defValue: Int): Int = prefs.getInt(key, defValue)
+
+    override fun putLong(key: String, value: Long) {
+        prefs.edit { putLong(key, value).apply() }
+    }
+
+    override fun putInt(key: String, value: Int) {
+        prefs.edit { putInt(key, value).apply() }
+    }
+
+    override fun contains(key: String): Boolean = prefs.contains(key)
 }
