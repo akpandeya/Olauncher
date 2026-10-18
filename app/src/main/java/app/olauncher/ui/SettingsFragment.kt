@@ -30,6 +30,7 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.AppCompatEditText
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.os.bundleOf
 import app.olauncher.glance.Place
 import app.olauncher.glance.WeatherApi
@@ -194,6 +195,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populatePauseEscalate()
         populatePauseAskWhy()
         populateCommitLock()
+        populateHoldNotifications()
         populateLockSettings()
         // Home button for recents feature disabled
         // populateHomeButtonRecents()
@@ -225,6 +227,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateScreenTimeOnOff()
         populatePauseAllowance()
         populateCommitLock()
+        populateHoldNotifications()
     }
 
     override fun onClick(view: View) {
@@ -236,6 +239,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.pauseEscalateOnOff, R.id.pauseEscalateTitle, R.id.pauseEscalateLayout -> togglePauseEscalate()
             R.id.pauseAskWhyOnOff, R.id.pauseAskWhyTitle, R.id.pauseAskWhyLayout -> togglePauseAskWhy()
             R.id.commitLockOnOff, R.id.commitLockTitle, R.id.commitLockSubtitle, R.id.commitLockLayout -> toggleCommitLock()
+            R.id.holdNotificationsOnOff, R.id.holdNotificationsTitle, R.id.holdNotificationsLayout -> toggleHoldNotifications()
             R.id.screenTimeOnOff -> viewModel.showDialog.postValue(Constants.Dialog.DIGITAL_WELLBEING)
             R.id.appInfo -> openAppInfo(requireContext(), Process.myUserHandle(), BuildConfig.APPLICATION_ID)
             R.id.setLauncher -> viewModel.resetLauncherLiveData.call()
@@ -351,6 +355,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.commitLockTitle.setOnClickListener(this)
         binding.commitLockSubtitle.setOnClickListener(this)
         binding.commitLockLayout.setOnClickListener(this)
+        binding.holdNotificationsOnOff.setOnClickListener(this)
+        binding.holdNotificationsTitle.setOnClickListener(this)
+        binding.holdNotificationsLayout.setOnClickListener(this)
         binding.alignment.setOnClickListener(this)
         binding.shortcutIconsOnOff.setOnClickListener(this)
         binding.shortcutIconsOnOffTitle.setOnClickListener(this)
@@ -1481,6 +1488,48 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         } else {
             prefs.commitLock = true
             populateCommitLock()
+        }
+    }
+
+    private fun isNotificationAccessGranted(): Boolean {
+        return NotificationManagerCompat.getEnabledListenerPackages(requireContext())
+            .contains(requireContext().packageName)
+    }
+
+    private fun populateHoldNotifications() {
+        val isOn = prefs.quietEnabled && isNotificationAccessGranted()
+        binding.holdNotificationsOnOff.text = getString(if (isOn) R.string.on else R.string.off)
+    }
+
+    private fun toggleHoldNotifications() {
+        val accessGranted = isNotificationAccessGranted()
+        val currentlyActive = prefs.quietEnabled && accessGranted
+        if (currentlyActive) {
+            prefs.quietEnabled = false
+            populateHoldNotifications()
+        } else {
+            prefs.quietEnabled = true
+            if (!accessGranted) {
+                populateHoldNotifications()
+                showHoldNotificationsAccessDialog()
+            } else {
+                populateHoldNotifications()
+            }
+        }
+    }
+
+    private fun showHoldNotificationsAccessDialog() {
+        dialog?.dismiss()
+        dialog = requireContext().showMessageDialog(
+            title = R.string.hold_notifications_from_distracting_apps,
+            message = R.string.hold_notifications_access_message,
+            action = R.string.allow,
+        ) {
+            try {
+                startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+            } catch (_: Exception) {
+                requireContext().showToast(getString(R.string.unable_to_open_app))
+            }
         }
     }
 
