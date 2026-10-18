@@ -147,4 +147,11 @@
         <item name="android:windowExitAnimation">@null</item>
     </style>
 
+    <style name="Theme.WordCapture" parent="AppTheme">
+        <item name="android:windowShowWallpaper">false</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
+
 </resources>
