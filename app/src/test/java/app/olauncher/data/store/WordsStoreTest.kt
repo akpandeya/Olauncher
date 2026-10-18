@@ -137,4 +137,11 @@ class WordsStoreTest {
         assertEquals("Fenster", words[0].text)
         assertEquals("Das Fenster öffnen", words[0].context)
     }
+
+    @Test
+    fun `get returns word by id or null if not found`() {
+        val word = store.add("Buch")
+        assertEquals(word, store.get(word.id))
+        assertNull(store.get(999999L))
+    }
 }

@@ -259,5 +259,7 @@
     <string name="save_word">Save word</string>
     <string name="saved_word_de" translatable="false">Gespeichert: %s</string>
     <string name="select_word_or_sentence">Select a word or a sentence</string>
+    <string name="german_lookup">Look up meanings online</string>
+    <string name="german_lookup_subtitle">Sends the saved word to Wiktionary</string>
 </resources>
 
