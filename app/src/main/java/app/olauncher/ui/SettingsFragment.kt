@@ -139,6 +139,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateShortcutIcons()
         populateStatusBar()
         populateDateTime()
+        populateBatteryMode()
         populateSwipeApps()
         populateTodayCards()
         populateNudgeWater()
@@ -175,6 +176,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.shortcutIconStyle, R.id.shortcutIconStyleTitle, R.id.shortcutIconStyleLayout -> showShortcutIconStyleDialog()
             R.id.statusBar -> toggleStatusBar()
             R.id.dateTime -> showDateTimeMenu(view)
+            R.id.batteryMode, R.id.batteryModeTitle, R.id.batteryModeLayout -> showBatteryModeMenu(binding.batteryMode)
             R.id.appThemeText -> showAppThemeMenu(view, showSystem = false)
             R.id.textSizeValue -> showTextSizeDialog()
             R.id.boldFont -> toggleBoldFont()
@@ -260,6 +262,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.shortcutIconStyleLayout.setOnClickListener(this)
         binding.statusBar.setOnClickListener(this)
         binding.dateTime.setOnClickListener(this)
+        binding.batteryMode.setOnClickListener(this)
+        binding.batteryModeTitle.setOnClickListener(this)
+        binding.batteryModeLayout.setOnClickListener(this)
         binding.swipeLeftApp.setOnClickListener(this)
         binding.swipeRightApp.setOnClickListener(this)
         binding.swipeRightLayout.setOnClickListener(this)
@@ -588,6 +593,35 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                 Constants.DateTime.DATE_ONLY -> R.string.date
                 Constants.DateTime.ON -> R.string.on
                 else -> R.string.off
+            }
+        )
+    }
+
+    private fun showBatteryModeMenu(anchor: View) {
+        val options = listOf(
+            Prefs.BATTERY_MODE_AUTO to getString(R.string.auto),
+            Prefs.BATTERY_MODE_ALWAYS to getString(R.string.always),
+            Prefs.BATTERY_MODE_OFF to getString(R.string.off),
+        )
+        anchor.showPopupMenu(
+            configure = { menu ->
+                options.forEach { (id, label) ->
+                    menu.add(Menu.NONE, id, id, label)
+                }
+            }
+        ) { item ->
+            prefs.batteryMode = item.itemId
+            populateBatteryMode()
+            viewModel.toggleDateTime()
+        }
+    }
+
+    private fun populateBatteryMode() {
+        binding.batteryMode.text = getString(
+            when (prefs.batteryMode) {
+                Prefs.BATTERY_MODE_ALWAYS -> R.string.always
+                Prefs.BATTERY_MODE_OFF -> R.string.off
+                else -> R.string.auto
             }
         )
     }
