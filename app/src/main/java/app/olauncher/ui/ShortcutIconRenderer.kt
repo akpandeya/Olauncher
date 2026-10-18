@@ -19,13 +19,44 @@ import app.olauncher.data.ShortcutIconStyle
 import app.olauncher.helper.dpToPx
 import app.olauncher.helper.getColorFromAttr
 import app.olauncher.helper.getUserHandleFromString
+import kotlin.math.roundToInt
+
+/** A resolved shortcut icon: the drawable, the padding for its 48dp view, and whether it is an app icon. */
+data class RenderedShortcutIcon(
+    val drawable: Drawable,
+    val paddingPx: Int,
+    val isAppIcon: Boolean,
+)
 
 object ShortcutIconRenderer {
 
-    private const val APP_ICON_PADDING_DP = 8
-    private const val DEFAULT_ICON_PADDING_DP = 12
+    /** Size of each shortcut ImageView in the home column. */
+    const val VIEW_SIZE_DP = 48
 
-    fun render(context: Context, slot: Int, prefs: Prefs): Pair<Drawable, Int /*paddingPx*/> {
+    /** Visible box of an app icon (its adaptive mask fills this box). */
+    const val APP_ICON_BOX_DP = 32
+    const val DEFAULT_ICON_PADDING_DP = 12
+
+    /** AdaptiveIconDrawable draws its layers 1.5x the mask bounds (25% extra on each side). */
+    const val ADAPTIVE_LAYER_SCALE = 1.5f
+
+    /** Padding that draws a bare adaptive layer as large as it appears inside a [maskBoxDp] icon. */
+    fun layerPaddingDp(viewSizeDp: Int, maskBoxDp: Int): Int =
+        ((viewSizeDp - maskBoxDp * ADAPTIVE_LAYER_SCALE) / 2f).roundToInt().coerceAtLeast(0)
+
+    /**
+     * Padding in dp for a shortcut icon. A monochrome layer is a bare 108-unit adaptive layer
+     * with its glyph in the centre, so it is drawn at layer scale instead of inside the
+     * [APP_ICON_BOX_DP] box; otherwise its glyph shows at two thirds of the intended size.
+     */
+    fun paddingDp(isAppIcon: Boolean, treatment: ShortcutIconStyle.Treatment?): Int = when {
+        !isAppIcon -> DEFAULT_ICON_PADDING_DP
+        treatment == ShortcutIconStyle.Treatment.MONOCHROME_LAYER ->
+            layerPaddingDp(VIEW_SIZE_DP, APP_ICON_BOX_DP)
+        else -> ((VIEW_SIZE_DP - APP_ICON_BOX_DP) / 2).coerceAtLeast(0)
+    }
+
+    fun render(context: Context, slot: Int, prefs: Prefs): RenderedShortcutIcon {
         if (prefs.getShortcutMode(slot) == Constants.SHORTCUT_MODE_APP) {
             val packageName = prefs.getShortcutPackage(slot)
             if (packageName.isNotEmpty()) {
@@ -38,14 +69,21 @@ object ShortcutIconRenderer {
                             ?: activities.firstOrNull()
                         val icon = match?.getBadgedIcon(0) ?: match?.getIcon(0)
                         if (icon != null) {
+                            val monochromeLayer = (icon as? AdaptiveIconDrawable)?.monochrome
+                                ?: (match?.getIcon(0) as? AdaptiveIconDrawable)?.monochrome
+                            val style = prefs.shortcutIconStyle
                             val styledIcon = applyStyle(
                                 icon = icon,
-                                style = prefs.shortcutIconStyle,
+                                style = style,
                                 primaryColor = context.getColorFromAttr(R.attr.primaryColor),
-                                monochromeLayer = (icon as? AdaptiveIconDrawable)?.monochrome
-                                    ?: (match?.getIcon(0) as? AdaptiveIconDrawable)?.monochrome
+                                monochromeLayer = monochromeLayer
                             )
-                            return Pair(styledIcon, APP_ICON_PADDING_DP.dpToPx())
+                            val treatment = ShortcutIconStyle.resolveTreatment(style, monochromeLayer != null)
+                            return RenderedShortcutIcon(
+                                drawable = styledIcon,
+                                paddingPx = paddingDp(isAppIcon = true, treatment = treatment).dpToPx(),
+                                isAppIcon = true,
+                            )
                         }
                     }
                 } catch (e: Exception) {
@@ -53,7 +91,11 @@ object ShortcutIconRenderer {
                 }
             }
         }
-        return Pair(getDefaultDrawable(context, slot), DEFAULT_ICON_PADDING_DP.dpToPx())
+        return RenderedShortcutIcon(
+            drawable = getDefaultDrawable(context, slot),
+            paddingPx = paddingDp(isAppIcon = false, treatment = null).dpToPx(),
+            isAppIcon = false,
+        )
     }
 
     fun applyStyle(
@@ -134,12 +176,9 @@ object ShortcutIconRenderer {
         return context.getString(getDefaultLabelRes(slot))
     }
 
-    /** [paddingPx] is the value returned by [render]; true when an app icon was resolved. */
-    fun isAppIcon(paddingPx: Int): Boolean = paddingPx == APP_ICON_PADDING_DP.dpToPx()
-
-    /** [paddingPx] is the value returned by [render]; it tells whether an app icon was resolved. */
-    fun getLabel(context: Context, slot: Int, prefs: Prefs, paddingPx: Int): String {
-        if (isAppIcon(paddingPx) && prefs.getShortcutMode(slot) == Constants.SHORTCUT_MODE_APP) {
+    /** [isAppIcon] comes from [render]; it tells whether an app icon was resolved. */
+    fun getLabel(context: Context, slot: Int, prefs: Prefs, isAppIcon: Boolean): String {
+        if (isAppIcon && prefs.getShortcutMode(slot) == Constants.SHORTCUT_MODE_APP) {
             val label = prefs.getShortcutLabel(slot)
             if (label.isNotEmpty()) return label
         }

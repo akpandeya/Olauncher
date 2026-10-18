@@ -1,6 +1,7 @@
 package app.olauncher.ui
 
 import app.olauncher.R
+import app.olauncher.data.ShortcutIconStyle.Treatment
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -38,5 +39,42 @@ class ShortcutIconRendererTest {
         assertEquals(R.string.shortcut_more, ShortcutIconRenderer.getDefaultLabelRes(0))
         assertEquals(R.string.shortcut_more, ShortcutIconRenderer.getDefaultLabelRes(7))
         assertEquals(R.string.shortcut_more, ShortcutIconRenderer.getDefaultLabelRes(8))
+    }
+
+    @Test
+    fun `default icons keep their 12dp padding`() {
+        assertEquals(12, ShortcutIconRenderer.paddingDp(isAppIcon = false, treatment = null))
+    }
+
+    @Test
+    fun `full app icons fill a 32dp box in the 48dp view`() {
+        assertEquals(8, ShortcutIconRenderer.paddingDp(isAppIcon = true, treatment = Treatment.ORIGINAL))
+        assertEquals(8, ShortcutIconRenderer.paddingDp(isAppIcon = true, treatment = Treatment.FALLBACK_GRAYSCALE))
+        assertEquals(8, ShortcutIconRenderer.paddingDp(isAppIcon = true, treatment = Treatment.FALLBACK_GRAYSCALE_ALPHA))
+    }
+
+    @Test
+    fun `monochrome layer is drawn at adaptive layer scale`() {
+        // 32dp mask box x 1.5 = 48dp layer, which fills the 48dp view
+        assertEquals(0, ShortcutIconRenderer.paddingDp(isAppIcon = true, treatment = Treatment.MONOCHROME_LAYER))
+    }
+
+    @Test
+    fun `layer padding matches how AdaptiveIconDrawable sizes its layers`() {
+        assertEquals(0, ShortcutIconRenderer.layerPaddingDp(viewSizeDp = 48, maskBoxDp = 32))
+        assertEquals(6, ShortcutIconRenderer.layerPaddingDp(viewSizeDp = 48, maskBoxDp = 24))
+        assertEquals(0, ShortcutIconRenderer.layerPaddingDp(viewSizeDp = 48, maskBoxDp = 40))
+    }
+
+    @Test
+    fun `monochrome glyph is about the size of a default glyph`() {
+        // Default: 24dp box. App: a 108-unit layer drawn at 48dp; themed glyphs sit in roughly
+        // the central 48 units, so they show at about 21dp instead of about 14dp before.
+        val layerDp = ShortcutIconRenderer.VIEW_SIZE_DP -
+            2 * ShortcutIconRenderer.paddingDp(isAppIcon = true, treatment = Treatment.MONOCHROME_LAYER)
+        val defaultBoxDp = ShortcutIconRenderer.VIEW_SIZE_DP -
+            2 * ShortcutIconRenderer.paddingDp(isAppIcon = false, treatment = null)
+        val glyphDp = layerDp * 48f / 108f
+        assertEquals(defaultBoxDp.toFloat(), glyphDp, 4f)
     }
 }
