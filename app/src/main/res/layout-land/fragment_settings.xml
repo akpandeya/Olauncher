@@ -733,6 +733,45 @@
 
             </LinearLayout>
 
+            <LinearLayout
+                android:id="@+id/backupSection"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="12dp"
+                android:background="@drawable/rounded_rect_shade_color"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <TextView
+                    style="@style/TextLarge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginTop="8dp"
+                    android:layout_marginBottom="4dp"
+                    android:text="@string/backup"
+                    android:textColor="?attr/primaryColor" />
+
+                <FrameLayout
+                    android:id="@+id/exportBackupLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="4dp">
+
+                    <TextView
+                        android:id="@+id/exportBackup"
+                        style="@style/TextSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:paddingVertical="8dp"
+                        android:text="@string/export_backup"
+                        android:textColor="?attr/primaryColor" />
+                </FrameLayout>
+
+            </LinearLayout>
+
             <TextView
                 android:id="@+id/footer"
                 style="@style/TextSmall"

@@ -29,6 +29,7 @@ import app.olauncher.wellbeing.NudgeFormatting
 import app.olauncher.wellbeing.NudgeScheduler
 import app.olauncher.wellbeing.Nudges
 import app.olauncher.wellbeing.NotificationPermission
+import app.olauncher.data.store.Backup
 import app.olauncher.BuildConfig
 import app.olauncher.MainViewModel
 import app.olauncher.R
@@ -81,6 +82,14 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     ) { uris ->
         if (uris.isNotEmpty()) {
             handlePickedPhotos(uris)
+        }
+    }
+
+    private val exportBackupLauncher = registerForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri != null) {
+            exportBackup(uri)
         }
     }
 
@@ -159,6 +168,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.nudgeWalk, R.id.nudgeWalkTitle, R.id.nudgeWalkLayout -> showNudgeWalkMenu(binding.nudgeWalk)
             R.id.nudgeSocial, R.id.nudgeSocialTitle, R.id.nudgeSocialLayout -> showNudgeSocialMenu(binding.nudgeSocial)
             R.id.nudgeActiveHours, R.id.nudgeActiveHoursTitle, R.id.nudgeActiveHoursLayout -> showActiveHoursDialog()
+            R.id.exportBackup, R.id.exportBackupLayout -> launchExportBackup()
             R.id.footer -> requireContext().openUrl(Constants.URL_SOURCE)
         }
     }
@@ -225,6 +235,8 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.nudgeActiveHours.setOnClickListener(this)
         binding.nudgeActiveHoursTitle.setOnClickListener(this)
         binding.nudgeActiveHoursLayout.setOnClickListener(this)
+        binding.exportBackup.setOnClickListener(this)
+        binding.exportBackupLayout.setOnClickListener(this)
         binding.appThemeText.setOnClickListener(this)
         binding.textSizeValue.setOnClickListener(this)
         binding.boldFont.setOnClickListener(this)
@@ -1280,6 +1292,26 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
         } else {
             picker.show()
+        }
+    }
+
+    private fun launchExportBackup() {
+        exportBackupLauncher.launch(Backup.defaultBackupFileName())
+    }
+
+    private fun exportBackup(uri: Uri) {
+        val appContext = context?.applicationContext ?: return
+        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+            val success = try {
+                Backup.export(appContext, uri)
+                true
+            } catch (e: Exception) {
+                e.printStackTrace()
+                false
+            }
+            withContext(Dispatchers.Main) {
+                appContext.showToast(if (success) R.string.backup_exported else R.string.backup_export_failed)
+            }
         }
     }
 
