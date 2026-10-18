@@ -1,5 +1,6 @@
 package app.olauncher.helper
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -135,5 +136,26 @@ class DrawerScrollHelperTest {
                 canScrollDown = false
             )
         )
+    }
+
+    @Test
+    fun `imeBottomPadding is zero when the keyboard is hidden`() {
+        assertEquals(0, DrawerScrollHelper.imeBottomPadding(true, imeBottom = 0, searchBottomMargin = 63))
+    }
+
+    @Test
+    fun `imeBottomPadding lifts the bottom search row above the keyboard`() {
+        assertEquals(837, DrawerScrollHelper.imeBottomPadding(true, imeBottom = 900, searchBottomMargin = 63))
+    }
+
+    @Test
+    fun `imeBottomPadding never goes negative`() {
+        assertEquals(0, DrawerScrollHelper.imeBottomPadding(true, imeBottom = 40, searchBottomMargin = 63))
+        assertEquals(900, DrawerScrollHelper.imeBottomPadding(true, imeBottom = 900, searchBottomMargin = -5))
+    }
+
+    @Test
+    fun `imeBottomPadding leaves the top search layout alone`() {
+        assertEquals(0, DrawerScrollHelper.imeBottomPadding(false, imeBottom = 900, searchBottomMargin = 63))
     }
 }
