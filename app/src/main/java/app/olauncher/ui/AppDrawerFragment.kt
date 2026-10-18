@@ -1,5 +1,6 @@
 package app.olauncher.ui
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.os.Bundle
 import android.os.Process
@@ -24,6 +25,8 @@ import app.olauncher.R
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
+import app.olauncher.data.SearchEngine
+import app.olauncher.data.SearchTarget
 import app.olauncher.databinding.FragmentAppDrawerBinding
 import app.olauncher.helper.DrawerScrollHelper
 import app.olauncher.helper.deletePinnedShortcut
@@ -144,10 +147,36 @@ class AppDrawerFragment : BaseFragment() {
     private fun initSearch() {
         binding.search.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
+                fun openSearchTarget() {
+                    when (val target = SearchEngine.resolve(prefs.searchEngine, prefs.searchEngineCustomUrl, query.orEmpty())) {
+                        is SearchTarget.PhoneDefault -> {
+                            try {
+                                requireContext().openSearch(target.query)
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                        }
+                        is SearchTarget.Url -> {
+                            try {
+                                requireContext().openUrl(target.url)
+                            } catch (e: ActivityNotFoundException) {
+                                e.printStackTrace()
+                                try {
+                                    requireContext().openSearch(query)
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+                        }
+                    }
+                }
+
                 if (query?.startsWith("!") == true)
-                    requireContext().openUrl(Constants.URL_DUCK_SEARCH + query.replace(" ", "%20"))
+                    openSearchTarget()
                 else if (adapter.itemCount == 0)
-                    requireContext().openSearch(query?.trim())
+                    openSearchTarget()
                 else
                     adapter.launchFirstInList()
                 return true
