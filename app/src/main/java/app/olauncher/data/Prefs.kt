@@ -74,6 +74,8 @@ class Prefs(context: Context) : PauseLogStorage {
         const val PAUSE_WHY_LOOKUP_TODAY = "PAUSE_WHY_LOOKUP_TODAY"
         const val PAUSE_WHY_BORED_TODAY = "PAUSE_WHY_BORED_TODAY"
         const val COMMIT_LOCK = "COMMIT_LOCK"
+        const val SEARCH_ENGINE = "SEARCH_ENGINE"
+        const val SEARCH_ENGINE_CUSTOM_URL = "SEARCH_ENGINE_CUSTOM_URL"
 
         fun nudgeDoneKey(type: String): String = "$NUDGE_DONE_PREFIX${type.uppercase()}"
 
@@ -1116,6 +1118,14 @@ class Prefs(context: Context) : PauseLogStorage {
     var weatherLocationAt: Long
         get() = prefs.getLong(WEATHER_LOCATION_AT, 0L)
         set(value) = prefs.edit { putLong(WEATHER_LOCATION_AT, value).apply() }
+
+    var searchEngine: String
+        get() = prefs.getString(SEARCH_ENGINE, SearchEngine.PHONE_DEFAULT) ?: SearchEngine.PHONE_DEFAULT
+        set(value) = prefs.edit { putString(SEARCH_ENGINE, value).apply() }
+
+    var searchEngineCustomUrl: String
+        get() = prefs.getString(SEARCH_ENGINE_CUSTOM_URL, "") ?: ""
+        set(value) = prefs.edit { putString(SEARCH_ENGINE_CUSTOM_URL, value).apply() }
 
     fun registerPreferenceChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
         prefs.registerOnSharedPreferenceChangeListener(listener)
