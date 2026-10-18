@@ -78,6 +78,8 @@ class Prefs(context: Context) : PauseLogStorage {
         const val SEARCH_ENGINE_CUSTOM_URL = "SEARCH_ENGINE_CUSTOM_URL"
         const val DRAWER_NEW_FIRST = "DRAWER_NEW_FIRST"
         const val QUIET_ENABLED = "QUIET_ENABLED"
+        const val QUIET_RELEASE_TIMES = "QUIET_RELEASE_TIMES"
+        const val DEFAULT_QUIET_RELEASE_TIMES = "750,1110"
 
         fun nudgeDoneKey(type: String): String = "$NUDGE_DONE_PREFIX${type.uppercase()}"
 
@@ -407,6 +409,10 @@ class Prefs(context: Context) : PauseLogStorage {
     var quietEnabled: Boolean
         get() = prefs.getBoolean(QUIET_ENABLED, false)
         set(value) = prefs.edit { putBoolean(QUIET_ENABLED, value).apply() }
+
+    var quietReleaseTimes: String
+        get() = prefs.getString(QUIET_RELEASE_TIMES, DEFAULT_QUIET_RELEASE_TIMES) ?: DEFAULT_QUIET_RELEASE_TIMES
+        set(value) = prefs.edit { putString(QUIET_RELEASE_TIMES, value).apply() }
 
     var germanEnabled: Boolean
         get() = prefs.getBoolean(GERMAN_ENABLED, false)

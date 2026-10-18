@@ -21,7 +21,9 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
+import androidx.work.ExistingWorkPolicy
 import androidx.work.WorkManager
+import app.olauncher.quiet.ReleaseWorker
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
@@ -55,6 +57,11 @@ import java.util.Calendar
 
 class MainActivity : AppCompatActivity() {
 
+    companion object {
+        const val EXTRA_NAVIGATE_TO = "navigate_to"
+        const val DESTINATION_TODAY = "todayFragment"
+    }
+
     private lateinit var prefs: Prefs
     private lateinit var navController: NavController
     private lateinit var viewModel: MainViewModel
@@ -84,6 +91,9 @@ class MainActivity : AppCompatActivity() {
         WorkManager.getInstance(this).cancelUniqueWork(Constants.WALLPAPER_WORKER_NAME)
         prefs.dailyWallpaper = false
         NudgeScheduler.ensureAll(this)
+        if (prefs.quietEnabled) {
+            ReleaseWorker.schedule(this, ExistingWorkPolicy.KEEP)
+        }
         if (isEinkDisplay()) prefs.appTheme = AppCompatDelegate.MODE_NIGHT_NO
         AppCompatDelegate.setDefaultNightMode(prefs.appTheme)
         super.onCreate(savedInstanceState)
@@ -130,6 +140,7 @@ class MainActivity : AppCompatActivity() {
             addAction(Intent.ACTION_PROFILE_UNAVAILABLE)
         }
         registerReceiver(profileReceiver, filter)
+        handleIntent(intent)
     }
 
     override fun onStart() {
@@ -187,14 +198,39 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onNewIntent(intent: Intent?) {
-        // Home button for recents feature disabled
-        // val alreadyHome = navController.currentDestination?.id == R.id.mainFragment
+        super.onNewIntent(intent)
+        setIntent(intent)
         // Home was pressed: leave any open picker behind and go home
         viewModel.isAwaitingActivityResult = false
         backToHomeScreen()
-        // if (alreadyHome && isResumed && prefs.homeButtonShowRecents)
-        //     viewModel.showRecentApps.call()
-        super.onNewIntent(intent)
+        handleIntent(intent)
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        val destination = intent?.getStringExtra(EXTRA_NAVIGATE_TO) ?: return
+        if (destination == DESTINATION_TODAY) {
+            intent.removeExtra(EXTRA_NAVIGATE_TO)
+            binding.root.post {
+                navigateToToday()
+            }
+        }
+    }
+
+    private fun navigateToToday() {
+        try {
+            if (navController.currentDestination?.id == R.id.todayFragment) return
+            if (navController.currentDestination?.id == R.id.mainFragment) {
+                navController.navigate(R.id.action_mainFragment_to_todayFragment)
+            } else {
+                navController.popBackStack(R.id.mainFragment, false)
+                navController.navigate(R.id.action_mainFragment_to_todayFragment)
+            }
+        } catch (_: Exception) {
+            try {
+                navController.navigate(R.id.todayFragment)
+            } catch (_: Exception) {
+            }
+        }
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
