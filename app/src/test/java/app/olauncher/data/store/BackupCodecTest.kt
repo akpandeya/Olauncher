@@ -319,4 +319,167 @@ class BackupCodecTest {
         val filename = Backup.defaultBackupFileName(date)
         assertEquals("thumbline-backup-2026-10-18.json", filename)
     }
+
+    @Test
+    fun `decode to encode is stable for fixture backup_v1 json`() {
+        val resourceStream = javaClass.classLoader?.getResourceAsStream("backup_v1.json")
+            ?: javaClass.getResourceAsStream("/backup_v1.json")
+            ?: File("app/src/test/resources/backup_v1.json").takeIf { it.exists() }?.inputStream()
+            ?: File("src/test/resources/backup_v1.json").takeIf { it.exists() }?.inputStream()
+        assertNotNull("Fixture backup_v1.json must be readable", resourceStream)
+
+        val rawJson = resourceStream!!.bufferedReader().use { it.readText() }.trim().replace("\r\n", "\n")
+        val decoded = BackupCodec.decode(rawJson)
+
+        assertEquals("thumbline-backup", BackupCodec.FORMAT)
+        assertEquals("v6.9.17-tl.113", decoded.appVersion)
+        assertEquals(8, decoded.prefs.size)
+        assertEquals(2, decoded.files.size)
+
+        val reEncoded = BackupCodec.encode(decoded.prefs, decoded.files, decoded.appVersion).trim().replace("\r\n", "\n")
+        assertEquals(rawJson, reEncoded)
+
+        val reDecoded = BackupCodec.decode(reEncoded)
+        assertEquals(decoded.prefs, reDecoded.prefs)
+        assertEquals(decoded.files, reDecoded.files)
+        assertEquals(decoded.appVersion, reDecoded.appVersion)
+    }
+
+    @Test
+    fun `restorePrefs clears old prefs and writes all typed values and commits`() {
+        val initialPrefs = mutableMapOf<String, Any?>(
+            "old_key_1" to "old_value",
+            "old_key_2" to 999
+        )
+        val fakePrefs = FakeSharedPreferences(initialPrefs)
+
+        val restoreMap = mapOf<String, Any?>(
+            "pref_bool" to true,
+            "pref_int" to 123,
+            "pref_long" to 456789L,
+            "pref_float" to 1.5f,
+            "pref_string" to "Restored String",
+            "pref_string_set" to setOf("x", "y", "z")
+        )
+
+        Backup.restorePrefs(fakePrefs, restoreMap)
+
+        assertFalse(fakePrefs.contains("old_key_1"))
+        assertFalse(fakePrefs.contains("old_key_2"))
+        assertEquals(true, fakePrefs.getBoolean("pref_bool", false))
+        assertEquals(123, fakePrefs.getInt("pref_int", 0))
+        assertEquals(456789L, fakePrefs.getLong("pref_long", 0L))
+        assertEquals(1.5f, fakePrefs.getFloat("pref_float", 0f), 0.001f)
+        assertEquals("Restored String", fakePrefs.getString("pref_string", null))
+        assertEquals(setOf("x", "y", "z"), fakePrefs.getStringSet("pref_string_set", null))
+    }
+
+    @Test
+    fun `writeFiles writes files atomically and removes deleted files`() {
+        val tempDir = File.createTempFile("backup_restore_test", "dir")
+        tempDir.delete()
+        tempDir.mkdirs()
+        try {
+            // Pre-existing files: one that is in backup, one old exported file not in backup, one user file
+            val oldSavedItems = File(tempDir, "saved_items.json")
+            oldSavedItems.writeText("""[{"id":99,"url":"https://old.com"}]""")
+
+            val oldWordProgress = File(tempDir, "word_progress.json")
+            oldWordProgress.writeText("""{"streak":10}""")
+
+            val otherFile = File(tempDir, "other.txt")
+            otherFile.writeText("preserved")
+
+            // Restoring backup that only has saved_items.json (word_progress.json was deleted)
+            val filesToRestore = mapOf(
+                "saved_items.json" to """[{"id":1,"url":"https://restored.com"}]"""
+            )
+
+            Backup.writeFiles(tempDir, filesToRestore)
+
+            // saved_items.json should be overwritten
+            assertEquals("""[{"id":1,"url":"https://restored.com"}]""", File(tempDir, "saved_items.json").readText())
+            // word_progress.json should have been deleted because it's an EXPORTED_FILE not in the backup
+            assertFalse(File(tempDir, "word_progress.json").exists())
+            // other.txt should not be touched
+            assertTrue(File(tempDir, "other.txt").exists())
+            assertEquals("preserved", File(tempDir, "other.txt").readText())
+        } finally {
+            tempDir.deleteRecursively()
+        }
+    }
+
+    private class FakeSharedPreferences(
+        val map: MutableMap<String, Any?> = mutableMapOf()
+    ) : android.content.SharedPreferences {
+        override fun getAll(): MutableMap<String, *> = HashMap(map)
+        override fun getString(key: String?, defValue: String?): String? = (map[key] as? String) ?: defValue
+        @Suppress("UNCHECKED_CAST")
+        override fun getStringSet(key: String?, defValues: MutableSet<String>?): MutableSet<String>? =
+            (map[key] as? Set<String>)?.toMutableSet() ?: defValues
+        override fun getInt(key: String?, defValue: Int): Int = (map[key] as? Int) ?: defValue
+        override fun getLong(key: String?, defValue: Long): Long = (map[key] as? Long) ?: defValue
+        override fun getFloat(key: String?, defValue: Float): Float = (map[key] as? Float) ?: defValue
+        override fun getBoolean(key: String?, defValue: Boolean): Boolean = (map[key] as? Boolean) ?: defValue
+        override fun contains(key: String?): Boolean = map.containsKey(key)
+        override fun edit(): android.content.SharedPreferences.Editor = FakeEditor()
+        override fun registerOnSharedPreferenceChangeListener(listener: android.content.SharedPreferences.OnSharedPreferenceChangeListener?) {}
+        override fun unregisterOnSharedPreferenceChangeListener(listener: android.content.SharedPreferences.OnSharedPreferenceChangeListener?) {}
+
+        inner class FakeEditor : android.content.SharedPreferences.Editor {
+            private val pending = mutableMapOf<String, Any?>()
+            private var clearRequested = false
+
+            override fun putString(key: String?, value: String?): android.content.SharedPreferences.Editor {
+                if (key != null) pending[key] = value
+                return this
+            }
+            override fun putStringSet(key: String?, values: MutableSet<String>?): android.content.SharedPreferences.Editor {
+                if (key != null) pending[key] = values?.toSet()
+                return this
+            }
+            override fun putInt(key: String?, value: Int): android.content.SharedPreferences.Editor {
+                if (key != null) pending[key] = value
+                return this
+            }
+            override fun putLong(key: String?, value: Long): android.content.SharedPreferences.Editor {
+                if (key != null) pending[key] = value
+                return this
+            }
+            override fun putFloat(key: String?, value: Float): android.content.SharedPreferences.Editor {
+                if (key != null) pending[key] = value
+                return this
+            }
+            override fun putBoolean(key: String?, value: Boolean): android.content.SharedPreferences.Editor {
+                if (key != null) pending[key] = value
+                return this
+            }
+            override fun remove(key: String?): android.content.SharedPreferences.Editor {
+                if (key != null) pending[key] = this
+                return this
+            }
+            override fun clear(): android.content.SharedPreferences.Editor {
+                clearRequested = true
+                return this
+            }
+            override fun commit(): Boolean {
+                if (clearRequested) {
+                    map.clear()
+                }
+                for ((k, v) in pending) {
+                    if (v === this) {
+                        map.remove(k)
+                    } else if (v == null) {
+                        map.remove(k)
+                    } else {
+                        map[k] = v
+                    }
+                }
+                return true
+            }
+            override fun apply() {
+                commit()
+            }
+        }
+    }
 }
