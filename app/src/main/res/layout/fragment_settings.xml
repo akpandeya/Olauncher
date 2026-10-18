@@ -327,6 +327,33 @@
                 </FrameLayout>
 
                 <FrameLayout
+                    android:id="@+id/shortcutSizeLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp">
+
+                    <TextView
+                        android:id="@+id/shortcutSizeTitle"
+                        style="@style/TextSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:paddingVertical="8dp"
+                        android:text="@string/size"
+                        android:textColor="?attr/primaryColor" />
+
+                    <TextView
+                        android:id="@+id/shortcutSize"
+                        style="@style/TextSmallBold"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end|bottom"
+                        android:layout_marginEnd="4dp"
+                        android:padding="8dp"
+                        tools:text="@string/icon_size_medium" />
+                </FrameLayout>
+
+                <FrameLayout
                     android:id="@+id/shortcutSideLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

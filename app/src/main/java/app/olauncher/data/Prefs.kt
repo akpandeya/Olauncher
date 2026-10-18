@@ -57,6 +57,7 @@ class Prefs(context: Context) {
     private val HOME_BOTTOM_ALIGNMENT = "HOME_BOTTOM_ALIGNMENT"
     private val HOME_SHORTCUTS = "HOME_SHORTCUTS"
     private val SHORTCUT_COUNT = "SHORTCUT_COUNT"
+    private val SHORTCUT_SIZE_STEP = "SHORTCUT_SIZE_STEP"
     private val SHORTCUT_SIDE_START = "SHORTCUT_SIDE_START"
     private val SHORTCUT_OFFSET_STEP = "SHORTCUT_OFFSET_STEP"
     private val SHORTCUT_ICON_STYLE = "SHORTCUT_ICON_STYLE"
@@ -243,6 +244,10 @@ class Prefs(context: Context) {
     var shortcutCount: Int
         get() = SlotCount.clamp(prefs.getInt(SHORTCUT_COUNT, SlotCount.DEFAULT))
         set(value) = prefs.edit { putInt(SHORTCUT_COUNT, SlotCount.clamp(value)).apply() }
+
+    var shortcutSizeStep: Int
+        get() = ShortcutSize.clamp(prefs.getInt(SHORTCUT_SIZE_STEP, ShortcutSize.DEFAULT))
+        set(value) = prefs.edit { putInt(SHORTCUT_SIZE_STEP, ShortcutSize.clamp(value)).apply() }
 
     var shortcutSideStart: Boolean
         get() = prefs.getBoolean(SHORTCUT_SIDE_START, false)

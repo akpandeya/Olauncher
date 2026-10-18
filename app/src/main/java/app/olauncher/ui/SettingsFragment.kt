@@ -40,6 +40,7 @@ import app.olauncher.data.Prefs
 import app.olauncher.data.SlotCount
 import app.olauncher.data.ShortcutOffset
 import app.olauncher.data.ShortcutIconStyle
+import app.olauncher.data.ShortcutSize
 import app.olauncher.ui.today.TodayCards
 import app.olauncher.databinding.DialogTextSizeBinding
 import app.olauncher.databinding.FragmentSettingsBinding
@@ -168,6 +169,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.alignment -> showAlignmentMenu(view)
             R.id.shortcutIconsOnOff, R.id.shortcutIconsOnOffTitle, R.id.shortcutIconsOnOffLayout -> toggleShortcutIcons()
             R.id.shortcutCount, R.id.shortcutCountTitle, R.id.shortcutCountLayout -> showShortcutCountDialog()
+            R.id.shortcutSize, R.id.shortcutSizeTitle, R.id.shortcutSizeLayout -> showShortcutSizeDialog()
             R.id.shortcutSide, R.id.shortcutSideTitle, R.id.shortcutSideLayout -> toggleShortcutSide()
             R.id.shortcutHeight, R.id.shortcutHeightTitle, R.id.shortcutHeightLayout -> showShortcutHeightDialog()
             R.id.shortcutIconStyle, R.id.shortcutIconStyleTitle, R.id.shortcutIconStyleLayout -> showShortcutIconStyleDialog()
@@ -244,6 +246,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.shortcutCount.setOnClickListener(this)
         binding.shortcutCountTitle.setOnClickListener(this)
         binding.shortcutCountLayout.setOnClickListener(this)
+        binding.shortcutSize.setOnClickListener(this)
+        binding.shortcutSizeTitle.setOnClickListener(this)
+        binding.shortcutSizeLayout.setOnClickListener(this)
         binding.shortcutSide.setOnClickListener(this)
         binding.shortcutSideTitle.setOnClickListener(this)
         binding.shortcutSideLayout.setOnClickListener(this)
@@ -374,6 +379,43 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             .setTitle(R.string.icons)
             .setSingleChoiceItems(items, checkedIndex) { dialogInterface, which ->
                 prefs.shortcutCount = counts[which]
+                populateShortcutIcons()
+                viewModel.updateHomeAlignment(prefs.homeAlignment)
+                dialogInterface.dismiss()
+            }
+            .setNegativeButton(R.string.cancel, null)
+
+        val alertDialog = builder.create()
+        dialog?.dismiss()
+        dialog = alertDialog
+        val window = alertDialog.window
+        if (window != null && !prefs.showStatusBar) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+            alertDialog.show()
+            window.hideStatusBar()
+            window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+        } else {
+            alertDialog.show()
+        }
+    }
+
+    private fun showShortcutSizeDialog() {
+        val sizes = listOf(
+            ShortcutSize.SMALL,
+            ShortcutSize.MEDIUM,
+            ShortcutSize.LARGE,
+        )
+        val items = arrayOf(
+            getString(R.string.icon_size_small),
+            getString(R.string.icon_size_medium),
+            getString(R.string.icon_size_large),
+        )
+        val checkedIndex = sizes.indexOf(prefs.shortcutSizeStep).coerceAtLeast(0)
+
+        val builder = AlertDialog.Builder(requireContext())
+            .setTitle(R.string.icon_size)
+            .setSingleChoiceItems(items, checkedIndex) { dialogInterface, which ->
+                prefs.shortcutSizeStep = sizes[which]
                 populateShortcutIcons()
                 viewModel.updateHomeAlignment(prefs.homeAlignment)
                 dialogInterface.dismiss()
@@ -966,11 +1008,30 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         val shortcutsOn = prefs.homeShortcuts
         binding.shortcutIconsOnOff.text = getString(if (shortcutsOn) R.string.on else R.string.off)
         binding.shortcutCountLayout.visibility = if (shortcutsOn) View.VISIBLE else View.GONE
+        binding.shortcutSizeLayout.visibility = if (shortcutsOn) View.VISIBLE else View.GONE
         binding.shortcutSideLayout.visibility = if (shortcutsOn) View.VISIBLE else View.GONE
         binding.shortcutHeightLayout.visibility = if (shortcutsOn) View.VISIBLE else View.GONE
         binding.shortcutIconStyleLayout.visibility = if (shortcutsOn) View.VISIBLE else View.GONE
 
-        binding.shortcutCount.text = prefs.shortcutCount.toString()
+        val displayMetrics = resources.displayMetrics
+        val density = displayMetrics.density.takeIf { it > 0f } ?: 1f
+        val columnHeightDp = (displayMetrics.heightPixels / density).toInt()
+        val viewSizeDp = ShortcutSize.viewSizeDp(prefs.shortcutSizeStep)
+        val bottomMarginDp = ShortcutOffset.bottomMarginDp(prefs.shortcutOffsetStep)
+        val requested = prefs.shortcutCount
+        val fitting = SlotCount.fitting(requested, columnHeightDp, viewSizeDp, bottomMarginDp)
+        binding.shortcutCount.text = if (fitting < requested) {
+            getString(R.string.icons_fit, requested, fitting)
+        } else {
+            requested.toString()
+        }
+
+        binding.shortcutSize.text = when (prefs.shortcutSizeStep) {
+            ShortcutSize.SMALL -> getString(R.string.icon_size_small)
+            ShortcutSize.MEDIUM -> getString(R.string.icon_size_medium)
+            ShortcutSize.LARGE -> getString(R.string.icon_size_large)
+            else -> getString(R.string.icon_size_medium)
+        }
         binding.shortcutSide.text = getString(if (prefs.shortcutSideStart) R.string.left else R.string.right)
         binding.shortcutHeight.text = ShortcutOffset.format(prefs.shortcutOffsetStep)
         binding.shortcutIconStyle.text = when (prefs.shortcutIconStyle) {
