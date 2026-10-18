@@ -297,17 +297,20 @@ class BackupCodecTest {
             assertEquals(1, oneFileMap.size)
             assertEquals("""[{"id":1}]""", oneFileMap["saved_items.json"])
 
-            // Both files exist, plus an unexported file
+            // All files exist, plus an unexported file
             val wordProgressFile = File(tempDir, "word_progress.json")
             wordProgressFile.writeText("""{"streak":3}""")
+            val wordsFile = File(tempDir, "words.json")
+            wordsFile.writeText("""[{"id":10,"text":"test"}]""")
             val otherFile = File(tempDir, "other.json")
             otherFile.writeText("ignored")
 
-            val twoFilesMap = Backup.readFiles(tempDir)
-            assertEquals(2, twoFilesMap.size)
-            assertEquals("""[{"id":1}]""", twoFilesMap["saved_items.json"])
-            assertEquals("""{"streak":3}""", twoFilesMap["word_progress.json"])
-            assertFalse(twoFilesMap.containsKey("other.json"))
+            val filesMap = Backup.readFiles(tempDir)
+            assertEquals(3, filesMap.size)
+            assertEquals("""[{"id":1}]""", filesMap["saved_items.json"])
+            assertEquals("""{"streak":3}""", filesMap["word_progress.json"])
+            assertEquals("""[{"id":10,"text":"test"}]""", filesMap["words.json"])
+            assertFalse(filesMap.containsKey("other.json"))
         } finally {
             tempDir.deleteRecursively()
         }

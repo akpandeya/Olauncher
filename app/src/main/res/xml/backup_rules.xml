@@ -3,5 +3,6 @@
     <include domain="sharedpref" path="app.olauncher.xml" />
     <include domain="file" path="saved_items.json" />
     <include domain="file" path="word_progress.json" />
+    <include domain="file" path="words.json" />
     <exclude domain="file" path="wallpapers/" />
 </full-backup-content>
