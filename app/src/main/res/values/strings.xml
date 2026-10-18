@@ -290,6 +290,7 @@
     <string name="words_edit">Edit word</string>
     <string name="words_word_hint">Word</string>
     <string name="words_look_up_again">Look up again</string>
+    <string name="words_already_saved">“%s” is already saved</string>
     <string name="words_looking_up">Looking it up on Wiktionary</string>
     <string name="words_open_wiktionary">Open on Wiktionary</string>
     <string name="words_status_due">Due today</string>

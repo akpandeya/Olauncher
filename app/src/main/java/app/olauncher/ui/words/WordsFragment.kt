@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.view.isVisible
+import androidx.work.WorkManager
 import app.olauncher.R
 import app.olauncher.data.Prefs
 import app.olauncher.data.store.Word
@@ -109,7 +110,10 @@ class WordsFragment : BaseFragment() {
         }
     }
 
-    private fun showEditDialog(context: Context, word: Word) {
+    private fun showEditDialog(context: Context, listedWord: Word) {
+        val store = WordsCard.getStore(context)
+        // A lookup may have filled the meaning since the list was drawn, so edit the saved copy.
+        val word = store.get(listedWord.id) ?: return render()
         val prefs = Prefs(context)
         val lookupAllowed = WordLookup.isLookupAllowed(prefs.germanEnabled, prefs.germanLookup)
         var dialogBinding: DialogEditWordBinding? = null
@@ -123,15 +127,21 @@ class WordsFragment : BaseFragment() {
             },
             onAction = {
                 dialogBinding?.let { db ->
+                    val newText = db.etWord.text?.toString().orEmpty()
+                    if (WordEdit.clashesWithOtherWord(newText, word.id, store.all())) {
+                        context.showToast(context.getString(R.string.words_already_saved, newText.trim()))
+                        return@let
+                    }
                     val outcome = WordEdit.apply(
                         word,
-                        newText = db.etWord.text?.toString().orEmpty(),
-                        newMeaning = db.etMeaning.text?.toString().orEmpty()
+                        newText = newText,
+                        newMeaning = db.etMeaning.text?.toString().orEmpty(),
+                        lookupAllowed = lookupAllowed
                     )
                     if (outcome.needsLookup && lookupAllowed) {
                         lookUpAgain(context, outcome.word)
                     } else {
-                        WordsCard.getStore(context).update(outcome.word)
+                        store.update(outcome.word)
                         render()
                     }
                 }
@@ -159,6 +169,19 @@ class WordsFragment : BaseFragment() {
         WordLookup.enqueue(context, word.id)
         context.showToast(R.string.words_looking_up)
         render()
+        refreshWhenLookupFinishes(context, word.id)
+    }
+
+    private fun refreshWhenLookupFinishes(context: Context, wordId: Long) {
+        val owner = _binding?.let { viewLifecycleOwner } ?: return
+        val work = WorkManager.getInstance(context)
+            .getWorkInfosForUniqueWorkLiveData(WordLookup.uniqueWorkName(wordId))
+        work.observe(owner) { infos ->
+            if (infos.isNotEmpty() && infos.all { it.state.isFinished }) {
+                work.removeObservers(owner)
+                render()
+            }
+        }
     }
 
     private fun AppCompatEditText.focusAtEnd(context: Context) {

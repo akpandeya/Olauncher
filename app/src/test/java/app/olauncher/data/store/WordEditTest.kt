@@ -69,6 +69,42 @@ class WordEditTest {
     }
 
     @Test
+    fun `new spelling keeps the Wiktionary meaning when lookups are off`() {
+        val outcome = WordEdit.apply(wiktionaryWord, "gehen", "simple past of gehen", lookupAllowed = false)
+        assertEquals("gehen", outcome.word.text)
+        assertEquals("simple past of gehen", outcome.word.meaning)
+        assertEquals("wiktionary", outcome.word.meaningSource)
+        assertFalse(outcome.needsLookup)
+    }
+
+    @Test
+    fun `changing spelling and meaning together keeps both as the user's own`() {
+        val outcome = WordEdit.apply(wiktionaryWord, "gehen", "to go")
+        assertEquals("gehen", outcome.word.text)
+        assertEquals("to go", outcome.word.meaning)
+        assertEquals("user", outcome.word.meaningSource)
+        assertFalse(outcome.needsLookup)
+    }
+
+    @Test
+    fun `unchanged word with an empty meaning still asks for a lookup`() {
+        val empty = wiktionaryWord.copy(meaning = "", meaningSource = "")
+        val outcome = WordEdit.apply(empty, "ging", "")
+        assertEquals(empty, outcome.word)
+        assertTrue(outcome.needsLookup)
+    }
+
+    @Test
+    fun `new spelling that matches another saved word clashes, ignoring case`() {
+        val other = wiktionaryWord.copy(id = 2L, text = "Gehen")
+        val words = listOf(wiktionaryWord, other)
+        assertTrue(WordEdit.clashesWithOtherWord(" gehen ", wiktionaryWord.id, words))
+        assertFalse(WordEdit.clashesWithOtherWord("GING", wiktionaryWord.id, words))
+        assertFalse(WordEdit.clashesWithOtherWord("laufen", wiktionaryWord.id, words))
+        assertFalse(WordEdit.clashesWithOtherWord("  ", wiktionaryWord.id, words))
+    }
+
+    @Test
     fun `reset clears meaning and source`() {
         val reset = WordEdit.resetMeaning(wiktionaryWord.copy(meaningSource = "user"))
         assertEquals("", reset.meaning)

@@ -13,9 +13,10 @@ object WordEdit {
      * - A blank [newText] keeps the old text.
      * - A changed meaning becomes the user's own and is never overwritten by Wiktionary.
      * - A cleared meaning, or a new spelling with an untouched Wiktionary meaning,
-     *   drops the meaning so Wiktionary can look the word up again.
+     *   drops the meaning so Wiktionary can look the word up again. When lookups are
+     *   off ([lookupAllowed] false) the Wiktionary meaning is kept, since nothing would refill it.
      */
-    fun apply(word: Word, newText: String, newMeaning: String): Outcome {
+    fun apply(word: Word, newText: String, newMeaning: String, lookupAllowed: Boolean = true): Outcome {
         val text = newText.trim().ifBlank { word.text }
         val meaning = newMeaning.trim()
         val textChanged = text != word.text
@@ -30,12 +31,19 @@ object WordEdit {
                 word.copy(text = text, meaning = meaning, meaningSource = "user"),
                 needsLookup = false
             )
-            textChanged && word.meaningSource != "user" -> Outcome(
+            textChanged && word.meaningSource != "user" && lookupAllowed -> Outcome(
                 word.copy(text = text, meaning = "", meaningSource = ""),
                 needsLookup = true
             )
             else -> Outcome(word.copy(text = text), needsLookup = false)
         }
+    }
+
+    /** True when another saved word (not [editedId]) already has [newText], ignoring case like [WordsStore.add]. */
+    fun clashesWithOtherWord(newText: String, editedId: Long, words: List<Word>): Boolean {
+        val text = newText.trim()
+        if (text.isBlank()) return false
+        return words.any { it.id != editedId && it.text.equals(text, ignoreCase = true) }
     }
 
     /** Forgets the current meaning, so the next lookup fills it from Wiktionary again. */
