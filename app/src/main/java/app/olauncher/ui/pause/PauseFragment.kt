@@ -75,6 +75,9 @@ class PauseFragment : Fragment() {
             }
         )
 
+        binding.btnNotNow.text = getString(
+            if (prefs.germanEnabled && prefs.germanUi) R.string.not_now_de else R.string.not_now
+        )
         binding.btnNotNow.setOnClickListener {
             popToHome()
         }
@@ -132,14 +135,20 @@ class PauseFragment : Fragment() {
 
     private fun updateOpenButton(remaining: Int) {
         if (_binding == null) return
+        val useGerman = prefs.germanEnabled && prefs.germanUi
         if (remaining > 0) {
             binding.btnOpen.isEnabled = false
             binding.btnOpen.alpha = 0.5f
-            binding.btnOpen.text = getString(R.string.pause_open_countdown, remaining)
+            binding.btnOpen.text = getString(
+                if (useGerman) R.string.pause_open_countdown_de else R.string.pause_open_countdown,
+                remaining
+            )
         } else {
             binding.btnOpen.isEnabled = true
             binding.btnOpen.alpha = 1.0f
-            binding.btnOpen.text = getString(R.string.pause_open)
+            binding.btnOpen.text = getString(
+                if (useGerman) R.string.pause_open_de else R.string.pause_open
+            )
         }
     }
 

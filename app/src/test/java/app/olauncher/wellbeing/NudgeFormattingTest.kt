@@ -103,4 +103,38 @@ class NudgeFormattingTest {
         assertFalse(NudgeFormatting.isValidActiveHours(-1, 540))
         assertFalse(NudgeFormatting.isValidActiveHours(540, 1441))
     }
+
+    @Test
+    fun `german water notification text matches specification format with done count`() {
+        assertEquals("Zeit für ein Glas Wasser · heute 0", NudgeFormatting.notificationText(Nudges.WATER, 0, german = true))
+        assertEquals("Zeit für ein Glas Wasser · heute 3", NudgeFormatting.notificationText(Nudges.WATER, 3, german = true))
+    }
+
+    @Test
+    fun `german walk notification text matches specification format with done count`() {
+        assertEquals("Steh auf und geh ein paar Minuten · heute 0", NudgeFormatting.notificationText(Nudges.WALK, 0, german = true))
+        assertEquals("Steh auf und geh ein paar Minuten · heute 2", NudgeFormatting.notificationText(Nudges.WALK, 2, german = true))
+    }
+
+    @Test
+    fun `doneActionLabel returns correct text for German and English`() {
+        assertEquals("Erledigt", NudgeFormatting.doneActionLabel(german = true))
+        assertEquals("Done", NudgeFormatting.doneActionLabel(german = false))
+    }
+
+    @Test
+    fun `german socialNotificationText matches specification format`() {
+        assertEquals(
+            "Heute 38 Min. auf Instagram, YouTube. Leg es weg?",
+            NudgeFormatting.socialNotificationText(38, "Instagram, YouTube", german = true)
+        )
+        assertEquals(
+            "Heute 16 Min. auf Instagram. Leg es weg?",
+            NudgeFormatting.socialNotificationText(16, "Instagram", german = true)
+        )
+        assertEquals(
+            "Heute 30 Min. auf ablenkenden Apps. Leg es weg?",
+            NudgeFormatting.socialNotificationText(30, "", german = true)
+        )
+    }
 }

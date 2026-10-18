@@ -32,4 +32,14 @@ object PauseFormatting {
         val times = formatTimes(openCount)
         return "Opened $times from Thumbline today"
     }
+
+    fun openLabel(countdownSeconds: Int = 0, german: Boolean = false): String {
+        return if (german) {
+            if (countdownSeconds > 0) "Öffnen ($countdownSeconds)" else "Öffnen"
+        } else {
+            if (countdownSeconds > 0) "Open ($countdownSeconds)" else "Open"
+        }
+    }
+
+    fun notNowLabel(german: Boolean = false): String = if (german) "Jetzt nicht" else "Not now"
 }
