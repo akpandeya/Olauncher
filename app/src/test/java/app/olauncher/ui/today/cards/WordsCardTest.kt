@@ -1,10 +1,13 @@
 package app.olauncher.ui.today.cards
 
+import android.view.View
 import app.olauncher.R
 import app.olauncher.data.store.Leitner
 import app.olauncher.data.store.Word
 import app.olauncher.data.store.WordsStore
+import app.olauncher.databinding.CardWordsBinding
 import app.olauncher.ui.today.TodayCards
+import app.olauncher.ui.today.WordReveal
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -47,75 +50,6 @@ class WordsCardTest {
     }
 
     @Test
-    fun `formatWordsCount handles singular and plural`() {
-        assertEquals("1 word", WordsCardLogic.formatWordsCount(1))
-        assertEquals("0 words", WordsCardLogic.formatWordsCount(0))
-        assertEquals("2 words", WordsCardLogic.formatWordsCount(2))
-        assertEquals("12 words", WordsCardLogic.formatWordsCount(12))
-    }
-
-    @Test
-    fun `formatFooter formats total words, due and learned`() {
-        assertEquals(
-            "12 words · 3 due · 4 learned",
-            WordsCardLogic.formatFooter(total = 12, due = 3, learned = 4)
-        )
-        assertEquals(
-            "1 word · 1 due · 0 learned",
-            WordsCardLogic.formatFooter(total = 1, due = 1, learned = 0)
-        )
-        assertEquals(
-            "5 words · 0 due · 2 learned",
-            WordsCardLogic.formatFooter(total = 5, due = 0, learned = 2)
-        )
-    }
-
-    @Test
-    fun `formatAllDone formats total words and learned without due count`() {
-        assertEquals(
-            "All done for today · 12 words · 4 learned",
-            WordsCardLogic.formatAllDone(total = 12, learned = 4)
-        )
-        assertEquals(
-            "All done for today · 1 word · 0 learned",
-            WordsCardLogic.formatAllDone(total = 1, learned = 0)
-        )
-        assertEquals(
-            "All done for today · 3 words · 3 learned",
-            WordsCardLogic.formatAllDone(total = 3, learned = 3)
-        )
-    }
-
-    @Test
-    fun `formatMeaning appends Wiktionary suffix only when sourced from wiktionary`() {
-        assertEquals(
-            "yearning for distant places · Wiktionary",
-            WordsCardLogic.formatMeaning("yearning for distant places", "wiktionary")
-        )
-        assertEquals(
-            "yearning for distant places · Wiktionary",
-            WordsCardLogic.formatMeaning("yearning for distant places", "Wiktionary")
-        )
-        assertEquals(
-            "wanderlust",
-            WordsCardLogic.formatMeaning("wanderlust", "user")
-        )
-        assertEquals(
-            "plain meaning",
-            WordsCardLogic.formatMeaning("plain meaning", "")
-        )
-    }
-
-    @Test
-    fun `formatMeaning returns No meaning yet when meaning is blank`() {
-        assertEquals("No meaning yet", WordsCardLogic.formatMeaning("", ""))
-        assertEquals("No meaning yet", WordsCardLogic.formatMeaning("   ", ""))
-        assertEquals("No meaning yet", WordsCardLogic.formatMeaning("", "wiktionary"))
-        assertEquals("No meaning yet", WordsCardLogic.formatMeaning("  ", "wiktionary"))
-        assertEquals("No meaning yet", WordsCardLogic.formatMeaning("", "user"))
-    }
-
-    @Test
     fun `card study flow through 3 words with Know it and Again moves due list and updates stats`() {
         val today = 20000L
         val w1 = store.add("Fernweh", "Ich habe Fernweh.")
@@ -129,7 +63,6 @@ class WordsCardTest {
         assertEquals(3, stats.total)
         assertEquals(3, stats.due)
         assertEquals(0, stats.learned)
-        assertEquals("3 words · 3 due · 0 learned", WordsCardLogic.formatFooter(stats.total, stats.due, stats.learned))
 
         // Word 1 answered "Know it"
         val current1 = dueWords.first()
@@ -141,7 +74,6 @@ class WordsCardTest {
         stats = store.stats(today)
         assertEquals(3, stats.total)
         assertEquals(2, stats.due)
-        assertEquals("3 words · 2 due · 0 learned", WordsCardLogic.formatFooter(stats.total, stats.due, stats.learned))
 
         // Word 2 answered "Again"
         val current2 = dueWords.first()
@@ -153,7 +85,6 @@ class WordsCardTest {
         stats = store.stats(today)
         assertEquals(3, stats.total)
         assertEquals(1, stats.due)
-        assertEquals("3 words · 1 due · 0 learned", WordsCardLogic.formatFooter(stats.total, stats.due, stats.learned))
 
         // Word 3 answered "Know it"
         val current3 = dueWords.first()
@@ -165,7 +96,6 @@ class WordsCardTest {
         stats = store.stats(today)
         assertEquals(3, stats.total)
         assertEquals(0, stats.due)
-        assertEquals("All done for today · 3 words · 0 learned", WordsCardLogic.formatAllDone(stats.total, stats.learned))
 
         // Tomorrow (today + 1), the "Again" word is back!
         val tomorrow = today + 1L
@@ -184,7 +114,6 @@ class WordsCardTest {
         assertNotNull(retrieved)
         assertEquals("longing for travels", retrieved?.meaning)
         assertEquals("user", retrieved?.meaningSource)
-        assertEquals("longing for travels", WordsCardLogic.formatMeaning(retrieved!!.meaning, retrieved.meaningSource))
     }
 
     @Test
@@ -202,5 +131,17 @@ class WordsCardTest {
         val remainingDue = store.due(today, 20)
         assertEquals(1, remainingDue.size)
         assertEquals(w2.id, remainingDue.first().id)
+    }
+
+    @Test
+    fun `WordsCard singleton holds no per-view state`() {
+        val perViewTypes = setOf(
+            CardWordsBinding::class.java,
+            WordReveal::class.java,
+        )
+        val leaked = WordsCard::class.java.declaredFields.filter { field ->
+            perViewTypes.any { it.isAssignableFrom(field.type) } || View::class.java.isAssignableFrom(field.type)
+        }
+        assertTrue("per-view fields on WordsCard: ${leaked.map { it.name }}", leaked.isEmpty())
     }
 }

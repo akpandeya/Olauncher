@@ -1,6 +1,7 @@
 package app.olauncher.data.store
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -118,5 +119,13 @@ class WordCaptureTest {
     @Test
     fun `punctuation only classifies as Invalid`() {
         assertEquals(Capture.Invalid, WordCapture.classify(".,;:!?\"'„“”‚‘()[]«»"))
+    }
+
+    @Test
+    fun `lookup is allowed only when German and lookup are both on`() {
+        assertTrue(WordLookup.isLookupAllowed(germanEnabled = true, germanLookup = true))
+        assertFalse(WordLookup.isLookupAllowed(germanEnabled = false, germanLookup = true))
+        assertFalse(WordLookup.isLookupAllowed(germanEnabled = true, germanLookup = false))
+        assertFalse(WordLookup.isLookupAllowed(germanEnabled = false, germanLookup = false))
     }
 }

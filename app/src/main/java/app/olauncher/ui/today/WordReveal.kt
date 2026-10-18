@@ -130,9 +130,6 @@ class WordReveal(
     }
 
     companion object {
-        fun formatMeaning(meaning: String, meaningSource: String): String =
-            WordsCardLogic.formatMeaning(meaning, meaningSource)
-
         fun inflate(
             inflater: LayoutInflater,
             parent: ViewGroup?,

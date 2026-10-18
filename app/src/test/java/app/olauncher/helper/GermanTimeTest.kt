@@ -1,6 +1,9 @@
 package app.olauncher.helper
 
+import app.olauncher.data.Prefs
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class GermanTimeTest {
@@ -144,5 +147,13 @@ class GermanTimeTest {
         assertEquals("zwölf Uhr mittags", GermanTime.words(12, 0))
         assertEquals("ein Uhr", GermanTime.words(13, 0))
         assertEquals("elf Uhr", GermanTime.words(23, 0))
+    }
+
+    @Test
+    fun `words clock is on only when German is on and In Worten is chosen`() {
+        assertTrue(GermanTime.isWordsClockOn(true, Prefs.GERMAN_CLOCK_IN_WORTEN))
+        assertFalse(GermanTime.isWordsClockOn(false, Prefs.GERMAN_CLOCK_IN_WORTEN))
+        assertFalse(GermanTime.isWordsClockOn(true, Prefs.GERMAN_CLOCK_SYSTEM))
+        assertFalse(GermanTime.isWordsClockOn(true, Prefs.GERMAN_CLOCK_DEUTSCH))
     }
 }
