@@ -74,4 +74,13 @@ class PauseLayoutResourceTest {
         assertTrue(ids.contains("btnOpen"))
         assertTrue(ids.contains("btnNotNow"))
     }
+
+    @Test
+    fun `strings contain commit lock and confirm strings matching acceptance criteria`() {
+        val strings = loadStrings()
+        assertEquals("Lock these settings", strings["commit_lock"])
+        assertEquals("Turning friction down takes a 30 s wait", strings["commit_lock_desc"])
+        assertEquals("Confirm", strings["confirm"])
+        assertEquals("Confirm (%d)", strings["confirm_countdown"])
+    }
 }

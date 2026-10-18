@@ -80,7 +80,10 @@ import app.olauncher.helper.showMessageDialog
 import app.olauncher.helper.showPopupMenu
 import app.olauncher.helper.showStatusBar
 import app.olauncher.helper.showToast
+import app.olauncher.helper.showWaitDialog
+import app.olauncher.wellbeing.CommitLock
 import app.olauncher.wellbeing.DistractingApps
+import app.olauncher.wellbeing.FrictionChange
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -184,6 +187,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populatePauseAllowance()
         populatePauseEscalate()
         populatePauseAskWhy()
+        populateCommitLock()
         populateLockSettings()
         // Home button for recents feature disabled
         // populateHomeButtonRecents()
@@ -213,6 +217,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         super.onResume()
         populateScreenTimeOnOff()
         populatePauseAllowance()
+        populateCommitLock()
     }
 
     override fun onClick(view: View) {
@@ -223,6 +228,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.pauseAllowance, R.id.pauseAllowanceTitle, R.id.pauseAllowanceLayout -> showPauseAllowanceMenu(binding.pauseAllowance)
             R.id.pauseEscalateOnOff, R.id.pauseEscalateTitle, R.id.pauseEscalateLayout -> togglePauseEscalate()
             R.id.pauseAskWhyOnOff, R.id.pauseAskWhyTitle, R.id.pauseAskWhyLayout -> togglePauseAskWhy()
+            R.id.commitLockOnOff, R.id.commitLockTitle, R.id.commitLockSubtitle, R.id.commitLockLayout -> toggleCommitLock()
             R.id.screenTimeOnOff -> viewModel.showDialog.postValue(Constants.Dialog.DIGITAL_WELLBEING)
             R.id.appInfo -> openAppInfo(requireContext(), Process.myUserHandle(), BuildConfig.APPLICATION_ID)
             R.id.setLauncher -> viewModel.resetLauncherLiveData.call()
@@ -326,6 +332,10 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.pauseAskWhyOnOff.setOnClickListener(this)
         binding.pauseAskWhyTitle.setOnClickListener(this)
         binding.pauseAskWhyLayout.setOnClickListener(this)
+        binding.commitLockOnOff.setOnClickListener(this)
+        binding.commitLockTitle.setOnClickListener(this)
+        binding.commitLockSubtitle.setOnClickListener(this)
+        binding.commitLockLayout.setOnClickListener(this)
         binding.alignment.setOnClickListener(this)
         binding.shortcutIconsOnOff.setOnClickListener(this)
         binding.shortcutIconsOnOffTitle.setOnClickListener(this)
@@ -1174,6 +1184,17 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
 
     private fun togglePauseBeforeApps() {
         if (prefs.pauseEnabled) {
+            val change = FrictionChange.Pause(false)
+            if (CommitLock.needsWait(prefs.commitLock, change)) {
+                dialog?.dismiss()
+                dialog = requireContext().showWaitDialog(
+                    message = getString(R.string.commit_lock_desc)
+                ) {
+                    prefs.pauseEnabled = false
+                    populatePauseBeforeApps()
+                }
+                return
+            }
             prefs.pauseEnabled = false
             populatePauseBeforeApps()
         } else {
@@ -1231,21 +1252,34 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             }
         ) { item ->
             val chosen = items.getOrNull(item.itemId)?.first ?: return@showPopupMenu
-            if (chosen <= 0) {
-                prefs.pauseAllowanceMin = 0
-                populatePauseAllowance()
-                return@showPopupMenu
+            val change = FrictionChange.Allowance(
+                currentMin = prefs.pauseAllowanceMin,
+                updatedMin = chosen,
+            )
+            val applyAllowance = {
+                if (chosen <= 0) {
+                    prefs.pauseAllowanceMin = 0
+                    populatePauseAllowance()
+                } else if (!requireContext().appUsagePermissionGranted()) {
+                    prefs.pauseAllowanceMin = 0
+                    populatePauseAllowance()
+                    showFirstTimePausePermissionDialog()
+                } else {
+                    prefs.pauseAllowanceMin = chosen
+                    populatePauseAllowance()
+                }
             }
 
-            if (!requireContext().appUsagePermissionGranted()) {
-                prefs.pauseAllowanceMin = 0
-                populatePauseAllowance()
-                showFirstTimePausePermissionDialog()
-                return@showPopupMenu
+            if (CommitLock.needsWait(prefs.commitLock, change)) {
+                dialog?.dismiss()
+                dialog = requireContext().showWaitDialog(
+                    message = getString(R.string.commit_lock_desc)
+                ) {
+                    applyAllowance()
+                }
+            } else {
+                applyAllowance()
             }
-
-            prefs.pauseAllowanceMin = chosen
-            populatePauseAllowance()
         }
     }
 
@@ -1254,8 +1288,24 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     }
 
     private fun togglePauseEscalate() {
-        prefs.pauseEscalate = !prefs.pauseEscalate
-        populatePauseEscalate()
+        if (prefs.pauseEscalate) {
+            val change = FrictionChange.Escalate(false)
+            if (CommitLock.needsWait(prefs.commitLock, change)) {
+                dialog?.dismiss()
+                dialog = requireContext().showWaitDialog(
+                    message = getString(R.string.commit_lock_desc)
+                ) {
+                    prefs.pauseEscalate = false
+                    populatePauseEscalate()
+                }
+                return
+            }
+            prefs.pauseEscalate = false
+            populatePauseEscalate()
+        } else {
+            prefs.pauseEscalate = true
+            populatePauseEscalate()
+        }
     }
 
     private fun populatePauseAskWhy() {
@@ -1263,8 +1313,49 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     }
 
     private fun togglePauseAskWhy() {
-        prefs.pauseAskWhy = !prefs.pauseAskWhy
-        populatePauseAskWhy()
+        if (prefs.pauseAskWhy) {
+            val change = FrictionChange.AskWhy(false)
+            if (CommitLock.needsWait(prefs.commitLock, change)) {
+                dialog?.dismiss()
+                dialog = requireContext().showWaitDialog(
+                    message = getString(R.string.commit_lock_desc)
+                ) {
+                    prefs.pauseAskWhy = false
+                    populatePauseAskWhy()
+                }
+                return
+            }
+            prefs.pauseAskWhy = false
+            populatePauseAskWhy()
+        } else {
+            prefs.pauseAskWhy = true
+            populatePauseAskWhy()
+        }
+    }
+
+    private fun populateCommitLock() {
+        binding.commitLockOnOff.text = getString(if (prefs.commitLock) R.string.on else R.string.off)
+    }
+
+    private fun toggleCommitLock() {
+        if (prefs.commitLock) {
+            val change = FrictionChange.Lock(false)
+            if (CommitLock.needsWait(prefs.commitLock, change)) {
+                dialog?.dismiss()
+                dialog = requireContext().showWaitDialog(
+                    message = getString(R.string.commit_lock_desc)
+                ) {
+                    prefs.commitLock = false
+                    populateCommitLock()
+                }
+                return
+            }
+            prefs.commitLock = false
+            populateCommitLock()
+        } else {
+            prefs.commitLock = true
+            populateCommitLock()
+        }
     }
 
     private fun showDistractingAppsDialog() {
@@ -1298,8 +1389,22 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                     }
                 }
                 .setPositiveButton(R.string.okay) { _, _ ->
-                    prefs.distractingApps = selectedPackages
-                    populateDistractingApps()
+                    val change = FrictionChange.DistractingApps(
+                        current = prefs.distractingApps,
+                        updated = selectedPackages,
+                    )
+                    if (CommitLock.needsWait(prefs.commitLock, change)) {
+                        dialog?.dismiss()
+                        dialog = requireContext().showWaitDialog(
+                            message = getString(R.string.commit_lock_desc)
+                        ) {
+                            prefs.distractingApps = selectedPackages
+                            populateDistractingApps()
+                        }
+                    } else {
+                        prefs.distractingApps = selectedPackages
+                        populateDistractingApps()
+                    }
                 }
                 .setNegativeButton(R.string.cancel, null)
 
