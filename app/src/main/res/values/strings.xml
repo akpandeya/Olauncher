@@ -314,5 +314,12 @@
     <string name="words_source_wiktionary">From Wiktionary. Edit it to make it yours.</string>
     <string name="words_source_user">Your own meaning. Clear it to look it up again.</string>
     <string name="save">Save</string>
+    <string name="glance">Glance</string>
+    <string name="weather">Weather</string>
+    <string name="city">City</string>
+    <string name="search">Search</string>
+    <string name="celsius">°C</string>
+    <string name="fahrenheit">°F</string>
+    <string name="weather_no_results">No places found</string>
 </resources>
 

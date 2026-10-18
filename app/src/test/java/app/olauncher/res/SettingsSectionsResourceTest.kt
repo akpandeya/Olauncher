@@ -137,6 +137,7 @@ class SettingsSectionsResourceTest {
             "@string/drawer",
             "@string/wellbeing",
             "@string/today_section",
+            "@string/glance",
             "@string/deutsch_de",
             "@string/appearance",
             "@string/gestures",
@@ -156,6 +157,7 @@ class SettingsSectionsResourceTest {
             "Drawer",
             "Wellbeing",
             "Today",
+            "Glance",
             "Deutsch",
             "Appearance",
             "Gestures",
@@ -205,7 +207,7 @@ class SettingsSectionsResourceTest {
         for (file in layoutFiles) {
             val doc = parseXml(file)
             val sections = extractSectionLinearChildren(doc)
-            assertEquals("Expected 10 section cards in ${file.name}", 10, sections.size)
+            assertEquals("Expected 11 section cards in ${file.name}", 11, sections.size)
 
             val sectionIds = sections.map { collectDescendantIds(it) }
 
@@ -272,33 +274,38 @@ class SettingsSectionsResourceTest {
                 sectionIds[5]
             )
 
-            // Section 6: Deutsch
-            assertTrue(sectionIds[6].contains("deutschSection"))
-            assertTrue(sectionIds[6].contains("germanLayout"))
-            assertTrue(sectionIds[6].contains("germanClockLayout"))
-            assertTrue(sectionIds[6].contains("germanLookupLayout"))
-            assertTrue(sectionIds[6].contains("germanPauseWordLayout"))
-            assertTrue(sectionIds[6].contains("germanUiLayout"))
+            // Section 6: Glance
+            assertTrue(sectionIds[6].contains("weatherLayout"))
+            assertTrue(sectionIds[6].contains("weatherTitle"))
+            assertTrue(sectionIds[6].contains("weather"))
 
-            // Section 7: Appearance
-            assertTrue(sectionIds[7].contains("photoWallpaperLayout"))
-            assertTrue(sectionIds[7].contains("statusBar"))
-            assertTrue(sectionIds[7].contains("appThemeText"))
-            assertTrue(sectionIds[7].contains("boldFont"))
-            assertTrue(sectionIds[7].contains("textSizeValue"))
-            assertFalse("autoShowKeyboard moved to Drawer", sectionIds[7].contains("autoShowKeyboard"))
-            assertFalse("drawerBottomSearch moved to Drawer", sectionIds[7].contains("drawerBottomSearchLayout"))
+            // Section 7: Deutsch
+            assertTrue(sectionIds[7].contains("deutschSection"))
+            assertTrue(sectionIds[7].contains("germanLayout"))
+            assertTrue(sectionIds[7].contains("germanClockLayout"))
+            assertTrue(sectionIds[7].contains("germanLookupLayout"))
+            assertTrue(sectionIds[7].contains("germanPauseWordLayout"))
+            assertTrue(sectionIds[7].contains("germanUiLayout"))
 
-            // Section 8: Gestures
-            assertTrue(sectionIds[8].contains("swipeLeftApp"))
-            assertTrue(sectionIds[8].contains("swipeRightLayout"))
-            assertTrue(sectionIds[8].contains("toggleLock"))
-            assertFalse("todayCardsLayout moved to Today", sectionIds[8].contains("todayCardsLayout"))
+            // Section 8: Appearance
+            assertTrue(sectionIds[8].contains("photoWallpaperLayout"))
+            assertTrue(sectionIds[8].contains("statusBar"))
+            assertTrue(sectionIds[8].contains("appThemeText"))
+            assertTrue(sectionIds[8].contains("boldFont"))
+            assertTrue(sectionIds[8].contains("textSizeValue"))
+            assertFalse("autoShowKeyboard moved to Drawer", sectionIds[8].contains("autoShowKeyboard"))
+            assertFalse("drawerBottomSearch moved to Drawer", sectionIds[8].contains("drawerBottomSearchLayout"))
 
-            // Section 9: Backup
-            assertTrue(sectionIds[9].contains("backupSection"))
-            assertTrue(sectionIds[9].contains("exportBackupLayout"))
-            assertTrue(sectionIds[9].contains("importBackupLayout"))
+            // Section 9: Gestures
+            assertTrue(sectionIds[9].contains("swipeLeftApp"))
+            assertTrue(sectionIds[9].contains("swipeRightLayout"))
+            assertTrue(sectionIds[9].contains("toggleLock"))
+            assertFalse("todayCardsLayout moved to Today", sectionIds[9].contains("todayCardsLayout"))
+
+            // Section 10: Backup
+            assertTrue(sectionIds[10].contains("backupSection"))
+            assertTrue(sectionIds[10].contains("exportBackupLayout"))
+            assertTrue(sectionIds[10].contains("importBackupLayout"))
         }
     }
 
@@ -397,6 +404,9 @@ class SettingsSectionsResourceTest {
             "todayCardsLayout",
             "todayCardsTitle",
             "toggleLock",
+            "weather",
+            "weatherLayout",
+            "weatherTitle",
         )
     }
 }
