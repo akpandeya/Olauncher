@@ -110,6 +110,11 @@ object SavedCard : TodayCard {
         return storeProvider?.invoke(context) ?: SavedItemsStore(context)
     }
 
+    override fun hasContent(context: Context): Boolean {
+        val store = getStore(context)
+        return store.active().isNotEmpty() || store.archived().isNotEmpty()
+    }
+
     override fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View {
         val viewBinding = CardSavedBinding.inflate(inflater, parent, false)
         binding = viewBinding

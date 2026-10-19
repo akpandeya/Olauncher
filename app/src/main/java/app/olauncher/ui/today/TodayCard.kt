@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
+import java.time.ZonedDateTime
 import app.olauncher.ui.today.cards.HeldCard
 import app.olauncher.ui.today.cards.NextUpCard
 import app.olauncher.ui.today.cards.SavedCard
@@ -30,6 +31,10 @@ interface TodayCard {
     val inHero: Boolean get() = false
 
     fun isAvailable(context: Context): Boolean = true
+
+    /** Higher shows nearer the top when the order is smart. Default keeps the list position. */
+    fun priority(context: Context, now: ZonedDateTime): Int =
+        TodayOrder.defaultPriority(TodayCards.all.indexOf(this).coerceAtLeast(0))
 
     /** False when the card would render nothing at all; its panel is then left out. */
     fun hasContent(context: Context): Boolean = true
