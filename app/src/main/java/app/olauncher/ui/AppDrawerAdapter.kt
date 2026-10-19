@@ -193,7 +193,8 @@ class AppDrawerAdapter(
 
                 val filterResults = FilterResults()
                 if (charSearch.isNullOrBlank()) {
-                    filterResults.values = FilterPayload(appsList, emptyList())
+                    val blankItems = DrawerOrdering.forSearchPosition(appsList, bottomSearch).toMutableList()
+                    filterResults.values = FilterPayload(blankItems, emptyList())
                     return filterResults
                 }
 
@@ -248,13 +249,12 @@ class AppDrawerAdapter(
                     appFilteredList = (results?.values as? MutableList<AppModel>) ?: mutableListOf()
                     appFilteredScores = emptyList()
                 }
-                val isQueryTyped = !constraint.isNullOrBlank()
                 (recyclerView?.layoutManager as? LinearLayoutManager)?.let { lm ->
-                    lm.stackFromEnd = bottomSearch && isQueryTyped
+                    lm.stackFromEnd = bottomSearch
                 }
                 submitList(appFilteredList) {
                     if (appFilteredList.isNotEmpty()) {
-                        val targetPosition = if (bottomSearch && isQueryTyped) appFilteredList.size - 1 else 0
+                        val targetPosition = if (bottomSearch) appFilteredList.size - 1 else 0
                         recyclerView?.scrollToPosition(targetPosition)
                     }
                     autoLaunch()
