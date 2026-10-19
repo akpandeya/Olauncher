@@ -61,6 +61,23 @@
         <item name="mainFontFamily">sans-serif</item>
     </style>
 
+    <!-- Font family overlays applied over AppTheme -->
+    <style name="FontInterOverlay">
+        <item name="mainFontFamily">@font/inter</item>
+    </style>
+
+    <style name="FontInterBoldOverlay">
+        <item name="mainFontFamily">@font/inter_bold</item>
+    </style>
+
+    <style name="FontPlexOverlay">
+        <item name="mainFontFamily">@font/ibm_plex_sans</item>
+    </style>
+
+    <style name="FontPlexBoldOverlay">
+        <item name="mainFontFamily">@font/ibm_plex_sans_bold</item>
+    </style>
+
     <style name="WindowAnimationTransition">
         <item name="android:windowEnterAnimation">@android:anim/fade_in</item>
         <item name="android:windowExitAnimation">@android:anim/fade_out</item>

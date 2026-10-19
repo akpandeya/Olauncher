@@ -6,9 +6,14 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.os.Process
+import android.graphics.Typeface
 import android.provider.MediaStore
 import android.provider.Settings
+import android.text.Spannable
+import android.text.SpannableString
 import android.text.format.DateFormat
+import android.text.style.TypefaceSpan
+import androidx.core.content.res.ResourcesCompat
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.Menu
@@ -237,6 +242,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         // Home button for recents feature disabled
         // populateHomeButtonRecents()
         populateAppThemeText()
+        populateFontFamily()
         populateTextSize()
         populateBoldFont()
         populateAlignment()
@@ -370,6 +376,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.photoWallpaperLayout, binding.photoWallpaperTitle, R.id.photoWallpaper),
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.statusBar.parent as View, getFirstTextView(binding.statusBar.parent as View), R.id.statusBar),
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.appThemeText.parent as View, getFirstTextView(binding.appThemeText.parent as View), R.id.appThemeText),
+            RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.fontFamily.parent as View, getFirstTextView(binding.fontFamily.parent as View), R.id.fontFamily),
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.boldFont.parent as View, getFirstTextView(binding.boldFont.parent as View), R.id.boldFont),
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.textSizeValue.parent as View, getFirstTextView(binding.textSizeValue.parent as View), R.id.textSizeValue),
 
@@ -600,6 +607,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.dateTime -> showDateTimeMenu(view)
             R.id.batteryMode, R.id.batteryModeTitle, R.id.batteryModeLayout -> showBatteryModeMenu(binding.batteryMode)
             R.id.appThemeText -> showAppThemeMenu(view, showSystem = false)
+            R.id.fontFamily -> showFontMenu(view)
             R.id.textSizeValue -> showTextSizeDialog()
             R.id.boldFont -> toggleBoldFont()
 
@@ -765,6 +773,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.importBackup.setOnClickListener(this)
         binding.importBackupLayout.setOnClickListener(this)
         binding.appThemeText.setOnClickListener(this)
+        binding.fontFamily.setOnClickListener(this)
         binding.textSizeValue.setOnClickListener(this)
         binding.boldFont.setOnClickListener(this)
         binding.footer.setOnClickListener(this)
@@ -1779,6 +1788,58 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             AppCompatDelegate.MODE_NIGHT_YES -> binding.appThemeText.text = getString(R.string.dark)
             AppCompatDelegate.MODE_NIGHT_NO -> binding.appThemeText.text = getString(R.string.light)
             else -> binding.appThemeText.text = getString(R.string.system_default)
+        }
+    }
+
+    private fun populateFontFamily() {
+        binding.fontFamily.text = when (prefs.fontFamily) {
+            Constants.FontFamily.INTER -> getString(R.string.font_inter)
+            Constants.FontFamily.PLEX -> getString(R.string.font_plex)
+            else -> getString(R.string.system_default)
+        }
+    }
+
+    private fun selectFontFamily(family: Int) {
+        if (prefs.fontFamily == family) return
+        prefs.fontFamily = family
+        populateFontFamily()
+        requireActivity().recreate()
+    }
+
+    private fun showFontMenu(anchor: View) {
+        val interTypeface = try {
+            ResourcesCompat.getFont(requireContext(), R.font.inter)
+        } catch (_: Exception) {
+            null
+        }
+        val plexTypeface = try {
+            ResourcesCompat.getFont(requireContext(), R.font.ibm_plex_sans)
+        } catch (_: Exception) {
+            null
+        }
+
+        val items = listOf(
+            Triple(Constants.FontFamily.SYSTEM, getString(R.string.system_default), Typeface.DEFAULT),
+            Triple(Constants.FontFamily.INTER, getString(R.string.font_inter), interTypeface ?: Typeface.DEFAULT),
+            Triple(Constants.FontFamily.PLEX, getString(R.string.font_plex), plexTypeface ?: Typeface.DEFAULT),
+        )
+
+        anchor.showPopupMenu(
+            configure = { menu ->
+                items.forEach { (id, label, typeface) ->
+                    val item = menu.add(Menu.NONE, id, id, label)
+                    val spannable = SpannableString(label)
+                    spannable.setSpan(
+                        TypefaceSpan(typeface),
+                        0,
+                        label.length,
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                    item.title = spannable
+                }
+            }
+        ) { item ->
+            selectFontFamily(item.itemId)
         }
     }
 
