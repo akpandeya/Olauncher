@@ -1,5 +1,6 @@
 package app.olauncher
 
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.BroadcastReceiver
@@ -20,6 +21,7 @@ import androidx.core.os.bundleOf
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
+import androidx.navigation.NavOptions
 import androidx.navigation.findNavController
 import androidx.work.ExistingWorkPolicy
 import androidx.work.WorkManager
@@ -33,6 +35,7 @@ import app.olauncher.wellbeing.NudgeScheduler
 import app.olauncher.wellbeing.UsageSnapshotWorker
 import app.olauncher.databinding.ActivityMainBinding
 import app.olauncher.helper.HomeReturnPolicy
+import app.olauncher.helper.MotionPolicy
 import app.olauncher.helper.getColorFromAttr
 import app.olauncher.helper.hasBeenDays
 import app.olauncher.helper.hasBeenHours
@@ -62,6 +65,7 @@ class MainActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_NAVIGATE_TO = "navigate_to"
         const val DESTINATION_TODAY = "todayFragment"
+        var animatorsEnabledSupplier: () -> Boolean = { ValueAnimator.areAnimatorsEnabled() }
     }
 
     private lateinit var prefs: Prefs
@@ -123,6 +127,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         navController = this.findNavController(R.id.nav_host_fragment)
+        applyNavigationMotion()
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
 
         val onBackPressedCallback = object : OnBackPressedCallback(true) {
@@ -171,11 +176,138 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        applyNavigationMotion()
         prefs.checkRollovers()
         isResumed = true
         viewModel.isPrivateSpaceToggling = false
         viewModel.isAwaitingActivityResult = false
         viewModel.getAppList()
+    }
+
+    fun applyNavigationMotion() {
+        val animatorsEnabled = animatorsEnabledSupplier() && !isEinkDisplay()
+        val durationMs = MotionPolicy.durationMs(MotionPolicy.DRAWER_DURATION_MS, animatorsEnabled)
+        val enabled = animatorsEnabled && durationMs > 0L
+        applyNavActionAnimations(enabled)
+    }
+
+    private fun applyNavActionAnimations(enabled: Boolean) {
+        if (!::navController.isInitialized) return
+
+        val drawerEnter = if (enabled) R.anim.drawer_enter else 0
+        val drawerExit = if (enabled) R.anim.drawer_exit else 0
+        val todayEnter = if (enabled) R.anim.today_enter else 0
+        val todayExit = if (enabled) R.anim.today_exit else 0
+        val fadeEnter = if (enabled) R.anim.fade_enter else 0
+        val fadeExit = if (enabled) R.anim.fade_exit else 0
+
+        // Drawer
+        updateActionAnimations(
+            destinationId = R.id.mainFragment,
+            actionId = R.id.action_mainFragment_to_appListFragment,
+            enterAnim = drawerEnter,
+            exitAnim = 0,
+            popEnterAnim = 0,
+            popExitAnim = drawerExit,
+        )
+        updateActionAnimations(
+            destinationId = R.id.todayFragment,
+            actionId = R.id.action_todayFragment_to_appListFragment,
+            enterAnim = drawerEnter,
+            exitAnim = 0,
+            popEnterAnim = 0,
+            popExitAnim = drawerExit,
+        )
+
+        // Today
+        updateActionAnimations(
+            destinationId = R.id.mainFragment,
+            actionId = R.id.action_mainFragment_to_todayFragment,
+            enterAnim = todayEnter,
+            exitAnim = 0,
+            popEnterAnim = 0,
+            popExitAnim = todayExit,
+        )
+
+        // Settings and Pause keep their current behavior (fade when animations on, instant when off)
+        updateActionAnimations(
+            destinationId = R.id.mainFragment,
+            actionId = R.id.action_mainFragment_to_settingsFragment,
+            enterAnim = fadeEnter,
+            exitAnim = fadeExit,
+            popEnterAnim = fadeEnter,
+            popExitAnim = fadeExit,
+        )
+        updateActionAnimations(
+            destinationId = R.id.mainFragment,
+            actionId = R.id.action_mainFragment_to_pauseFragment,
+            enterAnim = fadeEnter,
+            exitAnim = fadeExit,
+            popEnterAnim = fadeEnter,
+            popExitAnim = fadeExit,
+        )
+        updateActionAnimations(
+            destinationId = R.id.appListFragment,
+            actionId = R.id.action_appListFragment_to_settingsFragment2,
+            enterAnim = fadeEnter,
+            exitAnim = fadeExit,
+            popEnterAnim = fadeEnter,
+            popExitAnim = fadeExit,
+        )
+        updateActionAnimations(
+            destinationId = R.id.appListFragment,
+            actionId = R.id.action_appListFragment_to_pauseFragment,
+            enterAnim = fadeEnter,
+            exitAnim = fadeExit,
+            popEnterAnim = fadeEnter,
+            popExitAnim = fadeExit,
+        )
+        updateActionAnimations(
+            destinationId = R.id.settingsFragment,
+            actionId = R.id.action_settingsFragment_to_appListFragment,
+            enterAnim = fadeEnter,
+            exitAnim = fadeExit,
+            popEnterAnim = fadeEnter,
+            popExitAnim = fadeExit,
+        )
+        updateActionAnimations(
+            destinationId = R.id.todayFragment,
+            actionId = R.id.action_todayFragment_to_wordsFragment,
+            enterAnim = fadeEnter,
+            exitAnim = fadeExit,
+            popEnterAnim = fadeEnter,
+            popExitAnim = fadeExit,
+        )
+    }
+
+    private fun updateActionAnimations(
+        destinationId: Int,
+        actionId: Int,
+        enterAnim: Int,
+        exitAnim: Int,
+        popEnterAnim: Int,
+        popExitAnim: Int,
+    ) {
+        val destination = navController.graph.findNode(destinationId) ?: return
+        val action = destination.getAction(actionId) ?: return
+        val currentOptions = action.navOptions
+        val builder = NavOptions.Builder()
+            .setEnterAnim(enterAnim)
+            .setExitAnim(exitAnim)
+            .setPopEnterAnim(popEnterAnim)
+            .setPopExitAnim(popExitAnim)
+        if (currentOptions != null) {
+            builder.setLaunchSingleTop(currentOptions.shouldLaunchSingleTop())
+            builder.setRestoreState(currentOptions.shouldRestoreState())
+            if (currentOptions.popUpToId != -1) {
+                builder.setPopUpTo(
+                    currentOptions.popUpToId,
+                    currentOptions.isPopUpToInclusive(),
+                    currentOptions.shouldPopUpToSaveState(),
+                )
+            }
+        }
+        action.navOptions = builder.build()
     }
 
     private fun registerShortcutCallback() {
