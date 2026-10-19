@@ -87,6 +87,9 @@ object SettingsSections : List<SettingsSection> {
             R.id.batteryMode,
             R.id.batteryModeLayout,
             R.id.batteryModeTitle,
+            R.id.infoLine,
+            R.id.infoLineLayout,
+            R.id.infoLineTitle,
             R.id.alignment,
             R.id.swapSides,
             R.id.swapSidesLayout -> HOME
