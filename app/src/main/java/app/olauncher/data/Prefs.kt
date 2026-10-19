@@ -96,6 +96,8 @@ class Prefs(context: Context) : PauseLogStorage {
         const val WIND_DOWN = "WIND_DOWN"
         const val WIND_DOWN_START = "WIND_DOWN_START"
         const val WIND_DOWN_END = "WIND_DOWN_END"
+        const val WIND_DOWN_GREY = "WIND_DOWN_GREY"
+        const val WIND_DOWN_GREY_APPLIED = "WIND_DOWN_GREY_APPLIED"
         const val SEARCH_ENGINE = "SEARCH_ENGINE"
         const val SEARCH_ENGINE_CUSTOM_URL = "SEARCH_ENGINE_CUSTOM_URL"
         const val DRAWER_NEW_FIRST = "DRAWER_NEW_FIRST"
@@ -1060,6 +1062,15 @@ class Prefs(context: Context) : PauseLogStorage {
     var windDownEnd: Int
         get() = prefs.getInt(WIND_DOWN_END, WindDown.DEFAULT_END)
         set(value) = prefs.edit { putInt(WIND_DOWN_END, HomeSets.normalize(value)) }
+
+    var windDownGrey: Boolean
+        get() = prefs.getBoolean(WIND_DOWN_GREY, false)
+        set(value) = prefs.edit { putBoolean(WIND_DOWN_GREY, value) }
+
+    /** True while the grey wallpaper is what is currently applied. */
+    var windDownGreyApplied: Boolean
+        get() = prefs.getBoolean(WIND_DOWN_GREY_APPLIED, false)
+        set(value) = prefs.edit { putBoolean(WIND_DOWN_GREY_APPLIED, value) }
 
     fun isWindDownActive(nowMinutes: Int = currentMinutesOfDay()): Boolean =
         windDown && WindDown.isActive(nowMinutes, windDownStart, windDownEnd)

@@ -4,6 +4,10 @@ import android.app.WallpaperManager
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.ColorMatrix
+import android.graphics.ColorMatrixColorFilter
+import android.graphics.Paint
 import android.graphics.ImageDecoder
 import android.net.Uri
 import app.olauncher.data.Prefs
@@ -171,7 +175,21 @@ object PhotoWallpaper {
         }
     }
 
-    fun applyCurrent(context: Context, prefs: Prefs): Boolean {
+    /** Grey while the user opted in and the wind-down window is open. */
+    fun shouldBeGrey(prefs: Prefs): Boolean = prefs.windDownGrey && prefs.isWindDownActive()
+
+    /** A desaturated copy; the source bitmap is left untouched. */
+    fun desaturate(source: Bitmap): Bitmap {
+        val grey = Bitmap.createBitmap(source.width, source.height, Bitmap.Config.ARGB_8888)
+        val paint = Paint().apply {
+            colorFilter = ColorMatrixColorFilter(ColorMatrix().apply { setSaturation(0f) })
+        }
+        Canvas(grey).drawBitmap(source, 0f, 0f, paint)
+        return grey
+    }
+
+    /** Applies the current photo, desaturated when [grey] (default: wind-down grey is due now). Files are never changed. */
+    fun applyCurrent(context: Context, prefs: Prefs, grey: Boolean = shouldBeGrey(prefs)): Boolean {
         val count = prefs.photoWallpaperCount
         if (count <= 0) return false
         val index = prefs.photoWallpaperIndex.coerceIn(0, count - 1)
@@ -182,7 +200,9 @@ object PhotoWallpaper {
             val bitmap = BitmapFactory.decodeFile(file.absolutePath) ?: return false
             val flags = targetFlags(prefs.photoWallpaperTarget)
             val manager = WallpaperManager.getInstance(context)
-            manager.setBitmap(bitmap, null, true, flags)
+            val toApply = if (grey) desaturate(bitmap) else bitmap
+            manager.setBitmap(toApply, null, true, flags)
+            if (toApply !== bitmap) toApply.recycle()
             bitmap.recycle()
             true
         } catch (e: Exception) {
