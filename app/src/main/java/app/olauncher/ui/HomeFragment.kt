@@ -13,6 +13,7 @@ import android.util.TypedValue
 import android.view.Gravity
 import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
+import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
@@ -28,6 +29,7 @@ import androidx.core.view.isVisible
 import androidx.core.view.setPadding
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import app.olauncher.MainViewModel
 import app.olauncher.R
@@ -57,10 +59,13 @@ import app.olauncher.helper.openDialerApp
 import app.olauncher.helper.openGalleryApp
 import app.olauncher.helper.openMessagesApp
 import app.olauncher.helper.PhotoWallpaper
+import app.olauncher.helper.WallpaperHomeMenu
 import app.olauncher.helper.setPlainWallpaperByTheme
+import app.olauncher.helper.showPopupMenu
 import app.olauncher.helper.showToast
 import app.olauncher.listener.OnSwipeTouchListener
 import app.olauncher.listener.ViewSwipeTouchListener
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -961,11 +966,11 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
             override fun onLongClick() {
                 super.onLongClick()
-                try {
-                    findNavController().navigate(R.id.action_mainFragment_to_settingsFragment)
-                    viewModel.firstOpen(false)
-                } catch (e: Exception) {
-                    e.printStackTrace()
+                if (WallpaperHomeMenu.isShown(prefs.photoWallpaperHomeMenu, prefs.photoWallpaperCount)) {
+                    binding.mainLayout.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                    showWallpaperHomeMenu()
+                } else {
+                    openSettings()
                 }
             }
 
@@ -979,6 +984,40 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
                 super.onClick()
                 viewModel.checkForMessages.call()
             }
+        }
+    }
+
+    private fun showWallpaperHomeMenu() {
+        val appContext = requireContext().applicationContext
+        binding.mainLayout.showPopupMenu(
+            configure = { menu ->
+                menu.add(Menu.NONE, R.string.next_wallpaper, 0, R.string.next_wallpaper)
+                menu.add(Menu.NONE, R.string.previous_wallpaper, 1, R.string.previous_wallpaper)
+                menu.add(Menu.NONE, R.string.settings, 2, R.string.settings)
+            }
+        ) { item ->
+            when (item.itemId) {
+                R.string.next_wallpaper -> {
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        PhotoWallpaper.stepManually(appContext, prefs, forward = true)
+                    }
+                }
+                R.string.previous_wallpaper -> {
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        PhotoWallpaper.stepManually(appContext, prefs, forward = false)
+                    }
+                }
+                R.string.settings -> openSettings()
+            }
+        }
+    }
+
+    private fun openSettings() {
+        try {
+            findNavController().navigate(R.id.action_mainFragment_to_settingsFragment)
+            viewModel.firstOpen(false)
+        } catch (e: Exception) {
+            e.printStackTrace()
         }
     }
 
