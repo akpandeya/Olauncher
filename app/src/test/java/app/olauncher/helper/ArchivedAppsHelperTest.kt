@@ -260,4 +260,77 @@ class ArchivedAppsHelperTest {
             )
         )
     }
+
+    @Test
+    fun `canAutoLaunch with query returns false for digit prefix or currency prefix`() {
+        val app = createApp("5KPlayer", isArchived = false)
+
+        // "5 k" with a single matching app -> no auto-launch
+        assertFalse(
+            ArchivedAppsHelper.canAutoLaunch(
+                query = "5 k",
+                hasResultRow = false,
+                strongMatches = 1,
+                firstItem = app
+            )
+        )
+
+        // Currency prefixes
+        val currencies = listOf("€", "$", "£", "¥", "₹")
+        for (sym in currencies) {
+            assertFalse(
+                "Expected currency $sym to disable auto-launch",
+                ArchivedAppsHelper.canAutoLaunch(
+                    query = "${sym}10",
+                    hasResultRow = false,
+                    strongMatches = 1,
+                    firstItem = app
+                )
+            )
+            assertFalse(
+                "Expected trimmed currency $sym to disable auto-launch",
+                ArchivedAppsHelper.canAutoLaunch(
+                    query = "  ${sym}10",
+                    hasResultRow = false,
+                    strongMatches = 1,
+                    firstItem = app
+                )
+            )
+        }
+    }
+
+    @Test
+    fun `canAutoLaunch with query handles leading space, normal query, and bang search`() {
+        val app = createApp("Spotify", isArchived = false)
+
+        // " spot" (leading space) -> no auto-launch
+        assertFalse(
+            ArchivedAppsHelper.canAutoLaunch(
+                query = " spot",
+                hasResultRow = false,
+                strongMatches = 1,
+                firstItem = app
+            )
+        )
+
+        // "spot" -> auto-launch as today
+        assertTrue(
+            ArchivedAppsHelper.canAutoLaunch(
+                query = "spot",
+                hasResultRow = false,
+                strongMatches = 1,
+                firstItem = app
+            )
+        )
+
+        // "!w x" -> no auto-launch
+        assertFalse(
+            ArchivedAppsHelper.canAutoLaunch(
+                query = "!w x",
+                hasResultRow = false,
+                strongMatches = 1,
+                firstItem = app
+            )
+        )
+    }
 }

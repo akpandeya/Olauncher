@@ -298,4 +298,70 @@ class AppMatcherTest {
         val resultsCalc = filterApps(listOf(renamedApp), "calc")
         assertTrue(resultsCalc.isEmpty())
     }
+
+    // --- matchRanges tests ---
+
+    @Test
+    fun `matchRanges returns exact and prefix ranges`() {
+        assertEquals(listOf(0..7), AppMatcher.matchRanges("WhatsApp", "whatsapp"))
+        assertEquals(listOf(0..6), AppMatcher.matchRanges("WhatsApp", "whatsap"))
+        assertEquals(listOf(0..1), AppMatcher.matchRanges("Gmail", "gm"))
+        assertEquals(listOf(0..2), AppMatcher.matchRanges("YouTube", "you"))
+        assertEquals(listOf(0..5), AppMatcher.matchRanges("Google Maps", "google"))
+        assertEquals(listOf(0..5, 7..7), AppMatcher.matchRanges("Google Maps", "google m"))
+        assertEquals(listOf(0..5, 7..10), AppMatcher.matchRanges("Google Maps", "google maps"))
+        assertEquals(listOf(0..5, 7..10), AppMatcher.matchRanges("Google Maps", "googlemaps"))
+        assertEquals(listOf(0..0, 2..2, 4..7), AppMatcher.matchRanges("K-9 Mail", "k9mail"))
+        assertEquals(listOf(0..2), AppMatcher.matchRanges("Über", "ube"))
+        assertEquals(listOf(0..3), AppMatcher.matchRanges("Über", "uber"))
+    }
+
+    @Test
+    fun `matchRanges returns word-start ranges`() {
+        assertEquals(listOf(7..10), AppMatcher.matchRanges("Google Maps", "maps"))
+        assertEquals(listOf(7..9), AppMatcher.matchRanges("Google Maps", "map"))
+        assertEquals(listOf(3..6), AppMatcher.matchRanges("YouTube", "tube"))
+        assertEquals(listOf(3..5), AppMatcher.matchRanges("YouTube", "tub"))
+        assertEquals(listOf(5..7), AppMatcher.matchRanges("WhatsApp", "app"))
+        assertEquals(listOf(5..6), AppMatcher.matchRanges("WhatsApp", "ap"))
+        assertEquals(listOf(2..6), AppMatcher.matchRanges("F-Droid", "droid"))
+        assertEquals(listOf(14..18), AppMatcher.matchRanges("Google Keep - notes and lists", "notes"))
+        assertEquals(listOf(7..10, 12..13), AppMatcher.matchRanges("Google Maps Go", "maps go"))
+    }
+
+    @Test
+    fun `matchRanges returns initials ranges`() {
+        assertEquals(listOf(0..0, 7..7), AppMatcher.matchRanges("Google Maps", "gm"))
+        assertEquals(listOf(0..0, 3..3), AppMatcher.matchRanges("YouTube", "yt"))
+        assertEquals(listOf(0..0, 5..5), AppMatcher.matchRanges("WhatsApp", "wa"))
+        assertEquals(listOf(0..0, 5..5, 8..8), AppMatcher.matchRanges("Call of Duty", "cod"))
+        assertEquals(listOf(0..0, 8..8), AppMatcher.matchRanges("Call of Duty", "cd"))
+        assertEquals(listOf(0..0, 7..7, 12..12), AppMatcher.matchRanges("Google Play Store", "gps"))
+        assertEquals(listOf(0..0, 7..7), AppMatcher.matchRanges("Google Play Store", "gp"))
+    }
+
+    @Test
+    fun `matchRanges returns substring ranges`() {
+        assertEquals(listOf(4..7), AppMatcher.matchRanges("Telegram", "gram"))
+        assertEquals(listOf(3..6), AppMatcher.matchRanges("Spotify", "tify"))
+        assertEquals(listOf(1..5), AppMatcher.matchRanges("Google", "oogle"))
+        assertEquals(listOf(1..3), AppMatcher.matchRanges("WhatsApp", "hat"))
+    }
+
+    @Test
+    fun `matchRanges returns empty list for fuzzy match`() {
+        assertEquals(emptyList<IntRange>(), AppMatcher.matchRanges("WhatsApp", "whatsapo"))
+        assertEquals(emptyList<IntRange>(), AppMatcher.matchRanges("Spotify", "spotfy"))
+        assertEquals(emptyList<IntRange>(), AppMatcher.matchRanges("Spotify", "spitify"))
+        assertEquals(emptyList<IntRange>(), AppMatcher.matchRanges("Spotify", "spotfiy"))
+    }
+
+    @Test
+    fun `matchRanges returns empty list when query does not match or is blank`() {
+        assertEquals(emptyList<IntRange>(), AppMatcher.matchRanges("WhatsApp", "xyzabc"))
+        assertEquals(emptyList<IntRange>(), AppMatcher.matchRanges("Uber", "calculator"))
+        assertEquals(emptyList<IntRange>(), AppMatcher.matchRanges("WhatsApp", ""))
+        assertEquals(emptyList<IntRange>(), AppMatcher.matchRanges("WhatsApp", "   "))
+        assertEquals(emptyList<IntRange>(), AppMatcher.matchRanges("", "whatsapp"))
+    }
 }
