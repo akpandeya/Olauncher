@@ -976,6 +976,21 @@ class Prefs(context: Context) : PauseLogStorage {
 
     fun setShortcutMode(slot: Int, mode: Int) = prefs.edit { putInt("SHORTCUT_MODE_$slot", mode) }
 
+    // Built-in action chosen for a slot (ShortcutAction.id); NONE_ID falls back to the slot's default
+    fun getShortcutBuiltin(slot: Int): Int = prefs.getInt("SHORTCUT_BUILTIN_$slot", ShortcutAction.NONE_ID)
+
+    fun setShortcutBuiltin(slot: Int, actionId: Int) = prefs.edit {
+        putInt("SHORTCUT_MODE_$slot", Constants.SHORTCUT_MODE_DEFAULT)
+        putInt("SHORTCUT_BUILTIN_$slot", actionId)
+    }
+
+    fun resetShortcut(slot: Int) = prefs.edit {
+        putInt("SHORTCUT_MODE_$slot", Constants.SHORTCUT_MODE_DEFAULT)
+        remove("SHORTCUT_BUILTIN_$slot")
+    }
+
+    fun getShortcutAction(slot: Int): ShortcutAction? = ShortcutAction.resolve(slot, getShortcutBuiltin(slot))
+
     fun getAppRenameLabel(appPackage: String): String = prefs.getString(appPackage, "").toString()
 
     fun setAppRenameLabel(appPackage: String, renameLabel: String) = prefs.edit { putString(appPackage, renameLabel) }

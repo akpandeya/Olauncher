@@ -36,6 +36,7 @@ import app.olauncher.R
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
+import app.olauncher.data.ShortcutAction
 import app.olauncher.data.ShortcutOffset
 import app.olauncher.data.ShortcutSize
 import app.olauncher.data.SlotCount
@@ -444,7 +445,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         view.setImageDrawable(drawable)
         view.contentDescription = ShortcutIconRenderer.getLabel(context, slot, prefs, isAppIcon)
         // Extra slots (7..MAX_SHORTCUT_SLOTS) show a faint placeholder until an app icon resolves
-        val isPlaceholder = slot > Constants.SHORTCUT_SLOTS && !isAppIcon
+        val isPlaceholder = !isAppIcon && prefs.getShortcutAction(slot) == null
         view.alpha = if (isPlaceholder) 0.4f else 1.0f
     }
 
@@ -495,28 +496,47 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             )
             return
         }
-        when (slot) {
-            1 -> showAppList(Constants.FLAG_LAUNCH_APP)
-            2 -> openGalleryApp(context)
-            3 -> openCameraApp(context)
-            4 -> openMessagesApp(context)
-            5 -> openDialerApp(context)
-            6 -> findNavController().navigate(R.id.action_mainFragment_to_settingsFragment)
-            else -> showLongPressToast()
+        when (prefs.getShortcutAction(slot)) {
+            ShortcutAction.SEARCH -> showAppList(Constants.FLAG_LAUNCH_APP)
+            ShortcutAction.GALLERY -> openGalleryApp(context)
+            ShortcutAction.CAMERA -> openCameraApp(context)
+            ShortcutAction.MESSAGES -> openMessagesApp(context)
+            ShortcutAction.PHONE -> openDialerApp(context)
+            ShortcutAction.SETTINGS -> findNavController().navigate(R.id.action_mainFragment_to_settingsFragment)
+            null -> showLongPressToast()
         }
     }
 
     private fun showShortcutMenu(slot: Int) {
         val context = context ?: return
-        val options = arrayOf(getString(R.string.shortcut_choose_app), getString(R.string.shortcut_reset))
+        val options = arrayOf(
+            getString(R.string.shortcut_choose_app),
+            getString(R.string.shortcut_choose_builtin),
+            getString(R.string.shortcut_reset),
+        )
         AlertDialog.Builder(context)
             .setItems(options) { _, which ->
-                if (which == 0) {
-                    showAppList(Constants.FLAG_SET_SHORTCUT_1 + slot - 1)
-                } else {
-                    prefs.setShortcutMode(slot, Constants.SHORTCUT_MODE_DEFAULT)
-                    populateShortcuts()
+                when (which) {
+                    0 -> showAppList(Constants.FLAG_SET_SHORTCUT_1 + slot - 1)
+                    1 -> showBuiltinShortcutMenu(slot)
+                    else -> {
+                        prefs.resetShortcut(slot)
+                        populateShortcuts()
+                    }
                 }
+            }
+            .show()
+    }
+
+    private fun showBuiltinShortcutMenu(slot: Int) {
+        val context = context ?: return
+        val actions = ShortcutAction.values()
+        val labels = actions.map { getString(it.labelRes) }.toTypedArray()
+        AlertDialog.Builder(context)
+            .setTitle(R.string.shortcut_choose_builtin)
+            .setItems(labels) { _, which ->
+                prefs.setShortcutBuiltin(slot, actions[which].id)
+                populateShortcuts()
             }
             .show()
     }
