@@ -11,7 +11,6 @@ import android.os.BatteryManager
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.Gravity
-import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.View
@@ -47,6 +46,7 @@ import app.olauncher.glance.WeatherLocation
 import app.olauncher.helper.BatteryFormatting
 import app.olauncher.helper.DefaultLauncherCheck
 import app.olauncher.helper.GermanTime
+import app.olauncher.helper.Haptics
 import app.olauncher.helper.appUsagePermissionGranted
 import app.olauncher.helper.dpToPx
 import app.olauncher.helper.expandNotificationDrawer
@@ -158,7 +158,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             else -> {
                 try { // Launch app
                     val appLocation = view.tag.toString().toInt()
-                    homeAppClicked(appLocation)
+                    homeAppClicked(appLocation, view)
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -408,11 +408,11 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
                 setOnTouchListener(getShortcutSwipeTouchListener(context, this, slot))
                 // These fire only on d-pad/keyboard/accessibility events; touch is consumed by ViewSwipeTouchListener
                 setOnClickListener {
-                    performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                    Haptics.tick(this)
                     shortcutClicked(slot)
                 }
                 setOnLongClickListener {
-                    performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                    Haptics.longPress(this)
                     showShortcutMenu(slot)
                     true
                 }
@@ -463,23 +463,23 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
             override fun onSwipeUp() {
                 super.onSwipeUp()
-                showAppList(Constants.FLAG_LAUNCH_APP)
+                onHomeSwipeUp()
             }
 
             override fun onSwipeDown() {
                 super.onSwipeDown()
-                expandNotificationDrawer(context)
+                onHomeSwipeDown(context)
             }
 
             override fun onLongClick(view: View) {
                 super.onLongClick(view)
-                view.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                Haptics.longPress(view)
                 showShortcutMenu(slot)
             }
 
             override fun onClick(view: View) {
                 super.onClick(view)
-                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                Haptics.tick(view)
                 shortcutClicked(slot)
             }
         }
@@ -855,9 +855,13 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         )
     }
 
-    private fun homeAppClicked(location: Int) {
+    private fun homeAppClicked(location: Int, view: View? = null) {
+        val appName = prefs.getAppName(location)
+        if (appName.isNotEmpty()) {
+            Haptics.tick(view ?: binding.root)
+        }
         launchAppOrShortcut(
-            appName = prefs.getAppName(location),
+            appName = appName,
             packageName = prefs.getAppPackage(location),
             activityClassName = prefs.getAppActivityClassName(location),
             shortcutId = prefs.getShortcutId(location),
@@ -866,8 +870,19 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         )
     }
 
+    private fun onHomeSwipeUp() {
+        Haptics.tick(binding.root)
+        showAppList(Constants.FLAG_LAUNCH_APP)
+    }
+
+    private fun onHomeSwipeDown(context: Context = requireContext()) {
+        Haptics.tick(binding.root)
+        expandNotificationDrawer(context)
+    }
+
     private fun openSwipeRightApp() {
         if (!prefs.swipeRightEnabled) return
+        Haptics.tick(binding.root)
         if (prefs.swipeRightAction == Prefs.SWIPE_RIGHT_ACTION_TODAY) {
             try {
                 findNavController().navigate(R.id.action_mainFragment_to_todayFragment)
@@ -889,6 +904,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
     private fun openSwipeLeftApp() {
         if (!prefs.swipeLeftEnabled) return
+        Haptics.tick(binding.root)
         launchAppOrShortcut(
             appName = prefs.appNameSwipeLeft,
             packageName = prefs.appPackageSwipeLeft,
@@ -992,18 +1008,18 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
             override fun onSwipeUp() {
                 super.onSwipeUp()
-                showAppList(Constants.FLAG_LAUNCH_APP)
+                onHomeSwipeUp()
             }
 
             override fun onSwipeDown() {
                 super.onSwipeDown()
-                expandNotificationDrawer(requireContext())
+                onHomeSwipeDown(requireContext())
             }
 
             override fun onLongClick() {
                 super.onLongClick()
                 if (WallpaperHomeMenu.isShown(prefs.photoWallpaperHomeMenu, prefs.photoWallpaperCount)) {
-                    binding.mainLayout.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+                    Haptics.longPress(binding.mainLayout)
                     showWallpaperHomeMenu(downY)
                 } else {
                     openSettings()
@@ -1082,12 +1098,12 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
             override fun onSwipeUp() {
                 super.onSwipeUp()
-                showAppList(Constants.FLAG_LAUNCH_APP)
+                onHomeSwipeUp()
             }
 
             override fun onSwipeDown() {
                 super.onSwipeDown()
-                expandNotificationDrawer(requireContext())
+                onHomeSwipeDown(requireContext())
             }
 
             override fun onLongClick(view: View) {

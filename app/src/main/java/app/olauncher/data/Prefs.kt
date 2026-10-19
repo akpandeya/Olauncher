@@ -86,6 +86,7 @@ class Prefs(context: Context) : PauseLogStorage {
         const val FONT_FAMILY_INTER = Constants.FONT_FAMILY_INTER
         const val FONT_FAMILY_PLEX = Constants.FONT_FAMILY_PLEX
         const val ACCENT = "ACCENT"
+        const val HAPTICS = "HAPTICS"
 
         fun nudgeDoneKey(type: String): String = "$NUDGE_DONE_PREFIX${type.uppercase()}"
 
@@ -400,6 +401,10 @@ class Prefs(context: Context) : PauseLogStorage {
     var accent: Int
         get() = prefs.getInt(ACCENT, Accent.OFF.id)
         set(value) = prefs.edit { putInt(ACCENT, Accent.fromId(value).id).apply() }
+
+    var haptics: Boolean
+        get() = prefs.getBoolean(HAPTICS, true)
+        set(value) = prefs.edit { putBoolean(HAPTICS, value).apply() }
 
     var proMessageShown: Boolean
         get() = prefs.getBoolean(PRO_MESSAGE_SHOWN, false)
