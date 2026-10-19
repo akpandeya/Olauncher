@@ -71,6 +71,8 @@
     <string name="new_apps_first">New apps first</string>
     <string name="letter_strip">Letter strip</string>
     <string name="recent_apps">Recent apps</string>
+    <string name="search_contacts">Search contacts</string>
+    <string name="search_contacts_permission_message">Thumbline reads your contacts on this phone to find people in search</string>
     <string name="recent">Recent</string>
     <string name="hide">Hide</string>
     <string name="status_bar">Status bar on top</string>

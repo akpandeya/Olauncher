@@ -125,6 +125,9 @@ object SettingsSections : List<SettingsSection> {
             R.id.drawerRecents,
             R.id.drawerRecentsLayout,
             R.id.drawerRecentsTitle,
+            R.id.searchContacts,
+            R.id.searchContactsLayout,
+            R.id.searchContactsTitle,
             R.id.searchEngine,
             R.id.searchEngineLayout,
             R.id.searchEngineTitle -> DRAWER

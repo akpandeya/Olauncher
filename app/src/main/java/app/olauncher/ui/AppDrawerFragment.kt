@@ -2,7 +2,9 @@ package app.olauncher.ui
 
 import android.annotation.SuppressLint
 import android.content.ActivityNotFoundException
+import android.Manifest
 import android.content.Context
+import android.content.pm.PackageManager
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -21,6 +23,7 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.SearchView
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.TextViewCompat
 import androidx.fragment.app.activityViewModels
@@ -36,7 +39,9 @@ import app.olauncher.data.Prefs
 import app.olauncher.data.SearchEngine
 import app.olauncher.data.SearchTarget
 import app.olauncher.databinding.FragmentAppDrawerBinding
+import app.olauncher.helper.AndroidContactSource
 import app.olauncher.helper.ArchivedAppsHelper
+import app.olauncher.helper.ContactSource
 import app.olauncher.helper.HomeAppHelper
 import app.olauncher.wellbeing.UsageSnapshotWorker
 import app.olauncher.helper.DrawerOrdering
@@ -259,6 +264,30 @@ class AppDrawerFragment : BaseFragment() {
         return result
     }
 
+    private fun contactSourceOrNull(): ContactSource? {
+        val ctx = context ?: return null
+        if (!prefs.searchContacts) return null
+        if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.READ_CONTACTS) != PackageManager.PERMISSION_GRANTED) {
+            prefs.searchContacts = false
+            return null
+        }
+        return AndroidContactSource(ctx)
+    }
+
+    private fun dialContact(lookupUri: String) {
+        val source = contactSourceOrNull()
+        val number = try { source?.primaryNumber(lookupUri) } catch (_: Exception) { null }
+        try {
+            val intent = Intent(Intent.ACTION_DIAL).apply {
+                if (!number.isNullOrBlank()) data = Uri.fromParts("tel", number, null)
+            }
+            startActivity(intent)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        findNavController().popBackStack(R.id.mainFragment, false)
+    }
+
     private fun initAdapter() {
         adapter = AppDrawerAdapter(
             flag,
@@ -270,6 +299,15 @@ class AppDrawerFragment : BaseFragment() {
                             is AppModel.Result.Action.Copy -> {
                                 requireContext().copyToClipboard(action.value)
                                 requireContext().showToast(R.string.copied)
+                                findNavController().popBackStack(R.id.mainFragment, false)
+                            }
+
+                            is AppModel.Result.Action.Contact -> {
+                                try {
+                                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(action.lookupUri)))
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
                                 findNavController().popBackStack(R.id.mainFragment, false)
                             }
 
@@ -386,6 +424,11 @@ class AppDrawerFragment : BaseFragment() {
             context = requireContext(),
             bottomSearch = prefs.drawerBottomSearch,
             drawerRecents = prefs.drawerRecents,
+            contactSourceProvider = { contactSourceOrNull() },
+            contactLongClickListener = { result ->
+                val action = result.action as? AppModel.Result.Action.Contact
+                if (action != null) dialContact(action.lookupUri)
+            },
             recentAppsProvider = { RecentApps.decode(prefs.recentApps) },
             hiddenAppsProvider = { prefs.hiddenApps },
             appAddToHomeListener = { appModel ->

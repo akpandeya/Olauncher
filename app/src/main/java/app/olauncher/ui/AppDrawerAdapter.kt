@@ -34,6 +34,8 @@ import app.olauncher.helper.showKeyboard
 import app.olauncher.helper.AppMatcher
 import app.olauncher.helper.ArchivedAppsHelper
 import app.olauncher.helper.Calc
+import app.olauncher.helper.ContactSearch
+import app.olauncher.helper.ContactSource
 import app.olauncher.helper.DialMatch
 import app.olauncher.helper.DrawerOrdering
 import app.olauncher.helper.RecentApp
@@ -57,6 +59,8 @@ class AppDrawerAdapter(
     var appAddToHomeListener: ((AppModel) -> Unit)? = null,
     var appDistractingListener: ((AppModel) -> Unit)? = null,
     var distractingAppsProvider: (() -> Set<String>)? = null,
+    var contactSourceProvider: (() -> ContactSource?)? = null,
+    var contactLongClickListener: ((AppModel.Result) -> Unit)? = null,
 ) : ListAdapter<AppModel, RecyclerView.ViewHolder>(DIFF_CALLBACK), Filterable {
 
     companion object {
@@ -184,7 +188,8 @@ class AppDrawerAdapter(
                         holder.bind(
                             appLabelGravity,
                             appModel,
-                            appClickListener
+                            appClickListener,
+                            contactLongClickListener,
                         )
                     }
                 }
@@ -298,6 +303,17 @@ class AppDrawerAdapter(
                                 action = AppModel.Result.Action.Dial(dialNumber)
                             )
                         )
+                    }
+                    // Runs on the Filter worker thread; a newer query supersedes this one.
+                    val source = try { contactSourceProvider?.invoke() } catch (_: Exception) { null }
+                    if (source != null) {
+                        try {
+                            ContactSearch.search(source, query).forEach {
+                                resultRows.add(ContactSearch.toResult(it))
+                            }
+                        } catch (_: Exception) {
+                            // Permission revoked or provider failure: no contact rows.
+                        }
                     }
                 }
 
@@ -427,6 +443,7 @@ class AppDrawerAdapter(
             appLabelGravity: Int,
             result: AppModel.Result,
             clickListener: (AppModel) -> Unit,
+            longClickListener: ((AppModel.Result) -> Unit)? = null,
         ) = with(binding) {
             renameLayout.visibility = View.GONE
             otherProfileIndicator.visibility = View.GONE
@@ -434,9 +451,13 @@ class AppDrawerAdapter(
             appTitle.text = result.text
             appTitle.gravity = appLabelGravity or Gravity.CENTER_VERTICAL
             appTitle.setOnClickListener { clickListener(result) }
-            appTitle.setOnLongClickListener(null)
+            val onLong: View.OnLongClickListener? =
+                if (result.action is AppModel.Result.Action.Contact && longClickListener != null) {
+                    View.OnLongClickListener { longClickListener(result); true }
+                } else null
+            appTitle.setOnLongClickListener(onLong)
             root.setOnClickListener { clickListener(result) }
-            root.setOnLongClickListener(null)
+            root.setOnLongClickListener(onLong)
         }
     }
 
