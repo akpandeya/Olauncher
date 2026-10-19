@@ -12,6 +12,7 @@
         android:layout_gravity="bottom"
         android:background="@drawable/bg_bottom_sheet"
         android:clickable="true"
+        android:contentDescription="@string/a11y_word_capture_sheet"
         android:focusable="true"
         android:orientation="vertical"
         android:paddingHorizontal="20dp"
