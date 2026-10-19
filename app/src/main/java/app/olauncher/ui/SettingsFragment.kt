@@ -79,6 +79,7 @@ import app.olauncher.data.Constants
 import app.olauncher.data.FontFamilyResources
 import app.olauncher.data.Prefs
 import app.olauncher.data.SearchEngine
+import app.olauncher.helper.RatesWorker
 import app.olauncher.data.SlotCount
 import app.olauncher.data.ShortcutOffset
 import app.olauncher.data.ShortcutIconStyle
@@ -247,6 +248,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateDrawerLetterStrip()
         populateDrawerRecents()
         populateSearchContacts()
+        populateCurrencyRates()
         populateScreenTimeOnOff()
         populateDistractingApps()
         populatePauseBeforeApps()
@@ -369,6 +371,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             RuntimeSettingsRow(SettingsSections.KEY_DRAWER, binding.drawerLetterStripLayout, binding.drawerLetterStripTitle, R.id.drawerLetterStrip),
             RuntimeSettingsRow(SettingsSections.KEY_DRAWER, binding.drawerRecentsLayout, binding.drawerRecentsTitle, R.id.drawerRecents),
             RuntimeSettingsRow(SettingsSections.KEY_DRAWER, binding.searchContactsLayout, binding.searchContactsTitle, R.id.searchContacts),
+            RuntimeSettingsRow(SettingsSections.KEY_DRAWER, binding.currencyRatesLayout, binding.currencyRatesTitle, R.id.currencyRates),
 
             // Wellbeing
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.distractingAppsLayout, binding.distractingAppsTitle, R.id.distractingApps),
@@ -623,6 +626,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.drawerLetterStrip, R.id.drawerLetterStripTitle, R.id.drawerLetterStripLayout -> toggleDrawerLetterStrip()
             R.id.drawerRecents, R.id.drawerRecentsTitle, R.id.drawerRecentsLayout -> toggleDrawerRecents()
             R.id.searchContacts, R.id.searchContactsTitle, R.id.searchContactsLayout -> toggleSearchContacts()
+            R.id.currencyRates, R.id.currencyRatesTitle, R.id.currencyRatesLayout -> toggleCurrencyRates()
             R.id.searchEngine, R.id.searchEngineTitle, R.id.searchEngineLayout -> showSearchEngineMenu(binding.searchEngine)
             R.id.homeAppsNum -> showHomeAppsNumMenu(view)
             R.id.alignment -> showAlignmentMenu(view)
@@ -712,6 +716,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.searchContacts.setOnClickListener(this)
         binding.searchContactsTitle.setOnClickListener(this)
         binding.searchContactsLayout.setOnClickListener(this)
+        binding.currencyRates.setOnClickListener(this)
+        binding.currencyRatesTitle.setOnClickListener(this)
+        binding.currencyRatesLayout.setOnClickListener(this)
         binding.searchEngine.setOnClickListener(this)
         binding.searchEngineTitle.setOnClickListener(this)
         binding.searchEngineLayout.setOnClickListener(this)
@@ -2498,6 +2505,21 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     private fun populateSearchContacts() {
         if (prefs.searchContacts && !hasContactsPermission()) prefs.searchContacts = false
         binding.searchContacts.text = getString(if (prefs.searchContacts) R.string.on else R.string.off)
+    }
+
+    private fun populateCurrencyRates() {
+        binding.currencyRates.text = getString(if (prefs.currencyRates) R.string.currency_rates_on else R.string.off)
+    }
+
+    private fun toggleCurrencyRates() {
+        prefs.currencyRates = !prefs.currencyRates
+        if (prefs.currencyRates) {
+            RatesWorker.schedulePeriodic(requireContext())
+            RatesWorker.runOnce(requireContext())
+        } else {
+            RatesWorker.cancel(requireContext())
+        }
+        populateCurrencyRates()
     }
 
     private fun toggleSearchContacts() {
