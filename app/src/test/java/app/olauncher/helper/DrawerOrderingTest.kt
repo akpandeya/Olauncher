@@ -52,6 +52,9 @@ class DrawerOrderingTest {
     private fun createPrivateHeader(isLocked: Boolean = true): AppModel.PrivateSpaceHeader =
         AppModel.PrivateSpaceHeader(isLocked = isLocked, user = dummyUser)
 
+    private fun createResult(text: String): AppModel.Result =
+        AppModel.Result(text = text, action = AppModel.Result.Action.Copy(text))
+
     @Test
     fun `empty list returns empty list`() {
         assertTrue(DrawerOrdering.order(emptyList(), newFirst = true).isEmpty())
@@ -233,5 +236,75 @@ class DrawerOrderingTest {
 
         // Only Camera is isNew. Calculator is archived so it stays in restApps in its original place.
         assertEquals(listOf("Camera", "Calculator", "Clock"), ordered.map { it.appLabel })
+    }
+
+    @Test
+    fun `forSearchPosition returns empty list for empty input on both positions`() {
+        assertTrue(DrawerOrdering.forSearchPosition(emptyList<AppModel>(), bottomSearch = false).isEmpty())
+        assertTrue(DrawerOrdering.forSearchPosition(emptyList<AppModel>(), bottomSearch = true).isEmpty())
+    }
+
+    @Test
+    fun `forSearchPosition leaves top search results unchanged`() {
+        val app1 = createApp("Maps")
+        val app2 = createApp("Mail")
+        val input = listOf(app1, app2)
+
+        val ordered = DrawerOrdering.forSearchPosition(input, bottomSearch = false)
+        assertEquals(listOf("Maps", "Mail"), ordered.map { it.appLabel })
+    }
+
+    @Test
+    fun `forSearchPosition reverses results for bottom search so best match is last`() {
+        val app1 = createApp("Maps")
+        val app2 = createApp("Mail")
+        val app3 = createApp("Messages")
+        val input = listOf(app1, app2, app3)
+
+        val ordered = DrawerOrdering.forSearchPosition(input, bottomSearch = true)
+        assertEquals(listOf("Messages", "Mail", "Maps"), ordered.map { it.appLabel })
+    }
+
+    @Test
+    fun `forSearchPosition keeps result rows nearest the box for both search positions`() {
+        val calcRow = createResult("= 42")
+        val dialRow = createResult("Call 12345")
+        val app1 = createApp("Maps")
+        val app2 = createApp("Mail")
+        val input = listOf(calcRow, dialRow, app1, app2)
+
+        val topSearch = DrawerOrdering.forSearchPosition(input, bottomSearch = false)
+        // For top search, search box is at the top: calc and dial are at the start, nearest the box
+        assertEquals(listOf(calcRow, dialRow, app1, app2), topSearch)
+        assertEquals(calcRow, topSearch.first())
+
+        val bottomSearch = DrawerOrdering.forSearchPosition(input, bottomSearch = true)
+        // For bottom search, search box is at the bottom: calc and dial are at the end, nearest the box
+        assertEquals(listOf(app2, app1, dialRow, calcRow), bottomSearch)
+        assertEquals(calcRow, bottomSearch.last())
+        assertEquals(dialRow, bottomSearch[bottomSearch.size - 2])
+        assertEquals(app1, bottomSearch[bottomSearch.size - 3])
+    }
+
+    @Test
+    fun `forSearchPosition handles single item list on both positions`() {
+        val calcRow = createResult("= 42")
+        val input = listOf(calcRow)
+
+        assertEquals(input, DrawerOrdering.forSearchPosition(input, bottomSearch = false))
+        assertEquals(input, DrawerOrdering.forSearchPosition(input, bottomSearch = true))
+    }
+
+    @Test
+    fun `forSearchPosition handles only result rows`() {
+        val calcRow = createResult("= 100")
+        val dialRow = createResult("Call 911")
+        val input = listOf(calcRow, dialRow)
+
+        val topSearch = DrawerOrdering.forSearchPosition(input, bottomSearch = false)
+        assertEquals(listOf(calcRow, dialRow), topSearch)
+
+        val bottomSearch = DrawerOrdering.forSearchPosition(input, bottomSearch = true)
+        assertEquals(listOf(dialRow, calcRow), bottomSearch)
     }
 }

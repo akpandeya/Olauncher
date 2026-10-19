@@ -194,8 +194,6 @@ class AppDrawerFragment : BaseFragment() {
                 try {
                     adapter.allowAutoLaunch = !isSearchComposing()
                     adapter.filter.filter(newText)
-                    if (prefs.drawerBottomSearch)
-                        binding.recyclerView.scrollToPosition(0)
                     binding.appRename.visibility =
                         if (canRename && newText.isNotBlank()) View.VISIBLE else View.GONE
                     return true
@@ -360,9 +358,10 @@ class AppDrawerFragment : BaseFragment() {
                 findNavController().popBackStack(R.id.mainFragment, false)
             },
             context = requireContext(),
+            bottomSearch = prefs.drawerBottomSearch,
         )
 
-        linearLayoutManager = object : LinearLayoutManager(requireContext(), RecyclerView.VERTICAL, prefs.drawerBottomSearch) {
+        linearLayoutManager = object : LinearLayoutManager(requireContext()) {
             override fun scrollVerticallyBy(
                 dx: Int,
                 recycler: Recycler,
@@ -504,6 +503,7 @@ class AppDrawerFragment : BaseFragment() {
     override fun onStart() {
         super.onStart()
         cachedIsCjkKeyboard = null
+        adapter.bottomSearch = prefs.drawerBottomSearch
         if (currentAppList != null) updateCombinedAppList()
         binding.search.showKeyboard(prefs.autoShowKeyboard)
     }
