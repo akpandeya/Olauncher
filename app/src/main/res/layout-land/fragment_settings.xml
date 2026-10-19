@@ -1214,6 +1214,76 @@
                 </FrameLayout>
 
                 <FrameLayout
+                    android:id="@+id/systemGreyLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="start|center_vertical"
+                        android:layout_marginEnd="64dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/systemGreyTitle"
+                            style="@style/TextSmall"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:paddingVertical="8dp"
+                            android:text="@string/system_grey"
+                            android:textColor="?attr/primaryColor" />
+
+                        <TextView
+                            android:id="@+id/systemGreyStatus"
+                            style="@style/TextSmall"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:layout_marginTop="2dp"
+                            android:alpha="0.7"
+                            android:textColor="?attr/primaryColor"
+                            android:textSize="@dimen/text_subtitle"
+                            tools:text="Needs a one-time grant from a computer" />
+
+                        <LinearLayout
+                            android:id="@+id/systemGreyActions"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal">
+
+                            <TextView
+                                android:id="@+id/systemGreyCopy"
+                                style="@style/TextSmallBold"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:padding="8dp"
+                                android:text="@string/system_grey_copy" />
+
+                            <TextView
+                                android:id="@+id/systemGreyBedtime"
+                                style="@style/TextSmallBold"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:padding="8dp"
+                                android:text="@string/system_grey_bedtime" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/systemGreyOnOff"
+                        style="@style/TextSmallBold"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end|center_vertical"
+                        android:layout_marginEnd="4dp"
+                        android:padding="8dp"
+                        tools:text="Off" />
+                </FrameLayout>
+
+                <FrameLayout
                     android:id="@+id/commitLockLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

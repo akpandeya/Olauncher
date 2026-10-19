@@ -10,6 +10,7 @@ import java.util.Locale
 import app.olauncher.helper.HomeSet
 import app.olauncher.helper.HomeSetStarts
 import app.olauncher.helper.HomeSets
+import app.olauncher.wellbeing.SystemGrey
 import app.olauncher.wellbeing.WindDown
 import app.olauncher.helper.HomeSlotField
 import app.olauncher.helper.RecentApp
@@ -98,6 +99,10 @@ class Prefs(context: Context) : PauseLogStorage {
         const val WIND_DOWN_END = "WIND_DOWN_END"
         const val WIND_DOWN_GREY = "WIND_DOWN_GREY"
         const val WIND_DOWN_GREY_APPLIED = "WIND_DOWN_GREY_APPLIED"
+const val WIND_DOWN_SYSTEM_GREY = "WIND_DOWN_SYSTEM_GREY"
+const val SYSTEM_GREY_SAVED = "SYSTEM_GREY_SAVED"
+const val SYSTEM_GREY_SAVED_ENABLED = "SYSTEM_GREY_SAVED_ENABLED"
+const val SYSTEM_GREY_SAVED_MODE = "SYSTEM_GREY_SAVED_MODE"
         const val SEARCH_ENGINE = "SEARCH_ENGINE"
         const val SEARCH_ENGINE_CUSTOM_URL = "SEARCH_ENGINE_CUSTOM_URL"
         const val DRAWER_NEW_FIRST = "DRAWER_NEW_FIRST"
@@ -1071,6 +1076,28 @@ class Prefs(context: Context) : PauseLogStorage {
     var windDownGreyApplied: Boolean
         get() = prefs.getBoolean(WIND_DOWN_GREY_APPLIED, false)
         set(value) = prefs.edit { putBoolean(WIND_DOWN_GREY_APPLIED, value) }
+
+    var windDownSystemGrey: Boolean
+        get() = prefs.getBoolean(WIND_DOWN_SYSTEM_GREY, false)
+        set(value) = prefs.edit { putBoolean(WIND_DOWN_SYSTEM_GREY, value) }
+
+    /** The daltonizer values we replaced with grey, or null when we hold nothing to restore. */
+    var systemGreySaved: SystemGrey.Daltonizer?
+        get() = if (prefs.getBoolean(SYSTEM_GREY_SAVED, false)) {
+            SystemGrey.Daltonizer(
+                prefs.getInt(SYSTEM_GREY_SAVED_ENABLED, 0),
+                prefs.getInt(SYSTEM_GREY_SAVED_MODE, SystemGrey.MODE_OFF),
+            )
+        } else null
+        set(value) = prefs.edit {
+            if (value == null) {
+                putBoolean(SYSTEM_GREY_SAVED, false)
+            } else {
+                putInt(SYSTEM_GREY_SAVED_ENABLED, value.enabled)
+                putInt(SYSTEM_GREY_SAVED_MODE, value.mode)
+                putBoolean(SYSTEM_GREY_SAVED, true)
+            }
+        }
 
     fun isWindDownActive(nowMinutes: Int = currentMinutesOfDay()): Boolean =
         windDown && WindDown.isActive(nowMinutes, windDownStart, windDownEnd)

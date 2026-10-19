@@ -96,13 +96,18 @@ class WindDownWorker(
                     prefs.windDownGreyApplied = want
                 }
             }
+            val wantSystemGrey = WindDownGrey.shouldBeGrey(
+                prefs.windDownSystemGrey, prefs.windDown, nowMinutes, prefs.windDownStart, prefs.windDownEnd,
+            )
+            SystemGrey.sync(context, prefs, wantSystemGrey)
             schedule(context, prefs, now.toNanoOfDay() / 1_000_000L)
         }
 
         private fun schedule(context: Context, prefs: Prefs, nowMillisOfDay: Long) {
             val manager = WorkManager.getInstance(context)
             val next = WindDownGrey.nextBoundary(
-                prefs.windDownGrey, prefs.windDown, nowMillisOfDay, prefs.windDownStart, prefs.windDownEnd,
+                prefs.windDownGrey || prefs.windDownSystemGrey, prefs.windDown, nowMillisOfDay,
+                prefs.windDownStart, prefs.windDownEnd,
             )
             if (next == null) {
                 manager.cancelUniqueWork(WORK_NAME)
