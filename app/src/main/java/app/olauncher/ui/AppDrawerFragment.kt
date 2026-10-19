@@ -424,7 +424,7 @@ class AppDrawerFragment : BaseFragment() {
                     else -> {
                         if (flag == Constants.FLAG_LAUNCH_APP || flag == Constants.FLAG_HIDDEN_APPS)
                             Haptics.tick(binding.root)
-                        viewModel.selectedApp(appModel, flag)
+                        viewModel.selectedApp(appModel, flag, fromDrawer = true)
                         if (flag == Constants.FLAG_LAUNCH_APP || flag == Constants.FLAG_HIDDEN_APPS)
                             findNavController().popBackStack(R.id.mainFragment, false)
                         else

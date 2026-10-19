@@ -70,7 +70,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // Home button for recents feature disabled
     // val showRecentApps = SingleLiveEvent<Unit?>()
 
-    fun selectedApp(appModel: AppModel, flag: Int) {
+    fun selectedApp(appModel: AppModel, flag: Int, fromDrawer: Boolean = false) {
         if (appModel is AppModel.PrivateSpaceHeader || appModel is AppModel.Result || appModel is AppModel.RecentHeader) return
         val appPackage = when (appModel) {
             is AppModel.App -> appModel.appPackage
@@ -83,6 +83,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 snoozeUntil = prefs.pauseSnoozeUntil,
                 appSnoozes = prefs.pauseAppSnooze,
                 now = System.currentTimeMillis(),
+                windDownActive = fromDrawer && prefs.isWindDownActive(),
             )
         ) {
             pauseLaunch.postValue(appModel)

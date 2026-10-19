@@ -270,6 +270,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populatePauseEscalate()
         populatePauseAskWhy()
         populateCommitLock()
+        populateWindDown()
         populateHoldNotifications()
         populateQuietReleaseTimes()
         populateLockSettings()
@@ -335,6 +336,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateScreenTimeCue()
         populatePauseAllowance()
         populateCommitLock()
+        populateWindDown()
         populateHoldNotifications()
         populateQuietReleaseTimes()
         if (prefs.quietEnabled && isNotificationAccessGranted()) {
@@ -407,6 +409,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.pauseAllowanceLayout, binding.pauseAllowanceTitle, R.id.pauseAllowance),
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.pauseEscalateLayout, binding.pauseEscalateTitle, R.id.pauseEscalateOnOff),
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.pauseAskWhyLayout, binding.pauseAskWhyTitle, R.id.pauseAskWhyOnOff),
+            RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.windDownLayout, binding.windDownTitle, R.id.windDown),
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.commitLockLayout, binding.commitLockTitle, R.id.commitLockOnOff),
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.holdNotificationsLayout, binding.holdNotificationsTitle, R.id.holdNotificationsOnOff),
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.quietReleaseTimesLayout, binding.quietReleaseTimesTitle, R.id.quietReleaseTimes),
@@ -644,6 +647,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.pauseAllowance, R.id.pauseAllowanceTitle, R.id.pauseAllowanceLayout -> showPauseAllowanceMenu(binding.pauseAllowance)
             R.id.pauseEscalateOnOff, R.id.pauseEscalateTitle, R.id.pauseEscalateLayout -> togglePauseEscalate()
             R.id.pauseAskWhyOnOff, R.id.pauseAskWhyTitle, R.id.pauseAskWhyLayout -> togglePauseAskWhy()
+            R.id.windDown, R.id.windDownTitle, R.id.windDownLayout -> showWindDownMenu()
             R.id.commitLockOnOff, R.id.commitLockTitle, R.id.commitLockSubtitle, R.id.commitLockLayout -> toggleCommitLock()
             R.id.holdNotificationsOnOff, R.id.holdNotificationsTitle, R.id.holdNotificationsLayout -> toggleHoldNotifications()
             R.id.quietReleaseTimes, R.id.quietReleaseTimesTitle, R.id.quietReleaseTimesLayout -> showReleaseTimesEditor()
@@ -797,6 +801,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.pauseAskWhyOnOff.setOnClickListener(this)
         binding.pauseAskWhyTitle.setOnClickListener(this)
         binding.pauseAskWhyLayout.setOnClickListener(this)
+        binding.windDown.setOnClickListener(this)
+        binding.windDownTitle.setOnClickListener(this)
+        binding.windDownLayout.setOnClickListener(this)
         binding.commitLockOnOff.setOnClickListener(this)
         binding.commitLockTitle.setOnClickListener(this)
         binding.commitLockSubtitle.setOnClickListener(this)
@@ -2463,6 +2470,70 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         } else {
             prefs.pauseAskWhy = true
             populatePauseAskWhy()
+        }
+    }
+
+    private fun populateWindDown() {
+        binding.windDown.text = if (prefs.windDown) {
+            "${formatMinutes(prefs.windDownStart)}\u2013${formatMinutes(prefs.windDownEnd)}"
+        } else {
+            getString(R.string.off)
+        }
+    }
+
+    private fun showWindDownMenu() {
+        val labels = arrayOf(
+            getString(if (prefs.windDown) R.string.wind_down_turn_off else R.string.wind_down_turn_on),
+            getString(R.string.wind_down_starts) + "  " + formatMinutes(prefs.windDownStart),
+            getString(R.string.wind_down_ends) + "  " + formatMinutes(prefs.windDownEnd),
+        )
+        dialog?.dismiss()
+        dialog = AlertDialog.Builder(requireContext())
+            .setTitle(R.string.wind_down)
+            .setMessage(R.string.wind_down_desc)
+            .setItems(labels) { _, which ->
+                when (which) {
+                    0 -> toggleWindDown()
+                    1 -> showWindDownTimePicker(isStart = true)
+                    2 -> showWindDownTimePicker(isStart = false)
+                }
+            }
+            .show()
+    }
+
+    private fun toggleWindDown() {
+        if (prefs.windDown) {
+            val change = FrictionChange.WindDownToggle(false)
+            if (CommitLock.needsWait(prefs.commitLock, change)) {
+                dialog?.dismiss()
+                dialog = requireContext().showWaitDialog(
+                    message = getString(R.string.commit_lock_desc)
+                ) {
+                    prefs.windDown = false
+                    populateWindDown()
+                    viewModel.refreshHome(false)
+                }
+                return
+            }
+            prefs.windDown = false
+        } else {
+            prefs.windDown = true
+        }
+        populateWindDown()
+        viewModel.refreshHome(false)
+    }
+
+    private fun showWindDownTimePicker(isStart: Boolean) {
+        val current = if (isStart) prefs.windDownStart else prefs.windDownEnd
+        showTimePicker(
+            if (isStart) R.string.wind_down_starts else R.string.wind_down_ends,
+            current / 60,
+            current % 60,
+        ) { hour, minute ->
+            val minutes = HomeSets.minutesOfDay(hour, minute)
+            if (isStart) prefs.windDownStart = minutes else prefs.windDownEnd = minutes
+            populateWindDown()
+            viewModel.refreshHome(false)
         }
     }
 

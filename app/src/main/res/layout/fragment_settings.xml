@@ -1159,6 +1159,34 @@
                 </FrameLayout>
 
                 <FrameLayout
+                    android:id="@+id/windDownLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp">
+
+                    <TextView
+                        android:id="@+id/windDownTitle"
+                        style="@style/TextSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="start|center_vertical"
+                        android:layout_marginStart="8dp"
+                        android:paddingVertical="8dp"
+                        android:text="@string/wind_down"
+                        android:textColor="?attr/primaryColor" />
+
+                    <TextView
+                        android:id="@+id/windDown"
+                        style="@style/TextSmallBold"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end|center_vertical"
+                        android:layout_marginEnd="4dp"
+                        android:padding="8dp"
+                        tools:text="Off" />
+                </FrameLayout>
+
+                <FrameLayout
                     android:id="@+id/commitLockLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

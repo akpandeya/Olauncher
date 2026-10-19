@@ -290,6 +290,12 @@
     <string name="snooze_for_good">For good</string>
     <string name="pause_off_until">Off until %s</string>
     <string name="commit_lock">Lock these settings</string>
+    <string name="wind_down">Wind-down</string>
+    <string name="wind_down_desc">After the start time, every drawer app gets a pause and the Evening set shows</string>
+    <string name="wind_down_turn_on">Turn on</string>
+    <string name="wind_down_turn_off">Turn off</string>
+    <string name="wind_down_starts">Wind-down starts</string>
+    <string name="wind_down_ends">Wind-down ends</string>
     <string name="commit_lock_desc">Turning friction down takes a 30 s wait</string>
     <string name="confirm">Confirm</string>
     <string name="confirm_countdown">Confirm (%d)</string>
