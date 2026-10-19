@@ -173,4 +173,24 @@ class SettingsSectionsTest {
         assertNull(SettingsSections.findSectionByNameOrKey(""))
         assertNull(SettingsSections.findSectionByNameOrKey("randomUnknown"))
     }
+
+    @Test
+    fun `resolveTarget prefers explicit section key over row id`() {
+        assertEquals(
+            SettingsSections.BACKUP,
+            SettingsSections.resolveTarget(SettingsSections.KEY_BACKUP, R.id.pauseBeforeAppsOnOff),
+        )
+    }
+
+    @Test
+    fun `resolveTarget falls back to the section holding the row`() {
+        assertEquals(SettingsSections.WELLBEING, SettingsSections.resolveTarget(null, R.id.pauseBeforeAppsOnOff))
+        assertEquals(SettingsSections.DEUTSCH, SettingsSections.resolveTarget("not-a-section", R.id.germanUiOnOff))
+    }
+
+    @Test
+    fun `resolveTarget returns null without a usable target`() {
+        assertNull(SettingsSections.resolveTarget(null, 0))
+        assertNull(SettingsSections.resolveTarget("todayFragment", 0))
+    }
 }
