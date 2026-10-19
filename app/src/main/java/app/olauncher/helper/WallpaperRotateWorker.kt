@@ -22,12 +22,17 @@ class WallpaperRotateWorker(
         val count = prefs.photoWallpaperCount
         if (count <= 0) return@withContext Result.success()
 
-        // runOnce (after picking photos) must not rotate for ON_OPEN, or it would skip the first photo
-        if (RotationInterval.fromId(prefs.photoWallpaperInterval).rotatesFromWorker) {
-            PhotoWallpaper.rotateIfDue(prefs)
+        val success = PhotoWallpaper.withEditLock {
+            // runOnce (after picking photos) must not rotate for ON_OPEN, or it would skip the first photo
+            if (RotationInterval.fromId(prefs.photoWallpaperInterval).rotatesFromWorker) {
+                PhotoWallpaper.rotateIfDue(prefs)
+            }
+            // applyCurrent greys the new photo itself while wind-down grey is due.
+            val grey = PhotoWallpaper.shouldBeGrey(prefs)
+            val ok = PhotoWallpaper.applyCurrent(applicationContext, prefs, grey)
+            if (ok) prefs.windDownGreyApplied = grey
+            ok
         }
-
-        val success = PhotoWallpaper.applyCurrent(applicationContext, prefs)
         if (success) Result.success() else Result.retry()
     }
 

@@ -107,6 +107,7 @@ import app.olauncher.helper.isTablet
 import app.olauncher.helper.openAppInfo
 import app.olauncher.helper.openUrl
 import app.olauncher.helper.setPlainWallpaperByTheme
+import app.olauncher.wellbeing.WindDownWorker
 import app.olauncher.helper.WordCaptureActivity
 import app.olauncher.helper.OlDialog
 import app.olauncher.helper.showMessageDialog
@@ -271,6 +272,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populatePauseAskWhy()
         populateCommitLock()
         populateWindDown()
+        populateWindDownGrey()
         populateHoldNotifications()
         populateQuietReleaseTimes()
         populateLockSettings()
@@ -410,6 +412,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.pauseEscalateLayout, binding.pauseEscalateTitle, R.id.pauseEscalateOnOff),
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.pauseAskWhyLayout, binding.pauseAskWhyTitle, R.id.pauseAskWhyOnOff),
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.windDownLayout, binding.windDownTitle, R.id.windDown),
+            RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.windDownGreyLayout, binding.windDownGreyTitle, R.id.windDownGreyOnOff),
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.commitLockLayout, binding.commitLockTitle, R.id.commitLockOnOff),
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.holdNotificationsLayout, binding.holdNotificationsTitle, R.id.holdNotificationsOnOff),
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.quietReleaseTimesLayout, binding.quietReleaseTimesTitle, R.id.quietReleaseTimes),
@@ -648,6 +651,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.pauseEscalateOnOff, R.id.pauseEscalateTitle, R.id.pauseEscalateLayout -> togglePauseEscalate()
             R.id.pauseAskWhyOnOff, R.id.pauseAskWhyTitle, R.id.pauseAskWhyLayout -> togglePauseAskWhy()
             R.id.windDown, R.id.windDownTitle, R.id.windDownLayout -> showWindDownMenu()
+            R.id.windDownGreyOnOff, R.id.windDownGreyTitle, R.id.windDownGreyLayout -> toggleWindDownGrey()
             R.id.commitLockOnOff, R.id.commitLockTitle, R.id.commitLockSubtitle, R.id.commitLockLayout -> toggleCommitLock()
             R.id.holdNotificationsOnOff, R.id.holdNotificationsTitle, R.id.holdNotificationsLayout -> toggleHoldNotifications()
             R.id.quietReleaseTimes, R.id.quietReleaseTimesTitle, R.id.quietReleaseTimesLayout -> showReleaseTimesEditor()
@@ -804,6 +808,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.windDown.setOnClickListener(this)
         binding.windDownTitle.setOnClickListener(this)
         binding.windDownLayout.setOnClickListener(this)
+        binding.windDownGreyOnOff.setOnClickListener(this)
+        binding.windDownGreyTitle.setOnClickListener(this)
+        binding.windDownGreyLayout.setOnClickListener(this)
         binding.commitLockOnOff.setOnClickListener(this)
         binding.commitLockTitle.setOnClickListener(this)
         binding.commitLockSubtitle.setOnClickListener(this)
@@ -2474,11 +2481,23 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     }
 
     private fun populateWindDown() {
+        // Idempotent: also fixes a missed start/end and reschedules after a time or toggle change.
+        WindDownWorker.syncAsync(requireContext())
         binding.windDown.text = if (prefs.windDown) {
             "${formatMinutes(prefs.windDownStart)}\u2013${formatMinutes(prefs.windDownEnd)}"
         } else {
             getString(R.string.off)
         }
+    }
+
+    private fun populateWindDownGrey() {
+        binding.windDownGreyOnOff.text = getString(if (prefs.windDownGrey) R.string.on else R.string.off)
+    }
+
+    private fun toggleWindDownGrey() {
+        prefs.windDownGrey = !prefs.windDownGrey
+        populateWindDownGrey()
+        WindDownWorker.syncAsync(requireContext())
     }
 
     private fun showWindDownMenu() {
