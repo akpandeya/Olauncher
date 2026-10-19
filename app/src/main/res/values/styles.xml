@@ -92,7 +92,7 @@
     </style>
 
     <style name="TextMedium" parent="TextDefault">
-        <item name="android:textSize">20sp</item>
+        <item name="android:textSize">@dimen/text_body</item>
     </style>
 
     <style name="TextSmall" parent="TextDefault">

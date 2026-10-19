@@ -13,7 +13,7 @@
         style="@style/TextLarge"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="48sp"
+        android:textSize="@dimen/text_display"
         tools:text="🌦 12°" />
 
     <TextView
