@@ -82,9 +82,6 @@ class Prefs(context: Context) : PauseLogStorage {
         const val QUIET_RELEASE_TIMES = "QUIET_RELEASE_TIMES"
         const val DEFAULT_QUIET_RELEASE_TIMES = "750,1110"
         const val FONT_FAMILY = "FONT_FAMILY"
-        const val FONT_FAMILY_SYSTEM = Constants.FONT_FAMILY_SYSTEM
-        const val FONT_FAMILY_INTER = Constants.FONT_FAMILY_INTER
-        const val FONT_FAMILY_PLEX = Constants.FONT_FAMILY_PLEX
         const val ACCENT = "ACCENT"
         const val HAPTICS = "HAPTICS"
 

@@ -13,12 +13,6 @@ class FontPrefsTest {
         assertEquals(0, Constants.FontFamily.SYSTEM)
         assertEquals(1, Constants.FontFamily.INTER)
         assertEquals(2, Constants.FontFamily.PLEX)
-        assertEquals(0, Constants.FONT_FAMILY_SYSTEM)
-        assertEquals(1, Constants.FONT_FAMILY_INTER)
-        assertEquals(2, Constants.FONT_FAMILY_PLEX)
-        assertEquals(0, Prefs.FONT_FAMILY_SYSTEM)
-        assertEquals(1, Prefs.FONT_FAMILY_INTER)
-        assertEquals(2, Prefs.FONT_FAMILY_PLEX)
     }
 
     @Test

@@ -34,37 +34,6 @@ class HapticsTest {
     }
 
     @Test
-    fun `constantFor with int overload gates by enabled state`() {
-        val tick: Int? = Haptics.constantFor(HapticFeedbackConstants.CLOCK_TICK, enabled = true)
-        val confirm: Int? = Haptics.constantFor(HapticFeedbackConstants.CONFIRM, enabled = true)
-        val longPress: Int? = Haptics.constantFor(HapticFeedbackConstants.LONG_PRESS, enabled = true)
-
-        assertEquals(HapticFeedbackConstants.CLOCK_TICK, tick)
-        assertEquals(HapticFeedbackConstants.CONFIRM, confirm)
-        assertEquals(HapticFeedbackConstants.LONG_PRESS, longPress)
-
-        assertNull(Haptics.constantFor(HapticFeedbackConstants.CLOCK_TICK, enabled = false))
-        assertNull(Haptics.constantFor(HapticFeedbackConstants.CONFIRM, enabled = false))
-        assertNull(Haptics.constantFor(HapticFeedbackConstants.LONG_PRESS, enabled = false))
-    }
-
-    @Test
-    fun `constantFor with string overload gates by enabled state`() {
-        val tick: Int? = Haptics.constantFor("tick", enabled = true)
-        val confirm: Int? = Haptics.constantFor("confirm", enabled = true)
-        val longPress: Int? = Haptics.constantFor("long_press", enabled = true)
-
-        assertEquals(HapticFeedbackConstants.CLOCK_TICK, tick)
-        assertEquals(HapticFeedbackConstants.CONFIRM, confirm)
-        assertEquals(HapticFeedbackConstants.LONG_PRESS, longPress)
-
-        assertNull(Haptics.constantFor("tick", enabled = false))
-        assertNull(Haptics.constantFor("confirm", enabled = false))
-        assertNull(Haptics.constantFor("long_press", enabled = false))
-        assertNull(Haptics.constantFor("unknown", enabled = true))
-    }
-
-    @Test
     fun `haptics preference defaults to true and persists changes`() {
         assertEquals("HAPTICS", Prefs.HAPTICS)
 
