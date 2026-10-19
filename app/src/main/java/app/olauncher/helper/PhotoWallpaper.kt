@@ -205,6 +205,8 @@ object PhotoWallpaper {
         } ?: return@withContext false
         prefs.photoWallpaperIndex = newIndex
         markChanged(prefs)
+        // Restart the periodic timer from this manual step so the next timed rotation is a full period away.
+        WallpaperRotateWorker.schedulePeriodic(context, restartFromNow = true)
         applyCurrent(context, prefs)
     } }
 
