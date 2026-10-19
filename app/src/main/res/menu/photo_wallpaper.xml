@@ -4,6 +4,9 @@
         android:id="@+id/photoWallpaperAdd"
         android:title="@string/add_photos" />
     <item
+        android:id="@+id/photoWallpaperRemove"
+        android:title="@string/remove_photos" />
+    <item
         android:id="@+id/photoWallpaperChange"
         android:title="@string/change_photos" />
     <item
