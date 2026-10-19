@@ -13,7 +13,7 @@
         android:layout_gravity="bottom"
         android:orientation="vertical"
         android:paddingHorizontal="24dp"
-        android:paddingBottom="48dp">
+        android:paddingBottom="96dp">
 
         <TextView
             android:id="@+id/appName"
@@ -57,6 +57,16 @@
             tools:text="Over today's 30 min allowance"
             tools:visibility="visible" />
 
+        <TextView
+            android:id="@+id/notice"
+            style="@style/TextSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="2dp"
+            android:paddingBottom="16dp"
+            android:text="@string/pause_notification_notice"
+            android:textColor="?attr/primaryColorTrans80" />
+
         <include
             android:id="@+id/wordReveal"
             layout="@layout/view_word_reveal"
@@ -68,27 +78,44 @@
             tools:visibility="visible" />
 
         <TextView
-            android:id="@+id/notice"
-            style="@style/TextSmall"
+            android:id="@+id/btnNotNow"
+            style="@style/TextLarge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:paddingTop="2dp"
-            android:paddingBottom="16dp"
-            android:text="@string/pause_notification_notice"
-            android:textColor="?attr/primaryColorTrans80" />
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingVertical="@dimen/home_app_padding_vertical"
+            android:text="@string/not_now" />
+
+        <FrameLayout
+            android:id="@+id/btnOpenContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:id="@+id/btnOpen"
+                style="@style/TextMedium"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:alpha="0.7"
+                android:clickable="true"
+                android:focusable="true"
+                android:paddingVertical="@dimen/home_app_padding_vertical"
+                tools:text="Open (5)" />
+        </FrameLayout>
 
         <LinearLayout
             android:id="@+id/whyChoicesContainer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
+            android:layout_marginTop="16dp"
             android:orientation="vertical"
             android:visibility="gone"
             tools:visibility="visible">
 
             <TextView
                 android:id="@+id/choiceReply"
-                style="@style/TextMedium"
+                style="@style/TextSmall"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:minHeight="48dp"
@@ -101,7 +128,7 @@
 
             <TextView
                 android:id="@+id/choiceLookup"
-                style="@style/TextMedium"
+                style="@style/TextSmall"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:minHeight="48dp"
@@ -114,7 +141,7 @@
 
             <TextView
                 android:id="@+id/choiceBored"
-                style="@style/TextMedium"
+                style="@style/TextSmall"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:minHeight="48dp"
@@ -126,32 +153,6 @@
                 android:text="@string/pause_why_bored" />
 
         </LinearLayout>
-
-        <FrameLayout
-            android:id="@+id/btnOpenContainer"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content">
-
-            <TextView
-                android:id="@+id/btnOpen"
-                style="@style/TextLarge"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:clickable="true"
-                android:focusable="true"
-                android:paddingVertical="@dimen/home_app_padding_vertical"
-                tools:text="Open (5)" />
-        </FrameLayout>
-
-        <TextView
-            android:id="@+id/btnNotNow"
-            style="@style/TextLarge"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:clickable="true"
-            android:focusable="true"
-            android:paddingVertical="@dimen/home_app_padding_vertical"
-            android:text="@string/not_now" />
 
     </LinearLayout>
 

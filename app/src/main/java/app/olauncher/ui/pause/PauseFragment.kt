@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowInsets
 import androidx.activity.OnBackPressedCallback
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.view.isVisible
@@ -97,6 +98,18 @@ class PauseFragment : Fragment() {
         prefs = Prefs(requireContext())
 
         binding.appName.text = appLabel
+
+        // Edge-to-edge: keep the buttons at least 96dp above the nav bar so Not now is at thumb height.
+        val minBottomPadding = (96 * resources.displayMetrics.density).toInt()
+        binding.pauseContent.setOnApplyWindowInsetsListener { content, insets ->
+            val navBarBottom = insets.getInsets(WindowInsets.Type.navigationBars()).bottom
+            val bottom = navBarBottom + minBottomPadding
+            if (content.paddingBottom != bottom) {
+                content.setPadding(content.paddingLeft, content.paddingTop, content.paddingRight, bottom)
+            }
+            insets
+        }
+        binding.pauseContent.requestApplyInsets()
 
         requireActivity().onBackPressedDispatcher.addCallback(
             viewLifecycleOwner,
