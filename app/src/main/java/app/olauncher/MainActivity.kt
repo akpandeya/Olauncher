@@ -23,6 +23,7 @@ import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.work.ExistingWorkPolicy
 import androidx.work.WorkManager
+import app.olauncher.quiet.QuietAccess
 import app.olauncher.quiet.ReleaseWorker
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
@@ -91,7 +92,7 @@ class MainActivity : AppCompatActivity() {
         WorkManager.getInstance(this).cancelUniqueWork(Constants.WALLPAPER_WORKER_NAME)
         prefs.dailyWallpaper = false
         NudgeScheduler.ensureAll(this)
-        if (prefs.quietEnabled) {
+        if (prefs.quietEnabled && QuietAccess.isNotificationAccessGranted(this)) {
             ReleaseWorker.schedule(this, ExistingWorkPolicy.KEEP)
         }
         if (isEinkDisplay()) prefs.appTheme = AppCompatDelegate.MODE_NIGHT_NO
@@ -123,7 +124,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         initObservers(viewModel)
-        viewModel.getAppList()
+        // onResume loads the app list right after onCreate.
         registerShortcutCallback()
         setupOrientation()
 
@@ -140,7 +141,8 @@ class MainActivity : AppCompatActivity() {
             addAction(Intent.ACTION_PROFILE_UNAVAILABLE)
         }
         registerReceiver(profileReceiver, filter)
-        handleIntent(intent)
+        // On restore the system re-delivers the original intent; handle the Today request once.
+        if (savedInstanceState == null) handleIntent(intent)
     }
 
     override fun onStart() {

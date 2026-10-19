@@ -33,27 +33,32 @@ object HeldStoreCodec {
     }
 
     fun decode(raw: String?): List<HeldItem> {
-        if (raw.isNullOrBlank()) return emptyList()
         return try {
-            val array = JSONArray(raw)
-            val list = mutableListOf<HeldItem>()
-            for (i in 0 until array.length()) {
-                val obj = array.getJSONObject(i)
-                list.add(
-                    HeldItem(
-                        key = obj.getString("key"),
-                        pkg = obj.getString("pkg"),
-                        label = obj.optString("label", ""),
-                        title = obj.optString("title", ""),
-                        text = obj.optString("text", ""),
-                        postTime = obj.getLong("postTime")
-                    )
-                )
-            }
-            list
+            decodeStrict(raw)
         } catch (_: Exception) {
             emptyList()
         }
+    }
+
+    /** Throws on malformed input. Blank input is an empty list. */
+    fun decodeStrict(raw: String?): List<HeldItem> {
+        if (raw.isNullOrBlank()) return emptyList()
+        val array = JSONArray(raw)
+        val list = mutableListOf<HeldItem>()
+        for (i in 0 until array.length()) {
+            val obj = array.getJSONObject(i)
+            list.add(
+                HeldItem(
+                    key = obj.getString("key"),
+                    pkg = obj.getString("pkg"),
+                    label = obj.optString("label", ""),
+                    title = obj.optString("title", ""),
+                    text = obj.optString("text", ""),
+                    postTime = obj.getLong("postTime")
+                )
+            )
+        }
+        return list
     }
 }
 
@@ -92,8 +97,9 @@ class HeldStore(
 
     fun clear(pkg: String) {
         synchronized(LOCK) {
-            val remaining = loadAll().filter { it.pkg != pkg }
-            saveAll(remaining)
+            val current = loadAll()
+            val remaining = current.filter { it.pkg != pkg }
+            if (remaining.size != current.size) saveAll(remaining)
         }
     }
 
@@ -105,17 +111,29 @@ class HeldStore(
 
     fun pruneOlderThan(cutoffMillis: Long = System.currentTimeMillis() - FORTY_EIGHT_HOURS_MS) {
         synchronized(LOCK) {
-            val remaining = loadAll().filter { it.postTime >= cutoffMillis }
-            saveAll(remaining)
+            val current = loadAll()
+            val remaining = current.filter { it.postTime >= cutoffMillis }
+            // Render calls this on the main thread; skip the disk write when nothing was pruned.
+            if (remaining.size != current.size) saveAll(remaining)
         }
     }
 
     private fun loadAll(): List<HeldItem> {
         if (!file.exists() || !file.isFile) return emptyList()
         return try {
-            HeldStoreCodec.decode(file.readText(Charsets.UTF_8))
+            HeldStoreCodec.decodeStrict(file.readText(Charsets.UTF_8))
         } catch (_: Exception) {
+            quarantineCorruptFile()
             emptyList()
+        }
+    }
+
+    private fun quarantineCorruptFile() {
+        val corrupt = File(filesDir, "$FILE_NAME.corrupt")
+        try {
+            Files.move(file.toPath(), corrupt.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        } catch (_: Exception) {
+            // Keep the unreadable file in place if it cannot be moved.
         }
     }
 
