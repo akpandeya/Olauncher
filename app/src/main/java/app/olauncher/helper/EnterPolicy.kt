@@ -10,15 +10,27 @@ object EnterPolicy {
         object WebSearch : Action()
     }
 
+    /**
+     * [topApp] is the best app match below any result rows. Answer rows (calc, unit,
+     * currency, dial) take Enter; lookup rows (contact, event) only take it when no
+     * app scores >= 60, so contacts search never steals Enter from a matching app.
+     */
     fun resolve(
         query: String?,
         topItem: AppModel?,
-        topScore: Int?
+        topScore: Int?,
+        topApp: AppModel? = null,
     ): Action {
         if (query.isNullOrEmpty()) return Action.WebSearch
         if (query.startsWith("!")) return Action.WebSearch
 
         if (topItem is AppModel.Result) {
+            val isLookupRow = topItem.action is AppModel.Result.Action.Contact ||
+                topItem.action is AppModel.Result.Action.Event
+            if (isLookupRow && topApp != null) {
+                val appScore = topScore ?: AppMatcher.score(topApp.appLabel, query) ?: 0
+                if (appScore >= AppMatcher.SCORE_SUBSTRING) return Action.LaunchApp(topApp)
+            }
             return Action.ExecuteResult(topItem)
         }
 
