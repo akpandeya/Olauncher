@@ -13,12 +13,14 @@ import app.olauncher.databinding.CardWellbeingBinding
 import app.olauncher.helper.appUsagePermissionGranted
 import app.olauncher.ui.pause.PauseFormatting
 import app.olauncher.ui.today.TodayCard
+import app.olauncher.ui.today.TodayOrder
 import app.olauncher.wellbeing.Nudges
 import app.olauncher.wellbeing.UsageRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import java.time.ZonedDateTime
 
 object WellbeingCardLogic {
 
@@ -98,6 +100,9 @@ object WellbeingCard : TodayCard {
             usagePermissionGranted = context.appUsagePermissionGranted(),
         )
     }
+
+    override fun priority(context: Context, now: ZonedDateTime): Int =
+        TodayOrder.wellbeingPriority(now.hour, super.priority(context, now))
 
     override fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View {
         cardFragment = fragment

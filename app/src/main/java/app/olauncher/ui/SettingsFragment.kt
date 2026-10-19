@@ -289,6 +289,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateSearchEngine()
         populateSwipeApps()
         populateTodayCards()
+        populateTodayOrder()
         populateWeather()
         populateNudgeWater()
         populateNudgeWalk()
@@ -409,6 +410,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
 
             // Today
             RuntimeSettingsRow(SettingsSections.KEY_TODAY, binding.todayCardsLayout, binding.todayCardsTitle, R.id.todayCards),
+            RuntimeSettingsRow(SettingsSections.KEY_TODAY, binding.todayOrderLayout, binding.todayOrderTitle, R.id.todayOrder),
             RuntimeSettingsRow(SettingsSections.KEY_TODAY, binding.weatherLayout, binding.weatherTitle, R.id.weather),
 
             // Deutsch
@@ -529,7 +531,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             binding.nudgesSection.isVisible = nudgeIds.any { it in matchingIds }
         }
 
-        binding.todaySection.isVisible = (R.id.todayCards in matchingIds)
+        binding.todaySection.isVisible = (R.id.todayCards in matchingIds || R.id.todayOrder in matchingIds)
         binding.glanceSection.isVisible = (R.id.weather in matchingIds)
         binding.deutschSection.isVisible = runtimeRows.any { it.sectionKey == SettingsSections.KEY_DEUTSCH && it.viewId in matchingIds }
         binding.appearanceSection.isVisible = runtimeRows.any { it.sectionKey == SettingsSections.KEY_APPEARANCE && it.viewId in matchingIds }
@@ -676,6 +678,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.swipeLeftApp -> showAppListIfEnabled(Constants.FLAG_SET_SWIPE_LEFT_APP)
             R.id.swipeRightApp, R.id.swipeRightLayout -> showSwipeRightMenu(binding.swipeRightApp)
             R.id.todayCards, R.id.todayCardsTitle, R.id.todayCardsLayout -> showTodayCardsDialog()
+            R.id.todayOrder, R.id.todayOrderTitle, R.id.todayOrderLayout -> toggleTodayOrder()
             R.id.weatherTitle, R.id.weatherLayout -> showCitySearchDialog()
             R.id.weather -> {
                 if (prefs.weatherEnabled) {
@@ -824,6 +827,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.todayCards.setOnClickListener(this)
         binding.todayCardsTitle.setOnClickListener(this)
         binding.todayCardsLayout.setOnClickListener(this)
+        binding.todayOrder.setOnClickListener(this)
+        binding.todayOrderTitle.setOnClickListener(this)
+        binding.todayOrderLayout.setOnClickListener(this)
         binding.weather.setOnClickListener(this)
         binding.weatherTitle.setOnClickListener(this)
         binding.weatherLayout.setOnClickListener(this)
@@ -2843,6 +2849,17 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             binding.swipeRightApp.setTextColor(requireContext().getColorFromAttr(R.attr.primaryColorTrans50))
         else
             binding.swipeRightApp.setTextColor(requireContext().getColorFromAttr(R.attr.primaryColor))
+    }
+
+    private fun toggleTodayOrder() {
+        prefs.todayOrderSmart = !prefs.todayOrderSmart
+        populateTodayOrder()
+    }
+
+    private fun populateTodayOrder() {
+        binding.todayOrder.text = getString(
+            if (prefs.todayOrderSmart) R.string.today_order_smart else R.string.today_order_fixed
+        )
     }
 
     private fun populateTodayCards() {

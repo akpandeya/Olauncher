@@ -22,12 +22,14 @@ import app.olauncher.glance.CalendarRepository
 import app.olauncher.glance.NextUpFormatting
 import app.olauncher.glance.NextUpLabels
 import app.olauncher.ui.today.TodayCard
+import app.olauncher.ui.today.TodayOrder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.ZoneId
+import java.time.ZonedDateTime
 
 object NextUpCard : TodayCard {
 
@@ -54,6 +56,20 @@ object NextUpCard : TodayCard {
             context,
             Manifest.permission.READ_CALENDAR
         ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    override fun hasContent(context: Context): Boolean {
+        val now = nowSupplier().toEpochMilli()
+        return getCalendarRepository(context).events(now, now + 48 * 3_600_000L).any { it.endMillis > now }
+    }
+
+    override fun priority(context: Context, now: ZonedDateTime): Int {
+        val nowMillis = now.toInstant().toEpochMilli()
+        val soonest = getCalendarRepository(context)
+            .events(nowMillis, nowMillis + TodayOrder.NEXT_UP_WINDOW_MILLIS)
+            .filter { !it.allDay && it.startMillis >= nowMillis }
+            .minOfOrNull { it.startMillis }
+        return TodayOrder.nextUpPriority(soonest, nowMillis, super.priority(context, now))
     }
 
     override fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View {

@@ -16,8 +16,10 @@ import app.olauncher.databinding.ItemHeldBinding
 import app.olauncher.quiet.HeldItem
 import app.olauncher.quiet.HeldStore
 import app.olauncher.ui.today.TodayCard
+import app.olauncher.ui.today.TodayOrder
 import java.time.Instant
 import java.time.ZoneId
+import java.time.ZonedDateTime
 import java.util.Locale
 
 data class HeldAppSummary(
@@ -112,6 +114,11 @@ object HeldCard : TodayCard {
         val now = nowSupplier()
         val hasHeldItems = HeldCardLogic.groupAndSort(getStore(context).all(), now).isNotEmpty()
         return HeldCardLogic.isAvailable(hasHeldItems)
+    }
+
+    override fun priority(context: Context, now: ZonedDateTime): Int {
+        val anyHeld = HeldCardLogic.groupAndSort(getStore(context).all(), now.toInstant().toEpochMilli()).isNotEmpty()
+        return TodayOrder.heldPriority(anyHeld, super.priority(context, now))
     }
 
     override fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View {

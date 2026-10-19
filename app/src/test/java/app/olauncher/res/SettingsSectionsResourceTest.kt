@@ -290,7 +290,7 @@ class SettingsSectionsResourceTest {
             assertTrue(sectionIds[5].contains("todayCardsLayout"))
             assertEquals(
                 "Today section holds todayCardsLayout only",
-                setOf("todaySection", "todayCardsLayout", "todayCardsTitle", "todayCards"),
+                setOf("todaySection", "todayCardsLayout", "todayCardsTitle", "todayCards", "todayOrderLayout", "todayOrderTitle", "todayOrder"),
                 sectionIds[5]
             )
 
@@ -594,6 +594,9 @@ class SettingsSectionsResourceTest {
             "todayCards",
             "todayCardsLayout",
             "todayCardsTitle",
+            "todayOrder",
+            "todayOrderLayout",
+            "todayOrderTitle",
             "todaySection",
             "toggleLock",
             "weather",
