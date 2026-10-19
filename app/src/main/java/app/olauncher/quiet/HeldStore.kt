@@ -33,8 +33,17 @@ object HeldStoreCodec {
     }
 
     fun decode(raw: String?): List<HeldItem> {
-        if (raw.isNullOrBlank()) return emptyList()
         return try {
+            decodeStrict(raw)
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    /** Throws on malformed input. Blank input is an empty list. */
+    fun decodeStrict(raw: String?): List<HeldItem> {
+        if (raw.isNullOrBlank()) return emptyList()
+        run {
             val array = JSONArray(raw)
             val list = mutableListOf<HeldItem>()
             for (i in 0 until array.length()) {
@@ -50,9 +59,7 @@ object HeldStoreCodec {
                     )
                 )
             }
-            list
-        } catch (_: Exception) {
-            emptyList()
+            return list
         }
     }
 }
@@ -113,9 +120,19 @@ class HeldStore(
     private fun loadAll(): List<HeldItem> {
         if (!file.exists() || !file.isFile) return emptyList()
         return try {
-            HeldStoreCodec.decode(file.readText(Charsets.UTF_8))
+            HeldStoreCodec.decodeStrict(file.readText(Charsets.UTF_8))
         } catch (_: Exception) {
+            quarantineCorruptFile()
             emptyList()
+        }
+    }
+
+    private fun quarantineCorruptFile() {
+        val corrupt = File(filesDir, "$FILE_NAME.corrupt")
+        try {
+            Files.move(file.toPath(), corrupt.toPath(), StandardCopyOption.REPLACE_EXISTING)
+        } catch (_: Exception) {
+            // Keep the unreadable file in place if it cannot be moved.
         }
     }
 
