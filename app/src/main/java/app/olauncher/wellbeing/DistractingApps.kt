@@ -48,7 +48,12 @@ object DistractingApps {
         pauseEnabled: Boolean,
         distractingApps: Set<String>,
         bypassPackage: String? = null,
+        snoozeUntil: Long = 0L,
+        appSnoozes: Map<String, Long> = emptyMap(),
+        now: Long = 0L,
     ): Boolean {
+        if (PauseSnooze.isActive(snoozeUntil, now)) return false
+        if (pkg != null && PauseSnooze.isAppSnoozed(pkg, appSnoozes, now)) return false
         return pauseEnabled && pkg != null && pkg in distractingApps && pkg != bypassPackage
     }
 }

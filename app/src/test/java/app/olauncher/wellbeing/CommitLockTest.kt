@@ -224,4 +224,18 @@ class CommitLockRestoreTest {
         assertEquals(app.olauncher.data.Prefs.PAUSE_ASK_WHY, FrictionSettings.KEY_ASK_WHY)
         assertEquals(app.olauncher.data.Prefs.COMMIT_LOCK, FrictionSettings.KEY_COMMIT_LOCK)
     }
+
+    @Test
+    fun `snooze is loosening and never tightening`() {
+        val change = FrictionChange.Snooze(1_000L)
+        assertTrue(CommitLock.isLoosening(change))
+        assertFalse(CommitLock.isTightening(change))
+    }
+
+    @Test
+    fun `snooze waits only when the commit lock is on`() {
+        val change = FrictionChange.Snooze(1_000L)
+        assertTrue(CommitLock.needsWait(true, change))
+        assertFalse(CommitLock.needsWait(false, change))
+    }
 }

@@ -17,6 +17,7 @@ import app.olauncher.wellbeing.Nudges
 import app.olauncher.wellbeing.PauseDay
 import app.olauncher.wellbeing.toDaySnapshot
 import app.olauncher.wellbeing.PauseLog
+import app.olauncher.wellbeing.PauseSnooze
 import app.olauncher.wellbeing.PauseLogStorage
 import app.olauncher.wellbeing.UsageSnapshotStore
 
@@ -78,6 +79,8 @@ class Prefs(context: Context) : PauseLogStorage {
         const val PAUSE_WHY_REPLY_TODAY = "PAUSE_WHY_REPLY_TODAY"
         const val PAUSE_WHY_LOOKUP_TODAY = "PAUSE_WHY_LOOKUP_TODAY"
         const val PAUSE_WHY_BORED_TODAY = "PAUSE_WHY_BORED_TODAY"
+        const val PAUSE_SNOOZE_UNTIL = "PAUSE_SNOOZE_UNTIL"
+        const val PAUSE_APP_SNOOZE = "PAUSE_APP_SNOOZE"
         const val COMMIT_LOCK = "COMMIT_LOCK"
         const val SEARCH_ENGINE = "SEARCH_ENGINE"
         const val SEARCH_ENGINE_CUSTOM_URL = "SEARCH_ENGINE_CUSTOM_URL"
@@ -580,6 +583,14 @@ class Prefs(context: Context) : PauseLogStorage {
     var pauseEscalate: Boolean
         get() = prefs.getBoolean(PAUSE_ESCALATE, false)
         set(value) = prefs.edit { putBoolean(PAUSE_ESCALATE, value).apply() }
+
+    var pauseSnoozeUntil: Long
+        get() = prefs.getLong(PAUSE_SNOOZE_UNTIL, 0L)
+        set(value) = prefs.edit { putLong(PAUSE_SNOOZE_UNTIL, value).apply() }
+
+    var pauseAppSnooze: Map<String, Long>
+        get() = PauseSnooze.decode(prefs.getStringSet(PAUSE_APP_SNOOZE, emptySet())?.toSet() ?: emptySet())
+        set(value) = prefs.edit { putStringSet(PAUSE_APP_SNOOZE, PauseSnooze.encode(value)).apply() }
 
     var pauseAskWhy: Boolean
         get() = prefs.getBoolean(PAUSE_ASK_WHY, false)
