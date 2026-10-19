@@ -151,4 +151,34 @@ class PhotoWallpaperMenuResourceTest {
             }
         }
     }
+
+    @Test
+    fun `home screen wallpaper menu strings are defined in main strings and not in other locales`() {
+        val defaultStringsFile = resolveFile("src/main/res/values/strings.xml")
+        val defaultStrings = loadStrings(defaultStringsFile)
+        assertEquals("Next wallpaper", defaultStrings["next_wallpaper"])
+        assertEquals("Previous wallpaper", defaultStrings["previous_wallpaper"])
+        assertEquals("Settings", defaultStrings["settings"])
+
+        val resDir = resolveDir("src/main/res")
+        val otherLocaleFiles = resDir.listFiles { dir ->
+            dir.isDirectory && dir.name.startsWith("values-")
+        }?.mapNotNull { dir ->
+            val stringsFile = File(dir, "strings.xml")
+            if (stringsFile.exists()) stringsFile else null
+        }.orEmpty()
+
+        assertTrue("Expected other locale directories", otherLocaleFiles.isNotEmpty())
+        val checkKeys = listOf(
+            "next_wallpaper",
+            "previous_wallpaper",
+            "settings",
+        )
+        for (file in otherLocaleFiles) {
+            val localizedStrings = loadStrings(file)
+            for (key in checkKeys) {
+                assertNull("$key should not be defined in ${file.parentFile?.name}", localizedStrings[key])
+            }
+        }
+    }
 }
