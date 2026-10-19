@@ -47,6 +47,7 @@ sealed class AppModel : Comparable<AppModel> {
                 val textToCopy: String get() = value
             }
             data class Dial(val number: String) : Action
+            data class Contact(val lookupUri: String) : Action
         }
 
         override val appLabel: String get() = text
