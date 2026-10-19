@@ -104,6 +104,8 @@ class Prefs(context: Context) : PauseLogStorage {
 
     private val FIRST_OPEN = "FIRST_OPEN"
     private val FIRST_OPEN_TIME = "FIRST_OPEN_TIME"
+    private val GESTURE_HINT_INDEX = "GESTURE_HINT_INDEX"
+    private val GESTURE_HINT_DAY = "GESTURE_HINT_DAY"
     private val FIRST_SETTINGS_OPEN = "FIRST_SETTINGS_OPEN"
     private val FIRST_HIDE = "FIRST_HIDE"
     private val USER_STATE = "USER_STATE"
@@ -249,6 +251,14 @@ class Prefs(context: Context) : PauseLogStorage {
     var firstOpen: Boolean
         get() = prefs.getBoolean(FIRST_OPEN, true)
         set(value) = prefs.edit { putBoolean(FIRST_OPEN, value).apply() }
+
+    var gestureHintIndex: Int
+        get() = prefs.getInt(GESTURE_HINT_INDEX, 0)
+        set(value) = prefs.edit { putInt(GESTURE_HINT_INDEX, value).apply() }
+
+    var gestureHintDay: Long
+        get() = prefs.getLong(GESTURE_HINT_DAY, 0L)
+        set(value) = prefs.edit { putLong(GESTURE_HINT_DAY, value).apply() }
 
     var firstOpenTime: Long
         get() = prefs.getLong(FIRST_OPEN_TIME, 0L)
