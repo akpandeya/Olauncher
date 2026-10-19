@@ -10,7 +10,6 @@ import app.olauncher.data.Prefs
 import app.olauncher.databinding.FragmentTodayBinding
 import app.olauncher.databinding.ItemTodayPanelBinding
 import app.olauncher.glance.HeroFormatting
-import app.olauncher.helper.dpToPx
 import app.olauncher.listener.OnSwipeTouchListener
 import app.olauncher.ui.BaseFragment
 import java.time.LocalDate
@@ -22,10 +21,6 @@ class TodayFragment : BaseFragment() {
     private val binding get() = _binding!!
     private lateinit var prefs: Prefs
     private val activeCards = mutableListOf<Pair<TodayCard, View>>()
-
-    private companion object {
-        const val BLUR_RADIUS_DP = 40
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -45,15 +40,8 @@ class TodayFragment : BaseFragment() {
 
     override fun onResume() {
         super.onResume()
-        applyWindowBlur(BLUR_RADIUS_DP.dpToPx())
         populateCards()
         activeCards.forEach { (card, cardView) -> card.onResume(cardView) }
-    }
-
-    override fun onPause() {
-        // Home must stay clear, so drop the blur as soon as Today leaves the screen.
-        applyWindowBlur(0)
-        super.onPause()
     }
 
     private fun initSwipeTouchListener() {
@@ -109,12 +97,6 @@ class TodayFragment : BaseFragment() {
         val today = LocalDate.now()
         binding.tvHeroDay.text = HeroFormatting.dayName(today, locale)
         binding.tvHeroDate.text = HeroFormatting.dateLine(today, locale)
-    }
-
-    private fun applyWindowBlur(radiusPx: Int) {
-        val activity = activity ?: return
-        if (radiusPx > 0 && !activity.windowManager.isCrossWindowBlurEnabled) return
-        activity.window.setBackgroundBlurRadius(radiusPx)
     }
 
     override fun onDestroyView() {
