@@ -40,6 +40,8 @@ import android.view.WindowInsets
 import android.widget.TextView
 import app.olauncher.helper.DrawerScrollHelper
 import app.olauncher.helper.HandSide
+import app.olauncher.helper.HomeSet
+import app.olauncher.helper.HomeSets
 import app.olauncher.ui.settings.SettingsRow
 import app.olauncher.ui.settings.SettingsRowAvailability
 import app.olauncher.ui.settings.SettingsSearch
@@ -251,6 +253,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         viewModel.isOlauncherDefault()
 
         binding.homeAppsNum.text = prefs.homeAppsNum.toString()
+        populateHomeSets()
         populatePhotoWallpaperText()
         populateKeyboardText()
         populateDrawerBottomSearch()
@@ -370,6 +373,12 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.dateTime.parent as View, getFirstTextView(binding.dateTime.parent as View), R.id.dateTime),
             RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.batteryModeLayout, binding.batteryModeTitle, R.id.batteryMode),
             RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.infoLineLayout, binding.infoLineTitle, R.id.infoLine),
+            RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.homeSetsLayout, binding.homeSetsTitle, R.id.homeSets),
+            RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.editMorningAppsLayout, binding.editMorningAppsTitle, R.id.editMorningAppsLayout),
+            RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.editEveningAppsLayout, binding.editEveningAppsTitle, R.id.editEveningAppsLayout),
+            RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.morningStartLayout, binding.morningStartTitle, R.id.morningStart),
+            RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.dayStartLayout, binding.dayStartTitle, R.id.dayStart),
+            RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.eveningStartLayout, binding.eveningStartTitle, R.id.eveningStart),
             RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.contextLineLayout, binding.contextLineTitle, R.id.contextLineValue),
             RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.alignment.parent as View, getFirstTextView(binding.alignment.parent as View), R.id.alignment),
             RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.swapSidesLayout, binding.swapSides, R.id.swapSides),
@@ -667,6 +676,12 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.dateTime -> showDateTimeMenu(view)
             R.id.batteryMode, R.id.batteryModeTitle, R.id.batteryModeLayout -> showBatteryModeMenu(binding.batteryMode)
             R.id.infoLine, R.id.infoLineTitle, R.id.infoLineLayout -> toggleInfoLine()
+            R.id.homeSets, R.id.homeSetsTitle, R.id.homeSetsLayout -> toggleHomeSets()
+            R.id.editMorningAppsTitle, R.id.editMorningAppsLayout -> showHomeSetSlotsDialog(HomeSet.MORNING)
+            R.id.editEveningAppsTitle, R.id.editEveningAppsLayout -> showHomeSetSlotsDialog(HomeSet.EVENING)
+            R.id.morningStart, R.id.morningStartTitle, R.id.morningStartLayout -> showHomeSetStartPicker(HomeSet.MORNING, R.string.morning_starts)
+            R.id.dayStart, R.id.dayStartTitle, R.id.dayStartLayout -> showHomeSetStartPicker(HomeSet.DAY, R.string.day_starts)
+            R.id.eveningStart, R.id.eveningStartTitle, R.id.eveningStartLayout -> showHomeSetStartPicker(HomeSet.EVENING, R.string.evening_starts)
             R.id.contextLineValue, R.id.contextLineTitle, R.id.contextLineLayout -> toggleContextLine()
             R.id.appThemeText -> showAppThemeMenu(view, showSystem = false)
             R.id.accent -> showAccentMenu(view)
@@ -821,6 +836,22 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.infoLine.setOnClickListener(this)
         binding.infoLineTitle.setOnClickListener(this)
         binding.infoLineLayout.setOnClickListener(this)
+        binding.homeSetsLayout.setOnClickListener(this)
+        binding.homeSetsTitle.setOnClickListener(this)
+        binding.editMorningAppsLayout.setOnClickListener(this)
+        binding.editMorningAppsTitle.setOnClickListener(this)
+        binding.editEveningAppsLayout.setOnClickListener(this)
+        binding.editEveningAppsTitle.setOnClickListener(this)
+        binding.morningStartLayout.setOnClickListener(this)
+        binding.morningStartTitle.setOnClickListener(this)
+        binding.dayStartLayout.setOnClickListener(this)
+        binding.dayStartTitle.setOnClickListener(this)
+        binding.eveningStartLayout.setOnClickListener(this)
+        binding.eveningStartTitle.setOnClickListener(this)
+        binding.homeSets.setOnClickListener(this)
+        binding.morningStart.setOnClickListener(this)
+        binding.dayStart.setOnClickListener(this)
+        binding.eveningStart.setOnClickListener(this)
         binding.contextLineValue.setOnClickListener(this)
         binding.contextLineTitle.setOnClickListener(this)
         binding.contextLineLayout.setOnClickListener(this)
@@ -1261,6 +1292,48 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                 else -> R.string.auto
             }
         )
+    }
+
+    private fun populateHomeSets() {
+        binding.homeSets.text = getString(if (prefs.homeSets) R.string.on else R.string.off)
+        binding.morningStart.text = formatMinutes(prefs.homeSetMorningStart)
+        binding.dayStart.text = formatMinutes(prefs.homeSetDayStart)
+        binding.eveningStart.text = formatMinutes(prefs.homeSetEveningStart)
+    }
+
+    private fun formatMinutes(minutes: Int): String =
+        String.format("%02d:%02d", minutes / 60, minutes % 60)
+
+    private fun toggleHomeSets() {
+        prefs.homeSets = !prefs.homeSets
+        populateHomeSets()
+        viewModel.refreshHome(false)
+    }
+
+    private fun showHomeSetStartPicker(set: HomeSet, @StringRes title: Int) {
+        val current = prefs.homeSetStart(set)
+        showTimePicker(title, current / 60, current % 60) { hour, minute ->
+            prefs.setHomeSetStart(set, HomeSets.minutesOfDay(hour, minute))
+            populateHomeSets()
+            viewModel.refreshHome(false)
+        }
+    }
+
+    private fun showHomeSetSlotsDialog(set: HomeSet) {
+        val num = prefs.homeAppsNum.coerceIn(0, HomeSets.MAX_SLOTS)
+        if (num == 0) {
+            requireContext().showToast(R.string.home_set_no_slots)
+            return
+        }
+        val empty = getString(R.string.home_set_slot_empty)
+        val labels = Array(num) { i ->
+            val name = prefs.getAppName(i + 1, set)
+            "${i + 1}. ${name.ifEmpty { empty }}"
+        }
+        AlertDialog.Builder(requireContext())
+            .setTitle(if (set == HomeSet.MORNING) R.string.edit_morning_apps else R.string.edit_evening_apps)
+            .setItems(labels) { _, which -> showAppListIfEnabled(HomeSets.flagFor(set, which + 1)) }
+            .show()
     }
 
     private fun toggleInfoLine() {

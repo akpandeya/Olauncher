@@ -20,6 +20,7 @@ object ArchivedAppsHelper {
     fun isPickerFlag(flag: Int): Boolean =
         flag in Constants.FLAG_SET_HOME_APP_1..Constants.FLAG_SET_WEATHER_APP
             || flag in Constants.FLAG_SET_SHORTCUT_1..Constants.FLAG_SET_SHORTCUT_12
+            || HomeSets.fromFlag(flag) != null
 
     fun filterForPicker(apps: List<AppModel>, flag: Int): List<AppModel> =
         if (isPickerFlag(flag)) {

@@ -75,6 +75,12 @@ object Constants {
     const val FLAG_SET_HOME_APP_7 = 7
     const val FLAG_SET_HOME_APP_8 = 8
 
+    // Home app sets: Morning and Evening slots (Day set uses FLAG_SET_HOME_APP_n)
+    const val FLAG_SET_MORNING_HOME_APP_1 = 41
+    const val FLAG_SET_MORNING_HOME_APP_8 = 48
+    const val FLAG_SET_EVENING_HOME_APP_1 = 51
+    const val FLAG_SET_EVENING_HOME_APP_8 = 58
+
     const val FLAG_SET_SWIPE_LEFT_APP = 11
     const val FLAG_SET_SWIPE_RIGHT_APP = 12
     const val FLAG_SET_CLOCK_APP = 13
