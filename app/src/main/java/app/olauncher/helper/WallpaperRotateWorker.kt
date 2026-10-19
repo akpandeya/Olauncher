@@ -22,7 +22,10 @@ class WallpaperRotateWorker(
         val count = prefs.photoWallpaperCount
         if (count <= 0) return@withContext Result.success()
 
-        PhotoWallpaper.rotateIfDue(prefs)
+        // runOnce (after picking photos) must not rotate for ON_OPEN, or it would skip the first photo
+        if (RotationInterval.fromId(prefs.photoWallpaperInterval).rotatesFromWorker) {
+            PhotoWallpaper.rotateIfDue(prefs)
+        }
 
         val success = PhotoWallpaper.applyCurrent(applicationContext, prefs)
         if (success) Result.success() else Result.retry()
