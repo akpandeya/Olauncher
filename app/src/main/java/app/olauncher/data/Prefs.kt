@@ -104,6 +104,7 @@ class Prefs(context: Context) : PauseLogStorage {
     private val PHOTO_WALLPAPER_INDEX = "PHOTO_WALLPAPER_INDEX"
     private val PHOTO_WALLPAPER_TARGET = "PHOTO_WALLPAPER_TARGET"
     private val PHOTO_WALLPAPER_LAST_DAY = "PHOTO_WALLPAPER_LAST_DAY"
+    private val PHOTO_WALLPAPER_HOME_MENU = "PHOTO_WALLPAPER_HOME_MENU"
     private val HOME_ALIGNMENT = "HOME_ALIGNMENT"
     private val HOME_BOTTOM_ALIGNMENT = "HOME_BOTTOM_ALIGNMENT"
     private val HOME_SHORTCUTS = "HOME_SHORTCUTS"
@@ -288,6 +289,10 @@ class Prefs(context: Context) : PauseLogStorage {
     var photoWallpaperLastDay: Int
         get() = prefs.getInt(PHOTO_WALLPAPER_LAST_DAY, 0)
         set(value) = prefs.edit { putInt(PHOTO_WALLPAPER_LAST_DAY, value).apply() }
+
+    var photoWallpaperHomeMenu: Boolean
+        get() = prefs.getBoolean(PHOTO_WALLPAPER_HOME_MENU, false)
+        set(value) = prefs.edit { putBoolean(PHOTO_WALLPAPER_HOME_MENU, value).apply() }
 
     var homeAppsNum: Int
         get() = prefs.getInt(HOME_APPS_NUM, 4)

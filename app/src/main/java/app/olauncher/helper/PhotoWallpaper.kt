@@ -20,6 +20,20 @@ object Rotation {
         if (today == lastDay) return null
         return ((index + 1) % count + count) % count
     }
+
+    fun previous(index: Int, count: Int): Int? {
+        if (count <= 0) return null
+        return ((index - 1) % count + count) % count
+    }
+
+    fun manualNext(index: Int, count: Int): Int? {
+        if (count <= 0) return null
+        return ((index + 1) % count + count) % count
+    }
+}
+
+object WallpaperHomeMenu {
+    fun isShown(enabled: Boolean, count: Int): Boolean = enabled && count > 0
 }
 
 object PhotoWallpaper {
@@ -75,6 +89,23 @@ object PhotoWallpaper {
             e.printStackTrace()
             false
         }
+    }
+
+    suspend fun stepManually(
+        context: Context,
+        prefs: Prefs,
+        forward: Boolean,
+    ): Boolean = withContext(Dispatchers.IO) {
+        val count = prefs.photoWallpaperCount
+        if (count <= 0) return@withContext false
+        val newIndex = if (forward) {
+            Rotation.manualNext(prefs.photoWallpaperIndex, count)
+        } else {
+            Rotation.previous(prefs.photoWallpaperIndex, count)
+        } ?: return@withContext false
+        prefs.photoWallpaperIndex = newIndex
+        prefs.photoWallpaperLastDay = today()
+        applyCurrent(context, prefs)
     }
 
     suspend fun savePickedPhotos(
