@@ -4,6 +4,12 @@ import java.io.File
 
 object PhotoSet {
 
+    enum class RowTapAction { OPEN_PICKER, SHOW_MENU }
+
+    /** What a tap on the Settings "Wallpaper photos" row does: pick photos when none are saved, else show the menu. */
+    fun rowTapAction(savedCount: Int): RowTapAction =
+        if (savedCount > 0) RowTapAction.SHOW_MENU else RowTapAction.OPEN_PICKER
+
     data class Rename(val from: Int, val to: Int)
 
     data class RemovalPlan(
