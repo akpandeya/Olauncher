@@ -123,6 +123,9 @@ class SettingsSectionsTest {
         assertEquals(SettingsSections.HOME, SettingsSections.findSectionByViewId(R.id.homeSection))
         assertEquals(SettingsSections.HOME, SettingsSections.findSectionByViewId(R.id.homeAppsNum))
         assertEquals(SettingsSections.HOME, SettingsSections.findSectionByViewId(R.id.dateTime))
+        assertEquals(SettingsSections.HOME, SettingsSections.findSectionByViewId(R.id.alignment))
+        assertEquals(SettingsSections.HOME, SettingsSections.findSectionByViewId(R.id.swapSides))
+        assertEquals(SettingsSections.HOME, SettingsSections.findSectionByViewId(R.id.swapSidesLayout))
 
         assertEquals(SettingsSections.SHORTCUTS, SettingsSections.findSectionByViewId(R.id.shortcutIconsSection))
         assertEquals(SettingsSections.SHORTCUTS, SettingsSections.findSectionByViewId(R.id.shortcutIconsOnOff))

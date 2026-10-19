@@ -299,8 +299,7 @@
                 <FrameLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
-                    android:layout_marginBottom="4dp">
+                    android:layout_marginTop="12dp">
 
                     <TextView
                         style="@style/TextSmall"
@@ -320,6 +319,24 @@
                         android:layout_marginEnd="4dp"
                         android:padding="8dp"
                         android:text="@string/left" />
+                </FrameLayout>
+
+                <FrameLayout
+                    android:id="@+id/swapSidesLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="4dp">
+
+                    <TextView
+                        android:id="@+id/swapSides"
+                        style="@style/TextSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:paddingVertical="8dp"
+                        android:text="@string/swap_sides"
+                        android:textColor="?attr/primaryColor" />
                 </FrameLayout>
 
             </LinearLayout>

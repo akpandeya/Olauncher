@@ -39,6 +39,7 @@ import androidx.core.widget.doAfterTextChanged
 import android.view.WindowInsets
 import android.widget.TextView
 import app.olauncher.helper.DrawerScrollHelper
+import app.olauncher.helper.HandSide
 import app.olauncher.ui.settings.SettingsRow
 import app.olauncher.ui.settings.SettingsRowAvailability
 import app.olauncher.ui.settings.SettingsSearch
@@ -340,6 +341,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.dateTime.parent as View, getFirstTextView(binding.dateTime.parent as View), R.id.dateTime),
             RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.batteryModeLayout, binding.batteryModeTitle, R.id.batteryMode),
             RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.alignment.parent as View, getFirstTextView(binding.alignment.parent as View), R.id.alignment),
+            RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.swapSidesLayout, binding.swapSides, R.id.swapSides),
 
             // Shortcuts
             RuntimeSettingsRow(SettingsSections.KEY_SHORTCUTS, binding.shortcutIconsOnOffLayout, binding.shortcutIconsOnOffTitle, R.id.shortcutIconsOnOff),
@@ -608,6 +610,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.searchEngine, R.id.searchEngineTitle, R.id.searchEngineLayout -> showSearchEngineMenu(binding.searchEngine)
             R.id.homeAppsNum -> showHomeAppsNumMenu(view)
             R.id.alignment -> showAlignmentMenu(view)
+            R.id.swapSides, R.id.swapSidesLayout -> swapSides()
             R.id.shortcutIconsOnOff, R.id.shortcutIconsOnOffTitle, R.id.shortcutIconsOnOffLayout -> toggleShortcutIcons()
             R.id.shortcutCount, R.id.shortcutCountTitle, R.id.shortcutCountLayout -> showShortcutCountDialog()
             R.id.shortcutSize, R.id.shortcutSizeTitle, R.id.shortcutSizeLayout -> showShortcutSizeDialog()
@@ -721,6 +724,8 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.quietReleaseTimesTitle.setOnClickListener(this)
         binding.quietReleaseTimesLayout.setOnClickListener(this)
         binding.alignment.setOnClickListener(this)
+        binding.swapSides.setOnClickListener(this)
+        binding.swapSidesLayout.setOnClickListener(this)
         binding.shortcutIconsOnOff.setOnClickListener(this)
         binding.shortcutIconsOnOffTitle.setOnClickListener(this)
         binding.shortcutIconsOnOffLayout.setOnClickListener(this)
@@ -2458,6 +2463,14 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             Gravity.CENTER -> binding.alignment.text = getString(R.string.center)
             Gravity.END -> binding.alignment.text = getString(R.string.right)
         }
+    }
+
+    private fun swapSides() {
+        val layout = HandSide.swap(prefs.shortcutSideStart, prefs.homeAlignment)
+        prefs.shortcutSideStart = layout.shortcutSideStart
+        viewModel.updateHomeAlignment(layout.alignment)
+        populateAlignment()
+        populateShortcutIcons()
     }
 
     private fun toggleShortcutIcons() {
