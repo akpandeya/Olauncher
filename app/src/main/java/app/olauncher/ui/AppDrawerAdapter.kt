@@ -8,6 +8,7 @@ import android.text.Spannable
 import android.text.SpannableString
 import android.text.TextWatcher
 import android.text.style.ForegroundColorSpan
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -294,7 +295,7 @@ class AppDrawerAdapter(
             otherProfileIndicator.visibility = View.GONE
             appTitle.visibility = View.VISIBLE
             appTitle.text = result.text
-            appTitle.gravity = appLabelGravity
+            appTitle.gravity = appLabelGravity or Gravity.CENTER_VERTICAL
             appTitle.setOnClickListener { clickListener(result) }
             appTitle.setOnLongClickListener(null)
             root.setOnClickListener { clickListener(result) }
@@ -355,7 +356,7 @@ class AppDrawerAdapter(
             } else {
                 appTitle.text = formattedTitle
             }
-            appTitle.gravity = appLabelGravity
+            appTitle.gravity = appLabelGravity or Gravity.CENTER_VERTICAL
             otherProfileIndicator.isVisible = appModel.user != myUserHandle
 
             appTitle.setOnClickListener { clickListener(appModel) }

@@ -99,4 +99,22 @@ class PauseLayoutResourceTest {
         val strings = loadStrings()
         assertEquals("Open settings", strings["open_settings"])
     }
+
+    @Test
+    fun `fragment_pause why choices have minHeight 48dp`() {
+        val file = resolveFile("src/main/res/layout/fragment_pause.xml")
+        val doc = parseXml(file)
+        val allNodes = doc.getElementsByTagName("TextView")
+        val choices = setOf("choiceReply", "choiceLookup", "choiceBored")
+        var foundCount = 0
+        for (i in 0 until allNodes.length) {
+            val element = allNodes.item(i) as Element
+            val id = element.getAttribute("android:id").substringAfterLast("/")
+            if (id in choices) {
+                assertEquals("48dp", element.getAttribute("android:minHeight"))
+                foundCount++
+            }
+        }
+        assertEquals(3, foundCount)
+    }
 }

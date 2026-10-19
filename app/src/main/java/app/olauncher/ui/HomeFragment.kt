@@ -47,6 +47,7 @@ import app.olauncher.helper.BatteryFormatting
 import app.olauncher.helper.DefaultLauncherCheck
 import app.olauncher.helper.GermanTime
 import app.olauncher.helper.Haptics
+import app.olauncher.helper.TouchTarget
 import app.olauncher.helper.appUsagePermissionGranted
 import app.olauncher.helper.dpToPx
 import app.olauncher.helper.expandNotificationDrawer
@@ -391,12 +392,14 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         val count = getFittingShortcutCount()
         val viewSizeDp = ShortcutSize.viewSizeDp(prefs.shortcutSizeStep)
         val viewSizePx = viewSizeDp.dpToPx()
+        val extraPaddingPx = TouchTarget.extraPaddingPx(viewSizePx, TouchTarget.MIN_TARGET_DP.dpToPx())
+        val targetSizePx = viewSizePx + (2 * extraPaddingPx)
         binding.shortcutsLayout.removeAllViews()
         for (slot in 1..count) {
             val imageView = ImageView(context).apply {
                 layoutParams = LinearLayout.LayoutParams(
-                    viewSizePx,
-                    viewSizePx,
+                    targetSizePx,
+                    targetSizePx,
                 )
                 val typedValue = TypedValue()
                 context.theme.resolveAttribute(android.R.attr.selectableItemBackgroundBorderless, typedValue, true)
@@ -424,7 +427,9 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     private fun populateShortcuts() {
         val context = context ?: return
         val count = getFittingShortcutCount()
-        val expectedViewSizePx = ShortcutSize.viewSizeDp(prefs.shortcutSizeStep).dpToPx()
+        val viewSizePx = ShortcutSize.viewSizeDp(prefs.shortcutSizeStep).dpToPx()
+        val extraPaddingPx = TouchTarget.extraPaddingPx(viewSizePx, TouchTarget.MIN_TARGET_DP.dpToPx())
+        val expectedViewSizePx = viewSizePx + (2 * extraPaddingPx)
         val firstChild = binding.shortcutsLayout.getChildAt(0)
         val currentViewSizePx = firstChild?.layoutParams?.width ?: 0
         if (binding.shortcutsLayout.childCount != count || (count > 0 && currentViewSizePx != expectedViewSizePx)) {
@@ -441,7 +446,9 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     private fun bindShortcutIcon(context: Context, view: ImageView, slot: Int) {
         val viewSizeDp = ShortcutSize.viewSizeDp(prefs.shortcutSizeStep)
         val (drawable, paddingPx, isAppIcon) = ShortcutIconRenderer.render(context, slot, prefs, viewSizeDp)
-        view.setPadding(paddingPx, paddingPx, paddingPx, paddingPx)
+        val extraPaddingPx = TouchTarget.extraPaddingPx(viewSizeDp.dpToPx(), TouchTarget.MIN_TARGET_DP.dpToPx())
+        val totalPaddingPx = paddingPx + extraPaddingPx
+        view.setPadding(totalPaddingPx, totalPaddingPx, totalPaddingPx, totalPaddingPx)
         view.setImageDrawable(drawable)
         view.contentDescription = ShortcutIconRenderer.getLabel(context, slot, prefs, isAppIcon)
         // Extra slots (7..MAX_SHORTCUT_SLOTS) show a faint placeholder until an app icon resolves
