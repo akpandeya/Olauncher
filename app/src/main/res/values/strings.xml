@@ -480,4 +480,12 @@
     <string name="added_to_home">Added to home</string>
     <string name="already_on_home">Already on home screen</string>
     <string name="home_screen_full">Home screen is full</string>
+    <string name="app_sets">App sets</string>
+    <string name="edit_morning_apps">Edit morning apps</string>
+    <string name="edit_evening_apps">Edit evening apps</string>
+    <string name="morning_starts">Morning starts</string>
+    <string name="day_starts">Day starts</string>
+    <string name="evening_starts">Evening starts</string>
+    <string name="home_set_slot_empty">empty</string>
+    <string name="home_set_no_slots">Set apps on home screen to at least 1 first</string>
 </resources>

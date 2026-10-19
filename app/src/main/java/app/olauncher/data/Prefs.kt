@@ -7,6 +7,10 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.edit
 
 import java.util.Locale
+import app.olauncher.helper.HomeSet
+import app.olauncher.helper.HomeSetStarts
+import app.olauncher.helper.HomeSets
+import app.olauncher.helper.HomeSlotField
 import app.olauncher.helper.RecentApp
 import app.olauncher.helper.RecentApps
 import app.olauncher.helper.RotationInterval
@@ -39,6 +43,11 @@ class Prefs(context: Context) : PauseLogStorage {
 
         fun defaultWeatherUnit(country: String = Locale.getDefault().country): String =
             if (country == "US") WEATHER_UNIT_F else WEATHER_UNIT_C
+
+        const val HOME_SETS = "HOME_SETS"
+        const val HOME_SET_MORNING_START = "HOME_SET_MORNING_START"
+        const val HOME_SET_DAY_START = "HOME_SET_DAY_START"
+        const val HOME_SET_EVENING_START = "HOME_SET_EVENING_START"
 
         const val DRAWER_BOTTOM_SEARCH = "DRAWER_BOTTOM_SEARCH"
         const val SWIPE_RIGHT_ACTION_TODAY = 0
@@ -970,89 +979,23 @@ class Prefs(context: Context) : PauseLogStorage {
         get() = prefs.getBoolean(IS_SHORTCUT_SWIPE_RIGHT, false)
         set(value) = prefs.edit { putBoolean(IS_SHORTCUT_SWIPE_RIGHT, value) }
 
-    fun getAppName(location: Int): String {
-        return when (location) {
-            1 -> prefs.getString(APP_NAME_1, "").toString()
-            2 -> prefs.getString(APP_NAME_2, "").toString()
-            3 -> prefs.getString(APP_NAME_3, "").toString()
-            4 -> prefs.getString(APP_NAME_4, "").toString()
-            5 -> prefs.getString(APP_NAME_5, "").toString()
-            6 -> prefs.getString(APP_NAME_6, "").toString()
-            7 -> prefs.getString(APP_NAME_7, "").toString()
-            8 -> prefs.getString(APP_NAME_8, "").toString()
-            else -> ""
-        }
-    }
+    fun getAppName(location: Int, set: HomeSet = activeHomeSet()): String =
+        if (location in 1..HomeSets.MAX_SLOTS) prefs.getString(HomeSets.slotKey(set, HomeSlotField.NAME, location), "").toString() else ""
 
-    fun getAppPackage(location: Int): String {
-        return when (location) {
-            1 -> prefs.getString(APP_PACKAGE_1, "").toString()
-            2 -> prefs.getString(APP_PACKAGE_2, "").toString()
-            3 -> prefs.getString(APP_PACKAGE_3, "").toString()
-            4 -> prefs.getString(APP_PACKAGE_4, "").toString()
-            5 -> prefs.getString(APP_PACKAGE_5, "").toString()
-            6 -> prefs.getString(APP_PACKAGE_6, "").toString()
-            7 -> prefs.getString(APP_PACKAGE_7, "").toString()
-            8 -> prefs.getString(APP_PACKAGE_8, "").toString()
-            else -> ""
-        }
-    }
+    fun getAppPackage(location: Int, set: HomeSet = activeHomeSet()): String =
+        if (location in 1..HomeSets.MAX_SLOTS) prefs.getString(HomeSets.slotKey(set, HomeSlotField.PACKAGE, location), "").toString() else ""
 
-    fun getAppActivityClassName(location: Int): String {
-        return when (location) {
-            1 -> prefs.getString(APP_ACTIVITY_CLASS_NAME_1, "").toString()
-            2 -> prefs.getString(APP_ACTIVITY_CLASS_NAME_2, "").toString()
-            3 -> prefs.getString(APP_ACTIVITY_CLASS_NAME_3, "").toString()
-            4 -> prefs.getString(APP_ACTIVITY_CLASS_NAME_4, "").toString()
-            5 -> prefs.getString(APP_ACTIVITY_CLASS_NAME_5, "").toString()
-            6 -> prefs.getString(APP_ACTIVITY_CLASS_NAME_6, "").toString()
-            7 -> prefs.getString(APP_ACTIVITY_CLASS_NAME_7, "").toString()
-            8 -> prefs.getString(APP_ACTIVITY_CLASS_NAME_8, "").toString()
-            else -> ""
-        }
-    }
+    fun getAppActivityClassName(location: Int, set: HomeSet = activeHomeSet()): String =
+        if (location in 1..HomeSets.MAX_SLOTS) prefs.getString(HomeSets.slotKey(set, HomeSlotField.ACTIVITY, location), "").toString() else ""
 
-    fun getAppUser(location: Int): String {
-        return when (location) {
-            1 -> prefs.getString(APP_USER_1, "").toString()
-            2 -> prefs.getString(APP_USER_2, "").toString()
-            3 -> prefs.getString(APP_USER_3, "").toString()
-            4 -> prefs.getString(APP_USER_4, "").toString()
-            5 -> prefs.getString(APP_USER_5, "").toString()
-            6 -> prefs.getString(APP_USER_6, "").toString()
-            7 -> prefs.getString(APP_USER_7, "").toString()
-            8 -> prefs.getString(APP_USER_8, "").toString()
-            else -> ""
-        }
-    }
+    fun getAppUser(location: Int, set: HomeSet = activeHomeSet()): String =
+        if (location in 1..HomeSets.MAX_SLOTS) prefs.getString(HomeSets.slotKey(set, HomeSlotField.USER, location), "").toString() else ""
 
-    fun getShortcutId(location: Int): String {
-        return when (location) {
-            1 -> shortcutId1
-            2 -> shortcutId2
-            3 -> shortcutId3
-            4 -> shortcutId4
-            5 -> shortcutId5
-            6 -> shortcutId6
-            7 -> shortcutId7
-            8 -> shortcutId8
-            else -> ""
-        }
-    }
+    fun getShortcutId(location: Int, set: HomeSet = activeHomeSet()): String =
+        if (location in 1..HomeSets.MAX_SLOTS) prefs.getString(HomeSets.slotKey(set, HomeSlotField.SHORTCUT_ID, location), "").toString() else ""
 
-    fun getIsShortcut(location: Int): Boolean {
-        return when (location) {
-            1 -> isShortcut1
-            2 -> isShortcut2
-            3 -> isShortcut3
-            4 -> isShortcut4
-            5 -> isShortcut5
-            6 -> isShortcut6
-            7 -> isShortcut7
-            8 -> isShortcut8
-            else -> false
-        }
-    }
+    fun getIsShortcut(location: Int, set: HomeSet = activeHomeSet()): Boolean =
+        location in 1..HomeSets.MAX_SLOTS && prefs.getBoolean(HomeSets.slotKey(set, HomeSlotField.IS_SHORTCUT, location), false)
 
     fun setAppActivityClassName(location: Int, activityClassName: String) {
         when (location) {
@@ -1067,9 +1010,90 @@ class Prefs(context: Context) : PauseLogStorage {
         }
     }
 
+    // Home app sets (Morning / Day / Evening)
+    var homeSets: Boolean
+        get() = prefs.getBoolean(HOME_SETS, false)
+        set(value) = prefs.edit { putBoolean(HOME_SETS, value) }
+
+    var homeSetMorningStart: Int
+        get() = prefs.getInt(HOME_SET_MORNING_START, HomeSets.DEFAULT_MORNING_START)
+        set(value) = prefs.edit { putInt(HOME_SET_MORNING_START, HomeSets.normalize(value)) }
+
+    var homeSetDayStart: Int
+        get() = prefs.getInt(HOME_SET_DAY_START, HomeSets.DEFAULT_DAY_START)
+        set(value) = prefs.edit { putInt(HOME_SET_DAY_START, HomeSets.normalize(value)) }
+
+    var homeSetEveningStart: Int
+        get() = prefs.getInt(HOME_SET_EVENING_START, HomeSets.DEFAULT_EVENING_START)
+        set(value) = prefs.edit { putInt(HOME_SET_EVENING_START, HomeSets.normalize(value)) }
+
+    fun homeSetStarts(): HomeSetStarts =
+        HomeSetStarts(homeSetMorningStart, homeSetDayStart, homeSetEveningStart)
+
+    fun homeSetStart(set: HomeSet): Int = homeSetStarts().startOf(set)
+
+    fun setHomeSetStart(set: HomeSet, minutes: Int) {
+        when (set) {
+            HomeSet.MORNING -> homeSetMorningStart = minutes
+            HomeSet.DAY -> homeSetDayStart = minutes
+            HomeSet.EVENING -> homeSetEveningStart = minutes
+        }
+    }
+
+    fun homeSetHasApps(set: HomeSet): Boolean {
+        val num = homeAppsNum.coerceIn(0, HomeSets.MAX_SLOTS)
+        return (1..num).any { getAppPackage(it, set).isNotBlank() }
+    }
+
+    fun activeHomeSet(nowMinutes: Int = currentMinutesOfDay()): HomeSet =
+        HomeSets.active(nowMinutes, homeSetStarts(), homeSets) { homeSetHasApps(it) }
+
+    private fun currentMinutesOfDay(): Int {
+        val now = java.time.LocalTime.now()
+        return HomeSets.minutesOfDay(now.hour, now.minute)
+    }
+
+    fun setHomeSlot(
+        set: HomeSet,
+        slot: Int,
+        name: String,
+        packageName: String,
+        user: String,
+        activityClassName: String?,
+        isShortcut: Boolean,
+        shortcutId: String,
+    ) {
+        if (slot !in 1..HomeSets.MAX_SLOTS) return
+        prefs.edit {
+            putString(HomeSets.slotKey(set, HomeSlotField.NAME, slot), name)
+            putString(HomeSets.slotKey(set, HomeSlotField.PACKAGE, slot), packageName)
+            putString(HomeSets.slotKey(set, HomeSlotField.USER, slot), user)
+            putString(HomeSets.slotKey(set, HomeSlotField.ACTIVITY, slot), activityClassName)
+            putBoolean(HomeSets.slotKey(set, HomeSlotField.IS_SHORTCUT, slot), isShortcut)
+            putString(HomeSets.slotKey(set, HomeSlotField.SHORTCUT_ID, slot), shortcutId)
+        }
+    }
+
+    fun setHomeSlotName(set: HomeSet, slot: Int, name: String) {
+        if (slot !in 1..HomeSets.MAX_SLOTS) return
+        prefs.edit { putString(HomeSets.slotKey(set, HomeSlotField.NAME, slot), name) }
+    }
+
+    fun clearHomeSlotApp(set: HomeSet, slot: Int) {
+        if (slot !in 1..HomeSets.MAX_SLOTS) return
+        prefs.edit {
+            putString(HomeSets.slotKey(set, HomeSlotField.NAME, slot), "")
+            putString(HomeSets.slotKey(set, HomeSlotField.PACKAGE, slot), "")
+        }
+    }
+
     fun updateAppActivityClassName(packageName: String, activityClassName: String) {
-        for (i in 1..8) {
-            if (getAppPackage(i) == packageName) setAppActivityClassName(i, activityClassName)
+        for (set in HomeSet.values()) {
+            for (i in 1..HomeSets.MAX_SLOTS) {
+                if (getAppPackage(i, set) == packageName) {
+                    prefs.edit { putString(HomeSets.slotKey(set, HomeSlotField.ACTIVITY, i), activityClassName) }
+                }
+            }
         }
         if (clockAppPackage == packageName) clockAppClassName = activityClassName
         if (calendarAppPackage == packageName) calendarAppClassName = activityClassName

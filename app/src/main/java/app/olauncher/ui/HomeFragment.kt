@@ -42,6 +42,8 @@ import app.olauncher.R
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
+import app.olauncher.helper.HomeSet
+import app.olauncher.helper.HomeSets
 import app.olauncher.helper.Gesture
 import app.olauncher.helper.GestureHints
 import app.olauncher.data.ShortcutAction
@@ -104,6 +106,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     private lateinit var viewModel: MainViewModel
 
     private var timeTickReceiver: BroadcastReceiver? = null
+    private var renderedHomeSet: HomeSet? = null
     private var batteryReceiver: BroadcastReceiver? = null
     private var weatherPrefsListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
     private var latestScreenTime: String? = null
@@ -153,7 +156,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         viewModel.isOlauncherDefault()
         if (prefs.showStatusBar) showStatusBar()
         else hideStatusBar()
-        if (GermanTime.isWordsClockOn(prefs.germanEnabled, prefs.germanClock)) registerTimeTickReceiver()
+        if (prefs.homeSets || GermanTime.isWordsClockOn(prefs.germanEnabled, prefs.germanClock)) registerTimeTickReceiver()
         registerBatteryReceiver()
         startContextLine()
         if (prefs.photoWallpaperCount > 0 &&
@@ -276,14 +279,12 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
     override fun onLongClick(view: View): Boolean {
         when (view.id) {
-            R.id.homeApp1 -> showAppList(Constants.FLAG_SET_HOME_APP_1, prefs.appName1.isNotEmpty(), true)
-            R.id.homeApp2 -> showAppList(Constants.FLAG_SET_HOME_APP_2, prefs.appName2.isNotEmpty(), true)
-            R.id.homeApp3 -> showAppList(Constants.FLAG_SET_HOME_APP_3, prefs.appName3.isNotEmpty(), true)
-            R.id.homeApp4 -> showAppList(Constants.FLAG_SET_HOME_APP_4, prefs.appName4.isNotEmpty(), true)
-            R.id.homeApp5 -> showAppList(Constants.FLAG_SET_HOME_APP_5, prefs.appName5.isNotEmpty(), true)
-            R.id.homeApp6 -> showAppList(Constants.FLAG_SET_HOME_APP_6, prefs.appName6.isNotEmpty(), true)
-            R.id.homeApp7 -> showAppList(Constants.FLAG_SET_HOME_APP_7, prefs.appName7.isNotEmpty(), true)
-            R.id.homeApp8 -> showAppList(Constants.FLAG_SET_HOME_APP_8, prefs.appName8.isNotEmpty(), true)
+            R.id.homeApp1, R.id.homeApp2, R.id.homeApp3, R.id.homeApp4,
+            R.id.homeApp5, R.id.homeApp6, R.id.homeApp7, R.id.homeApp8 -> {
+                val slot = homeAppViews().indexOfFirst { it.id == view.id } + 1
+                val set = prefs.activeHomeSet()
+                showAppList(HomeSets.flagFor(set, slot), prefs.getAppName(slot, set).isNotEmpty(), true)
+            }
             R.id.clock, R.id.clockWords -> {
                 showAppList(Constants.FLAG_SET_CLOCK_APP)
                 prefs.clockAppPackage = ""
@@ -836,12 +837,18 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         binding.clockWords.text = GermanTime.words(hour, minute)
     }
 
+    private fun refreshHomeSetIfChanged() {
+        if (_binding == null) return
+        if (prefs.activeHomeSet() != renderedHomeSet) populateHomeScreen(false)
+    }
+
     private fun registerTimeTickReceiver() {
         if (timeTickReceiver == null) {
             timeTickReceiver = object : BroadcastReceiver() {
                 override fun onReceive(context: Context?, intent: Intent?) {
                     if (intent?.action == Intent.ACTION_TIME_TICK) {
-                        updateClockWords()
+                        if (GermanTime.isWordsClockOn(prefs.germanEnabled, prefs.germanClock)) updateClockWords()
+                        refreshHomeSetIfChanged()
                     }
                 }
             }
@@ -949,64 +956,31 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
         populateScreenTime()
 
+        val set = prefs.activeHomeSet()
+        renderedHomeSet = set
         val homeAppsNum = prefs.homeAppsNum
         if (homeAppsNum == 0) return
 
-        binding.homeApp1.visibility = View.VISIBLE
-        if (!setHomeAppText(binding.homeApp1, prefs.appName1, prefs.appPackage1, prefs.appUser1, prefs.isShortcut1, prefs.shortcutId1)) {
-            prefs.appName1 = ""
-            prefs.appPackage1 = ""
-        }
-        if (homeAppsNum == 1) return
-
-        binding.homeApp2.visibility = View.VISIBLE
-        if (!setHomeAppText(binding.homeApp2, prefs.appName2, prefs.appPackage2, prefs.appUser2, prefs.isShortcut2, prefs.shortcutId2)) {
-            prefs.appName2 = ""
-            prefs.appPackage2 = ""
-        }
-        if (homeAppsNum == 2) return
-
-        binding.homeApp3.visibility = View.VISIBLE
-        if (!setHomeAppText(binding.homeApp3, prefs.appName3, prefs.appPackage3, prefs.appUser3, prefs.isShortcut3, prefs.shortcutId3)) {
-            prefs.appName3 = ""
-            prefs.appPackage3 = ""
-        }
-        if (homeAppsNum == 3) return
-
-        binding.homeApp4.visibility = View.VISIBLE
-        if (!setHomeAppText(binding.homeApp4, prefs.appName4, prefs.appPackage4, prefs.appUser4, prefs.isShortcut4, prefs.shortcutId4)) {
-            prefs.appName4 = ""
-            prefs.appPackage4 = ""
-        }
-        if (homeAppsNum == 4) return
-
-        binding.homeApp5.visibility = View.VISIBLE
-        if (!setHomeAppText(binding.homeApp5, prefs.appName5, prefs.appPackage5, prefs.appUser5, prefs.isShortcut5, prefs.shortcutId5)) {
-            prefs.appName5 = ""
-            prefs.appPackage5 = ""
-        }
-        if (homeAppsNum == 5) return
-
-        binding.homeApp6.visibility = View.VISIBLE
-        if (!setHomeAppText(binding.homeApp6, prefs.appName6, prefs.appPackage6, prefs.appUser6, prefs.isShortcut6, prefs.shortcutId6)) {
-            prefs.appName6 = ""
-            prefs.appPackage6 = ""
-        }
-        if (homeAppsNum == 6) return
-
-        binding.homeApp7.visibility = View.VISIBLE
-        if (!setHomeAppText(binding.homeApp7, prefs.appName7, prefs.appPackage7, prefs.appUser7, prefs.isShortcut7, prefs.shortcutId7)) {
-            prefs.appName7 = ""
-            prefs.appPackage7 = ""
-        }
-        if (homeAppsNum == 7) return
-
-        binding.homeApp8.visibility = View.VISIBLE
-        if (!setHomeAppText(binding.homeApp8, prefs.appName8, prefs.appPackage8, prefs.appUser8, prefs.isShortcut8, prefs.shortcutId8)) {
-            prefs.appName8 = ""
-            prefs.appPackage8 = ""
+        val views = homeAppViews()
+        for (slot in 1..homeAppsNum.coerceAtMost(views.size)) {
+            val view = views[slot - 1]
+            view.visibility = View.VISIBLE
+            val shown = setHomeAppText(
+                view,
+                prefs.getAppName(slot, set),
+                prefs.getAppPackage(slot, set),
+                prefs.getAppUser(slot, set),
+                prefs.getIsShortcut(slot, set),
+                prefs.getShortcutId(slot, set),
+            )
+            if (!shown) prefs.clearHomeSlotApp(set, slot)
         }
     }
+
+    private fun homeAppViews(): List<TextView> = listOf(
+        binding.homeApp1, binding.homeApp2, binding.homeApp3, binding.homeApp4,
+        binding.homeApp5, binding.homeApp6, binding.homeApp7, binding.homeApp8,
+    )
 
     private fun setHomeAppText(
         textView: TextView,

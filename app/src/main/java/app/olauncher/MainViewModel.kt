@@ -14,6 +14,8 @@ import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
 import app.olauncher.helper.HomeAppHelper
+import app.olauncher.helper.HomeSet
+import app.olauncher.helper.HomeSets
 import app.olauncher.helper.SingleLiveEvent
 import app.olauncher.helper.formattedTimeSpent
 import app.olauncher.helper.getAppsList
@@ -110,14 +112,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
 
-            Constants.FLAG_SET_HOME_APP_1 -> saveHomeApp(appModel, 1)
-            Constants.FLAG_SET_HOME_APP_2 -> saveHomeApp(appModel, 2)
-            Constants.FLAG_SET_HOME_APP_3 -> saveHomeApp(appModel, 3)
-            Constants.FLAG_SET_HOME_APP_4 -> saveHomeApp(appModel, 4)
-            Constants.FLAG_SET_HOME_APP_5 -> saveHomeApp(appModel, 5)
-            Constants.FLAG_SET_HOME_APP_6 -> saveHomeApp(appModel, 6)
-            Constants.FLAG_SET_HOME_APP_7 -> saveHomeApp(appModel, 7)
-            Constants.FLAG_SET_HOME_APP_8 -> saveHomeApp(appModel, 8)
+            in Constants.FLAG_SET_HOME_APP_1..Constants.FLAG_SET_HOME_APP_8,
+            in Constants.FLAG_SET_MORNING_HOME_APP_1..Constants.FLAG_SET_MORNING_HOME_APP_8,
+            in Constants.FLAG_SET_EVENING_HOME_APP_1..Constants.FLAG_SET_EVENING_HOME_APP_8 ->
+                HomeSets.fromFlag(flag)?.let { saveHomeApp(appModel, it.slot, it.set) }
 
             Constants.FLAG_SET_SWIPE_LEFT_APP -> saveSwipeApp(appModel, isLeft = true)
             Constants.FLAG_SET_SWIPE_RIGHT_APP -> saveSwipeApp(appModel, isLeft = false)
@@ -163,9 +161,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private fun saveHomeApp(appModel: AppModel, position: Int) {
+    private fun saveHomeApp(appModel: AppModel, position: Int, set: HomeSet) {
         if (appModel.isArchived) return
-        HomeAppHelper.setHomeApp(prefs, position, appModel)
+        HomeAppHelper.setHomeApp(prefs, position, appModel, set)
         refreshHome(false)
     }
 
