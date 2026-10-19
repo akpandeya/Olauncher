@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="a11y_action_open_apps" type="id" />
+    <item name="a11y_action_open_today" type="id" />
+    <item name="a11y_action_settings" type="id" />
+    <item name="a11y_action_lock_screen" type="id" />
+    <item name="a11y_action_swipe_left_app" type="id" />
+    <item name="a11y_action_swipe_right_app" type="id" />
+</resources>
