@@ -315,6 +315,7 @@ class SettingsSectionsResourceTest {
             assertTrue(sectionIds[8].contains("boldFont"))
             assertTrue(sectionIds[8].contains("textSizeValue"))
             assertTrue(sectionIds[8].contains("haptics"))
+            assertTrue(sectionIds[8].contains("textContrastLayout"))
             assertFalse("autoShowKeyboard moved to Drawer", sectionIds[8].contains("autoShowKeyboard"))
             assertFalse("drawerBottomSearch moved to Drawer", sectionIds[8].contains("drawerBottomSearchLayout"))
 
@@ -575,6 +576,9 @@ class SettingsSectionsResourceTest {
             "swipeLeftApp",
             "swipeRightApp",
             "swipeRightLayout",
+            "textContrast",
+            "textContrastLayout",
+            "textContrastTitle",
             "textSizeValue",
             "thumblineHeaderCard",
             "todayCards",
