@@ -63,6 +63,7 @@ import app.olauncher.data.ShortcutSize
 import app.olauncher.ui.today.TodayCards
 import app.olauncher.databinding.DialogTextSizeBinding
 import app.olauncher.databinding.FragmentSettingsBinding
+import app.olauncher.helper.PhotoSet
 import app.olauncher.helper.PhotoWallpaper
 import app.olauncher.helper.WallpaperRotateWorker
 import app.olauncher.helper.appUsagePermissionGranted
@@ -1230,6 +1231,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     }
 
     private fun populatePhotoWallpaperText() {
+        if (_binding == null) return
         val count = prefs.photoWallpaperCount
         binding.photoWallpaper.text = when {
             count == 0 -> getString(R.string.off)
@@ -1257,11 +1259,90 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         ) { item ->
             when (item.itemId) {
                 R.id.photoWallpaperAdd -> openPhotoPickerForAdd()
+                R.id.photoWallpaperRemove -> showRemovePhotosDialog()
                 R.id.photoWallpaperChange -> openPhotoPicker()
                 R.id.photoWallpaperTarget -> cyclePhotoWallpaperTarget()
                 R.id.photoWallpaperNext -> nextPhotoNow()
                 R.id.photoWallpaperOff -> turnOffPhotoWallpaper()
             }
+        }
+    }
+
+    private fun showRemovePhotosDialog() {
+        val count = prefs.photoWallpaperCount
+        if (count <= 0) return
+
+        val currentIndex = prefs.photoWallpaperIndex.coerceIn(0, count - 1)
+        val labels = Array(count) { i ->
+            if (i == currentIndex) {
+                getString(R.string.photo_label_current, i + 1)
+            } else {
+                getString(R.string.photo_label, i + 1)
+            }
+        }
+        val checked = BooleanArray(count)
+
+        val builder = AlertDialog.Builder(requireContext())
+            .setTitle(R.string.remove_photos)
+            .setMultiChoiceItems(labels, checked) { _, which, isChecked ->
+                checked[which] = isChecked
+            }
+            .setPositiveButton(R.string.remove) { _, _ ->
+                val checkedIndices = checked.indices.filter { checked[it] }.toSet()
+                if (checkedIndices.isEmpty()) return@setPositiveButton
+
+                val plan = PhotoSet.planRemoval(
+                    prefs.photoWallpaperCount,
+                    prefs.photoWallpaperIndex,
+                    checkedIndices
+                )
+                if (plan.newCount == 0) {
+                    turnOffPhotoWallpaper()
+                } else {
+                    val appContext = requireContext().applicationContext
+                    requireActivity().lifecycleScope.launch(Dispatchers.IO) {
+                        val success = PhotoWallpaper.removePhotos(appContext, plan)
+                        if (success) {
+                            prefs.photoWallpaperCount = plan.newCount
+                            prefs.photoWallpaperIndex = plan.newIndex
+                            if (plan.currentRemoved) {
+                                PhotoWallpaper.applyCurrent(appContext, prefs)
+                            }
+                        } else {
+                            val recoveredCount = PhotoSet.countContiguous(PhotoWallpaper.getWallpaperDir(appContext))
+                            prefs.photoWallpaperCount = recoveredCount
+                            if (recoveredCount == 0) {
+                                withContext(Dispatchers.Main) {
+                                    turnOffPhotoWallpaper(appContext)
+                                }
+                            } else {
+                                prefs.photoWallpaperIndex = prefs.photoWallpaperIndex.coerceIn(0, recoveredCount - 1)
+                            }
+                            withContext(Dispatchers.Main) {
+                                appContext.showToast(R.string.wallpaper_photos_remove_failed)
+                            }
+                        }
+                        withContext(Dispatchers.Main) {
+                            if (_binding != null) {
+                                populatePhotoWallpaperText()
+                            }
+                        }
+                    }
+                }
+            }
+            .setNegativeButton(R.string.cancel, null)
+
+        val alertDialog = builder.create()
+        dialog?.dismiss()
+        dialog = alertDialog
+        val window = alertDialog.window
+        if (window != null && !prefs.showStatusBar) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+            alertDialog.show()
+            window.hideStatusBar()
+            window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+        } else {
+            alertDialog.show()
         }
     }
 
@@ -1293,25 +1374,29 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         }
     }
 
-    private fun turnOffPhotoWallpaper() {
-        WallpaperRotateWorker.cancel(requireContext())
-        PhotoWallpaper.deleteAll(requireContext())
+    private fun turnOffPhotoWallpaper(context: Context = requireContext()) {
+        WallpaperRotateWorker.cancel(context)
+        PhotoWallpaper.deleteAll(context)
         prefs.photoWallpaperCount = 0
         prefs.photoWallpaperIndex = 0
-        setPlainWallpaper(prefs.appTheme)
-        populatePhotoWallpaperText()
+        setPlainWallpaper(context, prefs.appTheme)
+        if (_binding != null) populatePhotoWallpaperText()
+    }
+
+    private fun setPlainWallpaper(context: Context, appTheme: Int) {
+        when (appTheme) {
+            AppCompatDelegate.MODE_NIGHT_YES -> setPlainWallpaper(context, android.R.color.black)
+            AppCompatDelegate.MODE_NIGHT_NO -> setPlainWallpaper(context, android.R.color.white)
+            else -> {
+                if (context.isDarkThemeOn())
+                    setPlainWallpaper(context, android.R.color.black)
+                else setPlainWallpaper(context, android.R.color.white)
+            }
+        }
     }
 
     private fun setPlainWallpaper(appTheme: Int) {
-        when (appTheme) {
-            AppCompatDelegate.MODE_NIGHT_YES -> setPlainWallpaper(requireContext(), android.R.color.black)
-            AppCompatDelegate.MODE_NIGHT_NO -> setPlainWallpaper(requireContext(), android.R.color.white)
-            else -> {
-                if (requireContext().isDarkThemeOn())
-                    setPlainWallpaper(requireContext(), android.R.color.black)
-                else setPlainWallpaper(requireContext(), android.R.color.white)
-            }
-        }
+        setPlainWallpaper(requireContext(), appTheme)
     }
 
     private fun populateAppThemeText(appTheme: Int = prefs.appTheme) {
