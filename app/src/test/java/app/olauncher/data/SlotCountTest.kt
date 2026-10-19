@@ -38,8 +38,20 @@ class SlotCountTest {
 
     @Test
     fun `fitting calculates slot count that fits on screen`() {
-        assertEquals(6, SlotCount.fitting(6, 700, 48, 48))
+        assertEquals(6, SlotCount.fitting(6, 700, 48, 96))
+        assertEquals(6, SlotCount.fitting(12, 600, 56, 96))
+        assertEquals(3, SlotCount.fitting(12, 200, 56, 96))
+    }
+
+    @Test
+    fun `fitting trims icons that would not fit`() {
+        val defaultBottomMargin = ShortcutOffset.bottomMarginDp(ShortcutOffset.DEFAULT_STEP)
+        assertEquals(96, defaultBottomMargin)
+        // With default bottom margin (96dp), 12 requested icons are trimmed to what fits
+        assertEquals(6, SlotCount.fitting(12, 600, 56, defaultBottomMargin))
+        assertEquals(10, SlotCount.fitting(12, 700, 48, defaultBottomMargin))
+        // With base bottom margin (48dp, step 0), more icons fit
         assertEquals(7, SlotCount.fitting(12, 600, 56, 48))
-        assertEquals(3, SlotCount.fitting(12, 200, 56, 48))
+        assertEquals(11, SlotCount.fitting(12, 700, 48, 48))
     }
 }

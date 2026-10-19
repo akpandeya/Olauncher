@@ -337,8 +337,8 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         val sideGravity = if (prefs.shortcutSideStart) Gravity.START else Gravity.END
         (binding.shortcutsLayout.layoutParams as? FrameLayout.LayoutParams)?.let { params ->
             params.gravity = Gravity.BOTTOM or sideGravity
-            params.marginStart = if (prefs.shortcutSideStart) 12.dpToPx() else 0
-            params.marginEnd = if (prefs.shortcutSideStart) 0 else 12.dpToPx()
+            params.marginStart = if (prefs.shortcutSideStart) ShortcutOffset.SIDE_INSET_DP.dpToPx() else 0
+            params.marginEnd = if (prefs.shortcutSideStart) 0 else ShortcutOffset.SIDE_INSET_DP.dpToPx()
             params.bottomMargin = ShortcutOffset.bottomMarginDp(prefs.shortcutOffsetStep).dpToPx()
             binding.shortcutsLayout.layoutParams = params
         }
