@@ -228,6 +228,7 @@ class SettingsSectionsResourceTest {
             assertTrue(sectionIds[1].contains("batteryMode"))
             assertTrue(sectionIds[1].contains("batteryModeLayout"))
             assertTrue(sectionIds[1].contains("batteryModeTitle"))
+            assertTrue(sectionIds[1].contains("infoLineLayout"))
             assertTrue(sectionIds[1].contains("alignment"))
             assertTrue(sectionIds[1].contains("swapSides"))
             assertTrue(sectionIds[1].contains("swapSidesLayout"))
@@ -432,6 +433,9 @@ class SettingsSectionsResourceTest {
             "batteryMode",
             "batteryModeLayout",
             "batteryModeTitle",
+            "infoLine",
+            "infoLineLayout",
+            "infoLineTitle",
             "boldFont",
             "commitLockLayout",
             "commitLockOnOff",
