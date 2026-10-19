@@ -143,6 +143,9 @@ class SettingsSectionsTest {
 
         assertEquals(SettingsSections.TODAY, SettingsSections.findSectionByViewId(R.id.todaySection))
         assertEquals(SettingsSections.TODAY, SettingsSections.findSectionByViewId(R.id.todayCardsLayout))
+        assertEquals(SettingsSections.TODAY, SettingsSections.findSectionByViewId(R.id.todayOrderLayout))
+        assertEquals(SettingsSections.TODAY, SettingsSections.findSectionByViewId(R.id.intentionOnHomeLayout))
+        assertEquals(SettingsSections.TODAY, SettingsSections.findSectionByViewId(R.id.intentionOnHome))
         assertEquals(SettingsSections.TODAY, SettingsSections.findSectionByViewId(R.id.glanceSection))
         assertEquals(SettingsSections.TODAY, SettingsSections.findSectionByViewId(R.id.weatherLayout))
 

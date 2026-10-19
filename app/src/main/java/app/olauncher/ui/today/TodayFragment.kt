@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import androidx.core.view.isVisible
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import app.olauncher.data.Prefs
 import app.olauncher.databinding.FragmentTodayBinding
@@ -16,6 +17,10 @@ import app.olauncher.glance.HeroFormatting
 import app.olauncher.helper.Intention
 import app.olauncher.listener.OnSwipeTouchListener
 import app.olauncher.ui.BaseFragment
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZonedDateTime
@@ -26,7 +31,7 @@ class TodayFragment : BaseFragment() {
     private var _binding: FragmentTodayBinding? = null
     private val binding get() = _binding!!
     private lateinit var prefs: Prefs
-    private val activeCards = mutableListOf<Pair<TodayCard, View>>()
+    private var panelsJob: Job? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -47,8 +52,9 @@ class TodayFragment : BaseFragment() {
 
     override fun onResume() {
         super.onResume()
+        refreshIntention()
+        // Rebuilds every card; each card renders itself in createView.
         populateCards()
-        activeCards.forEach { (card, cardView) -> card.onResume(cardView) }
     }
 
     private fun initSwipeTouchListener() {
@@ -66,8 +72,7 @@ class TodayFragment : BaseFragment() {
     }
 
     private fun initIntention() {
-        val current = Intention.current(prefs.intentionText, prefs.intentionDay, LocalDateTime.now())
-        binding.etIntention.setText(current.orEmpty())
+        refreshIntention()
         binding.etIntention.setOnEditorActionListener { v, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 saveIntention(v.text?.toString())
@@ -77,6 +82,14 @@ class TodayFragment : BaseFragment() {
                 true
             } else false
         }
+    }
+
+    /** Shows today's intention; after the 04:00 rollover yesterday's text is cleared from the field. */
+    private fun refreshIntention() {
+        val field = _binding?.etIntention ?: return
+        if (field.hasFocus()) return
+        val current = Intention.current(prefs.intentionText, prefs.intentionDay, LocalDateTime.now()).orEmpty()
+        if (field.text?.toString() != current) field.setText(current)
     }
 
     private fun saveIntention(raw: String?) {
@@ -92,8 +105,6 @@ class TodayFragment : BaseFragment() {
             prefs.isTodayCardEnabled(it.key) && it.isAvailable(context)
         }
 
-        activeCards.clear()
-        binding.cardsContainer.removeAllViews()
         binding.heroWeatherHost.removeAllViews()
         populateHeroDate()
 
@@ -102,20 +113,34 @@ class TodayFragment : BaseFragment() {
         for (card in heroCards) {
             val cardView = card.createView(layoutInflater, binding.heroWeatherHost, this)
             if (cardView.parent == null) binding.heroWeatherHost.addView(cardView)
-            activeCards.add(card to cardView)
         }
         binding.heroWeatherHost.isVisible = heroCards.isNotEmpty()
 
+        // hasContent and priority may read the calendar provider (blocking), so plan off the main thread.
+        val appContext = context.applicationContext
+        val smart = prefs.todayOrderSmart
+        panelsJob?.cancel()
+        panelsJob = viewLifecycleOwner.lifecycleScope.launch {
+            val ordered = withContext(Dispatchers.IO) { planPanels(appContext, panelCards, smart) }
+            showPanels(ordered)
+        }
+    }
+
+    /** Panels with something to show, highest priority first when the order is smart. */
+    private fun planPanels(context: Context, panelCards: List<TodayCard>, smart: Boolean): List<TodayCard> {
         // A card with nothing to show gets no panel and no header.
         val withContent = panelCards.filter { it.hasContent(context) }
-        val ordered = if (prefs.todayOrderSmart) {
-            val now = ZonedDateTime.now()
-            val byKey = withContent.associateBy { it.key }
-            TodayOrder.order(withContent.map { Ranked(it.key, it.priority(context, now)) })
-                .mapNotNull { byKey[it.key] }
-        } else {
-            withContent
-        }
+        if (!smart) return withContent
+        val now = ZonedDateTime.now()
+        val byKey = withContent.associateBy { it.key }
+        return TodayOrder.order(withContent.map { Ranked(it.key, it.priority(context, now)) })
+            .mapNotNull { byKey[it.key] }
+    }
+
+    private fun showPanels(ordered: List<TodayCard>) {
+        val binding = _binding ?: return
+        // Swap the panels in one go, so a refresh does not flash an empty page.
+        binding.cardsContainer.removeAllViews()
         // Stack from the bottom up: the first (highest priority) card is the lowest panel.
         for (card in ordered.asReversed()) {
             val panel = ItemTodayPanelBinding.inflate(layoutInflater, binding.cardsContainer, false)
@@ -125,7 +150,6 @@ class TodayFragment : BaseFragment() {
             val cardView = card.createView(layoutInflater, panel.panelContent, this)
             if (cardView.parent == null) panel.panelContent.addView(cardView)
             binding.cardsContainer.addView(panel.root)
-            activeCards.add(card to cardView)
         }
 
         // When the cards overflow, open at the bottom, where the top-priority card is.
@@ -144,7 +168,7 @@ class TodayFragment : BaseFragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        activeCards.clear()
+        panelsJob?.cancel()
         _binding = null
     }
 }
