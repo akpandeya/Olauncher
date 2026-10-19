@@ -668,10 +668,7 @@ class AppDrawerFragment : BaseFragment() {
         val totalCount = adapter.itemCount
         if (totalCount <= 0) return
 
-        val targetPosition = adapter.getTargetPositionForOrderedIndex(
-            orderedIndex = pos.index,
-            orderedTotal = currentAppList?.size ?: (totalCount - 1)
-        )
+        val targetPosition = adapter.getTargetPositionForOrderedIndex(pos.index)
 
         val rv = binding.recyclerView
         val offset = LetterIndex.scrollOffsetPx(

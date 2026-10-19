@@ -377,18 +377,14 @@ class AppDrawerAdapter(
             appFilteredList.firstOrNull { it !is AppModel.RecentHeader && it.appLabel.isNotBlank() }
         }
 
-    fun getTargetPositionForOrderedIndex(orderedIndex: Int, orderedTotal: Int): Int {
+    fun getTargetPositionForOrderedIndex(orderedIndex: Int): Int {
         if (itemCount <= 0) return 0
         return if (bottomSearch) {
-            (orderedTotal - orderedIndex).coerceIn(0, itemCount - 1)
+            // Full list is reversed, then the recents block sits after it.
+            (appsList.size - 1 - orderedIndex).coerceIn(0, itemCount - 1)
         } else {
-            val hasRecents = appFilteredList.any { it is AppModel.RecentHeader }
-            val recentOffset = if (hasRecents) {
-                appFilteredList.indexOfFirst {
-                    it !is AppModel.RecentHeader && (it !is AppModel.App || !it.isRecent)
-                }
-            } else 0
-            val offset = if (recentOffset > 0) recentOffset else 0
+            // Recents block (header + recents) sits before the full list.
+            val offset = appFilteredList.count { it is AppModel.RecentHeader || (it is AppModel.App && it.isRecent) }
             (orderedIndex + offset).coerceIn(0, itemCount - 1)
         }
     }
