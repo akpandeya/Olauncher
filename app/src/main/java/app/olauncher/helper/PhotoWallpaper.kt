@@ -102,6 +102,37 @@ object PhotoWallpaper {
 
     fun today(): Int = LocalDate.now().toEpochDay().toInt()
 
+    fun markChanged(prefs: Prefs, nowMillis: Long = System.currentTimeMillis()) {
+        prefs.photoWallpaperLastChanged = nowMillis
+        prefs.photoWallpaperLastDay = today()
+    }
+
+    fun rotateIfDue(prefs: Prefs, nowMillis: Long = System.currentTimeMillis()): Boolean {
+        val count = prefs.photoWallpaperCount
+        val currentIndex = prefs.photoWallpaperIndex
+        val today = today()
+        val lastChanged = Rotation.resolveLastChanged(
+            prefs.photoWallpaperLastChanged,
+            prefs.photoWallpaperLastDay,
+            today,
+            nowMillis,
+        )
+        val step = Rotation.step(
+            currentIndex,
+            count,
+            nowMillis,
+            lastChanged,
+            RotationInterval.fromId(prefs.photoWallpaperInterval),
+        )
+        val rotated = step.nextIndex != null
+        if (rotated) {
+            prefs.photoWallpaperIndex = step.nextIndex!!
+            prefs.photoWallpaperLastDay = today
+        }
+        prefs.photoWallpaperLastChanged = step.lastChangedMillis
+        return rotated && step.nextIndex != currentIndex
+    }
+
     fun getWallpaperDir(context: Context): File {
         return File(context.filesDir, "wallpapers")
     }
@@ -163,7 +194,7 @@ object PhotoWallpaper {
             Rotation.previous(prefs.photoWallpaperIndex, count)
         } ?: return@withContext false
         prefs.photoWallpaperIndex = newIndex
-        prefs.photoWallpaperLastDay = today()
+        markChanged(prefs)
         applyCurrent(context, prefs)
     }
 
