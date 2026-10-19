@@ -39,6 +39,9 @@ sealed interface FrictionChange {
     data class Lock(val enabled: Boolean) : FrictionChange {
         val on: Boolean get() = enabled
     }
+
+    /** A timed break from the pause, ending at [untilMillis]. */
+    data class Snooze(val untilMillis: Long) : FrictionChange
 }
 
 typealias FrictionChangeEscalation = FrictionChange.Escalate
@@ -69,6 +72,7 @@ object CommitLock {
         is FrictionChange.Escalate -> !change.enabled
         is FrictionChange.AskWhy -> !change.enabled
         is FrictionChange.Lock -> !change.enabled
+        is FrictionChange.Snooze -> true
     }
 
     fun isTightening(change: FrictionChange): Boolean = when (change) {
@@ -87,6 +91,7 @@ object CommitLock {
         is FrictionChange.Escalate -> change.enabled
         is FrictionChange.AskWhy -> change.enabled
         is FrictionChange.Lock -> change.enabled
+        is FrictionChange.Snooze -> false
     }
 
     fun needsWait(lockOn: Boolean, change: FrictionChange): Boolean {

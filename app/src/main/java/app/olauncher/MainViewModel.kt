@@ -76,7 +76,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             else -> null
         }
         if ((flag == Constants.FLAG_LAUNCH_APP || flag == Constants.FLAG_HIDDEN_APPS) &&
-            DistractingApps.shouldPauseLaunch(appPackage, prefs.pauseEnabled, prefs.distractingApps, bypassPackage)
+            DistractingApps.shouldPauseLaunch(
+                appPackage, prefs.pauseEnabled, prefs.distractingApps, bypassPackage,
+                snoozeUntil = prefs.pauseSnoozeUntil,
+                appSnoozes = prefs.pauseAppSnooze,
+                now = System.currentTimeMillis(),
+            )
         ) {
             pauseLaunch.postValue(appModel)
             return

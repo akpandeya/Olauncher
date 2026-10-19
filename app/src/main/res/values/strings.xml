@@ -284,6 +284,11 @@
     <string name="pause_open">Open</string>
     <string name="pause_open_countdown">Open (%d)</string>
     <string name="stop_pausing_app">Stop pausing %s</string>
+    <string name="snooze_hour">For 1 hour</string>
+    <string name="snooze_tomorrow">Until tomorrow</string>
+    <string name="snooze_turn_off">Turn off</string>
+    <string name="snooze_for_good">For good</string>
+    <string name="pause_off_until">Off until %s</string>
     <string name="commit_lock">Lock these settings</string>
     <string name="commit_lock_desc">Turning friction down takes a 30 s wait</string>
     <string name="confirm">Confirm</string>

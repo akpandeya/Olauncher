@@ -37,6 +37,7 @@ import app.olauncher.wellbeing.DistractingApps
 import app.olauncher.wellbeing.FrictionChange
 import app.olauncher.wellbeing.PauseLog
 import app.olauncher.wellbeing.PausePolicy
+import app.olauncher.wellbeing.PauseSnooze
 import app.olauncher.wellbeing.PauseWhy
 import app.olauncher.wellbeing.UsageRepository
 import app.olauncher.wellbeing.UsageSnapshotWorker
@@ -380,32 +381,45 @@ class PauseFragment : Fragment() {
     private fun offerStopPausing(anchor: View) {
         anchor.showPopupMenu(
             configure = { menu ->
-                menu.add(
-                    Menu.NONE,
-                    1,
-                    Menu.NONE,
-                    getString(R.string.stop_pausing_app, appLabel)
-                )
+                menu.add(Menu.NONE, 1, 1, getString(R.string.snooze_hour))
+                menu.add(Menu.NONE, 2, 2, getString(R.string.snooze_tomorrow))
+                menu.add(Menu.NONE, 3, 3, getString(R.string.snooze_for_good))
             }
         ) { item ->
-            if (item.itemId == 1) {
-                val change = FrictionChange.RemoveDistractingApp(appPackage)
-                if (CommitLock.needsWait(prefs.commitLock, change)) {
-                    val context = context ?: return@showPopupMenu
-                    val appContext = context.applicationContext
-                    waitDialog?.dismiss()
-                    waitDialog = context.showWaitDialog(
-                        message = getString(R.string.commit_lock_desc)
-                    ) {
-                        // The removal is the confirmed change: never lose it.
-                        removeThisAppFromDistracting(appContext)
-                        if (!isAdded || _binding == null) return@showWaitDialog
-                        openApp(bypassGating = true)
-                    }
+            val choice = when (item.itemId) {
+                1 -> PauseSnooze.Choice.HOUR
+                2 -> PauseSnooze.Choice.TOMORROW
+                3 -> null
+                else -> return@showPopupMenu
+            }
+            val context = context ?: return@showPopupMenu
+            val appContext = context.applicationContext
+            val apply: () -> Unit = {
+                if (choice == null) {
+                    removeThisAppFromDistracting(appContext)
                 } else {
-                    removeThisAppFromDistracting(context?.applicationContext ?: return@showPopupMenu)
+                    val until = PauseSnooze.until(choice, nowSupplier(), zoneSupplier())
+                    prefs.pauseAppSnooze = prefs.pauseAppSnooze + (appPackage to until)
+                }
+            }
+            val change = if (choice == null) {
+                FrictionChange.RemoveDistractingApp(appPackage)
+            } else {
+                FrictionChange.Snooze(PauseSnooze.until(choice, nowSupplier(), zoneSupplier()))
+            }
+            if (CommitLock.needsWait(prefs.commitLock, change)) {
+                waitDialog?.dismiss()
+                waitDialog = context.showWaitDialog(
+                    message = getString(R.string.commit_lock_desc)
+                ) {
+                    // The change is the confirmed one: never lose it.
+                    apply()
+                    if (!isAdded || _binding == null) return@showWaitDialog
                     openApp(bypassGating = true)
                 }
+            } else {
+                apply()
+                openApp(bypassGating = true)
             }
         }
     }
