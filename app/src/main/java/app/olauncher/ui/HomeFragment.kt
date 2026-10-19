@@ -392,8 +392,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         val count = getFittingShortcutCount()
         val viewSizeDp = ShortcutSize.viewSizeDp(prefs.shortcutSizeStep)
         val viewSizePx = viewSizeDp.dpToPx()
-        val extraPaddingPx = TouchTarget.extraPaddingPx(viewSizePx, TouchTarget.MIN_TARGET_DP.dpToPx())
-        val targetSizePx = viewSizePx + (2 * extraPaddingPx)
+        val targetSizePx = TouchTarget.targetSizePx(viewSizePx, TouchTarget.MIN_TARGET_DP.dpToPx())
         binding.shortcutsLayout.removeAllViews()
         for (slot in 1..count) {
             val imageView = ImageView(context).apply {
@@ -428,8 +427,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         val context = context ?: return
         val count = getFittingShortcutCount()
         val viewSizePx = ShortcutSize.viewSizeDp(prefs.shortcutSizeStep).dpToPx()
-        val extraPaddingPx = TouchTarget.extraPaddingPx(viewSizePx, TouchTarget.MIN_TARGET_DP.dpToPx())
-        val expectedViewSizePx = viewSizePx + (2 * extraPaddingPx)
+        val expectedViewSizePx = TouchTarget.targetSizePx(viewSizePx, TouchTarget.MIN_TARGET_DP.dpToPx())
         val firstChild = binding.shortcutsLayout.getChildAt(0)
         val currentViewSizePx = firstChild?.layoutParams?.width ?: 0
         if (binding.shortcutsLayout.childCount != count || (count > 0 && currentViewSizePx != expectedViewSizePx)) {
