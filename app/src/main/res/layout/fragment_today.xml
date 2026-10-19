@@ -48,6 +48,21 @@
                     android:layout_height="wrap_content"
                     tools:text="19 October" />
 
+                <EditText
+                    android:id="@+id/etIntention"
+                    style="@style/TextSmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:background="@null"
+                    android:hint="@string/intention_hint"
+                    android:imeOptions="actionDone"
+                    android:importantForAutofill="no"
+                    android:inputType="textCapSentences"
+                    android:maxLength="60"
+                    android:maxLines="1"
+                    android:paddingVertical="8dp" />
+
                 <FrameLayout
                     android:id="@+id/heroWeatherHost"
                     android:layout_width="match_parent"

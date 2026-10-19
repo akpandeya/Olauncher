@@ -290,6 +290,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateSwipeApps()
         populateTodayCards()
         populateTodayOrder()
+        populateIntentionOnHome()
         populateWeather()
         populateNudgeWater()
         populateNudgeWalk()
@@ -411,6 +412,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             // Today
             RuntimeSettingsRow(SettingsSections.KEY_TODAY, binding.todayCardsLayout, binding.todayCardsTitle, R.id.todayCards),
             RuntimeSettingsRow(SettingsSections.KEY_TODAY, binding.todayOrderLayout, binding.todayOrderTitle, R.id.todayOrder),
+            RuntimeSettingsRow(SettingsSections.KEY_TODAY, binding.intentionOnHomeLayout, binding.intentionOnHomeTitle, R.id.intentionOnHome),
             RuntimeSettingsRow(SettingsSections.KEY_TODAY, binding.weatherLayout, binding.weatherTitle, R.id.weather),
 
             // Deutsch
@@ -531,7 +533,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             binding.nudgesSection.isVisible = nudgeIds.any { it in matchingIds }
         }
 
-        binding.todaySection.isVisible = (R.id.todayCards in matchingIds || R.id.todayOrder in matchingIds)
+        binding.todaySection.isVisible = (R.id.todayCards in matchingIds || R.id.todayOrder in matchingIds || R.id.intentionOnHome in matchingIds)
         binding.glanceSection.isVisible = (R.id.weather in matchingIds)
         binding.deutschSection.isVisible = runtimeRows.any { it.sectionKey == SettingsSections.KEY_DEUTSCH && it.viewId in matchingIds }
         binding.appearanceSection.isVisible = runtimeRows.any { it.sectionKey == SettingsSections.KEY_APPEARANCE && it.viewId in matchingIds }
@@ -679,6 +681,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.swipeRightApp, R.id.swipeRightLayout -> showSwipeRightMenu(binding.swipeRightApp)
             R.id.todayCards, R.id.todayCardsTitle, R.id.todayCardsLayout -> showTodayCardsDialog()
             R.id.todayOrder, R.id.todayOrderTitle, R.id.todayOrderLayout -> toggleTodayOrder()
+            R.id.intentionOnHome, R.id.intentionOnHomeTitle, R.id.intentionOnHomeLayout -> toggleIntentionOnHome()
             R.id.weatherTitle, R.id.weatherLayout -> showCitySearchDialog()
             R.id.weather -> {
                 if (prefs.weatherEnabled) {
@@ -830,6 +833,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.todayOrder.setOnClickListener(this)
         binding.todayOrderTitle.setOnClickListener(this)
         binding.todayOrderLayout.setOnClickListener(this)
+        binding.intentionOnHome.setOnClickListener(this)
+        binding.intentionOnHomeTitle.setOnClickListener(this)
+        binding.intentionOnHomeLayout.setOnClickListener(this)
         binding.weather.setOnClickListener(this)
         binding.weatherTitle.setOnClickListener(this)
         binding.weatherLayout.setOnClickListener(this)
@@ -2849,6 +2855,15 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             binding.swipeRightApp.setTextColor(requireContext().getColorFromAttr(R.attr.primaryColorTrans50))
         else
             binding.swipeRightApp.setTextColor(requireContext().getColorFromAttr(R.attr.primaryColor))
+    }
+
+    private fun toggleIntentionOnHome() {
+        prefs.intentionOnHome = !prefs.intentionOnHome
+        populateIntentionOnHome()
+    }
+
+    private fun populateIntentionOnHome() {
+        binding.intentionOnHome.text = getString(if (prefs.intentionOnHome) R.string.on else R.string.off)
     }
 
     private fun toggleTodayOrder() {
