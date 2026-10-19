@@ -23,4 +23,8 @@ object DrawerOrdering {
         val sortedNewApps = newApps.sortedByDescending { it.firstInstallTime }
         return sortedNewApps + restApps + privateSpaceItems
     }
+
+    fun <T> forSearchPosition(results: List<T>, bottomSearch: Boolean): List<T> {
+        return if (bottomSearch) results.reversed() else results
+    }
 }
