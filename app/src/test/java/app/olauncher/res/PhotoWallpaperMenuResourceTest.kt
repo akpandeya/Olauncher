@@ -100,7 +100,7 @@ class PhotoWallpaperMenuResourceTest {
         val menuFile = resolveFile("src/main/res/menu/photo_wallpaper.xml")
         val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(menuFile)
         val items = doc.getElementsByTagName("item")
-        assertEquals(6, items.length)
+        assertEquals(8, items.length)
 
         val expected = listOf(
             Pair("@+id/photoWallpaperAdd", "@string/add_photos"),
@@ -108,6 +108,8 @@ class PhotoWallpaperMenuResourceTest {
             Pair("@+id/photoWallpaperChange", "@string/change_photos"),
             Pair("@+id/photoWallpaperTarget", "@string/set_on_home"),
             Pair("@+id/photoWallpaperNext", "@string/next_photo_now"),
+            Pair("@+id/photoWallpaperPrevious", "@string/previous_photo"),
+            Pair("@+id/photoWallpaperHomeMenu", "@string/wallpaper_home_menu"),
             Pair("@+id/photoWallpaperOff", "@string/off"),
         )
 
@@ -116,6 +118,37 @@ class PhotoWallpaperMenuResourceTest {
             val (expectedId, expectedTitle) = expected[i]
             assertEquals("Item $i ID", expectedId, element.getAttribute("android:id"))
             assertEquals("Item $i Title", expectedTitle, element.getAttribute("android:title"))
+        }
+
+        val homeMenuItem = items.item(6) as Element
+        assertEquals("true", homeMenuItem.getAttribute("android:checkable"))
+    }
+
+    @Test
+    fun `manual rotation and home menu strings are defined in main strings and not in other locales`() {
+        val defaultStringsFile = resolveFile("src/main/res/values/strings.xml")
+        val defaultStrings = loadStrings(defaultStringsFile)
+        assertEquals("Previous photo", defaultStrings["previous_photo"])
+        assertEquals("Switch from home (long-press)", defaultStrings["wallpaper_home_menu"])
+
+        val resDir = resolveDir("src/main/res")
+        val otherLocaleFiles = resDir.listFiles { dir ->
+            dir.isDirectory && dir.name.startsWith("values-")
+        }?.mapNotNull { dir ->
+            val stringsFile = File(dir, "strings.xml")
+            if (stringsFile.exists()) stringsFile else null
+        }.orEmpty()
+
+        assertTrue("Expected other locale directories", otherLocaleFiles.isNotEmpty())
+        val checkKeys = listOf(
+            "previous_photo",
+            "wallpaper_home_menu",
+        )
+        for (file in otherLocaleFiles) {
+            val localizedStrings = loadStrings(file)
+            for (key in checkKeys) {
+                assertNull("$key should not be defined in ${file.parentFile?.name}", localizedStrings[key])
+            }
         }
     }
 }

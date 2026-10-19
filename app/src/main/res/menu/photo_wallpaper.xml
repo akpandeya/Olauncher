@@ -16,6 +16,13 @@
         android:id="@+id/photoWallpaperNext"
         android:title="@string/next_photo_now" />
     <item
+        android:id="@+id/photoWallpaperPrevious"
+        android:title="@string/previous_photo" />
+    <item
+        android:id="@+id/photoWallpaperHomeMenu"
+        android:checkable="true"
+        android:title="@string/wallpaper_home_menu" />
+    <item
         android:id="@+id/photoWallpaperOff"
         android:title="@string/off" />
 </menu>
