@@ -78,6 +78,7 @@ class Prefs(context: Context) : PauseLogStorage {
         const val SEARCH_ENGINE = "SEARCH_ENGINE"
         const val SEARCH_ENGINE_CUSTOM_URL = "SEARCH_ENGINE_CUSTOM_URL"
         const val DRAWER_NEW_FIRST = "DRAWER_NEW_FIRST"
+        const val DRAWER_LETTER_STRIP = "DRAWER_LETTER_STRIP"
         const val QUIET_ENABLED = "QUIET_ENABLED"
         const val QUIET_RELEASE_TIMES = "QUIET_RELEASE_TIMES"
         const val DEFAULT_QUIET_RELEASE_TIMES = "750,1110"
@@ -267,6 +268,10 @@ class Prefs(context: Context) : PauseLogStorage {
     var drawerNewFirst: Boolean
         get() = prefs.getBoolean(DRAWER_NEW_FIRST, true)
         set(value) = prefs.edit { putBoolean(DRAWER_NEW_FIRST, value).apply() }
+
+    var drawerLetterStrip: Boolean
+        get() = prefs.getBoolean(DRAWER_LETTER_STRIP, false)
+        set(value) = prefs.edit { putBoolean(DRAWER_LETTER_STRIP, value).apply() }
 
     var keyboardMessageShown: Boolean
         get() = prefs.getBoolean(KEYBOARD_MESSAGE, false)

@@ -249,6 +249,7 @@ class SettingsSectionsResourceTest {
             assertTrue(sectionIds[3].contains("drawerBottomSearchLayout"))
             assertTrue(sectionIds[3].contains("searchEngineLayout"))
             assertTrue(sectionIds[3].contains("drawerNewFirstLayout"))
+            assertTrue(sectionIds[3].contains("drawerLetterStripLayout"))
 
             // Section 4: Wellbeing
             assertTrue(sectionIds[4].contains("distractingAppsLayout"))
@@ -443,6 +444,9 @@ class SettingsSectionsResourceTest {
             "drawerBottomSearch",
             "drawerBottomSearchLayout",
             "drawerBottomSearchTitle",
+            "drawerLetterStrip",
+            "drawerLetterStripLayout",
+            "drawerLetterStripTitle",
             "drawerNewFirst",
             "drawerNewFirstLayout",
             "drawerNewFirstTitle",
