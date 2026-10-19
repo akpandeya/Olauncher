@@ -124,6 +124,7 @@ class Prefs(context: Context) : PauseLogStorage {
     private val HOME_BOTTOM_ALIGNMENT = "HOME_BOTTOM_ALIGNMENT"
     private val HOME_SHORTCUTS = "HOME_SHORTCUTS"
     private val HOME_INFO_COMBINED = "HOME_INFO_COMBINED"
+    private val HOME_CONTEXT_LINE = "HOME_CONTEXT_LINE"
     private val HOME_TEXT_CONTRAST = "HOME_TEXT_CONTRAST"
     private val SHORTCUT_COUNT = "SHORTCUT_COUNT"
     private val SHORTCUT_SIZE_STEP = "SHORTCUT_SIZE_STEP"
@@ -368,6 +369,10 @@ class Prefs(context: Context) : PauseLogStorage {
     var homeInfoCombined: Boolean
         get() = prefs.getBoolean(HOME_INFO_COMBINED, false)
         set(value) = prefs.edit { putBoolean(HOME_INFO_COMBINED, value).apply() }
+
+    var homeContextLine: Boolean
+        get() = prefs.getBoolean(HOME_CONTEXT_LINE, false)
+        set(value) = prefs.edit { putBoolean(HOME_CONTEXT_LINE, value).apply() }
 
     var homeTextContrast: Int
         get() = prefs.getInt(HOME_TEXT_CONTRAST, TEXT_CONTRAST_AUTO)

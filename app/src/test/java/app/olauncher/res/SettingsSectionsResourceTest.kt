@@ -229,6 +229,7 @@ class SettingsSectionsResourceTest {
             assertTrue(sectionIds[1].contains("batteryModeLayout"))
             assertTrue(sectionIds[1].contains("batteryModeTitle"))
             assertTrue(sectionIds[1].contains("infoLineLayout"))
+            assertTrue(sectionIds[1].contains("contextLineLayout"))
             assertTrue(sectionIds[1].contains("alignment"))
             assertTrue(sectionIds[1].contains("swapSides"))
             assertTrue(sectionIds[1].contains("swapSidesLayout"))
@@ -442,6 +443,9 @@ class SettingsSectionsResourceTest {
             "commitLockOnOff",
             "commitLockSubtitle",
             "commitLockTitle",
+            "contextLineLayout",
+            "contextLineTitle",
+            "contextLineValue",
             "dateTime",
             "deutschSection",
             "distractingApps",
