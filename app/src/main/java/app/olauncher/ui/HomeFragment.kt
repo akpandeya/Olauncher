@@ -1,5 +1,7 @@
 package app.olauncher.ui
 
+import android.app.WallpaperColors
+import android.app.WallpaperManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -8,7 +10,10 @@ import android.content.SharedPreferences
 import android.content.pm.LauncherApps
 import android.content.res.Configuration
 import android.os.BatteryManager
+import android.graphics.Color
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -44,6 +49,7 @@ import app.olauncher.glance.WeatherCache
 import app.olauncher.glance.WeatherFormatting
 import app.olauncher.glance.WeatherLocation
 import app.olauncher.helper.BatteryFormatting
+import app.olauncher.helper.ContrastPolicy
 import app.olauncher.helper.DefaultLauncherCheck
 import app.olauncher.helper.GermanTime
 import app.olauncher.helper.Haptics
@@ -86,6 +92,9 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     private var batteryReceiver: BroadcastReceiver? = null
     private var weatherPrefsListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
     private var latestScreenTime: String? = null
+    private var wallpaperColorsListener: WallpaperManager.OnColorsChangedListener? = null
+    private val originalShadows = HashMap<TextView, FloatArray>()
+    private val originalShadowColors = HashMap<TextView, Int>()
     private var homeAppsPaddingStart = 0
     private var homeAppsPaddingEnd = 0
     private var _binding: FragmentHomeBinding? = null
@@ -120,6 +129,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         populateHomeScreen(false)
         populateShortcuts()
         populateWeather()
+        applyTextContrast()
         WeatherLocation.refreshIfStale(requireContext())
         viewModel.isOlauncherDefault()
         if (prefs.showStatusBar) showStatusBar()
@@ -140,6 +150,63 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     }
 
     private var onOpenRotationJob: Job? = null
+
+    override fun onStart() {
+        super.onStart()
+        val context = context ?: return
+        val listener = WallpaperManager.OnColorsChangedListener { _, which ->
+            if (which and WallpaperManager.FLAG_SYSTEM != 0) applyTextContrast()
+        }
+        wallpaperColorsListener = listener
+        WallpaperManager.getInstance(context)
+            .addOnColorsChangedListener(listener, Handler(Looper.getMainLooper()))
+    }
+
+    override fun onStop() {
+        super.onStop()
+        val listener = wallpaperColorsListener ?: return
+        context?.let { WallpaperManager.getInstance(it).removeOnColorsChangedListener(listener) }
+        wallpaperColorsListener = null
+    }
+
+    private fun applyTextContrast() {
+        if (_binding == null) return
+        val context = context ?: return
+        val themeIsDark = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+            Configuration.UI_MODE_NIGHT_YES
+        val supportsDarkText: Boolean? = if (prefs.homeTextContrast == Prefs.TEXT_CONTRAST_THEME) {
+            null
+        } else {
+            val colors: WallpaperColors? = try {
+                WallpaperManager.getInstance(context).getWallpaperColors(WallpaperManager.FLAG_SYSTEM)
+            } catch (e: Exception) {
+                null
+            }
+            colors?.let { (it.colorHints and WallpaperColors.HINT_SUPPORTS_DARK_TEXT) != 0 }
+        }
+        val treatment = ContrastPolicy.decide(supportsDarkText, themeIsDark)
+        val views = listOf(
+            binding.clock, binding.clockWords, binding.date, binding.weatherSeparator,
+            binding.weather, binding.tvScreenTime,
+            binding.homeApp1, binding.homeApp2, binding.homeApp3, binding.homeApp4,
+            binding.homeApp5, binding.homeApp6, binding.homeApp7, binding.homeApp8,
+        )
+        views.forEach { view ->
+            if (view !in originalShadows) {
+                originalShadows[view] = floatArrayOf(view.shadowRadius, view.shadowDx, view.shadowDy)
+                originalShadowColors[view] = view.shadowColor
+            }
+            val original = originalShadows.getValue(view)
+            if (treatment.shadowRadiusDp > 0) {
+                val base = if (themeIsDark) Color.BLACK else Color.WHITE
+                val shadowColor = Color.argb((treatment.shadowAlpha * 255).toInt(), Color.red(base), Color.green(base), Color.blue(base))
+                view.setShadowLayer(treatment.shadowRadiusDp.dpToPx().toFloat(), 0f, original[2], shadowColor)
+            } else {
+                view.setShadowLayer(original[0], original[1], original[2], originalShadowColors.getValue(view))
+            }
+            treatment.color?.let { view.setTextColor(it) }
+        }
+    }
 
     override fun onPause() {
         super.onPause()
@@ -276,6 +343,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         }
         viewModel.toggleDateTime.observe(viewLifecycleOwner) {
             populateDateTime()
+            applyTextContrast()
         }
         viewModel.screenTimeValue.observe(viewLifecycleOwner) {
             it?.let {
