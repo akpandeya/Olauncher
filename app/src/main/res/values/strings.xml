@@ -262,6 +262,7 @@
     <string name="pause_daily_allowance_needs_access">Daily allowance (needs usage access)</string>
     <string name="pause_longer_with_each_open">Longer pause with each open</string>
     <string name="pause_ask_why">Ask why before opening</string>
+    <string name="pause_ask_why_desc">Asks before Open. The wait and Not now do most of the work.</string>
     <string name="pause_why_reply">Reply to someone</string>
     <string name="pause_why_lookup">Look something up</string>
     <string name="pause_why_bored">Just bored</string>
