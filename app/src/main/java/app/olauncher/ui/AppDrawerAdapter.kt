@@ -412,12 +412,13 @@ class AppDrawerAdapter(
     }
 
     fun launchFirstInList() {
-        val first = if (bottomSearch) {
-            appFilteredList.lastOrNull { it !is AppModel.PrivateSpaceHeader && it !is AppModel.Result && it !is AppModel.RecentHeader && it.appLabel.isNotBlank() }
-        } else {
-            appFilteredList.firstOrNull { it !is AppModel.PrivateSpaceHeader && it !is AppModel.Result && it !is AppModel.RecentHeader && it.appLabel.isNotBlank() }
-        }
-        if (first != null) appClickListener(first)
+        getTopApp()?.let { appClickListener(it) }
+    }
+
+    /** Best app match nearest the search box, skipping result rows and headers. */
+    fun getTopApp(): AppModel? {
+        val isApp = { it: AppModel -> it !is AppModel.PrivateSpaceHeader && it !is AppModel.Result && it !is AppModel.RecentHeader && it.appLabel.isNotBlank() }
+        return if (bottomSearch) appFilteredList.lastOrNull(isApp) else appFilteredList.firstOrNull(isApp)
     }
 
     fun getTopItem(): AppModel? =
