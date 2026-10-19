@@ -91,6 +91,7 @@ import app.olauncher.helper.showToast
 import app.olauncher.listener.OnSwipeTouchListener
 import app.olauncher.listener.ViewSwipeTouchListener
 import app.olauncher.wellbeing.ScreenTimeCue
+import app.olauncher.wellbeing.WindDownWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -159,6 +160,10 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         if (prefs.homeSets || GermanTime.isWordsClockOn(prefs.germanEnabled, prefs.germanClock)) registerTimeTickReceiver()
         registerBatteryReceiver()
         startContextLine()
+        // Fixes a missed wind-down start/end (grey wallpaper, whole-phone grey) and reschedules.
+        if (prefs.windDown || prefs.windDownGreyApplied || prefs.systemGreySaved != null) {
+            WindDownWorker.syncAsync(requireContext())
+        }
         if (prefs.photoWallpaperCount > 0 &&
             RotationInterval.fromId(prefs.photoWallpaperInterval) == RotationInterval.ON_OPEN
         ) {
