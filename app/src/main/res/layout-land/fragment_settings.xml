@@ -1103,6 +1103,60 @@
                         android:text="@string/left" />
                 </FrameLayout>
 
+                <FrameLayout
+                    android:id="@+id/screenTimeStyleLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp">
+
+                    <TextView
+                        android:id="@+id/screenTimeStyleTitle"
+                        style="@style/TextSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:paddingVertical="8dp"
+                        android:text="@string/screen_time_style"
+                        android:textColor="?attr/primaryColor" />
+
+                    <TextView
+                        android:id="@+id/screenTimeStyle"
+                        style="@style/TextSmallBold"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end|bottom"
+                        android:layout_marginEnd="4dp"
+                        android:padding="8dp"
+                        android:text="@string/screen_time_style_number" />
+                </FrameLayout>
+
+                <FrameLayout
+                    android:id="@+id/screenTimeTargetLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp">
+
+                    <TextView
+                        android:id="@+id/screenTimeTargetTitle"
+                        style="@style/TextSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:paddingVertical="8dp"
+                        android:text="@string/screen_time_target"
+                        android:textColor="?attr/primaryColor" />
+
+                    <TextView
+                        android:id="@+id/screenTimeTarget"
+                        style="@style/TextSmallBold"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end|bottom"
+                        android:layout_marginEnd="4dp"
+                        android:padding="8dp"
+                        tools:text="2 h" />
+                </FrameLayout>
+
                 <TextView
                     android:id="@+id/nudgesSection"
                     style="@style/TextSmallLight"

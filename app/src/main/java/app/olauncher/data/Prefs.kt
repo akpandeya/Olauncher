@@ -149,6 +149,8 @@ class Prefs(context: Context) : PauseLogStorage {
     private val PRO_MESSAGE_SHOWN = "PRO_MESSAGE_SHOWN"
     private val HIDE_SET_DEFAULT_LAUNCHER = "HIDE_SET_DEFAULT_LAUNCHER"
     private val SCREEN_TIME_LAST_UPDATED = "SCREEN_TIME_LAST_UPDATED"
+    private val SCREEN_TIME_STYLE = "SCREEN_TIME_STYLE"
+    private val SCREEN_TIME_TARGET_MIN = "SCREEN_TIME_TARGET_MIN"
     private val LAUNCHER_RESTART_TIMESTAMP = "LAUNCHER_RECREATE_TIMESTAMP"
     private val SHOWN_ON_DAY_OF_YEAR = "SHOWN_ON_DAY_OF_YEAR"
     private val DISTRACTING_APPS = "DISTRACTING_APPS"
@@ -472,6 +474,14 @@ class Prefs(context: Context) : PauseLogStorage {
     var screenTimeLastUpdated: Long
         get() = prefs.getLong(SCREEN_TIME_LAST_UPDATED, 0L)
         set(value) = prefs.edit { putLong(SCREEN_TIME_LAST_UPDATED, value).apply() }
+
+    var screenTimeStyle: Int
+        get() = prefs.getInt(SCREEN_TIME_STYLE, 0)
+        set(value) = prefs.edit { putInt(SCREEN_TIME_STYLE, value).apply() }
+
+    var screenTimeTargetMin: Int
+        get() = prefs.getInt(SCREEN_TIME_TARGET_MIN, 120)
+        set(value) = prefs.edit { putInt(SCREEN_TIME_TARGET_MIN, value).apply() }
 
     var launcherRestartTimestamp: Long
         get() = prefs.getLong(LAUNCHER_RESTART_TIMESTAMP, 0L)
