@@ -25,6 +25,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.WorkManager
 import app.olauncher.quiet.QuietAccess
 import app.olauncher.quiet.ReleaseWorker
+import app.olauncher.data.Accent
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
@@ -108,6 +109,14 @@ class MainActivity : AppCompatActivity() {
             else -> {
                 if (prefs.boldFont) theme.applyStyle(R.style.BoldFontOverlay, true)
             }
+        }
+        when (Accent.fromId(prefs.accent)) {
+            Accent.OFF -> Unit
+            Accent.SYSTEM -> theme.applyStyle(R.style.AccentSystemOverlay, true)
+            Accent.SAGE -> theme.applyStyle(R.style.AccentSageOverlay, true)
+            Accent.SAND -> theme.applyStyle(R.style.AccentSandOverlay, true)
+            Accent.SKY -> theme.applyStyle(R.style.AccentSkyOverlay, true)
+            Accent.ROSE -> theme.applyStyle(R.style.AccentRoseOverlay, true)
         }
         if (isEinkDisplay() || isSystemAnimationsDisabled()) theme.applyStyle(R.style.NoAnimationOverlay, true)
         binding = ActivityMainBinding.inflate(layoutInflater)

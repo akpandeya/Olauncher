@@ -4,7 +4,10 @@ import android.content.Context
 import android.content.pm.LauncherApps
 import android.os.UserHandle
 import android.text.Editable
+import android.text.Spannable
+import android.text.SpannableString
 import android.text.TextWatcher
+import android.text.style.ForegroundColorSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -20,6 +23,7 @@ import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.databinding.AdapterAppDrawerBinding
 import app.olauncher.databinding.AdapterPrivateSpaceHeaderBinding
+import app.olauncher.helper.getColorFromAttr
 import app.olauncher.helper.hideKeyboard
 import app.olauncher.helper.isSystemApp
 import app.olauncher.helper.showKeyboard
@@ -332,7 +336,25 @@ class AppDrawerAdapter(
             appTitle.visibility = View.VISIBLE
 
             // Show indicators in title based on app type and state
-            appTitle.text = ArchivedAppsHelper.formatAppTitle(appModel)
+            val formattedTitle = ArchivedAppsHelper.formatAppTitle(appModel)
+            if (appModel.isNew && !appModel.isArchived) {
+                val starIndex = formattedTitle.lastIndexOf('✦')
+                if (starIndex >= 0) {
+                    val accentColor = root.context.getColorFromAttr(R.attr.accentColor)
+                    val spannable = SpannableString(formattedTitle)
+                    spannable.setSpan(
+                        ForegroundColorSpan(accentColor),
+                        starIndex,
+                        starIndex + 1,
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                    appTitle.text = spannable
+                } else {
+                    appTitle.text = formattedTitle
+                }
+            } else {
+                appTitle.text = formattedTitle
+            }
             appTitle.gravity = appLabelGravity
             otherProfileIndicator.isVisible = appModel.user != myUserHandle
 

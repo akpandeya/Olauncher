@@ -68,6 +68,7 @@ import app.olauncher.data.store.BackupData
 import app.olauncher.BuildConfig
 import app.olauncher.MainViewModel
 import app.olauncher.R
+import app.olauncher.data.Accent
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
@@ -242,6 +243,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         // Home button for recents feature disabled
         // populateHomeButtonRecents()
         populateAppThemeText()
+        populateAccent()
         populateFontFamily()
         populateTextSize()
         populateBoldFont()
@@ -376,6 +378,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.photoWallpaperLayout, binding.photoWallpaperTitle, R.id.photoWallpaper),
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.statusBar.parent as View, getFirstTextView(binding.statusBar.parent as View), R.id.statusBar),
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.appThemeText.parent as View, getFirstTextView(binding.appThemeText.parent as View), R.id.appThemeText),
+            RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.accent.parent as View, getFirstTextView(binding.accent.parent as View), R.id.accent),
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.fontFamily.parent as View, getFirstTextView(binding.fontFamily.parent as View), R.id.fontFamily),
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.boldFont.parent as View, getFirstTextView(binding.boldFont.parent as View), R.id.boldFont),
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.textSizeValue.parent as View, getFirstTextView(binding.textSizeValue.parent as View), R.id.textSizeValue),
@@ -607,6 +610,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.dateTime -> showDateTimeMenu(view)
             R.id.batteryMode, R.id.batteryModeTitle, R.id.batteryModeLayout -> showBatteryModeMenu(binding.batteryMode)
             R.id.appThemeText -> showAppThemeMenu(view, showSystem = false)
+            R.id.accent -> showAccentMenu(view)
             R.id.fontFamily -> showFontMenu(view)
             R.id.textSizeValue -> showTextSizeDialog()
             R.id.boldFont -> toggleBoldFont()
@@ -773,6 +777,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.importBackup.setOnClickListener(this)
         binding.importBackupLayout.setOnClickListener(this)
         binding.appThemeText.setOnClickListener(this)
+        binding.accent.setOnClickListener(this)
         binding.fontFamily.setOnClickListener(this)
         binding.textSizeValue.setOnClickListener(this)
         binding.boldFont.setOnClickListener(this)
@@ -1788,6 +1793,45 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             AppCompatDelegate.MODE_NIGHT_YES -> binding.appThemeText.text = getString(R.string.dark)
             AppCompatDelegate.MODE_NIGHT_NO -> binding.appThemeText.text = getString(R.string.light)
             else -> binding.appThemeText.text = getString(R.string.system_default)
+        }
+    }
+
+    private fun populateAccent() {
+        binding.accent.text = when (Accent.fromId(prefs.accent)) {
+            Accent.OFF -> getString(R.string.off)
+            Accent.SYSTEM -> getString(R.string.accent_system)
+            Accent.SAGE -> getString(R.string.accent_sage)
+            Accent.SAND -> getString(R.string.accent_sand)
+            Accent.SKY -> getString(R.string.accent_sky)
+            Accent.ROSE -> getString(R.string.accent_rose)
+        }
+    }
+
+    private fun selectAccent(accent: Accent) {
+        if (prefs.accent == accent.id) return
+        prefs.accent = accent.id
+        populateAccent()
+        requireActivity().recreate()
+    }
+
+    private fun showAccentMenu(anchor: View) {
+        val options = listOf(
+            Accent.OFF to getString(R.string.off),
+            Accent.SYSTEM to getString(R.string.accent_system),
+            Accent.SAGE to getString(R.string.accent_sage),
+            Accent.SAND to getString(R.string.accent_sand),
+            Accent.SKY to getString(R.string.accent_sky),
+            Accent.ROSE to getString(R.string.accent_rose),
+        )
+
+        anchor.showPopupMenu(
+            configure = { menu ->
+                options.forEach { (accent, label) ->
+                    menu.add(Menu.NONE, accent.id, accent.id, label)
+                }
+            }
+        ) { item ->
+            selectAccent(Accent.fromId(item.itemId))
         }
     }
 

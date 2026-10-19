@@ -424,4 +424,10 @@
     <string name="font">Font</string>
     <string name="font_inter">Inter</string>
     <string name="font_plex">Plex</string>
+    <string name="accent_color">Accent colour</string>
+    <string name="accent_system">System</string>
+    <string name="accent_sage">Sage</string>
+    <string name="accent_sand">Sand</string>
+    <string name="accent_sky">Sky</string>
+    <string name="accent_rose">Rose</string>
 </resources>

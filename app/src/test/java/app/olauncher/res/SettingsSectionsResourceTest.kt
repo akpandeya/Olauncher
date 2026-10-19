@@ -305,6 +305,7 @@ class SettingsSectionsResourceTest {
             assertTrue(sectionIds[8].contains("photoWallpaperLayout"))
             assertTrue(sectionIds[8].contains("statusBar"))
             assertTrue(sectionIds[8].contains("appThemeText"))
+            assertTrue(sectionIds[8].contains("accent"))
             assertTrue(sectionIds[8].contains("fontFamily"))
             assertTrue(sectionIds[8].contains("boldFont"))
             assertTrue(sectionIds[8].contains("textSizeValue"))
@@ -416,6 +417,7 @@ class SettingsSectionsResourceTest {
 
     companion object {
         val EXPECTED_MAIN_IDS = setOf(
+            "accent",
             "alignment",
             "appInfo",
             "appThemeText",

@@ -45,6 +45,7 @@
         <item name="todayPanelColor">@color/todayPanelLight</item>
         <item name="todayChipColor">@color/todayChipLight</item>
         <item name="dialogShadeColor">@color/blackInverseTrans50</item>
+        <item name="accentColor">?attr/primaryColor</item>
 
         <item name="mainFontFamily">sans-serif-light</item>
 
@@ -76,6 +77,27 @@
 
     <style name="FontPlexBoldOverlay">
         <item name="mainFontFamily">@font/ibm_plex_sans_bold</item>
+    </style>
+
+    <!-- Accent theme overlays applied over AppTheme -->
+    <style name="AccentSystemOverlay">
+        <item name="accentColor">@android:color/system_accent1_600</item>
+    </style>
+
+    <style name="AccentSageOverlay">
+        <item name="accentColor">@color/accentSageLight</item>
+    </style>
+
+    <style name="AccentSandOverlay">
+        <item name="accentColor">@color/accentSandLight</item>
+    </style>
+
+    <style name="AccentSkyOverlay">
+        <item name="accentColor">@color/accentSkyLight</item>
+    </style>
+
+    <style name="AccentRoseOverlay">
+        <item name="accentColor">@color/accentRoseLight</item>
     </style>
 
     <style name="WindowAnimationTransition">
