@@ -30,7 +30,7 @@ data class CalendarEvent(
     ) : this(id, title, start.toEpochMilli(), end.toEpochMilli(), allDay)
 }
 
-open class CalendarRepository(private val context: Context) {
+open class CalendarRepository(private val context: Context) : CalendarEventSource {
 
     open suspend fun next(
         now: Long = System.currentTimeMillis(),
@@ -113,6 +113,50 @@ open class CalendarRepository(private val context: Context) {
 
         events
     }
+
+    /** Blocking read of visible, non-declined events overlapping the window. Call off the main thread. */
+    override fun events(fromMillis: Long, toMillis: Long): List<CalendarEvent> {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
+            return emptyList()
+        }
+        val out = mutableListOf<CalendarEvent>()
+        try {
+            val uri = CalendarContract.Instances.CONTENT_URI.buildUpon().let { b ->
+                ContentUris.appendId(b, fromMillis)
+                ContentUris.appendId(b, toMillis)
+                b.build()
+            }
+            val projection = arrayOf(
+                CalendarContract.Instances.EVENT_ID,
+                CalendarContract.Instances.TITLE,
+                CalendarContract.Instances.BEGIN,
+                CalendarContract.Instances.END,
+                CalendarContract.Instances.ALL_DAY,
+                CalendarContract.Instances.SELF_ATTENDEE_STATUS,
+            )
+            val selection = "${CalendarContract.Instances.VISIBLE} = 1 AND ${CalendarContract.Instances.SELF_ATTENDEE_STATUS} != ${CalendarContract.Attendees.ATTENDEE_STATUS_DECLINED}"
+            context.contentResolver.query(
+                uri, projection, selection, null,
+                "${CalendarContract.Instances.BEGIN} ASC"
+            )?.use { c ->
+                while (c.moveToNext()) {
+                    val title = c.getString(1) ?: continue
+                    out.add(CalendarEvent(c.getLong(0), title, c.getLong(2), c.getLong(3), c.getInt(4) == 1))
+                }
+            }
+        } catch (_: Exception) {
+            // Permission revoked or provider unavailable: no rows.
+        }
+        return out
+    }
+
+    /** Upcoming events in [fromMillis, toMillis] whose title matches [query]. Blocking; needs READ_CALENDAR already granted. */
+    fun search(
+        query: String,
+        fromMillis: Long,
+        toMillis: Long,
+        max: Int = CalendarSearch.MAX_ROWS,
+    ): List<CalendarEvent> = CalendarSearch.search(this, query, fromMillis, toMillis, max)
 
     open suspend fun next(
         now: Instant,

@@ -3,7 +3,14 @@ package app.olauncher.ui
 import android.annotation.SuppressLint
 import android.content.ActivityNotFoundException
 import android.Manifest
+import android.content.ContentUris
 import android.content.Context
+import android.provider.CalendarContract
+import android.text.format.DateFormat
+import app.olauncher.glance.CalendarRepository
+import app.olauncher.glance.CalendarSearch
+import app.olauncher.glance.NextUpLabels
+import java.time.ZoneId
 import android.content.pm.PackageManager
 import android.content.Intent
 import android.net.Uri
@@ -274,6 +281,26 @@ class AppDrawerFragment : BaseFragment() {
         return AndroidContactSource(ctx)
     }
 
+    private fun calendarRows(query: String): List<AppModel.Result> {
+        val ctx = context ?: return emptyList()
+        if (query.trim().length < CalendarSearch.MIN_QUERY_LENGTH) return emptyList()
+        if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
+            return emptyList()
+        }
+        val now = System.currentTimeMillis()
+        val zone = ZoneId.systemDefault()
+        val is24Hour = DateFormat.is24HourFormat(ctx)
+        val labels = NextUpLabels(
+            today = ctx.getString(R.string.today_section),
+            tomorrow = ctx.getString(R.string.next_up_tomorrow),
+            nowTemplate = ctx.getString(R.string.next_up_now),
+            tomorrowEventTemplate = ctx.getString(R.string.next_up_tomorrow_event),
+        )
+        val to = now + CalendarSearch.WINDOW_DAYS * 24 * 3600 * 1000L
+        return CalendarRepository(ctx).search(query, now, to)
+            .map { CalendarSearch.toResult(it, now, zone, is24Hour, labels) }
+    }
+
     private fun dialContact(lookupUri: String) {
         val source = contactSourceOrNull()
         val number = try { source?.primaryNumber(lookupUri) } catch (_: Exception) { null }
@@ -299,6 +326,20 @@ class AppDrawerFragment : BaseFragment() {
                             is AppModel.Result.Action.Copy -> {
                                 requireContext().copyToClipboard(action.value)
                                 requireContext().showToast(R.string.copied)
+                                findNavController().popBackStack(R.id.mainFragment, false)
+                            }
+
+                            is AppModel.Result.Action.Event -> {
+                                try {
+                                    startActivity(
+                                        Intent(
+                                            Intent.ACTION_VIEW,
+                                            ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, action.eventId)
+                                        )
+                                    )
+                                } catch (e: Exception) {
+                                    e.printStackTrace()
+                                }
                                 findNavController().popBackStack(R.id.mainFragment, false)
                             }
 
@@ -425,6 +466,7 @@ class AppDrawerFragment : BaseFragment() {
             bottomSearch = prefs.drawerBottomSearch,
             drawerRecents = prefs.drawerRecents,
             contactSourceProvider = { contactSourceOrNull() },
+            calendarRowsProvider = { q -> calendarRows(q) },
             contactLongClickListener = { result ->
                 val action = result.action as? AppModel.Result.Action.Contact
                 if (action != null) dialContact(action.lookupUri)
