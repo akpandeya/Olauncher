@@ -9,7 +9,6 @@ import androidx.work.WorkerParameters
 import app.olauncher.data.Prefs
 import app.olauncher.helper.HomeSets
 import app.olauncher.helper.PhotoWallpaper
-import app.olauncher.helper.setPlainWallpaperByTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -86,13 +85,12 @@ class WindDownWorker(
             )
             if (WindDownGrey.needsChange(want, prefs.windDownGreyApplied)) {
                 PhotoWallpaper.withEditLock {
-                    if (prefs.photoWallpaperCount > 0) {
-                        // Greyed copy or the original, never modifying the stored photos.
-                        if (!PhotoWallpaper.applyCurrent(context, prefs, grey = want)) return@withEditLock
-                    } else {
-                        // The plain black/white theme wallpaper has no colour to remove.
-                        setPlainWallpaperByTheme(context, prefs.appTheme)
-                    }
+                    // Greyed copy or the original, never modifying the stored photos. Without photos the
+                    // wallpaper is left alone: the plain theme one has no colour to remove, and a
+                    // wallpaper set by another app must not be replaced.
+                    if (prefs.photoWallpaperCount > 0 &&
+                        !PhotoWallpaper.applyCurrent(context, prefs, grey = want)
+                    ) return@withEditLock
                     prefs.windDownGreyApplied = want
                 }
             }
