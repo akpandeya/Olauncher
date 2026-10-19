@@ -47,6 +47,7 @@ import app.olauncher.helper.BatteryFormatting
 import app.olauncher.helper.DefaultLauncherCheck
 import app.olauncher.helper.GermanTime
 import app.olauncher.helper.Haptics
+import app.olauncher.helper.InfoLine
 import app.olauncher.helper.TouchTarget
 import app.olauncher.helper.appUsagePermissionGranted
 import app.olauncher.helper.dpToPx
@@ -84,6 +85,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     private var timeTickReceiver: BroadcastReceiver? = null
     private var batteryReceiver: BroadcastReceiver? = null
     private var weatherPrefsListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
+    private var latestScreenTime: String? = null
     private var homeAppsPaddingStart = 0
     private var homeAppsPaddingEnd = 0
     private var _binding: FragmentHomeBinding? = null
@@ -151,7 +153,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             // Home button for recents feature disabled
             // R.id.recents -> {}
             R.id.clock, R.id.clockWords -> openClockApp()
-            R.id.date -> openCalendarApp()
+            R.id.date -> if (prefs.homeInfoCombined) openToday() else openCalendarApp()
             R.id.weather -> openWeatherApp()
             R.id.setDefaultLauncher -> viewModel.resetLauncherLiveData.call()
             R.id.tvScreenTime -> openScreenTimeDigitalWellbeing()
@@ -276,7 +278,11 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             populateDateTime()
         }
         viewModel.screenTimeValue.observe(viewLifecycleOwner) {
-            it?.let { binding.tvScreenTime.text = it }
+            it?.let {
+                latestScreenTime = it
+                binding.tvScreenTime.text = it
+                if (prefs.homeInfoCombined) populateDateTime()
+            }
         }
         // Home button for recents feature disabled
         // viewModel.showRecentApps.observe(viewLifecycleOwner) {
@@ -577,15 +583,48 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         val plugged = batteryIntent?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0
         val charging = plugged != 0
 
-        binding.date.text = BatteryFormatting.dateLine(
-            date = dateText,
-            percent = percent,
-            charging = charging,
-            mode = prefs.batteryMode,
-            statusBarShown = prefs.showStatusBar
-        )
+        if (prefs.homeInfoCombined) {
+            val combinedDate = if (isGerman) {
+                SimpleDateFormat("EEEE d. MMMM", Locale.GERMAN)
+            } else {
+                SimpleDateFormat("EEE d MMM", Locale.getDefault())
+            }.format(Date())
+            val screenTimeGranted = context?.appUsagePermissionGranted() == true
+            if (screenTimeGranted) viewModel.getTodaysScreenTime()
+            binding.date.text = InfoLine.compose(
+                date = combinedDate,
+                weather = combinedWeatherText(),
+                battery = BatteryFormatting.infoText(percent, charging, prefs.batteryMode, prefs.showStatusBar),
+                screenTime = if (screenTimeGranted) latestScreenTime else null
+            )
+            binding.tvScreenTime.isVisible = false
+        } else {
+            binding.date.text = BatteryFormatting.dateLine(
+                date = dateText,
+                percent = percent,
+                charging = charging,
+                mode = prefs.batteryMode,
+                statusBarShown = prefs.showStatusBar
+            )
+            populateScreenTime()
+        }
         binding.date.isVisible = isDateVisible
         populateWeather()
+    }
+
+    private fun openToday() {
+        try {
+            findNavController().navigate(R.id.action_mainFragment_to_todayFragment)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun combinedWeatherText(): String? {
+        val context = context ?: return null
+        if (!prefs.weatherEnabled) return null
+        val cached = WeatherCache(context).read() ?: return null
+        return WeatherFormatting.homeLine(cached.first, cached.second)
     }
 
     private fun updateClockWords() {
@@ -648,6 +687,10 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     }
 
     private fun populateScreenTime() {
+        if (prefs.homeInfoCombined) {
+            binding.tvScreenTime.isVisible = false
+            return
+        }
         if (requireContext().appUsagePermissionGranted().not()) return
 
         viewModel.getTodaysScreenTime()
@@ -1128,6 +1171,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             if (key == Prefs.WEATHER_FETCHED_AT || key == Prefs.WEATHER_ENABLED) {
                 activity?.runOnUiThread {
                     if (_binding != null) {
+                        if (prefs.homeInfoCombined) populateDateTime()
                         populateWeather()
                     }
                 }
@@ -1139,7 +1183,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     private fun populateWeather() {
         val binding = _binding ?: return
         val context = context ?: return
-        if (!prefs.weatherEnabled || prefs.dateTimeVisibility == Constants.DateTime.OFF) {
+        if (prefs.homeInfoCombined || !prefs.weatherEnabled || prefs.dateTimeVisibility == Constants.DateTime.OFF) {
             binding.weather.isVisible = false
             binding.weatherSeparator.isVisible = false
             return

@@ -272,6 +272,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateStatusBar()
         populateDateTime()
         populateBatteryMode()
+        populateInfoLine()
         populateSearchEngine()
         populateSwipeApps()
         populateTodayCards()
@@ -352,6 +353,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.homeAppsNum.parent as View, getFirstTextView(binding.homeAppsNum.parent as View), R.id.homeAppsNum),
             RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.dateTime.parent as View, getFirstTextView(binding.dateTime.parent as View), R.id.dateTime),
             RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.batteryModeLayout, binding.batteryModeTitle, R.id.batteryMode),
+            RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.infoLineLayout, binding.infoLineTitle, R.id.infoLine),
             RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.alignment.parent as View, getFirstTextView(binding.alignment.parent as View), R.id.alignment),
             RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.swapSidesLayout, binding.swapSides, R.id.swapSides),
 
@@ -640,6 +642,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.statusBar -> toggleStatusBar()
             R.id.dateTime -> showDateTimeMenu(view)
             R.id.batteryMode, R.id.batteryModeTitle, R.id.batteryModeLayout -> showBatteryModeMenu(binding.batteryMode)
+            R.id.infoLine, R.id.infoLineTitle, R.id.infoLineLayout -> toggleInfoLine()
             R.id.appThemeText -> showAppThemeMenu(view, showSystem = false)
             R.id.accent -> showAccentMenu(view)
             R.id.fontFamily -> showFontDialog()
@@ -781,6 +784,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.batteryMode.setOnClickListener(this)
         binding.batteryModeTitle.setOnClickListener(this)
         binding.batteryModeLayout.setOnClickListener(this)
+        binding.infoLine.setOnClickListener(this)
+        binding.infoLineTitle.setOnClickListener(this)
+        binding.infoLineLayout.setOnClickListener(this)
         binding.swipeLeftApp.setOnClickListener(this)
         binding.swipeRightApp.setOnClickListener(this)
         binding.swipeRightLayout.setOnClickListener(this)
@@ -1208,6 +1214,18 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                 Prefs.BATTERY_MODE_OFF -> R.string.off
                 else -> R.string.auto
             }
+        )
+    }
+
+    private fun toggleInfoLine() {
+        prefs.homeInfoCombined = !prefs.homeInfoCombined
+        populateInfoLine()
+        viewModel.toggleDateTime()
+    }
+
+    private fun populateInfoLine() {
+        binding.infoLine.text = getString(
+            if (prefs.homeInfoCombined) R.string.info_line_combined else R.string.info_line_separate
         )
     }
 
