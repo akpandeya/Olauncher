@@ -10,6 +10,7 @@ import java.util.Locale
 import app.olauncher.helper.HomeSet
 import app.olauncher.helper.HomeSetStarts
 import app.olauncher.helper.HomeSets
+import app.olauncher.wellbeing.WindDown
 import app.olauncher.helper.HomeSlotField
 import app.olauncher.helper.RecentApp
 import app.olauncher.helper.RecentApps
@@ -92,6 +93,9 @@ class Prefs(context: Context) : PauseLogStorage {
         const val PAUSE_SNOOZE_UNTIL = "PAUSE_SNOOZE_UNTIL"
         const val PAUSE_APP_SNOOZE = "PAUSE_APP_SNOOZE"
         const val COMMIT_LOCK = "COMMIT_LOCK"
+        const val WIND_DOWN = "WIND_DOWN"
+        const val WIND_DOWN_START = "WIND_DOWN_START"
+        const val WIND_DOWN_END = "WIND_DOWN_END"
         const val SEARCH_ENGINE = "SEARCH_ENGINE"
         const val SEARCH_ENGINE_CUSTOM_URL = "SEARCH_ENGINE_CUSTOM_URL"
         const val DRAWER_NEW_FIRST = "DRAWER_NEW_FIRST"
@@ -1045,8 +1049,26 @@ class Prefs(context: Context) : PauseLogStorage {
         return (1..num).any { getAppPackage(it, set).isNotBlank() }
     }
 
-    fun activeHomeSet(nowMinutes: Int = currentMinutesOfDay()): HomeSet =
-        HomeSets.active(nowMinutes, homeSetStarts(), homeSets) { homeSetHasApps(it) }
+    var windDown: Boolean
+        get() = prefs.getBoolean(WIND_DOWN, false)
+        set(value) = prefs.edit { putBoolean(WIND_DOWN, value) }
+
+    var windDownStart: Int
+        get() = prefs.getInt(WIND_DOWN_START, WindDown.DEFAULT_START)
+        set(value) = prefs.edit { putInt(WIND_DOWN_START, HomeSets.normalize(value)) }
+
+    var windDownEnd: Int
+        get() = prefs.getInt(WIND_DOWN_END, WindDown.DEFAULT_END)
+        set(value) = prefs.edit { putInt(WIND_DOWN_END, HomeSets.normalize(value)) }
+
+    fun isWindDownActive(nowMinutes: Int = currentMinutesOfDay()): Boolean =
+        windDown && WindDown.isActive(nowMinutes, windDownStart, windDownEnd)
+
+    fun activeHomeSet(nowMinutes: Int = currentMinutesOfDay()): HomeSet {
+        // Wind-down shows the Evening set (when sets are on and Evening has apps).
+        if (homeSets && isWindDownActive(nowMinutes) && homeSetHasApps(HomeSet.EVENING)) return HomeSet.EVENING
+        return HomeSets.active(nowMinutes, homeSetStarts(), homeSets) { homeSetHasApps(it) }
+    }
 
     private fun currentMinutesOfDay(): Int {
         val now = java.time.LocalTime.now()

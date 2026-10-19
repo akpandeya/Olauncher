@@ -40,6 +40,12 @@ sealed interface FrictionChange {
         val on: Boolean get() = enabled
     }
 
+    /** Evening wind-down switched on or off. */
+    data class WindDownToggle(val enabled: Boolean) : FrictionChange
+
+    /** Wind-down times changed; always counts as tightening. */
+    data object WindDownTimes : FrictionChange
+
     /** A timed break from the pause, ending at [untilMillis]. */
     data class Snooze(val untilMillis: Long) : FrictionChange
 }
@@ -73,6 +79,8 @@ object CommitLock {
         is FrictionChange.AskWhy -> !change.enabled
         is FrictionChange.Lock -> !change.enabled
         is FrictionChange.Snooze -> true
+        is FrictionChange.WindDownToggle -> !change.enabled
+        is FrictionChange.WindDownTimes -> false
     }
 
     fun isTightening(change: FrictionChange): Boolean = when (change) {
@@ -92,6 +100,8 @@ object CommitLock {
         is FrictionChange.AskWhy -> change.enabled
         is FrictionChange.Lock -> change.enabled
         is FrictionChange.Snooze -> false
+        is FrictionChange.WindDownToggle -> change.enabled
+        is FrictionChange.WindDownTimes -> true
     }
 
     fun needsWait(lockOn: Boolean, change: FrictionChange): Boolean {
