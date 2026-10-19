@@ -12,13 +12,72 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.time.LocalDate
+import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
 
+enum class RotationInterval(
+    val id: Int,
+    val intervalMillis: Long?,
+    val periodicRepeatMinutes: Long?,
+) {
+    ON_OPEN(1, 0L, null),
+    MINUTES_15(2, TimeUnit.MINUTES.toMillis(15), 15L),
+    MINUTES_30(3, TimeUnit.MINUTES.toMillis(30), 30L),
+    HOURS_1(4, TimeUnit.HOURS.toMillis(1), 60L),
+    HOURS_3(5, TimeUnit.HOURS.toMillis(3), 180L),
+    HOURS_6(6, TimeUnit.HOURS.toMillis(6), 360L),
+    HOURS_12(7, TimeUnit.HOURS.toMillis(12), 720L),
+    DAILY(8, TimeUnit.DAYS.toMillis(1), 1440L),
+    WEEKLY(9, TimeUnit.DAYS.toMillis(7), 10080L),
+    NEVER(10, null, null);
+
+    companion object {
+        val DEFAULT = DAILY
+
+        fun fromId(id: Int): RotationInterval =
+            entries.firstOrNull { it.id == id } ?: DEFAULT
+    }
+}
+
+data class RotationStep(
+    val nextIndex: Int?,
+    val lastChangedMillis: Long,
+)
+
 object Rotation {
-    fun next(index: Int, count: Int, today: Int, lastDay: Int): Int? {
-        if (count <= 0) return null
-        if (today == lastDay) return null
-        return ((index + 1) % count + count) % count
+    fun step(
+        index: Int,
+        count: Int,
+        nowMillis: Long,
+        lastChangedMillis: Long,
+        interval: RotationInterval,
+    ): RotationStep {
+        if (count <= 0) return RotationStep(null, lastChangedMillis)
+        if (interval == RotationInterval.NEVER) return RotationStep(null, lastChangedMillis)
+        if (nowMillis < lastChangedMillis) return RotationStep(null, nowMillis)
+
+        val intervalMillis = interval.intervalMillis ?: return RotationStep(null, lastChangedMillis)
+        val slack = intervalMillis / 10
+        val threshold = intervalMillis - slack
+        val elapsed = nowMillis - lastChangedMillis
+        return if (elapsed >= threshold) {
+            RotationStep(((index + 1) % count + count) % count, nowMillis)
+        } else {
+            RotationStep(null, lastChangedMillis)
+        }
+    }
+
+    fun resolveLastChanged(
+        storedMillis: Long,
+        lastDay: Int,
+        today: Int,
+        nowMillis: Long,
+    ): Long {
+        return when {
+            storedMillis > 0L -> storedMillis
+            lastDay == today -> nowMillis
+            else -> 0L
+        }
     }
 
     fun previous(index: Int, count: Int): Int? {
