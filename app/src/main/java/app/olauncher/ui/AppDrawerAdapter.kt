@@ -17,6 +17,7 @@ import android.widget.Filter
 import android.widget.Filterable
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import app.olauncher.R
@@ -32,6 +33,7 @@ import app.olauncher.helper.AppMatcher
 import app.olauncher.helper.ArchivedAppsHelper
 import app.olauncher.helper.Calc
 import app.olauncher.helper.DialMatch
+import app.olauncher.helper.DrawerOrdering
 
 class AppDrawerAdapter(
     private var flag: Int,
@@ -44,6 +46,7 @@ class AppDrawerAdapter(
     private val privateSpaceToggleListener: () -> Unit = {},
     private val privateSpaceSettingsListener: () -> Unit = {},
     private val context: Context? = null,
+    var bottomSearch: Boolean = false,
 ) : ListAdapter<AppModel, RecyclerView.ViewHolder>(DIFF_CALLBACK), Filterable {
 
     companion object {
@@ -89,6 +92,17 @@ class AppDrawerAdapter(
 
     var appsList: MutableList<AppModel> = mutableListOf()
     var appFilteredList: MutableList<AppModel> = mutableListOf()
+    var recyclerView: RecyclerView? = null
+
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+        super.onAttachedToRecyclerView(recyclerView)
+        this.recyclerView = recyclerView
+    }
+
+    override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) {
+        super.onDetachedFromRecyclerView(recyclerView)
+        this.recyclerView = null
+    }
 
     override fun getItemViewType(position: Int): Int {
         return when (appFilteredList.getOrNull(position)) {
@@ -217,7 +231,8 @@ class AppDrawerAdapter(
                     }
                 }
 
-                val items = (resultRows + scoredApps.map { it.first }).toMutableList()
+                val rawItems = resultRows + scoredApps.map { it.first }
+                val items = DrawerOrdering.forSearchPosition(rawItems, bottomSearch).toMutableList()
                 val scores = scoredApps.map { it.second }
                 filterResults.values = FilterPayload(items, scores)
                 return filterResults
@@ -233,7 +248,15 @@ class AppDrawerAdapter(
                     appFilteredList = (results?.values as? MutableList<AppModel>) ?: mutableListOf()
                     appFilteredScores = emptyList()
                 }
+                val isQueryTyped = !constraint.isNullOrBlank()
+                (recyclerView?.layoutManager as? LinearLayoutManager)?.let { lm ->
+                    lm.stackFromEnd = bottomSearch && isQueryTyped
+                }
                 submitList(appFilteredList) {
+                    if (appFilteredList.isNotEmpty()) {
+                        val targetPosition = if (bottomSearch && isQueryTyped) appFilteredList.size - 1 else 0
+                        recyclerView?.scrollToPosition(targetPosition)
+                    }
                     autoLaunch()
                 }
             }
@@ -243,7 +266,7 @@ class AppDrawerAdapter(
     private fun autoLaunch() {
         try {
             val strongMatches = appFilteredScores.count { it >= AppMatcher.SCORE_SUBSTRING }
-            val first = appFilteredList.firstOrNull()
+            val first = if (bottomSearch) appFilteredList.lastOrNull() else appFilteredList.firstOrNull()
             if (ArchivedAppsHelper.canAutoLaunch(
                     hasResultRow = hasResultRow,
                     strongMatches = strongMatches,
@@ -279,7 +302,11 @@ class AppDrawerAdapter(
     }
 
     fun launchFirstInList() {
-        val first = appFilteredList.firstOrNull { it !is AppModel.PrivateSpaceHeader && it !is AppModel.Result }
+        val first = if (bottomSearch) {
+            appFilteredList.lastOrNull { it !is AppModel.PrivateSpaceHeader && it !is AppModel.Result }
+        } else {
+            appFilteredList.firstOrNull { it !is AppModel.PrivateSpaceHeader && it !is AppModel.Result }
+        }
         if (first != null) appClickListener(first)
     }
 
