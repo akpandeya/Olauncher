@@ -59,12 +59,15 @@ import app.olauncher.helper.openDialerApp
 import app.olauncher.helper.openGalleryApp
 import app.olauncher.helper.openMessagesApp
 import app.olauncher.helper.PhotoWallpaper
+import app.olauncher.helper.RotationInterval
 import app.olauncher.helper.WallpaperHomeMenu
 import app.olauncher.helper.setPlainWallpaperByTheme
 import app.olauncher.helper.showPopupMenu
 import app.olauncher.helper.showToast
 import app.olauncher.listener.OnSwipeTouchListener
 import app.olauncher.listener.ViewSwipeTouchListener
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -119,7 +122,20 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         else hideStatusBar()
         if (GermanTime.isWordsClockOn(prefs.germanEnabled, prefs.germanClock)) registerTimeTickReceiver()
         registerBatteryReceiver()
+        if (prefs.photoWallpaperCount > 0 &&
+            RotationInterval.fromId(prefs.photoWallpaperInterval) == RotationInterval.ON_OPEN
+        ) {
+            if (onOpenRotationJob?.isActive == true) return
+            val appContext = requireContext().applicationContext
+            onOpenRotationJob = viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
+                if (PhotoWallpaper.rotateIfDue(prefs)) {
+                    PhotoWallpaper.applyCurrent(appContext, prefs)
+                }
+            }
+        }
     }
+
+    private var onOpenRotationJob: Job? = null
 
     override fun onPause() {
         super.onPause()
