@@ -14,8 +14,8 @@ import android.text.Spannable
 import android.text.SpannableString
 import android.text.format.DateFormat
 import android.text.style.AlignmentSpan
-import android.text.style.TypefaceSpan
 import android.util.TypedValue
+import androidx.annotation.FontRes
 import androidx.core.content.res.ResourcesCompat
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -72,8 +72,10 @@ import app.olauncher.BuildConfig
 import app.olauncher.MainViewModel
 import app.olauncher.R
 import app.olauncher.data.Accent
+import android.util.Log
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
+import app.olauncher.data.FontFamilyResources
 import app.olauncher.data.Prefs
 import app.olauncher.data.SearchEngine
 import app.olauncher.data.SlotCount
@@ -81,6 +83,7 @@ import app.olauncher.data.ShortcutOffset
 import app.olauncher.data.ShortcutIconStyle
 import app.olauncher.data.ShortcutSize
 import app.olauncher.ui.today.TodayCards
+import app.olauncher.databinding.DialogFontFamilyBinding
 import app.olauncher.databinding.DialogTextSizeBinding
 import app.olauncher.databinding.FragmentSettingsBinding
 import app.olauncher.helper.PhotoSet
@@ -616,7 +619,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.batteryMode, R.id.batteryModeTitle, R.id.batteryModeLayout -> showBatteryModeMenu(binding.batteryMode)
             R.id.appThemeText -> showAppThemeMenu(view, showSystem = false)
             R.id.accent -> showAccentMenu(view)
-            R.id.fontFamily -> showFontMenu(view)
+            R.id.fontFamily -> showFontDialog()
             R.id.textSizeValue -> showTextSizeDialog()
             R.id.boldFont -> toggleBoldFont()
             R.id.haptics -> toggleHaptics()
@@ -1901,11 +1904,8 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     }
 
     private fun populateFontFamily() {
-        binding.fontFamily.text = when (prefs.fontFamily) {
-            Constants.FontFamily.INTER -> getString(R.string.font_inter)
-            Constants.FontFamily.PLEX -> getString(R.string.font_plex)
-            else -> getString(R.string.system_default)
-        }
+        val resource = FontFamilyResources.forId(prefs.fontFamily)
+        binding.fontFamily.text = getString(resource.labelRes)
     }
 
     private fun selectFontFamily(family: Int) {
@@ -1915,40 +1915,45 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         requireActivity().recreate()
     }
 
-    private fun showFontMenu(anchor: View) {
-        val interTypeface = try {
-            ResourcesCompat.getFont(requireContext(), R.font.inter)
-        } catch (_: Exception) {
-            null
-        }
-        val plexTypeface = try {
-            ResourcesCompat.getFont(requireContext(), R.font.ibm_plex_sans)
-        } catch (_: Exception) {
-            null
-        }
+    private fun showFontDialog() {
+        val interTypeface = loadFontOrNull(FontFamilyResources.INTER.fontRes)
+        val plexTypeface = loadFontOrNull(FontFamilyResources.PLEX.fontRes)
 
-        val items = listOf(
-            Triple(Constants.FontFamily.SYSTEM, getString(R.string.system_default), Typeface.DEFAULT),
-            Triple(Constants.FontFamily.INTER, getString(R.string.font_inter), interTypeface ?: Typeface.DEFAULT),
-            Triple(Constants.FontFamily.PLEX, getString(R.string.font_plex), plexTypeface ?: Typeface.DEFAULT),
-        )
+        var fontDialog: OlDialog? = null
+        val dialog = requireContext().createDialog(
+            title = R.string.font,
+            action = R.string.cancel,
+        ) { container ->
+            val fontBinding = DialogFontFamilyBinding.inflate(layoutInflater, container, false)
+            fontBinding.fontOptionSystem.typeface = Typeface.DEFAULT
+            fontBinding.fontOptionInter.typeface = interTypeface ?: Typeface.DEFAULT
+            fontBinding.fontOptionPlex.typeface = plexTypeface ?: Typeface.DEFAULT
 
-        anchor.showPopupMenu(
-            configure = { menu ->
-                items.forEach { (id, label, typeface) ->
-                    val item = menu.add(Menu.NONE, id, id, label)
-                    val spannable = SpannableString(label)
-                    spannable.setSpan(
-                        TypefaceSpan(typeface),
-                        0,
-                        label.length,
-                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                    )
-                    item.title = spannable
-                }
+            fontBinding.fontOptionSystem.setOnClickListener {
+                fontDialog?.dismiss()
+                selectFontFamily(Constants.FontFamily.SYSTEM)
             }
-        ) { item ->
-            selectFontFamily(item.itemId)
+            fontBinding.fontOptionInter.setOnClickListener {
+                fontDialog?.dismiss()
+                selectFontFamily(Constants.FontFamily.INTER)
+            }
+            fontBinding.fontOptionPlex.setOnClickListener {
+                fontDialog?.dismiss()
+                selectFontFamily(Constants.FontFamily.PLEX)
+            }
+            fontBinding.root
+        }
+        fontDialog = dialog
+        showDialog(dialog)
+    }
+
+    private fun loadFontOrNull(@FontRes fontRes: Int?): Typeface? {
+        if (fontRes == null) return null
+        return try {
+            ResourcesCompat.getFont(requireContext(), fontRes)
+        } catch (e: Exception) {
+            Log.w("SettingsFragment", "Failed to load font $fontRes", e)
+            null
         }
     }
 
