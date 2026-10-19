@@ -222,6 +222,17 @@ object SettingsSections : List<SettingsSection> {
     fun resolveTarget(sectionKey: String?, @IdRes rowViewId: Int): SettingsSection? =
         findByKey(sectionKey) ?: findSectionByViewId(rowViewId)
 
+    /**
+     * Section to show when the Settings view is (re)created. The explicit deep-link target
+     * applies only on first creation; after a rotation or a return from another screen the
+     * section the user was on wins, and null there means the section list.
+     */
+    fun initialSection(
+        restored: Boolean,
+        restoredSectionKey: String?,
+        explicitTarget: () -> SettingsSection?,
+    ): SettingsSection? = if (restored) findByKey(restoredSectionKey) else explicitTarget()
+
     fun findSectionByNameOrKey(name: String?): SettingsSection? {
         if (name.isNullOrBlank()) return null
         val trimmed = name.trim()
