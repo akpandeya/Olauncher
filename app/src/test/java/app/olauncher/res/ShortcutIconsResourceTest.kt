@@ -127,9 +127,9 @@ class ShortcutIconsResourceTest {
             )
 
             // Verify section ordering: home_screen -> shortcutIconsSection -> appearance
-            val homeScreenIdx = content.indexOf("@string/home_screen")
+            val homeScreenIdx = content.lastIndexOf("@string/home_screen")
             val shortcutSectionIdx = content.indexOf("@+id/shortcutIconsSection")
-            val appearanceIdx = content.indexOf("@string/appearance")
+            val appearanceIdx = content.lastIndexOf("@string/appearance")
 
             assertTrue("home_screen exists", homeScreenIdx != -1)
             assertTrue("shortcutIconsSection exists", shortcutSectionIdx != -1)
