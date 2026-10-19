@@ -32,6 +32,7 @@ object AutoLaunchPolicy {
             && firstItem != null
             && firstItem !is AppModel.PrivateSpaceHeader
             && firstItem !is AppModel.Result
+            && firstItem !is AppModel.RecentHeader
             && !firstItem.isArchived
     }
 }

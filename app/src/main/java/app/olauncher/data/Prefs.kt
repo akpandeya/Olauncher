@@ -7,6 +7,8 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.edit
 
 import java.util.Locale
+import app.olauncher.helper.RecentApp
+import app.olauncher.helper.RecentApps
 import app.olauncher.helper.RotationInterval
 import app.olauncher.ui.today.TodayCard
 import app.olauncher.ui.today.TodayCards
@@ -79,6 +81,8 @@ class Prefs(context: Context) : PauseLogStorage {
         const val SEARCH_ENGINE_CUSTOM_URL = "SEARCH_ENGINE_CUSTOM_URL"
         const val DRAWER_NEW_FIRST = "DRAWER_NEW_FIRST"
         const val DRAWER_LETTER_STRIP = "DRAWER_LETTER_STRIP"
+        const val DRAWER_RECENTS = "DRAWER_RECENTS"
+        const val RECENT_APPS = "RECENT_APPS"
         const val QUIET_ENABLED = "QUIET_ENABLED"
         const val QUIET_RELEASE_TIMES = "QUIET_RELEASE_TIMES"
         const val DEFAULT_QUIET_RELEASE_TIMES = "750,1110"
@@ -272,6 +276,28 @@ class Prefs(context: Context) : PauseLogStorage {
     var drawerLetterStrip: Boolean
         get() = prefs.getBoolean(DRAWER_LETTER_STRIP, false)
         set(value) = prefs.edit { putBoolean(DRAWER_LETTER_STRIP, value).apply() }
+
+    var drawerRecents: Boolean
+        get() = prefs.getBoolean(DRAWER_RECENTS, true)
+        set(value) = prefs.edit { putBoolean(DRAWER_RECENTS, value).apply() }
+
+    var recentApps: String
+        get() = prefs.getString(RECENT_APPS, "") ?: ""
+        set(value) = prefs.edit { putString(RECENT_APPS, value).apply() }
+
+    fun addRecentApp(packageName: String, activityClassName: String?, user: String) {
+        val current = RecentApps.decode(recentApps)
+        val updated = RecentApps.push(
+            current,
+            RecentApp(
+                packageName = packageName,
+                activityClassName = activityClassName,
+                user = user,
+            ),
+            max = 3,
+        )
+        recentApps = RecentApps.encode(updated)
+    }
 
     var keyboardMessageShown: Boolean
         get() = prefs.getBoolean(KEYBOARD_MESSAGE, false)
