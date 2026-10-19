@@ -94,6 +94,19 @@
                 android:visibility="gone"
                 tools:text="🌦 12°" />
         </LinearLayout>
+
+        <TextView
+            android:id="@+id/contextLine"
+            style="@style/TextDefault"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:paddingHorizontal="3dp"
+            android:textSize="@dimen/date_size"
+            android:visibility="gone"
+            tools:text="▶ Song — Artist"
+            tools:visibility="visible" />
     </LinearLayout>
 
     <!-- Screen time-->

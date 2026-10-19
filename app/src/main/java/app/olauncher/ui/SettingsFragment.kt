@@ -222,6 +222,13 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         }
     }
 
+    private val contextLineCalendarLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) {
+        // Granted or not, the line stays on; ask for notification access next.
+        if (_binding != null) askContextLineNotificationAccess()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         NotificationPermission.register(this)
@@ -274,6 +281,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateDateTime()
         populateBatteryMode()
         populateInfoLine()
+        populateContextLine()
         populateSearchEngine()
         populateSwipeApps()
         populateTodayCards()
@@ -355,6 +363,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.dateTime.parent as View, getFirstTextView(binding.dateTime.parent as View), R.id.dateTime),
             RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.batteryModeLayout, binding.batteryModeTitle, R.id.batteryMode),
             RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.infoLineLayout, binding.infoLineTitle, R.id.infoLine),
+            RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.contextLineLayout, binding.contextLineTitle, R.id.contextLineValue),
             RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.alignment.parent as View, getFirstTextView(binding.alignment.parent as View), R.id.alignment),
             RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.swapSidesLayout, binding.swapSides, R.id.swapSides),
 
@@ -645,6 +654,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.dateTime -> showDateTimeMenu(view)
             R.id.batteryMode, R.id.batteryModeTitle, R.id.batteryModeLayout -> showBatteryModeMenu(binding.batteryMode)
             R.id.infoLine, R.id.infoLineTitle, R.id.infoLineLayout -> toggleInfoLine()
+            R.id.contextLineValue, R.id.contextLineTitle, R.id.contextLineLayout -> toggleContextLine()
             R.id.appThemeText -> showAppThemeMenu(view, showSystem = false)
             R.id.accent -> showAccentMenu(view)
             R.id.fontFamily -> showFontDialog()
@@ -790,6 +800,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.infoLine.setOnClickListener(this)
         binding.infoLineTitle.setOnClickListener(this)
         binding.infoLineLayout.setOnClickListener(this)
+        binding.contextLineValue.setOnClickListener(this)
+        binding.contextLineTitle.setOnClickListener(this)
+        binding.contextLineLayout.setOnClickListener(this)
         binding.swipeLeftApp.setOnClickListener(this)
         binding.swipeRightApp.setOnClickListener(this)
         binding.swipeRightLayout.setOnClickListener(this)
@@ -1233,6 +1246,49 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.infoLine.text = getString(
             if (prefs.homeInfoCombined) R.string.info_line_combined else R.string.info_line_separate
         )
+    }
+
+    private fun toggleContextLine() {
+        prefs.homeContextLine = !prefs.homeContextLine
+        populateContextLine()
+        viewModel.toggleDateTime()
+        if (!prefs.homeContextLine) return
+        // Permissions are asked only now, when the line is first switched on. Denial leaves it working.
+        val calendarGranted = ContextCompat.checkSelfPermission(
+            requireContext(), Manifest.permission.READ_CALENDAR
+        ) == PackageManager.PERMISSION_GRANTED
+        if (calendarGranted) {
+            askContextLineNotificationAccess()
+        } else {
+            dialog?.dismiss()
+            dialog = requireContext().showMessageDialog(
+                title = R.string.context_line,
+                message = R.string.calendar_permission_message,
+                action = R.string.allow,
+            ) {
+                contextLineCalendarLauncher.launch(Manifest.permission.READ_CALENDAR)
+            }
+        }
+    }
+
+    private fun askContextLineNotificationAccess() {
+        if (isNotificationAccessGranted()) return
+        dialog?.dismiss()
+        dialog = requireContext().showMessageDialog(
+            title = R.string.context_line,
+            message = R.string.context_line_access_message,
+            action = R.string.allow,
+        ) {
+            try {
+                startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
+            } catch (_: Exception) {
+                requireContext().showToast(getString(R.string.unable_to_open_app))
+            }
+        }
+    }
+
+    private fun populateContextLine() {
+        binding.contextLineValue.text = getString(if (prefs.homeContextLine) R.string.on else R.string.off)
     }
 
     private fun showSearchEngineMenu(anchor: View) {
