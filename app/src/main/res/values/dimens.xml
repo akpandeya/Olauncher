@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <dimen name="text_display">40sp</dimen>
+    <dimen name="text_large">30sp</dimen>
+    <dimen name="text_body">20sp</dimen>
+    <dimen name="text_small">18sp</dimen>
+    <dimen name="text_weather">48sp</dimen>
+    <dimen name="text_drawer_action">12sp</dimen>
+    <dimen name="text_subtitle">12sp</dimen>
+
     <dimen name="alphabet_recycler_margin_bottom">16dp</dimen>
     <dimen name="alphabet_recycler_margin_end">10dp</dimen>
     <dimen name="alphabet_recycler_margin_start">320dp</dimen>
