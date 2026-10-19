@@ -345,4 +345,48 @@ class NextUpFormattingTest {
         assertFalse(NextUpFormatting.hasEnded(event, end.minusSeconds(1), zoneBerlin))
         assertTrue(NextUpFormatting.hasEnded(event, end, zoneBerlin))
     }
+
+    private fun rowAt(
+        event: CalendarEvent,
+        nowDate: LocalDate = LocalDate.of(2026, 10, 18),
+        nowTime: LocalTime = LocalTime.of(12, 0),
+    ): NextUpRow {
+        val now = ZonedDateTime.of(nowDate, nowTime, zoneBerlin).toInstant()
+        return NextUpFormatting.row(event, now, zoneBerlin, is24Hour = true, labels = TEST_LABELS)
+    }
+
+    private fun berlin(date: LocalDate, time: LocalTime) =
+        ZonedDateTime.of(date, time, zoneBerlin).toInstant()
+
+    @Test
+    fun `row splits time from title for later today`() {
+        val d = LocalDate.of(2026, 10, 18)
+        val event = CalendarEvent(1L, "Dentist", berlin(d, LocalTime.of(14, 30)), berlin(d, LocalTime.of(15, 30)))
+        assertEquals(NextUpRow("14:30", "Dentist"), rowAt(event))
+    }
+
+    @Test
+    fun `row splits tomorrow and later days`() {
+        val tomorrow = LocalDate.of(2026, 10, 19)
+        val later = LocalDate.of(2026, 10, 21)
+        val e1 = CalendarEvent(2L, "Standup", berlin(tomorrow, LocalTime.of(9, 0)), berlin(tomorrow, LocalTime.of(9, 15)))
+        val e2 = CalendarEvent(3L, "Trip", berlin(later, LocalTime.of(8, 0)), berlin(later, LocalTime.of(9, 0)))
+        assertEquals(NextUpRow("Tomorrow 09:00", "Standup"), rowAt(e1))
+        assertEquals(NextUpRow("Wed 08:00", "Trip"), rowAt(e2))
+    }
+
+    @Test
+    fun `row keeps in-progress event whole`() {
+        val d = LocalDate.of(2026, 10, 18)
+        val event = CalendarEvent(4L, "Workshop", berlin(d, LocalTime.of(11, 0)), berlin(d, LocalTime.of(13, 0)))
+        assertEquals(NextUpRow("", "Now · Workshop (until 13:00)"), rowAt(event))
+    }
+
+    @Test
+    fun `row splits all-day prefix from title`() {
+        val d = LocalDate.of(2026, 10, 18)
+        val start = d.atStartOfDay(ZoneOffset.UTC).toInstant()
+        val event = CalendarEvent(5L, "Holiday", start, start.plusSeconds(24 * 3600), allDay = true)
+        assertEquals(NextUpRow("Today", "Holiday"), rowAt(event))
+    }
 }

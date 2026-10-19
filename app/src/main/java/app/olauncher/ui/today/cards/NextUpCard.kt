@@ -35,6 +35,7 @@ object NextUpCard : TodayCard {
 
     override val key: String = KEY
     override val titleRes: Int = R.string.next_up
+    override val emoji: String = "📅"
     override val defaultEnabled: Boolean = false
 
     var repositoryProvider: ((Context) -> CalendarRepository)? = null
@@ -120,7 +121,10 @@ internal class NextUpCardView(
 
                 for (event in events) {
                     val itemBinding = ItemNextUpBinding.inflate(inflater, currentBinding.eventsContainer, false)
-                    itemBinding.tvEventLine.text = NextUpFormatting.line(event, now, zone, is24Hour, labels)
+                    val row = NextUpFormatting.row(event, now, zone, is24Hour, labels)
+                    itemBinding.tvEventTime.text = row.lead
+                    itemBinding.tvEventTime.isVisible = row.lead.isNotEmpty()
+                    itemBinding.tvEventLine.text = row.title
                     itemBinding.root.setOnClickListener {
                         NextUpCard.openEvent(context, event)
                     }
