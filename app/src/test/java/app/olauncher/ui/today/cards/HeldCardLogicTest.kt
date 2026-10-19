@@ -48,11 +48,19 @@ class HeldCardLogicTest {
     // --- isAvailable tests ---
 
     @Test
-    fun `isAvailable returns true only when quiet is enabled and access is granted`() {
-        assertTrue(HeldCardLogic.isAvailable(quietEnabled = true, accessGranted = true))
-        assertFalse(HeldCardLogic.isAvailable(quietEnabled = false, accessGranted = true))
-        assertFalse(HeldCardLogic.isAvailable(quietEnabled = true, accessGranted = false))
-        assertFalse(HeldCardLogic.isAvailable(quietEnabled = false, accessGranted = false))
+    fun `isAvailable is true when items are held regardless of quiet mode or access`() {
+        // quiet off, access granted
+        assertTrue(HeldCardLogic.isAvailable(hasHeldItems = true))
+        // access revoked, quiet on
+        assertTrue(HeldCardLogic.isAvailable(hasHeldItems = true))
+    }
+
+    @Test
+    fun `isAvailable is false when nothing is held`() {
+        // quiet off
+        assertFalse(HeldCardLogic.isAvailable(hasHeldItems = false))
+        // quiet on
+        assertFalse(HeldCardLogic.isAvailable(hasHeldItems = false))
     }
 
     // --- groupAndSort tests ---
