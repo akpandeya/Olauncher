@@ -60,7 +60,9 @@ import app.olauncher.helper.ContextLine
 import app.olauncher.helper.ContrastPolicy
 import app.olauncher.helper.DefaultLauncherCheck
 import app.olauncher.helper.GermanTime
+import app.olauncher.helper.AppTarget
 import app.olauncher.helper.Haptics
+import app.olauncher.helper.OpenTargets
 import app.olauncher.helper.NowPlaying
 import app.olauncher.helper.InfoLine
 import app.olauncher.helper.TouchTarget
@@ -254,41 +256,21 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         }
     }
 
-    private fun openClockApp() {
-        if (prefs.clockAppPackage.isBlank())
-            openAlarmApp(requireContext())
-        else
-            launchApp(
-                "Clock",
-                prefs.clockAppPackage,
-                prefs.clockAppClassName,
-                prefs.clockAppUser
-            )
-    }
+    private fun launchTarget(target: AppTarget) =
+        launchApp(target.label, target.pkg, target.className, target.user)
 
-    private fun openCalendarApp() {
-        if (prefs.calendarAppPackage.isBlank())
-            openCalendar(requireContext())
-        else
-            launchApp(
-                "Calendar",
-                prefs.calendarAppPackage,
-                prefs.calendarAppClassName,
-                prefs.calendarAppUser
-            )
-    }
+    private fun openClockApp() =
+        OpenTargets.openClockApp(requireContext(), prefs, ::launchTarget)
 
-    private fun openWeatherApp() {
-        if (prefs.weatherAppPackage.isBlank())
-            showAppList(Constants.FLAG_SET_WEATHER_APP)
-        else
-            launchApp(
-                getString(R.string.weather),
-                prefs.weatherAppPackage,
-                prefs.weatherAppClassName,
-                prefs.weatherAppUser
-            )
-    }
+    private fun openCalendarApp() =
+        OpenTargets.openCalendarApp(requireContext(), prefs, ::launchTarget)
+
+    private fun openWeatherApp() =
+        OpenTargets.openWeatherApp(
+            requireContext(), prefs,
+            pickApp = { showAppList(Constants.FLAG_SET_WEATHER_APP) },
+            launch = ::launchTarget,
+        )
 
     override fun onLongClick(view: View): Boolean {
         when (view.id) {

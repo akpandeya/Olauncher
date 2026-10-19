@@ -24,6 +24,7 @@ import app.olauncher.glance.RainOutlookLabels
 import app.olauncher.glance.WeatherCache
 import app.olauncher.glance.WeatherCodes
 import app.olauncher.glance.WeatherLocation
+import app.olauncher.helper.OpenTargets
 import app.olauncher.helper.getUserHandleFromString
 import app.olauncher.ui.today.TodayCard
 import java.time.Instant
@@ -126,38 +127,34 @@ object WeatherCard : TodayCard {
                 null
             }
 
-            if (prefs.weatherAppPackage.isBlank()) {
-                viewModel?.getAppList(false)
-                try {
-                    fragment.findNavController().navigate(
-                        R.id.action_todayFragment_to_appListFragment,
-                        bundleOf(
-                            Constants.Key.FLAG to Constants.FLAG_SET_WEATHER_APP,
-                            Constants.Key.RENAME to false,
-                        )
+            OpenTargets.openWeatherApp(
+                context, prefs,
+                pickApp = {
+                    viewModel?.getAppList(false)
+                    val args = bundleOf(
+                        Constants.Key.FLAG to Constants.FLAG_SET_WEATHER_APP,
+                        Constants.Key.RENAME to false,
                     )
-                } catch (e: Exception) {
-                    fragment.findNavController().navigate(
-                        R.id.appListFragment,
-                        bundleOf(
-                            Constants.Key.FLAG to Constants.FLAG_SET_WEATHER_APP,
-                            Constants.Key.RENAME to false,
-                        )
+                    try {
+                        fragment.findNavController().navigate(R.id.action_todayFragment_to_appListFragment, args)
+                    } catch (e: Exception) {
+                        fragment.findNavController().navigate(R.id.appListFragment, args)
+                    }
+                },
+                launch = { target ->
+                    viewModel?.selectedApp(
+                        AppModel.App(
+                            appLabel = target.label,
+                            key = null,
+                            appPackage = target.pkg,
+                            activityClassName = target.className,
+                            isNew = false,
+                            user = getUserHandleFromString(context, target.user),
+                        ),
+                        Constants.FLAG_LAUNCH_APP
                     )
-                }
-            } else {
-                viewModel?.selectedApp(
-                    AppModel.App(
-                        appLabel = context.getString(R.string.weather),
-                        key = null,
-                        appPackage = prefs.weatherAppPackage,
-                        activityClassName = prefs.weatherAppClassName,
-                        isNew = false,
-                        user = getUserHandleFromString(context, prefs.weatherAppUser),
-                    ),
-                    Constants.FLAG_LAUNCH_APP
-                )
-            }
+                },
+            )
         }
     }
 }
