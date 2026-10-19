@@ -85,6 +85,15 @@ object PhotoWallpaper {
         if (dir.exists()) {
             dir.deleteRecursively()
         }
+        appendPickedPhotos(context, uris, startIndex = 0)
+    }
+
+    suspend fun appendPickedPhotos(
+        context: Context,
+        uris: List<Uri>,
+        startIndex: Int,
+    ): Int = withContext(Dispatchers.IO) {
+        val dir = getWallpaperDir(context)
         dir.mkdirs()
 
         val (screenWidth, screenHeight) = getScreenDimensions(context)
@@ -94,38 +103,59 @@ object PhotoWallpaper {
         var saved = 0
         for (uri in uris) {
             try {
-                val source = ImageDecoder.createSource(context.contentResolver, uri)
-                val decoded = ImageDecoder.decodeBitmap(source) { decoder, info, _ ->
-                    decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
-                    val origW = info.size.width
-                    val origH = info.size.height
-                    if (origW > 0 && origH > 0) {
-                        val scale = maxOf(
-                            targetWidth.toFloat() / origW,
-                            targetHeight.toFloat() / origH
-                        )
-                        val w = maxOf(1, (origW * scale).roundToInt())
-                        val h = maxOf(1, (origH * scale).roundToInt())
-                        decoder.setTargetSize(w, h)
+                val cropped = decodeAndCrop(context, uri, targetWidth, targetHeight)
+                try {
+                    val outFile = File(dir, "${startIndex + saved}.jpg")
+                    FileOutputStream(outFile).use { fos ->
+                        cropped.compress(Bitmap.CompressFormat.JPEG, 90, fos)
                     }
+                    saved++
+                } finally {
+                    cropped.recycle()
                 }
-
-                val cropped = centreCrop(decoded, targetWidth, targetHeight)
-                if (cropped != decoded) {
-                    decoded.recycle()
-                }
-
-                val outFile = File(dir, "$saved.jpg")
-                FileOutputStream(outFile).use { fos ->
-                    cropped.compress(Bitmap.CompressFormat.JPEG, 90, fos)
-                }
-                cropped.recycle()
-                saved++
             } catch (e: Exception) {
                 e.printStackTrace()
             }
         }
         saved
+    }
+
+    fun removePhotos(context: Context, plan: PhotoSet.RemovalPlan): Boolean {
+        return try {
+            PhotoSet.applyRemoval(getWallpaperDir(context), plan)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    private fun decodeAndCrop(
+        context: Context,
+        uri: Uri,
+        targetWidth: Int,
+        targetHeight: Int,
+    ): Bitmap {
+        val source = ImageDecoder.createSource(context.contentResolver, uri)
+        val decoded = ImageDecoder.decodeBitmap(source) { decoder, info, _ ->
+            decoder.allocator = ImageDecoder.ALLOCATOR_SOFTWARE
+            val origW = info.size.width
+            val origH = info.size.height
+            if (origW > 0 && origH > 0) {
+                val scale = maxOf(
+                    targetWidth.toFloat() / origW,
+                    targetHeight.toFloat() / origH
+                )
+                val w = maxOf(1, (origW * scale).roundToInt())
+                val h = maxOf(1, (origH * scale).roundToInt())
+                decoder.setTargetSize(w, h)
+            }
+        }
+
+        val cropped = centreCrop(decoded, targetWidth, targetHeight)
+        if (cropped != decoded) {
+            decoded.recycle()
+        }
+        return cropped
     }
 
     fun centreCrop(bitmap: Bitmap, targetWidth: Int, targetHeight: Int): Bitmap {
