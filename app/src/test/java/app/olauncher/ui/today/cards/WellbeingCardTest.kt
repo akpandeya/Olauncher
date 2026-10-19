@@ -140,4 +140,15 @@ class WellbeingCardTest {
         assertTrue(WellbeingCardLogic.hasContent(0, 120, emptySet(), usagePermissionGranted = false))
         assertTrue(WellbeingCardLogic.hasContent(0, 0, setOf("a"), usagePermissionGranted = true))
     }
+
+    @Test
+    fun `formatPauseWins is null for zero`() {
+        assertEquals(null, WellbeingCardLogic.formatPauseWins(0))
+    }
+
+    @Test
+    fun `formatPauseWins for one and many`() {
+        assertEquals("🌿 Not now × 1 today", WellbeingCardLogic.formatPauseWins(1))
+        assertEquals("🌿 Not now × 4 today", WellbeingCardLogic.formatPauseWins(4))
+    }
 }
