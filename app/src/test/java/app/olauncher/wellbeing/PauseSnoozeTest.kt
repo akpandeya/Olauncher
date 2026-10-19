@@ -61,6 +61,16 @@ class PauseSnoozeTest {
     }
 
     @Test
+    fun `adding an app break drops ended breaks and keeps live ones`() {
+        val now = 1_000L
+        val result = PauseSnooze.withAppSnooze(
+            mapOf("com.ended" to 999L, "com.live" to 5_000L),
+            "com.new", 7_777L, now,
+        )
+        assertEquals(mapOf("com.live" to 5_000L, "com.new" to 7_777L), result)
+    }
+
+    @Test
     fun `decode drops malformed entries`() {
         val decoded = PauseSnooze.decode(
             setOf(
