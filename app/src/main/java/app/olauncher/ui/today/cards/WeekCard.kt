@@ -21,6 +21,7 @@ object WeekCard : TodayCard {
 
     override val key: String = KEY
     override val titleRes: Int = R.string.last_7_days
+    override val emoji: String = "📊"
     override val defaultEnabled: Boolean = true
 
     var storeProvider: ((Context) -> UsageSnapshotStore)? = null
@@ -88,22 +89,22 @@ object WeekCard : TodayCard {
         val context = b.root.context
 
         b.tvDistractingApps.isVisible = review.distractingAppsLine != null
-        b.tvDistractingApps.text = review.distractingAppsLine?.let { WeekCardText.format(context, it) }
+        b.tvDistractingApps.text = review.distractingAppsLine?.let { WeekCardText.formatWithEmoji(context, it) }
 
         b.tvWeekComparison.isVisible = review.weekComparisonLine != null
-        b.tvWeekComparison.text = review.weekComparisonLine?.let { WeekCardText.format(context, it) }
+        b.tvWeekComparison.text = review.weekComparisonLine?.let { WeekCardText.formatWithEmoji(context, it) }
 
         b.tvTopApps.isVisible = review.topAppsLine != null
-        b.tvTopApps.text = review.topAppsLine?.let { WeekCardText.format(context, it) }
+        b.tvTopApps.text = review.topAppsLine?.let { WeekCardText.formatWithEmoji(context, it) }
 
         b.tvOverAllowance.isVisible = review.overAllowanceLine != null
-        b.tvOverAllowance.text = review.overAllowanceLine?.let { WeekCardText.format(context, it) }
+        b.tvOverAllowance.text = review.overAllowanceLine?.let { WeekCardText.formatWithEmoji(context, it) }
 
         b.tvPause.isVisible = review.pauseLine != null
-        b.tvPause.text = review.pauseLine?.let { WeekCardText.format(context, it) }
+        b.tvPause.text = review.pauseLine?.let { WeekCardText.formatWithEmoji(context, it) }
 
         b.tvNudges.isVisible = review.nudgesLine != null
-        b.tvNudges.text = review.nudgesLine?.let { WeekCardText.format(context, it) }
+        b.tvNudges.text = review.nudgesLine?.let { WeekCardText.formatWithEmoji(context, it) }
     }
 
     fun render() {

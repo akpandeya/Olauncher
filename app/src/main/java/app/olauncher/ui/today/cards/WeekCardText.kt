@@ -33,6 +33,21 @@ object WeekCardText {
 
     val usedPluralsResIds: List<Int> = listOf(R.plurals.week_review_opens)
 
+    /** Leading emoji for a review line. */
+    fun emoji(line: ReviewLine): String = when (line) {
+        is ReviewLine.Distracting -> "📱"
+        is ReviewLine.LessThanWeekBefore -> "📉"
+        is ReviewLine.MoreThanWeekBefore -> "📈"
+        is ReviewLine.TopApps -> "🔝"
+        is ReviewLine.OverAllowance -> "⏱"
+        is ReviewLine.Pause -> "⏸"
+        is ReviewLine.Nudges -> "💧"
+    }
+
+    /** [format] with the line's emoji in front. */
+    fun formatWithEmoji(context: Context, line: ReviewLine): String =
+        "${emoji(line)}  ${format(context, line)}"
+
     fun format(context: Context, line: ReviewLine): String = when (line) {
         is ReviewLine.Distracting -> context.getString(
             R.string.week_review_distracting,

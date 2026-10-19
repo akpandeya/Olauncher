@@ -4,16 +4,16 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.LinearLayout
-import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.navigation.fragment.findNavController
-import app.olauncher.R
 import app.olauncher.data.Prefs
 import app.olauncher.databinding.FragmentTodayBinding
-import app.olauncher.helper.dpToPx
+import app.olauncher.databinding.ItemTodayPanelBinding
+import app.olauncher.glance.HeroFormatting
 import app.olauncher.listener.OnSwipeTouchListener
 import app.olauncher.ui.BaseFragment
+import java.time.LocalDate
+import java.util.Locale
 
 class TodayFragment : BaseFragment() {
 
@@ -52,7 +52,6 @@ class TodayFragment : BaseFragment() {
             }
         }
         binding.root.setOnTouchListener(swipeListener)
-        binding.emptyView.setOnTouchListener(swipeListener)
         binding.todayScrollView.setOnTouchListener { v, event ->
             swipeListener.onTouch(v, event)
             false
@@ -67,40 +66,37 @@ class TodayFragment : BaseFragment() {
 
         activeCards.clear()
         binding.cardsContainer.removeAllViews()
+        binding.heroWeatherHost.removeAllViews()
+        populateHeroDate()
 
-        if (enabledCards.isEmpty()) {
-            binding.emptyView.isVisible = true
-            binding.todayScrollView.isVisible = false
-        } else {
-            binding.emptyView.isVisible = false
-            binding.todayScrollView.isVisible = true
+        val (heroCards, panelCards) = enabledCards.partition { it.inHero }
 
-            for (card in enabledCards) {
-
-                val titleView = TextView(context).apply {
-                    // Quiet, spaced-out headers so the content, not the labels, carries each section.
-                    setTextAppearance(R.style.TextSmallLight)
-                    setAllCaps(true)
-                    letterSpacing = 0.1f
-                    textSize = 12f
-                    text = getString(card.titleRes)
-                    layoutParams = LinearLayout.LayoutParams(
-                        LinearLayout.LayoutParams.MATCH_PARENT,
-                        LinearLayout.LayoutParams.WRAP_CONTENT
-                    ).apply {
-                        topMargin = 28.dpToPx()
-                        bottomMargin = 4.dpToPx()
-                    }
-                }
-                binding.cardsContainer.addView(titleView)
-
-                val cardView = card.createView(layoutInflater, binding.cardsContainer, this)
-                if (cardView.parent == null) {
-                    binding.cardsContainer.addView(cardView)
-                }
-                activeCards.add(card to cardView)
-            }
+        for (card in heroCards) {
+            val cardView = card.createView(layoutInflater, binding.heroWeatherHost, this)
+            if (cardView.parent == null) binding.heroWeatherHost.addView(cardView)
+            activeCards.add(card to cardView)
         }
+        binding.heroWeatherHost.isVisible = heroCards.isNotEmpty()
+
+        // A card with nothing to show gets no panel and no header.
+        for (card in panelCards.filter { it.hasContent(context) }) {
+            val panel = ItemTodayPanelBinding.inflate(layoutInflater, binding.cardsContainer, false)
+            val title = getString(card.titleRes)
+            panel.tvPanelTitle.text = if (card.emoji.isEmpty()) title else "${card.emoji}  $title"
+
+            val cardView = card.createView(layoutInflater, panel.panelContent, this)
+            if (cardView.parent == null) panel.panelContent.addView(cardView)
+            binding.cardsContainer.addView(panel.root)
+            activeCards.add(card to cardView)
+        }
+    }
+
+    private fun populateHeroDate() {
+        val isGerman = prefs.germanEnabled && prefs.germanClock != Prefs.GERMAN_CLOCK_SYSTEM
+        val locale = if (isGerman) Locale.GERMAN else Locale.getDefault()
+        val today = LocalDate.now()
+        binding.tvHeroDay.text = HeroFormatting.dayName(today, locale)
+        binding.tvHeroDate.text = HeroFormatting.dateLine(today, locale)
     }
 
     override fun onDestroyView() {

@@ -6,15 +6,22 @@
     android:background="?android:attr/selectableItemBackground"
     android:clickable="true"
     android:focusable="true"
-    android:orientation="vertical"
-    android:paddingVertical="4dp">
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/tvTemp"
+        style="@style/TextLarge"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="48sp"
+        tools:text="🌦 12°" />
 
     <TextView
         android:id="@+id/tvLine1"
         style="@style/TextMedium"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        tools:text="12° light rain · 15° / 8°" />
+        tools:text="Light rain · 15° / 8°" />
 
     <TextView
         android:id="@+id/tvLine2"
@@ -24,12 +31,20 @@
         android:layout_marginTop="2dp"
         tools:text="Rain until 16:00" />
 
+    <LinearLayout
+        android:id="@+id/hourlyRow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:orientation="horizontal"
+        android:weightSum="6" />
+
     <TextView
         android:id="@+id/tvLine3"
         style="@style/TextSmall"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
+        android:layout_marginTop="14dp"
         android:textColor="?attr/primaryColorTrans80"
         tools:text="Berlin · as of 14:05 · Open-Meteo" />
 
