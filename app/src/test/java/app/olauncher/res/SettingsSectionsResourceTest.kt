@@ -64,21 +64,6 @@ class SettingsSectionsResourceTest {
         return ids
     }
 
-    private fun extractSectionHeaders(doc: Document): List<String> {
-        val textViews = doc.getElementsByTagName("TextView")
-        val headers = mutableListOf<String>()
-        for (i in 0 until textViews.length) {
-            val element = textViews.item(i) as Element
-            if (element.getAttribute("style") == "@style/TextLarge") {
-                val textAttr = element.getAttribute("android:text")
-                if (textAttr.isNotEmpty()) {
-                    headers.add(textAttr)
-                }
-            }
-        }
-        return headers
-    }
-
     private fun extractSectionLinearChildren(doc: Document): List<Element> {
         val allLinear = doc.getElementsByTagName("LinearLayout")
         var scrollLayout: Element? = null
@@ -95,10 +80,31 @@ class SettingsSectionsResourceTest {
         for (i in 0 until children.length) {
             val child = children.item(i)
             if (child.nodeType == Node.ELEMENT_NODE && (child as Element).tagName == "LinearLayout") {
-                sectionCards.add(child)
+                val id = child.getAttribute("android:id")
+                if (!id.endsWith("settingsBackLayout") && !id.endsWith("sectionListLayout")) {
+                    sectionCards.add(child)
+                }
             }
         }
         return sectionCards
+    }
+
+    private fun extractSectionHeaders(doc: Document): List<String> {
+        val cards = extractSectionLinearChildren(doc)
+        val headers = mutableListOf<String>()
+        for (card in cards) {
+            val textViews = card.getElementsByTagName("TextView")
+            for (i in 0 until textViews.length) {
+                val element = textViews.item(i) as Element
+                if (element.getAttribute("style") == "@style/TextLarge") {
+                    val textAttr = element.getAttribute("android:text")
+                    if (textAttr.isNotEmpty()) {
+                        headers.add(textAttr)
+                    }
+                }
+            }
+        }
+        return headers
     }
 
     private fun collectDescendantIds(element: Element): Set<String> {
@@ -278,7 +284,7 @@ class SettingsSectionsResourceTest {
             assertTrue(sectionIds[5].contains("todayCardsLayout"))
             assertEquals(
                 "Today section holds todayCardsLayout only",
-                setOf("todayCardsLayout", "todayCardsTitle", "todayCards"),
+                setOf("todaySection", "todayCardsLayout", "todayCardsTitle", "todayCards"),
                 sectionIds[5]
             )
 
@@ -317,11 +323,102 @@ class SettingsSectionsResourceTest {
         }
     }
 
+    @Test
+    fun `section list rows order matches expected sections in portrait and landscape`() {
+        val expectedSectionRowIds = listOf(
+            "sectionRowHome",
+            "sectionRowShortcuts",
+            "sectionRowDrawer",
+            "sectionRowWellbeing",
+            "sectionRowToday",
+            "sectionRowDeutsch",
+            "sectionRowAppearance",
+            "sectionRowGestures",
+            "sectionRowBackup",
+        )
+        val expectedSectionRowTexts = listOf(
+            "@string/home_screen",
+            "@string/shortcut_icons",
+            "@string/drawer",
+            "@string/wellbeing",
+            "@string/today_section",
+            "@string/deutsch_de",
+            "@string/appearance",
+            "@string/gestures",
+            "@string/backup",
+        )
+
+        val layoutFiles = listOf(
+            resolveFile("src/main/res/layout/fragment_settings.xml"),
+            resolveFile("src/main/res/layout-land/fragment_settings.xml"),
+        )
+
+        for (file in layoutFiles) {
+            val doc = parseXml(file)
+            val allLinear = doc.getElementsByTagName("LinearLayout")
+            var sectionList: Element? = null
+            for (i in 0 until allLinear.length) {
+                val el = allLinear.item(i) as Element
+                if (el.getAttribute("android:id").endsWith("sectionListLayout")) {
+                    sectionList = el
+                    break
+                }
+            }
+            requireNotNull(sectionList) { "sectionListLayout not found in ${file.name}" }
+
+            val rowIds = mutableListOf<String>()
+            val rowTexts = mutableListOf<String>()
+            val children = sectionList.getElementsByTagName("TextView")
+            for (i in 0 until children.length) {
+                val tv = children.item(i) as Element
+                val idAttr = tv.getAttribute("android:id")
+                if (idAttr.isNotEmpty()) {
+                    rowIds.add(idAttr.substringAfterLast("/"))
+                }
+                rowTexts.add(tv.getAttribute("android:text"))
+                assertEquals("TextLarge style on row in ${file.name}", "@style/TextLarge", tv.getAttribute("style"))
+            }
+
+            assertEquals("Section row IDs in ${file.name}", expectedSectionRowIds, rowIds)
+            assertEquals("Section row texts in ${file.name}", expectedSectionRowTexts, rowTexts)
+        }
+    }
+
+    @Test
+    fun `settings back row has expected id and text in portrait and landscape`() {
+        val layoutFiles = listOf(
+            resolveFile("src/main/res/layout/fragment_settings.xml"),
+            resolveFile("src/main/res/layout-land/fragment_settings.xml"),
+        )
+
+        for (file in layoutFiles) {
+            val doc = parseXml(file)
+            val allLinear = doc.getElementsByTagName("LinearLayout")
+            var backLayout: Element? = null
+            for (i in 0 until allLinear.length) {
+                val el = allLinear.item(i) as Element
+                if (el.getAttribute("android:id").endsWith("settingsBackLayout")) {
+                    backLayout = el
+                    break
+                }
+            }
+            requireNotNull(backLayout) { "settingsBackLayout not found in ${file.name}" }
+
+            val textViews = backLayout.getElementsByTagName("TextView")
+            assertEquals("One TextView in settingsBackLayout in ${file.name}", 1, textViews.length)
+            val tv = textViews.item(0) as Element
+            assertEquals("settingsBack", tv.getAttribute("android:id").substringAfterLast("/"))
+            assertEquals("@string/settings_back", tv.getAttribute("android:text"))
+            assertEquals("@style/TextLarge", tv.getAttribute("style"))
+        }
+    }
+
     companion object {
         val EXPECTED_MAIN_IDS = setOf(
             "alignment",
             "appInfo",
             "appThemeText",
+            "appearanceSection",
             "autoShowKeyboard",
             "backupSection",
             "batteryMode",
@@ -343,6 +440,7 @@ class SettingsSectionsResourceTest {
             "drawerNewFirst",
             "drawerNewFirstLayout",
             "drawerNewFirstTitle",
+            "drawerSection",
             "exportBackup",
             "exportBackupLayout",
             "footer",
@@ -362,10 +460,13 @@ class SettingsSectionsResourceTest {
             "germanUiLayout",
             "germanUiOnOff",
             "germanUiTitle",
+            "gesturesSection",
+            "glanceSection",
             "holdNotificationsLayout",
             "holdNotificationsOnOff",
             "holdNotificationsTitle",
             "homeAppsNum",
+            "homeSection",
             "importBackup",
             "importBackupLayout",
             "mainActivityLayout",
@@ -408,7 +509,19 @@ class SettingsSectionsResourceTest {
             "searchEngine",
             "searchEngineLayout",
             "searchEngineTitle",
+            "sectionListLayout",
+            "sectionRowAppearance",
+            "sectionRowBackup",
+            "sectionRowDeutsch",
+            "sectionRowDrawer",
+            "sectionRowGestures",
+            "sectionRowHome",
+            "sectionRowShortcuts",
+            "sectionRowToday",
+            "sectionRowWellbeing",
             "setLauncher",
+            "settingsBack",
+            "settingsBackLayout",
             "shortcutCount",
             "shortcutCountLayout",
             "shortcutCountTitle",
@@ -433,13 +546,16 @@ class SettingsSectionsResourceTest {
             "swipeRightApp",
             "swipeRightLayout",
             "textSizeValue",
+            "thumblineHeaderCard",
             "todayCards",
             "todayCardsLayout",
             "todayCardsTitle",
+            "todaySection",
             "toggleLock",
             "weather",
             "weatherLayout",
             "weatherTitle",
+            "wellbeingSection",
         )
     }
 }
