@@ -437,4 +437,12 @@
     <string name="accent_rose">Rose</string>
     <string name="sample_text">Phone · Messages · Maps</string>
     <string name="apply">Apply</string>
+    <string name="add_to_home">Add to home</string>
+    <string name="unhide">Unhide</string>
+    <string name="mark_distracting">Mark distracting</string>
+    <string name="not_distracting">Not distracting</string>
+    <string name="app_info">App info</string>
+    <string name="added_to_home">Added to home</string>
+    <string name="already_on_home">Already on home screen</string>
+    <string name="home_screen_full">Home screen is full</string>
 </resources>
