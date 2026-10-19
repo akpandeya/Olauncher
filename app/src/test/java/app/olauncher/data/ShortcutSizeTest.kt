@@ -47,15 +47,22 @@ class ShortcutSizeTest {
     }
 
     @Test
-    fun `columnAllowanceDp returns 48 for SMALL, 56 for MEDIUM, 64 for LARGE`() {
-        assertEquals(48, ShortcutSize.columnAllowanceDp(ShortcutSize.SMALL))
+    fun `columnAllowanceDp returns 56 for SMALL, 56 for MEDIUM, 64 for LARGE`() {
+        assertEquals(56, ShortcutSize.columnAllowanceDp(ShortcutSize.SMALL))
         assertEquals(56, ShortcutSize.columnAllowanceDp(ShortcutSize.MEDIUM))
         assertEquals(64, ShortcutSize.columnAllowanceDp(ShortcutSize.LARGE))
     }
 
     @Test
     fun `columnAllowanceDp clamps out of bounds steps`() {
-        assertEquals(48, ShortcutSize.columnAllowanceDp(-1))
+        assertEquals(56, ShortcutSize.columnAllowanceDp(-1))
         assertEquals(64, ShortcutSize.columnAllowanceDp(10))
+    }
+
+    @Test
+    fun `slotSizeDp lifts small to 48 and keeps medium and large`() {
+        assertEquals(48, ShortcutSize.slotSizeDp(ShortcutSize.SMALL))
+        assertEquals(48, ShortcutSize.slotSizeDp(ShortcutSize.MEDIUM))
+        assertEquals(56, ShortcutSize.slotSizeDp(ShortcutSize.LARGE))
     }
 }

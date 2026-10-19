@@ -1,5 +1,7 @@
 package app.olauncher.data
 
+import app.olauncher.helper.TouchTarget
+
 object ShortcutSize {
     const val SMALL = 0
     const val MEDIUM = 1
@@ -25,5 +27,9 @@ object ShortcutSize {
         else -> VIEW_SIZE_MEDIUM_DP
     }
 
-    fun columnAllowanceDp(step: Int): Int = viewSizeDp(step) + COLUMN_ALLOWANCE_EXTRA_DP
+    /** Height of one shortcut slot in dp, including padding that lifts it to the touch minimum. */
+    fun slotSizeDp(step: Int): Int =
+        TouchTarget.targetSizePx(viewSizeDp(step), TouchTarget.MIN_TARGET_DP)
+
+    fun columnAllowanceDp(step: Int): Int = slotSizeDp(step) + COLUMN_ALLOWANCE_EXTRA_DP
 }

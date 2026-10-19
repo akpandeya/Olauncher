@@ -2497,7 +2497,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         val displayMetrics = resources.displayMetrics
         val density = displayMetrics.density.takeIf { it > 0f } ?: 1f
         val columnHeightDp = (displayMetrics.heightPixels / density).toInt()
-        val viewSizeDp = ShortcutSize.viewSizeDp(prefs.shortcutSizeStep)
+        val viewSizeDp = ShortcutSize.slotSizeDp(prefs.shortcutSizeStep)
         val bottomMarginDp = ShortcutOffset.bottomMarginDp(prefs.shortcutOffsetStep)
         val requested = prefs.shortcutCount
         val fitting = SlotCount.fitting(requested, columnHeightDp, viewSizeDp, bottomMarginDp)
