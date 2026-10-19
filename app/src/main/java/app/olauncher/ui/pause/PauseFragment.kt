@@ -23,6 +23,7 @@ import app.olauncher.data.store.WordsStore
 import app.olauncher.databinding.FragmentPauseBinding
 import app.olauncher.helper.OlDialog
 import app.olauncher.helper.appUsagePermissionGranted
+import app.olauncher.helper.getColorFromAttr
 import app.olauncher.helper.getUserHandleFromString
 import app.olauncher.helper.showPopupMenu
 import app.olauncher.helper.showWaitDialog
@@ -261,20 +262,29 @@ class PauseFragment : Fragment() {
         val lookup = binding.choiceLookup
         val bored = binding.choiceBored
 
+        val accentColor = context?.getColorFromAttr(R.attr.accentColor) ?: reply.currentTextColor
+        val primaryColor = context?.getColorFromAttr(R.attr.primaryColor) ?: reply.currentTextColor
+
         if (selected == null) {
             reply.alpha = 0.7f
             reply.isSelected = false
+            reply.setTextColor(primaryColor)
             lookup.alpha = 0.7f
             lookup.isSelected = false
+            lookup.setTextColor(primaryColor)
             bored.alpha = 0.7f
             bored.isSelected = false
+            bored.setTextColor(primaryColor)
         } else {
             reply.alpha = if (selected == PauseWhy.REPLY) 1.0f else 0.4f
             reply.isSelected = (selected == PauseWhy.REPLY)
+            reply.setTextColor(if (selected == PauseWhy.REPLY) accentColor else primaryColor)
             lookup.alpha = if (selected == PauseWhy.LOOKUP) 1.0f else 0.4f
             lookup.isSelected = (selected == PauseWhy.LOOKUP)
+            lookup.setTextColor(if (selected == PauseWhy.LOOKUP) accentColor else primaryColor)
             bored.alpha = if (selected == PauseWhy.BORED) 1.0f else 0.4f
             bored.isSelected = (selected == PauseWhy.BORED)
+            bored.setTextColor(if (selected == PauseWhy.BORED) accentColor else primaryColor)
         }
     }
 
@@ -305,6 +315,10 @@ class PauseFragment : Fragment() {
 
         binding.btnOpen.isEnabled = isReady
         binding.btnOpen.alpha = if (isReady) 1.0f else 0.5f
+
+        val accentColor = context?.getColorFromAttr(R.attr.accentColor) ?: binding.btnOpen.currentTextColor
+        val primaryColor = context?.getColorFromAttr(R.attr.primaryColor) ?: binding.btnOpen.currentTextColor
+        binding.btnOpen.setTextColor(if (countdownActive) primaryColor else accentColor)
 
         binding.btnOpen.text = if (countdownActive) {
             getString(

@@ -36,4 +36,21 @@
     <color name="todayChipLight">#1F000000</color>
     <color name="todayChipDark">#24FFFFFF</color>
 
+    <!-- Accent colours -->
+    <color name="accentSage">#9CAF88</color>
+    <color name="accentSageDark">#9CAF88</color>
+    <color name="accentSageLight">#4D6653</color>
+
+    <color name="accentSand">#D4C4A8</color>
+    <color name="accentSandDark">#D4C4A8</color>
+    <color name="accentSandLight">#765B3B</color>
+
+    <color name="accentSky">#96B9D0</color>
+    <color name="accentSkyDark">#96B9D0</color>
+    <color name="accentSkyLight">#2E6585</color>
+
+    <color name="accentRose">#DE9FA7</color>
+    <color name="accentRoseDark">#DE9FA7</color>
+    <color name="accentRoseLight">#82444E</color>
+
 </resources>
