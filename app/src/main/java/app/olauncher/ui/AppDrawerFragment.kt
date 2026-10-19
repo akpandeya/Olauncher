@@ -37,6 +37,8 @@ import app.olauncher.data.SearchEngine
 import app.olauncher.data.SearchTarget
 import app.olauncher.databinding.FragmentAppDrawerBinding
 import app.olauncher.helper.ArchivedAppsHelper
+import app.olauncher.helper.HomeAppHelper
+import app.olauncher.wellbeing.UsageSnapshotWorker
 import app.olauncher.helper.DrawerOrdering
 import app.olauncher.helper.DrawerScrollHelper
 import app.olauncher.helper.RecentApps
@@ -386,6 +388,28 @@ class AppDrawerFragment : BaseFragment() {
             drawerRecents = prefs.drawerRecents,
             recentAppsProvider = { RecentApps.decode(prefs.recentApps) },
             hiddenAppsProvider = { prefs.hiddenApps },
+            appAddToHomeListener = { appModel ->
+                when (HomeAppHelper.addToHome(prefs, appModel)) {
+                    is HomeAppHelper.AddResult.Added -> {
+                        requireContext().showToast(R.string.added_to_home)
+                        viewModel.refreshHome(true)
+                    }
+                    is HomeAppHelper.AddResult.AlreadyOnHome ->
+                        requireContext().showToast(R.string.already_on_home)
+                    is HomeAppHelper.AddResult.HomeFull ->
+                        requireContext().showToast(R.string.home_screen_full)
+                }
+            },
+            appDistractingListener = { appModel ->
+                val pkg = appModel.appPackage
+                if (pkg.isNotBlank()) {
+                    val current = prefs.distractingApps.toMutableSet()
+                    if (current.contains(pkg)) current.remove(pkg) else current.add(pkg)
+                    prefs.distractingApps = current
+                    UsageSnapshotWorker.syncWithDistractingApps(requireContext().applicationContext, current)
+                }
+            },
+            distractingAppsProvider = { prefs.distractingApps },
         )
 
         linearLayoutManager = object : LinearLayoutManager(requireContext()) {

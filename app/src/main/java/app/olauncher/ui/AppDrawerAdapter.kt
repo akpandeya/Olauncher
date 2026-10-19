@@ -54,6 +54,9 @@ class AppDrawerAdapter(
     var drawerRecents: Boolean = true,
     var recentAppsProvider: (() -> List<RecentApp>)? = null,
     var hiddenAppsProvider: (() -> Set<String>)? = null,
+    var appAddToHomeListener: ((AppModel) -> Unit)? = null,
+    var appDistractingListener: ((AppModel) -> Unit)? = null,
+    var distractingAppsProvider: (() -> Set<String>)? = null,
 ) : ListAdapter<AppModel, RecyclerView.ViewHolder>(DIFF_CALLBACK), Filterable {
 
     companion object {
@@ -195,18 +198,27 @@ class AppDrawerAdapter(
                     }
                 }
 
-                is ViewHolder -> holder.bind(
-                    flag,
-                    appLabelGravity,
-                    myUserHandle,
-                    appModel,
-                    searchQuery,
-                    appClickListener,
-                    appDeleteListener,
-                    appInfoListener,
-                    appHideListener,
-                    appRenameListener
-                )
+                is ViewHolder -> {
+                    val isHidden = flag == Constants.FLAG_HIDDEN_APPS ||
+                        (hiddenAppsProvider?.invoke()?.contains(appModel.appPackage + "|" + appModel.user.toString()) == true)
+                    val isDistracting = distractingAppsProvider?.invoke()?.contains(appModel.appPackage) == true
+                    holder.bind(
+                        flag,
+                        appLabelGravity,
+                        myUserHandle,
+                        appModel,
+                        searchQuery,
+                        appClickListener,
+                        appDeleteListener,
+                        appInfoListener,
+                        appHideListener,
+                        appRenameListener,
+                        appAddToHomeListener,
+                        appDistractingListener,
+                        isHidden,
+                        isDistracting,
+                    )
+                }
             }
         } catch (e: Exception) {
             e.printStackTrace()
@@ -416,7 +428,6 @@ class AppDrawerAdapter(
             result: AppModel.Result,
             clickListener: (AppModel) -> Unit,
         ) = with(binding) {
-            appHideLayout.visibility = View.GONE
             renameLayout.visibility = View.GONE
             otherProfileIndicator.visibility = View.GONE
             appTitle.visibility = View.VISIBLE
@@ -458,8 +469,11 @@ class AppDrawerAdapter(
             appInfoListener: (AppModel) -> Unit,
             appHideListener: (AppModel, Int) -> Unit,
             appRenameListener: (AppModel, String) -> Unit,
+            appAddToHomeListener: ((AppModel) -> Unit)?,
+            appDistractingListener: ((AppModel) -> Unit)?,
+            isHidden: Boolean,
+            isDistracting: Boolean,
         ) = with(binding) {
-            appHideLayout.visibility = View.GONE
             renameLayout.visibility = View.GONE
             appTitle.visibility = View.VISIBLE
 
@@ -517,47 +531,41 @@ class AppDrawerAdapter(
 
             appTitle.setOnClickListener { clickListener(appModel) }
 
-            appTitle.setOnLongClickListener {
-                if (appModel.appPackage.isNotEmpty()) {
-                    appDelete.alpha = when (
-                        appModel is AppModel.PinnedShortcut || !root.context.isSystemApp(appModel.appPackage, appModel.user)
-                    ) {
-                        true -> 1.0f
-                        false -> 0.5f
-                    }
-                    appHide.text = if (flag == Constants.FLAG_HIDDEN_APPS)
-                        root.context.getString(R.string.adapter_show)
-                    else
-                        root.context.getString(R.string.adapter_hide)
-                    appTitle.visibility = View.INVISIBLE
-                    appHide.alpha = when (appModel is AppModel.PinnedShortcut) {
-                        true -> 0.5f
-                        false -> 1.0f
-                    }
-                    appHideLayout.visibility = View.VISIBLE
-                    if (appModel.isArchived) {
-                        appRename.isVisible = false
-                        appHide.isVisible = false
-                    } else {
-                        appHide.isVisible = true
-                        appRename.isVisible = flag != Constants.FLAG_HIDDEN_APPS
-                    }
-                }
-                true
-            }
-
-            // Configure rename behavior
-            appRename.setOnClickListener {
+            fun showRenameEdit() {
                 if (appModel.appPackage.isNotEmpty()) {
                     etAppRename.hint = getAppName(etAppRename.context, appModel.appPackage, appModel.user)
                     etAppRename.setText(appModel.appLabel)
                     etAppRename.setSelectAllOnFocus(true)
                     renameLayout.visibility = View.VISIBLE
-                    appHideLayout.visibility = View.GONE
+                    appTitle.visibility = View.INVISIBLE
                     etAppRename.showKeyboard()
                     etAppRename.imeOptions = EditorInfo.IME_ACTION_DONE
                 }
             }
+
+            appTitle.setOnLongClickListener {
+                if (appModel.appPackage.isNotEmpty()) {
+                    root.hideKeyboard()
+                    val sheet = AppActionsSheet(
+                        context = root.context,
+                        appModel = appModel,
+                        isHidden = isHidden,
+                        isDistracting = isDistracting,
+                        flag = flag,
+                        appLabelGravity = appLabelGravity,
+                        onAddToHome = { appAddToHomeListener?.invoke(appModel) },
+                        onRename = { showRenameEdit() },
+                        onHide = { appHideListener(appModel, bindingAdapterPosition) },
+                        onToggleDistracting = { appDistractingListener?.invoke(appModel) },
+                        onAppInfo = { appInfoListener(appModel) },
+                        onUninstall = { appDeleteListener(appModel) },
+                    )
+                    sheet.showRespectingStatusBar()
+                }
+                true
+            }
+
+            // Configure rename behavior
             etAppRename.onFocusChangeListener = View.OnFocusChangeListener { _, hasFocus ->
                 appTitle.visibility = if (hasFocus) View.INVISIBLE else View.VISIBLE
             }
@@ -584,6 +592,7 @@ class AppDrawerAdapter(
                     if (renameLabel.isNotBlank() && appModel.appPackage.isNotBlank()) {
                         appRenameListener(appModel, renameLabel)
                         renameLayout.visibility = View.GONE
+                        appTitle.visibility = View.VISIBLE
                     }
                     true
                 }
@@ -595,25 +604,20 @@ class AppDrawerAdapter(
                 if (renameLabel.isNotBlank() && appModel.appPackage.isNotBlank()) {
                     appRenameListener(appModel, renameLabel)
                     renameLayout.visibility = View.GONE
+                    appTitle.visibility = View.VISIBLE
                 } else {
                     appRenameListener(
                         appModel,
                         getAppName(etAppRename.context, appModel.appPackage, appModel.user)
                     )
                     renameLayout.visibility = View.GONE
+                    appTitle.visibility = View.VISIBLE
                 }
-            }
-            appInfo.setOnClickListener { appInfoListener(appModel) }
-            appDelete.setOnClickListener { appDeleteListener(appModel) }
-            appMenuClose.setOnClickListener {
-                appHideLayout.visibility = View.GONE
-                appTitle.visibility = View.VISIBLE
             }
             appRenameClose.setOnClickListener {
                 renameLayout.visibility = View.GONE
                 appTitle.visibility = View.VISIBLE
             }
-            appHide.setOnClickListener { appHideListener(appModel, bindingAdapterPosition) }
         }
 
         private fun getAppName(context: Context, appPackage: String, user: UserHandle): String {
