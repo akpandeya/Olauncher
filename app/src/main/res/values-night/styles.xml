@@ -45,6 +45,7 @@
         <item name="todayPanelColor">@color/todayPanelDark</item>
         <item name="todayChipColor">@color/todayChipDark</item>
         <item name="dialogShadeColor">@color/whiteInverseTrans50</item>
+        <item name="accentColor">?attr/primaryColor</item>
 
         <item name="mainFontFamily">sans-serif-light</item>
 
@@ -54,6 +55,27 @@
         <item name="textAppearanceSmallPopupMenu">@style/OlPopupMenuText</item>
         <item name="alertDialogTheme">@style/OlAlertDialog</item>
 
+    </style>
+
+    <!-- Accent theme overlays applied over AppTheme -->
+    <style name="AccentSystemOverlay">
+        <item name="accentColor">@android:color/system_accent1_200</item>
+    </style>
+
+    <style name="AccentSageOverlay">
+        <item name="accentColor">@color/accentSageDark</item>
+    </style>
+
+    <style name="AccentSandOverlay">
+        <item name="accentColor">@color/accentSandDark</item>
+    </style>
+
+    <style name="AccentSkyOverlay">
+        <item name="accentColor">@color/accentSkyDark</item>
+    </style>
+
+    <style name="AccentRoseOverlay">
+        <item name="accentColor">@color/accentRoseDark</item>
     </style>
 
     <style name="WindowAnimationTransition">

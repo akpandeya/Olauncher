@@ -15,4 +15,5 @@
     <attr name="todayScrimColor" format="color" />
     <attr name="todayPanelColor" format="color" />
     <attr name="todayChipColor" format="color" />
+    <attr name="accentColor" format="color" />
 </resources>
