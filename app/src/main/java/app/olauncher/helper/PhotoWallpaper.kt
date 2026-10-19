@@ -31,6 +31,9 @@ enum class RotationInterval(
     WEEKLY(9, TimeUnit.DAYS.toMillis(7), 10080L),
     NEVER(10, null, null);
 
+    /** Only periodic intervals rotate from the worker; ON_OPEN rotates from HomeFragment, NEVER is manual. */
+    val rotatesFromWorker: Boolean get() = periodicRepeatMinutes != null
+
     companion object {
         val DEFAULT = DAILY
 
