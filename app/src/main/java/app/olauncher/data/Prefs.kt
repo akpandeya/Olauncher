@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.edit
 
 import java.util.Locale
+import app.olauncher.helper.RotationInterval
 import app.olauncher.ui.today.TodayCard
 import app.olauncher.ui.today.TodayCards
 import app.olauncher.wellbeing.DaySnapshot
@@ -105,6 +106,8 @@ class Prefs(context: Context) : PauseLogStorage {
     private val PHOTO_WALLPAPER_TARGET = "PHOTO_WALLPAPER_TARGET"
     private val PHOTO_WALLPAPER_LAST_DAY = "PHOTO_WALLPAPER_LAST_DAY"
     private val PHOTO_WALLPAPER_HOME_MENU = "PHOTO_WALLPAPER_HOME_MENU"
+    private val PHOTO_WALLPAPER_INTERVAL = "PHOTO_WALLPAPER_INTERVAL"
+    private val PHOTO_WALLPAPER_LAST_CHANGED = "PHOTO_WALLPAPER_LAST_CHANGED"
     private val HOME_ALIGNMENT = "HOME_ALIGNMENT"
     private val HOME_BOTTOM_ALIGNMENT = "HOME_BOTTOM_ALIGNMENT"
     private val HOME_SHORTCUTS = "HOME_SHORTCUTS"
@@ -293,6 +296,14 @@ class Prefs(context: Context) : PauseLogStorage {
     var photoWallpaperHomeMenu: Boolean
         get() = prefs.getBoolean(PHOTO_WALLPAPER_HOME_MENU, false)
         set(value) = prefs.edit { putBoolean(PHOTO_WALLPAPER_HOME_MENU, value).apply() }
+
+    var photoWallpaperInterval: Int
+        get() = prefs.getInt(PHOTO_WALLPAPER_INTERVAL, RotationInterval.DEFAULT.id)
+        set(value) = prefs.edit { putInt(PHOTO_WALLPAPER_INTERVAL, value).apply() }
+
+    var photoWallpaperLastChanged: Long
+        get() = prefs.getLong(PHOTO_WALLPAPER_LAST_CHANGED, 0L)
+        set(value) = prefs.edit { putLong(PHOTO_WALLPAPER_LAST_CHANGED, value).apply() }
 
     var homeAppsNum: Int
         get() = prefs.getInt(HOME_APPS_NUM, 4)
