@@ -82,6 +82,7 @@ class Prefs(context: Context) : PauseLogStorage {
         const val DRAWER_NEW_FIRST = "DRAWER_NEW_FIRST"
         const val DRAWER_LETTER_STRIP = "DRAWER_LETTER_STRIP"
         const val DRAWER_RECENTS = "DRAWER_RECENTS"
+        const val SEARCH_CONTACTS = "SEARCH_CONTACTS"
         const val RECENT_APPS = "RECENT_APPS"
         const val QUIET_ENABLED = "QUIET_ENABLED"
         const val QUIET_RELEASE_TIMES = "QUIET_RELEASE_TIMES"
@@ -276,6 +277,10 @@ class Prefs(context: Context) : PauseLogStorage {
     var drawerLetterStrip: Boolean
         get() = prefs.getBoolean(DRAWER_LETTER_STRIP, false)
         set(value) = prefs.edit { putBoolean(DRAWER_LETTER_STRIP, value).apply() }
+
+    var searchContacts: Boolean
+        get() = prefs.getBoolean(SEARCH_CONTACTS, false)
+        set(value) = prefs.edit { putBoolean(SEARCH_CONTACTS, value).apply() }
 
     var drawerRecents: Boolean
         get() = prefs.getBoolean(DRAWER_RECENTS, true)

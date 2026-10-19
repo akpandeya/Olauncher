@@ -187,6 +187,13 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         }
     }
 
+    private val contactsPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        prefs.searchContacts = isGranted
+        if (_binding != null) populateSearchContacts()
+    }
+
     private var pendingCalendarCardIndex: Int? = null
     private var todayCardsDialog: AlertDialog? = null
     private var todayCardsCheckedState: BooleanArray? = null
@@ -239,6 +246,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateDrawerNewFirst()
         populateDrawerLetterStrip()
         populateDrawerRecents()
+        populateSearchContacts()
         populateScreenTimeOnOff()
         populateDistractingApps()
         populatePauseBeforeApps()
@@ -360,6 +368,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             RuntimeSettingsRow(SettingsSections.KEY_DRAWER, binding.drawerNewFirstLayout, binding.drawerNewFirstTitle, R.id.drawerNewFirst),
             RuntimeSettingsRow(SettingsSections.KEY_DRAWER, binding.drawerLetterStripLayout, binding.drawerLetterStripTitle, R.id.drawerLetterStrip),
             RuntimeSettingsRow(SettingsSections.KEY_DRAWER, binding.drawerRecentsLayout, binding.drawerRecentsTitle, R.id.drawerRecents),
+            RuntimeSettingsRow(SettingsSections.KEY_DRAWER, binding.searchContactsLayout, binding.searchContactsTitle, R.id.searchContacts),
 
             // Wellbeing
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.distractingAppsLayout, binding.distractingAppsTitle, R.id.distractingApps),
@@ -613,6 +622,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.drawerNewFirst, R.id.drawerNewFirstTitle, R.id.drawerNewFirstLayout -> toggleDrawerNewFirst()
             R.id.drawerLetterStrip, R.id.drawerLetterStripTitle, R.id.drawerLetterStripLayout -> toggleDrawerLetterStrip()
             R.id.drawerRecents, R.id.drawerRecentsTitle, R.id.drawerRecentsLayout -> toggleDrawerRecents()
+            R.id.searchContacts, R.id.searchContactsTitle, R.id.searchContactsLayout -> toggleSearchContacts()
             R.id.searchEngine, R.id.searchEngineTitle, R.id.searchEngineLayout -> showSearchEngineMenu(binding.searchEngine)
             R.id.homeAppsNum -> showHomeAppsNumMenu(view)
             R.id.alignment -> showAlignmentMenu(view)
@@ -699,6 +709,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.drawerRecents.setOnClickListener(this)
         binding.drawerRecentsTitle.setOnClickListener(this)
         binding.drawerRecentsLayout.setOnClickListener(this)
+        binding.searchContacts.setOnClickListener(this)
+        binding.searchContactsTitle.setOnClickListener(this)
+        binding.searchContactsLayout.setOnClickListener(this)
         binding.searchEngine.setOnClickListener(this)
         binding.searchEngineTitle.setOnClickListener(this)
         binding.searchEngineLayout.setOnClickListener(this)
@@ -2477,6 +2490,32 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     private fun toggleDrawerRecents() {
         prefs.drawerRecents = !prefs.drawerRecents
         populateDrawerRecents()
+    }
+
+    private fun hasContactsPermission(): Boolean =
+        ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED
+
+    private fun populateSearchContacts() {
+        if (prefs.searchContacts && !hasContactsPermission()) prefs.searchContacts = false
+        binding.searchContacts.text = getString(if (prefs.searchContacts) R.string.on else R.string.off)
+    }
+
+    private fun toggleSearchContacts() {
+        if (prefs.searchContacts) {
+            prefs.searchContacts = false
+            populateSearchContacts()
+        } else if (hasContactsPermission()) {
+            prefs.searchContacts = true
+            populateSearchContacts()
+        } else {
+            requireContext().showMessageDialog(
+                title = R.string.search_contacts,
+                message = R.string.search_contacts_permission_message,
+                action = R.string.allow,
+            ) {
+                contactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
+            }
+        }
     }
 
     private fun updateHomeBottomAlignment() {
