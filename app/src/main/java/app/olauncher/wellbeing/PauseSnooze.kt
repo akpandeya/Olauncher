@@ -53,6 +53,10 @@ object PauseSnooze {
         return result
     }
 
+    /** Adds or replaces [pkg]'s break and drops breaks that already ended, so the set never grows. */
+    fun withAppSnooze(snoozes: Map<String, Long>, pkg: String, until: Long, now: Long): Map<String, Long> =
+        snoozes.filterValues { isActive(it, now) } + (pkg to until)
+
     fun isAppSnoozed(pkg: String, snoozes: Map<String, Long>, now: Long): Boolean =
         snoozes[pkg]?.let { isActive(it, now) } ?: false
 

@@ -332,7 +332,8 @@ class PauseFragment : Fragment() {
         val isReady = !countdownActive && (!whyRequired || whySelected)
 
         binding.btnOpen.isEnabled = isReady
-        binding.btnOpen.alpha = if (isReady) 1.0f else 0.5f
+        // Open stays quieter than Not now (70%) even when ready.
+        binding.btnOpen.alpha = if (isReady) 0.7f else 0.4f
 
         val accentColor = context?.getColorFromAttr(R.attr.accentColor) ?: binding.btnOpen.currentTextColor
         val primaryColor = context?.getColorFromAttr(R.attr.primaryColor) ?: binding.btnOpen.currentTextColor
@@ -381,6 +382,8 @@ class PauseFragment : Fragment() {
     private fun offerStopPausing(anchor: View) {
         anchor.showPopupMenu(
             configure = { menu ->
+                // Header so the choices read as "Stop pausing <app>: For 1 hour / ...".
+                menu.add(Menu.NONE, 0, 0, getString(R.string.stop_pausing_app, appLabel)).isEnabled = false
                 menu.add(Menu.NONE, 1, 1, getString(R.string.snooze_hour))
                 menu.add(Menu.NONE, 2, 2, getString(R.string.snooze_tomorrow))
                 menu.add(Menu.NONE, 3, 3, getString(R.string.snooze_for_good))
@@ -398,8 +401,9 @@ class PauseFragment : Fragment() {
                 if (choice == null) {
                     removeThisAppFromDistracting(appContext)
                 } else {
-                    val until = PauseSnooze.until(choice, nowSupplier(), zoneSupplier())
-                    prefs.pauseAppSnooze = prefs.pauseAppSnooze + (appPackage to until)
+                    val now = nowSupplier()
+                    val until = PauseSnooze.until(choice, now, zoneSupplier())
+                    prefs.pauseAppSnooze = PauseSnooze.withAppSnooze(prefs.pauseAppSnooze, appPackage, until, now)
                 }
             }
             val change = if (choice == null) {
