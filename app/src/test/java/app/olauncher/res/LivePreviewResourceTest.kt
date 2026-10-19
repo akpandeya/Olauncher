@@ -52,10 +52,9 @@ class LivePreviewResourceTest {
     }
 
     @Test
-    fun `strings define sample_text, text_size_sample, and apply`() {
+    fun `strings define sample_text and apply`() {
         val strings = loadStrings()
         assertEquals("Phone · Messages · Maps", strings["sample_text"])
-        assertEquals("@string/sample_text", strings["text_size_sample"])
         assertEquals("Apply", strings["apply"])
     }
 
@@ -92,8 +91,8 @@ class LivePreviewResourceTest {
         )
         val textAttr = sample.getAttribute("android:text")
         assertTrue(
-            "textSizeSample must use @string/sample_text or @string/text_size_sample, was: $textAttr",
-            textAttr == "@string/sample_text" || textAttr == "@string/text_size_sample"
+            "textSizeSample must use @string/sample_text, was: $textAttr",
+            textAttr == "@string/sample_text"
         )
     }
 
