@@ -1,5 +1,6 @@
 package app.olauncher.ui
 
+import android.annotation.SuppressLint
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
@@ -7,16 +8,21 @@ import android.net.Uri
 import android.os.Bundle
 import android.os.Process
 import android.text.Spannable
+import android.view.Gravity
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.animation.AnimationUtils
 import android.view.inputmethod.BaseInputConnection
 import android.view.inputmethod.InputMethodManager
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.SearchView
+import androidx.core.view.isVisible
+import androidx.core.widget.TextViewCompat
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -34,6 +40,8 @@ import app.olauncher.helper.ArchivedAppsHelper
 import app.olauncher.helper.DrawerOrdering
 import app.olauncher.helper.DrawerScrollHelper
 import app.olauncher.helper.Haptics
+import app.olauncher.helper.LetterIndex
+import app.olauncher.helper.LetterPos
 import app.olauncher.helper.copyToClipboard
 import app.olauncher.helper.deletePinnedShortcut
 import app.olauncher.helper.hideKeyboard
@@ -61,6 +69,8 @@ class AppDrawerFragment : BaseFragment() {
     private var currentPrivateSpaceApps: List<AppModel>? = null
     private var currentPrivateSpaceLocked: Boolean = true
     private var currentPrivateSpaceAvailable: Boolean = false
+    private var letterPosList: List<LetterPos> = emptyList()
+    private var lastSelectedLetter: Char? = null
 
     private val viewModel: MainViewModel by activityViewModels()
     private var _binding: FragmentAppDrawerBinding? = null
@@ -84,6 +94,7 @@ class AppDrawerFragment : BaseFragment() {
         }
 
         setupDrawerLayout()
+        setupLetterStripLayout()
         initViews()
         initSearch()
         initAdapter()
@@ -97,9 +108,9 @@ class AppDrawerFragment : BaseFragment() {
         val rv = binding.recyclerView
         val searchContainer = binding.searchContainer
 
-        val transition = binding.root.layoutTransition
-        binding.root.layoutTransition = null
-        binding.root.removeAllViews()
+        val transition = binding.drawerLayout.layoutTransition
+        binding.drawerLayout.layoutTransition = null
+        binding.drawerLayout.removeAllViews()
 
         val rvParams = rv.layoutParams as LinearLayout.LayoutParams
         rvParams.height = 0
@@ -116,9 +127,9 @@ class AppDrawerFragment : BaseFragment() {
         searchParams.bottomMargin = originalBottomMargin
         searchContainer.layoutParams = searchParams
 
-        binding.root.addView(rv)
-        binding.root.addView(searchContainer)
-        binding.root.layoutTransition = transition
+        binding.drawerLayout.addView(rv)
+        binding.drawerLayout.addView(searchContainer)
+        binding.drawerLayout.layoutTransition = transition
 
         // The activity is edge-to-edge, so the window is not resized for the keyboard.
         // Pad the drawer by the IME inset to keep the bottom search row above the keyboard.
@@ -196,6 +207,7 @@ class AppDrawerFragment : BaseFragment() {
                     adapter.filter.filter(newText)
                     binding.appRename.visibility =
                         if (canRename && newText.isNotBlank()) View.VISIBLE else View.GONE
+                    updateLetterStripVisibility(newText)
                     return true
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -391,8 +403,10 @@ class AppDrawerFragment : BaseFragment() {
         }
         if (flag == Constants.FLAG_HIDDEN_APPS) {
             viewModel.hiddenApps.observe(viewLifecycleOwner) {
-                it?.let {
-                    adapter.setAppList(it.toMutableList())
+                it?.let { apps ->
+                    val ordered = DrawerOrdering.order(apps, prefs.drawerNewFirst)
+                    adapter.setAppList(ordered.toMutableList())
+                    populateLetterStrip(ordered)
                 }
             }
         } else {
@@ -432,6 +446,7 @@ class AppDrawerFragment : BaseFragment() {
         val ordered = DrawerOrdering.order(filtered, prefs.drawerNewFirst)
         adapter.setAppList(ordered.toMutableList())
         adapter.filter.filter(binding.search.query)
+        populateLetterStrip(ordered)
     }
 
     private fun initClickListeners() {
@@ -504,7 +519,9 @@ class AppDrawerFragment : BaseFragment() {
         super.onStart()
         cachedIsCjkKeyboard = null
         adapter.bottomSearch = prefs.drawerBottomSearch
+        setupLetterStripLayout()
         if (currentAppList != null) updateCombinedAppList()
+        updateLetterStripVisibility()
         binding.search.showKeyboard(prefs.autoShowKeyboard)
     }
 
@@ -516,6 +533,111 @@ class AppDrawerFragment : BaseFragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         searchTextView = null
+        lastSelectedLetter = null
+        letterPosList = emptyList()
         _binding = null
+    }
+
+    private fun setupLetterStripLayout() {
+        val isStart = prefs.shortcutSideStart
+        val containerParams = binding.letterStripContainer.layoutParams as FrameLayout.LayoutParams
+        containerParams.gravity = Gravity.BOTTOM or (if (isStart) Gravity.START else Gravity.END)
+        binding.letterStripContainer.layoutParams = containerParams
+
+        val zone = binding.letterStripZone
+        zone.removeAllViews()
+        if (isStart) {
+            zone.addView(binding.letterStrip)
+            zone.addView(binding.letterPreview)
+        } else {
+            zone.addView(binding.letterPreview)
+            zone.addView(binding.letterStrip)
+        }
+    }
+
+    private fun updateLetterStripVisibility(query: String? = binding.search.query?.toString()) {
+        val show = prefs.drawerLetterStrip && query.isNullOrBlank() && letterPosList.isNotEmpty()
+        binding.letterStripContainer.isVisible = show
+        if (!show) {
+            binding.letterPreview.visibility = View.INVISIBLE
+        }
+    }
+
+    private fun populateLetterStrip(ordered: List<AppModel>) {
+        if (!prefs.drawerLetterStrip) {
+            binding.letterStripContainer.isVisible = false
+            return
+        }
+
+        val appLabels = ordered.filter { it !is AppModel.PrivateSpaceHeader && it !is AppModel.Result }
+            .map { it.appLabel }
+        letterPosList = LetterIndex.build(appLabels)
+
+        binding.letterStrip.removeAllViews()
+        for (pos in letterPosList) {
+            val tv = TextView(requireContext()).apply {
+                layoutParams = LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    0,
+                    1f,
+                )
+                gravity = Gravity.CENTER
+                includeFontPadding = false
+                setPadding(0, 0, 0, 0)
+                TextViewCompat.setTextAppearance(this, R.style.TextSmall)
+                text = pos.letter.toString()
+                isClickable = false
+                isFocusable = false
+            }
+            binding.letterStrip.addView(tv)
+        }
+
+        setupLetterStripTouchListener()
+        updateLetterStripVisibility()
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    private fun setupLetterStripTouchListener() {
+        binding.letterStrip.setOnTouchListener { view, event ->
+            if (letterPosList.isEmpty()) return@setOnTouchListener false
+
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
+                    view.parent?.requestDisallowInterceptTouchEvent(true)
+                    val letterIndex = LetterIndex.letterAt(event.y, view.height, letterPosList.size)
+                    if (letterIndex in letterPosList.indices) {
+                        val pos = letterPosList[letterIndex]
+                        if (pos.letter != lastSelectedLetter) {
+                            lastSelectedLetter = pos.letter
+                            Haptics.tick(binding.root)
+                            binding.letterPreview.text = pos.letter.toString()
+                            binding.letterPreview.visibility = View.VISIBLE
+                            scrollToLetter(pos)
+                        }
+                    }
+                    true
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    lastSelectedLetter = null
+                    binding.letterPreview.visibility = View.INVISIBLE
+                    view.parent?.requestDisallowInterceptTouchEvent(false)
+                    true
+                }
+                else -> false
+            }
+        }
+    }
+
+    private fun scrollToLetter(pos: LetterPos) {
+        val totalCount = adapter.itemCount
+        if (totalCount <= 0) return
+
+        val targetPosition = if (prefs.drawerBottomSearch) {
+            (totalCount - 1 - pos.index).coerceIn(0, totalCount - 1)
+        } else {
+            pos.index.coerceIn(0, totalCount - 1)
+        }
+
+        linearLayoutManager.scrollToPositionWithOffset(targetPosition, 0)
     }
 }

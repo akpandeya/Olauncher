@@ -133,6 +133,7 @@ class SettingsSectionsTest {
         assertEquals(SettingsSections.DRAWER, SettingsSections.findSectionByViewId(R.id.drawerSection))
         assertEquals(SettingsSections.DRAWER, SettingsSections.findSectionByViewId(R.id.autoShowKeyboard))
         assertEquals(SettingsSections.DRAWER, SettingsSections.findSectionByViewId(R.id.drawerBottomSearchLayout))
+        assertEquals(SettingsSections.DRAWER, SettingsSections.findSectionByViewId(R.id.drawerLetterStripLayout))
 
         assertEquals(SettingsSections.WELLBEING, SettingsSections.findSectionByViewId(R.id.wellbeingSection))
         assertEquals(SettingsSections.WELLBEING, SettingsSections.findSectionByViewId(R.id.pauseBeforeAppsLayout))

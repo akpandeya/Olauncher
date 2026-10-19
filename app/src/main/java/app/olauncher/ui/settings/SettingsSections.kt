@@ -119,6 +119,9 @@ object SettingsSections : List<SettingsSection> {
             R.id.drawerNewFirst,
             R.id.drawerNewFirstLayout,
             R.id.drawerNewFirstTitle,
+            R.id.drawerLetterStrip,
+            R.id.drawerLetterStripLayout,
+            R.id.drawerLetterStripTitle,
             R.id.searchEngine,
             R.id.searchEngineLayout,
             R.id.searchEngineTitle -> DRAWER
@@ -248,7 +251,8 @@ object SettingsSections : List<SettingsSection> {
         return when {
             lower.contains("home") || lower.contains("battery") || lower.contains("alignment") -> HOME
             lower.contains("shortcut") -> SHORTCUTS
-            lower.contains("drawer") || lower.contains("keyboard") || lower.contains("search") -> DRAWER
+            lower.contains("drawer") || lower.contains("keyboard") || lower.contains("search") ||
+                lower.contains("letter") || lower.contains("strip") -> DRAWER
             lower.contains("pause") || lower.contains("wellbeing") || lower.contains("distracting") ||
                 lower.contains("allowance") || lower.contains("escalate") || lower.contains("why") ||
                 lower.contains("commit") || lower.contains("nudge") || lower.contains("screen") ||

@@ -1,73 +1,129 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:animateLayoutChanges="true"
-    android:background="?attr/primaryShadeDarkColor"
-    android:orientation="vertical">
-
-    <Space
-        android:id="@+id/spaceTop"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginTop="24dp"
-        android:layout_weight="0.1" />
+    android:background="?attr/primaryShadeDarkColor">
 
     <LinearLayout
-        android:id="@+id/searchContainer"
+        android:id="@+id/drawerLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:animateLayoutChanges="true"
-        android:orientation="horizontal">
+        android:orientation="vertical">
 
-        <androidx.appcompat.widget.SearchView
-            android:id="@+id/search"
-            android:layout_width="0dp"
+        <Space
+            android:id="@+id/spaceTop"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="24dp"
+            android:layout_weight="0.1" />
+
+        <LinearLayout
+            android:id="@+id/searchContainer"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginEnd="16dp"
+            android:animateLayoutChanges="true"
+            android:orientation="horizontal">
+
+            <androidx.appcompat.widget.SearchView
+                android:id="@+id/search"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="16dp"
+                android:layout_weight="1"
+                android:gravity="end"
+                android:imeOptions="actionSearch"
+                android:paddingHorizontal="7dp"
+                android:paddingVertical="0dp"
+                android:textCursorDrawable="@null"
+                app:closeIcon="@null"
+                app:iconifiedByDefault="false"
+                app:queryBackground="@null"
+                app:queryHint=" ___"
+                app:searchIcon="@null"
+                app:theme="@style/AppSearchText" />
+
+            <TextView
+                android:id="@+id/appRename"
+                style="@style/TextSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginEnd="20dp"
+                android:paddingVertical="@dimen/app_padding_vertical"
+                android:text="@string/rename"
+                android:textAllCaps="true"
+                android:visibility="gone" />
+
+        </LinearLayout>
+
+        <Space
+            android:id="@+id/spaceMiddle"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.06" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
             android:layout_weight="1"
-            android:gravity="end"
-            android:imeOptions="actionSearch"
-            android:paddingHorizontal="7dp"
-            android:paddingVertical="0dp"
-            android:textCursorDrawable="@null"
-            app:closeIcon="@null"
-            app:iconifiedByDefault="false"
-            app:queryBackground="@null"
-            app:queryHint=" ___"
-            app:searchIcon="@null"
-            app:theme="@style/AppSearchText" />
-
-        <TextView
-            android:id="@+id/appRename"
-            style="@style/TextSmall"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:layout_marginEnd="20dp"
-            android:paddingVertical="@dimen/app_padding_vertical"
-            android:text="@string/rename"
-            android:textAllCaps="true"
-            android:visibility="gone" />
+            android:layout_marginBottom="24dp"
+            android:clipChildren="false"
+            android:clipToPadding="false"
+            android:fadingEdgeLength="24dp"
+            android:requiresFadingEdge="vertical" />
 
     </LinearLayout>
 
-    <Space
-        android:id="@+id/spaceMiddle"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="0.06" />
+    <LinearLayout
+        android:id="@+id/letterStripContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:layout_gravity="bottom|end"
+        android:orientation="vertical"
+        android:visibility="gone"
+        tools:visibility="visible">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerView"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_marginBottom="24dp"
-        android:clipChildren="false"
-        android:clipToPadding="false"
-        android:fadingEdgeLength="24dp"
-        android:requiresFadingEdge="vertical" />
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.45" />
 
-</LinearLayout>
+        <LinearLayout
+            android:id="@+id/letterStripZone"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:layout_weight="0.55"
+            android:gravity="bottom|center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/letterPreview"
+                style="@style/TextLarge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginHorizontal="16dp"
+                android:textSize="@dimen/text_display"
+                android:textStyle="bold"
+                android:visibility="invisible"
+                tools:text="S"
+                tools:visibility="visible" />
+
+            <LinearLayout
+                android:id="@+id/letterStrip"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center_horizontal"
+                android:minWidth="48dp"
+                android:orientation="vertical"
+                android:paddingHorizontal="4dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</FrameLayout>
