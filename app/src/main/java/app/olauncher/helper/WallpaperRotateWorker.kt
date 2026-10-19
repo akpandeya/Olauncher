@@ -22,14 +22,7 @@ class WallpaperRotateWorker(
         val count = prefs.photoWallpaperCount
         if (count <= 0) return@withContext Result.success()
 
-        val today = PhotoWallpaper.today()
-        val now = System.currentTimeMillis()
-        val lastChanged = Rotation.resolveLastChanged(0L, prefs.photoWallpaperLastDay, today, now)
-        val step = Rotation.step(prefs.photoWallpaperIndex, count, now, lastChanged, RotationInterval.DAILY)
-        if (step.nextIndex != null) {
-            prefs.photoWallpaperIndex = step.nextIndex
-            prefs.photoWallpaperLastDay = today
-        }
+        PhotoWallpaper.rotateIfDue(prefs)
 
         val success = PhotoWallpaper.applyCurrent(applicationContext, prefs)
         if (success) Result.success() else Result.retry()
@@ -39,7 +32,13 @@ class WallpaperRotateWorker(
         const val WORK_NAME = "photo_wallpaper"
 
         fun schedulePeriodic(context: Context) {
-            val request = PeriodicWorkRequestBuilder<WallpaperRotateWorker>(24, TimeUnit.HOURS)
+            val interval = RotationInterval.fromId(Prefs(context).photoWallpaperInterval)
+            val minutes = interval.periodicRepeatMinutes
+            if (minutes == null) {
+                cancel(context)
+                return
+            }
+            val request = PeriodicWorkRequestBuilder<WallpaperRotateWorker>(minutes, TimeUnit.MINUTES)
                 .build()
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 WORK_NAME,
