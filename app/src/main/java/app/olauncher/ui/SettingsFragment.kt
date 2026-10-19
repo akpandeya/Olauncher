@@ -117,6 +117,8 @@ import app.olauncher.wellbeing.DistractingApps
 import app.olauncher.wellbeing.FrictionChange
 import app.olauncher.wellbeing.FrictionSettings
 import app.olauncher.wellbeing.PausePolicy
+import app.olauncher.wellbeing.PauseSnooze
+import java.time.ZoneId
 import app.olauncher.wellbeing.ScreenTimeCue
 import app.olauncher.wellbeing.restoreNeedsWait
 import app.olauncher.wellbeing.UsageSnapshotWorker
@@ -2181,24 +2183,61 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     }
 
     private fun populatePauseBeforeApps() {
-        binding.pauseBeforeAppsOnOff.text = getString(if (prefs.pauseEnabled) R.string.on else R.string.off)
+        val snoozeUntil = prefs.pauseSnoozeUntil
+        binding.pauseBeforeAppsOnOff.text = if (prefs.pauseEnabled && PauseSnooze.isActive(snoozeUntil, System.currentTimeMillis())) {
+            getString(R.string.pause_off_until, PauseSnooze.formatUntil(snoozeUntil, ZoneId.systemDefault()))
+        } else {
+            getString(if (prefs.pauseEnabled) R.string.on else R.string.off)
+        }
     }
 
-    private fun togglePauseBeforeApps() {
-        if (prefs.pauseEnabled) {
-            val change = FrictionChange.Pause(false)
+    private fun showPauseOffChoices(anchor: View) {
+        anchor.showPopupMenu(
+            configure = { menu ->
+                menu.add(Menu.NONE, 1, 1, getString(R.string.snooze_hour))
+                menu.add(Menu.NONE, 2, 2, getString(R.string.snooze_tomorrow))
+                menu.add(Menu.NONE, 3, 3, getString(R.string.snooze_turn_off))
+            }
+        ) { item ->
+            val choice = when (item.itemId) {
+                1 -> PauseSnooze.Choice.HOUR
+                2 -> PauseSnooze.Choice.TOMORROW
+                3 -> null
+                else -> return@showPopupMenu
+            }
+            val apply: () -> Unit = {
+                if (choice == null) {
+                    prefs.pauseEnabled = false
+                } else {
+                    prefs.pauseSnoozeUntil = PauseSnooze.until(choice, System.currentTimeMillis(), ZoneId.systemDefault())
+                }
+                if (_binding != null) populatePauseBeforeApps()
+            }
+            val change = if (choice == null) {
+                FrictionChange.Pause(false)
+            } else {
+                FrictionChange.Snooze(PauseSnooze.until(choice, System.currentTimeMillis(), ZoneId.systemDefault()))
+            }
             if (CommitLock.needsWait(prefs.commitLock, change)) {
                 dialog?.dismiss()
                 dialog = requireContext().showWaitDialog(
                     message = getString(R.string.commit_lock_desc)
-                ) {
-                    prefs.pauseEnabled = false
-                    populatePauseBeforeApps()
-                }
-                return
+                ) { apply() }
+            } else {
+                apply()
             }
-            prefs.pauseEnabled = false
-            populatePauseBeforeApps()
+        }
+    }
+
+    private fun togglePauseBeforeApps() {
+        if (prefs.pauseEnabled) {
+            if (PauseSnooze.isActive(prefs.pauseSnoozeUntil, System.currentTimeMillis())) {
+                // Tapping while on a break ends the break (tightening, no wait).
+                prefs.pauseSnoozeUntil = 0L
+                populatePauseBeforeApps()
+            } else {
+                showPauseOffChoices(binding.pauseBeforeAppsOnOff)
+            }
         } else {
             if (prefs.firstPauseEnable) {
                 prefs.firstPauseEnable = false
