@@ -432,6 +432,5 @@
     <string name="accent_sky">Sky</string>
     <string name="accent_rose">Rose</string>
     <string name="sample_text">Phone · Messages · Maps</string>
-    <string name="text_size_sample">@string/sample_text</string>
     <string name="apply">Apply</string>
 </resources>

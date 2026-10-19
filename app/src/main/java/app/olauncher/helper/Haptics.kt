@@ -31,21 +31,6 @@ object Haptics {
         }
     }
 
-    fun constantFor(kind: Int, enabled: Boolean): Int? {
-        if (!enabled) return null
-        return kind
-    }
-
-    fun constantFor(kind: String, enabled: Boolean): Int? {
-        if (!enabled) return null
-        return when (kind.uppercase()) {
-            "TICK", "CLOCK_TICK" -> HapticFeedbackConstants.CLOCK_TICK
-            "CONFIRM" -> HapticFeedbackConstants.CONFIRM
-            "LONG_PRESS" -> HapticFeedbackConstants.LONG_PRESS
-            else -> null
-        }
-    }
-
     fun tick(view: View?): Boolean = perform(view, Kind.TICK)
 
     fun confirm(view: View?): Boolean = perform(view, Kind.CONFIRM)
@@ -56,13 +41,6 @@ object Haptics {
         if (view == null) return false
         val enabled = isEnabled(view.context)
         val constant = constantFor(kind, enabled) ?: return false
-        return view.performHapticFeedback(constant)
-    }
-
-    fun perform(view: View?, feedbackConstant: Int): Boolean {
-        if (view == null) return false
-        val enabled = isEnabled(view.context)
-        val constant = constantFor(feedbackConstant, enabled) ?: return false
         return view.performHapticFeedback(constant)
     }
 }
