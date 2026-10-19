@@ -22,9 +22,13 @@ import android.content.pm.PackageManager
 import android.text.InputType
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
+import androidx.core.view.isVisible
+import app.olauncher.ui.settings.SettingsSection
+import app.olauncher.ui.settings.SettingsSections
 import app.olauncher.ui.today.cards.NextUpCard
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
@@ -107,6 +111,14 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     private var _binding: FragmentSettingsBinding? = null
     private val binding get() = _binding!!
     private var dialog: AlertDialog? = null
+
+    private var currentSectionKey: String? = null
+
+    private val backCallback = object : OnBackPressedCallback(false) {
+        override fun handleOnBackPressed() {
+            showSectionList()
+        }
+    }
 
     private val pickMultipleMedia = registerForActivityResult(
         ActivityResultContracts.PickMultipleVisualMedia(MediaStore.getPickImagesMaxLimit())
@@ -233,6 +245,16 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         initClickListeners()
         initObservers()
 
+        requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, backCallback)
+
+        val targetSection = savedInstanceState?.getString(KEY_SAVED_SECTION)?.let { SettingsSections.findByKey(it) }
+            ?: resolveTargetSection()
+
+        if (targetSection != null) {
+            showSection(targetSection)
+        } else {
+            showSectionList()
+        }
     }
 
     override fun onResume() {
@@ -247,8 +269,133 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         }
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        currentSectionKey?.let { outState.putString(KEY_SAVED_SECTION, it) }
+    }
+
+    fun showSection(section: SettingsSection) {
+        currentSectionKey = section.key
+        backCallback.isEnabled = true
+
+        binding.settingsBackLayout.isVisible = true
+        binding.thumblineHeaderCard.isVisible = false
+        binding.sectionListLayout.isVisible = false
+
+        binding.homeSection.isVisible = (section == SettingsSections.HOME)
+        binding.shortcutIconsSection.isVisible = (section == SettingsSections.SHORTCUTS)
+        binding.drawerSection.isVisible = (section == SettingsSections.DRAWER)
+        binding.wellbeingSection.isVisible = (section == SettingsSections.WELLBEING)
+        binding.todaySection.isVisible = (section == SettingsSections.TODAY)
+        binding.glanceSection.isVisible = (section == SettingsSections.TODAY)
+        binding.deutschSection.isVisible = (section == SettingsSections.DEUTSCH)
+        binding.appearanceSection.isVisible = (section == SettingsSections.APPEARANCE)
+        binding.gesturesSection.isVisible = (section == SettingsSections.GESTURES)
+        binding.backupSection.isVisible = (section == SettingsSections.BACKUP)
+
+        binding.scrollView.scrollTo(0, 0)
+    }
+
+    fun showSectionList() {
+        currentSectionKey = null
+        backCallback.isEnabled = false
+
+        binding.settingsBackLayout.isVisible = false
+        binding.thumblineHeaderCard.isVisible = true
+        binding.sectionListLayout.isVisible = true
+
+        binding.homeSection.isVisible = false
+        binding.shortcutIconsSection.isVisible = false
+        binding.drawerSection.isVisible = false
+        binding.wellbeingSection.isVisible = false
+        binding.todaySection.isVisible = false
+        binding.glanceSection.isVisible = false
+        binding.deutschSection.isVisible = false
+        binding.appearanceSection.isVisible = false
+        binding.gesturesSection.isVisible = false
+        binding.backupSection.isVisible = false
+
+        binding.scrollView.scrollTo(0, 0)
+    }
+
+    private fun resolveTargetSection(): SettingsSection? {
+        val args = arguments
+        if (args != null && !args.isEmpty) {
+            for (key in listOf("section", "section_key", "target_section", "sectionKey", "targetSection")) {
+                val value = args.getString(key)
+                if (!value.isNullOrBlank()) {
+                    val found = SettingsSections.findSectionByNameOrKey(value)
+                    if (found != null) return found
+                }
+            }
+            for (key in listOf("row", "target_row", "row_id", "rowId", "targetRow", "target_view_id", "targetViewId", "view_id", "viewId", "id")) {
+                val intVal = try { args.getInt(key, 0) } catch (_: Exception) { 0 }
+                if (intVal != 0) {
+                    val found = SettingsSections.findSectionByViewId(intVal)
+                    if (found != null) return found
+                }
+                val strVal = try { args.getString(key) } catch (_: Exception) { null }
+                if (!strVal.isNullOrBlank()) {
+                    val found = SettingsSections.findSectionByNameOrKey(strVal)
+                    if (found != null) return found
+                }
+            }
+            for (k in args.keySet()) {
+                val intVal = try { args.getInt(k, 0) } catch (_: Exception) { 0 }
+                if (intVal != 0) {
+                    val found = SettingsSections.findSectionByViewId(intVal)
+                    if (found != null) return found
+                }
+                val strVal = try { args.getString(k) } catch (_: Exception) { null }
+                if (!strVal.isNullOrBlank()) {
+                    val found = SettingsSections.findSectionByNameOrKey(strVal)
+                    if (found != null) return found
+                }
+                val foundKey = SettingsSections.findSectionByNameOrKey(k)
+                if (foundKey != null) return foundKey
+            }
+        }
+
+        val intentExtras = activity?.intent?.extras
+        if (intentExtras != null && !intentExtras.isEmpty) {
+            for (key in listOf("section", "section_key", "target_section", "row", "target_row", "row_id", "view_id", "id")) {
+                val intVal = try { intentExtras.getInt(key, 0) } catch (_: Exception) { 0 }
+                if (intVal != 0) {
+                    val found = SettingsSections.findSectionByViewId(intVal)
+                    if (found != null) return found
+                }
+                val strVal = try { intentExtras.getString(key) } catch (_: Exception) { null }
+                if (!strVal.isNullOrBlank()) {
+                    val found = SettingsSections.findSectionByNameOrKey(strVal)
+                    if (found != null) return found
+                }
+            }
+            for (k in intentExtras.keySet()) {
+                val strVal = try { intentExtras.getString(k) } catch (_: Exception) { null }
+                if (!strVal.isNullOrBlank()) {
+                    val found = SettingsSections.findSectionByNameOrKey(strVal)
+                    if (found != null) return found
+                }
+                val foundKey = SettingsSections.findSectionByNameOrKey(k)
+                if (foundKey != null) return foundKey
+            }
+        }
+
+        return null
+    }
+
     override fun onClick(view: View) {
         when (view.id) {
+            R.id.settingsBack, R.id.settingsBackLayout -> showSectionList()
+            R.id.sectionRowHome -> showSection(SettingsSections.HOME)
+            R.id.sectionRowShortcuts -> showSection(SettingsSections.SHORTCUTS)
+            R.id.sectionRowDrawer -> showSection(SettingsSections.DRAWER)
+            R.id.sectionRowWellbeing -> showSection(SettingsSections.WELLBEING)
+            R.id.sectionRowToday -> showSection(SettingsSections.TODAY)
+            R.id.sectionRowDeutsch -> showSection(SettingsSections.DEUTSCH)
+            R.id.sectionRowAppearance -> showSection(SettingsSections.APPEARANCE)
+            R.id.sectionRowGestures -> showSection(SettingsSections.GESTURES)
+            R.id.sectionRowBackup -> showSection(SettingsSections.BACKUP)
             R.id.olauncherHiddenApps -> showHiddenApps()
             R.id.distractingApps, R.id.distractingAppsTitle, R.id.distractingAppsLayout -> showDistractingAppsDialog()
             R.id.pauseBeforeAppsOnOff, R.id.pauseBeforeAppsTitle, R.id.pauseBeforeAppsLayout -> togglePauseBeforeApps()
@@ -448,6 +595,17 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.textSizeValue.setOnClickListener(this)
         binding.boldFont.setOnClickListener(this)
         binding.footer.setOnClickListener(this)
+        binding.settingsBack.setOnClickListener(this)
+        binding.settingsBackLayout.setOnClickListener(this)
+        binding.sectionRowHome.setOnClickListener(this)
+        binding.sectionRowShortcuts.setOnClickListener(this)
+        binding.sectionRowDrawer.setOnClickListener(this)
+        binding.sectionRowWellbeing.setOnClickListener(this)
+        binding.sectionRowToday.setOnClickListener(this)
+        binding.sectionRowDeutsch.setOnClickListener(this)
+        binding.sectionRowAppearance.setOnClickListener(this)
+        binding.sectionRowGestures.setOnClickListener(this)
+        binding.sectionRowBackup.setOnClickListener(this)
 
 
         binding.photoWallpaper.setOnLongClickListener(this)
@@ -2587,6 +2745,10 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     }
 
     companion object {
+        const val KEY_SAVED_SECTION = "saved_section_key"
+        const val ARG_SECTION = "section"
+        const val ARG_ROW = "row"
+
         @StringRes
         fun intervalToStringRes(interval: RotationInterval): Int = when (interval) {
             RotationInterval.ON_OPEN -> R.string.wallpaper_frequency_on_open

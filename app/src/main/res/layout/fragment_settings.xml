@@ -24,6 +24,29 @@
             android:paddingVertical="64dp">
 
             <LinearLayout
+                android:id="@+id/settingsBackLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="12dp"
+                android:background="@drawable/rounded_rect_shade_color"
+                android:orientation="vertical"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="16dp"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <TextView
+                    android:id="@+id/settingsBack"
+                    style="@style/TextLarge"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/settings_back"
+                    android:textColor="?attr/primaryColor" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/thumblineHeaderCard"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
@@ -69,6 +92,110 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/sectionListLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="12dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/rounded_rect_shade_color"
+                android:orientation="vertical"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="16dp">
+
+                <TextView
+                    android:id="@+id/sectionRowHome"
+                    style="@style/TextLarge"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:paddingVertical="8dp"
+                    android:text="@string/home_screen"
+                    android:textColor="?attr/primaryColor" />
+
+                <TextView
+                    android:id="@+id/sectionRowShortcuts"
+                    style="@style/TextLarge"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:paddingVertical="8dp"
+                    android:text="@string/shortcut_icons"
+                    android:textColor="?attr/primaryColor" />
+
+                <TextView
+                    android:id="@+id/sectionRowDrawer"
+                    style="@style/TextLarge"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:paddingVertical="8dp"
+                    android:text="@string/drawer"
+                    android:textColor="?attr/primaryColor" />
+
+                <TextView
+                    android:id="@+id/sectionRowWellbeing"
+                    style="@style/TextLarge"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:paddingVertical="8dp"
+                    android:text="@string/wellbeing"
+                    android:textColor="?attr/primaryColor" />
+
+                <TextView
+                    android:id="@+id/sectionRowToday"
+                    style="@style/TextLarge"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:paddingVertical="8dp"
+                    android:text="@string/today_section"
+                    android:textColor="?attr/primaryColor" />
+
+                <TextView
+                    android:id="@+id/sectionRowDeutsch"
+                    style="@style/TextLarge"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:paddingVertical="8dp"
+                    android:text="@string/deutsch_de"
+                    android:textColor="?attr/primaryColor" />
+
+                <TextView
+                    android:id="@+id/sectionRowAppearance"
+                    style="@style/TextLarge"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:paddingVertical="8dp"
+                    android:text="@string/appearance"
+                    android:textColor="?attr/primaryColor" />
+
+                <TextView
+                    android:id="@+id/sectionRowGestures"
+                    style="@style/TextLarge"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:paddingVertical="8dp"
+                    android:text="@string/gestures"
+                    android:textColor="?attr/primaryColor" />
+
+                <TextView
+                    android:id="@+id/sectionRowBackup"
+                    style="@style/TextLarge"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:paddingVertical="8dp"
+                    android:text="@string/backup"
+                    android:textColor="?attr/primaryColor" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/homeSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="12dp"
@@ -77,6 +204,7 @@
                 android:orientation="vertical"
                 android:paddingHorizontal="12dp"
                 android:paddingVertical="16dp"
+                android:visibility="gone"
                 tools:visibility="visible">
 
                 <TextView
@@ -205,7 +333,9 @@
                 android:background="@drawable/rounded_rect_shade_color"
                 android:orientation="vertical"
                 android:paddingHorizontal="12dp"
-                android:paddingVertical="16dp">
+                android:paddingVertical="16dp"
+                android:visibility="gone"
+                tools:visibility="visible">
 
                 <TextView
                     style="@style/TextLarge"
@@ -383,6 +513,7 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/drawerSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="12dp"
@@ -391,6 +522,7 @@
                 android:orientation="vertical"
                 android:paddingHorizontal="12dp"
                 android:paddingVertical="16dp"
+                android:visibility="gone"
                 tools:visibility="visible">
 
                 <TextView
@@ -519,6 +651,7 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/wellbeingSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="12dp"
@@ -527,6 +660,7 @@
                 android:orientation="vertical"
                 android:paddingHorizontal="12dp"
                 android:paddingVertical="16dp"
+                android:visibility="gone"
                 tools:visibility="visible">
 
                 <TextView
@@ -923,6 +1057,7 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/todaySection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="12dp"
@@ -930,7 +1065,9 @@
                 android:background="@drawable/rounded_rect_shade_color"
                 android:orientation="vertical"
                 android:paddingHorizontal="12dp"
-                android:paddingVertical="16dp">
+                android:paddingVertical="16dp"
+                android:visibility="gone"
+                tools:visibility="visible">
 
                 <TextView
                     style="@style/TextLarge"
@@ -977,6 +1114,7 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/glanceSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="12dp"
@@ -984,7 +1122,9 @@
                 android:background="@drawable/rounded_rect_shade_color"
                 android:orientation="vertical"
                 android:paddingHorizontal="12dp"
-                android:paddingVertical="16dp">
+                android:paddingVertical="16dp"
+                android:visibility="gone"
+                tools:visibility="visible">
 
                 <TextView
                     style="@style/TextLarge"
@@ -1035,7 +1175,9 @@
                 android:background="@drawable/rounded_rect_shade_color"
                 android:orientation="vertical"
                 android:paddingHorizontal="12dp"
-                android:paddingVertical="16dp">
+                android:paddingVertical="16dp"
+                android:visibility="gone"
+                tools:visibility="visible">
 
                 <TextView
                     style="@style/TextLarge"
@@ -1209,6 +1351,7 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/appearanceSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="12dp"
@@ -1217,6 +1360,7 @@
                 android:orientation="vertical"
                 android:paddingHorizontal="12dp"
                 android:paddingVertical="16dp"
+                android:visibility="gone"
                 tools:visibility="visible">
 
                 <TextView
@@ -1362,6 +1506,7 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/gesturesSection"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="12dp"
@@ -1369,7 +1514,9 @@
                 android:background="@drawable/rounded_rect_shade_color"
                 android:orientation="vertical"
                 android:paddingHorizontal="12dp"
-                android:paddingVertical="16dp">
+                android:paddingVertical="16dp"
+                android:visibility="gone"
+                tools:visibility="visible">
 
                 <TextView
                     style="@style/TextLarge"
@@ -1503,7 +1650,9 @@
                 android:background="@drawable/rounded_rect_shade_color"
                 android:orientation="vertical"
                 android:paddingHorizontal="12dp"
-                android:paddingVertical="16dp">
+                android:paddingVertical="16dp"
+                android:visibility="gone"
+                tools:visibility="visible">
 
                 <TextView
                     style="@style/TextLarge"

@@ -418,5 +418,6 @@
     <string name="search_engine_custom_invalid" formatted="false">Enter an http(s) link with %s where the search goes</string>
     <string name="call_number">Call %s</string>
     <string name="restoring_app">Restoring %s…</string>
+    <string name="settings_back">‹ Settings</string>
 </resources>
 
