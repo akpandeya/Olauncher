@@ -89,7 +89,8 @@ class TodayFragment : BaseFragment() {
         } else {
             withContent
         }
-        for (card in ordered) {
+        // Stack from the bottom up: the first (highest priority) card is the lowest panel.
+        for (card in ordered.asReversed()) {
             val panel = ItemTodayPanelBinding.inflate(layoutInflater, binding.cardsContainer, false)
             val title = getString(card.titleRes)
             panel.tvPanelTitle.text = if (card.emoji.isEmpty()) title else "${card.emoji}  $title"
@@ -98,6 +99,11 @@ class TodayFragment : BaseFragment() {
             if (cardView.parent == null) panel.panelContent.addView(cardView)
             binding.cardsContainer.addView(panel.root)
             activeCards.add(card to cardView)
+        }
+
+        // When the cards overflow, open at the bottom, where the top-priority card is.
+        binding.todayScrollView.post {
+            _binding?.todayScrollView?.fullScroll(View.FOCUS_DOWN)
         }
     }
 
