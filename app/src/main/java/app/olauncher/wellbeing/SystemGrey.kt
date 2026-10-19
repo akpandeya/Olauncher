@@ -68,10 +68,12 @@ object SystemGrey {
         }
     }
 
-    /** Opens Digital Wellbeing's Bedtime mode, falling back to system Settings. */
+    /**
+     * Opens Digital Wellbeing (where Bedtime mode lives), falling back to system Settings.
+     * There is no documented public intent for the Bedtime mode screen itself.
+     */
     fun openBedtimeMode(context: Context) {
         val intents = listOf(
-            Intent("com.google.android.apps.wellbeing.action.BEDTIME_SETTINGS"),
             context.packageManager.getLaunchIntentForPackage("com.google.android.apps.wellbeing"),
             Intent(Settings.ACTION_SETTINGS),
         )
