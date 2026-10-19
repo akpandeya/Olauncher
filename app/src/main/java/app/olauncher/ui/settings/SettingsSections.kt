@@ -199,7 +199,8 @@ object SettingsSections : List<SettingsSection> {
             R.id.accent,
             R.id.fontFamily,
             R.id.boldFont,
-            R.id.textSizeValue -> APPEARANCE
+            R.id.textSizeValue,
+            R.id.haptics -> APPEARANCE
 
             R.id.gesturesSection,
             R.id.swipeLeftApp,
@@ -253,7 +254,8 @@ object SettingsSections : List<SettingsSection> {
             lower.contains("today") || lower.contains("weather") || lower.contains("glance") -> TODAY
             lower.contains("german") || lower.contains("deutsch") -> DEUTSCH
             lower.contains("wallpaper") || lower.contains("theme") || lower.contains("appearance") ||
-                lower.contains("font") || lower.contains("text_size") || lower.contains("status_bar") -> APPEARANCE
+                lower.contains("font") || lower.contains("text_size") || lower.contains("status_bar") ||
+                lower.contains("haptic") -> APPEARANCE
             lower.contains("gesture") || lower.contains("swipe") || lower.contains("lock") -> GESTURES
             lower.contains("backup") || lower.contains("export") || lower.contains("import") -> BACKUP
             else -> null
