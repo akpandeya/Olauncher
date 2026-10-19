@@ -83,6 +83,7 @@ class Prefs(context: Context) : PauseLogStorage {
         const val DRAWER_LETTER_STRIP = "DRAWER_LETTER_STRIP"
         const val DRAWER_RECENTS = "DRAWER_RECENTS"
         const val SEARCH_CONTACTS = "SEARCH_CONTACTS"
+        const val CURRENCY_RATES = "CURRENCY_RATES"
         const val RECENT_APPS = "RECENT_APPS"
         const val QUIET_ENABLED = "QUIET_ENABLED"
         const val QUIET_RELEASE_TIMES = "QUIET_RELEASE_TIMES"
@@ -281,6 +282,10 @@ class Prefs(context: Context) : PauseLogStorage {
     var searchContacts: Boolean
         get() = prefs.getBoolean(SEARCH_CONTACTS, false)
         set(value) = prefs.edit { putBoolean(SEARCH_CONTACTS, value).apply() }
+
+    var currencyRates: Boolean
+        get() = prefs.getBoolean(CURRENCY_RATES, false)
+        set(value) = prefs.edit { putBoolean(CURRENCY_RATES, value).apply() }
 
     var drawerRecents: Boolean
         get() = prefs.getBoolean(DRAWER_RECENTS, true)
