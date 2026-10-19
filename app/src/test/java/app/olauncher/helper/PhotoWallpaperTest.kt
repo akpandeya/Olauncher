@@ -266,6 +266,54 @@ class PhotoWallpaperTest {
     }
 
     @Test
+    fun `rotateIfDue with ON_OPEN interval rotates on every call when count is greater than one`() {
+        val (prefs, tempDir) = createPrefs()
+        try {
+            prefs.photoWallpaperCount = 3
+            prefs.photoWallpaperIndex = 0
+            prefs.photoWallpaperInterval = RotationInterval.ON_OPEN.id
+
+            val now = 1_000_000_000L
+            prefs.photoWallpaperLastChanged = now
+
+            // First call advances to 1
+            assertTrue(PhotoWallpaper.rotateIfDue(prefs, nowMillis = now))
+            assertEquals(1, prefs.photoWallpaperIndex)
+            assertEquals(now, prefs.photoWallpaperLastChanged)
+
+            // Subsequent call rotates immediately to 2
+            assertTrue(PhotoWallpaper.rotateIfDue(prefs, nowMillis = now + 100L))
+            assertEquals(2, prefs.photoWallpaperIndex)
+            assertEquals(now + 100L, prefs.photoWallpaperLastChanged)
+
+            // Subsequent call wraps around to 0
+            assertTrue(PhotoWallpaper.rotateIfDue(prefs, nowMillis = now + 200L))
+            assertEquals(0, prefs.photoWallpaperIndex)
+            assertEquals(now + 200L, prefs.photoWallpaperLastChanged)
+        } finally {
+            tempDir.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun `rotateIfDue with ON_OPEN interval returns false when count is one`() {
+        val (prefs, tempDir) = createPrefs()
+        try {
+            prefs.photoWallpaperCount = 1
+            prefs.photoWallpaperIndex = 0
+            prefs.photoWallpaperInterval = RotationInterval.ON_OPEN.id
+
+            val now = 1_000_000_000L
+            prefs.photoWallpaperLastChanged = now
+
+            assertFalse(PhotoWallpaper.rotateIfDue(prefs, nowMillis = now))
+            assertEquals(0, prefs.photoWallpaperIndex)
+        } finally {
+            tempDir.deleteRecursively()
+        }
+    }
+
+    @Test
     fun `rotateIfDue migrates legacy users with lastChanged 0L and lastDay matching today`() {
         val (prefs, tempDir) = createPrefs()
         try {
