@@ -39,6 +39,7 @@ import app.olauncher.databinding.FragmentAppDrawerBinding
 import app.olauncher.helper.ArchivedAppsHelper
 import app.olauncher.helper.DrawerOrdering
 import app.olauncher.helper.DrawerScrollHelper
+import app.olauncher.helper.EnterPolicy
 import app.olauncher.helper.Haptics
 import app.olauncher.helper.LetterIndex
 import app.olauncher.helper.LetterPos
@@ -190,14 +191,25 @@ class AppDrawerFragment : BaseFragment() {
                     }
                 }
 
-                if (query?.startsWith("!") == true)
-                    openSearchTarget()
-                else if (adapter.hasResultRow)
-                    openSearchTarget()
-                else if (adapter.itemCount == 0)
-                    openSearchTarget()
-                else
+                if (query.isNullOrBlank() && adapter.itemCount > 0) {
+                    // Blank query: keep existing behaviour (open first app in list).
                     adapter.launchFirstInList()
+                    return true
+                }
+
+                val topItem = adapter.getTopItem()
+                val topScore = adapter.getTopScore()
+                when (val action = EnterPolicy.resolve(query, topItem, topScore)) {
+                    is EnterPolicy.Action.ExecuteResult -> {
+                        adapter.executeItem(action.result)
+                    }
+                    is EnterPolicy.Action.LaunchApp -> {
+                        adapter.executeItem(action.app)
+                    }
+                    is EnterPolicy.Action.WebSearch -> {
+                        openSearchTarget()
+                    }
+                }
                 return true
             }
 

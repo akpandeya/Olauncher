@@ -74,6 +74,159 @@ object AppMatcher {
         return null
     }
 
+    fun matchRanges(label: String, query: String): List<IntRange> {
+        val normQuery = normalizeForSearch(query).lowercase()
+        if (normQuery.isEmpty()) return emptyList()
+
+        val (cleanLabel, cleanToLabelMap) = buildCleanLabelAndMap(label)
+        val (normLabel, normToCleanMap) = getNormMapping(cleanLabel)
+        if (normLabel.isEmpty()) return emptyList()
+
+        // 1 & 2. Exact match (100) and Prefix match (90)
+        if (normLabel.startsWith(normQuery)) {
+            val matchedCleanIndices = (0 until normQuery.length).map { normToCleanMap[it] }
+            val matchedLabelIndices = matchedCleanIndices.map { cleanToLabelMap[it] }
+            return collapseIndices(matchedLabelIndices)
+        }
+
+        // 3. Word-start prefix (80)
+        val wordStarts = getWordStartIndices(cleanLabel)
+        for (i in wordStarts) {
+            if (i > 0) {
+                val cleanSub = cleanLabel.substring(i)
+                val (subNorm, subNormToCleanMap) = getNormMapping(cleanSub)
+                if (subNorm.startsWith(normQuery)) {
+                    val matchedCleanIndices = (0 until normQuery.length).map { i + subNormToCleanMap[it] }
+                    val matchedLabelIndices = matchedCleanIndices.map { cleanToLabelMap[it] }
+                    return collapseIndices(matchedLabelIndices)
+                }
+            }
+        }
+
+        // 4. Initials (70)
+        if (normQuery.length >= 2) {
+            if (wordStarts.size >= 2) {
+                val wordInitials = wordStarts.map { cleanLabel[it].lowercaseChar() }.joinToString("")
+                if (wordInitials == normQuery || wordInitials.startsWith(normQuery)) {
+                    val matchedCleanIndices = wordStarts.take(normQuery.length)
+                    val matchedLabelIndices = matchedCleanIndices.map { cleanToLabelMap[it] }
+                    return collapseIndices(matchedLabelIndices)
+                }
+            }
+
+            if (cleanLabel.any { it.isLowerCase() }) {
+                val capitalIndices = cleanLabel.indices.filter { cleanLabel[it].isUpperCase() }
+                if (capitalIndices.size >= 2) {
+                    val capitals = capitalIndices.map { cleanLabel[it].lowercaseChar() }.joinToString("")
+                    if (capitals == normQuery || capitals.startsWith(normQuery)) {
+                        val matchedCleanIndices = capitalIndices.take(normQuery.length)
+                        val matchedLabelIndices = matchedCleanIndices.map { cleanToLabelMap[it] }
+                        return collapseIndices(matchedLabelIndices)
+                    }
+                }
+            }
+
+            val tokenIndices = getTokenFirstCharIndices(cleanLabel)
+            if (tokenIndices.size >= 2) {
+                val tokenInitials = tokenIndices.map { cleanLabel[it].lowercaseChar() }.joinToString("")
+                if (tokenInitials == normQuery || tokenInitials.startsWith(normQuery)) {
+                    val matchedCleanIndices = tokenIndices.take(normQuery.length)
+                    val matchedLabelIndices = matchedCleanIndices.map { cleanToLabelMap[it] }
+                    return collapseIndices(matchedLabelIndices)
+                }
+            }
+        }
+
+        // 5. Substring match (60)
+        val subIndex = normLabel.indexOf(normQuery)
+        if (subIndex >= 0) {
+            val matchedCleanIndices = (subIndex until (subIndex + normQuery.length)).map { normToCleanMap[it] }
+            val matchedLabelIndices = matchedCleanIndices.map { cleanToLabelMap[it] }
+            return collapseIndices(matchedLabelIndices)
+        }
+
+        // 6. Fuzzy match (40) or no match -> none for fuzzy
+        return emptyList()
+    }
+
+    private fun buildCleanLabelAndMap(label: String): Pair<String, IntArray> {
+        val nfc = Normalizer.normalize(label, Normalizer.Form.NFC)
+        val clean = StringBuilder()
+        val map = ArrayList<Int>()
+        for (i in nfc.indices) {
+            val c = nfc[i]
+            val stripped = Normalizer.normalize(c.toString(), Normalizer.Form.NFD)
+                .replace(diacriticsRegex, "")
+            if (stripped.isNotEmpty()) {
+                clean.append(stripped)
+                for (k in stripped.indices) {
+                    map.add(i)
+                }
+            }
+        }
+        return clean.toString() to map.toIntArray()
+    }
+
+    private fun getNormMapping(cleanLabel: String): Pair<String, IntArray> {
+        val norm = StringBuilder()
+        val map = ArrayList<Int>()
+        for (i in cleanLabel.indices) {
+            val c = cleanLabel[i]
+            if (!separatorsRegex.matches(c.toString())) {
+                norm.append(c.lowercaseChar())
+                map.add(i)
+            }
+        }
+        return norm.toString() to map.toIntArray()
+    }
+
+    private fun getTokenFirstCharIndices(cleanLabel: String): List<Int> {
+        val indices = mutableListOf<Int>()
+        var inToken = false
+        var tokenStart = -1
+        for (i in cleanLabel.indices) {
+            val c = cleanLabel[i]
+            val isSep = separatorsRegex.matches(c.toString())
+            if (!isSep) {
+                if (!inToken) {
+                    inToken = true
+                    tokenStart = i
+                }
+            } else {
+                if (inToken) {
+                    val first = (tokenStart until i).firstOrNull { cleanLabel[it].isLetterOrDigit() }
+                    if (first != null) indices.add(first)
+                    inToken = false
+                }
+            }
+        }
+        if (inToken) {
+            val first = (tokenStart until cleanLabel.length).firstOrNull { cleanLabel[it].isLetterOrDigit() }
+            if (first != null) indices.add(first)
+        }
+        return indices
+    }
+
+    private fun collapseIndices(indices: List<Int>): List<IntRange> {
+        if (indices.isEmpty()) return emptyList()
+        val sorted = indices.distinct().sorted()
+        val ranges = mutableListOf<IntRange>()
+        var start = sorted[0]
+        var end = sorted[0]
+        for (i in 1 until sorted.size) {
+            val curr = sorted[i]
+            if (curr == end + 1) {
+                end = curr
+            } else {
+                ranges.add(start..end)
+                start = curr
+                end = curr
+            }
+        }
+        ranges.add(start..end)
+        return ranges
+    }
+
     private fun getWordStartIndices(text: String): List<Int> {
         val indices = mutableListOf<Int>()
         for (i in text.indices) {
