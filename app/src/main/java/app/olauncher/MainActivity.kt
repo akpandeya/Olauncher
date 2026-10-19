@@ -124,7 +124,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         initObservers(viewModel)
-        viewModel.getAppList()
+        // onResume loads the app list right after onCreate.
         registerShortcutCallback()
         setupOrientation()
 
