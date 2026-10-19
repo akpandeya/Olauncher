@@ -115,6 +115,14 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         }
     }
 
+    private val pickMultipleMediaForAdd = registerForActivityResult(
+        ActivityResultContracts.PickMultipleVisualMedia(MediaStore.getPickImagesMaxLimit())
+    ) { uris ->
+        if (uris.isNotEmpty()) {
+            handleAddedPhotos(uris)
+        }
+    }
+
     private val exportBackupLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
@@ -1169,6 +1177,13 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         )
     }
 
+    private fun openPhotoPickerForAdd() {
+        viewModel.isAwaitingActivityResult = true
+        pickMultipleMediaForAdd.launch(
+            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+        )
+    }
+
     private fun handlePickedPhotos(uris: List<Uri>) {
         if (uris.size == 1) {
             requireContext().showToast(getString(R.string.saving_photo))
@@ -1190,6 +1205,24 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                 withContext(Dispatchers.IO) {
                     PhotoWallpaper.applyCurrent(appContext, prefs)
                 }
+            } else {
+                appContext.showToast(R.string.wallpaper_photos_save_failed)
+            }
+        }
+    }
+
+    private fun handleAddedPhotos(uris: List<Uri>) {
+        if (uris.size == 1) {
+            requireContext().showToast(getString(R.string.saving_photo))
+        } else {
+            requireContext().showToast(getString(R.string.saving_photos, uris.size))
+        }
+        val appContext = requireContext().applicationContext
+        requireActivity().lifecycleScope.launch {
+            val saved = PhotoWallpaper.appendPickedPhotos(appContext, uris, startIndex = prefs.photoWallpaperCount)
+            if (saved > 0) {
+                prefs.photoWallpaperCount += saved
+                if (_binding != null) populatePhotoWallpaperText()
             } else {
                 appContext.showToast(R.string.wallpaper_photos_save_failed)
             }
@@ -1223,6 +1256,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             }
         ) { item ->
             when (item.itemId) {
+                R.id.photoWallpaperAdd -> openPhotoPickerForAdd()
                 R.id.photoWallpaperChange -> openPhotoPicker()
                 R.id.photoWallpaperTarget -> cyclePhotoWallpaperTarget()
                 R.id.photoWallpaperNext -> nextPhotoNow()
