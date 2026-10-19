@@ -187,12 +187,15 @@ object HeldCard : TodayCard {
         for (summary in summaries) {
             val itemBinding = ItemHeldBinding.inflate(inflater, b.itemsContainer, false)
             itemBinding.tvHeldLine.text = HeldCardLogic.formatAppLine(summary, zone)
-            itemBinding.root.setOnClickListener {
-                store.clear(summary.pkg)
-                render()
-                if (fragment != null) {
+            if (fragment != null && summary.pkg.isNotBlank()) {
+                itemBinding.root.setOnClickListener {
+                    store.clear(summary.pkg)
+                    render()
                     openApp(fragment, summary.pkg, summary.label)
                 }
+            } else {
+                itemBinding.root.isClickable = false
+                itemBinding.root.isFocusable = false
             }
             b.itemsContainer.addView(itemBinding.root)
         }
