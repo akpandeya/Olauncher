@@ -47,6 +47,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val launcherResetFailed = MutableLiveData<Boolean>()
     val homeAppAlignment = MutableLiveData<Int>()
     val screenTimeValue = MutableLiveData<String>()
+    val screenTimeMinutes = MutableLiveData<Int>()
     private var screenTimeJob: Job? = null
 
     val privateSpaceApps = MutableLiveData<List<AppModel>?>()
@@ -349,6 +350,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 )
             }
             screenTimeValue.value = appContext.formattedTimeSpent(timeSpent)
+            screenTimeMinutes.value = (timeSpent / 60_000L).toInt()
             prefs.screenTimeLastUpdated = endTime
         }
     }

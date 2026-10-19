@@ -82,6 +82,7 @@ import app.olauncher.helper.showPopupMenu
 import app.olauncher.helper.showToast
 import app.olauncher.listener.OnSwipeTouchListener
 import app.olauncher.listener.ViewSwipeTouchListener
+import app.olauncher.wellbeing.ScreenTimeCue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -367,6 +368,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
                 if (prefs.homeInfoCombined) populateDateTime()
             }
         }
+        viewModel.screenTimeMinutes.observe(viewLifecycleOwner) { applyScreenTimeCue() }
         // Home button for recents feature disabled
         // viewModel.showRecentApps.observe(viewLifecycleOwner) {
         //     binding.recents.performClick()
@@ -675,11 +677,12 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             }.format(Date())
             val screenTimeGranted = context?.appUsagePermissionGranted() == true
             if (screenTimeGranted) viewModel.getTodaysScreenTime()
+            val showScreenTimeNumber = screenTimeGranted && !isScreenTimeCueOn()
             binding.date.text = InfoLine.compose(
                 date = combinedDate,
                 weather = combinedWeatherText(),
                 battery = BatteryFormatting.infoText(percent, charging, prefs.batteryMode, prefs.showStatusBar),
-                screenTime = if (screenTimeGranted) latestScreenTime else null
+                screenTime = if (showScreenTimeNumber) latestScreenTime else null
             )
             binding.tvScreenTime.isVisible = false
         } else {
@@ -860,7 +863,32 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         }
     }
 
+    private fun isScreenTimeCueOn(): Boolean =
+        prefs.screenTimeStyle == ScreenTimeCue.STYLE_CUE && context?.appUsagePermissionGranted() == true
+
+    /** Dims the clock and home app names once today's screen time reaches the target. Needs usage access. */
+    private fun applyScreenTimeCue() {
+        if (_binding == null) return
+        val alpha = if (isScreenTimeCueOn()) {
+            ScreenTimeCue.alpha(viewModel.screenTimeMinutes.value ?: 0, prefs.screenTimeTargetMin)
+        } else {
+            ScreenTimeCue.ALPHA_NORMAL
+        }
+        listOf(
+            binding.clock, binding.clockWords,
+            binding.homeApp1, binding.homeApp2, binding.homeApp3, binding.homeApp4,
+            binding.homeApp5, binding.homeApp6, binding.homeApp7, binding.homeApp8,
+        ).forEach { it.alpha = alpha }
+    }
+
     private fun populateScreenTime() {
+        if (isScreenTimeCueOn()) {
+            viewModel.getTodaysScreenTime()
+            binding.tvScreenTime.isVisible = false
+            applyScreenTimeCue()
+            return
+        }
+        applyScreenTimeCue()
         if (prefs.homeInfoCombined) {
             binding.tvScreenTime.isVisible = false
             return

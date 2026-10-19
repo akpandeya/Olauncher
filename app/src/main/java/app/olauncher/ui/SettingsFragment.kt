@@ -117,6 +117,7 @@ import app.olauncher.wellbeing.DistractingApps
 import app.olauncher.wellbeing.FrictionChange
 import app.olauncher.wellbeing.FrictionSettings
 import app.olauncher.wellbeing.PausePolicy
+import app.olauncher.wellbeing.ScreenTimeCue
 import app.olauncher.wellbeing.restoreNeedsWait
 import app.olauncher.wellbeing.UsageSnapshotWorker
 import kotlinx.coroutines.Dispatchers
@@ -257,6 +258,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateSearchContacts()
         populateCurrencyRates()
         populateScreenTimeOnOff()
+        populateScreenTimeCue()
         populateDistractingApps()
         populatePauseBeforeApps()
         populatePauseAllowance()
@@ -323,6 +325,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     override fun onResume() {
         super.onResume()
         populateScreenTimeOnOff()
+        populateScreenTimeCue()
         populatePauseAllowance()
         populateCommitLock()
         populateHoldNotifications()
@@ -395,6 +398,8 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.holdNotificationsLayout, binding.holdNotificationsTitle, R.id.holdNotificationsOnOff),
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.quietReleaseTimesLayout, binding.quietReleaseTimesTitle, R.id.quietReleaseTimes),
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.screenTimeLayout, getFirstTextView(binding.screenTimeLayout), R.id.screenTimeOnOff),
+            RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.screenTimeStyleLayout, binding.screenTimeStyleTitle, R.id.screenTimeStyle),
+            RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.screenTimeTargetLayout, binding.screenTimeTargetTitle, R.id.screenTimeTarget),
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.nudgeWaterLayout, binding.nudgeWaterTitle, R.id.nudgeWater),
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.nudgeWalkLayout, binding.nudgeWalkTitle, R.id.nudgeWalk),
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.nudgeSocialLayout, binding.nudgeSocialTitle, R.id.nudgeSocial),
@@ -628,6 +633,8 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.holdNotificationsOnOff, R.id.holdNotificationsTitle, R.id.holdNotificationsLayout -> toggleHoldNotifications()
             R.id.quietReleaseTimes, R.id.quietReleaseTimesTitle, R.id.quietReleaseTimesLayout -> showReleaseTimesEditor()
             R.id.screenTimeOnOff -> viewModel.showDialog.postValue(Constants.Dialog.DIGITAL_WELLBEING)
+            R.id.screenTimeStyle, R.id.screenTimeStyleTitle, R.id.screenTimeStyleLayout -> showScreenTimeStyleMenu(binding.screenTimeStyle)
+            R.id.screenTimeTarget, R.id.screenTimeTargetTitle, R.id.screenTimeTargetLayout -> showScreenTimeTargetMenu(binding.screenTimeTarget)
             R.id.appInfo -> openAppInfo(requireContext(), Process.myUserHandle(), BuildConfig.APPLICATION_ID)
             R.id.setLauncher -> viewModel.resetLauncherLiveData.call()
             R.id.toggleLock -> toggleLockMode()
@@ -746,6 +753,12 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         // binding.homeButtonRecents.setOnClickListener(this)
         binding.homeAppsNum.setOnClickListener(this)
         binding.screenTimeOnOff.setOnClickListener(this)
+        binding.screenTimeStyle.setOnClickListener(this)
+        binding.screenTimeStyleTitle.setOnClickListener(this)
+        binding.screenTimeStyleLayout.setOnClickListener(this)
+        binding.screenTimeTarget.setOnClickListener(this)
+        binding.screenTimeTargetTitle.setOnClickListener(this)
+        binding.screenTimeTargetLayout.setOnClickListener(this)
         binding.distractingApps.setOnClickListener(this)
         binding.distractingAppsTitle.setOnClickListener(this)
         binding.distractingAppsLayout.setOnClickListener(this)
@@ -2108,6 +2121,49 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
 
     private fun populateHaptics() {
         binding.haptics.text = getString(if (prefs.haptics) R.string.on else R.string.off)
+    }
+
+    private fun populateScreenTimeCue() {
+        binding.screenTimeStyle.text = getString(
+            if (prefs.screenTimeStyle == ScreenTimeCue.STYLE_CUE) R.string.screen_time_style_cue
+            else R.string.screen_time_style_number
+        )
+        binding.screenTimeTarget.text = getString(R.string.screen_time_target_hours, prefs.screenTimeTargetMin / 60)
+    }
+
+    private fun showScreenTimeStyleMenu(anchor: View) {
+        val items = listOf(
+            ScreenTimeCue.STYLE_NUMBER to getString(R.string.screen_time_style_number),
+            ScreenTimeCue.STYLE_CUE to getString(R.string.screen_time_style_cue),
+        )
+        anchor.showPopupMenu(
+            configure = { menu ->
+                items.forEachIndexed { index, pair -> menu.add(Menu.NONE, index, index, pair.second) }
+            }
+        ) { item ->
+            val chosen = items.getOrNull(item.itemId)?.first ?: return@showPopupMenu
+            prefs.screenTimeStyle = chosen
+            populateScreenTimeCue()
+            // The cue needs usage access; ask once, a denial just leaves the cue off.
+            if (chosen == ScreenTimeCue.STYLE_CUE && !requireContext().appUsagePermissionGranted()) {
+                viewModel.showDialog.postValue(Constants.Dialog.DIGITAL_WELLBEING)
+            }
+        }
+    }
+
+    private fun showScreenTimeTargetMenu(anchor: View) {
+        val choices = ScreenTimeCue.TARGET_CHOICES_MIN
+        anchor.showPopupMenu(
+            configure = { menu ->
+                choices.forEachIndexed { index, min ->
+                    menu.add(Menu.NONE, index, index, getString(R.string.screen_time_target_hours, min / 60))
+                }
+            }
+        ) { item ->
+            val chosen = choices.getOrNull(item.itemId) ?: return@showPopupMenu
+            prefs.screenTimeTargetMin = chosen
+            populateScreenTimeCue()
+        }
     }
 
     private fun populateScreenTimeOnOff() {
