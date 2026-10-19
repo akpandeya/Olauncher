@@ -1,11 +1,8 @@
 package app.olauncher.ui.today.cards
 
 import android.Manifest
-import android.content.ContentUris
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.provider.CalendarContract
 import android.text.format.DateFormat
 import android.view.LayoutInflater
 import android.view.View
@@ -21,6 +18,7 @@ import app.olauncher.glance.CalendarEvent
 import app.olauncher.glance.CalendarRepository
 import app.olauncher.glance.NextUpFormatting
 import app.olauncher.glance.NextUpLabels
+import app.olauncher.helper.OpenTargets
 import app.olauncher.ui.today.TodayCard
 import app.olauncher.ui.today.TodayOrder
 import kotlinx.coroutines.CoroutineScope
@@ -85,16 +83,8 @@ object NextUpCard : TodayCard {
     }
 
     fun openEvent(context: Context, event: CalendarEvent) {
-        eventOpener?.invoke(context, event) ?: run {
-            try {
-                val intent = Intent(Intent.ACTION_VIEW).apply {
-                    data = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, event.id)
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                }
-                context.startActivity(intent)
-            } catch (_: Exception) {
-            }
-        }
+        val opener = eventOpener
+        if (opener != null) opener(context, event) else OpenTargets.openEvent(context, event.id)
     }
 }
 
@@ -141,8 +131,13 @@ internal class NextUpCardView(
                     itemBinding.tvEventTime.text = row.lead
                     itemBinding.tvEventTime.isVisible = row.lead.isNotEmpty()
                     itemBinding.tvEventLine.text = row.title
-                    itemBinding.root.setOnClickListener {
-                        NextUpCard.openEvent(context, event)
+                    if (OpenTargets.canOpenEvent(event.id)) {
+                        itemBinding.root.setOnClickListener {
+                            NextUpCard.openEvent(context, event)
+                        }
+                    } else {
+                        itemBinding.root.isClickable = false
+                        itemBinding.root.isFocusable = false
                     }
                     currentBinding.eventsContainer.addView(itemBinding.root)
                 }
