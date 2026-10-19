@@ -283,7 +283,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.textSizeValue -> showTextSizeDialog()
             R.id.boldFont -> toggleBoldFont()
 
-            R.id.photoWallpaper, R.id.photoWallpaperTitle, R.id.photoWallpaperLayout -> openPhotoPicker()
+            R.id.photoWallpaper, R.id.photoWallpaperTitle, R.id.photoWallpaperLayout -> showPhotoWallpaperMenu(binding.photoWallpaper)
             R.id.swipeLeftApp -> showAppListIfEnabled(Constants.FLAG_SET_SWIPE_LEFT_APP)
             R.id.swipeRightApp, R.id.swipeRightLayout -> showSwipeRightMenu(binding.swipeRightApp)
             R.id.todayCards, R.id.todayCardsTitle, R.id.todayCardsLayout -> showTodayCardsDialog()
@@ -1245,7 +1245,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     }
 
     private fun showPhotoWallpaperMenu(anchor: View) {
-        if (prefs.photoWallpaperCount == 0) {
+        if (PhotoSet.rowTapAction(prefs.photoWallpaperCount) == PhotoSet.RowTapAction.OPEN_PICKER) {
             openPhotoPicker()
             return
         }
