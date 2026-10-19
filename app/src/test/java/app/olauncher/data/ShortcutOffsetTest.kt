@@ -28,9 +28,19 @@ class ShortcutOffsetTest {
     }
 
     @Test
-    fun `default step is 0`() {
-        assertEquals(0, ShortcutOffset.DEFAULT_STEP)
-        assertEquals(0, ShortcutOffset.clamp(ShortcutOffset.DEFAULT_STEP))
+    fun `default step is 2`() {
+        assertEquals(2, ShortcutOffset.DEFAULT_STEP)
+        assertEquals(2, ShortcutOffset.clamp(ShortcutOffset.DEFAULT_STEP))
+    }
+
+    @Test
+    fun `default bottom margin is 96dp`() {
+        assertEquals(96, ShortcutOffset.bottomMarginDp(ShortcutOffset.DEFAULT_STEP))
+    }
+
+    @Test
+    fun `side inset is 16dp`() {
+        assertEquals(16, ShortcutOffset.SIDE_INSET_DP)
     }
 
     @Test
