@@ -43,24 +43,22 @@ object HeldStoreCodec {
     /** Throws on malformed input. Blank input is an empty list. */
     fun decodeStrict(raw: String?): List<HeldItem> {
         if (raw.isNullOrBlank()) return emptyList()
-        run {
-            val array = JSONArray(raw)
-            val list = mutableListOf<HeldItem>()
-            for (i in 0 until array.length()) {
-                val obj = array.getJSONObject(i)
-                list.add(
-                    HeldItem(
-                        key = obj.getString("key"),
-                        pkg = obj.getString("pkg"),
-                        label = obj.optString("label", ""),
-                        title = obj.optString("title", ""),
-                        text = obj.optString("text", ""),
-                        postTime = obj.getLong("postTime")
-                    )
+        val array = JSONArray(raw)
+        val list = mutableListOf<HeldItem>()
+        for (i in 0 until array.length()) {
+            val obj = array.getJSONObject(i)
+            list.add(
+                HeldItem(
+                    key = obj.getString("key"),
+                    pkg = obj.getString("pkg"),
+                    label = obj.optString("label", ""),
+                    title = obj.optString("title", ""),
+                    text = obj.optString("text", ""),
+                    postTime = obj.getLong("postTime")
                 )
-            }
-            return list
+            )
         }
+        return list
     }
 }
 
@@ -99,8 +97,9 @@ class HeldStore(
 
     fun clear(pkg: String) {
         synchronized(LOCK) {
-            val remaining = loadAll().filter { it.pkg != pkg }
-            saveAll(remaining)
+            val current = loadAll()
+            val remaining = current.filter { it.pkg != pkg }
+            if (remaining.size != current.size) saveAll(remaining)
         }
     }
 
@@ -112,8 +111,10 @@ class HeldStore(
 
     fun pruneOlderThan(cutoffMillis: Long = System.currentTimeMillis() - FORTY_EIGHT_HOURS_MS) {
         synchronized(LOCK) {
-            val remaining = loadAll().filter { it.postTime >= cutoffMillis }
-            saveAll(remaining)
+            val current = loadAll()
+            val remaining = current.filter { it.postTime >= cutoffMillis }
+            // Render calls this on the main thread; skip the disk write when nothing was pruned.
+            if (remaining.size != current.size) saveAll(remaining)
         }
     }
 

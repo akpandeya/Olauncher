@@ -86,7 +86,7 @@ class ReleaseWorker(
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val prefs = Prefs(applicationContext)
-        if (!prefs.quietEnabled) {
+        if (!prefs.quietEnabled || !QuietAccess.isNotificationAccessGranted(applicationContext)) {
             return@withContext Result.success()
         }
 
