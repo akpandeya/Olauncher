@@ -21,6 +21,7 @@ sealed class AppModel : Comparable<AppModel> {
         override val user: UserHandle,
         override val firstInstallTime: Long = 0L,
         override val isArchived: Boolean = false,
+        val isRecent: Boolean = false,
     ) : AppModel()
 
     data class PinnedShortcut(
@@ -63,8 +64,19 @@ sealed class AppModel : Comparable<AppModel> {
         override val appLabel: String = ""
         override val key: CollationKey? = null
         override val appPackage: String = ""
-        override val isNew: Boolean = false
-        override val firstInstallTime: Long = 0L
+        override val isNew: Boolean get() = false
+        override val firstInstallTime: Long get() = 0L
+    }
+
+    data class RecentHeader(
+        val title: String = "",
+    ) : AppModel() {
+        override val appLabel: String get() = title
+        override val key: CollationKey? get() = null
+        override val appPackage: String get() = ""
+        override val isNew: Boolean get() = false
+        override val user: UserHandle get() = defaultUser
+        override val firstInstallTime: Long get() = 0L
     }
 
     companion object {
