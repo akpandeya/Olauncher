@@ -219,6 +219,7 @@
     <string name="pause_allowance_min">%d min</string>
     <string name="pause_usage_access_message">Thumbline can show real open counts if you allow usage access</string>
     <string name="pause_notification_notice">Opens from notifications aren\'t paused</string>
+    <string name="pause_notifications_held_until">Notifications from this app are held until %s</string>
     <string name="hold_notifications_from_distracting_apps">Hold notifications from distracting apps</string>
     <string name="hold_notifications_access_message">Thumbline holds notifications from your distracting apps and shows them later. Nothing leaves your phone.</string>
     <string name="release_at">Release at</string>
@@ -240,6 +241,9 @@
     <string name="today_cards">Today cards</string>
     <string name="choose_app">Choose app…</string>
     <string name="nothing_here_yet">Nothing here yet</string>
+    <string name="held">Held</string>
+    <string name="nothing_held">Nothing held</string>
+    <string name="clear_all">Clear all</string>
     <string name="save_for_later">Save for later</string>
     <string name="saved_for_later">Saved for later</string>
     <string name="no_link_found">No link found</string>

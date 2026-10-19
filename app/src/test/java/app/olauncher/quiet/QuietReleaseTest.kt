@@ -322,4 +322,17 @@ class QuietReleaseTest {
         assertEquals("09:00 · 12:30 · 18:30", QuietRelease.formatReleaseTimesRow(listOf(540, 750, 1110)))
         assertEquals("18:30", QuietRelease.formatReleaseTimesRow(listOf(1110)))
     }
+
+    @Test
+    fun `nextReleaseFormatted formats slot today and rolls to tomorrow`() {
+        val times = listOf(750, 1110) // 12:30, 18:30
+        val morning = epochMillis(2026, 10, 19, 10, 0, zoneUtc)
+        assertEquals("12:30", QuietRelease.nextReleaseFormatted(morning, zoneUtc, times))
+
+        val afternoon = epochMillis(2026, 10, 19, 14, 0, zoneUtc)
+        assertEquals("18:30", QuietRelease.nextReleaseFormatted(afternoon, zoneUtc, times))
+
+        val night = epochMillis(2026, 10, 19, 21, 0, zoneUtc)
+        assertEquals("12:30", QuietRelease.nextReleaseFormatted(night, zoneUtc, times))
+    }
 }
