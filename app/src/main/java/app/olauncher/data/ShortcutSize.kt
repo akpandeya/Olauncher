@@ -27,9 +27,9 @@ object ShortcutSize {
         else -> VIEW_SIZE_MEDIUM_DP
     }
 
-    fun columnAllowanceDp(step: Int): Int {
-        val viewSize = viewSizeDp(step)
-        val extraPadding = TouchTarget.extraPaddingPx(viewSize, TouchTarget.MIN_TARGET_DP)
-        return viewSize + (2 * extraPadding) + COLUMN_ALLOWANCE_EXTRA_DP
-    }
+    /** Height of one shortcut slot in dp, including padding that lifts it to the touch minimum. */
+    fun slotSizeDp(step: Int): Int =
+        TouchTarget.targetSizePx(viewSizeDp(step), TouchTarget.MIN_TARGET_DP)
+
+    fun columnAllowanceDp(step: Int): Int = slotSizeDp(step) + COLUMN_ALLOWANCE_EXTRA_DP
 }

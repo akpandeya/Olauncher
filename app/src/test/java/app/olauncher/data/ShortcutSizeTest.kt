@@ -58,4 +58,11 @@ class ShortcutSizeTest {
         assertEquals(56, ShortcutSize.columnAllowanceDp(-1))
         assertEquals(64, ShortcutSize.columnAllowanceDp(10))
     }
+
+    @Test
+    fun `slotSizeDp lifts small to 48 and keeps medium and large`() {
+        assertEquals(48, ShortcutSize.slotSizeDp(ShortcutSize.SMALL))
+        assertEquals(48, ShortcutSize.slotSizeDp(ShortcutSize.MEDIUM))
+        assertEquals(56, ShortcutSize.slotSizeDp(ShortcutSize.LARGE))
+    }
 }
