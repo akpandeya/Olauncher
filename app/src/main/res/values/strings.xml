@@ -419,5 +419,7 @@
     <string name="call_number">Call %s</string>
     <string name="restoring_app">Restoring %s…</string>
     <string name="settings_back">‹ Settings</string>
+    <string name="search_settings">Search settings</string>
 </resources>
+
 

@@ -1680,4 +1680,31 @@
 
     </ScrollView>
 
+    <LinearLayout
+        android:id="@+id/settingsSearchContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginHorizontal="112dp"
+        android:layout_marginBottom="12dp"
+        android:background="@drawable/rounded_rect_shade_color"
+        android:orientation="horizontal"
+        android:paddingHorizontal="12dp"
+        android:paddingVertical="12dp">
+
+        <androidx.appcompat.widget.AppCompatEditText
+            android:id="@+id/settingsSearch"
+            style="@style/TextLarge"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:background="@null"
+            android:hint="@string/search_settings"
+            android:imeOptions="actionDone"
+            android:inputType="text|textNoSuggestions"
+            android:maxLines="1"
+            android:textColor="?attr/primaryColor"
+            android:textColorHint="?attr/primaryColorTrans80" />
+    </LinearLayout>
+
 </FrameLayout>

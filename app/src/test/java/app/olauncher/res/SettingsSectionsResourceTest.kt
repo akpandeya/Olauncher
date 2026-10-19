@@ -522,6 +522,8 @@ class SettingsSectionsResourceTest {
             "setLauncher",
             "settingsBack",
             "settingsBackLayout",
+            "settingsSearch",
+            "settingsSearchContainer",
             "shortcutCount",
             "shortcutCountLayout",
             "shortcutCountTitle",
