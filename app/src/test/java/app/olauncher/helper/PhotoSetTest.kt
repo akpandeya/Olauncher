@@ -222,4 +222,45 @@ class PhotoSetTest {
         File(dirWithGap, "1.jpg").writeText("photo 1")
         assertEquals(3, PhotoSet.countContiguous(dirWithGap))
     }
+
+    @Test
+    fun `applyRemoval continues past a failed rename and keeps later photos`() {
+        val dir = temporaryFolder.newFolder("wallpapers_rename_fail")
+        // 2.jpg is missing, so the rename 2 -> 1 fails
+        File(dir, "0.jpg").writeText("p0")
+        File(dir, "1.jpg").writeText("p1")
+        File(dir, "3.jpg").writeText("p3")
+        File(dir, "4.jpg").writeText("p4")
+
+        val plan = PhotoSet.planRemoval(count = 5, index = 1, removed = setOf(0))
+        val result = PhotoSet.applyRemoval(dir, plan)
+
+        assertFalse(result)
+        assertEquals("p1", File(dir, "0.jpg").readText())
+        assertEquals("p3", File(dir, "2.jpg").readText())
+        assertEquals("p4", File(dir, "3.jpg").readText())
+        assertFalse(File(dir, "4.jpg").exists())
+    }
+
+    @Test
+    fun `applyRemoval does not overwrite a photo whose rename failed`() {
+        val dir = temporaryFolder.newFolder("wallpapers_no_overwrite")
+        File(dir, "0.jpg").writeText("p0")
+        // 1.jpg is still in place, as if its rename 1 -> 0 had failed
+        File(dir, "1.jpg").writeText("p1")
+        File(dir, "2.jpg").writeText("p2")
+        val plan = PhotoSet.RemovalPlan(
+            renames = listOf(Rename(from = 2, to = 1)),
+            removed = listOf(0),
+            newCount = 2,
+            newIndex = 0,
+            currentRemoved = true
+        )
+
+        val result = PhotoSet.applyRemoval(dir, plan)
+
+        assertFalse(result)
+        assertEquals("p1", File(dir, "1.jpg").readText())
+        assertEquals("p2", File(dir, "2.jpg").readText())
+    }
 }

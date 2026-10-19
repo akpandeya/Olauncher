@@ -34,7 +34,7 @@ class WallpaperRotateWorker(
     companion object {
         const val WORK_NAME = "photo_wallpaper"
 
-        fun schedulePeriodic(context: Context) {
+        fun schedulePeriodic(context: Context, restartFromNow: Boolean = false) {
             val interval = RotationInterval.fromId(Prefs(context).photoWallpaperInterval)
             val minutes = interval.periodicRepeatMinutes
             if (minutes == null) {
@@ -45,7 +45,8 @@ class WallpaperRotateWorker(
                 .build()
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 WORK_NAME,
-                ExistingPeriodicWorkPolicy.UPDATE,
+                // UPDATE keeps the old period start; a manual step needs the clock restarted.
+                if (restartFromNow) ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE else ExistingPeriodicWorkPolicy.UPDATE,
                 request,
             )
         }

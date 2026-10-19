@@ -207,4 +207,31 @@ class HeldStoreTest {
         val all = store.all()
         assertTrue(all.isEmpty())
     }
+
+    @Test
+    fun `corrupt file is moved aside and store starts empty`() {
+        val file = File(tempDir, HeldStore.FILE_NAME)
+        file.writeText("{not json", Charsets.UTF_8)
+        File(tempDir, "held.json.corrupt").writeText("older")
+
+        assertTrue(store.all().isEmpty())
+
+        val corrupt = File(tempDir, "held.json.corrupt")
+        assertEquals("{not json", corrupt.readText(Charsets.UTF_8))
+        assertTrue(!file.exists())
+    }
+
+    @Test
+    fun `valid file is read and not quarantined`() {
+        val item = HeldItem("k", "p", "L", "T", "X", 5L)
+        store.add(item)
+        assertEquals(listOf(item), store.all())
+        assertTrue(!File(tempDir, "held.json.corrupt").exists())
+    }
+
+    @Test
+    fun `missing file gives empty store without corrupt file`() {
+        assertTrue(store.all().isEmpty())
+        assertTrue(!File(tempDir, "held.json.corrupt").exists())
+    }
 }

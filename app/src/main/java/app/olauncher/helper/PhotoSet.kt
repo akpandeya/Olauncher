@@ -73,14 +73,17 @@ object PhotoSet {
                 return false
             }
         }
+        // Keep going after a failed rename so later photos are still moved into place.
+        // Never overwrite: a target that still exists holds a photo whose own rename failed.
+        var allOk = true
         for (rename in plan.renames.sortedBy { it.from }) {
             val fromFile = File(dir, "${rename.from}.jpg")
             val toFile = File(dir, "${rename.to}.jpg")
-            if (!fromFile.renameTo(toFile)) {
-                return false
+            if (toFile.exists() || !fromFile.renameTo(toFile)) {
+                allOk = false
             }
         }
-        return true
+        return allOk
     }
 
     fun countContiguous(dir: File): Int {

@@ -1194,6 +1194,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         // Use the activity scope and app context so leaving Settings mid-save does not cancel it
         val appContext = requireContext().applicationContext
         requireActivity().lifecycleScope.launch {
+            PhotoWallpaper.withEditLock {
             val savedCount = PhotoWallpaper.savePickedPhotos(appContext, uris)
             if (savedCount > 0) {
                 prefs.photoWallpaperCount = savedCount
@@ -1209,6 +1210,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             } else {
                 appContext.showToast(R.string.wallpaper_photos_save_failed)
             }
+            }
         }
     }
 
@@ -1220,12 +1222,14 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         }
         val appContext = requireContext().applicationContext
         requireActivity().lifecycleScope.launch {
-            val saved = PhotoWallpaper.appendPickedPhotos(appContext, uris, startIndex = prefs.photoWallpaperCount)
-            if (saved > 0) {
-                prefs.photoWallpaperCount += saved
-                if (_binding != null) populatePhotoWallpaperText()
-            } else {
-                appContext.showToast(R.string.wallpaper_photos_save_failed)
+            PhotoWallpaper.withEditLock {
+                val saved = PhotoWallpaper.appendPickedPhotos(appContext, uris, startIndex = prefs.photoWallpaperCount)
+                if (saved > 0) {
+                    prefs.photoWallpaperCount += saved
+                    if (_binding != null) populatePhotoWallpaperText()
+                } else {
+                    appContext.showToast(R.string.wallpaper_photos_save_failed)
+                }
             }
         }
     }
@@ -1271,7 +1275,12 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                 R.id.photoWallpaperNext -> nextPhotoNow()
                 R.id.photoWallpaperPrevious -> previousPhotoNow()
                 R.id.photoWallpaperHomeMenu -> togglePhotoWallpaperHomeMenu()
-                R.id.photoWallpaperOff -> turnOffPhotoWallpaper()
+                R.id.photoWallpaperOff -> {
+                    val appContext = requireContext().applicationContext
+                    requireActivity().lifecycleScope.launch {
+                        PhotoWallpaper.withEditLock { turnOffPhotoWallpaper(appContext) }
+                    }
+                }
             }
         }
     }
@@ -1328,41 +1337,46 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                 val checkedIndices = checked.indices.filter { checked[it] }.toSet()
                 if (checkedIndices.isEmpty()) return@setPositiveButton
 
-                val plan = PhotoSet.planRemoval(
-                    prefs.photoWallpaperCount,
-                    prefs.photoWallpaperIndex,
-                    checkedIndices
-                )
-                if (plan.newCount == 0) {
-                    turnOffPhotoWallpaper()
-                } else {
-                    val appContext = requireContext().applicationContext
-                    requireActivity().lifecycleScope.launch(Dispatchers.IO) {
-                        val success = PhotoWallpaper.removePhotos(appContext, plan)
-                        if (success) {
-                            prefs.photoWallpaperCount = plan.newCount
-                            prefs.photoWallpaperIndex = plan.newIndex
-                            if (plan.currentRemoved) {
-                                PhotoWallpaper.applyCurrent(appContext, prefs)
-                            }
-                        } else {
-                            val recoveredCount = PhotoSet.countContiguous(PhotoWallpaper.getWallpaperDir(appContext))
-                            prefs.photoWallpaperCount = recoveredCount
-                            if (recoveredCount == 0) {
-                                withContext(Dispatchers.Main) {
-                                    turnOffPhotoWallpaper(appContext)
+                val appContext = requireContext().applicationContext
+                requireActivity().lifecycleScope.launch {
+                    PhotoWallpaper.withEditLock {
+                        // Plan under the lock so it matches the set as it is now.
+                        val currentCount = prefs.photoWallpaperCount
+                        if (currentCount <= 0 || checkedIndices.any { it >= currentCount }) return@withEditLock
+                        val plan = PhotoSet.planRemoval(
+                            currentCount,
+                            prefs.photoWallpaperIndex,
+                            checkedIndices
+                        )
+                        if (plan.newCount == 0) {
+                            turnOffPhotoWallpaper(appContext)
+                            return@withEditLock
+                        }
+                        withContext(Dispatchers.IO) {
+                            val success = PhotoWallpaper.removePhotos(appContext, plan)
+                            if (success) {
+                                prefs.photoWallpaperCount = plan.newCount
+                                prefs.photoWallpaperIndex = plan.newIndex
+                                if (plan.currentRemoved) {
+                                    PhotoWallpaper.applyCurrent(appContext, prefs)
                                 }
                             } else {
-                                prefs.photoWallpaperIndex = prefs.photoWallpaperIndex.coerceIn(0, recoveredCount - 1)
-                            }
-                            withContext(Dispatchers.Main) {
-                                appContext.showToast(R.string.wallpaper_photos_remove_failed)
+                                val recoveredCount = PhotoSet.countContiguous(PhotoWallpaper.getWallpaperDir(appContext))
+                                prefs.photoWallpaperCount = recoveredCount
+                                if (recoveredCount == 0) {
+                                    withContext(Dispatchers.Main) {
+                                        turnOffPhotoWallpaper(appContext)
+                                    }
+                                } else {
+                                    prefs.photoWallpaperIndex = prefs.photoWallpaperIndex.coerceIn(0, recoveredCount - 1)
+                                }
+                                withContext(Dispatchers.Main) {
+                                    appContext.showToast(R.string.wallpaper_photos_remove_failed)
+                                }
                             }
                         }
-                        withContext(Dispatchers.Main) {
-                            if (_binding != null) {
-                                populatePhotoWallpaperText()
-                            }
+                        if (_binding != null) {
+                            populatePhotoWallpaperText()
                         }
                     }
                 }
