@@ -65,6 +65,7 @@ import app.olauncher.databinding.DialogTextSizeBinding
 import app.olauncher.databinding.FragmentSettingsBinding
 import app.olauncher.helper.PhotoSet
 import app.olauncher.helper.PhotoWallpaper
+import app.olauncher.helper.RotationInterval
 import app.olauncher.helper.WallpaperRotateWorker
 import app.olauncher.helper.appUsagePermissionGranted
 import app.olauncher.helper.createDialog
@@ -1197,7 +1198,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             if (savedCount > 0) {
                 prefs.photoWallpaperCount = savedCount
                 prefs.photoWallpaperIndex = 0
-                prefs.photoWallpaperLastDay = PhotoWallpaper.today()
+                PhotoWallpaper.markChanged(prefs)
                 if (_binding != null) populatePhotoWallpaperText()
 
                 WallpaperRotateWorker.schedulePeriodic(appContext)
@@ -1254,6 +1255,10 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                     else -> R.string.set_on_home
                 }
                 menu.findItem(R.id.photoWallpaperTarget).setTitle(targetTitle)
+                val currentInterval = RotationInterval.fromId(prefs.photoWallpaperInterval)
+                val frequencyLabel = getString(intervalToStringRes(currentInterval))
+                menu.findItem(R.id.photoWallpaperFrequency).title =
+                    getString(R.string.photo_wallpaper_frequency, frequencyLabel)
                 menu.findItem(R.id.photoWallpaperHomeMenu).isChecked = prefs.photoWallpaperHomeMenu
             }
         ) { item ->
@@ -1262,11 +1267,41 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                 R.id.photoWallpaperRemove -> showRemovePhotosDialog()
                 R.id.photoWallpaperChange -> openPhotoPicker()
                 R.id.photoWallpaperTarget -> cyclePhotoWallpaperTarget()
+                R.id.photoWallpaperFrequency -> showPhotoWallpaperFrequencyDialog()
                 R.id.photoWallpaperNext -> nextPhotoNow()
                 R.id.photoWallpaperPrevious -> previousPhotoNow()
                 R.id.photoWallpaperHomeMenu -> togglePhotoWallpaperHomeMenu()
                 R.id.photoWallpaperOff -> turnOffPhotoWallpaper()
             }
+        }
+    }
+
+    private fun showPhotoWallpaperFrequencyDialog() {
+        val intervals = RotationInterval.entries
+        val items = intervals.map { getString(intervalToStringRes(it)) }.toTypedArray()
+        val currentInterval = RotationInterval.fromId(prefs.photoWallpaperInterval)
+        val checkedIndex = intervals.indexOf(currentInterval)
+
+        val builder = AlertDialog.Builder(requireContext())
+            .setSingleChoiceItems(items, checkedIndex) { dialogInterface, which ->
+                val interval = intervals[which]
+                prefs.photoWallpaperInterval = interval.id
+                WallpaperRotateWorker.schedulePeriodic(requireContext().applicationContext)
+                dialogInterface.dismiss()
+            }
+            .setNegativeButton(R.string.cancel, null)
+
+        val alertDialog = builder.create()
+        dialog?.dismiss()
+        dialog = alertDialog
+        val window = alertDialog.window
+        if (window != null && !prefs.showStatusBar) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+            alertDialog.show()
+            window.hideStatusBar()
+            window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+        } else {
+            alertDialog.show()
         }
     }
 
@@ -2535,5 +2570,21 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     override fun onDestroy() {
         viewModel.checkForMessages.call()
         super.onDestroy()
+    }
+
+    companion object {
+        @StringRes
+        fun intervalToStringRes(interval: RotationInterval): Int = when (interval) {
+            RotationInterval.ON_OPEN -> R.string.wallpaper_frequency_on_open
+            RotationInterval.MINUTES_15 -> R.string.wallpaper_frequency_15_min
+            RotationInterval.MINUTES_30 -> R.string.wallpaper_frequency_30_min
+            RotationInterval.HOURS_1 -> R.string.wallpaper_frequency_1_hour
+            RotationInterval.HOURS_3 -> R.string.wallpaper_frequency_3_hours
+            RotationInterval.HOURS_6 -> R.string.wallpaper_frequency_6_hours
+            RotationInterval.HOURS_12 -> R.string.wallpaper_frequency_12_hours
+            RotationInterval.DAILY -> R.string.wallpaper_frequency_daily
+            RotationInterval.WEEKLY -> R.string.wallpaper_frequency_weekly
+            RotationInterval.NEVER -> R.string.wallpaper_frequency_never
+        }
     }
 }

@@ -13,6 +13,9 @@
         android:id="@+id/photoWallpaperTarget"
         android:title="@string/set_on_home" />
     <item
+        android:id="@+id/photoWallpaperFrequency"
+        android:title="@string/photo_wallpaper_frequency" />
+    <item
         android:id="@+id/photoWallpaperNext"
         android:title="@string/next_photo_now" />
     <item

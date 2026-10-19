@@ -203,6 +203,17 @@
     <string name="set_on_home">Set on: Home</string>
     <string name="set_on_lock">Set on: Lock</string>
     <string name="set_on_both">Set on: Both</string>
+    <string name="photo_wallpaper_frequency">Change: %s</string>
+    <string name="wallpaper_frequency_on_open">Every time home opens</string>
+    <string name="wallpaper_frequency_15_min">15 minutes</string>
+    <string name="wallpaper_frequency_30_min">30 minutes</string>
+    <string name="wallpaper_frequency_1_hour">1 hour</string>
+    <string name="wallpaper_frequency_3_hours">3 hours</string>
+    <string name="wallpaper_frequency_6_hours">6 hours</string>
+    <string name="wallpaper_frequency_12_hours">12 hours</string>
+    <string name="wallpaper_frequency_daily">Daily</string>
+    <string name="wallpaper_frequency_weekly">Weekly</string>
+    <string name="wallpaper_frequency_never">Never (manual only)</string>
     <string name="next_photo_now">Next photo now</string>
     <string name="previous_photo">Previous photo</string>
     <string name="wallpaper_home_menu">Switch from home (long-press)</string>
