@@ -4,6 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:minHeight="48dp"
     android:animateLayoutChanges="true">
 
     <TextView
@@ -11,6 +12,8 @@
         style="@style/TextLarge"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:minHeight="48dp"
+        android:gravity="center_vertical"
         android:maxLines="1"
         android:paddingHorizontal="24dp"
         android:paddingVertical="@dimen/app_padding_vertical"
