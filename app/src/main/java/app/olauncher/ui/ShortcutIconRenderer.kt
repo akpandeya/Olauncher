@@ -15,6 +15,7 @@ import androidx.core.content.ContextCompat
 import app.olauncher.R
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
+import app.olauncher.data.ShortcutAction
 import app.olauncher.data.ShortcutIconStyle
 import app.olauncher.data.ShortcutSize
 import app.olauncher.helper.dpToPx
@@ -106,7 +107,7 @@ object ShortcutIconRenderer {
             }
         }
         return RenderedShortcutIcon(
-            drawable = getDefaultDrawable(context, slot),
+            drawable = getBuiltinDrawable(context, getBuiltinIconRes(slot, prefs.getShortcutBuiltin(slot))),
             paddingPx = paddingDp(isAppIcon = false, treatment = null, viewSizeDp = viewSizeDp).dpToPx(),
             isAppIcon = false,
         )
@@ -154,8 +155,10 @@ object ShortcutIconRenderer {
         }
     }
 
-    fun getDefaultDrawable(context: Context, slot: Int): Drawable {
-        val resId = getDefaultIconRes(slot)
+    fun getDefaultDrawable(context: Context, slot: Int): Drawable =
+        getBuiltinDrawable(context, getDefaultIconRes(slot))
+
+    private fun getBuiltinDrawable(context: Context, @DrawableRes resId: Int): Drawable {
         val primaryColor = context.getColorFromAttr(R.attr.primaryColor)
         return ContextCompat.getDrawable(context, resId)?.mutate()?.apply {
             colorFilter = null
@@ -165,26 +168,19 @@ object ShortcutIconRenderer {
     }
 
     @DrawableRes
-    fun getDefaultIconRes(slot: Int): Int = when (slot) {
-        1 -> R.drawable.ic_shortcut_search
-        2 -> R.drawable.ic_shortcut_gallery
-        3 -> R.drawable.ic_shortcut_camera
-        4 -> R.drawable.ic_shortcut_messages
-        5 -> R.drawable.ic_shortcut_phone
-        6 -> R.drawable.ic_shortcut_more
-        else -> R.drawable.ic_shortcut_more
-    }
+    fun getDefaultIconRes(slot: Int): Int = getBuiltinIconRes(slot, ShortcutAction.NONE_ID)
 
     @StringRes
-    fun getDefaultLabelRes(slot: Int): Int = when (slot) {
-        1 -> R.string.shortcut_search
-        2 -> R.string.shortcut_gallery
-        3 -> R.string.shortcut_camera
-        4 -> R.string.shortcut_messages
-        5 -> R.string.shortcut_phone
-        6 -> R.string.shortcut_more
-        else -> R.string.shortcut_more
-    }
+    fun getDefaultLabelRes(slot: Int): Int = getBuiltinLabelRes(slot, ShortcutAction.NONE_ID)
+
+    /** Icon for [slot] given its stored built-in id; slots with no action show the settings glyph as a placeholder. */
+    @DrawableRes
+    fun getBuiltinIconRes(slot: Int, storedId: Int): Int =
+        (ShortcutAction.resolve(slot, storedId) ?: ShortcutAction.SETTINGS).iconRes
+
+    @StringRes
+    fun getBuiltinLabelRes(slot: Int, storedId: Int): Int =
+        (ShortcutAction.resolve(slot, storedId) ?: ShortcutAction.SETTINGS).labelRes
 
     fun getDefaultLabel(context: Context, slot: Int): String {
         return context.getString(getDefaultLabelRes(slot))
@@ -196,6 +192,6 @@ object ShortcutIconRenderer {
             val label = prefs.getShortcutLabel(slot)
             if (label.isNotEmpty()) return label
         }
-        return getDefaultLabel(context, slot)
+        return context.getString(getBuiltinLabelRes(slot, prefs.getShortcutBuiltin(slot)))
     }
 }
