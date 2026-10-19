@@ -8,6 +8,7 @@ import android.text.Spannable
 import android.text.SpannableString
 import android.text.TextWatcher
 import android.text.style.ForegroundColorSpan
+import android.text.style.UnderlineSpan
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
@@ -71,10 +72,11 @@ class AppDrawerAdapter(
             }
 
             override fun areContentsTheSame(oldItem: AppModel, newItem: AppModel): Boolean =
-                oldItem == newItem
+                false
         }
     }
 
+    var searchQuery: String = ""
     private var autoLaunch = true
     private var isBangSearch = false
     var allowAutoLaunch = true
@@ -171,6 +173,7 @@ class AppDrawerAdapter(
                     appLabelGravity,
                     myUserHandle,
                     appModel,
+                    searchQuery,
                     appClickListener,
                     appDeleteListener,
                     appInfoListener,
@@ -188,6 +191,8 @@ class AppDrawerAdapter(
     private fun createAppFilter(): Filter {
         return object : Filter() {
             override fun performFiltering(charSearch: CharSequence?): FilterResults {
+                val queryStr = charSearch?.toString().orEmpty()
+                searchQuery = queryStr
                 isBangSearch = charSearch?.startsWith("!") ?: false
                 autoLaunch = allowAutoLaunch && (charSearch?.startsWith(" ")?.not() ?: true)
 
@@ -241,6 +246,7 @@ class AppDrawerAdapter(
 
             @Suppress("UNCHECKED_CAST")
             override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
+                searchQuery = constraint?.toString().orEmpty()
                 val payload = results?.values as? FilterPayload
                 if (payload != null) {
                     appFilteredList = payload.items
@@ -268,6 +274,7 @@ class AppDrawerAdapter(
             val strongMatches = appFilteredScores.count { it >= AppMatcher.SCORE_SUBSTRING }
             val first = if (bottomSearch) appFilteredList.lastOrNull() else appFilteredList.firstOrNull()
             if (ArchivedAppsHelper.canAutoLaunch(
+                    query = searchQuery,
                     hasResultRow = hasResultRow,
                     strongMatches = strongMatches,
                     autoLaunch = autoLaunch,
@@ -298,6 +305,7 @@ class AppDrawerAdapter(
         this.appsList = appsList
         this.appFilteredList = appsList
         this.appFilteredScores = emptyList()
+        this.searchQuery = ""
         submitList(appsList)
     }
 
@@ -308,6 +316,16 @@ class AppDrawerAdapter(
             appFilteredList.firstOrNull { it !is AppModel.PrivateSpaceHeader && it !is AppModel.Result }
         }
         if (first != null) appClickListener(first)
+    }
+
+    fun getTopItem(): AppModel? =
+        if (bottomSearch) appFilteredList.lastOrNull() else appFilteredList.firstOrNull()
+
+    fun getTopScore(): Int? =
+        appFilteredScores.firstOrNull()
+
+    fun executeItem(appModel: AppModel) {
+        appClickListener(appModel)
     }
 
     class ResultViewHolder(private val binding: AdapterAppDrawerBinding) :
@@ -353,6 +371,7 @@ class AppDrawerAdapter(
             appLabelGravity: Int,
             myUserHandle: UserHandle,
             appModel: AppModel,
+            searchQuery: String,
             clickListener: (AppModel) -> Unit,
             appDeleteListener: (AppModel) -> Unit,
             appInfoListener: (AppModel) -> Unit,
@@ -365,21 +384,50 @@ class AppDrawerAdapter(
 
             // Show indicators in title based on app type and state
             val formattedTitle = ArchivedAppsHelper.formatAppTitle(appModel)
-            if (appModel.isNew && !appModel.isArchived) {
-                val starIndex = formattedTitle.lastIndexOf('✦')
+            val accentColor = root.context.getColorFromAttr(R.attr.accentColor)
+            val primaryColor = root.context.getColorFromAttr(R.attr.primaryColor)
+            val hasAccent = accentColor != primaryColor
+
+            val ranges = if (searchQuery.isNotBlank()) {
+                AppMatcher.matchRanges(appModel.appLabel, searchQuery)
+            } else {
+                emptyList()
+            }
+
+            val hasStar = appModel.isNew && !appModel.isArchived
+            val starIndex = if (hasStar) formattedTitle.lastIndexOf('✦') else -1
+
+            if (ranges.isNotEmpty() || starIndex >= 0) {
+                val spannable = SpannableString(formattedTitle)
+                for (range in ranges) {
+                    val start = range.first.coerceIn(0, appModel.appLabel.length)
+                    val end = (range.last + 1).coerceIn(start, appModel.appLabel.length)
+                    if (start < end) {
+                        spannable.setSpan(
+                            UnderlineSpan(),
+                            start,
+                            end,
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                        )
+                        if (hasAccent) {
+                            spannable.setSpan(
+                                ForegroundColorSpan(accentColor),
+                                start,
+                                end,
+                                Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                            )
+                        }
+                    }
+                }
                 if (starIndex >= 0) {
-                    val accentColor = root.context.getColorFromAttr(R.attr.accentColor)
-                    val spannable = SpannableString(formattedTitle)
                     spannable.setSpan(
                         ForegroundColorSpan(accentColor),
                         starIndex,
                         starIndex + 1,
                         Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
                     )
-                    appTitle.text = spannable
-                } else {
-                    appTitle.text = formattedTitle
                 }
+                appTitle.text = spannable
             } else {
                 appTitle.text = formattedTitle
             }
