@@ -33,6 +33,20 @@
             tools:text="Opened 4 times today · 38 min" />
 
         <TextView
+            android:id="@+id/openSettings"
+            style="@style/TextSmall"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:paddingVertical="2dp"
+            android:text="@string/open_settings"
+            android:textColor="?attr/primaryColorTrans80"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <TextView
             android:id="@+id/overAllowance"
             style="@style/TextSmall"
             android:layout_width="wrap_content"

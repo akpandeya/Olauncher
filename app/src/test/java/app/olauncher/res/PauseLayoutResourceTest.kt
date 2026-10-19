@@ -83,4 +83,20 @@ class PauseLayoutResourceTest {
         assertEquals("Confirm", strings["confirm"])
         assertEquals("Confirm (%d)", strings["confirm_countdown"])
     }
+
+    @Test
+    fun `fragment_pause contains openSettings text under usageStats`() {
+        val file = resolveFile("src/main/res/layout/fragment_pause.xml")
+        val doc = parseXml(file)
+        val ids = extractAllIds(doc)
+
+        assertTrue(ids.contains("usageStats"))
+        assertTrue(ids.contains("openSettings"))
+    }
+
+    @Test
+    fun `strings contain open settings string matching acceptance criteria`() {
+        val strings = loadStrings()
+        assertEquals("Open settings", strings["open_settings"])
+    }
 }

@@ -27,6 +27,7 @@ import app.olauncher.helper.getUserHandleFromString
 import app.olauncher.helper.showPopupMenu
 import app.olauncher.helper.showWaitDialog
 import app.olauncher.quiet.QuietRelease
+import app.olauncher.ui.settings.SettingsDeepLinks
 import app.olauncher.ui.today.WordReveal
 import app.olauncher.wellbeing.CommitLock
 import app.olauncher.wellbeing.DistractingApps
@@ -54,6 +55,12 @@ class PauseFragment : Fragment() {
         var isQuietOnSupplier: ((Context, Prefs) -> Boolean)? = null
         var nowSupplier: () -> Long = { System.currentTimeMillis() }
         var zoneSupplier: () -> ZoneId = { ZoneId.systemDefault() }
+        var isUsageAccessGrantedSupplier: ((Context) -> Boolean)? = null
+    }
+
+    private fun isUsageAccessGranted(context: Context): Boolean {
+        return isUsageAccessGrantedSupplier?.invoke(context)
+            ?: context.appUsagePermissionGranted()
     }
 
     private var _binding: FragmentPauseBinding? = null
@@ -117,10 +124,33 @@ class PauseFragment : Fragment() {
             true
         }
 
+        binding.openSettings.setOnClickListener {
+            openSettingsOnPause()
+        }
+
         setupWhyChoices()
         setupPauseWord()
         updateNotice()
         startDecisionAndCountdown()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val context = context ?: return
+        if (_binding != null && binding.openSettings.isVisible && isUsageAccessGranted(context)) {
+            startDecisionAndCountdown()
+        }
+    }
+
+    private fun openSettingsOnPause() {
+        if (!isAdded || _binding == null) return
+        val navController = findNavController()
+        // Ignore a second tap once we already left the Pause screen.
+        if (navController.currentDestination?.id != R.id.pauseFragment) return
+        navController.navigate(
+            R.id.settingsFragment,
+            SettingsDeepLinks.pauseBundle(),
+        )
     }
 
     private fun startDecisionAndCountdown() {
@@ -130,9 +160,10 @@ class PauseFragment : Fragment() {
 
             val context = context ?: return@launch
             val baseSeconds = prefs.pauseSeconds
+            val usageGranted = isUsageAccessGranted(context)
             val allowanceMin = PausePolicy.effectiveAllowanceMin(
                 savedMin = prefs.pauseAllowanceMin,
-                usageAccessGranted = context.appUsagePermissionGranted(),
+                usageAccessGranted = usageGranted,
             )
             val escalate = prefs.pauseEscalate
             val distractingPkgs = if (prefs.hasSavedDistractingApps()) {
@@ -142,7 +173,7 @@ class PauseFragment : Fragment() {
             }
 
             val (usageLine, decision) = withContext(Dispatchers.IO) {
-                if (context.appUsagePermissionGranted()) {
+                if (usageGranted) {
                     val repository = usageRepositoryProvider?.invoke(context) ?: UsageRepository(context)
                     val opens = repository.openCountToday(appPackage) ?: 0
                     val appMillis = repository.foregroundMillisToday(setOf(appPackage)) ?: 0L
@@ -173,6 +204,7 @@ class PauseFragment : Fragment() {
 
             if (_binding == null) return@launch
             binding.usageStats.text = usageLine
+            binding.openSettings.isVisible = !usageGranted
 
             if (decision.overAllowance && allowanceMin > 0) {
                 binding.overAllowance.text = getString(R.string.pause_over_allowance, PauseFormatting.overAllowanceMinutes(allowanceMin))
