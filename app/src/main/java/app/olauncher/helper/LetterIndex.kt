@@ -49,6 +49,18 @@ object LetterIndex {
     fun letterAt(y: Float, height: Int, count: Int): Int =
         letterAt(y, height.toFloat(), count)
 
+    /**
+     * Scroll offset from the top of the list for the first app of a letter.
+     * Bottom search shows the list reversed, so that app is the lowest row of its group:
+     * pin it to the bottom so the rest of the group sits above it, near the thumb.
+     */
+    fun scrollOffsetPx(bottomSearch: Boolean, listHeightPx: Int, rowHeightPx: Int): Int =
+        if (bottomSearch) (listHeightPx - rowHeightPx).coerceAtLeast(0) else 0
+
+    /** Extra list padding on the strip side so row text clears a strip [stripWidthPx] wide. */
+    fun listInsetPx(stripWidthPx: Int, rowPaddingPx: Int, listMarginPx: Int): Int =
+        (stripWidthPx - rowPaddingPx - listMarginPx).coerceAtLeast(0)
+
     fun letterFor(label: String): Char {
         val trimmed = label.trimStart()
         if (trimmed.isEmpty()) return '#'
