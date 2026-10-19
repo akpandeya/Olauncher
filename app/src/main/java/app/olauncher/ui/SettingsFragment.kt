@@ -27,6 +27,12 @@ import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
+import androidx.core.widget.doAfterTextChanged
+import android.view.WindowInsets
+import android.widget.TextView
+import app.olauncher.helper.DrawerScrollHelper
+import app.olauncher.ui.settings.SettingsRow
+import app.olauncher.ui.settings.SettingsSearch
 import app.olauncher.ui.settings.SettingsSection
 import app.olauncher.ui.settings.SettingsSections
 import app.olauncher.ui.today.cards.NextUpCard
@@ -116,7 +122,11 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
 
     private val backCallback = object : OnBackPressedCallback(false) {
         override fun handleOnBackPressed() {
-            showSectionList()
+            if (_binding != null && !binding.settingsSearch.text.isNullOrEmpty()) {
+                binding.settingsSearch.setText("")
+            } else {
+                showSectionList()
+            }
         }
     }
 
@@ -243,6 +253,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateGerman()
         populateFooter()
         initClickListeners()
+        initRuntimeRows()
+        initSearch()
+        setupSearchInsets()
         initObservers()
 
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, backCallback)
@@ -274,13 +287,200 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         currentSectionKey?.let { outState.putString(KEY_SAVED_SECTION, it) }
     }
 
+    private data class RuntimeSettingsRow(
+        val sectionKey: String,
+        val rowView: View,
+        val labelView: TextView,
+        val viewId: Int,
+    )
+
+    private var runtimeRows: List<RuntimeSettingsRow> = emptyList()
+
+    private fun getFirstTextView(parent: View): TextView {
+        if (parent is ViewGroup) {
+            for (i in 0 until parent.childCount) {
+                val child = parent.getChildAt(i)
+                if (child is TextView) return child
+            }
+        }
+        error("Expected TextView in parent $parent")
+    }
+
+    private fun initRuntimeRows() {
+        runtimeRows = listOf(
+            // Home
+            RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.homeAppsNum.parent as View, getFirstTextView(binding.homeAppsNum.parent as View), R.id.homeAppsNum),
+            RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.dateTime.parent as View, getFirstTextView(binding.dateTime.parent as View), R.id.dateTime),
+            RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.batteryModeLayout, binding.batteryModeTitle, R.id.batteryMode),
+            RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.alignment.parent as View, getFirstTextView(binding.alignment.parent as View), R.id.alignment),
+
+            // Shortcuts
+            RuntimeSettingsRow(SettingsSections.KEY_SHORTCUTS, binding.shortcutIconsOnOffLayout, binding.shortcutIconsOnOffTitle, R.id.shortcutIconsOnOff),
+            RuntimeSettingsRow(SettingsSections.KEY_SHORTCUTS, binding.shortcutCountLayout, binding.shortcutCountTitle, R.id.shortcutCount),
+            RuntimeSettingsRow(SettingsSections.KEY_SHORTCUTS, binding.shortcutSizeLayout, binding.shortcutSizeTitle, R.id.shortcutSize),
+            RuntimeSettingsRow(SettingsSections.KEY_SHORTCUTS, binding.shortcutSideLayout, binding.shortcutSideTitle, R.id.shortcutSide),
+            RuntimeSettingsRow(SettingsSections.KEY_SHORTCUTS, binding.shortcutHeightLayout, binding.shortcutHeightTitle, R.id.shortcutHeight),
+            RuntimeSettingsRow(SettingsSections.KEY_SHORTCUTS, binding.shortcutIconStyleLayout, binding.shortcutIconStyleTitle, R.id.shortcutIconStyle),
+
+            // Drawer
+            RuntimeSettingsRow(SettingsSections.KEY_DRAWER, binding.autoShowKeyboard.parent as View, getFirstTextView(binding.autoShowKeyboard.parent as View), R.id.autoShowKeyboard),
+            RuntimeSettingsRow(SettingsSections.KEY_DRAWER, binding.drawerBottomSearchLayout, binding.drawerBottomSearchTitle, R.id.drawerBottomSearch),
+            RuntimeSettingsRow(SettingsSections.KEY_DRAWER, binding.searchEngineLayout, binding.searchEngineTitle, R.id.searchEngine),
+            RuntimeSettingsRow(SettingsSections.KEY_DRAWER, binding.drawerNewFirstLayout, binding.drawerNewFirstTitle, R.id.drawerNewFirst),
+
+            // Wellbeing
+            RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.distractingAppsLayout, binding.distractingAppsTitle, R.id.distractingApps),
+            RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.pauseBeforeAppsLayout, binding.pauseBeforeAppsTitle, R.id.pauseBeforeAppsOnOff),
+            RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.pauseAllowanceLayout, binding.pauseAllowanceTitle, R.id.pauseAllowance),
+            RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.pauseEscalateLayout, binding.pauseEscalateTitle, R.id.pauseEscalateOnOff),
+            RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.pauseAskWhyLayout, binding.pauseAskWhyTitle, R.id.pauseAskWhyOnOff),
+            RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.commitLockLayout, binding.commitLockTitle, R.id.commitLockOnOff),
+            RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.holdNotificationsLayout, binding.holdNotificationsTitle, R.id.holdNotificationsOnOff),
+            RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.quietReleaseTimesLayout, binding.quietReleaseTimesTitle, R.id.quietReleaseTimes),
+            RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.screenTimeLayout, getFirstTextView(binding.screenTimeLayout), R.id.screenTimeOnOff),
+            RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.nudgeWaterLayout, binding.nudgeWaterTitle, R.id.nudgeWater),
+            RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.nudgeWalkLayout, binding.nudgeWalkTitle, R.id.nudgeWalk),
+            RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.nudgeSocialLayout, binding.nudgeSocialTitle, R.id.nudgeSocial),
+            RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.nudgeActiveHoursLayout, binding.nudgeActiveHoursTitle, R.id.nudgeActiveHours),
+
+            // Today
+            RuntimeSettingsRow(SettingsSections.KEY_TODAY, binding.todayCardsLayout, binding.todayCardsTitle, R.id.todayCards),
+            RuntimeSettingsRow(SettingsSections.KEY_TODAY, binding.weatherLayout, binding.weatherTitle, R.id.weather),
+
+            // Deutsch
+            RuntimeSettingsRow(SettingsSections.KEY_DEUTSCH, binding.germanLayout, binding.germanTitle, R.id.germanOnOff),
+            RuntimeSettingsRow(SettingsSections.KEY_DEUTSCH, binding.germanClockLayout, binding.germanClockTitle, R.id.germanClock),
+            RuntimeSettingsRow(SettingsSections.KEY_DEUTSCH, binding.germanLookupLayout, binding.germanLookupTitle, R.id.germanLookupOnOff),
+            RuntimeSettingsRow(SettingsSections.KEY_DEUTSCH, binding.germanPauseWordLayout, binding.germanPauseWordTitle, R.id.germanPauseWordOnOff),
+            RuntimeSettingsRow(SettingsSections.KEY_DEUTSCH, binding.germanUiLayout, binding.germanUiTitle, R.id.germanUiOnOff),
+
+            // Appearance
+            RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.photoWallpaperLayout, binding.photoWallpaperTitle, R.id.photoWallpaper),
+            RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.statusBar.parent as View, getFirstTextView(binding.statusBar.parent as View), R.id.statusBar),
+            RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.appThemeText.parent as View, getFirstTextView(binding.appThemeText.parent as View), R.id.appThemeText),
+            RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.boldFont.parent as View, getFirstTextView(binding.boldFont.parent as View), R.id.boldFont),
+            RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.textSizeValue.parent as View, getFirstTextView(binding.textSizeValue.parent as View), R.id.textSizeValue),
+
+            // Gestures
+            RuntimeSettingsRow(SettingsSections.KEY_GESTURES, binding.swipeLeftApp.parent as View, getFirstTextView(binding.swipeLeftApp.parent as View), R.id.swipeLeftApp),
+            RuntimeSettingsRow(SettingsSections.KEY_GESTURES, binding.swipeRightLayout, getFirstTextView(binding.swipeRightLayout), R.id.swipeRightApp),
+            RuntimeSettingsRow(SettingsSections.KEY_GESTURES, binding.toggleLock.parent as View, getFirstTextView(binding.toggleLock.parent as View), R.id.toggleLock),
+
+            // Backup
+            RuntimeSettingsRow(SettingsSections.KEY_BACKUP, binding.exportBackupLayout, binding.exportBackup, R.id.exportBackup),
+            RuntimeSettingsRow(SettingsSections.KEY_BACKUP, binding.importBackupLayout, binding.importBackup, R.id.importBackup),
+        )
+
+        for (item in runtimeRows) {
+            if (!item.rowView.hasOnClickListeners()) {
+                item.rowView.setOnClickListener {
+                    binding.root.findViewById<View>(item.viewId)?.performClick()
+                }
+            }
+            if (!item.labelView.hasOnClickListeners()) {
+                item.labelView.setOnClickListener {
+                    binding.root.findViewById<View>(item.viewId)?.performClick()
+                }
+            }
+        }
+    }
+
+    fun collectRows(): List<SettingsRow> {
+        return runtimeRows.map { item ->
+            SettingsRow(
+                label = item.labelView.text.toString(),
+                sectionKey = item.sectionKey,
+                viewId = item.viewId,
+            )
+        }
+    }
+
+    private fun setupSearchInsets() {
+        binding.root.setOnApplyWindowInsetsListener { root, insets ->
+            val imeBottom = insets.getInsets(WindowInsets.Type.ime()).bottom
+            val navBarBottom = insets.getInsets(WindowInsets.Type.navigationBars()).bottom
+            val searchMargin = (12 * resources.displayMetrics.density).toInt()
+            val bottomPadding = if (imeBottom > 0) {
+                DrawerScrollHelper.imeBottomPadding(
+                    drawerBottomSearch = true,
+                    imeBottom = imeBottom,
+                    searchBottomMargin = searchMargin,
+                )
+            } else {
+                navBarBottom
+            }
+            if (root.paddingBottom != bottomPadding) {
+                root.setPadding(root.paddingLeft, root.paddingTop, root.paddingRight, bottomPadding)
+            }
+            insets
+        }
+        binding.root.requestApplyInsets()
+    }
+
+    private fun initSearch() {
+        binding.settingsSearch.doAfterTextChanged { text ->
+            onSearchQueryChanged(text?.toString().orEmpty())
+        }
+    }
+
+    private fun onSearchQueryChanged(query: String) {
+        if (query.isBlank()) {
+            if (currentSectionKey == null) {
+                showSectionList()
+            }
+            return
+        }
+
+        val matchingRows = SettingsSearch.match(query, collectRows())
+        val matchingIds = matchingRows.map { it.viewId }.toSet()
+
+        backCallback.isEnabled = true
+        binding.settingsBackLayout.isVisible = false
+        binding.thumblineHeaderCard.isVisible = false
+        binding.sectionListLayout.isVisible = false
+        binding.footer.isVisible = false
+
+        for (item in runtimeRows) {
+            item.rowView.isVisible = item.viewId in matchingIds
+        }
+
+        binding.homeSection.isVisible = runtimeRows.any { it.sectionKey == SettingsSections.KEY_HOME && it.viewId in matchingIds }
+        binding.shortcutIconsSection.isVisible = runtimeRows.any { it.sectionKey == SettingsSections.KEY_SHORTCUTS && it.viewId in matchingIds }
+        binding.drawerSection.isVisible = runtimeRows.any { it.sectionKey == SettingsSections.KEY_DRAWER && it.viewId in matchingIds }
+
+        val wellbeingMatch = runtimeRows.any { it.sectionKey == SettingsSections.KEY_WELLBEING && it.viewId in matchingIds }
+        binding.wellbeingSection.isVisible = wellbeingMatch
+        if (wellbeingMatch) {
+            val nudgeIds = setOf(R.id.nudgeWater, R.id.nudgeWalk, R.id.nudgeSocial, R.id.nudgeActiveHours)
+            binding.nudgesSection.isVisible = nudgeIds.any { it in matchingIds }
+        }
+
+        binding.todaySection.isVisible = (R.id.todayCards in matchingIds)
+        binding.glanceSection.isVisible = (R.id.weather in matchingIds)
+        binding.deutschSection.isVisible = runtimeRows.any { it.sectionKey == SettingsSections.KEY_DEUTSCH && it.viewId in matchingIds }
+        binding.appearanceSection.isVisible = runtimeRows.any { it.sectionKey == SettingsSections.KEY_APPEARANCE && it.viewId in matchingIds }
+        binding.gesturesSection.isVisible = runtimeRows.any { it.sectionKey == SettingsSections.KEY_GESTURES && it.viewId in matchingIds }
+        binding.backupSection.isVisible = runtimeRows.any { it.sectionKey == SettingsSections.KEY_BACKUP && it.viewId in matchingIds }
+
+        binding.scrollView.scrollTo(0, 0)
+    }
+
     fun showSection(section: SettingsSection) {
         currentSectionKey = section.key
         backCallback.isEnabled = true
 
+        binding.settingsSearchContainer.isVisible = false
+
         binding.settingsBackLayout.isVisible = true
         binding.thumblineHeaderCard.isVisible = false
         binding.sectionListLayout.isVisible = false
+
+        for (item in runtimeRows) {
+            if (item.sectionKey == section.key) {
+                item.rowView.isVisible = true
+            }
+        }
+        binding.nudgesSection.isVisible = true
 
         binding.homeSection.isVisible = (section == SettingsSections.HOME)
         binding.shortcutIconsSection.isVisible = (section == SettingsSections.SHORTCUTS)
@@ -298,11 +498,23 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
 
     fun showSectionList() {
         currentSectionKey = null
+        val hasSearch = _binding != null && !binding.settingsSearch.text.isNullOrEmpty()
         backCallback.isEnabled = false
+
+        binding.settingsSearchContainer.isVisible = true
+        if (hasSearch) {
+            binding.settingsSearch.setText("")
+        }
 
         binding.settingsBackLayout.isVisible = false
         binding.thumblineHeaderCard.isVisible = true
         binding.sectionListLayout.isVisible = true
+        binding.footer.isVisible = true
+
+        for (item in runtimeRows) {
+            item.rowView.isVisible = true
+        }
+        binding.nudgesSection.isVisible = true
 
         binding.homeSection.isVisible = false
         binding.shortcutIconsSection.isVisible = false
