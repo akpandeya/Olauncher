@@ -17,6 +17,14 @@ class PhotoSetTest {
     val temporaryFolder = TemporaryFolder()
 
     @Test
+    fun `row tap opens picker only when no photos are saved`() {
+        assertEquals(PhotoSet.RowTapAction.OPEN_PICKER, PhotoSet.rowTapAction(0))
+        assertEquals(PhotoSet.RowTapAction.OPEN_PICKER, PhotoSet.rowTapAction(-1))
+        assertEquals(PhotoSet.RowTapAction.SHOW_MENU, PhotoSet.rowTapAction(1))
+        assertEquals(PhotoSet.RowTapAction.SHOW_MENU, PhotoSet.rowTapAction(7))
+    }
+
+    @Test
     fun `keep-current index shift`() {
         val plan = PhotoSet.planRemoval(count = 5, index = 3, removed = setOf(0, 1))
         assertEquals(3, plan.newCount)
