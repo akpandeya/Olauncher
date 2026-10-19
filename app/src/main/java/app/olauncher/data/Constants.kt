@@ -46,6 +46,16 @@ object Constants {
         const val HIDE = 101
     }
 
+    object FontFamily {
+        const val SYSTEM = 0
+        const val INTER = 1
+        const val PLEX = 2
+    }
+
+    const val FONT_FAMILY_SYSTEM = FontFamily.SYSTEM
+    const val FONT_FAMILY_INTER = FontFamily.INTER
+    const val FONT_FAMILY_PLEX = FontFamily.PLEX
+
     val CLOCK_APP_PACKAGES = arrayOf(
         "com.google.android.deskclock", //Google Clock
         "com.sec.android.app.clockpackage", //Samsung Clock

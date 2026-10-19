@@ -81,6 +81,10 @@ class Prefs(context: Context) : PauseLogStorage {
         const val QUIET_ENABLED = "QUIET_ENABLED"
         const val QUIET_RELEASE_TIMES = "QUIET_RELEASE_TIMES"
         const val DEFAULT_QUIET_RELEASE_TIMES = "750,1110"
+        const val FONT_FAMILY = "FONT_FAMILY"
+        const val FONT_FAMILY_SYSTEM = Constants.FONT_FAMILY_SYSTEM
+        const val FONT_FAMILY_INTER = Constants.FONT_FAMILY_INTER
+        const val FONT_FAMILY_PLEX = Constants.FONT_FAMILY_PLEX
 
         fun nudgeDoneKey(type: String): String = "$NUDGE_DONE_PREFIX${type.uppercase()}"
 
@@ -376,6 +380,17 @@ class Prefs(context: Context) : PauseLogStorage {
     var textSizeScale: Float
         get() = prefs.getFloat(TEXT_SIZE_SCALE, 1.0f)
         set(value) = prefs.edit { putFloat(TEXT_SIZE_SCALE, value).apply() }
+
+    var fontFamily: Int
+        get() {
+            val value = prefs.getInt(FONT_FAMILY, Constants.FontFamily.SYSTEM)
+            return when (value) {
+                Constants.FontFamily.INTER,
+                Constants.FontFamily.PLEX -> value
+                else -> Constants.FontFamily.SYSTEM
+            }
+        }
+        set(value) = prefs.edit { putInt(FONT_FAMILY, value).apply() }
 
     var boldFont: Boolean
         get() = prefs.getBoolean(BOLD_FONT, false)

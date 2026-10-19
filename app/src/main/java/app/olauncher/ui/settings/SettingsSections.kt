@@ -196,6 +196,7 @@ object SettingsSections : List<SettingsSection> {
             R.id.photoWallpaperTitle,
             R.id.statusBar,
             R.id.appThemeText,
+            R.id.fontFamily,
             R.id.boldFont,
             R.id.textSizeValue -> APPEARANCE
 

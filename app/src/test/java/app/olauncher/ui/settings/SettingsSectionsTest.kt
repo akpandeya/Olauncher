@@ -148,6 +148,7 @@ class SettingsSectionsTest {
         assertEquals(SettingsSections.APPEARANCE, SettingsSections.findSectionByViewId(R.id.appearanceSection))
         assertEquals(SettingsSections.APPEARANCE, SettingsSections.findSectionByViewId(R.id.photoWallpaper))
         assertEquals(SettingsSections.APPEARANCE, SettingsSections.findSectionByViewId(R.id.boldFont))
+        assertEquals(SettingsSections.APPEARANCE, SettingsSections.findSectionByViewId(R.id.fontFamily))
 
         assertEquals(SettingsSections.GESTURES, SettingsSections.findSectionByViewId(R.id.gesturesSection))
         assertEquals(SettingsSections.GESTURES, SettingsSections.findSectionByViewId(R.id.swipeRightLayout))
