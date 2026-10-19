@@ -126,4 +126,18 @@ class WellbeingCardTest {
         )
         assertEquals("Distracting apps 1h 15m · 1 open", singularLine)
     }
+
+    @Test
+    fun `hasContent is false when nothing would render`() {
+        assertFalse(WellbeingCardLogic.hasContent(0, 0, emptySet(), usagePermissionGranted = true))
+        // Social threshold alone renders no line here.
+        assertFalse(WellbeingCardLogic.hasContent(0, 0, setOf("a"), usagePermissionGranted = false))
+    }
+
+    @Test
+    fun `hasContent is true for a chip or for usage stats`() {
+        assertTrue(WellbeingCardLogic.hasContent(60, 0, emptySet(), usagePermissionGranted = false))
+        assertTrue(WellbeingCardLogic.hasContent(0, 120, emptySet(), usagePermissionGranted = false))
+        assertTrue(WellbeingCardLogic.hasContent(0, 0, setOf("a"), usagePermissionGranted = true))
+    }
 }

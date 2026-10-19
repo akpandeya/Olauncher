@@ -28,4 +28,12 @@
     <color name="blackInverseTrans80">#CCFFFFFF</color>
     <color name="blackInverseTrans90">#E6FFFFFF</color>
 
+    <!--Today page: scrim over the wallpaper, panels and chips on top of it-->
+    <color name="todayScrimLight">#B3FFFFFF</color>
+    <color name="todayScrimDark">#99000000</color>
+    <color name="todayPanelLight">#0F000000</color>
+    <color name="todayPanelDark">#12FFFFFF</color>
+    <color name="todayChipLight">#1F000000</color>
+    <color name="todayChipDark">#24FFFFFF</color>
+
 </resources>

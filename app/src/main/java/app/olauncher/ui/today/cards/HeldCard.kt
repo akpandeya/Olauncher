@@ -93,6 +93,7 @@ object HeldCard : TodayCard {
 
     override val key: String = KEY
     override val titleRes: Int = R.string.held
+    override val emoji: String = "🔔"
     override val defaultEnabled: Boolean = true
 
     var storeProvider: ((Context) -> HeldStore)? = null

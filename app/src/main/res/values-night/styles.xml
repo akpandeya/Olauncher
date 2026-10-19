@@ -41,6 +41,9 @@
         <item name="primaryColorInverseTrans90">@color/whiteInverseTrans90</item>
         <item name="primaryShadeColor">@color/whiteInverseTrans10</item>
         <item name="primaryShadeDarkColor">@color/whiteInverseTrans25</item>
+        <item name="todayScrimColor">@color/todayScrimDark</item>
+        <item name="todayPanelColor">@color/todayPanelDark</item>
+        <item name="todayChipColor">@color/todayChipDark</item>
         <item name="dialogShadeColor">@color/whiteInverseTrans50</item>
 
         <item name="mainFontFamily">sans-serif-light</item>

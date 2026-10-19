@@ -32,6 +32,16 @@ object WellbeingCardLogic {
         return anyNudgeOn || distractingApps.isNotEmpty()
     }
 
+    /** True when at least one chip or the distracting-apps line will be shown. */
+    fun hasContent(
+        waterIntervalMin: Int,
+        walkIntervalMin: Int,
+        distractingApps: Set<String>,
+        usagePermissionGranted: Boolean,
+    ): Boolean = waterIntervalMin > 0 ||
+        walkIntervalMin > 0 ||
+        (distractingApps.isNotEmpty() && usagePermissionGranted)
+
     fun formatWater(count: Int, label: String = "Water"): String = "$label $count"
 
     fun formatWalk(count: Int, label: String = "Walk"): String = "$label $count"
@@ -56,6 +66,7 @@ object WellbeingCard : TodayCard {
 
     override val key: String = KEY
     override val titleRes: Int = R.string.wellbeing
+    override val emoji: String = "🌱"
 
     var usageRepositoryProvider: ((Context) -> UsageRepository)? = null
     var scopeProvider: (() -> CoroutineScope)? = null
@@ -75,6 +86,16 @@ object WellbeingCard : TodayCard {
             walkIntervalMin = prefs.nudgeWalkIntervalMin,
             socialThresholdMin = prefs.nudgeSocialThresholdMin,
             distractingApps = prefs.distractingApps,
+        )
+    }
+
+    override fun hasContent(context: Context): Boolean {
+        val prefs = Prefs(context)
+        return WellbeingCardLogic.hasContent(
+            waterIntervalMin = prefs.nudgeWaterIntervalMin,
+            walkIntervalMin = prefs.nudgeWalkIntervalMin,
+            distractingApps = prefs.distractingApps,
+            usagePermissionGranted = context.appUsagePermissionGranted(),
         )
     }
 
@@ -140,15 +161,14 @@ object WellbeingCard : TodayCard {
 
             b.tvWater.isVisible = waterOn
             if (waterOn) {
-                b.tvWater.text = context.getString(R.string.wellbeing_water, waterCount)
+                b.tvWater.text = context.getString(R.string.wellbeing_water_chip, waterCount)
             }
 
             b.tvWalk.isVisible = walkOn
             if (walkOn) {
-                b.tvWalk.text = context.getString(R.string.wellbeing_walk, walkCount)
+                b.tvWalk.text = context.getString(R.string.wellbeing_walk_chip, walkCount)
             }
 
-            b.tvNudgeDivider.isVisible = waterOn && walkOn
         }
     }
 
