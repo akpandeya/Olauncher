@@ -41,6 +41,9 @@
         <item name="primaryColorInverseTrans90">@color/whiteInverseTrans90</item>
         <item name="primaryShadeColor">@color/whiteInverseTrans10</item>
         <item name="primaryShadeDarkColor">@color/whiteInverseTrans25</item>
+        <item name="todayScrimColor">@color/todayScrimDark</item>
+        <item name="todayPanelColor">@color/todayPanelDark</item>
+        <item name="todayChipColor">@color/todayChipDark</item>
         <item name="dialogShadeColor">@color/whiteInverseTrans50</item>
 
         <item name="mainFontFamily">sans-serif-light</item>
@@ -75,7 +78,7 @@
         <item name="android:shadowColor">?attr/primaryTextShadowColor</item>
         <item name="android:shadowDx">0</item>
         <item name="android:shadowDy">2</item>
-        <item name="android:shadowRadius">4</item>
+        <item name="android:shadowRadius">6</item>
     </style>
 
     <style name="TextLarge" parent="TextDefault">

@@ -19,6 +19,9 @@ data class NextUpLabels(
     fun tomorrowEvent(startTime: String, title: String): String = String.format(tomorrowEventTemplate, startTime, title)
 }
 
+/** An event line split for a two-column row: [lead] is the time or day, [title] the rest. */
+data class NextUpRow(val lead: String, val title: String)
+
 object NextUpFormatting {
 
     private val dayFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("EEE", Locale.US)
@@ -98,6 +101,25 @@ object NextUpFormatting {
             tomorrow -> labels.tomorrowEvent(startTimeStr, event.title)
             else -> "${dayFormatter.format(startDate)} $startTimeStr ${event.title}"
         }
+    }
+
+    /**
+     * Same text as [line], split into a lead (time or day, may be empty) and a title.
+     * In-progress events and templates that do not end with the title stay whole in [NextUpRow.title].
+     */
+    fun row(
+        event: CalendarEvent,
+        now: Instant,
+        zone: ZoneId,
+        is24Hour: Boolean = true,
+        labels: NextUpLabels,
+    ): NextUpRow {
+        val full = line(event, now, zone, is24Hour, labels)
+        val inProgress = !event.allDay && !now.isBefore(event.start) && now.isBefore(event.end)
+        if (inProgress) return NextUpRow("", full)
+        val lead = if (event.allDay) full.removeSuffix(" · ${event.title}") else full.removeSuffix(event.title).trim()
+        if (lead == full || lead.isEmpty()) return NextUpRow("", full)
+        return NextUpRow(lead, event.title)
     }
 
     fun line(

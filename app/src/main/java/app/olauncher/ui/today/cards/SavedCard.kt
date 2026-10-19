@@ -97,6 +97,7 @@ object SavedCard : TodayCard {
 
     override val key: String = KEY
     override val titleRes: Int = R.string.saved_for_later
+    override val emoji: String = "🔖"
 
     var isArchivedExpanded: Boolean = false
     var isActiveExpanded: Boolean = false

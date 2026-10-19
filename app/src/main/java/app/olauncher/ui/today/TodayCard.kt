@@ -22,7 +22,17 @@ interface TodayCard {
     val key: String
     val titleRes: Int
     val defaultEnabled: Boolean get() = true
+
+    /** Emoji put in front of the title in the card's panel header. */
+    val emoji: String get() = ""
+
+    /** True for cards drawn in the page header instead of a panel (the weather). */
+    val inHero: Boolean get() = false
+
     fun isAvailable(context: Context): Boolean = true
+
+    /** False when the card would render nothing at all; its panel is then left out. */
+    fun hasContent(context: Context): Boolean = true
     fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View
     fun onResume() {}
 

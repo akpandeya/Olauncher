@@ -59,4 +59,44 @@ class WeatherCodesTest {
         assertEquals("—", WeatherCodes.text(10, isDay = true))
         assertEquals("—", WeatherCodes.text(100, isDay = true))
     }
+
+    @Test
+    fun `emoji maps every code group`() {
+        val groups = mapOf(
+            "☁️" to listOf(3),
+            "🌫" to listOf(45, 48),
+            "🌦" to listOf(51, 53, 55, 56, 57),
+            "🌧" to listOf(61, 63, 65, 66, 67, 80, 81, 82),
+            "🌨" to listOf(71, 73, 75, 77, 85, 86),
+            "⛈" to listOf(95, 96, 99),
+        )
+        for ((emoji, codes) in groups) {
+            for (code in codes) {
+                assertEquals("code $code", emoji, WeatherCodes.emoji(code, isDay = true))
+                assertEquals("code $code night", emoji, WeatherCodes.emoji(code, isDay = false))
+            }
+        }
+    }
+
+    @Test
+    fun `emoji differs between day and night for codes 0 1 2`() {
+        assertEquals("☀️", WeatherCodes.emoji(0, isDay = true))
+        assertEquals("🌙", WeatherCodes.emoji(0, isDay = false))
+        assertEquals("🌤", WeatherCodes.emoji(1, isDay = true))
+        assertEquals("🌙", WeatherCodes.emoji(1, isDay = false))
+        assertEquals("⛅", WeatherCodes.emoji(2, isDay = true))
+        assertEquals("☁️", WeatherCodes.emoji(2, isDay = false))
+    }
+
+    @Test
+    fun `emoji defaults to day`() {
+        assertEquals("☀️", WeatherCodes.emoji(0))
+    }
+
+    @Test
+    fun `emoji is empty for unknown codes`() {
+        for (code in listOf(-1, 4, 10, 100)) {
+            assertEquals("", WeatherCodes.emoji(code))
+        }
+    }
 }

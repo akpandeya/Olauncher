@@ -16,7 +16,7 @@ object WeatherFormatting {
         if (forecast.nowTemp.isNaN()) return null
         if (now - fetchedAt > MAX_AGE_MILLIS) return null
         val temp = forecast.nowTemp.roundToInt()
-        val condition = WeatherCodes.text(forecast.nowCode, forecast.isDay)
-        return "$temp° · $condition"
+        val emoji = WeatherCodes.emoji(forecast.nowCode, forecast.isDay)
+        return if (emoji.isEmpty()) "$temp°" else "$emoji $temp°"
     }
 }

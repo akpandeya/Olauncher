@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.os.bundleOf
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
@@ -14,7 +15,10 @@ import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
 import app.olauncher.databinding.CardWeatherBinding
+import app.olauncher.databinding.ItemWeatherHourBinding
 import app.olauncher.glance.Forecast
+import app.olauncher.glance.HeroFormatting
+import app.olauncher.glance.HourlyStrip
 import app.olauncher.glance.RainOutlook
 import app.olauncher.glance.RainOutlookLabels
 import app.olauncher.glance.WeatherCache
@@ -81,6 +85,7 @@ object WeatherCard : TodayCard {
 
     override val key: String = KEY
     override val titleRes: Int = R.string.weather
+    override val inHero: Boolean = true
 
     var cacheProvider: ((Context) -> WeatherCache)? = null
     var nowSupplier: () -> LocalDateTime = { LocalDateTime.now() }
@@ -172,8 +177,10 @@ internal class WeatherCardView(
         val cached = cache.read() ?: return
         val (forecast, fetchedAt) = cached
 
-        binding.tvLine1.text = WeatherCardLogic.formatLine1(forecast)
+        binding.tvTemp.text = HeroFormatting.bigTemperature(forecast)
+        binding.tvLine1.text = HeroFormatting.conditionLine(forecast)
         val now = forecast.cityNow(WeatherCard.nowSupplier())
+        renderHours(forecast, now)
         val rainLine = RainOutlook.summary(
             forecast.hours,
             RainOutlookLabels(
@@ -191,5 +198,19 @@ internal class WeatherCardView(
             fetchedAt = fetchedAt,
             asOfTemplate = context.getString(R.string.weather_as_of),
         )
+    }
+
+    private fun renderHours(forecast: Forecast, now: LocalDateTime) {
+        val row = binding.hourlyRow
+        row.removeAllViews()
+        val inflater = LayoutInflater.from(row.context)
+        for (hour in HourlyStrip.next(forecast.hours, now)) {
+            val item = ItemWeatherHourBinding.inflate(inflater, row, false)
+            item.tvHourLabel.text = HeroFormatting.hourLabel(hour)
+            item.tvHourEmoji.text = HeroFormatting.hourEmoji(hour)
+            item.tvHourTemp.text = HeroFormatting.hourTemperature(hour)
+            row.addView(item.root)
+        }
+        row.isVisible = row.childCount > 0
     }
 }

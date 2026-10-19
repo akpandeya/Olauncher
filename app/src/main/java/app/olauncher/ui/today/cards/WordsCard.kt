@@ -65,6 +65,7 @@ object WordsCard : TodayCard {
 
     override val key: String = KEY
     override val titleRes: Int = R.string.words
+    override val emoji: String = "🇩🇪"
 
     var storeProvider: ((Context) -> WordsStore)? = null
     var epochDaySupplier: () -> Long = { LocalDate.now().toEpochDay() }
