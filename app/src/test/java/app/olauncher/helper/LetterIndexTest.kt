@@ -175,4 +175,29 @@ class LetterIndexTest {
         val emptyStrPos = LetterPos("", 1)
         assertEquals('#', emptyStrPos.letter)
     }
+
+    @Test
+    fun `scrollOffsetPx pins the row to the bottom with bottom search`() {
+        assertEquals(1337, LetterIndex.scrollOffsetPx(bottomSearch = true, listHeightPx = 1500, rowHeightPx = 163))
+    }
+
+    @Test
+    fun `scrollOffsetPx keeps the row at the top with top search`() {
+        assertEquals(0, LetterIndex.scrollOffsetPx(bottomSearch = false, listHeightPx = 1500, rowHeightPx = 163))
+    }
+
+    @Test
+    fun `scrollOffsetPx never goes negative before layout`() {
+        assertEquals(0, LetterIndex.scrollOffsetPx(bottomSearch = true, listHeightPx = 0, rowHeightPx = 163))
+    }
+
+    @Test
+    fun `listInsetPx pads by the part of the strip the row padding does not cover`() {
+        assertEquals(29, LetterIndex.listInsetPx(stripWidthPx = 144, rowPaddingPx = 72, listMarginPx = 43))
+    }
+
+    @Test
+    fun `listInsetPx is zero when the list margin already clears the strip`() {
+        assertEquals(0, LetterIndex.listInsetPx(stripWidthPx = 144, rowPaddingPx = 72, listMarginPx = 168))
+    }
 }

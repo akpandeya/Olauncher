@@ -581,6 +581,7 @@ class AppDrawerFragment : BaseFragment() {
     private fun populateLetterStrip(ordered: List<AppModel>) {
         if (!prefs.drawerLetterStrip) {
             binding.letterStripContainer.isVisible = false
+            updateListInsetForStrip()
             return
         }
 
@@ -612,6 +613,7 @@ class AppDrawerFragment : BaseFragment() {
 
         setupLetterStripTouchListener()
         updateLetterStripVisibility()
+        updateListInsetForStrip()
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -656,6 +658,33 @@ class AppDrawerFragment : BaseFragment() {
             pos.index.coerceIn(0, totalCount - 1)
         }
 
-        linearLayoutManager.scrollToPositionWithOffset(targetPosition, 0)
+        val rv = binding.recyclerView
+        val offset = LetterIndex.scrollOffsetPx(
+            bottomSearch = prefs.drawerBottomSearch,
+            listHeightPx = rv.height - rv.paddingTop - rv.paddingBottom,
+            rowHeightPx = rv.getChildAt(0)?.height ?: 0,
+        )
+        linearLayoutManager.scrollToPositionWithOffset(targetPosition, offset)
+    }
+
+    /** Pad the list on the strip side so app names never sit under the strip. */
+    private fun updateListInsetForStrip() {
+        val rv = binding.recyclerView
+        val lp = rv.layoutParams as ViewGroup.MarginLayoutParams
+        val stripOn = prefs.drawerLetterStrip && letterPosList.isNotEmpty()
+        val isStart = prefs.shortcutSideStart
+        val inset = if (stripOn) {
+            LetterIndex.listInsetPx(
+                stripWidthPx = binding.letterStrip.minimumWidth,
+                rowPaddingPx = resources.getDimensionPixelSize(R.dimen.drawer_row_padding_horizontal),
+                listMarginPx = if (isStart) lp.marginStart else lp.marginEnd,
+            )
+        } else 0
+        rv.setPaddingRelative(
+            if (isStart) inset else 0,
+            rv.paddingTop,
+            if (isStart) 0 else inset,
+            rv.paddingBottom,
+        )
     }
 }
