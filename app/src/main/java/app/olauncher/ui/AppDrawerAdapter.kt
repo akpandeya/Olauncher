@@ -34,6 +34,7 @@ import app.olauncher.helper.showKeyboard
 import app.olauncher.helper.AppMatcher
 import app.olauncher.helper.ArchivedAppsHelper
 import app.olauncher.helper.Calc
+import app.olauncher.helper.UnitConvert
 import app.olauncher.helper.ContactSearch
 import app.olauncher.helper.ContactSource
 import app.olauncher.helper.DialMatch
@@ -291,6 +292,15 @@ class AppDrawerAdapter(
                             AppModel.Result(
                                 text = "= $calcResult",
                                 action = AppModel.Result.Action.Copy(calcResult)
+                            )
+                        )
+                    }
+                    val unitResult = if (calcResult == null) UnitConvert.evaluate(query) else null
+                    if (unitResult != null) {
+                        resultRows.add(
+                            AppModel.Result(
+                                text = "= $unitResult",
+                                action = AppModel.Result.Action.Copy(unitResult)
                             )
                         )
                     }
