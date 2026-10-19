@@ -267,6 +267,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateTextSize()
         populateBoldFont()
         populateHaptics()
+        populateTextContrast()
         populateAlignment()
         populateShortcutIcons()
         populateStatusBar()
@@ -410,6 +411,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.boldFont.parent as View, getFirstTextView(binding.boldFont.parent as View), R.id.boldFont),
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.textSizeValue.parent as View, getFirstTextView(binding.textSizeValue.parent as View), R.id.textSizeValue),
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.haptics.parent as View, getFirstTextView(binding.haptics.parent as View), R.id.haptics),
+            RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.textContrastLayout, binding.textContrastTitle, R.id.textContrast),
 
             // Gestures
             RuntimeSettingsRow(SettingsSections.KEY_GESTURES, binding.swipeLeftApp.parent as View, getFirstTextView(binding.swipeLeftApp.parent as View), R.id.swipeLeftApp),
@@ -649,6 +651,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.textSizeValue -> showTextSizeDialog()
             R.id.boldFont -> toggleBoldFont()
             R.id.haptics -> toggleHaptics()
+            R.id.textContrast, R.id.textContrastTitle, R.id.textContrastLayout -> toggleTextContrast()
 
             R.id.photoWallpaper, R.id.photoWallpaperTitle, R.id.photoWallpaperLayout -> showPhotoWallpaperMenu(binding.photoWallpaper)
             R.id.swipeLeftApp -> showAppListIfEnabled(Constants.FLAG_SET_SWIPE_LEFT_APP)
@@ -834,6 +837,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.textSizeValue.setOnClickListener(this)
         binding.boldFont.setOnClickListener(this)
         binding.haptics.setOnClickListener(this)
+        binding.textContrast.setOnClickListener(this)
+        binding.textContrastTitle.setOnClickListener(this)
+        binding.textContrastLayout.setOnClickListener(this)
         binding.footer.setOnClickListener(this)
         binding.settingsBack.setOnClickListener(this)
         binding.settingsBackLayout.setOnClickListener(this)
@@ -2024,6 +2030,19 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
 
     private fun populateBoldFont() {
         binding.boldFont.text = getString(if (prefs.boldFont) R.string.on else R.string.off)
+    }
+
+    private fun toggleTextContrast() {
+        prefs.homeTextContrast =
+            if (prefs.homeTextContrast == Prefs.TEXT_CONTRAST_AUTO) Prefs.TEXT_CONTRAST_THEME else Prefs.TEXT_CONTRAST_AUTO
+        populateTextContrast()
+        viewModel.toggleDateTime()
+    }
+
+    private fun populateTextContrast() {
+        binding.textContrast.text = getString(
+            if (prefs.homeTextContrast == Prefs.TEXT_CONTRAST_THEME) R.string.text_contrast_follow_theme else R.string.auto
+        )
     }
 
     private fun toggleHaptics() {

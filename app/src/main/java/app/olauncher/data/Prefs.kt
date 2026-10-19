@@ -67,6 +67,8 @@ class Prefs(context: Context) : PauseLogStorage {
         const val BATTERY_MODE_AUTO = 0
         const val BATTERY_MODE_ALWAYS = 1
         const val BATTERY_MODE_OFF = 2
+        const val TEXT_CONTRAST_AUTO = 0
+        const val TEXT_CONTRAST_THEME = 1
         const val PAUSE_ALLOWANCE_MIN = "PAUSE_ALLOWANCE_MIN"
         const val PAUSE_ESCALATE = "PAUSE_ESCALATE"
         const val PAUSE_ASK_WHY = "PAUSE_ASK_WHY"
@@ -122,6 +124,7 @@ class Prefs(context: Context) : PauseLogStorage {
     private val HOME_BOTTOM_ALIGNMENT = "HOME_BOTTOM_ALIGNMENT"
     private val HOME_SHORTCUTS = "HOME_SHORTCUTS"
     private val HOME_INFO_COMBINED = "HOME_INFO_COMBINED"
+    private val HOME_TEXT_CONTRAST = "HOME_TEXT_CONTRAST"
     private val SHORTCUT_COUNT = "SHORTCUT_COUNT"
     private val SHORTCUT_SIZE_STEP = "SHORTCUT_SIZE_STEP"
     private val SHORTCUT_SIDE_START = "SHORTCUT_SIDE_START"
@@ -365,6 +368,10 @@ class Prefs(context: Context) : PauseLogStorage {
     var homeInfoCombined: Boolean
         get() = prefs.getBoolean(HOME_INFO_COMBINED, false)
         set(value) = prefs.edit { putBoolean(HOME_INFO_COMBINED, value).apply() }
+
+    var homeTextContrast: Int
+        get() = prefs.getInt(HOME_TEXT_CONTRAST, TEXT_CONTRAST_AUTO)
+        set(value) = prefs.edit { putInt(HOME_TEXT_CONTRAST, value).apply() }
 
     var homeShortcuts: Boolean
         get() = prefs.getBoolean(HOME_SHORTCUTS, false)

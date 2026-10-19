@@ -36,6 +36,8 @@
     <string name="info_line">Info line</string>
     <string name="info_line_separate">Separate</string>
     <string name="info_line_combined">Combined</string>
+    <string name="text_on_wallpaper">Text on wallpaper</string>
+    <string name="text_contrast_follow_theme">Follow theme</string>
     <string name="auto">Auto</string>
     <string name="always">Always</string>
     <string name="black">Black</string>
