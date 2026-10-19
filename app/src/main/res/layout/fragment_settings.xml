@@ -324,6 +324,150 @@
                 </FrameLayout>
 
                 <FrameLayout
+                    android:id="@+id/homeSetsLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp">
+
+                    <TextView
+                        android:id="@+id/homeSetsTitle"
+                        style="@style/TextSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:paddingVertical="8dp"
+                        android:text="@string/app_sets"
+                        android:textColor="?attr/primaryColor" />
+
+                    <TextView
+                        android:id="@+id/homeSets"
+                        style="@style/TextSmallBold"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end|bottom"
+                        android:layout_marginEnd="4dp"
+                        android:padding="8dp"
+                        tools:text="@string/off" />
+                </FrameLayout>
+
+                <FrameLayout
+                    android:id="@+id/editMorningAppsLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp">
+
+                    <TextView
+                        android:id="@+id/editMorningAppsTitle"
+                        style="@style/TextSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:paddingVertical="8dp"
+                        android:text="@string/edit_morning_apps"
+                        android:textColor="?attr/primaryColor" />
+
+                </FrameLayout>
+
+                <FrameLayout
+                    android:id="@+id/editEveningAppsLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp">
+
+                    <TextView
+                        android:id="@+id/editEveningAppsTitle"
+                        style="@style/TextSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:paddingVertical="8dp"
+                        android:text="@string/edit_evening_apps"
+                        android:textColor="?attr/primaryColor" />
+
+                </FrameLayout>
+
+                <FrameLayout
+                    android:id="@+id/morningStartLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp">
+
+                    <TextView
+                        android:id="@+id/morningStartTitle"
+                        style="@style/TextSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:paddingVertical="8dp"
+                        android:text="@string/morning_starts"
+                        android:textColor="?attr/primaryColor" />
+
+                    <TextView
+                        android:id="@+id/morningStart"
+                        style="@style/TextSmallBold"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end|bottom"
+                        android:layout_marginEnd="4dp"
+                        android:padding="8dp"
+                        tools:text="@string/off" />
+                </FrameLayout>
+
+                <FrameLayout
+                    android:id="@+id/dayStartLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp">
+
+                    <TextView
+                        android:id="@+id/dayStartTitle"
+                        style="@style/TextSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:paddingVertical="8dp"
+                        android:text="@string/day_starts"
+                        android:textColor="?attr/primaryColor" />
+
+                    <TextView
+                        android:id="@+id/dayStart"
+                        style="@style/TextSmallBold"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end|bottom"
+                        android:layout_marginEnd="4dp"
+                        android:padding="8dp"
+                        tools:text="@string/off" />
+                </FrameLayout>
+
+                <FrameLayout
+                    android:id="@+id/eveningStartLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp">
+
+                    <TextView
+                        android:id="@+id/eveningStartTitle"
+                        style="@style/TextSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:paddingVertical="8dp"
+                        android:text="@string/evening_starts"
+                        android:textColor="?attr/primaryColor" />
+
+                    <TextView
+                        android:id="@+id/eveningStart"
+                        style="@style/TextSmallBold"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end|bottom"
+                        android:layout_marginEnd="4dp"
+                        android:padding="8dp"
+                        tools:text="@string/off" />
+                </FrameLayout>
+
+                <FrameLayout
                     android:id="@+id/contextLineLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

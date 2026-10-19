@@ -56,6 +56,7 @@ import app.olauncher.helper.AndroidContactSource
 import app.olauncher.helper.ArchivedAppsHelper
 import app.olauncher.helper.ContactSource
 import app.olauncher.helper.HomeAppHelper
+import app.olauncher.helper.HomeSets
 import app.olauncher.wellbeing.UsageSnapshotWorker
 import app.olauncher.helper.DrawerOrdering
 import app.olauncher.helper.DrawerScrollHelper
@@ -173,7 +174,8 @@ class AppDrawerFragment : BaseFragment() {
         if (flag == Constants.FLAG_HIDDEN_APPS)
             binding.search.queryHint = getString(R.string.hidden_apps)
         else if (flag in Constants.FLAG_SET_HOME_APP_1..Constants.FLAG_SET_WEATHER_APP
-            || flag in Constants.FLAG_SET_SHORTCUT_1..Constants.FLAG_SET_SHORTCUT_12)
+            || flag in Constants.FLAG_SET_SHORTCUT_1..Constants.FLAG_SET_SHORTCUT_12
+            || HomeSets.fromFlag(flag) != null)
             binding.search.queryHint = "Please select an app"
         try {
             searchTextView = binding.search.findViewById(R.id.search_src_text)
@@ -635,16 +637,7 @@ class AppDrawerFragment : BaseFragment() {
                 return@setOnClickListener
             }
 
-            when (flag) {
-                Constants.FLAG_SET_HOME_APP_1 -> prefs.appName1 = name
-                Constants.FLAG_SET_HOME_APP_2 -> prefs.appName2 = name
-                Constants.FLAG_SET_HOME_APP_3 -> prefs.appName3 = name
-                Constants.FLAG_SET_HOME_APP_4 -> prefs.appName4 = name
-                Constants.FLAG_SET_HOME_APP_5 -> prefs.appName5 = name
-                Constants.FLAG_SET_HOME_APP_6 -> prefs.appName6 = name
-                Constants.FLAG_SET_HOME_APP_7 -> prefs.appName7 = name
-                Constants.FLAG_SET_HOME_APP_8 -> prefs.appName8 = name
-            }
+            HomeSets.fromFlag(flag)?.let { prefs.setHomeSlotName(it.set, it.slot, name) }
             findNavController().popBackStack()
         }
     }
