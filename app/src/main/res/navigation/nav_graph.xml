@@ -13,10 +13,8 @@
         <action
             android:id="@+id/action_mainFragment_to_appListFragment"
             app:destination="@id/appListFragment"
-            app:enterAnim="@anim/fade_enter"
-            app:exitAnim="@anim/slide_out_top"
-            app:popEnterAnim="@anim/slide_in_top"
-            app:popExitAnim="@anim/fade_exit" />
+            app:enterAnim="@anim/drawer_enter"
+            app:popExitAnim="@anim/drawer_exit" />
         <action
             android:id="@+id/action_mainFragment_to_settingsFragment"
             app:destination="@id/settingsFragment"
@@ -34,10 +32,8 @@
         <action
             android:id="@+id/action_mainFragment_to_todayFragment"
             app:destination="@id/todayFragment"
-            app:enterAnim="@anim/slide_in_left"
-            app:exitAnim="@anim/fade_exit"
-            app:popEnterAnim="@anim/fade_enter"
-            app:popExitAnim="@anim/slide_out_left" />
+            app:enterAnim="@anim/today_enter"
+            app:popExitAnim="@anim/today_exit" />
     </fragment>
 
     <fragment
@@ -119,10 +115,8 @@
         <action
             android:id="@+id/action_todayFragment_to_appListFragment"
             app:destination="@id/appListFragment"
-            app:enterAnim="@anim/fade_enter"
-            app:exitAnim="@anim/slide_out_top"
-            app:popEnterAnim="@anim/slide_in_top"
-            app:popExitAnim="@anim/fade_exit" />
+            app:enterAnim="@anim/drawer_enter"
+            app:popExitAnim="@anim/drawer_exit" />
     </fragment>
 
     <fragment
