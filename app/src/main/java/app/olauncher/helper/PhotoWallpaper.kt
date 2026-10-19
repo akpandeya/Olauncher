@@ -8,6 +8,8 @@ import android.graphics.ImageDecoder
 import android.net.Uri
 import app.olauncher.data.Prefs
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
@@ -103,6 +105,11 @@ object PhotoWallpaper {
     const val TARGET_LOCK = 1
     const val TARGET_BOTH = 2
 
+    // Add, remove, turn-off and manual steps must not interleave. Not reentrant.
+    private val editLock = Mutex()
+
+    suspend fun <T> withEditLock(block: suspend () -> T): T = editLock.withLock { block() }
+
     fun today(): Int = LocalDate.now().toEpochDay().toInt()
 
     fun markChanged(prefs: Prefs, nowMillis: Long = System.currentTimeMillis()) {
@@ -188,7 +195,7 @@ object PhotoWallpaper {
         context: Context,
         prefs: Prefs,
         forward: Boolean,
-    ): Boolean = withContext(Dispatchers.IO) {
+    ): Boolean = withEditLock { withContext(Dispatchers.IO) {
         val count = prefs.photoWallpaperCount
         if (count <= 0) return@withContext false
         val newIndex = if (forward) {
@@ -199,7 +206,7 @@ object PhotoWallpaper {
         prefs.photoWallpaperIndex = newIndex
         markChanged(prefs)
         applyCurrent(context, prefs)
-    }
+    } }
 
     suspend fun savePickedPhotos(
         context: Context,
