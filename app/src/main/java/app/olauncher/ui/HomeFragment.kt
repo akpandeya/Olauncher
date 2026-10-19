@@ -984,7 +984,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
                 super.onLongClick()
                 if (WallpaperHomeMenu.isShown(prefs.photoWallpaperHomeMenu, prefs.photoWallpaperCount)) {
                     binding.mainLayout.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-                    showWallpaperHomeMenu()
+                    showWallpaperHomeMenu(downY)
                 } else {
                     openSettings()
                 }
@@ -1003,28 +1003,39 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         }
     }
 
-    private fun showWallpaperHomeMenu() {
+    // Anchored to a 1px-high strip at the press height: anchoring to the
+    // full-screen layout drops the menu below the bottom edge, off screen.
+    private fun showWallpaperHomeMenu(y: Float) {
         val appContext = requireContext().applicationContext
-        binding.mainLayout.showPopupMenu(
-            configure = { menu ->
-                menu.add(Menu.NONE, R.string.next_wallpaper, 0, R.string.next_wallpaper)
-                menu.add(Menu.NONE, R.string.previous_wallpaper, 1, R.string.previous_wallpaper)
-                menu.add(Menu.NONE, R.string.settings, 2, R.string.settings)
+        val anchor = View(requireContext()).apply {
+            layoutParams = FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 1).apply {
+                topMargin = y.toInt()
             }
-        ) { item ->
-            when (item.itemId) {
-                R.string.next_wallpaper -> {
-                    viewLifecycleOwner.lifecycleScope.launch {
-                        PhotoWallpaper.stepManually(appContext, prefs, forward = true)
-                    }
+        }
+        binding.mainLayout.addView(anchor)
+        // Wait one layout pass so the anchor has its position.
+        anchor.post {
+            anchor.showPopupMenu(
+                configure = { menu ->
+                    menu.add(Menu.NONE, R.string.next_wallpaper, 0, R.string.next_wallpaper)
+                    menu.add(Menu.NONE, R.string.previous_wallpaper, 1, R.string.previous_wallpaper)
+                    menu.add(Menu.NONE, R.string.settings, 2, R.string.settings)
                 }
-                R.string.previous_wallpaper -> {
-                    viewLifecycleOwner.lifecycleScope.launch {
-                        PhotoWallpaper.stepManually(appContext, prefs, forward = false)
+            ) { item ->
+                when (item.itemId) {
+                    R.string.next_wallpaper -> {
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            PhotoWallpaper.stepManually(appContext, prefs, forward = true)
+                        }
                     }
+                    R.string.previous_wallpaper -> {
+                        viewLifecycleOwner.lifecycleScope.launch {
+                            PhotoWallpaper.stepManually(appContext, prefs, forward = false)
+                        }
+                    }
+                    R.string.settings -> openSettings()
                 }
-                R.string.settings -> openSettings()
-            }
+            }.setOnDismissListener { (anchor.parent as? ViewGroup)?.removeView(anchor) }
         }
     }
 

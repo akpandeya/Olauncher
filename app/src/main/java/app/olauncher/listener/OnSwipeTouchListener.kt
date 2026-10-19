@@ -23,6 +23,10 @@ Source: https://www.tutorialspoint.com/how-to-handle-swipe-gestures-in-kotlin
 internal open class OnSwipeTouchListener(c: Context?) : OnTouchListener {
     private var longPressOn = false
 
+    /** Where the current gesture started, in the touched view's coordinates. */
+    protected var downY = 0f
+        private set
+
     //    private var doubleTapOn = false
     private val gestureDetector: GestureDetector
 
@@ -37,6 +41,7 @@ internal open class OnSwipeTouchListener(c: Context?) : OnTouchListener {
         private val SWIPE_VELOCITY_THRESHOLD: Int = 100
 
         override fun onDown(e: MotionEvent): Boolean {
+            downY = e.y
             return true
         }
 
