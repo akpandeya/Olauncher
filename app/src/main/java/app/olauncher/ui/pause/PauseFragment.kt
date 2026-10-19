@@ -7,6 +7,7 @@ import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.OnBackPressedCallback
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -25,6 +26,7 @@ import app.olauncher.helper.appUsagePermissionGranted
 import app.olauncher.helper.getUserHandleFromString
 import app.olauncher.helper.showPopupMenu
 import app.olauncher.helper.showWaitDialog
+import app.olauncher.quiet.QuietRelease
 import app.olauncher.ui.today.WordReveal
 import app.olauncher.wellbeing.CommitLock
 import app.olauncher.wellbeing.DistractingApps
@@ -40,6 +42,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.LocalDate
+import java.time.ZoneId
 
 class PauseFragment : Fragment() {
 
@@ -48,6 +51,9 @@ class PauseFragment : Fragment() {
         var usageRepositoryProvider: ((Context) -> UsageRepository)? = null
         var pauseLogProvider: ((Context) -> PauseLog)? = null
         var epochDaySupplier: () -> Long = { LocalDate.now().toEpochDay() }
+        var isQuietOnSupplier: ((Context, Prefs) -> Boolean)? = null
+        var nowSupplier: () -> Long = { System.currentTimeMillis() }
+        var zoneSupplier: () -> ZoneId = { ZoneId.systemDefault() }
     }
 
     private var _binding: FragmentPauseBinding? = null
@@ -113,6 +119,7 @@ class PauseFragment : Fragment() {
 
         setupWhyChoices()
         setupPauseWord()
+        updateNotice()
         startDecisionAndCountdown()
     }
 
@@ -431,6 +438,26 @@ class PauseFragment : Fragment() {
         ).also { wordReveal = it }
 
         helper.bind(pickedWord)
+    }
+
+    private fun updateNotice() {
+        val context = context ?: return
+        val quietOn = isQuietOnSupplier?.invoke(context, prefs)
+            ?: (prefs.quietEnabled && isNotificationAccessGranted(context))
+        if (quietOn) {
+            val now = nowSupplier()
+            val zone = zoneSupplier()
+            val times = QuietRelease.parseTimes(prefs.quietReleaseTimes)
+            val formattedTime = QuietRelease.nextReleaseFormatted(now, zone, times)
+            binding.notice.text = getString(R.string.pause_notifications_held_until, formattedTime)
+        } else {
+            binding.notice.text = getString(R.string.pause_notification_notice)
+        }
+    }
+
+    private fun isNotificationAccessGranted(context: Context): Boolean {
+        return NotificationManagerCompat.getEnabledListenerPackages(context)
+            .contains(context.packageName)
     }
 
     private fun popToHome() {

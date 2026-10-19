@@ -43,6 +43,19 @@ object QuietRelease {
         return ScheduleMath.slotToEpochMillis(tomorrow, sortedTimes.first(), zone)
     }
 
+    /**
+     * Calculates the next release time formatted as "HH:mm".
+     */
+    fun nextReleaseFormatted(
+        nowMillis: Long,
+        zone: ZoneId,
+        times: List<Int>,
+    ): String {
+        val nextMillis = nextRelease(nowMillis, zone, times)
+        val zonedDateTime = Instant.ofEpochMilli(nextMillis).atZone(zone)
+        return formatTime(zonedDateTime.hour * 60 + zonedDateTime.minute)
+    }
+
     private data class AppCount(val name: String, val count: Int)
 
     /**
