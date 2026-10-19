@@ -131,6 +131,9 @@ class Prefs(context: Context) : PauseLogStorage {
     private val HOME_SHORTCUTS = "HOME_SHORTCUTS"
     private val HOME_INFO_COMBINED = "HOME_INFO_COMBINED"
     private val HOME_CONTEXT_LINE = "HOME_CONTEXT_LINE"
+    private val INTENTION_TEXT = "INTENTION_TEXT"
+    private val INTENTION_DAY = "INTENTION_DAY"
+    private val INTENTION_ON_HOME = "INTENTION_ON_HOME"
     private val HOME_TEXT_CONTRAST = "HOME_TEXT_CONTRAST"
     private val SHORTCUT_COUNT = "SHORTCUT_COUNT"
     private val SHORTCUT_SIZE_STEP = "SHORTCUT_SIZE_STEP"
@@ -389,6 +392,18 @@ class Prefs(context: Context) : PauseLogStorage {
     var homeContextLine: Boolean
         get() = prefs.getBoolean(HOME_CONTEXT_LINE, false)
         set(value) = prefs.edit { putBoolean(HOME_CONTEXT_LINE, value).apply() }
+
+    var intentionText: String
+        get() = prefs.getString(INTENTION_TEXT, "").orEmpty()
+        set(value) = prefs.edit { putString(INTENTION_TEXT, value).apply() }
+
+    var intentionDay: Long
+        get() = prefs.getLong(INTENTION_DAY, 0L)
+        set(value) = prefs.edit { putLong(INTENTION_DAY, value).apply() }
+
+    var intentionOnHome: Boolean
+        get() = prefs.getBoolean(INTENTION_ON_HOME, true)
+        set(value) = prefs.edit { putBoolean(INTENTION_ON_HOME, value).apply() }
 
     var homeTextContrast: Int
         get() = prefs.getInt(HOME_TEXT_CONTRAST, TEXT_CONTRAST_AUTO)
