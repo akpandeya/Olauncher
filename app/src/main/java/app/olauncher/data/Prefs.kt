@@ -45,6 +45,7 @@ class Prefs(context: Context) : PauseLogStorage {
         const val SWIPE_RIGHT_ACTION_APP = 1
         const val SWIPE_RIGHT_ACTION = "SWIPE_RIGHT_ACTION"
         const val TODAY_CARD_PREFIX = "TODAY_CARD_"
+        const val TODAY_ORDER_SMART = "TODAY_ORDER_SMART"
         const val NUDGE_WINDOW_START_MIN = "NUDGE_WINDOW_START_MIN"
         const val NUDGE_WINDOW_END_MIN = "NUDGE_WINDOW_END_MIN"
         const val NUDGE_WATER_INTERVAL_MIN = "NUDGE_WATER_INTERVAL_MIN"
@@ -1146,6 +1147,10 @@ class Prefs(context: Context) : PauseLogStorage {
     fun setTodayCardEnabled(key: String, enabled: Boolean) = prefs.edit {
         putBoolean("$TODAY_CARD_PREFIX$key", enabled).apply()
     }
+
+    var todayOrderSmart: Boolean
+        get() = prefs.getBoolean(TODAY_ORDER_SMART, true)
+        set(value) = prefs.edit { putBoolean(TODAY_ORDER_SMART, value).apply() }
 
     var nudgeWindowStartMin: Int
         get() = prefs.getInt(NUDGE_WINDOW_START_MIN, 540)

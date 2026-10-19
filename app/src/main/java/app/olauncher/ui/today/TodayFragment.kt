@@ -13,6 +13,7 @@ import app.olauncher.glance.HeroFormatting
 import app.olauncher.listener.OnSwipeTouchListener
 import app.olauncher.ui.BaseFragment
 import java.time.LocalDate
+import java.time.ZonedDateTime
 import java.util.Locale
 
 class TodayFragment : BaseFragment() {
@@ -79,7 +80,16 @@ class TodayFragment : BaseFragment() {
         binding.heroWeatherHost.isVisible = heroCards.isNotEmpty()
 
         // A card with nothing to show gets no panel and no header.
-        for (card in panelCards.filter { it.hasContent(context) }) {
+        val withContent = panelCards.filter { it.hasContent(context) }
+        val ordered = if (prefs.todayOrderSmart) {
+            val now = ZonedDateTime.now()
+            val byKey = withContent.associateBy { it.key }
+            TodayOrder.order(withContent.map { Ranked(it.key, it.priority(context, now)) })
+                .mapNotNull { byKey[it.key] }
+        } else {
+            withContent
+        }
+        for (card in ordered) {
             val panel = ItemTodayPanelBinding.inflate(layoutInflater, binding.cardsContainer, false)
             val title = getString(card.titleRes)
             panel.tvPanelTitle.text = if (card.emoji.isEmpty()) title else "${card.emoji}  $title"

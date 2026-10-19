@@ -9,11 +9,13 @@ import androidx.fragment.app.Fragment
 import app.olauncher.R
 import app.olauncher.databinding.CardWeekBinding
 import app.olauncher.ui.today.TodayCard
+import app.olauncher.ui.today.TodayOrder
 import app.olauncher.wellbeing.DaySnapshot
 import app.olauncher.wellbeing.Review
 import app.olauncher.wellbeing.UsageSnapshotStore
 import app.olauncher.wellbeing.WeeklyReview
 import java.time.LocalDate
+import java.time.ZonedDateTime
 
 object WeekCard : TodayCard {
 
@@ -57,6 +59,9 @@ object WeekCard : TodayCard {
 
     fun isAvailable(snapshots: List<DaySnapshot>, today: LocalDate): Boolean =
         isAvailable(snapshots, today.toEpochDay())
+
+    override fun priority(context: Context, now: ZonedDateTime): Int =
+        TodayOrder.weekPriority(now.dayOfWeek, super.priority(context, now))
 
     override fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View {
         val viewBinding = CardWeekBinding.inflate(inflater, parent, false)

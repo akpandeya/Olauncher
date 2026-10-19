@@ -296,6 +296,9 @@
     <string name="today_page">Today page</string>
     <string name="today_section">Today</string>
     <string name="today_cards">Today cards</string>
+    <string name="today_card_order">Card order</string>
+    <string name="today_order_smart">Smart</string>
+    <string name="today_order_fixed">Fixed</string>
     <string name="choose_app">Choose app…</string>
     <string name="nothing_here_yet">Nothing here yet</string>
     <string name="held">Held</string>
