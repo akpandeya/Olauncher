@@ -73,13 +73,12 @@ import app.olauncher.helper.getAppsList
 import app.olauncher.helper.getColorFromAttr
 import app.olauncher.helper.hideStatusBar
 import app.olauncher.helper.isAccessServiceEnabled
-import app.olauncher.helper.isDarkThemeOn
 import app.olauncher.helper.isEinkDisplay
 import app.olauncher.helper.isOlauncherDefault
 import app.olauncher.helper.isTablet
 import app.olauncher.helper.openAppInfo
 import app.olauncher.helper.openUrl
-import app.olauncher.helper.setPlainWallpaper
+import app.olauncher.helper.setPlainWallpaperByTheme
 import app.olauncher.helper.WordCaptureActivity
 import app.olauncher.helper.OlDialog
 import app.olauncher.helper.showMessageDialog
@@ -1166,7 +1165,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         if (prefs.photoWallpaperCount > 0) {
             PhotoWallpaper.applyCurrent(requireContext(), prefs)
         } else {
-            setPlainWallpaper(theme)
+            setPlainWallpaperByTheme(requireContext(), theme)
         }
         requireActivity().recreate()
     }
@@ -1379,24 +1378,8 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         PhotoWallpaper.deleteAll(context)
         prefs.photoWallpaperCount = 0
         prefs.photoWallpaperIndex = 0
-        setPlainWallpaper(context, prefs.appTheme)
+        setPlainWallpaperByTheme(context, prefs.appTheme)
         if (_binding != null) populatePhotoWallpaperText()
-    }
-
-    private fun setPlainWallpaper(context: Context, appTheme: Int) {
-        when (appTheme) {
-            AppCompatDelegate.MODE_NIGHT_YES -> setPlainWallpaper(context, android.R.color.black)
-            AppCompatDelegate.MODE_NIGHT_NO -> setPlainWallpaper(context, android.R.color.white)
-            else -> {
-                if (context.isDarkThemeOn())
-                    setPlainWallpaper(context, android.R.color.black)
-                else setPlainWallpaper(context, android.R.color.white)
-            }
-        }
-    }
-
-    private fun setPlainWallpaper(appTheme: Int) {
-        setPlainWallpaper(requireContext(), appTheme)
     }
 
     private fun populateAppThemeText(appTheme: Int = prefs.appTheme) {
