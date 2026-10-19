@@ -128,6 +128,9 @@ object SettingsSections : List<SettingsSection> {
             R.id.searchContacts,
             R.id.searchContactsLayout,
             R.id.searchContactsTitle,
+            R.id.currencyRates,
+            R.id.currencyRatesLayout,
+            R.id.currencyRatesTitle,
             R.id.searchEngine,
             R.id.searchEngineLayout,
             R.id.searchEngineTitle -> DRAWER

@@ -44,6 +44,8 @@ import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
 import app.olauncher.data.SearchEngine
+import app.olauncher.helper.CurrencyConvert
+import app.olauncher.helper.RatesCache
 import app.olauncher.data.SearchTarget
 import app.olauncher.databinding.FragmentAppDrawerBinding
 import app.olauncher.helper.AndroidContactSource
@@ -180,31 +182,7 @@ class AppDrawerFragment : BaseFragment() {
     private fun initSearch() {
         binding.search.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
             override fun onQueryTextSubmit(query: String?): Boolean {
-                fun openSearchTarget() {
-                    when (val target = SearchEngine.resolve(prefs.searchEngine, prefs.searchEngineCustomUrl, query.orEmpty())) {
-                        is SearchTarget.PhoneDefault -> {
-                            try {
-                                requireContext().openSearch(target.query)
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                            }
-                        }
-                        is SearchTarget.Url -> {
-                            try {
-                                requireContext().openUrl(target.url)
-                            } catch (e: ActivityNotFoundException) {
-                                e.printStackTrace()
-                                try {
-                                    requireContext().openSearch(query)
-                                } catch (e: Exception) {
-                                    e.printStackTrace()
-                                }
-                            } catch (e: Exception) {
-                                e.printStackTrace()
-                            }
-                        }
-                    }
-                }
+                fun openSearchTarget() = openWebSearch(query.orEmpty())
 
                 if (query.isNullOrBlank() && adapter.itemCount > 0) {
                     // Blank query: keep existing behaviour (open first app in list).
@@ -281,6 +259,65 @@ class AppDrawerFragment : BaseFragment() {
         return AndroidContactSource(ctx)
     }
 
+    private fun currencyRows(query: String): List<AppModel.Result> {
+        val ctx = context ?: return emptyList()
+        val q = CurrencyConvert.parse(query) ?: return emptyList()
+        val rows = mutableListOf<AppModel.Result>()
+        if (prefs.currencyRates) {
+            val rates = RatesCache(ctx).read()
+            val money = CurrencyConvert.convert(q, rates)
+            if (money != null && rates != null) {
+                rows.add(
+                    AppModel.Result(
+                        text = "= ${money.formatted} ${money.code} · ${CurrencyConvert.sourceLabel(rates.date)}",
+                        action = AppModel.Result.Action.Copy(money.formatted)
+                    )
+                )
+            }
+        }
+        val engine = ctx.getString(
+            when (prefs.searchEngine) {
+                SearchEngine.GOOGLE -> R.string.search_engine_google
+                SearchEngine.DUCKDUCKGO -> R.string.search_engine_duckduckgo
+                SearchEngine.BING -> R.string.search_engine_bing
+                SearchEngine.CUSTOM -> R.string.search_engine_custom
+                else -> R.string.search_engine_phone_default
+            }
+        )
+        rows.add(
+            AppModel.Result(
+                text = ctx.getString(R.string.currency_web_row, q.amountText, q.from, q.to, engine),
+                action = AppModel.Result.Action.Web(query.trim())
+            )
+        )
+        return rows
+    }
+
+    private fun openWebSearch(query: String) {
+        when (val target = SearchEngine.resolve(prefs.searchEngine, prefs.searchEngineCustomUrl, query)) {
+            is SearchTarget.PhoneDefault -> {
+                try {
+                    requireContext().openSearch(target.query)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+            is SearchTarget.Url -> {
+                try {
+                    requireContext().openUrl(target.url)
+                } catch (e: ActivityNotFoundException) {
+                    try {
+                        requireContext().openSearch(query)
+                    } catch (e2: Exception) {
+                        e2.printStackTrace()
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
+    }
+
     private fun calendarRows(query: String): List<AppModel.Result> {
         val ctx = context ?: return emptyList()
         if (query.trim().length < CalendarSearch.MIN_QUERY_LENGTH) return emptyList()
@@ -326,6 +363,11 @@ class AppDrawerFragment : BaseFragment() {
                             is AppModel.Result.Action.Copy -> {
                                 requireContext().copyToClipboard(action.value)
                                 requireContext().showToast(R.string.copied)
+                                findNavController().popBackStack(R.id.mainFragment, false)
+                            }
+
+                            is AppModel.Result.Action.Web -> {
+                                openWebSearch(action.query)
                                 findNavController().popBackStack(R.id.mainFragment, false)
                             }
 
@@ -467,6 +509,7 @@ class AppDrawerFragment : BaseFragment() {
             drawerRecents = prefs.drawerRecents,
             contactSourceProvider = { contactSourceOrNull() },
             calendarRowsProvider = { q -> calendarRows(q) },
+            currencyRowsProvider = { q -> currencyRows(q) },
             contactLongClickListener = { result ->
                 val action = result.action as? AppModel.Result.Action.Contact
                 if (action != null) dialContact(action.lookupUri)

@@ -62,6 +62,7 @@ class AppDrawerAdapter(
     var distractingAppsProvider: (() -> Set<String>)? = null,
     var contactSourceProvider: (() -> ContactSource?)? = null,
     var calendarRowsProvider: ((String) -> List<AppModel.Result>)? = null,
+    var currencyRowsProvider: ((String) -> List<AppModel.Result>)? = null,
     var contactLongClickListener: ((AppModel.Result) -> Unit)? = null,
 ) : ListAdapter<AppModel, RecyclerView.ViewHolder>(DIFF_CALLBACK), Filterable {
 
@@ -303,6 +304,11 @@ class AppDrawerAdapter(
                                 action = AppModel.Result.Action.Copy(unitResult)
                             )
                         )
+                    }
+                    try {
+                        currencyRowsProvider?.invoke(query)?.let { resultRows.addAll(it) }
+                    } catch (_: Exception) {
+                        // No currency rows on failure.
                     }
                     val dialNumber = if (DialMatch.showDialRow(query)) DialMatch.number(query) else null
                     if (dialNumber != null) {

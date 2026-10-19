@@ -28,6 +28,9 @@
     <string name="admin_permission_message">Thumbline promises to use the accessibility permission responsibly. Thumbline does not collect or share any data.</string>
     <string name="about">About</string>
     <string name="off">Off</string>
+    <string name="currency_rates">Currency rates</string>
+    <string name="currency_rates_on">On (daily, from the ECB)</string>
+    <string name="currency_web_row">💱 %1$s %2$s → %3$s on %4$s</string>
     <string name="on">On</string>
     <string name="battery">Battery</string>
     <string name="auto">Auto</string>

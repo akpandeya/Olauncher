@@ -49,6 +49,7 @@ sealed class AppModel : Comparable<AppModel> {
             data class Dial(val number: String) : Action
             data class Contact(val lookupUri: String) : Action
             data class Event(val eventId: Long) : Action
+            data class Web(val query: String) : Action
         }
 
         override val appLabel: String get() = text
