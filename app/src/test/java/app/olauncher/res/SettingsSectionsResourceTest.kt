@@ -309,6 +309,7 @@ class SettingsSectionsResourceTest {
             assertTrue(sectionIds[8].contains("fontFamily"))
             assertTrue(sectionIds[8].contains("boldFont"))
             assertTrue(sectionIds[8].contains("textSizeValue"))
+            assertTrue(sectionIds[8].contains("haptics"))
             assertFalse("autoShowKeyboard moved to Drawer", sectionIds[8].contains("autoShowKeyboard"))
             assertFalse("drawerBottomSearch moved to Drawer", sectionIds[8].contains("drawerBottomSearchLayout"))
 
@@ -466,6 +467,7 @@ class SettingsSectionsResourceTest {
             "germanUiTitle",
             "gesturesSection",
             "glanceSection",
+            "haptics",
             "holdNotificationsLayout",
             "holdNotificationsOnOff",
             "holdNotificationsTitle",

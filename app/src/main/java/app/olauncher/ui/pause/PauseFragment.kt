@@ -21,6 +21,7 @@ import app.olauncher.data.store.Leitner
 import app.olauncher.data.store.PauseWordPicker
 import app.olauncher.data.store.WordsStore
 import app.olauncher.databinding.FragmentPauseBinding
+import app.olauncher.helper.Haptics
 import app.olauncher.helper.OlDialog
 import app.olauncher.helper.appUsagePermissionGranted
 import app.olauncher.helper.getColorFromAttr
@@ -224,7 +225,10 @@ class PauseFragment : Fragment() {
                 updateOpenButton(remaining)
                 delay(1000L)
             }
-            updateOpenButton(0)
+            if (_binding != null) {
+                updateOpenButton(0)
+                Haptics.confirm(binding.btnOpen)
+            }
         }
     }
 
@@ -339,6 +343,9 @@ class PauseFragment : Fragment() {
     }
 
     private fun onNotNow() {
+        if (_binding != null) {
+            Haptics.confirm(binding.btnNotNow)
+        }
         countdownJob?.cancel()
         getPauseLog().recordNotNow()
         popToHome()

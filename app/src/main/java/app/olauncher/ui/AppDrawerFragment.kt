@@ -33,6 +33,7 @@ import app.olauncher.databinding.FragmentAppDrawerBinding
 import app.olauncher.helper.ArchivedAppsHelper
 import app.olauncher.helper.DrawerOrdering
 import app.olauncher.helper.DrawerScrollHelper
+import app.olauncher.helper.Haptics
 import app.olauncher.helper.copyToClipboard
 import app.olauncher.helper.deletePinnedShortcut
 import app.olauncher.helper.hideKeyboard
@@ -263,6 +264,8 @@ class AppDrawerFragment : BaseFragment() {
 
                     is AppModel.PrivateSpaceHeader -> {}
                     else -> {
+                        if (flag == Constants.FLAG_LAUNCH_APP || flag == Constants.FLAG_HIDDEN_APPS)
+                            Haptics.tick(binding.root)
                         viewModel.selectedApp(appModel, flag)
                         if (flag == Constants.FLAG_LAUNCH_APP || flag == Constants.FLAG_HIDDEN_APPS)
                             findNavController().popBackStack(R.id.mainFragment, false)

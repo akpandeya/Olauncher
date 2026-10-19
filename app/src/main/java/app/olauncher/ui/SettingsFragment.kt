@@ -250,6 +250,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateFontFamily()
         populateTextSize()
         populateBoldFont()
+        populateHaptics()
         populateAlignment()
         populateShortcutIcons()
         populateStatusBar()
@@ -385,6 +386,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.fontFamily.parent as View, getFirstTextView(binding.fontFamily.parent as View), R.id.fontFamily),
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.boldFont.parent as View, getFirstTextView(binding.boldFont.parent as View), R.id.boldFont),
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.textSizeValue.parent as View, getFirstTextView(binding.textSizeValue.parent as View), R.id.textSizeValue),
+            RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.haptics.parent as View, getFirstTextView(binding.haptics.parent as View), R.id.haptics),
 
             // Gestures
             RuntimeSettingsRow(SettingsSections.KEY_GESTURES, binding.swipeLeftApp.parent as View, getFirstTextView(binding.swipeLeftApp.parent as View), R.id.swipeLeftApp),
@@ -617,6 +619,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.fontFamily -> showFontMenu(view)
             R.id.textSizeValue -> showTextSizeDialog()
             R.id.boldFont -> toggleBoldFont()
+            R.id.haptics -> toggleHaptics()
 
             R.id.photoWallpaper, R.id.photoWallpaperTitle, R.id.photoWallpaperLayout -> showPhotoWallpaperMenu(binding.photoWallpaper)
             R.id.swipeLeftApp -> showAppListIfEnabled(Constants.FLAG_SET_SWIPE_LEFT_APP)
@@ -784,6 +787,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.fontFamily.setOnClickListener(this)
         binding.textSizeValue.setOnClickListener(this)
         binding.boldFont.setOnClickListener(this)
+        binding.haptics.setOnClickListener(this)
         binding.footer.setOnClickListener(this)
         binding.settingsBack.setOnClickListener(this)
         binding.settingsBackLayout.setOnClickListener(this)
@@ -1960,6 +1964,15 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
 
     private fun populateBoldFont() {
         binding.boldFont.text = getString(if (prefs.boldFont) R.string.on else R.string.off)
+    }
+
+    private fun toggleHaptics() {
+        prefs.haptics = !prefs.haptics
+        populateHaptics()
+    }
+
+    private fun populateHaptics() {
+        binding.haptics.text = getString(if (prefs.haptics) R.string.on else R.string.off)
     }
 
     private fun populateScreenTimeOnOff() {
