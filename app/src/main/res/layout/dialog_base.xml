@@ -96,7 +96,7 @@
             android:focusable="true"
             android:includeFontPadding="false"
             android:padding="8dp"
-            android:textSize="18sp"
+            android:textSize="@dimen/text_small"
             tools:text="@string/okay" />
     </LinearLayout>
 
