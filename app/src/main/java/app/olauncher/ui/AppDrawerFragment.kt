@@ -191,6 +191,12 @@ class AppDrawerFragment : BaseFragment() {
                     }
                 }
 
+                if (query.isNullOrBlank() && adapter.itemCount > 0) {
+                    // Blank query: keep existing behaviour (open first app in list).
+                    adapter.launchFirstInList()
+                    return true
+                }
+
                 val topItem = adapter.getTopItem()
                 val topScore = adapter.getTopScore()
                 when (val action = EnterPolicy.resolve(query, topItem, topScore)) {
