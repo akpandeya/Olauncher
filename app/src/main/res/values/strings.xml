@@ -204,6 +204,8 @@
     <string name="set_on_lock">Set on: Lock</string>
     <string name="set_on_both">Set on: Both</string>
     <string name="next_photo_now">Next photo now</string>
+    <string name="previous_photo">Previous photo</string>
+    <string name="wallpaper_home_menu">Switch from home (long-press)</string>
     <string name="home">Home</string>
     <string name="lock">Lock</string>
     <string name="both">Both</string>

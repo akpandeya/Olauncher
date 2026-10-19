@@ -1254,6 +1254,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                     else -> R.string.set_on_home
                 }
                 menu.findItem(R.id.photoWallpaperTarget).setTitle(targetTitle)
+                menu.findItem(R.id.photoWallpaperHomeMenu).isChecked = prefs.photoWallpaperHomeMenu
             }
         ) { item ->
             when (item.itemId) {
@@ -1262,6 +1263,8 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                 R.id.photoWallpaperChange -> openPhotoPicker()
                 R.id.photoWallpaperTarget -> cyclePhotoWallpaperTarget()
                 R.id.photoWallpaperNext -> nextPhotoNow()
+                R.id.photoWallpaperPrevious -> previousPhotoNow()
+                R.id.photoWallpaperHomeMenu -> togglePhotoWallpaperHomeMenu()
                 R.id.photoWallpaperOff -> turnOffPhotoWallpaper()
             }
         }
@@ -1364,13 +1367,22 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     }
 
     private fun nextPhotoNow() {
-        if (prefs.photoWallpaperCount <= 0) return
-        val nextIndex = (prefs.photoWallpaperIndex + 1) % prefs.photoWallpaperCount
-        prefs.photoWallpaperIndex = nextIndex
-        prefs.photoWallpaperLastDay = PhotoWallpaper.today()
-        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-            PhotoWallpaper.applyCurrent(requireContext(), prefs)
+        val appContext = requireContext().applicationContext
+        viewLifecycleOwner.lifecycleScope.launch {
+            PhotoWallpaper.stepManually(appContext, prefs, forward = true)
         }
+    }
+
+    private fun previousPhotoNow() {
+        val appContext = requireContext().applicationContext
+        viewLifecycleOwner.lifecycleScope.launch {
+            PhotoWallpaper.stepManually(appContext, prefs, forward = false)
+        }
+    }
+
+    private fun togglePhotoWallpaperHomeMenu() {
+        prefs.photoWallpaperHomeMenu = !prefs.photoWallpaperHomeMenu
+        showToast(if (prefs.photoWallpaperHomeMenu) R.string.on else R.string.off)
     }
 
     private fun turnOffPhotoWallpaper(context: Context = requireContext()) {
