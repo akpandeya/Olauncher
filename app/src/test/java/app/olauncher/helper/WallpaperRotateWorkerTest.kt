@@ -31,4 +31,12 @@ class WallpaperRotateWorkerTest {
         assertEquals(RotationInterval.DAILY, RotationInterval.DEFAULT)
         assertEquals(1440L, RotationInterval.DEFAULT.periodicRepeatMinutes)
     }
+
+    @Test
+    fun `only periodic intervals rotate from the worker`() {
+        assertEquals(
+            listOf(RotationInterval.ON_OPEN, RotationInterval.NEVER),
+            RotationInterval.entries.filterNot { it.rotatesFromWorker },
+        )
+    }
 }
