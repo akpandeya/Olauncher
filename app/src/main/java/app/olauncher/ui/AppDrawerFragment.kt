@@ -543,6 +543,21 @@ class AppDrawerFragment : BaseFragment() {
         val containerParams = binding.letterStripContainer.layoutParams as FrameLayout.LayoutParams
         containerParams.gravity = Gravity.BOTTOM or (if (isStart) Gravity.START else Gravity.END)
         binding.letterStripContainer.layoutParams = containerParams
+        // With the search row at the bottom, keep the strip above it.
+        val search = binding.searchContainer
+        val clearSearch = {
+            val extra = if (prefs.drawerBottomSearch && search.height > 0) {
+                val lp = search.layoutParams as ViewGroup.MarginLayoutParams
+                search.height + lp.bottomMargin
+            } else 0
+            val lp = binding.letterStripContainer.layoutParams as FrameLayout.LayoutParams
+            if (lp.bottomMargin != extra) {
+                lp.bottomMargin = extra
+                binding.letterStripContainer.layoutParams = lp
+            }
+        }
+        clearSearch()
+        if (prefs.drawerBottomSearch) search.post { _binding?.let { clearSearch() } }
 
         val zone = binding.letterStripZone
         zone.removeAllViews()
@@ -569,9 +584,12 @@ class AppDrawerFragment : BaseFragment() {
             return
         }
 
-        val appLabels = ordered.filter { it !is AppModel.PrivateSpaceHeader && it !is AppModel.Result }
-            .map { it.appLabel }
-        letterPosList = LetterIndex.build(appLabels)
+        // Keep positions in the full adapter list: skip headers/results but remember their real index.
+        val realIndices = ordered.indices.filter {
+            ordered[it] !is AppModel.PrivateSpaceHeader && ordered[it] !is AppModel.Result
+        }
+        letterPosList = LetterIndex.build(realIndices.map { ordered[it].appLabel })
+            .map { LetterPos(it.letter, realIndices[it.index]) }
 
         binding.letterStrip.removeAllViews()
         for (pos in letterPosList) {
