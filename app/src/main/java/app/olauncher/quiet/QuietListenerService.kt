@@ -14,7 +14,11 @@ class QuietListenerService : NotificationListenerService() {
         super.onCreate()
         prefs = Prefs(this)
         heldStore = HeldStore(filesDir)
-        heldStore.pruneOlderThan(System.currentTimeMillis() - HeldStore.FORTY_EIGHT_HOURS_MS)
+        try {
+            heldStore.pruneOlderThan(System.currentTimeMillis() - HeldStore.FORTY_EIGHT_HOURS_MS)
+        } catch (_: Exception) {
+            // A failed prune must not crash the launcher process; the next read retries it.
+        }
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification?) {
@@ -61,25 +65,37 @@ class QuietListenerService : NotificationListenerService() {
                 text = text,
                 postTime = sbn.postTime
             )
-            heldStore.add(item)
             try {
+                heldStore.add(item)
+            } catch (_: Exception) {
+                // Not saved, so leave the notification in the shade rather than lose it.
+                return
+            }
+            val cancelled = try {
                 cancelNotification(sbn.key)
+                true
             } catch (_: Exception) {
                 // If listener service connection is temporarily lost
+                false
             }
 
-            cancelGroupSummaryIfAllChildrenHeld(sbn.packageName, notification.group)
+            // The cancel is applied asynchronously, so the held child can still be listed as active.
+            cancelGroupSummaryIfAllChildrenHeld(
+                sbn.packageName,
+                notification.group,
+                heldKey = if (cancelled) sbn.key else null,
+            )
         } else if (isGroupSummary && sbn.packageName in prefs.distractingApps) {
             cancelGroupSummaryIfAllChildrenHeld(sbn.packageName, notification.group)
         }
     }
 
-    private fun cancelGroupSummaryIfAllChildrenHeld(pkg: String, group: String?) {
+    private fun cancelGroupSummaryIfAllChildrenHeld(pkg: String, group: String?, heldKey: String? = null) {
         if (group == null) return
         try {
             val active = activeNotifications ?: return
             val pkgGroupNotifications = active.filter {
-                it.packageName == pkg && it.notification?.group == group
+                it.packageName == pkg && it.notification?.group == group && it.key != heldKey
             }
             val nonSummary = pkgGroupNotifications.filter {
                 ((it.notification?.flags ?: 0) and Notification.FLAG_GROUP_SUMMARY) == 0
