@@ -120,6 +120,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     private var dialog: AlertDialog? = null
 
     private var currentSectionKey: String? = null
+    private var initialTargetApplied = false
 
     private val backCallback = object : OnBackPressedCallback(false) {
         override fun handleOnBackPressed() {
@@ -261,8 +262,18 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
 
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, backCallback)
 
-        val targetSection = savedInstanceState?.getString(KEY_SAVED_SECTION)?.let { SettingsSections.findByKey(it) }
-            ?: resolveTargetSection()
+        val restored = savedInstanceState != null || initialTargetApplied
+        val restoredKey = if (savedInstanceState != null) {
+            savedInstanceState.getString(KEY_SAVED_SECTION)
+        } else {
+            currentSectionKey
+        }
+        val targetSection = SettingsSections.initialSection(
+            restored = restored,
+            restoredSectionKey = restoredKey,
+            explicitTarget = { resolveTargetSection() },
+        )
+        initialTargetApplied = true
 
         if (targetSection != null) {
             showSection(targetSection)

@@ -193,4 +193,34 @@ class SettingsSectionsTest {
         assertNull(SettingsSections.resolveTarget(null, 0))
         assertNull(SettingsSections.resolveTarget("todayFragment", 0))
     }
+
+    @Test
+    fun `initialSection uses explicit target only on first creation`() {
+        val first = SettingsSections.initialSection(
+            restored = false,
+            restoredSectionKey = SettingsSections.KEY_BACKUP,
+            explicitTarget = { SettingsSections.WELLBEING },
+        )
+        assertEquals(SettingsSections.WELLBEING, first)
+    }
+
+    @Test
+    fun `initialSection keeps the restored section over the deep-link target`() {
+        val restored = SettingsSections.initialSection(
+            restored = true,
+            restoredSectionKey = SettingsSections.KEY_BACKUP,
+            explicitTarget = { SettingsSections.WELLBEING },
+        )
+        assertEquals(SettingsSections.BACKUP, restored)
+    }
+
+    @Test
+    fun `initialSection keeps the section list after the user left the deep-linked section`() {
+        val restored = SettingsSections.initialSection(
+            restored = true,
+            restoredSectionKey = null,
+            explicitTarget = { SettingsSections.WELLBEING },
+        )
+        assertNull(restored)
+    }
 }
