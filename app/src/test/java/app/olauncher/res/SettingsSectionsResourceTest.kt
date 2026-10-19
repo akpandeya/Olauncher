@@ -229,6 +229,8 @@ class SettingsSectionsResourceTest {
             assertTrue(sectionIds[1].contains("batteryModeLayout"))
             assertTrue(sectionIds[1].contains("batteryModeTitle"))
             assertTrue(sectionIds[1].contains("alignment"))
+            assertTrue(sectionIds[1].contains("swapSides"))
+            assertTrue(sectionIds[1].contains("swapSidesLayout"))
             assertFalse("distractingApps must not be in Home screen", sectionIds[1].contains("distractingAppsLayout"))
             assertFalse("pauseBeforeApps must not be in Home screen", sectionIds[1].contains("pauseBeforeAppsLayout"))
             assertFalse("screenTime must not be in Home screen", sectionIds[1].contains("screenTimeLayout"))
@@ -550,6 +552,8 @@ class SettingsSectionsResourceTest {
             "shortcutSizeLayout",
             "shortcutSizeTitle",
             "statusBar",
+            "swapSides",
+            "swapSidesLayout",
             "swipeLeftApp",
             "swipeRightApp",
             "swipeRightLayout",
