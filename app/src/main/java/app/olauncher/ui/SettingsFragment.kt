@@ -32,6 +32,7 @@ import android.view.WindowInsets
 import android.widget.TextView
 import app.olauncher.helper.DrawerScrollHelper
 import app.olauncher.ui.settings.SettingsRow
+import app.olauncher.ui.settings.SettingsRowAvailability
 import app.olauncher.ui.settings.SettingsSearch
 import app.olauncher.ui.settings.SettingsSection
 import app.olauncher.ui.settings.SettingsSections
@@ -385,8 +386,14 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         }
     }
 
+    private fun isRowAvailable(viewId: Int): Boolean = SettingsRowAvailability.isAvailable(
+        viewId = viewId,
+        shortcutsOn = prefs.homeShortcuts,
+        germanOn = prefs.germanEnabled,
+    )
+
     fun collectRows(): List<SettingsRow> {
-        return runtimeRows.map { item ->
+        return runtimeRows.filter { isRowAvailable(it.viewId) }.map { item ->
             SettingsRow(
                 label = item.labelView.text.toString(),
                 sectionKey = item.sectionKey,
@@ -477,7 +484,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
 
         for (item in runtimeRows) {
             if (item.sectionKey == section.key) {
-                item.rowView.isVisible = true
+                item.rowView.isVisible = isRowAvailable(item.viewId)
             }
         }
         binding.nudgesSection.isVisible = true
@@ -512,7 +519,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.footer.isVisible = true
 
         for (item in runtimeRows) {
-            item.rowView.isVisible = true
+            item.rowView.isVisible = isRowAvailable(item.viewId)
         }
         binding.nudgesSection.isVisible = true
 
@@ -530,70 +537,13 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.scrollView.scrollTo(0, 0)
     }
 
+    /** Only explicit fragment arguments ([ARG_SECTION] key or [ARG_ROW] view id) open a section. */
     private fun resolveTargetSection(): SettingsSection? {
-        val args = arguments
-        if (args != null && !args.isEmpty) {
-            for (key in listOf("section", "section_key", "target_section", "sectionKey", "targetSection")) {
-                val value = args.getString(key)
-                if (!value.isNullOrBlank()) {
-                    val found = SettingsSections.findSectionByNameOrKey(value)
-                    if (found != null) return found
-                }
-            }
-            for (key in listOf("row", "target_row", "row_id", "rowId", "targetRow", "target_view_id", "targetViewId", "view_id", "viewId", "id")) {
-                val intVal = try { args.getInt(key, 0) } catch (_: Exception) { 0 }
-                if (intVal != 0) {
-                    val found = SettingsSections.findSectionByViewId(intVal)
-                    if (found != null) return found
-                }
-                val strVal = try { args.getString(key) } catch (_: Exception) { null }
-                if (!strVal.isNullOrBlank()) {
-                    val found = SettingsSections.findSectionByNameOrKey(strVal)
-                    if (found != null) return found
-                }
-            }
-            for (k in args.keySet()) {
-                val intVal = try { args.getInt(k, 0) } catch (_: Exception) { 0 }
-                if (intVal != 0) {
-                    val found = SettingsSections.findSectionByViewId(intVal)
-                    if (found != null) return found
-                }
-                val strVal = try { args.getString(k) } catch (_: Exception) { null }
-                if (!strVal.isNullOrBlank()) {
-                    val found = SettingsSections.findSectionByNameOrKey(strVal)
-                    if (found != null) return found
-                }
-                val foundKey = SettingsSections.findSectionByNameOrKey(k)
-                if (foundKey != null) return foundKey
-            }
-        }
-
-        val intentExtras = activity?.intent?.extras
-        if (intentExtras != null && !intentExtras.isEmpty) {
-            for (key in listOf("section", "section_key", "target_section", "row", "target_row", "row_id", "view_id", "id")) {
-                val intVal = try { intentExtras.getInt(key, 0) } catch (_: Exception) { 0 }
-                if (intVal != 0) {
-                    val found = SettingsSections.findSectionByViewId(intVal)
-                    if (found != null) return found
-                }
-                val strVal = try { intentExtras.getString(key) } catch (_: Exception) { null }
-                if (!strVal.isNullOrBlank()) {
-                    val found = SettingsSections.findSectionByNameOrKey(strVal)
-                    if (found != null) return found
-                }
-            }
-            for (k in intentExtras.keySet()) {
-                val strVal = try { intentExtras.getString(k) } catch (_: Exception) { null }
-                if (!strVal.isNullOrBlank()) {
-                    val found = SettingsSections.findSectionByNameOrKey(strVal)
-                    if (found != null) return found
-                }
-                val foundKey = SettingsSections.findSectionByNameOrKey(k)
-                if (foundKey != null) return foundKey
-            }
-        }
-
-        return null
+        val args = arguments ?: return null
+        return SettingsSections.resolveTarget(
+            sectionKey = args.getString(ARG_SECTION),
+            rowViewId = args.getInt(ARG_ROW, 0),
+        )
     }
 
     override fun onClick(view: View) {

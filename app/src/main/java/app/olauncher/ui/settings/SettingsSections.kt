@@ -215,6 +215,13 @@ object SettingsSections : List<SettingsSection> {
         }
     }
 
+    /**
+     * Section to open for an explicit target: a section key wins, else the section that
+     * holds the row view id. Returns null (open the list) when neither resolves.
+     */
+    fun resolveTarget(sectionKey: String?, @IdRes rowViewId: Int): SettingsSection? =
+        findByKey(sectionKey) ?: findSectionByViewId(rowViewId)
+
     fun findSectionByNameOrKey(name: String?): SettingsSection? {
         if (name.isNullOrBlank()) return null
         val trimmed = name.trim()
