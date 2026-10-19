@@ -51,6 +51,10 @@ object WellbeingCardLogic {
     fun formatLine1(waterPart: String?, walkPart: String?): String =
         listOfNotNull(waterPart, walkPart).joinToString(" · ")
 
+    /** Praise line for "Not now" choices; null when there are none. Never counts opens. */
+    fun formatPauseWins(notNow: Int, template: String = "🌿 Not now × $notNow today"): String? =
+        if (notNow > 0) template else null
+
     fun formatDuration(millis: Long): String = PauseFormatting.formatDuration(millis)
 
     fun formatOpens(count: Int): String = if (count == 1) "1 open" else "$count opens"
@@ -147,6 +151,7 @@ object WellbeingCard : TodayCard {
     fun render() {
         renderLine1()
         renderLine2()
+        renderPauseWins()
     }
 
     fun renderLine1() {
@@ -175,6 +180,15 @@ object WellbeingCard : TodayCard {
             }
 
         }
+    }
+
+    fun renderPauseWins() {
+        val b = binding ?: return
+        val context = b.root.context ?: return
+        val notNow = Prefs(context).pauseLog.today().notNow
+        val text = WellbeingCardLogic.formatPauseWins(notNow, context.getString(R.string.wellbeing_pause_wins, notNow))
+        b.tvPauseWins.isVisible = text != null
+        if (text != null) b.tvPauseWins.text = text
     }
 
     fun renderLine2() {
