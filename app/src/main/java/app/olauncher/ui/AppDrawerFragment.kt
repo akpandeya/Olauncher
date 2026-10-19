@@ -34,7 +34,11 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.TextViewCompat
 import androidx.fragment.app.activityViewModels
+import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.Recycler
@@ -192,7 +196,7 @@ class AppDrawerFragment : BaseFragment() {
 
                 val topItem = adapter.getTopItem()
                 val topScore = adapter.getTopScore()
-                when (val action = EnterPolicy.resolve(query, topItem, topScore)) {
+                when (val action = EnterPolicy.resolve(query, topItem, topScore, adapter.getTopApp())) {
                     is EnterPolicy.Action.ExecuteResult -> {
                         adapter.executeItem(action.result)
                     }
@@ -340,16 +344,22 @@ class AppDrawerFragment : BaseFragment() {
 
     private fun dialContact(lookupUri: String) {
         val source = contactSourceOrNull()
-        val number = try { source?.primaryNumber(lookupUri) } catch (_: Exception) { null }
-        try {
-            val intent = Intent(Intent.ACTION_DIAL).apply {
-                if (!number.isNullOrBlank()) data = Uri.fromParts("tel", number, null)
+        viewLifecycleOwner.lifecycleScope.launch {
+            // Provider lookup stays off the main thread.
+            val number = withContext(Dispatchers.IO) {
+                try { source?.primaryNumber(lookupUri) } catch (_: Exception) { null }
             }
-            startActivity(intent)
-        } catch (e: Exception) {
-            e.printStackTrace()
+            if (!isAdded) return@launch
+            try {
+                val intent = Intent(Intent.ACTION_DIAL).apply {
+                    if (!number.isNullOrBlank()) data = Uri.fromParts("tel", number, null)
+                }
+                startActivity(intent)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+            findNavController().popBackStack(R.id.mainFragment, false)
         }
-        findNavController().popBackStack(R.id.mainFragment, false)
     }
 
     private fun initAdapter() {

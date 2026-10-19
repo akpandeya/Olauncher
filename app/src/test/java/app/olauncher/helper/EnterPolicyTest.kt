@@ -127,4 +127,39 @@ class EnterPolicyTest {
         val header = AppModel.PrivateSpaceHeader(isLocked = true, user = AppModel.defaultUser)
         assertEquals(EnterPolicy.Action.WebSearch, EnterPolicy.resolve("query", header, 90))
     }
+
+    @Test
+    fun `contact or event row on top does not steal enter from a matching app`() {
+        val gmail = createApp("Gmail")
+        val contact = AppModel.Result("👤 Gerda Müller", AppModel.Result.Action.Contact("content://lookup/gm"))
+        val event = AppModel.Result("📅 Gmeeting", AppModel.Result.Action.Event(42L))
+
+        val onContact = EnterPolicy.resolve("gm", contact, 90, gmail)
+        assertEquals(gmail, (onContact as EnterPolicy.Action.LaunchApp).app)
+
+        val onEvent = EnterPolicy.resolve("gm", event, 90, gmail)
+        assertEquals(gmail, (onEvent as EnterPolicy.Action.LaunchApp).app)
+    }
+
+    @Test
+    fun `contact row on top takes enter when no app scores at least 60`() {
+        val contact = AppModel.Result("👤 Anna", AppModel.Result.Action.Contact("content://lookup/anna"))
+        val weakApp = createApp("Banana")
+
+        val noApp = EnterPolicy.resolve("anna", contact, null, null)
+        assertEquals(contact, (noApp as EnterPolicy.Action.ExecuteResult).result)
+
+        val weak = EnterPolicy.resolve("anna", contact, 40, weakApp)
+        assertEquals(contact, (weak as EnterPolicy.Action.ExecuteResult).result)
+    }
+
+    @Test
+    fun `answer rows keep enter even with a matching app`() {
+        val app = createApp("Euro Tracker")
+        val rate = AppModel.Result("= 21.68 USD · ECB 18 Oct", AppModel.Result.Action.Copy("21.68"))
+        val web = AppModel.Result("💱 20 EUR → USD on Google", AppModel.Result.Action.Web("20 eur in usd"))
+
+        assertEquals(rate, (EnterPolicy.resolve("20 eur in usd", rate, 90, app) as EnterPolicy.Action.ExecuteResult).result)
+        assertEquals(web, (EnterPolicy.resolve("20 eur in usd", web, 90, app) as EnterPolicy.Action.ExecuteResult).result)
+    }
 }
