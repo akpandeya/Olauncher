@@ -1168,6 +1168,52 @@
                 </FrameLayout>
 
                 <FrameLayout
+                    android:id="@+id/windDownGreyLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="start|center_vertical"
+                        android:layout_marginEnd="64dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/windDownGreyTitle"
+                            style="@style/TextSmall"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:paddingVertical="8dp"
+                            android:text="@string/wind_down_grey"
+                            android:textColor="?attr/primaryColor" />
+
+                        <TextView
+                            style="@style/TextSmall"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:layout_marginTop="2dp"
+                            android:alpha="0.7"
+                            android:text="@string/wind_down_grey_desc"
+                            android:textColor="?attr/primaryColor"
+                            android:textSize="@dimen/text_subtitle" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/windDownGreyOnOff"
+                        style="@style/TextSmallBold"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end|bottom"
+                        android:layout_marginEnd="4dp"
+                        android:padding="8dp"
+                        tools:text="Off" />
+                </FrameLayout>
+
+                <FrameLayout
                     android:id="@+id/commitLockLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

@@ -296,6 +296,8 @@
     <string name="wind_down_turn_off">Turn off</string>
     <string name="wind_down_starts">Wind-down starts</string>
     <string name="wind_down_ends">Wind-down ends</string>
+    <string name="wind_down_grey">Grey wallpaper during wind-down</string>
+    <string name="wind_down_grey_desc">Your wallpaper turns grey when wind-down starts and comes back in colour when it ends</string>
     <string name="commit_lock_desc">Turning friction down takes a 30 s wait</string>
     <string name="confirm">Confirm</string>
     <string name="confirm_countdown">Confirm (%d)</string>
