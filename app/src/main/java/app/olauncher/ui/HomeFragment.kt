@@ -364,6 +364,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         binding.dateTimeLayout.gravity = horizontalGravity
         binding.clockWords.gravity = horizontalGravity
         binding.weather.gravity = horizontalGravity
+        binding.dateWeatherRow.gravity = horizontalGravity
         binding.homeApp1.gravity = horizontalGravity
         binding.homeApp2.gravity = horizontalGravity
         binding.homeApp3.gravity = horizontalGravity
@@ -629,11 +630,10 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
         val isLandscape = resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
         val horizontalMargin = if (isLandscape) 64.dpToPx() else 10.dpToPx()
-        val marginTop = if (isLandscape) {
-            if (prefs.dateTimeVisibility == Constants.DateTime.DATE_ONLY) 36.dpToPx() else 56.dpToPx()
-        } else {
-            if (prefs.dateTimeVisibility == Constants.DateTime.DATE_ONLY) 45.dpToPx() else 72.dpToPx()
-        }
+        // Line the text's top up with the clock/date block (its layout margin) minus our own padding.
+        val screenTimePaddingDp = 10
+        val dateTimeTopMarginDp = if (isLandscape) 48 else 56
+        val marginTop = (dateTimeTopMarginDp - screenTimePaddingDp).dpToPx()
         val targetGravity = if (prefs.homeAlignment == Gravity.END) Gravity.START else Gravity.END
         val extraStartMargin = if (prefs.homeShortcuts && prefs.shortcutSideStart && targetGravity == Gravity.START) ShortcutSize.columnAllowanceDp(prefs.shortcutSizeStep).dpToPx() else 0
         val params = FrameLayout.LayoutParams(
@@ -646,7 +646,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             gravity = targetGravity
         }
         binding.tvScreenTime.layoutParams = params
-        binding.tvScreenTime.setPadding(10.dpToPx())
+        binding.tvScreenTime.setPadding(screenTimePaddingDp.dpToPx())
     }
 
     private fun populateHomeScreen(appCountUpdated: Boolean) {
@@ -1100,6 +1100,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         val context = context ?: return
         if (!prefs.weatherEnabled || prefs.dateTimeVisibility == Constants.DateTime.OFF) {
             binding.weather.isVisible = false
+            binding.weatherSeparator.isVisible = false
             return
         }
         val cached = WeatherCache(context).read()
@@ -1115,6 +1116,8 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         } else {
             binding.weather.isVisible = false
         }
+        // Only show the dot between the two when both are visible.
+        binding.weatherSeparator.isVisible = binding.weather.isVisible && binding.date.isVisible
     }
 
     override fun onDestroyView() {
