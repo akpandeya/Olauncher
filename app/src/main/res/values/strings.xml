@@ -228,7 +228,7 @@
     <string name="distracting_apps_count">%d apps</string>
     <string name="distracting_app_count">%d app</string>
     <string name="cancel">Cancel</string>
-    <string name="settings_footer">Thumbline %1$s · based on %2$s · GPLv3</string>
+    <string name="settings_footer">Thumbline %1$s · based on %2$s · GPLv3\nFonts: Inter, IBM Plex Sans · SIL OFL</string>
     <string name="pause_before_distracting_apps">Pause before distracting apps</string>
     <string name="pause_daily_allowance">Daily allowance</string>
     <string name="pause_daily_allowance_needs_access">Daily allowance (needs usage access)</string>
@@ -421,4 +421,7 @@
     <string name="settings_back">‹ Settings</string>
     <string name="search_settings">Search settings</string>
     <string name="open_settings">Open settings</string>
+    <string name="font">Font</string>
+    <string name="font_inter">Inter</string>
+    <string name="font_plex">Plex</string>
 </resources>

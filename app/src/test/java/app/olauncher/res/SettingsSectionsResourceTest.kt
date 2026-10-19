@@ -305,6 +305,7 @@ class SettingsSectionsResourceTest {
             assertTrue(sectionIds[8].contains("photoWallpaperLayout"))
             assertTrue(sectionIds[8].contains("statusBar"))
             assertTrue(sectionIds[8].contains("appThemeText"))
+            assertTrue(sectionIds[8].contains("fontFamily"))
             assertTrue(sectionIds[8].contains("boldFont"))
             assertTrue(sectionIds[8].contains("textSizeValue"))
             assertFalse("autoShowKeyboard moved to Drawer", sectionIds[8].contains("autoShowKeyboard"))
@@ -443,6 +444,7 @@ class SettingsSectionsResourceTest {
             "drawerSection",
             "exportBackup",
             "exportBackupLayout",
+            "fontFamily",
             "footer",
             "germanClock",
             "germanClockLayout",
