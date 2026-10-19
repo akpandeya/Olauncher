@@ -107,12 +107,14 @@ import app.olauncher.helper.isTablet
 import app.olauncher.helper.openAppInfo
 import app.olauncher.helper.openUrl
 import app.olauncher.helper.setPlainWallpaperByTheme
+import app.olauncher.wellbeing.SystemGrey
 import app.olauncher.wellbeing.WindDownWorker
 import app.olauncher.helper.WordCaptureActivity
 import app.olauncher.helper.OlDialog
 import app.olauncher.helper.showMessageDialog
 import app.olauncher.helper.showPopupMenu
 import app.olauncher.helper.showStatusBar
+import app.olauncher.helper.copyToClipboard
 import app.olauncher.helper.showToast
 import app.olauncher.helper.showWaitDialog
 import app.olauncher.wellbeing.CommitLock
@@ -273,6 +275,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateCommitLock()
         populateWindDown()
         populateWindDownGrey()
+        populateSystemGrey()
         populateHoldNotifications()
         populateQuietReleaseTimes()
         populateLockSettings()
@@ -413,6 +416,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.pauseAskWhyLayout, binding.pauseAskWhyTitle, R.id.pauseAskWhyOnOff),
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.windDownLayout, binding.windDownTitle, R.id.windDown),
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.windDownGreyLayout, binding.windDownGreyTitle, R.id.windDownGreyOnOff),
+            RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.systemGreyLayout, binding.systemGreyTitle, R.id.systemGreyOnOff),
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.commitLockLayout, binding.commitLockTitle, R.id.commitLockOnOff),
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.holdNotificationsLayout, binding.holdNotificationsTitle, R.id.holdNotificationsOnOff),
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.quietReleaseTimesLayout, binding.quietReleaseTimesTitle, R.id.quietReleaseTimes),
@@ -652,6 +656,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.pauseAskWhyOnOff, R.id.pauseAskWhyTitle, R.id.pauseAskWhyLayout -> togglePauseAskWhy()
             R.id.windDown, R.id.windDownTitle, R.id.windDownLayout -> showWindDownMenu()
             R.id.windDownGreyOnOff, R.id.windDownGreyTitle, R.id.windDownGreyLayout -> toggleWindDownGrey()
+            R.id.systemGreyOnOff, R.id.systemGreyTitle, R.id.systemGreyLayout -> toggleSystemGrey()
+            R.id.systemGreyCopy -> copySystemGreyCommand()
+            R.id.systemGreyBedtime -> SystemGrey.openBedtimeMode(requireContext())
             R.id.commitLockOnOff, R.id.commitLockTitle, R.id.commitLockSubtitle, R.id.commitLockLayout -> toggleCommitLock()
             R.id.holdNotificationsOnOff, R.id.holdNotificationsTitle, R.id.holdNotificationsLayout -> toggleHoldNotifications()
             R.id.quietReleaseTimes, R.id.quietReleaseTimesTitle, R.id.quietReleaseTimesLayout -> showReleaseTimesEditor()
@@ -811,6 +818,11 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.windDownGreyOnOff.setOnClickListener(this)
         binding.windDownGreyTitle.setOnClickListener(this)
         binding.windDownGreyLayout.setOnClickListener(this)
+        binding.systemGreyOnOff.setOnClickListener(this)
+        binding.systemGreyTitle.setOnClickListener(this)
+        binding.systemGreyLayout.setOnClickListener(this)
+        binding.systemGreyCopy.setOnClickListener(this)
+        binding.systemGreyBedtime.setOnClickListener(this)
         binding.commitLockOnOff.setOnClickListener(this)
         binding.commitLockTitle.setOnClickListener(this)
         binding.commitLockSubtitle.setOnClickListener(this)
@@ -2498,6 +2510,25 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         prefs.windDownGrey = !prefs.windDownGrey
         populateWindDownGrey()
         WindDownWorker.syncAsync(requireContext())
+    }
+
+    private fun populateSystemGrey() {
+        val granted = SystemGrey.isGranted(requireContext())
+        binding.systemGreyOnOff.text = getString(if (prefs.windDownSystemGrey) R.string.on else R.string.off)
+        binding.systemGreyStatus.text = getString(if (granted) R.string.system_grey_ready else R.string.system_grey_needs_grant)
+        binding.systemGreyActions.visibility = if (granted) View.GONE else View.VISIBLE
+    }
+
+    private fun toggleSystemGrey() {
+        prefs.windDownSystemGrey = !prefs.windDownSystemGrey
+        populateSystemGrey()
+        // Off restores the colour settings right away; on applies grey if wind-down is already active.
+        WindDownWorker.syncAsync(requireContext())
+    }
+
+    private fun copySystemGreyCommand() {
+        requireContext().copyToClipboard(SystemGrey.GRANT_COMMAND)
+        requireContext().showToast(R.string.system_grey_copied)
     }
 
     private fun showWindDownMenu() {
