@@ -1,18 +1,23 @@
 package app.olauncher.ui.today
 
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import androidx.core.view.isVisible
 import androidx.navigation.fragment.findNavController
 import app.olauncher.data.Prefs
 import app.olauncher.databinding.FragmentTodayBinding
 import app.olauncher.databinding.ItemTodayPanelBinding
 import app.olauncher.glance.HeroFormatting
+import app.olauncher.helper.Intention
 import app.olauncher.listener.OnSwipeTouchListener
 import app.olauncher.ui.BaseFragment
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.ZonedDateTime
 import java.util.Locale
 
@@ -36,6 +41,7 @@ class TodayFragment : BaseFragment() {
         super.onViewCreated(view, savedInstanceState)
         prefs = Prefs(requireContext())
         initSwipeTouchListener()
+        initIntention()
         populateCards()
     }
 
@@ -57,6 +63,27 @@ class TodayFragment : BaseFragment() {
             swipeListener.onTouch(v, event)
             false
         }
+    }
+
+    private fun initIntention() {
+        val current = Intention.current(prefs.intentionText, prefs.intentionDay, LocalDateTime.now())
+        binding.etIntention.setText(current.orEmpty())
+        binding.etIntention.setOnEditorActionListener { v, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                saveIntention(v.text?.toString())
+                v.clearFocus()
+                (v.context.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager)
+                    ?.hideSoftInputFromWindow(v.windowToken, 0)
+                true
+            } else false
+        }
+    }
+
+    private fun saveIntention(raw: String?) {
+        val text = Intention.clean(raw)
+        prefs.intentionText = text
+        prefs.intentionDay = Intention.dayOf(LocalDateTime.now())
+        _binding?.etIntention?.setText(text)
     }
 
     private fun populateCards() {

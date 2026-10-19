@@ -65,6 +65,8 @@ import app.olauncher.helper.Haptics
 import app.olauncher.helper.OpenTargets
 import app.olauncher.helper.NowPlaying
 import app.olauncher.helper.InfoLine
+import app.olauncher.helper.Intention
+import java.time.LocalDateTime
 import app.olauncher.helper.TouchTarget
 import app.olauncher.helper.appUsagePermissionGranted
 import app.olauncher.helper.dpToPx
@@ -710,6 +712,16 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         binding.date.isVisible = isDateVisible
         populateWeather()
         refreshContextLine()
+        refreshIntentionLine()
+    }
+
+    private fun refreshIntentionLine() {
+        if (_binding == null) return
+        val text = if (prefs.intentionOnHome) {
+            Intention.current(prefs.intentionText, prefs.intentionDay, LocalDateTime.now())
+        } else null
+        binding.intentionLine.text = text
+        binding.intentionLine.isVisible = text != null
     }
 
     private fun startContextLine() {
