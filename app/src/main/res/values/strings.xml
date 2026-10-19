@@ -298,6 +298,12 @@
     <string name="wind_down_ends">Wind-down ends</string>
     <string name="wind_down_grey">Grey wallpaper during wind-down</string>
     <string name="wind_down_grey_desc">Your wallpaper turns grey when wind-down starts and comes back in colour when it ends</string>
+    <string name="system_grey">Whole phone grey during wind-down</string>
+    <string name="system_grey_needs_grant">Needs a one-time grant from a computer</string>
+    <string name="system_grey_ready">Ready. The whole screen turns grey during wind-down</string>
+    <string name="system_grey_copy">Copy command</string>
+    <string name="system_grey_copied">Command copied</string>
+    <string name="system_grey_bedtime">Open Bedtime mode</string>
     <string name="commit_lock_desc">Turning friction down takes a 30 s wait</string>
     <string name="confirm">Confirm</string>
     <string name="confirm_countdown">Confirm (%d)</string>
