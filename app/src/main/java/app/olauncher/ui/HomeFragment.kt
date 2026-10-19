@@ -42,6 +42,8 @@ import app.olauncher.R
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
+import app.olauncher.helper.Gesture
+import app.olauncher.helper.GestureHints
 import app.olauncher.data.ShortcutAction
 import app.olauncher.data.ShortcutOffset
 import app.olauncher.data.ShortcutSize
@@ -338,11 +340,38 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         return true
     }
 
+    private fun showGestureHint() {
+        val enabled = buildSet {
+            if (prefs.swipeRightEnabled && prefs.swipeRightAction == Prefs.SWIPE_RIGHT_ACTION_TODAY) add(Gesture.SWIPE_RIGHT)
+            if (prefs.swipeLeftEnabled) add(Gesture.SWIPE_LEFT)
+            if (prefs.lockModeOn) add(Gesture.DOUBLE_TAP)
+            add(Gesture.LONG_PRESS)
+        }
+        val today = prefs.epochDaySupplier()
+        val hint = GestureHints.next(prefs.gestureHintIndex, prefs.gestureHintDay, today, enabled) ?: return
+        prefs.gestureHintIndex = hint.position + 1
+        prefs.gestureHintDay = today
+        binding.firstRunTips.text = when (hint.gesture) {
+            Gesture.SWIPE_RIGHT -> getString(R.string.hint_swipe_right_today)
+            Gesture.SWIPE_LEFT -> getString(R.string.hint_swipe_left_app, prefs.appNameSwipeLeft)
+            Gesture.DOUBLE_TAP -> getString(R.string.hint_double_tap_lock)
+            Gesture.LONG_PRESS -> getString(R.string.hint_long_press_settings)
+        }
+        binding.firstRunTips.setOnClickListener {
+            prefs.gestureHintIndex = GestureHints.DONE
+            binding.firstRunTips.visibility = View.GONE
+        }
+        binding.firstRunTips.visibility = View.VISIBLE
+    }
+
     private fun initObservers() {
         if (prefs.firstSettingsOpen) {
             binding.firstRunTips.visibility = View.VISIBLE
             binding.setDefaultLauncher.visibility = View.GONE
-        } else binding.firstRunTips.visibility = View.GONE
+        } else {
+            binding.firstRunTips.visibility = View.GONE
+            showGestureHint()
+        }
 
         viewModel.refreshHome.observe(viewLifecycleOwner) {
             populateHomeScreen(it)
@@ -351,7 +380,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             // Do not clear the saved Bottom preference here; setHomeAlignment() only
             // stops applying it while Thumbline is not the default launcher.
             setHomeAlignment()
-            if (binding.firstRunTips.isVisible) return@Observer
+            if (prefs.firstSettingsOpen) return@Observer
             binding.setDefaultLauncher.isVisible = it.not() && prefs.hideSetDefaultLauncher.not()
         })
         viewModel.homeAppAlignment.observe(viewLifecycleOwner) {

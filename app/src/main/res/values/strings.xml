@@ -55,6 +55,10 @@
     <string name="follow">Follow</string>
     <string name="email">Email</string>
     <string name="donate">Donate</string>
+    <string name="hint_swipe_right_today">Swipe right for Today</string>
+    <string name="hint_swipe_left_app">Swipe left for %1$s</string>
+    <string name="hint_double_tap_lock">Double tap to lock</string>
+    <string name="hint_long_press_settings">Long-press for settings</string>
     <string name="swipe_up_for_apps">1. Swipe up for all apps\n2. Long press anywhere for settings</string>
     <string name="apps_on_home_screen">Apps on home screen</string>
     <string name="daily_wallpaper_update">Daily new wallpaper</string>
