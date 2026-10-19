@@ -9,10 +9,13 @@ import android.os.Process
 import android.graphics.Typeface
 import android.provider.MediaStore
 import android.provider.Settings
+import android.text.Layout
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.format.DateFormat
+import android.text.style.AlignmentSpan
 import android.text.style.TypefaceSpan
+import android.util.TypedValue
 import androidx.core.content.res.ResourcesCompat
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -850,7 +853,34 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         anchor.showPopupMenu(
             R.menu.alignment,
             configure = { menu ->
-                menu.findItem(R.id.alignmentBottom).setTitle(
+                val leftLabel = getString(R.string.left)
+                val centerLabel = getString(R.string.center)
+                val rightLabel = getString(R.string.right)
+                menu.findItem(R.id.alignmentLeft)?.title = SpannableString(leftLabel).apply {
+                    setSpan(
+                        AlignmentSpan.Standard(Layout.Alignment.ALIGN_NORMAL),
+                        0,
+                        leftLabel.length,
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                }
+                menu.findItem(R.id.alignmentCenter)?.title = SpannableString(centerLabel).apply {
+                    setSpan(
+                        AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER),
+                        0,
+                        centerLabel.length,
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                }
+                menu.findItem(R.id.alignmentRight)?.title = SpannableString(rightLabel).apply {
+                    setSpan(
+                        AlignmentSpan.Standard(Layout.Alignment.ALIGN_OPPOSITE),
+                        0,
+                        rightLabel.length,
+                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                }
+                menu.findItem(R.id.alignmentBottom)?.setTitle(
                     if (prefs.homeBottomAlignment) R.string.bottom_on else R.string.bottom_off
                 )
             }
@@ -990,16 +1020,37 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     }
 
     private fun showTextSizeDialog() {
+        var applied = false
+        val initialScale = prefs.textSizeScale
+        pendingTextSizeScale = initialScale
         var stepper: DialogTextSizeBinding? = null
-        val dialog = requireContext().createDialog(R.string.text_size, R.string.okay) { container ->
+        val dialog = requireContext().createDialog(
+            title = R.string.text_size,
+            action = R.string.apply,
+            neutral = R.string.cancel,
+            onAction = {
+                applied = true
+                applyTextSizeScale()
+            },
+            onNeutral = {
+                // Cancelled
+            }
+        ) { container ->
             DialogTextSizeBinding.inflate(layoutInflater, container, false).also { stepper = it }.root
         }
         stepper?.apply {
-            textSizeCurrent.text = formatScale(pendingOrCurrentTextSizeScale())
+            textSizeSample.isVisible = true
+            updateTextSizeSample(textSizeSample, pendingTextSizeScale)
+            textSizeCurrent.text = formatScale(pendingTextSizeScale)
             textSizeMinus.setOnClickListener { adjustTextSizePreview(-0.1f, this) }
             textSizePlus.setOnClickListener { adjustTextSizePreview(0.1f, this) }
         }
-        dialog.setOnDismissListener { applyTextSizeScale() }
+        dialog.setOnDismissListener {
+            if (!applied) {
+                pendingTextSizeScale = -1f
+                populateTextSize()
+            }
+        }
         showDialog(dialog)
     }
 
@@ -1010,6 +1061,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             DialogTextSizeBinding.inflate(layoutInflater, container, false).also { stepper = it }.root
         }
         stepper?.apply {
+            textSizeSample.isVisible = false
             textSizeCurrent.text = ShortcutOffset.format(pendingOrCurrentShortcutOffsetStep())
             textSizeMinus.setOnClickListener { adjustShortcutHeightPreview(-1, this) }
             textSizePlus.setOnClickListener { adjustShortcutHeightPreview(1, this) }
@@ -1445,6 +1497,15 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         val formatted = formatScale(clamped)
         binding.textSizeValue.text = formatted
         dialogBinding.textSizeCurrent.text = formatted
+        updateTextSizeSample(dialogBinding.textSizeSample, clamped)
+    }
+
+    private fun updateTextSizeSample(sampleView: TextView, scale: Float) {
+        val typedValue = TypedValue()
+        resources.getValue(R.dimen.text_large, typedValue, true)
+        val baseSp = TypedValue.complexToFloat(typedValue.data)
+        val basePx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, baseSp, resources.displayMetrics)
+        sampleView.setTextSize(TypedValue.COMPLEX_UNIT_PX, basePx * scale)
     }
 
     private fun applyTextSizeScale() {
