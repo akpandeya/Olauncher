@@ -1,5 +1,7 @@
 package app.olauncher.ui.pause
 
+import androidx.core.view.ViewCompat
+import app.olauncher.helper.HomeAccessibilityActions
 import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -231,16 +233,19 @@ class PauseFragment : Fragment() {
 
             val totalSeconds = decision.seconds
             if (totalSeconds <= 0) {
-                updateOpenButton(0)
+                updateOpenButton(0, announce = true)
                 return@launch
             }
 
             for (remaining in totalSeconds downTo 1) {
-                updateOpenButton(remaining)
+                updateOpenButton(
+                    remaining,
+                    announce = HomeAccessibilityActions.shouldAnnounceCountdown(remaining, totalSeconds),
+                )
                 delay(1000L)
             }
             if (_binding != null) {
-                updateOpenButton(0)
+                updateOpenButton(0, announce = true)
                 Haptics.confirm(binding.btnOpen)
             }
         }
@@ -317,8 +322,15 @@ class PauseFragment : Fragment() {
         }
     }
 
-    private fun updateOpenButton(remaining: Int) {
+    private fun updateOpenButton(remaining: Int, announce: Boolean = false) {
         countdownRemaining = remaining
+        if (_binding == null) return
+        // Polite live region only for the announced updates, so TalkBack stays quiet every other second.
+        ViewCompat.setAccessibilityLiveRegion(
+            binding.btnOpen,
+            if (announce) ViewCompat.ACCESSIBILITY_LIVE_REGION_POLITE
+            else ViewCompat.ACCESSIBILITY_LIVE_REGION_NONE,
+        )
         updateOpenButtonState()
     }
 

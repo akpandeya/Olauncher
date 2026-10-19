@@ -31,6 +31,11 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.bundleOf
+import androidx.core.view.AccessibilityDelegateCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat
+import app.olauncher.helper.HomeAccessibilityAction
+import app.olauncher.helper.HomeAccessibilityActions
 import androidx.core.view.isVisible
 import androidx.core.view.setPadding
 import androidx.lifecycle.Observer
@@ -143,6 +148,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         setHomeAlignment(prefs.homeAlignment)
         initSwipeTouchListener()
         initClickListeners()
+        initAccessibilityActions()
         initWeatherListener()
     }
 
@@ -406,6 +412,61 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         binding.homeApp6.setOnTouchListener(getViewSwipeTouchListener(context, binding.homeApp6))
         binding.homeApp7.setOnTouchListener(getViewSwipeTouchListener(context, binding.homeApp7))
         binding.homeApp8.setOnTouchListener(getViewSwipeTouchListener(context, binding.homeApp8))
+    }
+
+    /** Gives every gesture a TalkBack custom action. Read from prefs on each query, so it never goes stale. */
+    private fun initAccessibilityActions() {
+        ViewCompat.setAccessibilityDelegate(binding.mainLayout, object : AccessibilityDelegateCompat() {
+            override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfoCompat) {
+                super.onInitializeAccessibilityNodeInfo(host, info)
+                if (_binding == null) return
+                HomeAccessibilityActions.enabled(
+                    lockModeOn = prefs.lockModeOn,
+                    swipeLeftEnabled = prefs.swipeLeftEnabled,
+                    swipeRightEnabled = prefs.swipeRightEnabled,
+                ).forEach { action ->
+                    val label = when (action) {
+                        HomeAccessibilityAction.OPEN_APPS -> getString(R.string.a11y_action_open_apps)
+                        HomeAccessibilityAction.OPEN_TODAY -> getString(R.string.a11y_action_open_today)
+                        HomeAccessibilityAction.SETTINGS -> getString(R.string.a11y_action_settings)
+                        HomeAccessibilityAction.LOCK_SCREEN -> getString(R.string.a11y_action_lock_screen)
+                        HomeAccessibilityAction.SWIPE_LEFT_APP ->
+                            getString(R.string.a11y_action_swipe_left_app, prefs.appNameSwipeLeft)
+                        HomeAccessibilityAction.SWIPE_RIGHT_APP ->
+                            getString(
+                                R.string.a11y_action_swipe_right_app,
+                                if (prefs.swipeRightAction == Prefs.SWIPE_RIGHT_ACTION_TODAY) getString(R.string.a11y_action_open_today)
+                                else prefs.appNameSwipeRight
+                            )
+                    }
+                    info.addAction(AccessibilityNodeInfoCompat.AccessibilityActionCompat(accessibilityActionId(action), label))
+                }
+            }
+
+            override fun performAccessibilityAction(host: View, action: Int, args: Bundle?): Boolean {
+                val match = HomeAccessibilityAction.values().firstOrNull { accessibilityActionId(it) == action }
+                    ?: return super.performAccessibilityAction(host, action, args)
+                if (_binding == null) return false
+                when (match) {
+                    HomeAccessibilityAction.OPEN_APPS -> onHomeSwipeUp()
+                    HomeAccessibilityAction.OPEN_TODAY -> openToday()
+                    HomeAccessibilityAction.SETTINGS -> openSettings()
+                    HomeAccessibilityAction.LOCK_SCREEN -> if (prefs.lockModeOn) binding.lock.performClick()
+                    HomeAccessibilityAction.SWIPE_LEFT_APP -> openSwipeLeftApp()
+                    HomeAccessibilityAction.SWIPE_RIGHT_APP -> openSwipeRightApp()
+                }
+                return true
+            }
+        })
+    }
+
+    private fun accessibilityActionId(action: HomeAccessibilityAction): Int = when (action) {
+        HomeAccessibilityAction.OPEN_APPS -> R.id.a11y_action_open_apps
+        HomeAccessibilityAction.OPEN_TODAY -> R.id.a11y_action_open_today
+        HomeAccessibilityAction.SETTINGS -> R.id.a11y_action_settings
+        HomeAccessibilityAction.LOCK_SCREEN -> R.id.a11y_action_lock_screen
+        HomeAccessibilityAction.SWIPE_LEFT_APP -> R.id.a11y_action_swipe_left_app
+        HomeAccessibilityAction.SWIPE_RIGHT_APP -> R.id.a11y_action_swipe_right_app
     }
 
     private fun initClickListeners() {

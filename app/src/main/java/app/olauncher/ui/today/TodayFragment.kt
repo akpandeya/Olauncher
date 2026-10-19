@@ -146,6 +146,7 @@ class TodayFragment : BaseFragment() {
             val panel = ItemTodayPanelBinding.inflate(layoutInflater, binding.cardsContainer, false)
             val title = getString(card.titleRes)
             panel.tvPanelTitle.text = if (card.emoji.isEmpty()) title else "${card.emoji}  $title"
+            androidx.core.view.ViewCompat.setAccessibilityHeading(panel.tvPanelTitle, true)
 
             val cardView = card.createView(layoutInflater, panel.panelContent, this)
             if (cardView.parent == null) panel.panelContent.addView(cardView)
