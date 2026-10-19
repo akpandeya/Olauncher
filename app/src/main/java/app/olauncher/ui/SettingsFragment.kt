@@ -15,6 +15,7 @@ import android.text.SpannableString
 import android.text.format.DateFormat
 import android.text.style.AlignmentSpan
 import android.util.TypedValue
+import androidx.annotation.FontRes
 import androidx.core.content.res.ResourcesCompat
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -618,7 +619,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.batteryMode, R.id.batteryModeTitle, R.id.batteryModeLayout -> showBatteryModeMenu(binding.batteryMode)
             R.id.appThemeText -> showAppThemeMenu(view, showSystem = false)
             R.id.accent -> showAccentMenu(view)
-            R.id.fontFamily -> showFontMenu(view)
+            R.id.fontFamily -> showFontDialog()
             R.id.textSizeValue -> showTextSizeDialog()
             R.id.boldFont -> toggleBoldFont()
             R.id.haptics -> toggleHaptics()
@@ -1915,26 +1916,8 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     }
 
     private fun showFontDialog() {
-        val interRes = FontFamilyResources.forId(Constants.FontFamily.INTER).fontRes
-        val plexRes = FontFamilyResources.forId(Constants.FontFamily.PLEX).fontRes
-
-        val interTypeface = if (interRes != null) {
-            try {
-                ResourcesCompat.getFont(requireContext(), interRes)
-            } catch (e: Exception) {
-                Log.w("SettingsFragment", "Failed to load font $interRes", e)
-                null
-            }
-        } else null
-
-        val plexTypeface = if (plexRes != null) {
-            try {
-                ResourcesCompat.getFont(requireContext(), plexRes)
-            } catch (e: Exception) {
-                Log.w("SettingsFragment", "Failed to load font $plexRes", e)
-                null
-            }
-        } else null
+        val interTypeface = loadFontOrNull(FontFamilyResources.INTER.fontRes)
+        val plexTypeface = loadFontOrNull(FontFamilyResources.PLEX.fontRes)
 
         var fontDialog: OlDialog? = null
         val dialog = requireContext().createDialog(
@@ -1964,8 +1947,14 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         showDialog(dialog)
     }
 
-    private fun showFontMenu(anchor: View? = null) {
-        showFontDialog()
+    private fun loadFontOrNull(@FontRes fontRes: Int?): Typeface? {
+        if (fontRes == null) return null
+        return try {
+            ResourcesCompat.getFont(requireContext(), fontRes)
+        } catch (e: Exception) {
+            Log.w("SettingsFragment", "Failed to load font $fontRes", e)
+            null
+        }
     }
 
     private fun populateTextSize() {

@@ -13,9 +13,7 @@ class FontFamilyResourcesTest {
         val result = FontFamilyResources.forId(Constants.FontFamily.SYSTEM)
         assertEquals(Constants.FontFamily.SYSTEM, result.id)
         assertNull(result.fontRes)
-        assertNull(result.fontResourceId)
         assertEquals(R.string.system_default, result.labelRes)
-        assertEquals(R.string.system_default, result.stringRes)
     }
 
     @Test
@@ -23,9 +21,7 @@ class FontFamilyResourcesTest {
         val result = FontFamilyResources.forId(Constants.FontFamily.INTER)
         assertEquals(Constants.FontFamily.INTER, result.id)
         assertEquals(R.font.inter, result.fontRes)
-        assertEquals(R.font.inter, result.fontResourceId)
         assertEquals(R.string.font_inter, result.labelRes)
-        assertEquals(R.string.font_inter, result.stringRes)
     }
 
     @Test
@@ -33,9 +29,7 @@ class FontFamilyResourcesTest {
         val result = FontFamilyResources.forId(Constants.FontFamily.PLEX)
         assertEquals(Constants.FontFamily.PLEX, result.id)
         assertEquals(R.font.ibm_plex_sans, result.fontRes)
-        assertEquals(R.font.ibm_plex_sans, result.fontResourceId)
         assertEquals(R.string.font_plex, result.labelRes)
-        assertEquals(R.string.font_plex, result.stringRes)
     }
 
     @Test
@@ -60,7 +54,7 @@ class FontFamilyResourcesTest {
 
     @Test
     fun `all font family options are registered in expected order`() {
-        val all = FontFamilyResources.all()
+        val all = FontFamilyResources.ALL
         assertEquals(3, all.size)
         assertEquals(FontFamilyResources.SYSTEM, all[0])
         assertEquals(FontFamilyResources.INTER, all[1])

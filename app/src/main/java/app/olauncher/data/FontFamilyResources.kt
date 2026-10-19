@@ -11,10 +11,7 @@ data class FontFamilyResource(
     val id: Int,
     @FontRes val fontRes: Int?,
     @StringRes val labelRes: Int,
-) {
-    @get:FontRes val fontResourceId: Int? get() = fontRes
-    @get:StringRes val stringRes: Int get() = labelRes
-}
+)
 
 /**
  * Context-free mapping from font family IDs to their font and label resources.
@@ -50,6 +47,4 @@ object FontFamilyResources {
         Constants.FontFamily.PLEX -> PLEX
         else -> SYSTEM
     }
-
-    fun all(): List<FontFamilyResource> = ALL
 }
