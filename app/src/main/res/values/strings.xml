@@ -193,6 +193,7 @@
     <string name="saving_photos">Saving %d photos…</string>
     <string name="saving_photo">Saving 1 photo…</string>
     <string name="wallpaper_photos_save_failed">Could not save the photos</string>
+    <string name="add_photos">Add photos</string>
     <string name="change_photos">Change photos</string>
     <string name="set_on_home">Set on: Home</string>
     <string name="set_on_lock">Set on: Lock</string>
