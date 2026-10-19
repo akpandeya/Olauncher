@@ -100,13 +100,14 @@ class PhotoWallpaperMenuResourceTest {
         val menuFile = resolveFile("src/main/res/menu/photo_wallpaper.xml")
         val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(menuFile)
         val items = doc.getElementsByTagName("item")
-        assertEquals(8, items.length)
+        assertEquals(9, items.length)
 
         val expected = listOf(
             Pair("@+id/photoWallpaperAdd", "@string/add_photos"),
             Pair("@+id/photoWallpaperRemove", "@string/remove_photos"),
             Pair("@+id/photoWallpaperChange", "@string/change_photos"),
             Pair("@+id/photoWallpaperTarget", "@string/set_on_home"),
+            Pair("@+id/photoWallpaperFrequency", "@string/photo_wallpaper_frequency"),
             Pair("@+id/photoWallpaperNext", "@string/next_photo_now"),
             Pair("@+id/photoWallpaperPrevious", "@string/previous_photo"),
             Pair("@+id/photoWallpaperHomeMenu", "@string/wallpaper_home_menu"),
@@ -120,7 +121,7 @@ class PhotoWallpaperMenuResourceTest {
             assertEquals("Item $i Title", expectedTitle, element.getAttribute("android:title"))
         }
 
-        val homeMenuItem = items.item(6) as Element
+        val homeMenuItem = items.item(7) as Element
         assertEquals("true", homeMenuItem.getAttribute("android:checkable"))
     }
 
@@ -173,6 +174,52 @@ class PhotoWallpaperMenuResourceTest {
             "next_wallpaper",
             "previous_wallpaper",
             "settings",
+        )
+        for (file in otherLocaleFiles) {
+            val localizedStrings = loadStrings(file)
+            for (key in checkKeys) {
+                assertNull("$key should not be defined in ${file.parentFile?.name}", localizedStrings[key])
+            }
+        }
+    }
+
+    @Test
+    fun `photo wallpaper frequency strings are defined in main strings and not in other locales`() {
+        val defaultStringsFile = resolveFile("src/main/res/values/strings.xml")
+        val defaultStrings = loadStrings(defaultStringsFile)
+        assertEquals("Change: %s", defaultStrings["photo_wallpaper_frequency"])
+        assertEquals("Every time home opens", defaultStrings["wallpaper_frequency_on_open"])
+        assertEquals("15 minutes", defaultStrings["wallpaper_frequency_15_min"])
+        assertEquals("30 minutes", defaultStrings["wallpaper_frequency_30_min"])
+        assertEquals("1 hour", defaultStrings["wallpaper_frequency_1_hour"])
+        assertEquals("3 hours", defaultStrings["wallpaper_frequency_3_hours"])
+        assertEquals("6 hours", defaultStrings["wallpaper_frequency_6_hours"])
+        assertEquals("12 hours", defaultStrings["wallpaper_frequency_12_hours"])
+        assertEquals("Daily", defaultStrings["wallpaper_frequency_daily"])
+        assertEquals("Weekly", defaultStrings["wallpaper_frequency_weekly"])
+        assertEquals("Never (manual only)", defaultStrings["wallpaper_frequency_never"])
+
+        val resDir = resolveDir("src/main/res")
+        val otherLocaleFiles = resDir.listFiles { dir ->
+            dir.isDirectory && dir.name.startsWith("values-")
+        }?.mapNotNull { dir ->
+            val stringsFile = File(dir, "strings.xml")
+            if (stringsFile.exists()) stringsFile else null
+        }.orEmpty()
+
+        assertTrue("Expected other locale directories", otherLocaleFiles.isNotEmpty())
+        val checkKeys = listOf(
+            "photo_wallpaper_frequency",
+            "wallpaper_frequency_on_open",
+            "wallpaper_frequency_15_min",
+            "wallpaper_frequency_30_min",
+            "wallpaper_frequency_1_hour",
+            "wallpaper_frequency_3_hours",
+            "wallpaper_frequency_6_hours",
+            "wallpaper_frequency_12_hours",
+            "wallpaper_frequency_daily",
+            "wallpaper_frequency_weekly",
+            "wallpaper_frequency_never",
         )
         for (file in otherLocaleFiles) {
             val localizedStrings = loadStrings(file)

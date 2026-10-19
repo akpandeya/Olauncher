@@ -1,5 +1,7 @@
 package app.olauncher.helper
 
+import app.olauncher.R
+import app.olauncher.ui.SettingsFragment
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -346,5 +348,22 @@ class RotationTest {
         // Negative count
         assertFalse(WallpaperHomeMenu.isShown(enabled = true, count = -1))
         assertFalse(WallpaperHomeMenu.isShown(enabled = false, count = -1))
+    }
+
+    @Test
+    fun `intervalToStringRes covers all RotationInterval entries with unique string resources`() {
+        val resIds = RotationInterval.entries.map { SettingsFragment.intervalToStringRes(it) }
+        assertEquals(RotationInterval.entries.size, resIds.size)
+        assertEquals(RotationInterval.entries.size, resIds.toSet().size)
+        assertEquals(R.string.wallpaper_frequency_on_open, SettingsFragment.intervalToStringRes(RotationInterval.ON_OPEN))
+        assertEquals(R.string.wallpaper_frequency_15_min, SettingsFragment.intervalToStringRes(RotationInterval.MINUTES_15))
+        assertEquals(R.string.wallpaper_frequency_30_min, SettingsFragment.intervalToStringRes(RotationInterval.MINUTES_30))
+        assertEquals(R.string.wallpaper_frequency_1_hour, SettingsFragment.intervalToStringRes(RotationInterval.HOURS_1))
+        assertEquals(R.string.wallpaper_frequency_3_hours, SettingsFragment.intervalToStringRes(RotationInterval.HOURS_3))
+        assertEquals(R.string.wallpaper_frequency_6_hours, SettingsFragment.intervalToStringRes(RotationInterval.HOURS_6))
+        assertEquals(R.string.wallpaper_frequency_12_hours, SettingsFragment.intervalToStringRes(RotationInterval.HOURS_12))
+        assertEquals(R.string.wallpaper_frequency_daily, SettingsFragment.intervalToStringRes(RotationInterval.DAILY))
+        assertEquals(R.string.wallpaper_frequency_weekly, SettingsFragment.intervalToStringRes(RotationInterval.WEEKLY))
+        assertEquals(R.string.wallpaper_frequency_never, SettingsFragment.intervalToStringRes(RotationInterval.NEVER))
     }
 }
