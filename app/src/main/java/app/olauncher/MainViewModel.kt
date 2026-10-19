@@ -67,7 +67,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     // val showRecentApps = SingleLiveEvent<Unit?>()
 
     fun selectedApp(appModel: AppModel, flag: Int) {
-        if (appModel is AppModel.PrivateSpaceHeader || appModel is AppModel.Result) return
+        if (appModel is AppModel.PrivateSpaceHeader || appModel is AppModel.Result || appModel is AppModel.RecentHeader) return
         val appPackage = when (appModel) {
             is AppModel.App -> appModel.appPackage
             is AppModel.PinnedShortcut -> appModel.appPackage
@@ -159,7 +159,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private fun saveHomeApp(appModel: AppModel, position: Int) {
         if (appModel.isArchived) return
         when (appModel) {
-            is AppModel.PrivateSpaceHeader, is AppModel.Result -> return
+            is AppModel.PrivateSpaceHeader, is AppModel.Result, is AppModel.RecentHeader -> return
             is AppModel.App -> {
                 when (position) {
                     1 -> {
@@ -325,7 +325,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun saveSwipeApp(appModel: AppModel, isLeft: Boolean) {
         when (appModel) {
-            is AppModel.PrivateSpaceHeader, is AppModel.Result -> return
+            is AppModel.PrivateSpaceHeader, is AppModel.Result, is AppModel.RecentHeader -> return
             is AppModel.App -> {
                 if (isLeft) {
                     prefs.appNameSwipeLeft = appModel.appLabel
@@ -438,9 +438,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
         try {
             launcher.startMainActivity(component, userHandle, null, null)
+            prefs.addRecentApp(packageName, component.className, userHandle.toString())
         } catch (e: SecurityException) {
             try {
                 launcher.startMainActivity(component, android.os.Process.myUserHandle(), null, null)
+                prefs.addRecentApp(packageName, component.className, android.os.Process.myUserHandle().toString())
             } catch (e: Exception) {
                 appContext.showToast(appContext.getString(R.string.unable_to_open_app))
             }

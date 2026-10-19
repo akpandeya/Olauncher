@@ -238,6 +238,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateDrawerBottomSearch()
         populateDrawerNewFirst()
         populateDrawerLetterStrip()
+        populateDrawerRecents()
         populateScreenTimeOnOff()
         populateDistractingApps()
         populatePauseBeforeApps()
@@ -358,6 +359,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             RuntimeSettingsRow(SettingsSections.KEY_DRAWER, binding.searchEngineLayout, binding.searchEngineTitle, R.id.searchEngine),
             RuntimeSettingsRow(SettingsSections.KEY_DRAWER, binding.drawerNewFirstLayout, binding.drawerNewFirstTitle, R.id.drawerNewFirst),
             RuntimeSettingsRow(SettingsSections.KEY_DRAWER, binding.drawerLetterStripLayout, binding.drawerLetterStripTitle, R.id.drawerLetterStrip),
+            RuntimeSettingsRow(SettingsSections.KEY_DRAWER, binding.drawerRecentsLayout, binding.drawerRecentsTitle, R.id.drawerRecents),
 
             // Wellbeing
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.distractingAppsLayout, binding.distractingAppsTitle, R.id.distractingApps),
@@ -610,6 +612,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.drawerBottomSearch, R.id.drawerBottomSearchTitle, R.id.drawerBottomSearchLayout -> toggleDrawerBottomSearch()
             R.id.drawerNewFirst, R.id.drawerNewFirstTitle, R.id.drawerNewFirstLayout -> toggleDrawerNewFirst()
             R.id.drawerLetterStrip, R.id.drawerLetterStripTitle, R.id.drawerLetterStripLayout -> toggleDrawerLetterStrip()
+            R.id.drawerRecents, R.id.drawerRecentsTitle, R.id.drawerRecentsLayout -> toggleDrawerRecents()
             R.id.searchEngine, R.id.searchEngineTitle, R.id.searchEngineLayout -> showSearchEngineMenu(binding.searchEngine)
             R.id.homeAppsNum -> showHomeAppsNumMenu(view)
             R.id.alignment -> showAlignmentMenu(view)
@@ -693,6 +696,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.drawerLetterStrip.setOnClickListener(this)
         binding.drawerLetterStripTitle.setOnClickListener(this)
         binding.drawerLetterStripLayout.setOnClickListener(this)
+        binding.drawerRecents.setOnClickListener(this)
+        binding.drawerRecentsTitle.setOnClickListener(this)
+        binding.drawerRecentsLayout.setOnClickListener(this)
         binding.searchEngine.setOnClickListener(this)
         binding.searchEngineTitle.setOnClickListener(this)
         binding.searchEngineLayout.setOnClickListener(this)
@@ -2461,6 +2467,16 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     private fun toggleDrawerLetterStrip() {
         prefs.drawerLetterStrip = !prefs.drawerLetterStrip
         populateDrawerLetterStrip()
+    }
+
+    private fun populateDrawerRecents() {
+        if (prefs.drawerRecents) binding.drawerRecents.text = getString(R.string.on)
+        else binding.drawerRecents.text = getString(R.string.off)
+    }
+
+    private fun toggleDrawerRecents() {
+        prefs.drawerRecents = !prefs.drawerRecents
+        populateDrawerRecents()
     }
 
     private fun updateHomeBottomAlignment() {

@@ -39,6 +39,7 @@ import app.olauncher.databinding.FragmentAppDrawerBinding
 import app.olauncher.helper.ArchivedAppsHelper
 import app.olauncher.helper.DrawerOrdering
 import app.olauncher.helper.DrawerScrollHelper
+import app.olauncher.helper.RecentApps
 import app.olauncher.helper.EnterPolicy
 import app.olauncher.helper.Haptics
 import app.olauncher.helper.LetterIndex
@@ -284,7 +285,7 @@ class AppDrawerFragment : BaseFragment() {
                         }
                     }
 
-                    is AppModel.PrivateSpaceHeader -> {}
+                    is AppModel.PrivateSpaceHeader, is AppModel.RecentHeader -> {}
                     else -> {
                         if (flag == Constants.FLAG_LAUNCH_APP || flag == Constants.FLAG_HIDDEN_APPS)
                             Haptics.tick(binding.root)
@@ -306,8 +307,7 @@ class AppDrawerFragment : BaseFragment() {
             },
             appDeleteListener = { appModel ->
                 when (appModel) {
-                    is AppModel.Result -> {}
-                    is AppModel.PrivateSpaceHeader -> {}
+                    is AppModel.Result, is AppModel.PrivateSpaceHeader, is AppModel.RecentHeader -> {}
                     is AppModel.PinnedShortcut ->
                         requireContext().deletePinnedShortcut(
                             packageName = appModel.appPackage,
@@ -336,12 +336,12 @@ class AppDrawerFragment : BaseFragment() {
                     requireContext().showToast("Hiding pinned shortcuts is not supported")
                     return@AppDrawerAdapter
                 }
-                if (appModel is AppModel.Result) {
+                if (appModel is AppModel.Result || appModel is AppModel.RecentHeader) {
                     return@AppDrawerAdapter
                 }
                 adapter.appFilteredList.removeAt(position)
                 adapter.notifyItemRemoved(position)
-                adapter.appsList.remove(appModel)
+                adapter.appsList.removeAll { it.appPackage == appModel.appPackage && it.user == appModel.user }
 
                 val newSet = mutableSetOf<String>()
                 newSet.addAll(prefs.hiddenApps)
@@ -383,6 +383,9 @@ class AppDrawerFragment : BaseFragment() {
             },
             context = requireContext(),
             bottomSearch = prefs.drawerBottomSearch,
+            drawerRecents = prefs.drawerRecents,
+            recentAppsProvider = { RecentApps.decode(prefs.recentApps) },
+            hiddenAppsProvider = { prefs.hiddenApps },
         )
 
         linearLayoutManager = object : LinearLayoutManager(requireContext()) {
@@ -531,6 +534,7 @@ class AppDrawerFragment : BaseFragment() {
         super.onStart()
         cachedIsCjkKeyboard = null
         adapter.bottomSearch = prefs.drawerBottomSearch
+        adapter.drawerRecents = prefs.drawerRecents
         setupLetterStripLayout()
         if (currentAppList != null) updateCombinedAppList()
         updateLetterStripVisibility()
@@ -599,7 +603,7 @@ class AppDrawerFragment : BaseFragment() {
 
         // Keep positions in the full adapter list: skip headers/results but remember their real index.
         val realIndices = ordered.indices.filter {
-            ordered[it] !is AppModel.PrivateSpaceHeader && ordered[it] !is AppModel.Result
+            ordered[it] !is AppModel.PrivateSpaceHeader && ordered[it] !is AppModel.Result && ordered[it] !is AppModel.RecentHeader
         }
         letterPosList = LetterIndex.build(realIndices.map { ordered[it].appLabel })
             .map { LetterPos(it.letter, realIndices[it.index]) }
@@ -664,11 +668,10 @@ class AppDrawerFragment : BaseFragment() {
         val totalCount = adapter.itemCount
         if (totalCount <= 0) return
 
-        val targetPosition = if (prefs.drawerBottomSearch) {
-            (totalCount - 1 - pos.index).coerceIn(0, totalCount - 1)
-        } else {
-            pos.index.coerceIn(0, totalCount - 1)
-        }
+        val targetPosition = adapter.getTargetPositionForOrderedIndex(
+            orderedIndex = pos.index,
+            orderedTotal = currentAppList?.size ?: (totalCount - 1)
+        )
 
         val rv = binding.recyclerView
         val offset = LetterIndex.scrollOffsetPx(

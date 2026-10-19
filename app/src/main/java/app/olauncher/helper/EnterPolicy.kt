@@ -22,7 +22,7 @@ object EnterPolicy {
             return Action.ExecuteResult(topItem)
         }
 
-        if (topItem != null && topItem !is AppModel.PrivateSpaceHeader) {
+        if (topItem != null && topItem !is AppModel.PrivateSpaceHeader && topItem !is AppModel.RecentHeader) {
             val score = topScore ?: AppMatcher.score(topItem.appLabel, query) ?: 0
             if (score >= AppMatcher.SCORE_SUBSTRING) {
                 return Action.LaunchApp(topItem)

@@ -122,6 +122,9 @@ object SettingsSections : List<SettingsSection> {
             R.id.drawerLetterStrip,
             R.id.drawerLetterStripLayout,
             R.id.drawerLetterStripTitle,
+            R.id.drawerRecents,
+            R.id.drawerRecentsLayout,
+            R.id.drawerRecentsTitle,
             R.id.searchEngine,
             R.id.searchEngineLayout,
             R.id.searchEngineTitle -> DRAWER

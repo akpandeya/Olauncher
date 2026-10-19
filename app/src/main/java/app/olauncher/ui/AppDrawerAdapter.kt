@@ -26,6 +26,7 @@ import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.databinding.AdapterAppDrawerBinding
 import app.olauncher.databinding.AdapterPrivateSpaceHeaderBinding
+import app.olauncher.databinding.AdapterRecentHeaderBinding
 import app.olauncher.helper.getColorFromAttr
 import app.olauncher.helper.hideKeyboard
 import app.olauncher.helper.isSystemApp
@@ -35,6 +36,8 @@ import app.olauncher.helper.ArchivedAppsHelper
 import app.olauncher.helper.Calc
 import app.olauncher.helper.DialMatch
 import app.olauncher.helper.DrawerOrdering
+import app.olauncher.helper.RecentApp
+import app.olauncher.helper.RecentApps
 
 class AppDrawerAdapter(
     private var flag: Int,
@@ -48,17 +51,21 @@ class AppDrawerAdapter(
     private val privateSpaceSettingsListener: () -> Unit = {},
     private val context: Context? = null,
     var bottomSearch: Boolean = false,
+    var drawerRecents: Boolean = true,
+    var recentAppsProvider: (() -> List<RecentApp>)? = null,
+    var hiddenAppsProvider: (() -> Set<String>)? = null,
 ) : ListAdapter<AppModel, RecyclerView.ViewHolder>(DIFF_CALLBACK), Filterable {
 
     companion object {
         const val VIEW_TYPE_APP = 0
         const val VIEW_TYPE_PRIVATE_HEADER = 1
         const val VIEW_TYPE_RESULT = 2
+        const val VIEW_TYPE_RECENT_HEADER = 3
 
         val DIFF_CALLBACK = object : DiffUtil.ItemCallback<AppModel>() {
             override fun areItemsTheSame(oldItem: AppModel, newItem: AppModel): Boolean = when {
                 oldItem is AppModel.App && newItem is AppModel.App ->
-                    oldItem.appPackage == newItem.appPackage && oldItem.user == newItem.user
+                    oldItem.appPackage == newItem.appPackage && oldItem.user == newItem.user && oldItem.isRecent == newItem.isRecent
 
                 oldItem is AppModel.PinnedShortcut && newItem is AppModel.PinnedShortcut ->
                     oldItem.identity == newItem.identity
@@ -67,6 +74,8 @@ class AppDrawerAdapter(
 
                 oldItem is AppModel.Result && newItem is AppModel.Result ->
                     oldItem.text == newItem.text && oldItem.action == newItem.action
+
+                oldItem is AppModel.RecentHeader && newItem is AppModel.RecentHeader -> true
 
                 else -> false
             }
@@ -110,6 +119,7 @@ class AppDrawerAdapter(
         return when (appFilteredList.getOrNull(position)) {
             is AppModel.PrivateSpaceHeader -> VIEW_TYPE_PRIVATE_HEADER
             is AppModel.Result -> VIEW_TYPE_RESULT
+            is AppModel.RecentHeader -> VIEW_TYPE_RECENT_HEADER
             else -> VIEW_TYPE_APP
         }
     }
@@ -129,6 +139,14 @@ class AppDrawerAdapter(
 
             VIEW_TYPE_RESULT -> ResultViewHolder(
                 AdapterAppDrawerBinding.inflate(
+                    LayoutInflater.from(parent.context),
+                    parent,
+                    false
+                )
+            )
+
+            VIEW_TYPE_RECENT_HEADER -> RecentHeaderViewHolder(
+                AdapterRecentHeaderBinding.inflate(
                     LayoutInflater.from(parent.context),
                     parent,
                     false
@@ -168,6 +186,15 @@ class AppDrawerAdapter(
                     }
                 }
 
+                is RecentHeaderViewHolder -> {
+                    if (appModel is AppModel.RecentHeader) {
+                        holder.bind(
+                            appLabelGravity,
+                            appModel,
+                        )
+                    }
+                }
+
                 is ViewHolder -> holder.bind(
                     flag,
                     appLabelGravity,
@@ -198,14 +225,39 @@ class AppDrawerAdapter(
 
                 val filterResults = FilterResults()
                 if (charSearch.isNullOrBlank()) {
-                    val blankItems = DrawerOrdering.forSearchPosition(appsList, bottomSearch).toMutableList()
+                    val recentAppsToDisplay = if (flag == Constants.FLAG_LAUNCH_APP && drawerRecents) {
+                        val recentDecoded = recentAppsProvider?.invoke() ?: emptyList()
+                        val hiddenApps = hiddenAppsProvider?.invoke() ?: emptySet()
+                        recentDecoded.mapNotNull { entry ->
+                            val matching = appsList.filterIsInstance<AppModel.App>().firstOrNull {
+                                it.appPackage == entry.packageName &&
+                                it.user.toString() == entry.user &&
+                                !it.isArchived &&
+                                it.appLabel.isNotBlank() &&
+                                !hiddenApps.contains(it.appPackage + "|" + it.user.toString())
+                            } ?: return@mapNotNull null
+                            matching.copy(isRecent = true)
+                        }.take(3)
+                    } else {
+                        emptyList()
+                    }
+
+                    val ctx = context ?: adapterContext
+                    val caption = ctx?.getString(R.string.recent) ?: "Recent"
+                    val blankItems = RecentApps.forEmptySearch(
+                        appsList = appsList,
+                        recentApps = recentAppsToDisplay,
+                        recentCaption = caption,
+                        bottomSearch = bottomSearch,
+                    ).toMutableList()
+
                     filterResults.values = FilterPayload(blankItems, emptyList())
                     return filterResults
                 }
 
                 val query = charSearch.toString()
                 val scoredApps = appsList.mapNotNull { app ->
-                    if (app is AppModel.PrivateSpaceHeader || app is AppModel.Result) return@mapNotNull null
+                    if (app is AppModel.PrivateSpaceHeader || app is AppModel.Result || app is AppModel.RecentHeader) return@mapNotNull null
                     val score = AppMatcher.score(app.appLabel, query) ?: return@mapNotNull null
                     app to score
                 }.sortedWith(
@@ -311,21 +363,54 @@ class AppDrawerAdapter(
 
     fun launchFirstInList() {
         val first = if (bottomSearch) {
-            appFilteredList.lastOrNull { it !is AppModel.PrivateSpaceHeader && it !is AppModel.Result }
+            appFilteredList.lastOrNull { it !is AppModel.PrivateSpaceHeader && it !is AppModel.Result && it !is AppModel.RecentHeader && it.appLabel.isNotBlank() }
         } else {
-            appFilteredList.firstOrNull { it !is AppModel.PrivateSpaceHeader && it !is AppModel.Result }
+            appFilteredList.firstOrNull { it !is AppModel.PrivateSpaceHeader && it !is AppModel.Result && it !is AppModel.RecentHeader && it.appLabel.isNotBlank() }
         }
         if (first != null) appClickListener(first)
     }
 
     fun getTopItem(): AppModel? =
-        if (bottomSearch) appFilteredList.lastOrNull() else appFilteredList.firstOrNull()
+        if (bottomSearch) {
+            appFilteredList.lastOrNull { it !is AppModel.RecentHeader && it.appLabel.isNotBlank() }
+        } else {
+            appFilteredList.firstOrNull { it !is AppModel.RecentHeader && it.appLabel.isNotBlank() }
+        }
+
+    fun getTargetPositionForOrderedIndex(orderedIndex: Int, orderedTotal: Int): Int {
+        if (itemCount <= 0) return 0
+        return if (bottomSearch) {
+            (orderedTotal - orderedIndex).coerceIn(0, itemCount - 1)
+        } else {
+            val hasRecents = appFilteredList.any { it is AppModel.RecentHeader }
+            val recentOffset = if (hasRecents) {
+                appFilteredList.indexOfFirst {
+                    it !is AppModel.RecentHeader && (it !is AppModel.App || !it.isRecent)
+                }
+            } else 0
+            val offset = if (recentOffset > 0) recentOffset else 0
+            (orderedIndex + offset).coerceIn(0, itemCount - 1)
+        }
+    }
 
     fun getTopScore(): Int? =
         appFilteredScores.firstOrNull()
 
     fun executeItem(appModel: AppModel) {
         appClickListener(appModel)
+    }
+
+    class RecentHeaderViewHolder(private val binding: AdapterRecentHeaderBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+        fun bind(
+            appLabelGravity: Int,
+            header: AppModel.RecentHeader,
+        ) = with(binding) {
+            recentCaption.gravity = appLabelGravity or Gravity.CENTER_VERTICAL
+            if (header.title.isNotEmpty()) {
+                recentCaption.text = header.title
+            }
+        }
     }
 
     class ResultViewHolder(private val binding: AdapterAppDrawerBinding) :

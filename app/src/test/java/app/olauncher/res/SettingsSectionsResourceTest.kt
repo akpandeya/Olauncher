@@ -250,6 +250,7 @@ class SettingsSectionsResourceTest {
             assertTrue(sectionIds[3].contains("searchEngineLayout"))
             assertTrue(sectionIds[3].contains("drawerNewFirstLayout"))
             assertTrue(sectionIds[3].contains("drawerLetterStripLayout"))
+            assertTrue(sectionIds[3].contains("drawerRecentsLayout"))
 
             // Section 4: Wellbeing
             assertTrue(sectionIds[4].contains("distractingAppsLayout"))
@@ -450,6 +451,9 @@ class SettingsSectionsResourceTest {
             "drawerNewFirst",
             "drawerNewFirstLayout",
             "drawerNewFirstTitle",
+            "drawerRecents",
+            "drawerRecentsLayout",
+            "drawerRecentsTitle",
             "drawerSection",
             "exportBackup",
             "exportBackupLayout",
