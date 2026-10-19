@@ -62,7 +62,7 @@ class PauseLayoutResourceTest {
     }
 
     @Test
-    fun `fragment_pause contains whyChoicesContainer and the three choices above Open`() {
+    fun `fragment_pause contains whyChoicesContainer and the three choices`() {
         val file = resolveFile("src/main/res/layout/fragment_pause.xml")
         val doc = parseXml(file)
         val ids = extractAllIds(doc)
@@ -116,5 +116,45 @@ class PauseLayoutResourceTest {
             }
         }
         assertEquals(3, foundCount)
+    }
+
+    @Test
+    fun `strings contain ask why subtitle`() {
+        assertEquals(
+            "Asks before Open. The wait and Not now do most of the work.",
+            loadStrings()["pause_ask_why_desc"],
+        )
+    }
+
+    @Test
+    fun `fragment_pause orders content then Not now then Open then why choices`() {
+        val doc = parseXml(resolveFile("src/main/res/layout/fragment_pause.xml"))
+        val order = listOf(
+            "appName", "usageStats", "notice", "wordReveal",
+            "btnNotNow", "btnOpenContainer", "whyChoicesContainer",
+        )
+        val all = doc.getElementsByTagName("*")
+        val positions = mutableMapOf<String, Int>()
+        val elements = mutableMapOf<String, Element>()
+        for (i in 0 until all.length) {
+            val e = all.item(i) as Element
+            val id = e.getAttribute("android:id").substringAfterLast("/")
+            if (id.isNotEmpty()) {
+                positions[id] = i
+                elements[id] = e
+            }
+        }
+        val idx = order.map { assertNotNull("missing $it", positions[it]); positions[it]!! }
+        assertEquals(idx.sorted(), idx)
+        assertTrue(positions.getValue("btnOpen") > positions.getValue("btnNotNow"))
+        assertTrue(positions.getValue("btnOpen") < positions.getValue("whyChoicesContainer"))
+
+        assertEquals("@style/TextLarge", elements.getValue("btnNotNow").getAttribute("style"))
+        assertEquals("@style/TextMedium", elements.getValue("btnOpen").getAttribute("style"))
+        assertEquals("0.7", elements.getValue("btnOpen").getAttribute("android:alpha"))
+        for (id in listOf("choiceReply", "choiceLookup", "choiceBored")) {
+            assertEquals("@style/TextSmall", elements.getValue(id).getAttribute("style"))
+        }
+        assertEquals("96dp", elements.getValue("pauseContent").getAttribute("android:paddingBottom"))
     }
 }
