@@ -241,4 +241,26 @@ class PhotoSetTest {
         assertEquals("p4", File(dir, "3.jpg").readText())
         assertFalse(File(dir, "4.jpg").exists())
     }
+
+    @Test
+    fun `applyRemoval does not overwrite a photo whose rename failed`() {
+        val dir = temporaryFolder.newFolder("wallpapers_no_overwrite")
+        File(dir, "0.jpg").writeText("p0")
+        // 1.jpg is still in place, as if its rename 1 -> 0 had failed
+        File(dir, "1.jpg").writeText("p1")
+        File(dir, "2.jpg").writeText("p2")
+        val plan = PhotoSet.RemovalPlan(
+            renames = listOf(Rename(from = 2, to = 1)),
+            removed = listOf(0),
+            newCount = 2,
+            newIndex = 0,
+            currentRemoved = true
+        )
+
+        val result = PhotoSet.applyRemoval(dir, plan)
+
+        assertFalse(result)
+        assertEquals("p1", File(dir, "1.jpg").readText())
+        assertEquals("p2", File(dir, "2.jpg").readText())
+    }
 }
