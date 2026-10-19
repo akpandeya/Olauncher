@@ -60,6 +60,7 @@ class AppDrawerAdapter(
     var appDistractingListener: ((AppModel) -> Unit)? = null,
     var distractingAppsProvider: (() -> Set<String>)? = null,
     var contactSourceProvider: (() -> ContactSource?)? = null,
+    var calendarRowsProvider: ((String) -> List<AppModel.Result>)? = null,
     var contactLongClickListener: ((AppModel.Result) -> Unit)? = null,
 ) : ListAdapter<AppModel, RecyclerView.ViewHolder>(DIFF_CALLBACK), Filterable {
 
@@ -314,6 +315,11 @@ class AppDrawerAdapter(
                         } catch (_: Exception) {
                             // Permission revoked or provider failure: no contact rows.
                         }
+                    }
+                    try {
+                        calendarRowsProvider?.invoke(query)?.let { resultRows.addAll(it) }
+                    } catch (_: Exception) {
+                        // Permission revoked or provider failure: no event rows.
                     }
                 }
 
