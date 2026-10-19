@@ -4,7 +4,6 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -12,7 +11,6 @@ import app.olauncher.MainViewModel
 import app.olauncher.R
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
-import app.olauncher.data.Prefs
 import app.olauncher.databinding.CardHeldBinding
 import app.olauncher.databinding.ItemHeldBinding
 import app.olauncher.quiet.HeldItem
@@ -33,9 +31,8 @@ data class HeldAppSummary(
 
 object HeldCardLogic {
 
-    fun isAvailable(quietEnabled: Boolean, accessGranted: Boolean): Boolean {
-        return quietEnabled && accessGranted
-    }
+    // Held items stay visible even if quiet mode is off or access was revoked.
+    fun isAvailable(hasHeldItems: Boolean): Boolean = hasHeldItems
 
     fun groupAndSort(
         items: List<HeldItem>,
@@ -99,9 +96,6 @@ object HeldCard : TodayCard {
     override val defaultEnabled: Boolean = true
 
     var storeProvider: ((Context) -> HeldStore)? = null
-    var accessGrantedSupplier: (Context) -> Boolean = { context ->
-        NotificationManagerCompat.getEnabledListenerPackages(context).contains(context.packageName)
-    }
     var nowSupplier: () -> Long = { System.currentTimeMillis() }
     var zoneSupplier: () -> ZoneId = { ZoneId.systemDefault() }
     var appOpener: ((Fragment, String, String) -> Unit)? = null
@@ -114,8 +108,9 @@ object HeldCard : TodayCard {
     }
 
     override fun isAvailable(context: Context): Boolean {
-        val prefs = Prefs(context)
-        return HeldCardLogic.isAvailable(prefs.quietEnabled, accessGrantedSupplier(context))
+        val now = nowSupplier()
+        val hasHeldItems = HeldCardLogic.groupAndSort(getStore(context).all(), now).isNotEmpty()
+        return HeldCardLogic.isAvailable(hasHeldItems)
     }
 
     override fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View {
