@@ -23,14 +23,11 @@ class WallpaperRotateWorker(
         if (count <= 0) return@withContext Result.success()
 
         val today = PhotoWallpaper.today()
-        val nextIndex = Rotation.next(
-            prefs.photoWallpaperIndex,
-            count,
-            today,
-            prefs.photoWallpaperLastDay,
-        )
-        if (nextIndex != null) {
-            prefs.photoWallpaperIndex = nextIndex
+        val now = System.currentTimeMillis()
+        val lastChanged = Rotation.resolveLastChanged(0L, prefs.photoWallpaperLastDay, today, now)
+        val step = Rotation.step(prefs.photoWallpaperIndex, count, now, lastChanged, RotationInterval.DAILY)
+        if (step.nextIndex != null) {
+            prefs.photoWallpaperIndex = step.nextIndex
             prefs.photoWallpaperLastDay = today
         }
 
