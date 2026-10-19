@@ -7,7 +7,7 @@ data class Hint(val gesture: Gesture, val position: Int)
 /** Teaches one gesture per day, in a fixed order, skipping gestures that are off. */
 object GestureHints {
 
-    /** Stored as the index once the sequence is over or the user dismissed a hint. */
+    /** An index past every hint: the sequence is over. */
     const val DONE = Int.MAX_VALUE
 
     val order: List<Gesture> = Gesture.values().toList()

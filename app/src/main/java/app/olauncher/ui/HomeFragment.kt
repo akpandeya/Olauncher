@@ -357,8 +357,8 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             Gesture.DOUBLE_TAP -> getString(R.string.hint_double_tap_lock)
             Gesture.LONG_PRESS -> getString(R.string.hint_long_press_settings)
         }
+        // The index already moved past this hint, so a tap only hides it; the next one comes tomorrow.
         binding.firstRunTips.setOnClickListener {
-            prefs.gestureHintIndex = GestureHints.DONE
             binding.firstRunTips.visibility = View.GONE
         }
         binding.firstRunTips.visibility = View.VISIBLE
@@ -368,10 +368,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         if (prefs.firstSettingsOpen) {
             binding.firstRunTips.visibility = View.VISIBLE
             binding.setDefaultLauncher.visibility = View.GONE
-        } else {
-            binding.firstRunTips.visibility = View.GONE
-            showGestureHint()
-        }
+        } else binding.firstRunTips.visibility = View.GONE
 
         viewModel.refreshHome.observe(viewLifecycleOwner) {
             populateHomeScreen(it)
@@ -381,7 +378,11 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             // stops applying it while Thumbline is not the default launcher.
             setHomeAlignment()
             if (prefs.firstSettingsOpen) return@Observer
-            binding.setDefaultLauncher.isVisible = it.not() && prefs.hideSetDefaultLauncher.not()
+            val showLauncherPrompt = it.not() && prefs.hideSetDefaultLauncher.not()
+            binding.setDefaultLauncher.isVisible = showLauncherPrompt
+            // The gesture hint shares the prompt's spot at the bottom; the prompt wins.
+            if (showLauncherPrompt) binding.firstRunTips.visibility = View.GONE
+            else showGestureHint()
         })
         viewModel.homeAppAlignment.observe(viewLifecycleOwner) {
             setHomeAlignment(it)
@@ -1437,6 +1438,8 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     }
 
     override fun onDestroyView() {
+        originalShadows.clear()
+        originalShadowColors.clear()
         unregisterTimeTickReceiver()
         unregisterBatteryReceiver()
         weatherPrefsListener?.let {
