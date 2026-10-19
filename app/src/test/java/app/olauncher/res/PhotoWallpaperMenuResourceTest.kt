@@ -62,14 +62,49 @@ class PhotoWallpaperMenuResourceTest {
     }
 
     @Test
+    fun `remove photos strings are defined in main strings and not in other locales`() {
+        val defaultStringsFile = resolveFile("src/main/res/values/strings.xml")
+        val defaultStrings = loadStrings(defaultStringsFile)
+        assertEquals("Remove photos", defaultStrings["remove_photos"])
+        assertEquals("Photo %d", defaultStrings["photo_label"])
+        assertEquals("Photo %d (on screen)", defaultStrings["photo_label_current"])
+        assertEquals("Remove", defaultStrings["remove"])
+        assertEquals("Could not remove the photos", defaultStrings["wallpaper_photos_remove_failed"])
+
+        val resDir = resolveDir("src/main/res")
+        val otherLocaleFiles = resDir.listFiles { dir ->
+            dir.isDirectory && dir.name.startsWith("values-")
+        }?.mapNotNull { dir ->
+            val stringsFile = File(dir, "strings.xml")
+            if (stringsFile.exists()) stringsFile else null
+        }.orEmpty()
+
+        assertTrue("Expected other locale directories", otherLocaleFiles.isNotEmpty())
+        val checkKeys = listOf(
+            "remove_photos",
+            "photo_label",
+            "photo_label_current",
+            "remove",
+            "wallpaper_photos_remove_failed",
+        )
+        for (file in otherLocaleFiles) {
+            val localizedStrings = loadStrings(file)
+            for (key in checkKeys) {
+                assertNull("$key should not be defined in ${file.parentFile?.name}", localizedStrings[key])
+            }
+        }
+    }
+
+    @Test
     fun `photo wallpaper menu has expected items and order`() {
         val menuFile = resolveFile("src/main/res/menu/photo_wallpaper.xml")
         val doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(menuFile)
         val items = doc.getElementsByTagName("item")
-        assertEquals(5, items.length)
+        assertEquals(6, items.length)
 
         val expected = listOf(
             Pair("@+id/photoWallpaperAdd", "@string/add_photos"),
+            Pair("@+id/photoWallpaperRemove", "@string/remove_photos"),
             Pair("@+id/photoWallpaperChange", "@string/change_photos"),
             Pair("@+id/photoWallpaperTarget", "@string/set_on_home"),
             Pair("@+id/photoWallpaperNext", "@string/next_photo_now"),
