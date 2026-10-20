@@ -241,7 +241,9 @@ class AppDrawerAdapter(
                 val queryStr = charSearch?.toString().orEmpty()
                 searchQuery = queryStr
                 isBangSearch = charSearch?.startsWith("!") ?: false
-                autoLaunch = allowAutoLaunch && (charSearch?.startsWith(" ")?.not() ?: true)
+                autoLaunch = allowAutoLaunch
+                    && (charSearch?.startsWith(" ")?.not() ?: true)
+                    && (charSearch?.trimStart()?.startsWith(":")?.not() ?: true)
 
                 val filterResults = FilterResults()
                 if (charSearch.isNullOrBlank()) {
