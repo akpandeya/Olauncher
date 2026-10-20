@@ -155,18 +155,18 @@ internal fun HomeFragment.getShortcutSwipeTouchListener(context: Context, view: 
 }
 
 internal fun HomeFragment.onHomeSwipeUp() {
-    Haptics.tick(binding.root)
+    Haptics.perform(binding.root, Haptics.Kind.GESTURE)
     showAppList(Constants.FLAG_LAUNCH_APP)
 }
 
 internal fun HomeFragment.onHomeSwipeDown(context: Context = requireContext()) {
-    Haptics.tick(binding.root)
+    Haptics.perform(binding.root, Haptics.Kind.GESTURE)
     expandNotificationDrawer(context)
 }
 
 internal fun HomeFragment.openSwipeRightApp() {
     if (!prefs.swipeRightEnabled) return
-    Haptics.tick(binding.root)
+    Haptics.perform(binding.root, Haptics.Kind.GESTURE)
     if (prefs.swipeRightAction == Prefs.SWIPE_RIGHT_ACTION_TODAY) {
         try {
             findNavController().navigate(R.id.action_mainFragment_to_todayFragment)
@@ -188,7 +188,7 @@ internal fun HomeFragment.openSwipeRightApp() {
 
 internal fun HomeFragment.openSwipeLeftApp() {
     if (!prefs.swipeLeftEnabled) return
-    Haptics.tick(binding.root)
+    Haptics.perform(binding.root, Haptics.Kind.GESTURE)
     launchAppOrShortcut(
         appName = prefs.appNameSwipeLeft,
         packageName = prefs.appPackageSwipeLeft,
