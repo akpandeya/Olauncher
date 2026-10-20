@@ -3,12 +3,17 @@ package app.olauncher.helper
 import android.content.ComponentName
 import android.content.Context
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.media.MediaMetadata
 import android.media.session.MediaController
 import android.media.session.MediaSessionManager
 import android.media.session.PlaybackState
 import androidx.palette.graphics.Palette
 import app.olauncher.quiet.QuietListenerService
+import java.net.HttpURLConnection
+import java.net.URL
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 
 /** Transport state of a media session, reduced to what the picker needs. */
 enum class Transport { PLAYING, PAUSED, OTHER }
@@ -67,6 +72,12 @@ class NowPlaying(private val context: Context, private val onChange: () -> Unit)
     private val lastPlayingMs = HashMap<String, Long>()
     private val playingPackages = HashSet<String>()
 
+    /** Artwork fetched from a URL, keyed by URL. A null value means the fetch failed. Guarded by this. */
+    private val artworkCache = object : LinkedHashMap<String, Bitmap?>(8, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Bitmap?>?) = size > ARTWORK_CACHE_SIZE
+    }
+    private val artworkPending = HashSet<String>()
+
     private val sessionsListener = MediaSessionManager.OnActiveSessionsChangedListener { controllers ->
         watch(controllers.orEmpty())
         onChange()
@@ -107,6 +118,11 @@ class NowPlaying(private val context: Context, private val onChange: () -> Unit)
             val transport = transportOf(state?.state)
             noteTransport(controller.packageName, transport, now)
             val metadata = controller.metadata
+            val artworkUrl = MusicPulse.fetchableArtworkUri(
+                metadata?.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI),
+                metadata?.getString(MediaMetadata.METADATA_KEY_ART_URI),
+                metadata?.getString(MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI),
+            )
             MediaSession(
                 packageName = controller.packageName,
                 transport = transport,
@@ -114,7 +130,9 @@ class NowPlaying(private val context: Context, private val onChange: () -> Unit)
                 artist = metadata?.getString(MediaMetadata.METADATA_KEY_ARTIST)
                     ?: metadata?.getString(MediaMetadata.METADATA_KEY_ALBUM_ARTIST),
                 artwork = metadata?.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART)
-                    ?: metadata?.getBitmap(MediaMetadata.METADATA_KEY_ART),
+                    ?: metadata?.getBitmap(MediaMetadata.METADATA_KEY_ART)
+                    ?: metadata?.getBitmap(MediaMetadata.METADATA_KEY_DISPLAY_ICON)
+                    ?: artworkFromUrl(artworkUrl),
                 positionMs = state?.position ?: 0L,
                 positionAtMs = state?.lastPositionUpdateTime ?: 0L,
                 durationMs = metadata?.getLong(MediaMetadata.METADATA_KEY_DURATION) ?: 0L,
@@ -138,7 +156,7 @@ class NowPlaying(private val context: Context, private val onChange: () -> Unit)
         val bitmap = media.artwork
         val color = if (bitmap == null) null else {
             try {
-                MusicPulse.glowColor(swatchesOf(bitmap))
+                MusicPulse.glowColor(swatchesOf(bitmap.toSoftwareBitmap()))
             } catch (_: Exception) {
                 // A recycled or unreadable bitmap just means no glow for this track.
                 null
@@ -147,6 +165,52 @@ class NowPlaying(private val context: Context, private val onChange: () -> Unit)
         glowKey = key
         glowCached = color
         return color
+    }
+
+    /** Palette cannot read hardware bitmaps, so they are copied to a normal one first. */
+    private fun Bitmap.toSoftwareBitmap(): Bitmap =
+        if (config == Bitmap.Config.HARDWARE) copy(Bitmap.Config.ARGB_8888, false) else this
+
+    /**
+     * Artwork bitmap for [url], fetched once in the background. Returns null until the fetch
+     * finishes; then [onChange] runs so the glow appears without waiting for the next tick.
+     */
+    private fun artworkFromUrl(url: String?): Bitmap? {
+        if (url == null) return null
+        synchronized(this) {
+            if (artworkCache.containsKey(url)) return artworkCache[url]
+            if (!artworkPending.add(url)) return null
+        }
+        artworkExecutor.execute {
+            val bitmap = fetchBitmap(url)
+            synchronized(this) {
+                artworkPending.remove(url)
+                artworkCache[url] = bitmap
+            }
+            onChange()
+        }
+        return null
+    }
+
+    private fun fetchBitmap(url: String): Bitmap? {
+        val connection = try {
+            URL(url).openConnection() as HttpURLConnection
+        } catch (_: Exception) {
+            return null
+        }
+        return try {
+            connection.connectTimeout = ARTWORK_TIMEOUT_MS
+            connection.readTimeout = ARTWORK_TIMEOUT_MS
+            val options = BitmapFactory.Options().apply {
+                inSampleSize = ARTWORK_SAMPLE_SIZE
+                inPreferredConfig = Bitmap.Config.ARGB_8888
+            }
+            connection.inputStream.use { BitmapFactory.decodeStream(it, null, options) }
+        } catch (_: Exception) {
+            null
+        } finally {
+            connection.disconnect()
+        }
     }
 
     private fun swatchesOf(bitmap: Bitmap): List<SwatchColor> =
@@ -188,6 +252,17 @@ class NowPlaying(private val context: Context, private val onChange: () -> Unit)
             lastPlayingMs[packageName] = now
         } else if (playingPackages.remove(packageName)) {
             lastPlayingMs[packageName] = now
+        }
+    }
+
+    companion object {
+        private const val ARTWORK_CACHE_SIZE = 8
+        private const val ARTWORK_TIMEOUT_MS = 5_000
+        private const val ARTWORK_SAMPLE_SIZE = 2
+
+        /** One background thread for artwork downloads, shared by every instance. */
+        private val artworkExecutor: ExecutorService = Executors.newSingleThreadExecutor { runnable ->
+            Thread(runnable, "thumbline-artwork").apply { isDaemon = true }
         }
     }
 

@@ -56,6 +56,19 @@ object MusicPulse {
         return (position.toFloat() / durationMs).coerceIn(0f, 1f)
     }
 
+    /** Only web artwork is fetched. A session can name any URI, and content:// or file:// ones are not for the launcher. */
+    fun isFetchableArtwork(uri: String?): Boolean {
+        val trimmed = uri?.trim().orEmpty()
+        return trimmed.startsWith("https://", ignoreCase = true) || trimmed.startsWith("http://", ignoreCase = true)
+    }
+
+    /**
+     * First fetchable artwork URI in preference order (album art, art, display icon), trimmed.
+     * Players such as YouTube Music often send artwork only as a URI, not as a bitmap.
+     */
+    fun fetchableArtworkUri(vararg candidates: String?): String? =
+        candidates.map { it?.trim() }.firstOrNull { isFetchableArtwork(it) }
+
     /**
      * The glow colour: the most populous swatch that is saturated and not too dark or light.
      * Falls back to a plain grey swatch in the same lightness range. Null when none fit.

@@ -1,7 +1,9 @@
 package app.olauncher.helper
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class MusicPulseTest {
@@ -90,5 +92,30 @@ class MusicPulseTest {
         assertNull(MusicPulse.glowColor(emptyList()))
         val black = SwatchColor(0xFF000000.toInt(), population = 10, saturation = 0f, lightness = 0f)
         assertNull(MusicPulse.glowColor(listOf(black)))
+    }
+
+    @Test
+    fun onlyWebArtworkIsFetchable() {
+        assertTrue(MusicPulse.isFetchableArtwork("https://lh3.googleusercontent.com/art=w544"))
+        assertTrue(MusicPulse.isFetchableArtwork("HTTP://example.com/a.jpg"))
+        assertFalse(MusicPulse.isFetchableArtwork("content://media/external/images/1"))
+        assertFalse(MusicPulse.isFetchableArtwork("file:///sdcard/a.jpg"))
+        assertFalse(MusicPulse.isFetchableArtwork(""))
+        assertFalse(MusicPulse.isFetchableArtwork(null))
+    }
+
+    @Test
+    fun artworkUriTakesFirstFetchableCandidate() {
+        // Album art is a content URI here, so the web art URI after it is used.
+        val uri = MusicPulse.fetchableArtworkUri(
+            "content://media/1", "  https://yt.example/art.jpg  ", "https://yt.example/icon.jpg",
+        )
+        assertEquals("https://yt.example/art.jpg", uri)
+    }
+
+    @Test
+    fun artworkUriIsNullWhenNoCandidateIsWeb() {
+        assertNull(MusicPulse.fetchableArtworkUri(null, "", "content://media/2"))
+        assertNull(MusicPulse.fetchableArtworkUri())
     }
 }
