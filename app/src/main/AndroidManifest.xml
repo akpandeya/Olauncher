@@ -98,6 +98,19 @@
             </intent-filter>
         </activity>
 
+        <activity-alias
+            android:name=".helper.WordShareAlias"
+            android:enabled="false"
+            android:exported="true"
+            android:label="@string/save_word"
+            android:targetActivity=".helper.WordCaptureActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity-alias>
+
         <activity
             android:name=".helper.FakeHomeActivity"
             android:enabled="false"
