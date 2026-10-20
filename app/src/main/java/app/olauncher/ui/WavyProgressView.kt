@@ -10,8 +10,9 @@ import android.view.View
 import app.olauncher.helper.MusicPulse
 
 /**
- * Material 3 style wavy progress line. The played part is a sine wave, and a semi-opaque straight
- * track runs across the full width. Both have a thin dark outline so they stay visible on light
+ * Material 3 style wavy progress line. The played part is a sine wave. A semi-opaque straight track
+ * covers the unplayed part and fades out early in the song (see [MusicPulse.waveTrackAlpha]), so
+ * after that only the played wave shows. Both have a thin dark outline so they stay visible on light
  * wallpapers. The wave only moves while [setRunning] is true; stopped, it keeps its last phase
  * and draws nothing new.
  */
@@ -67,6 +68,7 @@ class WavyProgressView @JvmOverloads constructor(
         val clamped = fraction.coerceIn(0f, 1f)
         if (clamped == progress) return
         progress = clamped
+        updateTrackColors()
         invalidate()
     }
 
@@ -74,10 +76,14 @@ class WavyProgressView @JvmOverloads constructor(
         if (argb == lineColor) return
         lineColor = argb
         wavePaint.color = argb
-        trackPaint.color = MusicPulse.waveTrackColor(argb)
         waveOutlinePaint.color = MusicPulse.waveOutlineColor(wavePaint.color)
-        trackOutlinePaint.color = MusicPulse.waveOutlineColor(trackPaint.color)
+        updateTrackColors()
         invalidate()
+    }
+
+    private fun updateTrackColors() {
+        trackPaint.color = MusicPulse.waveTrackColor(lineColor, progress)
+        trackOutlinePaint.color = MusicPulse.waveOutlineColor(trackPaint.color)
     }
 
     /** Starts or stops the wave motion. Call with false whenever Home is hidden or music stops. */
@@ -98,9 +104,12 @@ class WavyProgressView @JvmOverloads constructor(
         val end = width - half
         if (end <= start) return
         val centreY = height / 2f
-        canvas.drawLine(start, centreY, end, centreY, trackOutlinePaint)
-        canvas.drawLine(start, centreY, end, centreY, trackPaint)
         val playedEnd = start + (end - start) * progress
+        // Only the unplayed part gets the straight track, and only while it has not faded out.
+        if (trackPaint.alpha > 0 && playedEnd < end) {
+            canvas.drawLine(playedEnd, centreY, end, centreY, trackOutlinePaint)
+            canvas.drawLine(playedEnd, centreY, end, centreY, trackPaint)
+        }
         if (playedEnd <= start) return
         val phase = MusicPulse.wavePhase(elapsedMs)
         wavePath.rewind()

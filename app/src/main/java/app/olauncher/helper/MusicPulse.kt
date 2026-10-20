@@ -212,11 +212,83 @@ object MusicPulse {
         return amplitude * kotlin.math.sin(2.0 * Math.PI * (x / wavelength - phase)).toFloat()
     }
 
-    /** Colour of the progress line: the glow colour shown now, or the now-playing text colour without a glow. */
-    fun progressLineColor(glowColor: Int?, textColor: Int): Int = glowColor ?: textColor
+    /** Contrast the progress line needs against the wallpaper; the WCAG minimum for graphics. */
+    const val LINE_MIN_CONTRAST = 3f
 
-    /** Track colour: [argb] with its alpha scaled by [WAVE_TRACK_ALPHA] out of 255. */
-    fun waveTrackColor(argb: Int): Int = (scaledAlpha(argb, WAVE_TRACK_ALPHA) shl 24) or (argb and 0x00FFFFFF)
+    /** Step used when mixing a too-faint album colour towards the text colour. */
+    private const val LINE_MIX_STEP = 0.05f
+
+    /** WCAG relative luminance of [argb], 0 (black) to 1 (white). Alpha is ignored. */
+    fun relativeLuminance(argb: Int): Float {
+        fun channel(c: Int): Double {
+            val v = c / 255.0
+            return if (v <= 0.03928) v / 12.92 else Math.pow((v + 0.055) / 1.055, 2.4)
+        }
+        val r = channel((argb shr 16) and 0xFF)
+        val g = channel((argb shr 8) and 0xFF)
+        val b = channel(argb and 0xFF)
+        return (0.2126 * r + 0.7152 * g + 0.0722 * b).toFloat()
+    }
+
+    /** WCAG contrast ratio of two colours, 1 to 21. */
+    fun contrastRatio(a: Int, b: Int): Float {
+        val la = relativeLuminance(a)
+        val lb = relativeLuminance(b)
+        return (maxOf(la, lb) + 0.05f) / (minOf(la, lb) + 0.05f)
+    }
+
+    /**
+     * Wallpaper colour the line is judged against. The now-playing text is already chosen to read on
+     * the wallpaper, so light text means a dark wallpaper (black) and dark text a light one (white).
+     */
+    fun lineBackground(textColor: Int): Int =
+        if (relativeLuminance(textColor) > 0.5f) 0xFF000000.toInt() else 0xFFFFFFFF.toInt()
+
+    /** Opaque mix of [from] towards [to]; [t] 0 gives [from], 1 gives [to]. */
+    fun mixColor(from: Int, to: Int, t: Float): Int {
+        val k = t.coerceIn(0f, 1f)
+        fun ch(shift: Int): Int {
+            val a = (from shr shift) and 0xFF
+            val b = (to shr shift) and 0xFF
+            return Math.round(a + (b - a) * k) and 0xFF
+        }
+        return (0xFF shl 24) or (ch(16) shl 16) or (ch(8) shl 8) or ch(0)
+    }
+
+    /**
+     * Colour of the progress line. Of the album colours, the one with the best contrast against the
+     * wallpaper ([lineBackground]) wins. If even that is below [LINE_MIN_CONTRAST], it is mixed towards
+     * the now-playing text colour just enough to reach it. With no album colour, the text colour is used.
+     * The result is one steady colour per track; the glow keeps fading between album colours on its own.
+     */
+    fun progressLineColor(albumColors: List<Int>, textColor: Int): Int {
+        if (albumColors.isEmpty()) return textColor
+        val background = lineBackground(textColor)
+        val best = albumColors.maxBy { contrastRatio(it, background) } or (0xFF shl 24)
+        var t = 0f
+        var color = best
+        while (contrastRatio(color, background) < LINE_MIN_CONTRAST && t < 1f) {
+            t = (t + LINE_MIX_STEP).coerceAtMost(1f)
+            color = mixColor(best, textColor, t)
+        }
+        return color
+    }
+
+    /** Song fraction over which the straight unplayed track fades out. After it, only the played wave shows. */
+    const val WAVE_TRACK_FADE_END = 0.1f
+
+    /**
+     * Alpha (0 to 255) of the straight unplayed track at [progress]: [WAVE_TRACK_ALPHA] at the start,
+     * falling evenly to 0 at [WAVE_TRACK_FADE_END], then hidden for the rest of the song.
+     */
+    fun waveTrackAlpha(progress: Float): Int {
+        val left = 1f - progress.coerceIn(0f, 1f) / WAVE_TRACK_FADE_END
+        return Math.round(WAVE_TRACK_ALPHA * left.coerceIn(0f, 1f))
+    }
+
+    /** Track colour at [progress]: [argb] with its alpha scaled by [waveTrackAlpha] out of 255. */
+    fun waveTrackColor(argb: Int, progress: Float = 0f): Int =
+        (scaledAlpha(argb, waveTrackAlpha(progress)) shl 24) or (argb and 0x00FFFFFF)
 
     /**
      * Dark outline drawn under a stroke of colour [argb]: black at [WAVE_OUTLINE_ALPHA] out of 255,

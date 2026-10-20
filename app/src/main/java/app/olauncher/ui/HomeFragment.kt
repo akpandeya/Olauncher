@@ -144,8 +144,6 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     private var glowShownColors: List<Int> = emptyList()
     private var glowColorIndex = 0
     private var glowColorAnimator: ValueAnimator? = null
-    /** Glow colour drawn now, including mid-fade; the progress line follows it. Null without a glow. */
-    private var glowCurrentColor: Int? = null
     private var glowRotating = false
     private val glowRotationStep = Runnable { fadeToNextGlowColor() }
     private var glowShownStrength: Int? = null
@@ -1690,7 +1688,6 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             glowShownColors = colors
             glowShownStrength = strength
             glowColorIndex = 0
-            glowCurrentColor = glow
             binding.musicGlow.background = glow?.let { glowDrawable(it, strength) }
         }
         binding.musicGlow.isVisible = glow != null
@@ -1706,9 +1703,9 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         )
         binding.mediaProgress.isVisible = fraction != null
         if (fraction != null) {
-            // Follow the glow colour; without a glow, follow the now-playing text so it tracks the text settings.
+            // One steady album colour picked for contrast on the wallpaper; the text colour without a glow.
             binding.mediaProgress.setLineColor(
-                MusicPulse.progressLineColor(glowCurrentColor, binding.contextLine.currentTextColor)
+                MusicPulse.progressLineColor(colors, binding.contextLine.currentTextColor)
             )
             binding.mediaProgress.setProgress(fraction)
         }
@@ -1761,8 +1758,6 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             addUpdateListener {
                 val color = it.animatedValue as Int
                 drawable.setColors(glowGradient(color, strength))
-                glowCurrentColor = color
-                _binding?.mediaProgress?.setLineColor(color)
             }
             start()
         }
@@ -1838,7 +1833,6 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         stopGlowRotation()
         glowShownColors = emptyList()
         glowShownStrength = null
-        glowCurrentColor = null
         _binding?.root?.removeCallbacks(musicTick)
         _binding?.mediaProgress?.setRunning(false)
         originalShadows.clear()
