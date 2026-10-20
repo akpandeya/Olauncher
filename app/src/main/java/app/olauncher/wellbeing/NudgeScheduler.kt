@@ -171,7 +171,7 @@ class NudgeWorker(
                 )
                 else -> null
             }
-            if (text != null) {
+            if (text != null && !shouldSkipWalk(prefs, type, interval)) {
                 val doneAction = androidx.core.app.NotificationCompat.Action.Builder(
                     0,
                     applicationContext.getString(
@@ -186,5 +186,23 @@ class NudgeWorker(
             NudgeScheduler.schedule(applicationContext, type)
         }
         Result.success()
+    }
+
+    /** True when Health Connect shows recent steps or exercise. Any read problem means post. */
+    private suspend fun shouldSkipWalk(prefs: Prefs, type: String, intervalMin: Int): Boolean {
+        if (type != Nudges.WALK || !prefs.healthConnectEnabled) return false
+        return try {
+            val now = java.time.Instant.now()
+            val reading = HealthRepository(applicationContext, { prefs.healthConnectEnabled })
+                .readWalkWindow(now, intervalMin) ?: return false
+            WalkNudgePolicy.shouldSkip(
+                steps = reading.steps,
+                exerciseSessions = reading.exercise,
+                windowStartMs = now.minusSeconds(intervalMin * 60L).toEpochMilli(),
+                windowEndMs = now.toEpochMilli(),
+            )
+        } catch (_: Exception) {
+            false
+        }
     }
 }
