@@ -55,4 +55,19 @@ class WordSuggestTest {
         val both = WordSuggest.suggestForItems(saved, listOf("hermwn", "Mull"))
         assertEquals(mapOf("hermwn" to listOf("Hermann"), "Mull" to listOf("Müll")), both)
     }
+
+    @Test
+    fun `mergeOptions puts offline first, dedupes, drops typed and caps at three`() {
+        val merged = WordSuggest.mergeOptions(
+            "hermwn",
+            listOf("Hermann", "Hermes"),
+            listOf("hermann", "Hermwn", "Herman", "Hermine")
+        )
+        assertEquals(listOf("Hermann", "Hermes", "Herman"), merged)
+    }
+
+    @Test
+    fun `mergeOptions falls back to online when nothing is saved`() {
+        assertEquals(listOf("Hermann"), WordSuggest.mergeOptions("hermwn", emptyList(), listOf("Hermann")))
+    }
 }

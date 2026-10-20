@@ -42,6 +42,18 @@ object WordSuggest {
         return result
     }
 
+    /** Offline [local] suggestions first, then [online] ones; drops [typed] and case-insensitive repeats, capped at [MAX_SUGGESTIONS]. */
+    fun mergeOptions(typed: String, local: List<String>, online: List<String>): List<String> {
+        val seen = HashSet<String>()
+        seen.add(typed.trim().lowercase())
+        val options = ArrayList<String>()
+        for (candidate in local + online) {
+            if (options.size >= MAX_SUGGESTIONS) break
+            if (seen.add(candidate.trim().lowercase())) options.add(candidate)
+        }
+        return options
+    }
+
     fun fold(text: String): String {
         val sb = StringBuilder()
         for (c in text.trim().lowercase()) {
