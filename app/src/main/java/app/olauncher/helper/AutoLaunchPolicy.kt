@@ -22,6 +22,7 @@ object AutoLaunchPolicy {
             if (query.startsWith("!")) return false
             val trimmed = query.trim()
             if (trimmed.isEmpty()) return false
+            if (trimmed.startsWith(":")) return false
             val firstChar = trimmed[0]
             if (firstChar.isDigit() || firstChar in CURRENCY_SYMBOLS) return false
         }
