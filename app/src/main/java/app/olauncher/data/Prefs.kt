@@ -153,6 +153,7 @@ class Prefs(context: Context) : PauseLogStorage {
     private val HOME_SHORTCUTS = "HOME_SHORTCUTS"
     private val HOME_INFO_COMBINED = "HOME_INFO_COMBINED"
     private val HOME_CONTEXT_LINE = "HOME_CONTEXT_LINE"
+    private val HOME_NEXT_EVENT = "HOME_NEXT_EVENT"
     private val INTENTION_TEXT = "INTENTION_TEXT"
     private val INTENTION_DAY = "INTENTION_DAY"
     private val INTENTION_ON_HOME = "INTENTION_ON_HOME"
@@ -414,6 +415,10 @@ class Prefs(context: Context) : PauseLogStorage {
     var homeContextLine: Boolean
         get() = prefs.getBoolean(HOME_CONTEXT_LINE, false)
         set(value) = prefs.edit { putBoolean(HOME_CONTEXT_LINE, value).apply() }
+
+    var homeNextEvent: Boolean
+        get() = prefs.getBoolean(HOME_NEXT_EVENT, true)
+        set(value) = prefs.edit { putBoolean(HOME_NEXT_EVENT, value).apply() }
 
     var intentionText: String
         get() = prefs.getString(INTENTION_TEXT, "").orEmpty()
