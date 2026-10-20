@@ -11,7 +11,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -19,8 +18,8 @@ import kotlin.math.abs
 
 /*
 Shared swipe, double tap and long press gesture handling for a view.
-The long press delay runs in a scope owned by the listener: it is cancelled when a new gesture
-starts and when the touched view detaches from its window.
+The long press delay runs in a scope owned by the listener; pending long presses are cancelled
+when the touched view detaches from its window.
 Source: https://www.tutorialspoint.com/how-to-handle-swipe-gestures-in-kotlin
 */
 
@@ -32,14 +31,13 @@ internal abstract class BaseSwipeTouchListener(c: Context?) : OnTouchListener {
         private set
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-    private var longPressJob: Job? = null
     private var watchedView: View? = null
     private val gestureDetector = GestureDetector(c, GestureListener())
 
     private val detachListener = object : View.OnAttachStateChangeListener {
         override fun onViewAttachedToWindow(v: View) {}
         override fun onViewDetachedFromWindow(v: View) {
-            longPressJob?.cancel()
+            scope.coroutineContext[Job]?.children?.forEach { it.cancel() }
         }
     }
 
@@ -50,13 +48,6 @@ internal abstract class BaseSwipeTouchListener(c: Context?) : OnTouchListener {
             watchedView = view
         }
         return gestureDetector.onTouchEvent(motionEvent)
-    }
-
-    /** Cancels any pending long press and the listener's scope. Call when the listener is discarded. */
-    fun cancel() {
-        watchedView?.removeOnAttachStateChangeListener(detachListener)
-        watchedView = null
-        scope.cancel()
     }
 
     protected abstract fun dispatchLongClick()
@@ -74,7 +65,6 @@ internal abstract class BaseSwipeTouchListener(c: Context?) : OnTouchListener {
 
         override fun onDown(e: MotionEvent): Boolean {
             downY = e.y
-            longPressJob?.cancel()
             return true
         }
 
@@ -90,8 +80,7 @@ internal abstract class BaseSwipeTouchListener(c: Context?) : OnTouchListener {
 
         override fun onLongPress(e: MotionEvent) {
             longPressOn = true
-            longPressJob?.cancel()
-            longPressJob = scope.launch {
+            scope.launch {
                 delay(Constants.LONG_PRESS_DELAY_MS)
                 if (isActive && longPressOn)
                     dispatchLongClick()
