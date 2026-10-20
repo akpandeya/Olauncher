@@ -37,6 +37,21 @@ data class MediaSession(
 object MediaPicker {
     const val PAUSED_WINDOW_MS = 30L * 60_000L
 
+    /**
+     * Transport for a [PlaybackState] state. Buffering, connecting and skipping count as playing:
+     * players pass through them between and inside tracks, and the pulse should not blink off.
+     */
+    fun transportOf(state: Int?): Transport = when (state) {
+        PlaybackState.STATE_PLAYING,
+        PlaybackState.STATE_BUFFERING,
+        PlaybackState.STATE_CONNECTING,
+        PlaybackState.STATE_SKIPPING_TO_NEXT,
+        PlaybackState.STATE_SKIPPING_TO_PREVIOUS,
+        PlaybackState.STATE_SKIPPING_TO_QUEUE_ITEM -> Transport.PLAYING
+        PlaybackState.STATE_PAUSED -> Transport.PAUSED
+        else -> Transport.OTHER
+    }
+
     /** A playing session wins; else a paused one that was playing within 30 minutes. */
     fun pick(sessions: List<MediaSession>, lastPlayingMs: Map<String, Long>, nowMs: Long): MediaInfo? {
         val usable = sessions.filter { !it.title.isNullOrBlank() }
@@ -124,7 +139,7 @@ class NowPlaying(private val context: Context, private val onChange: () -> Unit)
         val now = System.currentTimeMillis()
         val sessions = controllers.map { controller ->
             val state = controller.playbackState
-            val transport = transportOf(state?.state)
+            val transport = MediaPicker.transportOf(state?.state)
             noteTransport(controller.packageName, transport, now)
             val metadata = controller.metadata
             val artworkUrl = MusicPulse.loadableArtworkUri(
@@ -263,7 +278,7 @@ class NowPlaying(private val context: Context, private val onChange: () -> Unit)
         try {
             val controller = manager?.getActiveSessions(component).orEmpty()
                 .firstOrNull { it.packageName == packageName } ?: return
-            if (controller.playbackState?.state == PlaybackState.STATE_PLAYING) {
+            if (MediaPicker.transportOf(controller.playbackState?.state) == Transport.PLAYING) {
                 controller.transportControls.pause()
             } else {
                 controller.transportControls.play()
@@ -272,11 +287,6 @@ class NowPlaying(private val context: Context, private val onChange: () -> Unit)
         }
     }
 
-    private fun transportOf(state: Int?) = when (state) {
-        PlaybackState.STATE_PLAYING -> Transport.PLAYING
-        PlaybackState.STATE_PAUSED -> Transport.PAUSED
-        else -> Transport.OTHER
-    }
 
     /** Remembers when a session was last playing: now while playing, and at the moment it stops. */
     @Synchronized
@@ -305,7 +315,7 @@ class NowPlaying(private val context: Context, private val onChange: () -> Unit)
         controllers.forEach { controller ->
             val callback = object : MediaController.Callback() {
                 override fun onPlaybackStateChanged(state: PlaybackState?) {
-                    noteTransport(controller.packageName, transportOf(state?.state), System.currentTimeMillis())
+                    noteTransport(controller.packageName, MediaPicker.transportOf(state?.state), System.currentTimeMillis())
                     onChange()
                 }
                 override fun onMetadataChanged(metadata: MediaMetadata?) = onChange()
