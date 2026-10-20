@@ -1,5 +1,6 @@
 package app.olauncher
 
+import android.os.SystemClock
 import androidx.navigation.Navigation
 import androidx.test.core.app.ActivityScenario
 import androidx.test.espresso.Espresso.onView
@@ -22,11 +23,16 @@ class SmokeTest {
     }
 
     private fun assertDestination(scenario: ActivityScenario<MainActivity>, expected: Int) {
-        // Espresso syncs with the main looper, so the transition has settled here.
-        onView(withId(R.id.nav_host_fragment)).check(matches(isDisplayed()))
+        // Poll the nav controller instead of Espresso: a settled settings screen may not
+        // hold the RESUMED stage that onView() needs, so only the destination is read.
+        val deadline = SystemClock.uptimeMillis() + 10_000
         var actual: Int? = null
-        scenario.onActivity {
-            actual = Navigation.findNavController(it, R.id.nav_host_fragment).currentDestination?.id
+        while (SystemClock.uptimeMillis() < deadline) {
+            scenario.onActivity {
+                actual = Navigation.findNavController(it, R.id.nav_host_fragment).currentDestination?.id
+            }
+            if (actual == expected) break
+            SystemClock.sleep(100)
         }
         assertEquals(expected, actual)
     }
