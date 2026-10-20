@@ -79,6 +79,35 @@ class HealthRepository(
         return HealthSummary(steps, sleep, resting, exercise)
     }
 
+    /**
+     * Steps and exercise sessions in [now - intervalMin, now]. Null when the switch is off,
+     * Health Connect is unavailable, or nothing could be read.
+     */
+    suspend fun readWalkWindow(now: Instant, intervalMin: Int): WalkWindowReading? {
+        if (!isEnabled()) return null
+        val c = client ?: return null
+        val granted = try {
+            c.permissionController.getGrantedPermissions()
+        } catch (_: Exception) {
+            return null
+        }
+        val range = TimeRangeFilter.between(now.minus(Duration.ofMinutes(intervalMin.toLong())), now)
+
+        val steps = if (HealthPermission.getReadPermission(StepsRecord::class) in granted) {
+            safe { c.aggregate(AggregateRequest(setOf(StepsRecord.COUNT_TOTAL), range))[StepsRecord.COUNT_TOTAL] ?: 0L }
+        } else null
+
+        val exercise = if (HealthPermission.getReadPermission(ExerciseSessionRecord::class) in granted) {
+            safe {
+                c.readRecords(ReadRecordsRequest(ExerciseSessionRecord::class, range)).records
+                    .map { ExerciseSpan(it.startTime.toEpochMilli(), it.endTime.toEpochMilli()) }
+            }
+        } else null
+
+        if (steps == null && exercise == null) return null
+        return WalkWindowReading(steps, exercise)
+    }
+
     private inline fun <T> safe(block: () -> T?): T? = try {
         block()
     } catch (_: Exception) {
