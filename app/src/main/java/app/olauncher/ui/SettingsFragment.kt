@@ -320,6 +320,8 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateTextContrast()
         populateHomeDarkness()
         populateTextBrightness()
+        populateMusicPulse()
+        populateWeatherEffects()
         populateAlignment()
         populateShortcutIcons()
         populateStatusBar()
@@ -491,6 +493,8 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.textContrastLayout, binding.textContrastTitle, R.id.textContrast),
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.homeWashLayout, binding.homeWashTitle, R.id.homeDarkness),
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.textBrightnessLayout, binding.textBrightnessTitle, R.id.textBrightness),
+            RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.musicPulseLayout, binding.musicPulseTitle, R.id.musicPulse),
+            RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.weatherEffectsLayout, binding.weatherEffectsTitle, R.id.weatherEffects),
 
             // Gestures
             RuntimeSettingsRow(SettingsSections.KEY_GESTURES, binding.swipeLeftApp.parent as View, getFirstTextView(binding.swipeLeftApp.parent as View), R.id.swipeLeftApp),
@@ -752,6 +756,8 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.textContrast, R.id.textContrastTitle, R.id.textContrastLayout -> toggleTextContrast()
             R.id.homeDarkness, R.id.homeWashTitle, R.id.homeWashLayout -> cycleHomeDarkness()
             R.id.textBrightness, R.id.textBrightnessTitle, R.id.textBrightnessLayout -> cycleTextBrightness()
+            R.id.musicPulse, R.id.musicPulseTitle, R.id.musicPulseLayout -> toggleMusicPulse()
+            R.id.weatherEffects, R.id.weatherEffectsTitle, R.id.weatherEffectsLayout -> toggleWeatherEffects()
 
             R.id.photoWallpaper, R.id.photoWallpaperTitle, R.id.photoWallpaperLayout -> showPhotoWallpaperMenu(binding.photoWallpaper)
             R.id.swipeLeftApp -> showAppListIfEnabled(Constants.FLAG_SET_SWIPE_LEFT_APP)
@@ -1012,6 +1018,12 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.textBrightness.setOnClickListener(this)
         binding.textBrightnessTitle.setOnClickListener(this)
         binding.textBrightnessLayout.setOnClickListener(this)
+        binding.musicPulse.setOnClickListener(this)
+        binding.musicPulseTitle.setOnClickListener(this)
+        binding.musicPulseLayout.setOnClickListener(this)
+        binding.weatherEffects.setOnClickListener(this)
+        binding.weatherEffectsTitle.setOnClickListener(this)
+        binding.weatherEffectsLayout.setOnClickListener(this)
         binding.footer.setOnClickListener(this)
         binding.settingsBack.setOnClickListener(this)
         binding.settingsBackLayout.setOnClickListener(this)
@@ -2363,6 +2375,26 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                 else -> R.string.text_brightness_full
             }
         )
+    }
+
+    private fun toggleMusicPulse() {
+        prefs.homeMusicPulse = !prefs.homeMusicPulse
+        populateMusicPulse()
+        viewModel.toggleDateTime()
+    }
+
+    private fun populateMusicPulse() {
+        binding.musicPulse.text = getString(if (prefs.homeMusicPulse) R.string.on else R.string.off)
+    }
+
+    private fun toggleWeatherEffects() {
+        prefs.homeWeatherEffects = !prefs.homeWeatherEffects
+        populateWeatherEffects()
+        viewModel.toggleDateTime()
+    }
+
+    private fun populateWeatherEffects() {
+        binding.weatherEffects.text = getString(if (prefs.homeWeatherEffects) R.string.on else R.string.off)
     }
 
     private fun toggleHaptics() {

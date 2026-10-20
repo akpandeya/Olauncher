@@ -32,6 +32,22 @@
         android:importantForAccessibility="no"
         android:visibility="gone" />
 
+    <!-- Animated weather over the wallpaper; shown only with Weather effects on (HomeFragment) -->
+    <app.olauncher.ui.WeatherEffectView
+        android:id="@+id/weatherEffects"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:importantForAccessibility="no"
+        android:visibility="gone" />
+
+    <!-- Slow album-colour glow behind the clock while music plays (HomeFragment) -->
+    <View
+        android:id="@+id/musicGlow"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/music_glow_height"
+        android:importantForAccessibility="no"
+        android:visibility="gone" />
+
     <!-- Clock and calendar-->
     <LinearLayout
         android:id="@+id/dateTimeLayout"
@@ -55,6 +71,7 @@
             android:fontFamily="sans-serif-black"
             android:format12Hour="h:mm"
             android:maxLines="1"
+            android:lastBaselineToBottomHeight="6dp"
             android:textSize="@dimen/time_size"
             tools:text="23:59" />
 
@@ -73,7 +90,7 @@
         <!-- Date and weather; weather moves under the date when both do not fit (HomeMetaLine) -->
         <LinearLayout
             android:id="@+id/dateWeatherRow"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="2dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
@@ -158,12 +175,21 @@
             tools:text="▶ Song — Artist"
             tools:visibility="visible" />
 
+        <!-- Thin progress line under the now-playing text while music plays (HomeFragment) -->
+        <View
+            android:id="@+id/mediaProgress"
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:layout_marginHorizontal="3dp"
+            android:importantForAccessibility="no"
+            android:visibility="gone" />
+
         <TextView
             android:id="@+id/intentionLine"
             android:letterSpacing="0.01"
             android:textStyle="italic"
             android:fontFamily="serif"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="4dp"
             android:textColor="@drawable/text_colors_light"
             style="@style/TextDefault"
             android:layout_width="wrap_content"

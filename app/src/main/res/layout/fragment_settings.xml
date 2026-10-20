@@ -2420,6 +2420,60 @@
                         tools:text="@string/text_brightness_full" />
                 </FrameLayout>
 
+                <FrameLayout
+                    android:id="@+id/musicPulseLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp">
+
+                    <TextView
+                        android:id="@+id/musicPulseTitle"
+                        style="@style/TextSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:paddingVertical="8dp"
+                        android:text="@string/music_pulse"
+                        android:textColor="?attr/primaryColor" />
+
+                    <TextView
+                        android:id="@+id/musicPulse"
+                        style="@style/TextSettingsValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end|bottom"
+                        android:layout_marginEnd="4dp"
+                        android:padding="8dp"
+                        tools:text="@string/on" />
+                </FrameLayout>
+
+                <FrameLayout
+                    android:id="@+id/weatherEffectsLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp">
+
+                    <TextView
+                        android:id="@+id/weatherEffectsTitle"
+                        style="@style/TextSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:paddingVertical="8dp"
+                        android:text="@string/weather_effects"
+                        android:textColor="?attr/primaryColor" />
+
+                    <TextView
+                        android:id="@+id/weatherEffects"
+                        style="@style/TextSettingsValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end|bottom"
+                        android:layout_marginEnd="4dp"
+                        android:padding="8dp"
+                        tools:text="@string/on" />
+                </FrameLayout>
+
             </LinearLayout>
 
             <LinearLayout

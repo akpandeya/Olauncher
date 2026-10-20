@@ -1,14 +1,23 @@
 package app.olauncher.helper
 
+import android.graphics.Bitmap
 import app.olauncher.glance.CalendarEvent
 import java.time.Instant
 
-/** What the active media session is doing. */
+/**
+ * What the active media session is doing. [positionMs] was reported at [positionAtMs]
+ * (elapsed realtime, 0 if never reported); [durationMs] is 0 when unknown.
+ */
 data class MediaInfo(
     val title: String,
     val artist: String?,
     val packageName: String,
     val playing: Boolean,
+    val artwork: Bitmap? = null,
+    val positionMs: Long = 0L,
+    val positionAtMs: Long = 0L,
+    val durationMs: Long = 0L,
+    val speed: Float = 1f,
 )
 
 /** Templates for event text; [inMinutes] takes %1$s = title, %2$d = minutes, [now] takes %1$s = title. */
