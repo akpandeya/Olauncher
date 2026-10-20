@@ -2,7 +2,14 @@ package app.olauncher.ui
 
 import android.app.WallpaperColors
 import android.app.WallpaperManager
+import android.Manifest
 import android.content.BroadcastReceiver
+import android.content.pm.PackageManager
+import android.text.format.DateFormat
+import androidx.core.content.ContextCompat
+import app.olauncher.glance.HomeNextEvent
+import app.olauncher.glance.NextUpPlanner
+import java.time.ZoneId
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -120,6 +127,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     private var contextTickReceiver: BroadcastReceiver? = null
     private var nowPlaying: NowPlaying? = null
     private var contextItem: ContextItem? = null
+    private var nextEventId: Long? = null
     private var contextJob: Job? = null
     private var wallpaperColorsListener: WallpaperManager.OnColorsChangedListener? = null
     private val originalShadows = HashMap<TextView, FloatArray>()
@@ -173,6 +181,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         if (prefs.homeSets || GermanTime.isWordsClockOn(prefs.germanEnabled, prefs.germanClock)) registerTimeTickReceiver()
         registerBatteryReceiver()
         startContextLine()
+        populateNextEventLine()
         // Fixes a missed wind-down start/end (grey wallpaper, whole-phone grey) and reschedules.
         if (prefs.windDown || prefs.windDownGreyApplied || prefs.systemGreySaved != null) {
             WindDownWorker.syncAsync(requireContext())
@@ -228,7 +237,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         val treatment = ContrastPolicy.decide(supportsDarkText, themeIsDark)
         val views = listOf(
             binding.clock, binding.clockWords, binding.date, binding.weatherSeparator,
-            binding.weather, binding.contextLine, binding.intentionLine, binding.tvScreenTime,
+            binding.weather, binding.contextLine, binding.nextEventLine, binding.intentionLine, binding.tvScreenTime,
             binding.homeApp1, binding.homeApp2, binding.homeApp3, binding.homeApp4,
             binding.homeApp5, binding.homeApp6, binding.homeApp7, binding.homeApp8,
         )
@@ -265,6 +274,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             R.id.date -> if (prefs.homeInfoCombined) openToday() else openCalendarApp()
             R.id.weather -> openWeatherApp()
             R.id.contextLine -> openContextItem()
+            R.id.nextEventLine -> openNextEvent()
             R.id.setDefaultLauncher -> viewModel.resetLauncherLiveData.call()
             R.id.tvScreenTime -> openScreenTimeDigitalWellbeing()
 
@@ -482,6 +492,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         binding.date.setOnClickListener(this)
         binding.weather.setOnClickListener(this)
         binding.contextLine.setOnClickListener(this)
+        binding.nextEventLine.setOnClickListener(this)
         binding.clock.setOnLongClickListener(this)
         binding.clockWords.setOnLongClickListener(this)
         binding.date.setOnLongClickListener(this)
@@ -861,6 +872,43 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             contextItem = item
             binding.contextLine.text = item?.text
             binding.contextLine.isVisible = item != null
+        }
+    }
+
+    private fun populateNextEventLine() {
+        if (_binding == null) return
+        val ctx = context ?: return
+        val appContext = ctx.applicationContext
+        if (!prefs.homeNextEvent ||
+            ContextCompat.checkSelfPermission(ctx, Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED
+        ) {
+            nextEventId = null
+            binding.nextEventLine.isVisible = false
+            return
+        }
+        val nowTemplate = getString(R.string.next_up_now)
+        val is24Hour = DateFormat.is24HourFormat(ctx)
+        viewLifecycleOwner.lifecycleScope.launch {
+            val now = Instant.now()
+            val line = try {
+                val events = CalendarRepository(appContext)
+                    .next(now.toEpochMilli(), hours = 24, limit = NextUpPlanner.FETCH_LIMIT)
+                HomeNextEvent.line(events, now, ZoneId.systemDefault(), is24Hour, nowTemplate)
+            } catch (_: Exception) {
+                null
+            }
+            if (_binding == null) return@launch
+            nextEventId = line?.eventId
+            binding.nextEventLine.text = line?.text
+            binding.nextEventLine.isVisible = line != null
+        }
+    }
+
+    private fun openNextEvent() {
+        val context = context ?: return
+        val id = nextEventId ?: return
+        if (!OpenTargets.openEvent(context, id)) {
+            context.showToast(getString(R.string.unable_to_open_app))
         }
     }
 
