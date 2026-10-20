@@ -23,7 +23,8 @@ object Backup {
         "saved_items.json",
         "word_progress.json",
         "words.json",
-        "usage_days.json"
+        "usage_days.json",
+        "intention_history.json"
     )
 
     fun isVolatileKey(key: String): Boolean {
