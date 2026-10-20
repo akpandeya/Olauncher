@@ -82,4 +82,31 @@ class IntentionHistoryTest {
         IntentionHistoryStore(tmp.root).put(10L, "B")
         assertEquals(listOf(IntentionEntry(10L, "B")), IntentionHistoryStore(tmp.root).load())
     }
+
+    @Test
+    fun `pastEntries excludes today and later days`() {
+        val entries = listOf(IntentionEntry(9L, "A"), IntentionEntry(10L, "Today"), IntentionEntry(11L, "Future"))
+        assertEquals(listOf(IntentionEntry(9L, "A")), IntentionHistory.pastEntries(entries, 10L))
+    }
+
+    @Test
+    fun `pastEntries is newest first and skips days with no entry`() {
+        val entries = listOf(IntentionEntry(2L, "A"), IntentionEntry(7L, "B"), IntentionEntry(5L, "C"))
+        assertEquals(listOf(7L, 5L, 2L), IntentionHistory.pastEntries(entries, 10L).map { it.day })
+    }
+
+    @Test
+    fun `pastEntries is limited to the 30 days before today`() {
+        val entries = (1L..40L).map { IntentionEntry(it, "T$it") }
+        val result = IntentionHistory.pastEntries(entries, 41L)
+        assertEquals(30, result.size)
+        assertEquals(40L, result.first().day)
+        assertEquals(11L, result.last().day)
+    }
+
+    @Test
+    fun `pastEntries is empty when there are no past entries`() {
+        assertTrue(IntentionHistory.pastEntries(emptyList(), 10L).isEmpty())
+        assertTrue(IntentionHistory.pastEntries(listOf(IntentionEntry(10L, "Today")), 10L).isEmpty())
+    }
 }
