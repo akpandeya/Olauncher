@@ -111,6 +111,16 @@ object MusicPulse {
     fun loadableArtworkUri(vararg candidates: String?): String? =
         candidates.map { it?.trim() }.firstOrNull { isLoadableArtwork(it) }
 
+    /** How long a failed artwork download waits before it is tried again. */
+    const val ARTWORK_RETRY_MS = 60_000L
+
+    /**
+     * True when artwork should be fetched: it never failed ([failedAtMs] null), or it failed at
+     * least [ARTWORK_RETRY_MS] ago. Times are on one clock (elapsed realtime on the phone).
+     */
+    fun shouldFetchArtwork(failedAtMs: Long?, nowMs: Long): Boolean =
+        failedAtMs == null || nowMs - failedAtMs >= ARTWORK_RETRY_MS
+
     /**
      * Cache key for the glow colour of a track. Built from stable values only: players hand out a
      * new bitmap object on every read, so object identity would miss the cache on every refresh.
