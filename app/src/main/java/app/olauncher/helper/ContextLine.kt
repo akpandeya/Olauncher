@@ -18,6 +18,8 @@ data class MediaInfo(
     val positionAtMs: Long = 0L,
     val durationMs: Long = 0L,
     val speed: Float = 1f,
+    /** Artwork link the player sent, if any. Part of the glow cache key. */
+    val artworkUri: String? = null,
 )
 
 /** Templates for event text; [inMinutes] takes %1$s = title, %2$d = minutes, [now] takes %1$s = title. */
