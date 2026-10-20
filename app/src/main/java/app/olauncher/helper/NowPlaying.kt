@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.media.MediaMetadata
 import android.media.session.MediaController
 import android.media.session.MediaSessionManager
@@ -118,7 +119,7 @@ class NowPlaying(private val context: Context, private val onChange: () -> Unit)
             val transport = transportOf(state?.state)
             noteTransport(controller.packageName, transport, now)
             val metadata = controller.metadata
-            val artworkUrl = MusicPulse.fetchableArtworkUri(
+            val artworkUrl = MusicPulse.loadableArtworkUri(
                 metadata?.getString(MediaMetadata.METADATA_KEY_ALBUM_ART_URI),
                 metadata?.getString(MediaMetadata.METADATA_KEY_ART_URI),
                 metadata?.getString(MediaMetadata.METADATA_KEY_DISPLAY_ICON_URI),
@@ -193,6 +194,24 @@ class NowPlaying(private val context: Context, private val onChange: () -> Unit)
     }
 
     private fun fetchBitmap(url: String): Bitmap? {
+        val options = BitmapFactory.Options().apply {
+            inSampleSize = ARTWORK_SAMPLE_SIZE
+            inPreferredConfig = Bitmap.Config.ARGB_8888
+        }
+        return if (MusicPulse.isWebArtwork(url)) {
+            fetchWebBitmap(url, options)
+        } else {
+            try {
+                context.contentResolver.openInputStream(Uri.parse(url))?.use {
+                    BitmapFactory.decodeStream(it, null, options)
+                }
+            } catch (_: Exception) {
+                null
+            }
+        }
+    }
+
+    private fun fetchWebBitmap(url: String, options: BitmapFactory.Options): Bitmap? {
         val connection = try {
             URL(url).openConnection() as HttpURLConnection
         } catch (_: Exception) {
@@ -201,10 +220,6 @@ class NowPlaying(private val context: Context, private val onChange: () -> Unit)
         return try {
             connection.connectTimeout = ARTWORK_TIMEOUT_MS
             connection.readTimeout = ARTWORK_TIMEOUT_MS
-            val options = BitmapFactory.Options().apply {
-                inSampleSize = ARTWORK_SAMPLE_SIZE
-                inPreferredConfig = Bitmap.Config.ARGB_8888
-            }
             connection.inputStream.use { BitmapFactory.decodeStream(it, null, options) }
         } catch (_: Exception) {
             null

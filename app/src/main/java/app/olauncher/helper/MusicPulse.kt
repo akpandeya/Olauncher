@@ -56,18 +56,27 @@ object MusicPulse {
         return (position.toFloat() / durationMs).coerceIn(0f, 1f)
     }
 
-    /** Only web artwork is fetched. A session can name any URI, and content:// or file:// ones are not for the launcher. */
-    fun isFetchableArtwork(uri: String?): Boolean {
+    /**
+     * Artwork the launcher can load: web links, and the content:// and file:// links that
+     * Android tells apps to use for artwork. Anything else (or a blank value) is skipped.
+     */
+    fun isLoadableArtwork(uri: String?): Boolean {
         val trimmed = uri?.trim().orEmpty()
-        return trimmed.startsWith("https://", ignoreCase = true) || trimmed.startsWith("http://", ignoreCase = true)
+        return LOADABLE_SCHEMES.any { trimmed.startsWith("$it:", ignoreCase = true) }
     }
 
+    private val LOADABLE_SCHEMES = listOf("https", "http", "content", "file", "android.resource")
+
+    /** True for web links; these are fetched over the network. */
+    fun isWebArtwork(uri: String): Boolean =
+        uri.startsWith("https://", ignoreCase = true) || uri.startsWith("http://", ignoreCase = true)
+
     /**
-     * First fetchable artwork URI in preference order (album art, art, display icon), trimmed.
+     * First loadable artwork URI in preference order (album art, art, display icon), trimmed.
      * Players such as YouTube Music often send artwork only as a URI, not as a bitmap.
      */
-    fun fetchableArtworkUri(vararg candidates: String?): String? =
-        candidates.map { it?.trim() }.firstOrNull { isFetchableArtwork(it) }
+    fun loadableArtworkUri(vararg candidates: String?): String? =
+        candidates.map { it?.trim() }.firstOrNull { isLoadableArtwork(it) }
 
     /**
      * The glow colour: the most populous swatch that is saturated and not too dark or light.

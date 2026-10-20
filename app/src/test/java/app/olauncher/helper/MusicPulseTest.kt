@@ -95,27 +95,31 @@ class MusicPulseTest {
     }
 
     @Test
-    fun onlyWebArtworkIsFetchable() {
-        assertTrue(MusicPulse.isFetchableArtwork("https://lh3.googleusercontent.com/art=w544"))
-        assertTrue(MusicPulse.isFetchableArtwork("HTTP://example.com/a.jpg"))
-        assertFalse(MusicPulse.isFetchableArtwork("content://media/external/images/1"))
-        assertFalse(MusicPulse.isFetchableArtwork("file:///sdcard/a.jpg"))
-        assertFalse(MusicPulse.isFetchableArtwork(""))
-        assertFalse(MusicPulse.isFetchableArtwork(null))
+    fun androidArtworkSchemesAreLoadable() {
+        assertTrue(MusicPulse.isLoadableArtwork("https://lh3.googleusercontent.com/art=w544"))
+        assertTrue(MusicPulse.isLoadableArtwork("HTTP://example.com/a.jpg"))
+        assertTrue(MusicPulse.isLoadableArtwork("content://media/external/images/1"))
+        assertTrue(MusicPulse.isLoadableArtwork("android.resource://app.olauncher/1"))
+        assertTrue(MusicPulse.isLoadableArtwork("file:///sdcard/a.jpg"))
+        assertFalse(MusicPulse.isLoadableArtwork("ftp://example.com/a.jpg"))
+        assertFalse(MusicPulse.isLoadableArtwork(""))
+        assertFalse(MusicPulse.isLoadableArtwork(null))
     }
 
     @Test
     fun artworkUriTakesFirstFetchableCandidate() {
-        // Album art is a content URI here, so the web art URI after it is used.
-        val uri = MusicPulse.fetchableArtworkUri(
-            "content://media/1", "  https://yt.example/art.jpg  ", "https://yt.example/icon.jpg",
+        // Album art is a non-loadable scheme here, so the web art URI after it is used.
+        val uri = MusicPulse.loadableArtworkUri(
+            "ftp://media/1", "  https://yt.example/art.jpg  ", "https://yt.example/icon.jpg",
         )
         assertEquals("https://yt.example/art.jpg", uri)
+        // A content:// link is loadable and wins over later ones.
+        assertEquals("content://media/1", MusicPulse.loadableArtworkUri("content://media/1", "https://yt.example/a.jpg"))
     }
 
     @Test
     fun artworkUriIsNullWhenNoCandidateIsWeb() {
-        assertNull(MusicPulse.fetchableArtworkUri(null, "", "content://media/2"))
-        assertNull(MusicPulse.fetchableArtworkUri())
+        assertNull(MusicPulse.loadableArtworkUri(null, "", "ftp://media/2"))
+        assertNull(MusicPulse.loadableArtworkUri())
     }
 }
