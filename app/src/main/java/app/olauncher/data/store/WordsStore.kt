@@ -20,6 +20,11 @@ data class Word(
     val learnedAt: Long? = null
 )
 
+data class AddAllResult(
+    val added: List<Word>,
+    val alreadySaved: List<Word>
+)
+
 data class WordStats(
     val total: Int,
     val due: Int,
@@ -145,6 +150,40 @@ class WordsStore(
             newWord
         }
         return word
+    }
+
+    /** Saves each text not already stored (case-insensitive). Existing words are left untouched. */
+    @Synchronized
+    fun addAll(texts: List<String>, context: String = ""): AddAllResult {
+        val cleanContext = context.trim()
+        val all = loadAll().toMutableList()
+        val added = mutableListOf<Word>()
+        val alreadySaved = mutableListOf<Word>()
+        val now = clockSupplier()
+        val today = epochDaySupplier()
+        for (raw in texts) {
+            val cleanText = raw.trim()
+            if (cleanText.isEmpty()) continue
+            val existing = all.firstOrNull { it.text.equals(cleanText, ignoreCase = true) }
+            if (existing != null) {
+                if (added.none { it.id == existing.id } && alreadySaved.none { it.id == existing.id }) {
+                    alreadySaved.add(existing)
+                }
+                continue
+            }
+            val newWord = Word(
+                id = generateId(all, now),
+                text = cleanText,
+                context = cleanContext,
+                box = 1,
+                dueDay = Leitner.newWordDueDay(today),
+                addedAt = now
+            )
+            all.add(0, newWord)
+            added.add(newWord)
+        }
+        if (added.isNotEmpty()) saveAll(all)
+        return AddAllResult(added, alreadySaved)
     }
 
     @Synchronized

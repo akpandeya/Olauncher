@@ -50,6 +50,10 @@ sealed class AppModel : Comparable<AppModel> {
             data class Contact(val lookupUri: String) : Action
             data class Event(val eventId: Long) : Action
             data class Web(val query: String) : Action
+            /** [meaning] is a looked-up Wiktionary meaning; only used when [items] has one item. */
+            data class SaveWords(val items: List<String>, val meaning: String = "") : Action
+            /** [openOnTap] false: tap does nothing, long-press still opens the page. */
+            data class OpenWiktionary(val text: String, val openOnTap: Boolean = true) : Action
         }
 
         override val appLabel: String get() = text
