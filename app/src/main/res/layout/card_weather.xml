@@ -45,7 +45,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="14dp"
+        android:ellipsize="end"
+        android:maxLines="1"
         android:textColor="?attr/primaryColorTrans80"
+        android:textSize="@dimen/text_caption"
         tools:text="Berlin · as of 14:05 · Open-Meteo" />
 
 </LinearLayout>

@@ -36,6 +36,9 @@ interface TodayCard {
     fun priority(context: Context, now: ZonedDateTime): Int =
         TodayOrder.defaultPriority(TodayCards.all.indexOf(this).coerceAtLeast(0))
 
+    /** True when the card belongs at the top of the page right now (smart order only). */
+    fun pinnedToTop(context: Context, now: ZonedDateTime): Boolean = false
+
     /** False when the card would render nothing at all; its panel is then left out. */
     fun hasContent(context: Context): Boolean = true
     fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View

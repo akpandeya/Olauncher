@@ -62,10 +62,13 @@
                     android:inputType="textCapSentences"
                     android:maxLength="60"
                     android:maxLines="1"
+                    android:minHeight="48dp"
                     android:paddingVertical="8dp" />
 
                 <TextView
                     android:id="@+id/tvPastIntentions"
+                    android:gravity="center_vertical"
+                    android:minHeight="48dp"
                     style="@style/TextSmall"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -78,6 +81,15 @@
                     style="@style/TextSmall"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:visibility="gone" />
+
+                <!-- Cards that belong first right now (Next up while a meeting is on or later today) -->
+                <LinearLayout
+                    android:id="@+id/pinnedCardsContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:orientation="vertical"
                     android:visibility="gone" />
 
                 <FrameLayout

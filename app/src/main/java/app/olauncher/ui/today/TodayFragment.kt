@@ -151,42 +151,61 @@ class TodayFragment : BaseFragment() {
         val smart = prefs.todayOrderSmart
         panelsJob?.cancel()
         panelsJob = viewLifecycleOwner.lifecycleScope.launch {
-            val ordered = withContext(Dispatchers.IO) { planPanels(appContext, panelCards, smart) }
-            showPanels(ordered)
+            val plan = withContext(Dispatchers.IO) { planPanels(appContext, panelCards, smart) }
+            showPanels(plan)
         }
     }
 
-    /** Panels with something to show, highest priority first when the order is smart. */
-    private fun planPanels(context: Context, panelCards: List<TodayCard>, smart: Boolean): List<TodayCard> {
+    /** Panels with something to show: pinned ones for the top, the rest highest priority first when the order is smart. */
+    private fun planPanels(context: Context, panelCards: List<TodayCard>, smart: Boolean): PanelPlan {
         // A card with nothing to show gets no panel and no header.
         val withContent = panelCards.filter { it.hasContent(context) }
-        if (!smart) return withContent
+        if (!smart) return PanelPlan(pinned = emptyList(), stacked = withContent)
         val now = ZonedDateTime.now()
         val byKey = withContent.associateBy { it.key }
-        return TodayOrder.order(withContent.map { Ranked(it.key, it.priority(context, now)) })
-            .mapNotNull { byKey[it.key] }
+        val pinnedKeys = withContent.filter { it.pinnedToTop(context, now) }.map { it.key }.toSet()
+        val split = TodayOrder.split(withContent.map { Ranked(it.key, it.priority(context, now)) }, pinnedKeys)
+        return PanelPlan(
+            pinned = split.pinned.mapNotNull { byKey[it] },
+            stacked = split.stacked.mapNotNull { byKey[it] },
+        )
     }
 
-    private fun showPanels(ordered: List<TodayCard>) {
+    private data class PanelPlan(val pinned: List<TodayCard>, val stacked: List<TodayCard>)
+
+    private fun showPanels(plan: PanelPlan) {
         val binding = _binding ?: return
         // Swap the panels in one go, so a refresh does not flash an empty page.
+        binding.pinnedCardsContainer.removeAllViews()
+        for (card in plan.pinned) {
+            binding.pinnedCardsContainer.addView(inflatePanel(binding.pinnedCardsContainer, card))
+        }
+        binding.pinnedCardsContainer.isVisible = plan.pinned.isNotEmpty()
+
         binding.cardsContainer.removeAllViews()
         // Stack from the bottom up: the first (highest priority) card is the lowest panel.
-        for (card in ordered.asReversed()) {
-            val panel = ItemTodayPanelBinding.inflate(layoutInflater, binding.cardsContainer, false)
-            val title = getString(card.titleRes)
-            panel.tvPanelTitle.text = if (card.emoji.isEmpty()) title else "${card.emoji}  $title"
-            androidx.core.view.ViewCompat.setAccessibilityHeading(panel.tvPanelTitle, true)
-
-            val cardView = card.createView(layoutInflater, panel.panelContent, this)
-            if (cardView.parent == null) panel.panelContent.addView(cardView)
-            binding.cardsContainer.addView(panel.root)
+        for (card in plan.stacked.asReversed()) {
+            binding.cardsContainer.addView(inflatePanel(binding.cardsContainer, card))
         }
 
-        // When the cards overflow, open at the bottom, where the top-priority card is.
-        binding.todayScrollView.post {
-            _binding?.todayScrollView?.fullScroll(View.FOCUS_DOWN)
+        // With a pinned card the page opens at the top, where it is. Otherwise, when the cards
+        // overflow, open at the bottom, where the top-priority card is.
+        if (plan.pinned.isEmpty()) {
+            binding.todayScrollView.post {
+                _binding?.todayScrollView?.fullScroll(View.FOCUS_DOWN)
+            }
         }
+    }
+
+    private fun inflatePanel(parent: ViewGroup, card: TodayCard): View {
+        val panel = ItemTodayPanelBinding.inflate(layoutInflater, parent, false)
+        val title = getString(card.titleRes)
+        panel.tvPanelTitle.text = if (card.emoji.isEmpty()) title else "${card.emoji}  $title"
+        androidx.core.view.ViewCompat.setAccessibilityHeading(panel.tvPanelTitle, true)
+
+        val cardView = card.createView(layoutInflater, panel.panelContent, this)
+        if (cardView.parent == null) panel.panelContent.addView(cardView)
+        return panel.root
     }
 
     private fun populateHeroDate() {

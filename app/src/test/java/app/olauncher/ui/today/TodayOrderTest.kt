@@ -1,7 +1,13 @@
 package app.olauncher.ui.today
 
+import app.olauncher.glance.CalendarEvent
 import java.time.DayOfWeek
+import java.time.Instant
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class TodayOrderTest {
@@ -69,5 +75,59 @@ class TodayOrderTest {
             Ranked("next_up", TodayOrder.NEXT_UP_PRIORITY),
         )
         assertEquals(listOf("next_up", "held", "wellbeing", "saved"), TodayOrder.order(cards).map { it.key })
+    }
+
+    private val zone: ZoneId = ZoneId.of("Europe/Berlin")
+    private fun at(hour: Int, minute: Int = 0, day: Int = 20): Instant =
+        ZonedDateTime.of(2026, 10, day, hour, minute, 0, 0, zone).toInstant()
+
+    private fun event(title: String, start: Instant, end: Instant, allDay: Boolean = false) =
+        CalendarEvent(id = title.hashCode().toLong(), title = title, start = start, end = end, allDay = allDay)
+
+    @Test
+    fun nextUpPinnedWhileAMeetingIsRunning() {
+        val standup = event("Standup", at(9, 30), at(10, 0))
+        assertTrue(TodayOrder.nextUpPinned(listOf(standup), at(9, 45), zone))
+    }
+
+    @Test
+    fun nextUpPinnedForAMeetingLaterToday() {
+        val review = event("Review", at(16), at(17))
+        assertTrue(TodayOrder.nextUpPinned(listOf(review), at(8), zone))
+    }
+
+    @Test
+    fun nextUpNotPinnedOnceTodaysMeetingsAreOver() {
+        val standup = event("Standup", at(9, 30), at(10, 0))
+        assertFalse(TodayOrder.nextUpPinned(listOf(standup), at(10, 1), zone))
+    }
+
+    @Test
+    fun nextUpNotPinnedForAllDayOrTomorrowOnly() {
+        val holiday = event("Holiday", at(0), at(0, day = 21), allDay = true)
+        val tomorrow = event("Dentist", at(9, day = 21), at(10, day = 21))
+        assertFalse(TodayOrder.nextUpPinned(listOf(holiday, tomorrow), at(12), zone))
+        assertFalse(TodayOrder.nextUpPinned(emptyList(), at(12), zone))
+    }
+
+    @Test
+    fun splitPullsPinnedOutAndRanksTheRest() {
+        val cards = listOf(
+            Ranked("next_up", 49),
+            Ranked("saved", 48),
+            Ranked("wellbeing", 46),
+            Ranked("week", 90),
+        )
+        val split = TodayOrder.split(cards, setOf("next_up"))
+        assertEquals(listOf("next_up"), split.pinned)
+        assertEquals(listOf("week", "saved", "wellbeing"), split.stacked)
+    }
+
+    @Test
+    fun splitWithNothingPinnedIsThePlainOrder() {
+        val cards = listOf(Ranked("a", 10), Ranked("b", 99), Ranked("c", 50))
+        val split = TodayOrder.split(cards, emptySet())
+        assertEquals(emptyList<String>(), split.pinned)
+        assertEquals(listOf("b", "c", "a"), split.stacked)
     }
 }

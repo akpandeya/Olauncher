@@ -7,7 +7,7 @@
     android:clickable="true"
     android:focusable="true"
     android:orientation="horizontal"
-    android:paddingVertical="6dp">
+    android:paddingVertical="11dp">
 
     <TextView
         android:id="@+id/tvEventTime"
@@ -27,7 +27,7 @@
         android:layout_height="wrap_content"
         android:layout_weight="1"
         android:ellipsize="end"
-        android:maxLines="1"
+        android:maxLines="2"
         tools:text="Dentist" />
 
 </LinearLayout>

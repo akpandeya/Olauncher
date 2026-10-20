@@ -72,6 +72,15 @@ object NextUpCard : TodayCard {
         return TodayOrder.nextUpPriority(soonest, nowMillis, super.priority(context, now))
     }
 
+    override fun pinnedToTop(context: Context, now: ZonedDateTime): Boolean {
+        val startOfDay = now.toLocalDate().atStartOfDay(now.zone)
+        val events = getCalendarRepository(context).events(
+            startOfDay.toInstant().toEpochMilli(),
+            startOfDay.plusDays(1).toInstant().toEpochMilli(),
+        )
+        return TodayOrder.nextUpPinned(events, now.toInstant(), now.zone)
+    }
+
     override fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View {
         val binding = CardNextUpBinding.inflate(inflater, parent, false)
         val cardView = NextUpCardView(binding, fragment)
