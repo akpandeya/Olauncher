@@ -311,6 +311,8 @@
     <string name="today_section">Today</string>
     <string name="today_cards">Today cards</string>
     <string name="intention_hint">Today I want to…</string>
+    <string name="intention_past_header">Past intentions ›</string>
+    <string name="intention_past_header_open">Past intentions ‹</string>
     <string name="intention_on_home">Intention on home</string>
     <string name="today_card_order">Card order</string>
     <string name="today_order_smart">Smart</string>

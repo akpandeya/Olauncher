@@ -64,6 +64,22 @@
                     android:maxLines="1"
                     android:paddingVertical="8dp" />
 
+                <TextView
+                    android:id="@+id/tvPastIntentions"
+                    style="@style/TextSmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingVertical="8dp"
+                    android:text="@string/intention_past_header"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/tvPastIntentionsList"
+                    style="@style/TextSmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:visibility="gone" />
+
                 <FrameLayout
                     android:id="@+id/heroWeatherHost"
                     android:layout_width="match_parent"

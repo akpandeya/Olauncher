@@ -57,6 +57,10 @@ object IntentionHistory {
     fun remove(entries: List<IntentionEntry>, day: Long): List<IntentionEntry> =
         normalize(entries.filter { it.day != day })
 
+    /** Entries in the [days] days before [today], newest first. Days without an entry are simply absent. */
+    fun pastEntries(entries: List<IntentionEntry>, today: Long, days: Int = 30): List<IntentionEntry> =
+        entries.filter { it.day < today && it.day >= today - days }.sortedByDescending { it.day }
+
     /** One entry per day (last wins), sorted oldest first, newest [MAX_ENTRIES] kept. */
     fun normalize(entries: List<IntentionEntry>): List<IntentionEntry> =
         entries.associateBy { it.day }.values.sortedBy { it.day }.takeLast(MAX_ENTRIES)
