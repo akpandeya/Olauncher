@@ -1,5 +1,6 @@
 package app.olauncher.ui
 
+import android.util.Log
 import android.annotation.SuppressLint
 import android.content.ActivityNotFoundException
 import android.Manifest
@@ -480,6 +481,7 @@ class AppDrawerFragment : BaseFragment() {
             }
             language.startsWith("zh") || language.startsWith("ja") || language.startsWith("ko")
         } catch (e: Exception) {
+            Log.w("AppDrawerFragment", "Failed to detect CJK keyboard", e)
             false
         }
         cachedIsCjkKeyboard = result

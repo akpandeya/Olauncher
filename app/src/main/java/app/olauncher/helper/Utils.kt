@@ -112,6 +112,7 @@ suspend fun getAppsList(
                 val pinned = try {
                     getPinnedShortcuts(context, prefs, collator)
                 } catch (e: Exception) {
+                    Log.w("Utils", "Failed to load pinned shortcuts", e)
                     emptyList()
                 }
                 appList.addAll(pinned)
@@ -197,6 +198,7 @@ fun isPrivateSpaceProfile(context: Context, userHandle: UserHandle): Boolean {
         val launcherApps = context.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
         launcherApps.getLauncherUserInfo(userHandle)?.userType == "android.os.usertype.profile.PRIVATE"
     } catch (e: Exception) {
+        Log.w("Utils", "Failed to check private space profile", e)
         false
     }
 }
@@ -206,6 +208,7 @@ fun isPrivateSpaceLocked(context: Context, userHandle: UserHandle): Boolean {
         val userManager = context.getSystemService(Context.USER_SERVICE) as UserManager
         userManager.isQuietModeEnabled(userHandle)
     } catch (e: Exception) {
+        Log.w("Utils", "Failed to check private space quiet mode", e)
         true
     }
 }
@@ -274,6 +277,7 @@ fun isOlauncherDefault(context: Context): Boolean {
             roleManager.isRoleHeld(RoleManager.ROLE_HOME)
         else null
     } catch (e: Exception) {
+        Log.w("Utils", "Failed to query home role", e)
         null
     }
     val resolvedPackage = if (roleHeld == null) getDefaultLauncherPackage(context) else null
@@ -456,6 +460,7 @@ fun isAccessServiceEnabled(context: Context): Boolean {
     val enabled = try {
         Settings.Secure.getInt(context.applicationContext.contentResolver, Settings.Secure.ACCESSIBILITY_ENABLED)
     } catch (e: Exception) {
+        Log.w("Utils", "Failed to read accessibility setting", e)
         0
     }
     if (enabled == 1) {
