@@ -57,6 +57,7 @@ import app.olauncher.helper.ArchivedAppsHelper
 import app.olauncher.helper.ContactSource
 import app.olauncher.helper.HomeAppHelper
 import app.olauncher.helper.HomeSets
+import app.olauncher.helper.LetterStripVisibility
 import app.olauncher.wellbeing.UsageSnapshotWorker
 import app.olauncher.helper.DrawerOrdering
 import app.olauncher.helper.DrawerScrollHelper
@@ -117,6 +118,7 @@ class AppDrawerFragment : BaseFragment() {
     private var currentPrivateSpaceLocked: Boolean = true
     private var currentPrivateSpaceAvailable: Boolean = false
     private var letterPosList: List<LetterPos> = emptyList()
+    private var keyboardVisible = false
     private var lastSelectedLetter: Char? = null
 
     private val viewModel: MainViewModel by activityViewModels()
@@ -190,6 +192,15 @@ class AppDrawerFragment : BaseFragment() {
             )
             if (root.paddingBottom != padding)
                 root.setPadding(root.paddingLeft, root.paddingTop, root.paddingRight, padding)
+            // The strip gets squashed above the keyboard, so hide it while the keyboard is open.
+            val imeVisible = imeBottom > 0
+            if (imeVisible != keyboardVisible) {
+                keyboardVisible = imeVisible
+                if (_binding != null) {
+                    updateLetterStripVisibility()
+                    updateListInsetForStrip()
+                }
+            }
             insets
         }
         binding.root.requestApplyInsets()
@@ -984,7 +995,12 @@ class AppDrawerFragment : BaseFragment() {
     }
 
     private fun updateLetterStripVisibility(query: String? = binding.search.query?.toString()) {
-        val show = prefs.drawerLetterStrip && query.isNullOrBlank() && letterPosList.isNotEmpty()
+        val show = LetterStripVisibility.shouldShow(
+            stripEnabled = prefs.drawerLetterStrip,
+            keyboardVisible = keyboardVisible,
+            queryBlank = query.isNullOrBlank(),
+            hasLetters = letterPosList.isNotEmpty(),
+        )
         binding.letterStripContainer.isVisible = show
         if (!show) {
             binding.letterPreview.visibility = View.INVISIBLE
@@ -1080,7 +1096,7 @@ class AppDrawerFragment : BaseFragment() {
     private fun updateListInsetForStrip() {
         val rv = binding.recyclerView
         val lp = rv.layoutParams as ViewGroup.MarginLayoutParams
-        val stripOn = prefs.drawerLetterStrip && letterPosList.isNotEmpty()
+        val stripOn = prefs.drawerLetterStrip && !keyboardVisible && letterPosList.isNotEmpty()
         val isStart = prefs.shortcutSideStart
         val inset = if (stripOn) {
             LetterIndex.listInsetPx(
