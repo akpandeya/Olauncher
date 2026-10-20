@@ -1680,6 +1680,8 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         )
         binding.mediaProgress.isVisible = fraction != null
         if (fraction != null) {
+            // The bar is a plain view, so it needs a colour; follow the now-playing text so it tracks the text settings.
+            binding.mediaProgress.setBackgroundColor(binding.contextLine.currentTextColor)
             binding.mediaProgress.pivotX = 0f
             binding.mediaProgress.scaleX = fraction
         }
@@ -1711,7 +1713,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     private fun glowDrawable(argb: Int): GradientDrawable = GradientDrawable().apply {
         gradientType = GradientDrawable.RADIAL_GRADIENT
         gradientRadius = resources.getDimension(R.dimen.music_glow_height) / 2f
-        colors = intArrayOf(0x66000000 or (argb and 0x00FFFFFF), argb and 0x00FFFFFF)
+        colors = intArrayOf(0xAA000000.toInt() or (argb and 0x00FFFFFF), argb and 0x00FFFFFF)
     }
 
     /** Sets the weather layer from the cached forecast. Hidden unless Weather effects is on and a forecast is cached. */
