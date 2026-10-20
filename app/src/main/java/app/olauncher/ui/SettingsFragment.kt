@@ -238,6 +238,11 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         if (_binding != null) askContextLineNotificationAccess()
     }
 
+    // A denial leaves the switch on and changes nothing else.
+    private val homeNextEventCalendarLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) {}
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         NotificationPermission.register(this)
@@ -296,6 +301,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateBatteryMode()
         populateInfoLine()
         populateContextLine()
+        populateHomeNextEvent()
         populateSearchEngine()
         populateSwipeApps()
         populateTodayCards()
@@ -388,6 +394,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.dayStartLayout, binding.dayStartTitle, R.id.dayStart),
             RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.eveningStartLayout, binding.eveningStartTitle, R.id.eveningStart),
             RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.contextLineLayout, binding.contextLineTitle, R.id.contextLineValue),
+            RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.homeNextEventLayout, binding.homeNextEventTitle, R.id.homeNextEventValue),
             RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.alignment.parent as View, getFirstTextView(binding.alignment.parent as View), R.id.alignment),
             RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.swapSidesLayout, binding.swapSides, R.id.swapSides),
 
@@ -703,6 +710,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.dayStart, R.id.dayStartTitle, R.id.dayStartLayout -> showHomeSetStartPicker(HomeSet.DAY, R.string.day_starts)
             R.id.eveningStart, R.id.eveningStartTitle, R.id.eveningStartLayout -> showHomeSetStartPicker(HomeSet.EVENING, R.string.evening_starts)
             R.id.contextLineValue, R.id.contextLineTitle, R.id.contextLineLayout -> toggleContextLine()
+            R.id.homeNextEventValue, R.id.homeNextEventTitle, R.id.homeNextEventLayout -> toggleHomeNextEvent()
             R.id.appThemeText -> showAppThemeMenu(view, showSystem = false)
             R.id.accent -> showAccentMenu(view)
             R.id.fontFamily -> showFontDialog()
@@ -888,6 +896,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.contextLineValue.setOnClickListener(this)
         binding.contextLineTitle.setOnClickListener(this)
         binding.contextLineLayout.setOnClickListener(this)
+        binding.homeNextEventValue.setOnClickListener(this)
+        binding.homeNextEventTitle.setOnClickListener(this)
+        binding.homeNextEventLayout.setOnClickListener(this)
         binding.swipeLeftApp.setOnClickListener(this)
         binding.swipeRightApp.setOnClickListener(this)
         binding.swipeRightLayout.setOnClickListener(this)
@@ -1430,6 +1441,29 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
 
     private fun populateContextLine() {
         binding.contextLineValue.text = getString(if (prefs.homeContextLine) R.string.on else R.string.off)
+    }
+
+    private fun toggleHomeNextEvent() {
+        prefs.homeNextEvent = !prefs.homeNextEvent
+        populateHomeNextEvent()
+        if (!prefs.homeNextEvent) return
+        // Permission is asked only now, when the line is switched on. Denial leaves it on.
+        val calendarGranted = ContextCompat.checkSelfPermission(
+            requireContext(), Manifest.permission.READ_CALENDAR
+        ) == PackageManager.PERMISSION_GRANTED
+        if (calendarGranted) return
+        dialog?.dismiss()
+        dialog = requireContext().showMessageDialog(
+            title = R.string.home_next_event,
+            message = R.string.calendar_permission_message,
+            action = R.string.allow,
+        ) {
+            homeNextEventCalendarLauncher.launch(Manifest.permission.READ_CALENDAR)
+        }
+    }
+
+    private fun populateHomeNextEvent() {
+        binding.homeNextEventValue.text = getString(if (prefs.homeNextEvent) R.string.on else R.string.off)
     }
 
     private fun showSearchEngineMenu(anchor: View) {
