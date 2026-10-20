@@ -34,6 +34,29 @@ class HapticsTest {
     }
 
     @Test
+    fun `hapticsEnabled is false for every kind when pref is off and true when on`() {
+        Haptics.Kind.values().forEach { kind ->
+            assertFalse("$kind should be gated off", Haptics.hapticsEnabled(prefsOn = false, kind = kind))
+            assertTrue("$kind should fire when on", Haptics.hapticsEnabled(prefsOn = true, kind = kind))
+            assertNull(Haptics.constantFor(kind, enabled = false))
+        }
+    }
+
+    @Test
+    fun `new kinds map to distinct constants`() {
+        val reject = Haptics.constantFor(Haptics.Kind.REJECT, enabled = true)
+        val gesture = Haptics.constantFor(Haptics.Kind.GESTURE, enabled = true)
+        val menu = Haptics.constantFor(Haptics.Kind.MENU, enabled = true)
+
+        assertEquals(HapticFeedbackConstants.REJECT, reject)
+        assertEquals(HapticFeedbackConstants.SEGMENT_TICK, gesture)
+        assertEquals(HapticFeedbackConstants.CONTEXT_CLICK, menu)
+        assertEquals(3, setOf(reject, gesture, menu).size)
+        val old = setOf(HapticFeedbackConstants.CLOCK_TICK, HapticFeedbackConstants.CONFIRM, HapticFeedbackConstants.LONG_PRESS)
+        assertTrue(old.none { it == reject || it == gesture || it == menu })
+    }
+
+    @Test
     fun `haptics preference defaults to true and persists changes`() {
         assertEquals("HAPTICS", Prefs.HAPTICS)
 
