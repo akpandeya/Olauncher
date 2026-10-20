@@ -23,6 +23,15 @@
         android:layout_height="1dp"
         android:contentDescription="@string/recents_layout_description" /> -->
 
+    <!-- Soft dark wash behind the top text; shown only when light text needs it (HomeWash) -->
+    <View
+        android:id="@+id/homeWash"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@drawable/home_top_wash"
+        android:importantForAccessibility="no"
+        android:visibility="gone" />
+
     <!-- Clock and calendar-->
     <LinearLayout
         android:id="@+id/dateTimeLayout"
@@ -37,15 +46,16 @@
         <TextClock
             android:id="@+id/clock"
             android:includeFontPadding="false"
-            android:letterSpacing="-0.04"
+            android:letterSpacing="-0.03"
             style="@style/TextDefault"
             android:textColor="@drawable/text_colors_accent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="sans-serif-light"
+            android:fontFamily="sans-serif-black"
             android:format12Hour="h:mm"
+            android:maxLines="1"
             android:textSize="@dimen/time_size"
-            tools:text="02:34" />
+            tools:text="23:59" />
 
         <TextView
             android:id="@+id/clockWords"
@@ -53,15 +63,16 @@
             android:textColor="@drawable/text_colors_accent"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:fontFamily="sans-serif-light"
+            android:fontFamily="sans-serif-black"
             android:maxLines="2"
             android:textSize="@dimen/time_words_size"
             android:visibility="gone"
             tools:text="Viertel nach drei" />
 
+        <!-- Date and weather; weather moves under the date when both do not fit (HomeMetaLine) -->
         <LinearLayout
             android:id="@+id/dateWeatherRow"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="6dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
@@ -70,22 +81,23 @@
                 android:id="@+id/date"
                 android:fontFamily="sans-serif-medium"
                 android:textAllCaps="true"
-                android:letterSpacing="0.14"
+                android:letterSpacing="0.08"
                 style="@style/TextDefault"
                 android:textColor="@drawable/text_colors_accent"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:format12Hour="EEE, dd MMM"
                 android:format24Hour="EEE, dd MMM"
+                android:maxLines="2"
                 android:paddingHorizontal="3dp"
                 android:textSize="@dimen/home_meta_size"
-                tools:text="Thu, 30 Dec" />
+                tools:text="Tue, 20 Oct" />
 
             <TextView
                 android:id="@+id/weatherSeparator"
                 android:fontFamily="sans-serif-medium"
                 android:textAllCaps="true"
-                android:letterSpacing="0.14"
+                android:letterSpacing="0.08"
                 style="@style/TextDefault"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -99,10 +111,11 @@
                 android:id="@+id/weather"
                 android:fontFamily="sans-serif-medium"
                 android:textAllCaps="true"
-                android:letterSpacing="0.14"
+                android:letterSpacing="0.08"
                 style="@style/TextDefault"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:maxLines="1"
                 android:paddingHorizontal="3dp"
                 android:textSize="@dimen/home_meta_size"
                 android:visibility="gone"
@@ -113,8 +126,9 @@
             android:id="@+id/nextEventLine"
             android:letterSpacing="0.02"
             android:textColor="@drawable/text_colors_light"
-            android:layout_marginTop="2dp"
-            android:paddingVertical="4dp"
+            android:layout_marginTop="4dp"
+            android:gravity="center_vertical"
+            android:minHeight="@dimen/home_info_min_height"
             style="@style/TextDefault"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -130,8 +144,8 @@
             android:id="@+id/contextLine"
             android:letterSpacing="0.02"
             android:textColor="@drawable/text_colors_light"
-            android:layout_marginTop="2dp"
-            android:paddingVertical="4dp"
+            android:gravity="center_vertical"
+            android:minHeight="@dimen/home_info_min_height"
             style="@style/TextDefault"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -148,14 +162,15 @@
             android:letterSpacing="0.01"
             android:textStyle="italic"
             android:fontFamily="serif"
-            android:layout_marginTop="14dp"
+            android:layout_marginTop="8dp"
             android:textColor="@drawable/text_colors_light"
-            style="@style/TextSmall"
+            style="@style/TextDefault"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:ellipsize="end"
-            android:maxLines="1"
+            android:maxLines="2"
             android:paddingHorizontal="3dp"
+            android:textSize="@dimen/home_quote_size"
             android:visibility="gone"
             tools:text="finish the draft"
             tools:visibility="visible" />
