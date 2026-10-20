@@ -184,6 +184,7 @@ object WellbeingCard : TodayCard {
                 slept = context.getString(R.string.health_line_slept),
                 restingHr = context.getString(R.string.health_line_resting_hr),
                 exercise = context.getString(R.string.health_line_exercise),
+                heartRate = context.getString(R.string.health_line_heart_rate),
             )
             val line = summary?.let { HealthSummaryFormatting.formatLine(it, labels) }
             val current = binding ?: return@launch
