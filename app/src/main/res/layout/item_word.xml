@@ -6,36 +6,51 @@
     android:background="?android:attr/selectableItemBackground"
     android:clickable="true"
     android:focusable="true"
-    android:orientation="vertical"
-    android:paddingVertical="8dp">
+    android:gravity="center_vertical"
+    android:minHeight="56dp"
+    android:orientation="horizontal"
+    android:paddingVertical="10dp">
 
-    <TextView
-        android:id="@+id/tvWord"
-        style="@style/TextMedium"
-        android:layout_width="match_parent"
+    <LinearLayout
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:ellipsize="end"
-        android:singleLine="true"
-        tools:text="Fernweh" />
+        android:layout_weight="1"
+        android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/tvMeaning"
-        style="@style/TextSmall"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:ellipsize="end"
-        android:maxLines="2"
-        tools:text="yearning for distant places · Wiktionary" />
+        <TextView
+            android:id="@+id/tvWord"
+            style="@style/TextMedium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:singleLine="true"
+            tools:text="Fernweh" />
+
+        <TextView
+            android:id="@+id/tvMeaning"
+            style="@style/TextSmallLight"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:ellipsize="end"
+            android:maxLines="2"
+            tools:text="yearning for distant places · Wiktionary" />
+
+    </LinearLayout>
 
     <TextView
         android:id="@+id/tvStatus"
         style="@style/TextSmallLight"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:ellipsize="end"
-        android:singleLine="true"
+        android:layout_marginStart="12dp"
+        android:background="@drawable/bg_pill"
+        android:fontFeatureSettings="tnum"
+        android:maxLines="1"
+        android:paddingHorizontal="10dp"
+        android:paddingVertical="4dp"
+        android:shadowRadius="0"
+        android:textSize="@dimen/text_caption"
         tools:text="Due in 4 d" />
 
 </LinearLayout>

@@ -6,20 +6,26 @@ import android.view.LayoutInflater
 import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowInsets
 import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.view.isVisible
+import androidx.core.widget.doAfterTextChanged
 import androidx.work.WorkManager
 import app.olauncher.R
 import app.olauncher.data.Prefs
 import app.olauncher.data.store.Word
 import app.olauncher.data.store.WordEdit
 import app.olauncher.data.store.WordLookup
+import app.olauncher.data.store.WordSearch
 import app.olauncher.data.store.WordsListLogic
 import app.olauncher.databinding.DialogEditWordBinding
 import app.olauncher.databinding.FragmentWordsBinding
 import app.olauncher.databinding.ItemWordBinding
+import app.olauncher.helper.DrawerScrollHelper
 import app.olauncher.helper.createDialog
+import app.olauncher.helper.dpToPx
+import app.olauncher.helper.getColorFromAttr
 import app.olauncher.helper.openUrl
 import app.olauncher.helper.showMessageDialog
 import app.olauncher.helper.showPopupMenu
@@ -43,6 +49,37 @@ class WordsFragment : BaseFragment() {
         return binding.root
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        binding.etSearch.doAfterTextChanged {
+            binding.btnClearSearch.isVisible = !it.isNullOrEmpty()
+            render()
+        }
+        binding.etSearch.setOnEditorActionListener { v, _, _ ->
+            (v.context.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager)
+                ?.hideSoftInputFromWindow(v.windowToken, 0)
+            true
+        }
+        binding.btnClearSearch.setOnClickListener { binding.etSearch.text?.clear() }
+
+        // The activity is edge-to-edge, so the window is not resized for the keyboard.
+        // Pad the page by the IME inset so the search field stays just above the keyboard.
+        val keyboardGap = binding.wordsFooter.paddingBottom - KEYBOARD_GAP_DP.dpToPx()
+        binding.root.setOnApplyWindowInsetsListener { root, insets ->
+            val imeBottom = insets.getInsets(WindowInsets.Type.ime()).bottom
+            val padding = DrawerScrollHelper.imeBottomPadding(
+                drawerBottomSearch = true,
+                imeBottom = imeBottom,
+                searchBottomMargin = keyboardGap,
+            )
+            if (root.paddingBottom != padding) {
+                root.setPadding(root.paddingLeft, root.paddingTop, root.paddingRight, padding)
+                scrollToDueWords()
+            }
+            insets
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         render()
@@ -56,23 +93,49 @@ class WordsFragment : BaseFragment() {
         val stats = store.stats(today)
         val words = store.all()
 
+        val query = b.etSearch.text?.toString().orEmpty()
+        val shown = WordSearch.filter(words, query)
+        val searching = query.isNotBlank()
+
         b.tvStats.text = WordsCardLogic.formatFooter(context, stats.total, stats.due, stats.learned)
         b.tvStats.isVisible = words.isNotEmpty()
-        b.tvEmpty.isVisible = words.isEmpty()
+        b.searchBar.isVisible = words.isNotEmpty()
+        b.tvMatchCount.isVisible = searching
+        b.tvMatchCount.text = context.getString(R.string.words_search_count, shown.size, words.size)
+        b.tvEmpty.isVisible = shown.isEmpty()
+        b.tvEmpty.text = if (words.isEmpty()) {
+            context.getString(R.string.words_empty_state)
+        } else {
+            context.getString(R.string.words_search_no_match, query.trim())
+        }
+        b.wordsContainer.isVisible = shown.isNotEmpty()
 
         // Due words sit nearest the bottom, closest to the thumb.
+        val accent = context.getColorFromAttr(R.attr.accentColor)
         b.wordsContainer.removeAllViews()
-        for (word in WordsListLogic.sort(words).asReversed()) {
+        for (word in WordsListLogic.sort(shown).asReversed()) {
             val item = ItemWordBinding.inflate(layoutInflater, b.wordsContainer, false)
+            val status = WordsListLogic.status(word, today)
             item.tvWord.text = word.text
             item.tvMeaning.text = WordsCardLogic.formatMeaning(context, word.meaning, word.meaningSource)
-            item.tvStatus.text = formatStatus(context, WordsListLogic.status(word, today))
+            item.tvStatus.text = formatStatus(context, status)
+            if (status == WordsListLogic.Status.Due) item.tvStatus.setTextColor(accent)
             item.root.setOnClickListener { showEditDialog(context, word) }
             item.root.setOnLongClickListener {
                 showWordPopup(item.tvWord, word)
                 true
             }
             b.wordsContainer.addView(item.root)
+        }
+
+        scrollToDueWords()
+    }
+
+    /** Due words are at the bottom. scrollTo, not fullScroll, so the search field keeps focus. */
+    private fun scrollToDueWords() {
+        _binding?.wordsScrollView?.post {
+            val scroll = _binding?.wordsScrollView ?: return@post
+            scroll.scrollTo(0, scroll.getChildAt(0)?.bottom ?: 0)
         }
     }
 
@@ -191,6 +254,10 @@ class WordsFragment : BaseFragment() {
             val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
             imm?.showSoftInput(this, InputMethodManager.SHOW_IMPLICIT)
         }
+    }
+
+    private companion object {
+        const val KEYBOARD_GAP_DP = 12
     }
 
     override fun onDestroyView() {

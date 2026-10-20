@@ -37,6 +37,8 @@
 
         <TextClock
             android:id="@+id/clock"
+            android:includeFontPadding="false"
+            android:letterSpacing="-0.02"
             style="@style/TextDefault"
             android:textColor="@drawable/text_colors_accent"
             android:layout_width="wrap_content"
@@ -60,6 +62,7 @@
 
         <LinearLayout
             android:id="@+id/dateWeatherRow"
+            android:layout_marginTop="6dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal">
@@ -100,6 +103,8 @@
 
         <TextView
             android:id="@+id/nextEventLine"
+            android:layout_marginTop="4dp"
+            android:paddingVertical="4dp"
             style="@style/TextDefault"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -113,6 +118,8 @@
 
         <TextView
             android:id="@+id/contextLine"
+            android:layout_marginTop="4dp"
+            android:paddingVertical="4dp"
             style="@style/TextDefault"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -126,6 +133,8 @@
 
         <TextView
             android:id="@+id/intentionLine"
+            android:layout_marginTop="6dp"
+            android:textColor="@drawable/text_colors_light"
             style="@style/TextSmall"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

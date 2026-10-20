@@ -1,9 +1,19 @@
 package app.olauncher.ui.today
 
+import app.olauncher.glance.CalendarEvent
+import app.olauncher.glance.HomeNextEvent
 import java.time.DayOfWeek
+import java.time.Instant
+import java.time.ZoneId
 
 /** A card key with the priority it has right now. */
 data class Ranked(val key: String, val priority: Int)
+
+/**
+ * Where the Today panels go: [pinned] sit at the top, right under the date; [stacked] fill the
+ * bottom-up stack, the first (highest priority) one nearest the thumb.
+ */
+data class TodayPanelSplit(val pinned: List<String>, val stacked: List<String>)
 
 /** Context-free ranking rules for the Today cards. */
 object TodayOrder {
@@ -35,4 +45,18 @@ object TodayOrder {
 
     fun wellbeingPriority(hourOfDay: Int, fallback: Int): Int =
         if (hourOfDay >= WELLBEING_FROM_HOUR) WELLBEING_PRIORITY else fallback
+
+    /**
+     * Next up is pinned to the top of the page while a timed event is running now or starts later
+     * today: a meeting is the thing to see first, not something to dig for at the bottom.
+     * All-day and tomorrow-only events leave it in the normal stack.
+     */
+    fun nextUpPinned(events: List<CalendarEvent>, now: Instant, zone: ZoneId): Boolean =
+        HomeNextEvent.pick(events, now, zone) != null
+
+    /** Pinned keys keep their incoming order; the rest are ranked by [order]. */
+    fun split(cards: List<Ranked>, pinnedKeys: Set<String>): TodayPanelSplit {
+        val (pinned, rest) = cards.partition { it.key in pinnedKeys }
+        return TodayPanelSplit(pinned.map { it.key }, order(rest).map { it.key })
+    }
 }
