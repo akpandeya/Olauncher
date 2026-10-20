@@ -53,14 +53,28 @@ class AutoBackupWorker(
         val existing = listChildren(context, tree, parent)
         val todayName = Backup.defaultBackupFileName(LocalDate.now())
 
-        existing[todayName]?.let { DocumentsContract.deleteDocument(context.contentResolver, it) }
-        val target = DocumentsContract.createDocument(
-            context.contentResolver,
-            parent,
-            "application/json",
-            todayName,
-        ) ?: throw IOException("Cannot create backup file")
-        Backup.export(context, target)
+        // Write under a temporary name first, so a failed export never costs the old file.
+        val resolver = context.contentResolver
+        val temp = DocumentsContract.createDocument(resolver, parent, "application/json", "$todayName.tmp")
+            ?: throw IOException("Cannot create backup file")
+        try {
+            Backup.export(context, temp)
+        } catch (e: Exception) {
+            try {
+                DocumentsContract.deleteDocument(resolver, temp)
+            } catch (_: Exception) {
+                // Leftover .tmp is ignored by retention.
+            }
+            throw e
+        }
+        existing[todayName]?.let { DocumentsContract.deleteDocument(resolver, it) }
+        if (DocumentsContract.renameDocument(resolver, temp, todayName) == null) {
+            // Provider cannot rename: write the name directly now that the export is known to work.
+            val target = DocumentsContract.createDocument(resolver, parent, "application/json", todayName)
+                ?: throw IOException("Cannot create backup file")
+            Backup.export(context, target)
+            DocumentsContract.deleteDocument(resolver, temp)
+        }
 
         val names = (existing.keys + todayName).toList()
         for (name in AutoBackupRetention.namesToDelete(names)) {

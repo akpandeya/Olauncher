@@ -14,6 +14,7 @@ import app.olauncher.helper.appUsagePermissionGranted
 import app.olauncher.ui.pause.PauseFormatting
 import app.olauncher.ui.today.TodayCard
 import app.olauncher.ui.today.TodayOrder
+import app.olauncher.wellbeing.HealthLabels
 import app.olauncher.wellbeing.HealthRepository
 import app.olauncher.wellbeing.HealthSummaryFormatting
 import app.olauncher.wellbeing.Nudges
@@ -178,7 +179,13 @@ object WellbeingCard : TodayCard {
             val summary = withContext(Dispatchers.IO) {
                 HealthRepository(context, { prefs.healthConnectEnabled }).readToday()
             }
-            val line = summary?.let { HealthSummaryFormatting.formatLine(it) }
+            val labels = HealthLabels(
+                steps = context.getString(R.string.health_line_steps),
+                slept = context.getString(R.string.health_line_slept),
+                restingHr = context.getString(R.string.health_line_resting_hr),
+                exercise = context.getString(R.string.health_line_exercise),
+            )
+            val line = summary?.let { HealthSummaryFormatting.formatLine(it, labels) }
             val current = binding ?: return@launch
             current.tvHealth.isVisible = line != null
             if (line != null) current.tvHealth.text = line

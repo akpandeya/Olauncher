@@ -106,7 +106,17 @@ object Backup {
         writeFiles(filesDir, backupData.files)
     }
 
-    fun restorePrefs(prefs: SharedPreferences, prefsMap: Map<String, Any?>) {
+    /** Imported values without volatile keys, plus the device's current volatile values. */
+    fun mergeKeepingVolatile(current: Map<String, *>, imported: Map<String, Any?>): Map<String, Any?> {
+        val merged = imported.filterKeys { it !in VOLATILE_KEYS }.toMutableMap()
+        for ((key, value) in current) {
+            if (key in VOLATILE_KEYS) merged[key] = value
+        }
+        return merged
+    }
+
+    fun restorePrefs(prefs: SharedPreferences, importedMap: Map<String, Any?>) {
+        val prefsMap = mergeKeepingVolatile(prefs.all, importedMap)
         val editor = prefs.edit().clear()
         for ((key, value) in prefsMap) {
             when (value) {
