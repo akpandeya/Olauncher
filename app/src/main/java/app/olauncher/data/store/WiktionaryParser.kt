@@ -7,6 +7,7 @@ object WiktionaryParser {
 
     private const val MAX_LENGTH = 160
 
+    private val ARTICLE_REGEX = Regex("""(?i)(?:der|die|das|ein|eine)\s+(.+)""")
     private val ENTITY_REGEX = Regex("""&(#x[0-9a-fA-F]+|#[0-9]+|[a-zA-Z]+);""")
     private val TAG_STRIP_REGEX = Regex("""<[^>]+>""")
     private val STYLE_SCRIPT_REGEX = Regex("""<(style|script)[^>]*>.*?</\1>""", RegexOption.DOT_MATCHES_ALL)
@@ -95,14 +96,21 @@ object WiktionaryParser {
 
     fun candidates(text: String): List<String> {
         val trimmed = text.trim()
-        if (trimmed.isEmpty() || trimmed.contains(Regex("""\s"""))) {
-            return listOf(text)
+        if (trimmed.isEmpty()) return listOf(text)
+        if (trimmed.contains(Regex("""\s"""))) {
+            val stripped = withoutArticle(text) ?: return listOf(text)
+            return listOf(text, stripped).distinct()
         }
         val capitalised = text.lowercase(Locale.GERMAN).replaceFirstChar {
             if (it.isLowerCase()) it.titlecase(Locale.GERMAN) else it.toString()
         }
         val lowercased = text.lowercase(Locale.GERMAN)
         return listOf(text, capitalised, lowercased).distinct()
+    }
+
+    private fun withoutArticle(text: String): String? {
+        val match = ARTICLE_REGEX.matchEntire(text.trim()) ?: return null
+        return match.groupValues[1].trim().takeIf { it.isNotEmpty() }
     }
 
     private fun cleanDefinition(html: String): String {
