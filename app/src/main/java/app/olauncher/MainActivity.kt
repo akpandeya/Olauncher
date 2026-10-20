@@ -36,6 +36,8 @@ import app.olauncher.wellbeing.UsageSnapshotWorker
 import app.olauncher.databinding.ActivityMainBinding
 import app.olauncher.helper.HomeReturnPolicy
 import app.olauncher.helper.MotionPolicy
+import app.olauncher.helper.WordCaptureActivity
+import app.olauncher.helper.WordScreenService
 import app.olauncher.helper.getColorFromAttr
 import app.olauncher.helper.hasBeenDays
 import app.olauncher.helper.hasBeenHours
@@ -94,6 +96,8 @@ class MainActivity : AppCompatActivity() {
         prefs = Prefs(this)
         prefs.checkRollovers()
         UsageSnapshotWorker.syncWithDistractingApps(this, prefs.distractingApps)
+        WordCaptureActivity.setEnabled(this, prefs.germanEnabled)
+        WordScreenService.setEnabled(this, prefs.germanEnabled && prefs.germanScreenPick)
         WorkManager.getInstance(this).cancelUniqueWork(Constants.WALLPAPER_WORKER_NAME)
         prefs.dailyWallpaper = false
         NudgeScheduler.ensureAll(this)
