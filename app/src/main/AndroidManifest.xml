@@ -88,7 +88,7 @@
             android:enabled="false"
             android:excludeFromRecents="true"
             android:exported="true"
-            android:label="@string/save_word"
+            android:label="@string/save_word_thumbline"
             android:taskAffinity=""
             android:theme="@style/Theme.WordCapture">
             <intent-filter>
@@ -102,7 +102,7 @@
             android:name=".helper.WordShareAlias"
             android:enabled="false"
             android:exported="true"
-            android:label="@string/save_word"
+            android:label="@string/save_word_thumbline"
             android:targetActivity=".helper.WordCaptureActivity">
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
