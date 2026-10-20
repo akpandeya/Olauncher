@@ -10,9 +10,10 @@ import android.view.View
 import app.olauncher.helper.MusicPulse
 
 /**
- * Material 3 style wavy progress line. The played part is a sine wave, and a faded straight
- * track runs across the full width. The wave only moves while [setRunning] is true; stopped,
- * it keeps its last phase and draws nothing new.
+ * Material 3 style wavy progress line. The played part is a sine wave, and a semi-opaque straight
+ * track runs across the full width. Both have a thin dark outline so they stay visible on light
+ * wallpapers. The wave only moves while [setRunning] is true; stopped, it keeps its last phase
+ * and draws nothing new.
  */
 class WavyProgressView @JvmOverloads constructor(
     context: Context,
@@ -20,9 +21,10 @@ class WavyProgressView @JvmOverloads constructor(
 ) : View(context, attrs) {
 
     private val density = resources.displayMetrics.density
-    private val strokeWidthPx = 2f * density
-    private val amplitudePx = 3f * density
-    private val wavelengthPx = 24f * density
+    private val strokeWidthPx = MusicPulse.WAVE_STROKE_DP * density
+    private val outlineWidthPx = strokeWidthPx + 2 * MusicPulse.WAVE_OUTLINE_DP * density
+    private val amplitudePx = MusicPulse.WAVE_AMPLITUDE_DP * density
+    private val wavelengthPx = MusicPulse.WAVE_LENGTH_DP * density
     /** Distance between path points; small enough for a smooth curve. */
     private val stepPx = 1.5f * density
 
@@ -37,6 +39,9 @@ class WavyProgressView @JvmOverloads constructor(
         strokeWidth = strokeWidthPx
         strokeCap = Paint.Cap.ROUND
     }
+    /** Wider dark strokes drawn under the wave and the track as a contrast edge. */
+    private val waveOutlinePaint = Paint(wavePaint).apply { strokeWidth = outlineWidthPx }
+    private val trackOutlinePaint = Paint(trackPaint).apply { strokeWidth = outlineWidthPx }
     private val wavePath = Path()
 
     private var progress = 0f
@@ -70,6 +75,8 @@ class WavyProgressView @JvmOverloads constructor(
         lineColor = argb
         wavePaint.color = argb
         trackPaint.color = MusicPulse.waveTrackColor(argb)
+        waveOutlinePaint.color = MusicPulse.waveOutlineColor(wavePaint.color)
+        trackOutlinePaint.color = MusicPulse.waveOutlineColor(trackPaint.color)
         invalidate()
     }
 
@@ -86,11 +93,12 @@ class WavyProgressView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
-        val half = strokeWidthPx / 2f
+        val half = outlineWidthPx / 2f
         val start = half
         val end = width - half
         if (end <= start) return
         val centreY = height / 2f
+        canvas.drawLine(start, centreY, end, centreY, trackOutlinePaint)
         canvas.drawLine(start, centreY, end, centreY, trackPaint)
         val playedEnd = start + (end - start) * progress
         if (playedEnd <= start) return
@@ -103,6 +111,7 @@ class WavyProgressView @JvmOverloads constructor(
             x += stepPx
         }
         wavePath.lineTo(playedEnd, centreY + MusicPulse.waveOffset(playedEnd - start, wavelengthPx, amplitudePx, phase))
+        canvas.drawPath(wavePath, waveOutlinePaint)
         canvas.drawPath(wavePath, wavePaint)
     }
 

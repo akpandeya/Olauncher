@@ -173,8 +173,29 @@ object MusicPulse {
     const val WAVE_MAX_FPS = 20
     const val WAVE_FRAME_INTERVAL_MS = 1000L / WAVE_MAX_FPS
 
-    /** Alpha (0 to 255) of the faded straight track line, before the line colour's own alpha. */
-    const val WAVE_TRACK_ALPHA = 0x4D
+    /** Alpha (0 to 255) of the straight track line, before the line colour's own alpha. About 60%, so the full length reads. */
+    const val WAVE_TRACK_ALPHA = 0x99
+
+    /** Stroke width of the wave and the track, in dp. Ends are rounded. */
+    const val WAVE_STROKE_DP = 3.5f
+
+    /** Height of the wave from the centre line to a crest, in dp. */
+    const val WAVE_AMPLITUDE_DP = 4f
+
+    /** Length of one wave cycle, in dp. */
+    const val WAVE_LENGTH_DP = 24f
+
+    /** Width of the dark outline on each side of the stroke, in dp. Keeps the colour visible on light wallpapers. */
+    const val WAVE_OUTLINE_DP = 1f
+
+    /** Alpha (0 to 255) of the dark outline, before the stroke colour's own alpha. Subtle, so the colour stays the main look. */
+    const val WAVE_OUTLINE_ALPHA = 0x59
+
+    /** Height of the progress view in the layouts, in dp. Must fit [waveDrawHeightDp]. */
+    const val WAVE_VIEW_HEIGHT_DP = 16f
+
+    /** Full height the wave needs: both crests, the stroke and the outline on both sides. */
+    fun waveDrawHeightDp(): Float = 2 * WAVE_AMPLITUDE_DP + WAVE_STROKE_DP + 2 * WAVE_OUTLINE_DP
 
     /** Wave phase, 0 (inclusive) to 1 (exclusive), after [elapsedMs] of motion. 0 when [periodMs] is not positive. */
     fun wavePhase(elapsedMs: Long, periodMs: Long = WAVE_PERIOD_MS): Float {
@@ -194,11 +215,16 @@ object MusicPulse {
     /** Colour of the progress line: the glow colour shown now, or the now-playing text colour without a glow. */
     fun progressLineColor(glowColor: Int?, textColor: Int): Int = glowColor ?: textColor
 
-    /** Faded track colour: [argb] with its alpha scaled by [WAVE_TRACK_ALPHA] out of 255. */
-    fun waveTrackColor(argb: Int): Int {
-        val alpha = (argb ushr 24) * WAVE_TRACK_ALPHA / 255
-        return (alpha shl 24) or (argb and 0x00FFFFFF)
-    }
+    /** Track colour: [argb] with its alpha scaled by [WAVE_TRACK_ALPHA] out of 255. */
+    fun waveTrackColor(argb: Int): Int = (scaledAlpha(argb, WAVE_TRACK_ALPHA) shl 24) or (argb and 0x00FFFFFF)
+
+    /**
+     * Dark outline drawn under a stroke of colour [argb]: black at [WAVE_OUTLINE_ALPHA] out of 255,
+     * scaled by the stroke's own alpha so a faded stroke gets a fainter outline.
+     */
+    fun waveOutlineColor(argb: Int): Int = scaledAlpha(argb, WAVE_OUTLINE_ALPHA) shl 24
+
+    private fun scaledAlpha(argb: Int, alpha: Int): Int = (argb ushr 24) * alpha / 255
 
     /**
      * The glow colour: the most populous swatch that is saturated and not too dark or light.
