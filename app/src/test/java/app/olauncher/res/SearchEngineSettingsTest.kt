@@ -126,7 +126,7 @@ class SearchEngineSettingsTest {
 
             val valueView = textViews.item(1) as Element
             assertEquals("@+id/searchEngine", valueView.getAttribute("android:id"))
-            assertEquals("@style/TextSmallBold", valueView.getAttribute("style"))
+            assertEquals("@style/TextSettingsValue", valueView.getAttribute("style"))
         }
     }
 }

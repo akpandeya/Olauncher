@@ -29,7 +29,7 @@
 
         <item name="colorPrimary">@color/black</item>
         <item name="colorPrimaryDark">@android:color/darker_gray</item>
-        <item name="colorAccent">@color/black</item>
+        <item name="colorAccent">?attr/accentColor</item>
 
         <item name="primaryColor">@color/black</item>
         <item name="primaryInverseColor">@color/blackInverse</item>
@@ -140,6 +140,11 @@
 
     <style name="TextSmallBold" parent="TextSmall">
         <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- Value text on the right of a settings row; follows the accent -->
+    <style name="TextSettingsValue" parent="TextSmallBold">
+        <item name="android:textColor">@drawable/text_colors_accent</item>
     </style>
 
     <style name="TextSmallLight" parent="TextSmall">
