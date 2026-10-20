@@ -10,6 +10,8 @@ import javax.xml.parsers.DocumentBuilderFactory
  * Every clickable view in the layouts must have text or a contentDescription.
  * A TextView filled in from code counts when the layout previews it with tools:text.
  * A clickable container counts when a descendant is labelled, because TalkBack reads its children.
+ * Every ImageView or ImageButton needs a contentDescription or importantForAccessibility="no",
+ * since images are often made clickable from code without android:clickable in the layout.
  */
 class AccessibilityResourceTest {
     private val ns = "http://schemas.android.com/apk/res/android"
@@ -37,6 +39,12 @@ class AccessibilityResourceTest {
         val clickable = el.getAttributeNS(ns, "clickable") == "true"
         if (clickable && !el.isLabelled() && !el.hasLabelledDescendant()) {
             out.add("$file: <${el.tagName}> id=${el.getAttributeNS(ns, "id")}")
+        }
+        // Images have no text of their own, so they need a description or must be marked decorative.
+        val isImage = el.localName in setOf("ImageView", "ImageButton") ||
+            el.tagName.endsWith(".AppCompatImageView") || el.tagName.endsWith(".AppCompatImageButton")
+        if (isImage && !el.hasAttr("contentDescription") && el.getAttributeNS(ns, "importantForAccessibility") != "no") {
+            out.add("$file: <${el.tagName}> id=${el.getAttributeNS(ns, "id")} (image needs contentDescription or importantForAccessibility=\"no\")")
         }
         val children = el.childNodes
         for (i in 0 until children.length) (children.item(i) as? Element)?.let { collect(it, file, out) }

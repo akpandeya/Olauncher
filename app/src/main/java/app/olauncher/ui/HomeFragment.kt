@@ -430,7 +430,8 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
                 HomeAccessibilityActions.enabled(
                     lockModeOn = prefs.lockModeOn,
                     swipeLeftEnabled = prefs.swipeLeftEnabled,
-                    swipeRightEnabled = prefs.swipeRightEnabled,
+                    // Swipe-right set to Today is already covered by the Open Today action.
+                    swipeRightEnabled = prefs.swipeRightEnabled && prefs.swipeRightAction != Prefs.SWIPE_RIGHT_ACTION_TODAY,
                 ).forEach { action ->
                     val label = when (action) {
                         HomeAccessibilityAction.OPEN_APPS -> getString(R.string.a11y_action_open_apps)
@@ -440,11 +441,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
                         HomeAccessibilityAction.SWIPE_LEFT_APP ->
                             getString(R.string.a11y_action_swipe_left_app, prefs.appNameSwipeLeft)
                         HomeAccessibilityAction.SWIPE_RIGHT_APP ->
-                            getString(
-                                R.string.a11y_action_swipe_right_app,
-                                if (prefs.swipeRightAction == Prefs.SWIPE_RIGHT_ACTION_TODAY) getString(R.string.a11y_action_open_today)
-                                else prefs.appNameSwipeRight
-                            )
+                            getString(R.string.a11y_action_swipe_right_app, prefs.appNameSwipeRight)
                     }
                     info.addAction(AccessibilityNodeInfoCompat.AccessibilityActionCompat(accessibilityActionId(action), label))
                 }
@@ -1055,7 +1052,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     /** Keeps the clock block under the max share of the screen height, whatever the font scale. */
     private fun capClockSize() {
         val screenPx = resources.displayMetrics.heightPixels.toFloat()
-        val maxPx = screenPx * resources.getFraction(R.dimen.clock_max_height_fraction, 1, 1)
+        val maxPx = screenPx * resources.getFloat(R.dimen.clock_max_height_fraction)
         fun capped(view: TextView, sizePx: Float, lines: Int) {
             val fm = view.paint.fontMetrics
             val lineRatio = (fm.descent - fm.ascent) / view.paint.textSize.coerceAtLeast(1f)

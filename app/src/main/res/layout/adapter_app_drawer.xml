@@ -27,6 +27,7 @@
         android:layout_marginStart="10dp"
         android:layout_marginTop="1dp"
         android:gravity="center"
+        android:importantForAccessibility="no"
         android:src="@drawable/ic_rounded"
         app:tint="?attr/primaryColor" />
 
