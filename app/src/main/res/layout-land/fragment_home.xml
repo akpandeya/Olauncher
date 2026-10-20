@@ -179,7 +179,7 @@
         <app.olauncher.ui.WavyProgressView
             android:id="@+id/mediaProgress"
             android:layout_width="match_parent"
-            android:layout_height="12dp"
+            android:layout_height="16dp"
             android:layout_marginHorizontal="3dp"
             android:importantForAccessibility="no"
             android:visibility="gone" />
