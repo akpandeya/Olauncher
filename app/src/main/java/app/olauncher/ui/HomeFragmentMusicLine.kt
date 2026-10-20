@@ -129,11 +129,11 @@ internal fun HomeFragment.openMediaApp(item: ContextItem.Media) {
     }
 }
 
-/** Shows the album-colour glow and progress line while media plays; hides them and stops their timer otherwise. */
+/** Shows the album-colour glow and progress line for playing or paused media; paused freezes them. Hides them otherwise. */
 internal fun HomeFragment.updateMusicPulse(media: MediaInfo?) {
     val binding = _binding ?: return
     binding.root.removeCallbacks(musicTick)
-    if (media == null || !media.playing || !prefs.homeMusicPulse) {
+    if (media == null || !prefs.homeMusicPulse) {
         stopMusicPulse()
         return
     }
@@ -153,10 +153,15 @@ internal fun HomeFragment.updateMusicPulse(media: MediaInfo?) {
     if (glow == null) {
         glowAnimator?.cancel()
         glowAnimator = null
-    } else if (strengthChanged || glowAnimator?.isRunning != true) {
-        startGlowPulse(strength)
+    } else if (media.playing) {
+        if (strengthChanged || glowAnimator?.isRunning != true) startGlowPulse(strength)
+    } else {
+        // Paused: hold the glow where it is; if it was not pulsing, rest at its brightest.
+        if (glowAnimator == null) binding.musicGlow.alpha = MusicPulse.glowPulseRange(strength).high
+        glowAnimator?.cancel()
+        glowAnimator = null
     }
-    if (colors.size > 1 && !glowRotating) startGlowRotation()
+    if (!media.playing) stopGlowRotation() else if (colors.size > 1 && !glowRotating) startGlowRotation()
     val fraction = MusicPulse.progress(
         media.positionMs, media.positionAtMs, SystemClock.elapsedRealtime(), media.speed, media.playing, media.durationMs,
     )
@@ -168,9 +173,9 @@ internal fun HomeFragment.updateMusicPulse(media: MediaInfo?) {
         )
         binding.mediaProgress.setProgress(fraction)
     }
-    binding.mediaProgress.setRunning(fraction != null && homeVisible)
-    // Re-check every second so the progress line keeps moving while the song plays.
-    binding.root.postDelayed(musicTick, 1_000L)
+    binding.mediaProgress.setRunning(fraction != null && homeVisible && media.playing)
+    // Re-check every second so the progress line keeps moving while the song plays; paused needs no tick.
+    if (media.playing) binding.root.postDelayed(musicTick, 1_000L)
 }
 
 internal fun HomeFragment.stopMusicPulse() {
