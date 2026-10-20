@@ -300,7 +300,11 @@ class AppDrawerFragment : BaseFragment() {
     }
 
     private fun suggestItems(query: String): List<String> =
-        (parseCommand(query) as? DrawerCommand.SaveWords)?.items.orEmpty()
+        when (val command = parseCommand(query)) {
+            is DrawerCommand.SaveWords -> command.items
+            is DrawerCommand.LookUp -> listOf(command.text)
+            null -> emptyList()
+        }
 
     private fun suggestOnlineAllowed(): Boolean = prefs.germanEnabled && prefs.germanSpellSuggest
 
@@ -342,14 +346,7 @@ class AppDrawerFragment : BaseFragment() {
         val online = suggestState?.takeIf { it.first == items && suggestOnlineAllowed() }?.second.orEmpty()
         val rows = ArrayList<AppModel.Result>()
         for ((item, local) in offline) {
-            val seen = HashSet<String>()
-            seen.add(item.trim().lowercase())
-            val options = ArrayList<String>()
-            for (candidate in local + online[item].orEmpty()) {
-                if (options.size >= WordSuggest.MAX_SUGGESTIONS) break
-                if (seen.add(candidate.trim().lowercase())) options.add(candidate)
-            }
-            for (option in options) {
+            for (option in WordSuggest.mergeOptions(item, local, online[item].orEmpty())) {
                 val text = if (items.size == 1) ctx.getString(R.string.did_you_mean_row, option)
                 else ctx.getString(R.string.did_you_mean_for_row, option, item)
                 rows.add(AppModel.Result(text, AppModel.Result.Action.SaveWords(listOf(option))))
@@ -358,8 +355,27 @@ class AppDrawerFragment : BaseFragment() {
         return rows
     }
 
+    /** "Did you mean" rows for a `:w` query without an exact saved match; tapping one looks that spelling up. */
+    private fun lookUpSuggestionRows(ctx: Context, text: String): List<AppModel.Result> {
+        val local = WordSuggest.suggest(savedWordTexts, text)
+        val online = suggestState?.takeIf { it.first == listOf(text) && suggestOnlineAllowed() }
+            ?.second?.get(text).orEmpty()
+        return WordSuggest.mergeOptions(text, local, online).map { option ->
+            AppModel.Result(
+                ctx.getString(R.string.did_you_mean_row, option),
+                AppModel.Result.Action.LookUpWord(option)
+            )
+        }
+    }
+
     private fun lookUpRows(text: String): List<AppModel.Result> {
         val ctx = context ?: return emptyList()
+        val main = lookUpMainRows(ctx, text)
+        if (savedWord(ctx, text) != null) return main
+        return main + lookUpSuggestionRows(ctx, text)
+    }
+
+    private fun lookUpMainRows(ctx: Context, text: String): List<AppModel.Result> {
         val saved = savedWord(ctx, text)
         if (saved != null) {
             val meaning = saved.meaning.ifBlank { ctx.getString(R.string.word_row_no_meaning_yet) }
@@ -611,6 +627,9 @@ class AppDrawerFragment : BaseFragment() {
                             }
 
                             is AppModel.Result.Action.SaveWords -> saveWords(action)
+
+                            is AppModel.Result.Action.LookUpWord ->
+                                binding.search.setQuery(":w ${action.text}", false)
 
                             is AppModel.Result.Action.OpenWiktionary -> {
                                 if (action.openOnTap) {
