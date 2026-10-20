@@ -153,7 +153,8 @@ class TypeScaleResourceTest {
         assertEquals(18, small)
 
         // Named dimens for text keeping today's values
-        assertEquals(66, spValue("time_size"))
+        // Home clock raised from 66sp in the typography pass (design/home-option-1)
+        assertEquals(80, spValue("time_size"))
         assertEquals(18, spValue("date_size"))
         assertEquals(48, spValue("text_weather"))
         assertEquals(12, spValue("text_drawer_action"))

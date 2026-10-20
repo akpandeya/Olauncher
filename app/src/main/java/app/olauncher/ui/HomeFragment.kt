@@ -644,7 +644,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         view.contentDescription = ShortcutIconRenderer.getLabel(context, slot, prefs, isAppIcon)
         // Extra slots (7..MAX_SHORTCUT_SLOTS) show a faint placeholder until an app icon resolves
         val isPlaceholder = !isAppIcon && prefs.getShortcutAction(slot) == null
-        view.alpha = if (isPlaceholder) 0.4f else 1.0f
+        view.alpha = if (isPlaceholder) 0.4f else 0.85f
     }
 
     private fun getShortcutSwipeTouchListener(context: Context, view: View, slot: Int): View.OnTouchListener {
