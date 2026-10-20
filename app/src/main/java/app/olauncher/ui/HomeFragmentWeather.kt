@@ -45,11 +45,12 @@ internal fun HomeFragment.layoutDateWeatherRow() {
 internal fun HomeFragment.initWeatherListener() {
     weatherPrefsListener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
         if (key == Prefs.WEATHER_FETCHED_AT || key == Prefs.WEATHER_ENABLED) {
-            // Preference listeners are called on the main thread.
-            if (_binding != null) {
-                if (prefs.homeInfoCombined) populateDateTime()
-                populateWeather()
-                applyWeatherEffects()
+            activity?.runOnUiThread {
+                if (_binding != null) {
+                    if (prefs.homeInfoCombined) populateDateTime()
+                    populateWeather()
+                    applyWeatherEffects()
+                }
             }
         }
     }
