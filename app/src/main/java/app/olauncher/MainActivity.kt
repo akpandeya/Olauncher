@@ -119,14 +119,16 @@ class MainActivity : AppCompatActivity() {
                 if (prefs.boldFont) theme.applyStyle(R.style.BoldFontOverlay, true)
             }
         }
-        when (Accent.fromId(prefs.accent)) {
-            Accent.OFF -> Unit
-            Accent.SYSTEM -> theme.applyStyle(R.style.AccentSystemOverlay, true)
-            Accent.SAGE -> theme.applyStyle(R.style.AccentSageOverlay, true)
-            Accent.SAND -> theme.applyStyle(R.style.AccentSandOverlay, true)
-            Accent.SKY -> theme.applyStyle(R.style.AccentSkyOverlay, true)
-            Accent.ROSE -> theme.applyStyle(R.style.AccentRoseOverlay, true)
+        val accentOverlay = Accent.resolve(Accent.fromId(prefs.accent), 0) {
+            when (it) {
+                Accent.SYSTEM -> R.style.AccentSystemOverlay
+                Accent.SAGE -> R.style.AccentSageOverlay
+                Accent.SAND -> R.style.AccentSandOverlay
+                Accent.SKY -> R.style.AccentSkyOverlay
+                else -> R.style.AccentRoseOverlay
+            }
         }
+        if (accentOverlay != 0) theme.applyStyle(accentOverlay, true)
         if (isEinkDisplay() || isSystemAnimationsDisabled()) theme.applyStyle(R.style.NoAnimationOverlay, true)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
