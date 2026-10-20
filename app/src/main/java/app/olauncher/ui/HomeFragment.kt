@@ -1,7 +1,9 @@
 package app.olauncher.ui
 
 import android.Manifest
+import android.animation.ArgbEvaluator
 import android.animation.ObjectAnimator
+import android.animation.ValueAnimator
 import android.app.WallpaperColors
 import android.app.WallpaperManager
 import android.content.BroadcastReceiver
@@ -139,7 +141,11 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     private var contextTickReceiver: BroadcastReceiver? = null
     private var nowPlaying: NowPlaying? = null
     private var glowAnimator: ObjectAnimator? = null
-    private var glowShownColor: Int? = null
+    private var glowShownColors: List<Int> = emptyList()
+    private var glowColorIndex = 0
+    private var glowColorAnimator: ValueAnimator? = null
+    private var glowRotating = false
+    private val glowRotationStep = Runnable { fadeToNextGlowColor() }
     private var glowShownStrength: Int? = null
     private var homeVisible = false
     private val musicTick = Runnable { refreshContextLine() }
@@ -1673,11 +1679,15 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             return
         }
         val strength = prefs.homeGlowStrength
-        val glow = nowPlaying?.glowColor(media)?.takeIf { MusicPulse.isGlowVisible(strength) }
+        val colors = if (MusicPulse.isGlowVisible(strength)) nowPlaying?.glowColors(media).orEmpty() else emptyList()
+        val glow = colors.firstOrNull()
         val strengthChanged = strength != glowShownStrength
-        if (glow != glowShownColor || strengthChanged) {
-            glowShownColor = glow
+        if (colors != glowShownColors || strengthChanged) {
+            // New track or new strength: start again from the strongest colour.
+            stopGlowRotation()
+            glowShownColors = colors
             glowShownStrength = strength
+            glowColorIndex = 0
             binding.musicGlow.background = glow?.let { glowDrawable(it, strength) }
         }
         binding.musicGlow.isVisible = glow != null
@@ -1687,6 +1697,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         } else if (strengthChanged || glowAnimator?.isRunning != true) {
             startGlowPulse(strength)
         }
+        if (colors.size > 1 && !glowRotating) startGlowRotation()
         val fraction = MusicPulse.progress(
             media.positionMs, media.positionAtMs, SystemClock.elapsedRealtime(), media.speed, media.playing, media.durationMs,
         )
@@ -1706,8 +1717,46 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         binding.root.removeCallbacks(musicTick)
         glowAnimator?.cancel()
         glowAnimator = null
+        stopGlowRotation()
         binding.musicGlow.isVisible = false
         binding.mediaProgress.isVisible = false
+    }
+
+    /** Fades the glow between the album colours: rests on one, then fades to the next, wrapping round. */
+    private fun startGlowRotation() {
+        val binding = _binding ?: return
+        glowRotating = true
+        binding.root.removeCallbacks(glowRotationStep)
+        binding.root.postDelayed(glowRotationStep, MusicPulse.GLOW_COLOR_HOLD_MS)
+    }
+
+    private fun stopGlowRotation() {
+        glowRotating = false
+        _binding?.root?.removeCallbacks(glowRotationStep)
+        glowColorAnimator?.cancel()
+        glowColorAnimator = null
+    }
+
+    private fun fadeToNextGlowColor() {
+        val binding = _binding ?: return
+        val colors = glowShownColors
+        val strength = glowShownStrength
+        val drawable = binding.musicGlow.background as? GradientDrawable
+        if (!glowRotating || colors.size < 2 || strength == null || drawable == null) {
+            stopGlowRotation()
+            return
+        }
+        val from = colors[glowColorIndex.coerceIn(0, colors.lastIndex)]
+        glowColorIndex = MusicPulse.nextGlowColorIndex(glowColorIndex, colors.size)
+        val to = colors[glowColorIndex]
+        glowColorAnimator?.cancel()
+        glowColorAnimator = ValueAnimator.ofObject(ArgbEvaluator(), from, to).apply {
+            duration = MusicPulse.GLOW_COLOR_FADE_MS
+            addUpdateListener { drawable.setColors(glowGradient(it.animatedValue as Int, strength)) }
+            start()
+        }
+        // The next fade starts once this one has run and the colour has rested.
+        binding.root.postDelayed(glowRotationStep, MusicPulse.GLOW_COLOR_FADE_MS + MusicPulse.GLOW_COLOR_HOLD_MS)
     }
 
     /** Slow alpha breathing of the glow; about 6 seconds per half cycle. The range scales with [strength]. */
@@ -1726,8 +1775,13 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     private fun glowDrawable(argb: Int, strength: Int): GradientDrawable = GradientDrawable().apply {
         gradientType = GradientDrawable.RADIAL_GRADIENT
         gradientRadius = resources.getDimension(R.dimen.music_glow_height) / 2f
+        setColors(glowGradient(argb, strength))
+    }
+
+    /** Centre and edge colours of the glow: the album colour at the strength's alpha, fading to transparent. */
+    private fun glowGradient(argb: Int, strength: Int): IntArray {
         val centreAlpha = MusicPulse.glowCentreAlpha(strength) shl 24
-        colors = intArrayOf(centreAlpha or (argb and 0x00FFFFFF), argb and 0x00FFFFFF)
+        return intArrayOf(centreAlpha or (argb and 0x00FFFFFF), argb and 0x00FFFFFF)
     }
 
     /** Sets the weather layer from the cached forecast. Hidden unless Weather effects is on and a forecast is cached. */
@@ -1770,7 +1824,8 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         glowAnimator?.cancel()
         glowAnimator = null
         // The next view starts without a glow background, so forget what was drawn.
-        glowShownColor = null
+        stopGlowRotation()
+        glowShownColors = emptyList()
         glowShownStrength = null
         _binding?.root?.removeCallbacks(musicTick)
         originalShadows.clear()

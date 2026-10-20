@@ -136,6 +136,36 @@ object MusicPulse {
     ): String = listOf(packageName, title, artist.orEmpty(), artworkUri.orEmpty(), "${artworkWidth}x$artworkHeight")
         .joinToString("|")
 
+    /** Most album colours the glow fades between. */
+    const val GLOW_MAX_COLORS = 3
+
+    /** How long the glow rests on one colour before it starts fading to the next. */
+    const val GLOW_COLOR_HOLD_MS = 6_000L
+
+    /** How long one fade between two album colours takes. Hold plus fade is about 9 seconds per colour. */
+    const val GLOW_COLOR_FADE_MS = 3_000L
+
+    /**
+     * Album colours the glow fades between, at most [max]. The first is [glowColor], so a single-colour
+     * glow looks as before. The rest are the other saturated swatches in the usable lightness range,
+     * most populous first. With no saturated swatch the glow keeps to the one grey fallback.
+     */
+    fun glowColors(swatches: List<SwatchColor>, max: Int = GLOW_MAX_COLORS): List<Int> {
+        if (max <= 0) return emptyList()
+        val first = glowColor(swatches) ?: return emptyList()
+        val others = swatches
+            .filter { it.lightness in MIN_LIGHTNESS..MAX_LIGHTNESS && it.population > 0 && it.saturation >= MIN_SATURATION }
+            .sortedByDescending { it.population }
+            .map { it.argb }
+            .filter { it != first }
+            .distinct()
+        return (listOf(first) + others).take(max)
+    }
+
+    /** Index of the colour after [index] in a list of [count] colours, wrapping to the start. 0 for an empty list. */
+    fun nextGlowColorIndex(index: Int, count: Int): Int =
+        if (count <= 0) 0 else (index + 1).mod(count)
+
     /**
      * The glow colour: the most populous swatch that is saturated and not too dark or light.
      * Falls back to a plain grey swatch in the same lightness range. Null when none fit.

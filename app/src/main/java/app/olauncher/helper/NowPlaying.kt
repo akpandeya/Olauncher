@@ -168,31 +168,30 @@ class NowPlaying(private val context: Context, private val onChange: () -> Unit)
     }
 
     private var glowKey: String? = null
-    private var glowCached: Int? = null
+    private var glowCached: List<Int> = emptyList()
 
     /**
-     * Dominant album colour for the glow, or null when there is no artwork or no fitting colour.
-     * Cached per track, so the palette runs once per song rather than on every refresh.
+     * Up to three album colours for the glow, strongest first; empty when there is no artwork or
+     * no fitting colour. Cached per track, so the palette runs once per song rather than on every refresh.
      */
-    fun glowColor(media: MediaInfo): Int? {
+    fun glowColors(media: MediaInfo): List<Int> {
         // Each refresh reads a fresh bitmap copy over IPC, so the key uses the art link and size, not object identity.
         val artwork = media.artwork
         val key = MusicPulse.glowCacheKey(
             media.packageName, media.title, media.artist, media.artworkUri, artwork?.width ?: 0, artwork?.height ?: 0,
         )
         if (key == glowKey) return glowCached
-        val bitmap = media.artwork
-        val color = if (bitmap == null) null else {
+        val colors = if (artwork == null) emptyList() else {
             try {
-                MusicPulse.glowColor(swatchesOf(bitmap.toSoftwareBitmap()))
+                MusicPulse.glowColors(swatchesOf(artwork.toSoftwareBitmap()))
             } catch (_: Exception) {
                 // A recycled or unreadable bitmap just means no glow for this track.
-                null
+                emptyList()
             }
         }
         glowKey = key
-        glowCached = color
-        return color
+        glowCached = colors
+        return colors
     }
 
     /** Palette cannot read hardware bitmaps, so they are copied to a normal one first. */
