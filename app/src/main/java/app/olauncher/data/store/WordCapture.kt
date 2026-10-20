@@ -90,6 +90,12 @@ object WordCapture {
         return if (items.size >= 2) Capture.List(items) else null
     }
 
+    /** Words of [text] without punctuation; tokens with no letter or digit are dropped. */
+    fun tokenize(text: String): List<String> =
+        text.split(WHITESPACE_REGEX)
+            .map { it.filter { c -> c !in PUNCTUATION_SET }.trim() }
+            .filter { it.isNotBlank() && it.any { c -> c.isLetterOrDigit() } }
+
     fun classify(raw: String): Capture {
         if (raw.isBlank()) return Capture.Invalid
         if (URL_REGEX.containsMatchIn(raw)) return Capture.Invalid
