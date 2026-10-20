@@ -9,6 +9,58 @@ import java.net.URLEncoder
 object WiktionaryApi {
 
     const val TIMEOUT_MS = 10_000
+    const val SUGGEST_TIMEOUT_MS = 3_000
+    const val SUGGEST_LIMIT = 3
+
+    /** Result of a spelling-suggestion query; [Failed] covers 429, timeout and no network. */
+    sealed interface SuggestResult {
+        data class Suggestions(val words: List<String>) : SuggestResult
+        data object Failed : SuggestResult
+    }
+
+    /** Test hook: replaces the network call in [suggest]. */
+    internal var suggestFetcherOverride: ((String) -> SuggestResult)? = null
+
+    /** Parses an opensearch response: `[query, [titles], [descriptions], [urls]]`. */
+    fun parseSuggestions(body: String): List<String> {
+        return try {
+            val titles = org.json.JSONArray(body).getJSONArray(1)
+            (0 until titles.length()).map { titles.getString(it) }.filter { it.isNotBlank() }
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    fun suggest(query: String): SuggestResult {
+        suggestFetcherOverride?.let { return it(query) }
+        val encoded = URLEncoder.encode(query.trim(), "UTF-8")
+        val url = URL(
+            "https://en.wiktionary.org/w/api.php?action=opensearch&profile=fuzzy" +
+                "&limit=$SUGGEST_LIMIT&namespace=0&format=json&search=$encoded"
+        )
+        var connection: HttpURLConnection? = null
+        return try {
+            connection = (url.openConnection() as HttpURLConnection).apply {
+                requestMethod = "GET"
+                connectTimeout = SUGGEST_TIMEOUT_MS
+                readTimeout = SUGGEST_TIMEOUT_MS
+                setRequestProperty(
+                    "User-Agent",
+                    "Thumbline/${BuildConfig.VERSION_NAME} (https://github.com/akpandeya/Olauncher)"
+                )
+            }
+            if (connection.responseCode == HttpURLConnection.HTTP_OK) {
+                val body = connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
+                SuggestResult.Suggestions(parseSuggestions(body).take(SUGGEST_LIMIT))
+            } else {
+                SuggestResult.Failed
+            }
+        } catch (e: Exception) {
+            SuggestResult.Failed
+        } finally {
+            connection?.disconnect()
+        }
+    }
 
     sealed interface FetchOutcome {
         data class Success(val definition: String) : FetchOutcome
