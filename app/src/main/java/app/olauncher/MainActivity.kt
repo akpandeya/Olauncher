@@ -207,12 +207,12 @@ class MainActivity : AppCompatActivity() {
     private fun applyNavActionAnimations(enabled: Boolean) {
         if (!::navController.isInitialized) return
 
-        val drawerEnter = if (enabled) R.anim.drawer_enter else 0
-        val drawerExit = if (enabled) R.anim.drawer_exit else 0
-        val todayEnter = if (enabled) R.anim.today_enter else 0
-        val todayExit = if (enabled) R.anim.today_exit else 0
-        val fadeEnter = if (enabled) R.anim.fade_enter else 0
-        val fadeExit = if (enabled) R.anim.fade_exit else 0
+        val drawerEnter = if (enabled) R.animator.drawer_enter else 0
+        val drawerExit = if (enabled) R.animator.drawer_exit else 0
+        val todayEnter = if (enabled) R.animator.today_enter else 0
+        val todayExit = if (enabled) R.animator.today_exit else 0
+        val fadeEnter = if (enabled) R.animator.fade_enter else 0
+        val fadeExit = if (enabled) R.animator.fade_exit else 0
 
         // Drawer
         updateActionAnimations(
