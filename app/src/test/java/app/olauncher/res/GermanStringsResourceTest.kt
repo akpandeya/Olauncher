@@ -69,7 +69,7 @@ class GermanStringsResourceTest {
         assertEquals("12 words", format("words_count_plural", 12))
         assertEquals("12 words · 3 due · 4 learned", format("words_footer", "12 words", 3, 4))
         assertEquals("All done for today · 3 words", format("words_all_done", "3 words"))
-        assertEquals("No meaning yet", string("words_no_meaning"))
+        assertEquals("No meaning yet", string("word_row_no_meaning_yet"))
         assertEquals(" · Wiktionary", string("words_wiktionary_suffix"))
     }
 }
