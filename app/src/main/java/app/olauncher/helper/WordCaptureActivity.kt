@@ -34,17 +34,18 @@ class WordCaptureActivity : AppCompatActivity() {
 
     companion object {
         fun setEnabled(context: Context, enabled: Boolean) {
-            val component = ComponentName(context, WordCaptureActivity::class.java)
             val state = if (enabled) {
                 PackageManager.COMPONENT_ENABLED_STATE_ENABLED
             } else {
                 PackageManager.COMPONENT_ENABLED_STATE_DISABLED
             }
-            context.packageManager.setComponentEnabledSetting(
-                component,
-                state,
-                PackageManager.DONT_KILL_APP
+            val components = listOf(
+                ComponentName(context, WordCaptureActivity::class.java),
+                ComponentName(context, "app.olauncher.helper.WordShareAlias")
             )
+            components.forEach {
+                context.packageManager.setComponentEnabledSetting(it, state, PackageManager.DONT_KILL_APP)
+            }
         }
     }
 
@@ -54,10 +55,7 @@ class WordCaptureActivity : AppCompatActivity() {
         if (prefs.boldFont) theme.applyStyle(R.style.BoldFontOverlay, true)
         super.onCreate(savedInstanceState)
 
-        val rawText = intent?.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)?.toString()
-            ?: intent?.getStringExtra(Intent.EXTRA_PROCESS_TEXT)
-            ?: intent?.getStringExtra(Intent.EXTRA_TEXT)
-            ?: ""
+        val rawText = readIncomingText()
 
         when (val capture = WordCapture.classify(rawText)) {
             is Capture.Word -> {
@@ -76,6 +74,20 @@ class WordCaptureActivity : AppCompatActivity() {
                 finish()
             }
         }
+    }
+
+    private fun readIncomingText(): String {
+        val i = intent ?: return ""
+        if (i.action == Intent.ACTION_SEND) {
+            val clipText = i.clipData?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.text?.toString()
+            return i.getStringExtra(Intent.EXTRA_TEXT)
+                ?: i.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString()
+                ?: clipText
+                ?: ""
+        }
+        return i.getCharSequenceExtra(Intent.EXTRA_PROCESS_TEXT)?.toString()
+            ?: i.getStringExtra(Intent.EXTRA_PROCESS_TEXT)
+            ?: ""
     }
 
     private fun saveWord(text: String, context: String) {
