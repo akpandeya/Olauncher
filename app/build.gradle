@@ -53,6 +53,10 @@ android {
         viewBinding = true
         buildConfig = true
     }
+    lint {
+        // Existing issues are recorded here; any new lint issue fails lintDebug.
+        baseline = file("lint-baseline.xml")
+    }
     dependenciesInfo {
         includeInApk = false
         includeInBundle = true
