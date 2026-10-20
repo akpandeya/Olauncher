@@ -439,6 +439,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             RuntimeSettingsRow(SettingsSections.KEY_DEUTSCH, binding.germanLayout, binding.germanTitle, R.id.germanOnOff),
             RuntimeSettingsRow(SettingsSections.KEY_DEUTSCH, binding.germanClockLayout, binding.germanClockTitle, R.id.germanClock),
             RuntimeSettingsRow(SettingsSections.KEY_DEUTSCH, binding.germanLookupLayout, binding.germanLookupTitle, R.id.germanLookupOnOff),
+            RuntimeSettingsRow(SettingsSections.KEY_DEUTSCH, binding.germanSpellSuggestLayout, binding.germanSpellSuggestTitle, R.id.germanSpellSuggestOnOff),
             RuntimeSettingsRow(SettingsSections.KEY_DEUTSCH, binding.germanScreenPickLayout, binding.germanScreenPickTitle, R.id.germanScreenPickOnOff),
             RuntimeSettingsRow(SettingsSections.KEY_DEUTSCH, binding.germanPauseWordLayout, binding.germanPauseWordTitle, R.id.germanPauseWordOnOff),
             RuntimeSettingsRow(SettingsSections.KEY_DEUTSCH, binding.germanUiLayout, binding.germanUiTitle, R.id.germanUiOnOff),
@@ -538,6 +539,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.thumblineHeaderCard.isVisible = false
         binding.sectionListLayout.isVisible = false
         binding.footer.isVisible = false
+        binding.licenseNote.isVisible = false
 
         for (item in runtimeRows) {
             item.rowView.isVisible = item.viewId in matchingIds
@@ -609,6 +611,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.thumblineHeaderCard.isVisible = true
         binding.sectionListLayout.isVisible = true
         binding.footer.isVisible = true
+        binding.licenseNote.isVisible = true
 
         for (item in runtimeRows) {
             item.rowView.isVisible = isRowAvailable(item.viewId)
@@ -729,6 +732,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.germanOnOff, R.id.germanTitle, R.id.germanLayout -> toggleGerman()
             R.id.germanClock, R.id.germanClockTitle, R.id.germanClockLayout -> showGermanClockMenu(binding.germanClock)
             R.id.germanLookupOnOff, R.id.germanLookupTitle, R.id.germanLookupSubtitle, R.id.germanLookupLayout -> toggleGermanLookup()
+            R.id.germanSpellSuggestOnOff, R.id.germanSpellSuggestTitle, R.id.germanSpellSuggestSubtitle, R.id.germanSpellSuggestLayout -> toggleGermanSpellSuggest()
             R.id.germanScreenPickOnOff, R.id.germanScreenPickTitle, R.id.germanScreenPickSubtitle, R.id.germanScreenPickLayout -> toggleGermanScreenPick()
             R.id.germanPauseWordOnOff, R.id.germanPauseWordTitle, R.id.germanPauseWordLayout -> toggleGermanPauseWord()
             R.id.germanUiOnOff, R.id.germanUiTitle, R.id.germanUiLayout -> toggleGermanUi()
@@ -921,6 +925,10 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.germanLookupTitle.setOnClickListener(this)
         binding.germanLookupSubtitle.setOnClickListener(this)
         binding.germanLookupLayout.setOnClickListener(this)
+        binding.germanSpellSuggestOnOff.setOnClickListener(this)
+        binding.germanSpellSuggestTitle.setOnClickListener(this)
+        binding.germanSpellSuggestSubtitle.setOnClickListener(this)
+        binding.germanSpellSuggestLayout.setOnClickListener(this)
         binding.germanScreenPickOnOff.setOnClickListener(this)
         binding.germanScreenPickTitle.setOnClickListener(this)
         binding.germanScreenPickSubtitle.setOnClickListener(this)
@@ -3581,6 +3589,11 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         }
     }
 
+    private fun toggleGermanSpellSuggest() {
+        prefs.germanSpellSuggest = !prefs.germanSpellSuggest
+        populateGerman()
+    }
+
     private fun toggleGermanLookup() {
         prefs.germanLookup = !prefs.germanLookup
         populateGerman()
@@ -3606,6 +3619,8 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         }
         binding.germanLookupLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
         binding.germanLookupOnOff.text = getString(if (prefs.germanLookup) R.string.on else R.string.off)
+        binding.germanSpellSuggestLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
+        binding.germanSpellSuggestOnOff.text = getString(if (prefs.germanSpellSuggest) R.string.on else R.string.off)
         binding.germanScreenPickLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
         binding.germanScreenPickOnOff.text = getString(if (prefs.germanScreenPick) R.string.on else R.string.off)
         binding.germanPauseWordLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
