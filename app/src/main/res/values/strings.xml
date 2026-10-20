@@ -38,6 +38,8 @@
     <string name="info_line_combined">Combined</string>
     <string name="context_line">Context line</string>
     <string name="context_line_in_minutes">%1$s in %2$d min</string>
+    <string name="context_line_pause_title">Pause %1$s</string>
+    <string name="context_line_play_title">Play %1$s</string>
     <string name="context_line_now">%1$s now</string>
     <string name="context_line_access_message">Show what is playing. Thumbline needs notification access to read it; the next meeting works without it.</string>
     <string name="text_on_wallpaper">Text on wallpaper</string>

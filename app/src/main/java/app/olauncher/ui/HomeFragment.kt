@@ -493,6 +493,10 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         binding.date.setOnClickListener(this)
         binding.weather.setOnClickListener(this)
         binding.contextLine.setOnClickListener(this)
+        binding.contextLine.setOnLongClickListener {
+            (contextItem as? ContextItem.Media)?.let { openMediaApp(it) }
+            contextItem is ContextItem.Media
+        }
         binding.nextEventLine.setOnClickListener(this)
         binding.clock.setOnLongClickListener(this)
         binding.clockWords.setOnLongClickListener(this)
@@ -872,6 +876,9 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             val item = ContextLine.pick(media, event, now, labels)
             contextItem = item
             binding.contextLine.text = item?.text
+            binding.contextLine.contentDescription = (item as? ContextItem.Media)?.let {
+                getString(if (it.playing) R.string.context_line_pause_title else R.string.context_line_play_title, it.title)
+            }
             binding.contextLine.isVisible = item != null
         }
     }
@@ -917,10 +924,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         val context = context ?: return
         try {
             when (val item = contextItem) {
-                is ContextItem.Media -> {
-                    val intent = context.packageManager.getLaunchIntentForPackage(item.packageName)
-                    if (intent != null) startActivity(intent)
-                }
+                is ContextItem.Media -> nowPlaying?.toggle(item.packageName)
                 is ContextItem.Event -> startActivity(
                     Intent(Intent.ACTION_VIEW).apply {
                         data = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, item.eventId)
@@ -930,6 +934,15 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             }
         } catch (_: Exception) {
             context.showToast(getString(R.string.unable_to_open_app))
+        }
+    }
+
+    private fun openMediaApp(item: ContextItem.Media) {
+        val context = context ?: return
+        try {
+            val intent = context.packageManager.getLaunchIntentForPackage(item.packageName)
+            if (intent != null) startActivity(intent)
+        } catch (_: Exception) {
         }
     }
 
