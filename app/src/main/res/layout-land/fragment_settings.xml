@@ -225,7 +225,7 @@
 
                     <TextView
                         android:id="@+id/homeAppsNum"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -249,7 +249,7 @@
 
                     <TextView
                         android:id="@+id/dateTime"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -276,7 +276,7 @@
 
                     <TextView
                         android:id="@+id/batteryMode"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -303,7 +303,7 @@
 
                     <TextView
                         android:id="@+id/infoLine"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -330,7 +330,7 @@
 
                     <TextView
                         android:id="@+id/homeSets"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -393,7 +393,7 @@
 
                     <TextView
                         android:id="@+id/morningStart"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -420,7 +420,7 @@
 
                     <TextView
                         android:id="@+id/dayStart"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -447,7 +447,7 @@
 
                     <TextView
                         android:id="@+id/eveningStart"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -474,7 +474,7 @@
 
                     <TextView
                         android:id="@+id/contextLineValue"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -501,7 +501,7 @@
 
                     <TextView
                         android:id="@+id/homeNextEventValue"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -526,7 +526,7 @@
 
                     <TextView
                         android:id="@+id/alignment"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -594,7 +594,7 @@
 
                     <TextView
                         android:id="@+id/shortcutIconsOnOff"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -621,7 +621,7 @@
 
                     <TextView
                         android:id="@+id/shortcutCount"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -648,7 +648,7 @@
 
                     <TextView
                         android:id="@+id/shortcutSize"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -675,7 +675,7 @@
 
                     <TextView
                         android:id="@+id/shortcutSide"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -702,7 +702,7 @@
 
                     <TextView
                         android:id="@+id/shortcutHeight"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -730,7 +730,7 @@
 
                     <TextView
                         android:id="@+id/shortcutIconStyle"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -778,7 +778,7 @@
 
                     <TextView
                         android:id="@+id/autoShowKeyboard"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -807,7 +807,7 @@
 
                     <TextView
                         android:id="@+id/drawerBottomSearch"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -836,7 +836,7 @@
 
                     <TextView
                         android:id="@+id/searchEngine"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -865,7 +865,7 @@
 
                     <TextView
                         android:id="@+id/drawerNewFirst"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -894,7 +894,7 @@
 
                     <TextView
                         android:id="@+id/drawerLetterStrip"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -923,7 +923,7 @@
 
                     <TextView
                         android:id="@+id/drawerRecents"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -952,7 +952,7 @@
 
                     <TextView
                         android:id="@+id/searchContacts"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -981,7 +981,7 @@
 
                     <TextView
                         android:id="@+id/currencyRates"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -1030,7 +1030,7 @@
 
                     <TextView
                         android:id="@+id/distractingApps"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -1057,7 +1057,7 @@
 
                     <TextView
                         android:id="@+id/pauseBeforeAppsOnOff"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -1084,7 +1084,7 @@
 
                     <TextView
                         android:id="@+id/pauseAllowance"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -1111,7 +1111,7 @@
 
                     <TextView
                         android:id="@+id/pauseEscalateOnOff"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -1157,7 +1157,7 @@
 
                     <TextView
                         android:id="@+id/pauseAskWhyOnOff"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -1185,7 +1185,7 @@
 
                     <TextView
                         android:id="@+id/windDown"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|center_vertical"
@@ -1231,7 +1231,7 @@
 
                     <TextView
                         android:id="@+id/windDownGreyOnOff"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -1283,7 +1283,7 @@
 
                             <TextView
                                 android:id="@+id/systemGreyCopy"
-                                style="@style/TextSmallBold"
+                                style="@style/TextSettingsValue"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:padding="8dp"
@@ -1291,7 +1291,7 @@
 
                             <TextView
                                 android:id="@+id/systemGreyBedtime"
-                                style="@style/TextSmallBold"
+                                style="@style/TextSettingsValue"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:padding="8dp"
@@ -1301,7 +1301,7 @@
 
                     <TextView
                         android:id="@+id/systemGreyOnOff"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|center_vertical"
@@ -1348,7 +1348,7 @@
 
                     <TextView
                         android:id="@+id/commitLockOnOff"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|center_vertical"
@@ -1375,7 +1375,7 @@
 
                     <TextView
                         android:id="@+id/holdNotificationsOnOff"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -1402,7 +1402,7 @@
 
                     <TextView
                         android:id="@+id/quietReleaseTimes"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -1428,7 +1428,7 @@
 
                     <TextView
                         android:id="@+id/screenTimeOnOff"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -1455,7 +1455,7 @@
 
                     <TextView
                         android:id="@+id/screenTimeStyle"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -1482,7 +1482,7 @@
 
                     <TextView
                         android:id="@+id/screenTimeTarget"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -1519,7 +1519,7 @@
 
                     <TextView
                         android:id="@+id/nudgeWater"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -1546,7 +1546,7 @@
 
                     <TextView
                         android:id="@+id/nudgeWalk"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -1573,7 +1573,7 @@
 
                     <TextView
                         android:id="@+id/nudgeSocial"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -1601,7 +1601,7 @@
 
                     <TextView
                         android:id="@+id/nudgeActiveHours"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -1655,7 +1655,7 @@
 
                     <TextView
                         android:id="@+id/todayCards"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -1687,7 +1687,7 @@
 
                     <TextView
                         android:id="@+id/todayOrder"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -1719,7 +1719,7 @@
 
                     <TextView
                         android:id="@+id/intentionOnHome"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -1769,7 +1769,7 @@
 
                     <TextView
                         android:id="@+id/weather"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -1821,7 +1821,7 @@
 
                     <TextView
                         android:id="@+id/germanOnOff"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -1849,7 +1849,7 @@
 
                     <TextView
                         android:id="@+id/germanClock"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -1896,7 +1896,7 @@
 
                     <TextView
                         android:id="@+id/germanLookupOnOff"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|center_vertical"
@@ -1943,7 +1943,7 @@
 
                     <TextView
                         android:id="@+id/germanSpellSuggestOnOff"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|center_vertical"
@@ -1990,7 +1990,7 @@
 
                     <TextView
                         android:id="@+id/germanScreenPickOnOff"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|center_vertical"
@@ -2018,7 +2018,7 @@
 
                     <TextView
                         android:id="@+id/germanPauseWordOnOff"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -2046,7 +2046,7 @@
 
                     <TextView
                         android:id="@+id/germanUiOnOff"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -2095,7 +2095,7 @@
 
                     <TextView
                         android:id="@+id/photoWallpaper"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -2120,7 +2120,7 @@
 
                     <TextView
                         android:id="@+id/statusBar"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -2145,7 +2145,7 @@
 
                     <TextView
                         android:id="@+id/appThemeText"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -2170,7 +2170,7 @@
 
                     <TextView
                         android:id="@+id/accent"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -2195,7 +2195,7 @@
 
                     <TextView
                         android:id="@+id/fontFamily"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -2220,7 +2220,7 @@
 
                     <TextView
                         android:id="@+id/boldFont"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -2245,7 +2245,7 @@
 
                     <TextView
                         android:id="@+id/textSizeValue"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -2273,7 +2273,7 @@
 
                     <TextView
                         android:id="@+id/haptics"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -2300,7 +2300,7 @@
 
                     <TextView
                         android:id="@+id/textContrast"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -2351,7 +2351,7 @@
 
                     <TextView
                         android:id="@+id/swipeLeftApp"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -2381,7 +2381,7 @@
 
                     <TextView
                         android:id="@+id/swipeRightApp"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end|bottom"
@@ -2407,7 +2407,7 @@
 
                     <TextView
                         android:id="@+id/toggleLock"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end"
@@ -2434,7 +2434,7 @@
 
                     <TextView
                         android:id="@+id/homeButtonRecents"
-                        style="@style/TextSmallBold"
+                        style="@style/TextSettingsValue"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="end"

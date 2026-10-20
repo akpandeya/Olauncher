@@ -8,6 +8,18 @@ import org.junit.Test
 class AccentTest {
 
     @Test
+    fun resolve_off_returnsFallback() {
+        assertEquals(-1, Accent.resolve(Accent.OFF, -1) { it.id * 10 })
+    }
+
+    @Test
+    fun resolve_eachAccent_returnsOwnValue() {
+        for (accent in Accent.entries.filter { it != Accent.OFF }) {
+            assertEquals(accent.id * 10, Accent.resolve(accent, -1) { it.id * 10 })
+        }
+    }
+
+    @Test
     fun `all accent options have expected ids`() {
         assertEquals(0, Accent.OFF.id)
         assertEquals(1, Accent.SYSTEM.id)
