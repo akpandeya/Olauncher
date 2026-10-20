@@ -89,6 +89,12 @@ class Prefs(context: Context) : PauseLogStorage {
         const val BATTERY_MODE_OFF = 2
         const val TEXT_CONTRAST_AUTO = 0
         const val TEXT_CONTRAST_THEME = 1
+        const val WASH_AUTO = 0
+        const val WASH_STRONG = 1
+        const val WASH_OFF = 2
+        const val BRIGHTNESS_FULL = 0
+        const val BRIGHTNESS_SOFT = 1
+        const val BRIGHTNESS_DIM = 2
         const val PAUSE_ALLOWANCE_MIN = "PAUSE_ALLOWANCE_MIN"
         const val PAUSE_ESCALATE = "PAUSE_ESCALATE"
         const val PAUSE_ASK_WHY = "PAUSE_ASK_WHY"
@@ -163,6 +169,8 @@ class Prefs(context: Context) : PauseLogStorage {
     private val INTENTION_DAY = "INTENTION_DAY"
     private val INTENTION_ON_HOME = "INTENTION_ON_HOME"
     private val HOME_TEXT_CONTRAST = "HOME_TEXT_CONTRAST"
+    private val HOME_WASH_LEVEL = "HOME_WASH_LEVEL"
+    private val HOME_TEXT_BRIGHTNESS = "HOME_TEXT_BRIGHTNESS"
     private val SHORTCUT_COUNT = "SHORTCUT_COUNT"
     private val SHORTCUT_SIZE_STEP = "SHORTCUT_SIZE_STEP"
     private val SHORTCUT_SIDE_START = "SHORTCUT_SIDE_START"
@@ -440,6 +448,14 @@ class Prefs(context: Context) : PauseLogStorage {
     var homeTextContrast: Int
         get() = prefs.getInt(HOME_TEXT_CONTRAST, TEXT_CONTRAST_AUTO)
         set(value) = prefs.edit { putInt(HOME_TEXT_CONTRAST, value).apply() }
+
+    var homeWashLevel: Int
+        get() = prefs.getInt(HOME_WASH_LEVEL, WASH_AUTO)
+        set(value) = prefs.edit { putInt(HOME_WASH_LEVEL, value).apply() }
+
+    var homeTextBrightness: Int
+        get() = prefs.getInt(HOME_TEXT_BRIGHTNESS, BRIGHTNESS_FULL)
+        set(value) = prefs.edit { putInt(HOME_TEXT_BRIGHTNESS, value).apply() }
 
     var homeShortcuts: Boolean
         get() = prefs.getBoolean(HOME_SHORTCUTS, false)

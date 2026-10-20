@@ -318,6 +318,8 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateBoldFont()
         populateHaptics()
         populateTextContrast()
+        populateHomeDarkness()
+        populateTextBrightness()
         populateAlignment()
         populateShortcutIcons()
         populateStatusBar()
@@ -487,6 +489,8 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.textSizeValue.parent as View, getFirstTextView(binding.textSizeValue.parent as View), R.id.textSizeValue),
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.haptics.parent as View, getFirstTextView(binding.haptics.parent as View), R.id.haptics),
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.textContrastLayout, binding.textContrastTitle, R.id.textContrast),
+            RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.homeWashLayout, binding.homeWashTitle, R.id.homeDarkness),
+            RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.textBrightnessLayout, binding.textBrightnessTitle, R.id.textBrightness),
 
             // Gestures
             RuntimeSettingsRow(SettingsSections.KEY_GESTURES, binding.swipeLeftApp.parent as View, getFirstTextView(binding.swipeLeftApp.parent as View), R.id.swipeLeftApp),
@@ -746,6 +750,8 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.boldFont -> toggleBoldFont()
             R.id.haptics -> toggleHaptics()
             R.id.textContrast, R.id.textContrastTitle, R.id.textContrastLayout -> toggleTextContrast()
+            R.id.homeDarkness, R.id.homeWashTitle, R.id.homeWashLayout -> cycleHomeDarkness()
+            R.id.textBrightness, R.id.textBrightnessTitle, R.id.textBrightnessLayout -> cycleTextBrightness()
 
             R.id.photoWallpaper, R.id.photoWallpaperTitle, R.id.photoWallpaperLayout -> showPhotoWallpaperMenu(binding.photoWallpaper)
             R.id.swipeLeftApp -> showAppListIfEnabled(Constants.FLAG_SET_SWIPE_LEFT_APP)
@@ -1000,6 +1006,12 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.textContrast.setOnClickListener(this)
         binding.textContrastTitle.setOnClickListener(this)
         binding.textContrastLayout.setOnClickListener(this)
+        binding.homeDarkness.setOnClickListener(this)
+        binding.homeWashTitle.setOnClickListener(this)
+        binding.homeWashLayout.setOnClickListener(this)
+        binding.textBrightness.setOnClickListener(this)
+        binding.textBrightnessTitle.setOnClickListener(this)
+        binding.textBrightnessLayout.setOnClickListener(this)
         binding.footer.setOnClickListener(this)
         binding.settingsBack.setOnClickListener(this)
         binding.settingsBackLayout.setOnClickListener(this)
@@ -2310,6 +2322,46 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     private fun populateTextContrast() {
         binding.textContrast.text = getString(
             if (prefs.homeTextContrast == Prefs.TEXT_CONTRAST_THEME) R.string.text_contrast_follow_theme else R.string.auto
+        )
+    }
+
+    private fun cycleHomeDarkness() {
+        prefs.homeWashLevel = when (prefs.homeWashLevel) {
+            Prefs.WASH_AUTO -> Prefs.WASH_STRONG
+            Prefs.WASH_STRONG -> Prefs.WASH_OFF
+            else -> Prefs.WASH_AUTO
+        }
+        populateHomeDarkness()
+        viewModel.toggleDateTime()
+    }
+
+    private fun populateHomeDarkness() {
+        binding.homeDarkness.text = getString(
+            when (prefs.homeWashLevel) {
+                Prefs.WASH_STRONG -> R.string.home_darkness_strong
+                Prefs.WASH_OFF -> R.string.off
+                else -> R.string.auto
+            }
+        )
+    }
+
+    private fun cycleTextBrightness() {
+        prefs.homeTextBrightness = when (prefs.homeTextBrightness) {
+            Prefs.BRIGHTNESS_FULL -> Prefs.BRIGHTNESS_SOFT
+            Prefs.BRIGHTNESS_SOFT -> Prefs.BRIGHTNESS_DIM
+            else -> Prefs.BRIGHTNESS_FULL
+        }
+        populateTextBrightness()
+        viewModel.toggleDateTime()
+    }
+
+    private fun populateTextBrightness() {
+        binding.textBrightness.text = getString(
+            when (prefs.homeTextBrightness) {
+                Prefs.BRIGHTNESS_SOFT -> R.string.text_brightness_soft
+                Prefs.BRIGHTNESS_DIM -> R.string.text_brightness_dim
+                else -> R.string.text_brightness_full
+            }
         )
     }
 

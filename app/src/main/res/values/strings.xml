@@ -43,6 +43,12 @@
     <string name="context_line_now">%1$s now</string>
     <string name="context_line_access_message">Show what is playing. Thumbline needs notification access to read it; the next meeting works without it.</string>
     <string name="text_on_wallpaper">Text on wallpaper</string>
+    <string name="home_darkness">Home darkness</string>
+    <string name="home_darkness_strong">Strong</string>
+    <string name="text_brightness">Text brightness</string>
+    <string name="text_brightness_full">Full</string>
+    <string name="text_brightness_soft">Soft</string>
+    <string name="text_brightness_dim">Dim</string>
     <string name="text_contrast_follow_theme">Follow theme</string>
     <string name="auto">Auto</string>
     <string name="always">Always</string>

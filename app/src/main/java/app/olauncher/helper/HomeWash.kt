@@ -1,5 +1,6 @@
 package app.olauncher.helper
 
+import app.olauncher.data.Prefs
 import kotlin.math.pow
 
 /**
@@ -17,14 +18,18 @@ object HomeWash {
      * @param themeIsDark the theme draws light text.
      * @param supportsDarkText the wallpaper says it is light (HINT_SUPPORTS_DARK_TEXT); null when unknown.
      * @param wallpaperColors the wallpaper's main colours as ARGB ints; empty when unknown.
+     * @param level the user's darkness setting: auto, strong (always on with light text) or off.
      */
     fun shouldShow(
         autoContrast: Boolean,
         themeIsDark: Boolean,
         supportsDarkText: Boolean?,
         wallpaperColors: List<Int>,
+        level: Int = Prefs.WASH_AUTO,
     ): Boolean {
-        if (!autoContrast || !themeIsDark) return false
+        if (level == Prefs.WASH_OFF || !themeIsDark) return false
+        if (level == Prefs.WASH_STRONG) return true
+        if (!autoContrast) return false
         // Unknown wallpaper (e.g. a live one): the wash is subtle, so err on readable.
         if (supportsDarkText == null) return true
         if (supportsDarkText) return true
