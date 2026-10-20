@@ -71,6 +71,7 @@ import app.olauncher.quiet.QuietRelease
 import app.olauncher.quiet.ReleaseWorker
 import app.olauncher.data.store.Backup
 import app.olauncher.data.store.BackupData
+import app.olauncher.data.store.WordLookup
 import app.olauncher.BuildConfig
 import app.olauncher.MainViewModel
 import app.olauncher.R
@@ -3586,7 +3587,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             }
             withContext(Dispatchers.Main) {
                 if (!isAdded) return@withContext
-                WordCaptureActivity.setEnabled(appContext, prefs.germanEnabled)
+                WordCaptureActivity.setEnabled(
+                    appContext, prefs.germanEnabled, WordLookup.isLookupAllowed(prefs.germanEnabled, prefs.germanLookup)
+                )
                 WordScreenService.setEnabled(appContext, prefs.germanEnabled && prefs.germanScreenPick)
                 NudgeScheduler.rescheduleAll(appContext)
                 UsageSnapshotWorker.syncWithDistractingApps(appContext, prefs.distractingApps)
@@ -3597,7 +3600,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
 
     private fun toggleGerman() {
         prefs.germanEnabled = !prefs.germanEnabled
-        WordCaptureActivity.setEnabled(requireContext(), prefs.germanEnabled)
+        syncWordShareEntries()
         WordScreenService.setEnabled(requireContext(), prefs.germanEnabled && prefs.germanScreenPick)
         populateGerman()
     }
@@ -3630,7 +3633,14 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
 
     private fun toggleGermanLookup() {
         prefs.germanLookup = !prefs.germanLookup
+        syncWordShareEntries()
         populateGerman()
+    }
+
+    private fun syncWordShareEntries() {
+        WordCaptureActivity.setEnabled(
+            requireContext(), prefs.germanEnabled, WordLookup.isLookupAllowed(prefs.germanEnabled, prefs.germanLookup)
+        )
     }
 
     private fun toggleGermanPauseWord() {
