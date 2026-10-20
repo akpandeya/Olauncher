@@ -8,6 +8,8 @@ import org.junit.Test
 
 class WalkNudgePolicyTest {
 
+    private val labels = HealthLabels("%1\$s steps", "Slept %1\$s", "Resting HR %1\$s", "Exercise %1\$s min")
+
     private val start = 1_000_000L
     private val end = 4_600_000L
 
@@ -40,8 +42,8 @@ class WalkNudgePolicyTest {
 
     @Test
     fun `today line with missing parts leaves them out`() {
-        val line = HealthSummaryFormatting.formatLine(HealthSummary(steps = 1200, sleepMinutes = null, restingHeartRate = 0, exerciseMinutes = 30))
+        val line = HealthSummaryFormatting.formatLine(HealthSummary(steps = 1200, sleepMinutes = null, restingHeartRate = 0, exerciseMinutes = 30), labels)
         assertEquals("1,200 steps · Exercise 30 min", line)
-        assertNull(HealthSummaryFormatting.formatLine(HealthSummary()))
+        assertNull(HealthSummaryFormatting.formatLine(HealthSummary(), labels))
     }
 }

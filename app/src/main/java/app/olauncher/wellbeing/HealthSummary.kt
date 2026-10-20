@@ -15,6 +15,14 @@ data class HealthSummary(
 /** A sleep session as epoch milliseconds. It may start the evening before. */
 data class SleepSpan(val startMs: Long, val endMs: Long)
 
+/** Display templates for the Health line. Each holds one %1$s for its value. */
+data class HealthLabels(
+    val steps: String,
+    val slept: String,
+    val restingHr: String,
+    val exercise: String,
+)
+
 object HealthSummaryFormatting {
 
     /**
@@ -40,12 +48,12 @@ object HealthSummaryFormatting {
      * Parts with no data (null or zero) are left out. Returns null when no part remains,
      * so the caller hides the line.
      */
-    fun formatLine(summary: HealthSummary): String? {
+    fun formatLine(summary: HealthSummary, labels: HealthLabels): String? {
         val parts = buildList {
-            summary.steps?.takeIf { it > 0 }?.let { add(String.format(Locale.US, "%,d steps", it)) }
-            summary.sleepMinutes?.takeIf { it > 0 }?.let { add("Slept ${formatDuration(it)}") }
-            summary.restingHeartRate?.takeIf { it > 0 }?.let { add("Resting HR $it") }
-            summary.exerciseMinutes?.takeIf { it > 0 }?.let { add("Exercise $it min") }
+            summary.steps?.takeIf { it > 0 }?.let { add(labels.steps.format(String.format(Locale.US, "%,d", it))) }
+            summary.sleepMinutes?.takeIf { it > 0 }?.let { add(labels.slept.format(formatDuration(it))) }
+            summary.restingHeartRate?.takeIf { it > 0 }?.let { add(labels.restingHr.format(it.toString())) }
+            summary.exerciseMinutes?.takeIf { it > 0 }?.let { add(labels.exercise.format(it.toString())) }
         }
         return if (parts.isEmpty()) null else parts.joinToString(" · ")
     }
