@@ -892,6 +892,9 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
     private fun refreshContextLine() {
         if (_binding == null) return
+        // Late callbacks (artwork downloads, media changes) can land after onPause; they must not
+        // restart the music tick in the background. onResume refreshes again.
+        if (!homeVisible) return
         val media = if (prefs.homeContextLine || prefs.homeMusicPulse) nowPlaying?.current() else null
         updateMusicPulse(media)
         if (!prefs.homeContextLine) {
