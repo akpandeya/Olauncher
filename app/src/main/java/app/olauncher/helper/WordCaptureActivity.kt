@@ -15,7 +15,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.lifecycle.lifecycleScope
-import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import app.olauncher.R
@@ -199,7 +198,6 @@ class WordCaptureActivity : AppCompatActivity() {
         binding.captureScrim.setOnClickListener { finish() }
         // Prevent clicks inside the sheet from dismissing via scrim
         binding.captureSheet.setOnClickListener { }
-        onBackPressedDispatcher.addCallback(this) { finish() }
 
         val store = WordsStore(this)
         val savedByText = store.all().associateBy { it.text.lowercase() }
