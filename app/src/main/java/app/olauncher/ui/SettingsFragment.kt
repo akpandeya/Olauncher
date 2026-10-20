@@ -70,6 +70,8 @@ import app.olauncher.wellbeing.NotificationPermission
 import androidx.work.ExistingWorkPolicy
 import app.olauncher.quiet.QuietRelease
 import app.olauncher.quiet.ReleaseWorker
+import app.olauncher.data.store.AutoBackupStatus
+import app.olauncher.data.store.AutoBackupWorker
 import app.olauncher.data.store.Backup
 import app.olauncher.data.store.BackupData
 import app.olauncher.data.store.WordLookup
@@ -181,6 +183,14 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         }
     }
 
+    private val autoBackupFolderLauncher = registerForActivityResult(
+        ActivityResultContracts.OpenDocumentTree()
+    ) { uri ->
+        if (uri != null) {
+            enableAutoBackup(uri)
+        }
+    }
+
     private val importBackupLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri ->
@@ -281,6 +291,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateDrawerNewFirst()
         populateDrawerLetterStrip()
         populateDrawerRecents()
+        populateAutoBackup()
         populateSearchContacts()
         populateCurrencyRates()
         populateScreenTimeOnOff()
@@ -484,6 +495,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
 
             // Backup
             RuntimeSettingsRow(SettingsSections.KEY_BACKUP, binding.exportBackupLayout, binding.exportBackup, R.id.exportBackup),
+            RuntimeSettingsRow(SettingsSections.KEY_BACKUP, binding.autoBackupLayout, binding.autoBackupTitle, R.id.autoBackup),
             RuntimeSettingsRow(SettingsSections.KEY_BACKUP, binding.importBackupLayout, binding.importBackup, R.id.importBackup),
         )
 
@@ -762,6 +774,8 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.germanUiOnOff, R.id.germanUiTitle, R.id.germanUiLayout -> toggleGermanUi()
             R.id.exportBackup, R.id.exportBackupLayout -> launchExportBackup()
             R.id.importBackup, R.id.importBackupLayout -> launchImportBackup()
+            R.id.autoBackup, R.id.autoBackupTitle, R.id.autoBackupLayout -> toggleAutoBackup()
+            R.id.autoBackupStatus -> if (prefs.autoBackupLastFailed) launchAutoBackupFolderPicker()
             R.id.footer -> requireContext().openUrl(Constants.URL_SOURCE)
         }
     }
@@ -971,6 +985,10 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.germanUiLayout.setOnClickListener(this)
         binding.exportBackup.setOnClickListener(this)
         binding.exportBackupLayout.setOnClickListener(this)
+        binding.autoBackup.setOnClickListener(this)
+        binding.autoBackupTitle.setOnClickListener(this)
+        binding.autoBackupLayout.setOnClickListener(this)
+        binding.autoBackupStatus.setOnClickListener(this)
         binding.importBackup.setOnClickListener(this)
         binding.importBackupLayout.setOnClickListener(this)
         binding.appThemeText.setOnClickListener(this)
@@ -3548,6 +3566,62 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                 appContext.showToast(if (success) R.string.backup_exported else R.string.backup_export_failed)
             }
         }
+    }
+
+    private fun populateAutoBackup() {
+        binding.autoBackup.text = getString(if (prefs.autoBackupEnabled) R.string.on else R.string.off)
+        val status = AutoBackupStatus.of(prefs.autoBackupEnabled, prefs.autoBackupLastOk, prefs.autoBackupLastFailed)
+        binding.autoBackupStatus.isVisible = status != AutoBackupStatus.HIDDEN
+        binding.autoBackupStatus.text = when (status) {
+            AutoBackupStatus.FAILED -> getString(R.string.nightly_backup_failed)
+            AutoBackupStatus.LAST_OK -> getString(
+                R.string.nightly_backup_last,
+                java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.MEDIUM, java.text.DateFormat.SHORT)
+                    .format(java.util.Date(prefs.autoBackupLastOk))
+            )
+            else -> getString(R.string.nightly_backup_waiting)
+        }
+    }
+
+    private fun toggleAutoBackup() {
+        if (prefs.autoBackupEnabled) {
+            prefs.autoBackupEnabled = false
+            AutoBackupWorker.cancel(requireContext().applicationContext)
+            populateAutoBackup()
+            return
+        }
+        dialog?.dismiss()
+        dialog = requireContext().showMessageDialog(
+            title = R.string.nightly_backup,
+            message = R.string.nightly_backup_message,
+            action = R.string.allow,
+        ) {
+            launchAutoBackupFolderPicker()
+        }
+    }
+
+    private fun launchAutoBackupFolderPicker() {
+        viewModel.isAwaitingActivityResult = true
+        autoBackupFolderLauncher.launch(null)
+    }
+
+    private fun enableAutoBackup(uri: Uri) {
+        val appContext = requireContext().applicationContext
+        try {
+            appContext.contentResolver.takePersistableUriPermission(
+                uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return
+        }
+        prefs.autoBackupTreeUri = uri.toString()
+        prefs.autoBackupLastFailed = false
+        prefs.autoBackupEnabled = true
+        AutoBackupWorker.schedulePeriodic(appContext)
+        AutoBackupWorker.runOnce(appContext)
+        populateAutoBackup()
     }
 
     private fun launchImportBackup() {

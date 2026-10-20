@@ -29,6 +29,10 @@ import app.olauncher.wellbeing.UsageSnapshotStore
 
 class Prefs(context: Context) : PauseLogStorage {
     companion object {
+        const val AUTO_BACKUP_ENABLED = "AUTO_BACKUP_ENABLED"
+        const val AUTO_BACKUP_TREE_URI = "AUTO_BACKUP_TREE_URI"
+        const val AUTO_BACKUP_LAST_OK = "AUTO_BACKUP_LAST_OK"
+        const val AUTO_BACKUP_LAST_FAILED = "AUTO_BACKUP_LAST_FAILED"
         const val WEATHER_ENABLED = "WEATHER_ENABLED"
         const val WEATHER_PLACE_NAME = "WEATHER_PLACE_NAME"
         const val WEATHER_LAT = "WEATHER_LAT"
@@ -1368,6 +1372,22 @@ class Prefs(context: Context) : PauseLogStorage {
             putLong(NUDGE_SOCIAL_DAY, epochDaySupplier())
             putInt(NUDGE_SOCIAL_LAST_BUCKET, value).apply()
         }
+
+    var autoBackupEnabled: Boolean
+        get() = prefs.getBoolean(AUTO_BACKUP_ENABLED, false)
+        set(value) = prefs.edit { putBoolean(AUTO_BACKUP_ENABLED, value).apply() }
+
+    var autoBackupTreeUri: String
+        get() = prefs.getString(AUTO_BACKUP_TREE_URI, "") ?: ""
+        set(value) = prefs.edit { putString(AUTO_BACKUP_TREE_URI, value).apply() }
+
+    var autoBackupLastOk: Long
+        get() = prefs.getLong(AUTO_BACKUP_LAST_OK, 0L)
+        set(value) = prefs.edit { putLong(AUTO_BACKUP_LAST_OK, value).apply() }
+
+    var autoBackupLastFailed: Boolean
+        get() = prefs.getBoolean(AUTO_BACKUP_LAST_FAILED, false)
+        set(value) = prefs.edit { putBoolean(AUTO_BACKUP_LAST_FAILED, value).apply() }
 
     var weatherEnabled: Boolean
         get() = prefs.getBoolean(WEATHER_ENABLED, false)

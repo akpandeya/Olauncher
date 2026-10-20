@@ -15,7 +15,11 @@ object Backup {
 
     val VOLATILE_KEYS = setOf(
         "SCREEN_TIME_LAST_UPDATED",
-        "LAUNCHER_RECREATE_TIMESTAMP"
+        "LAUNCHER_RECREATE_TIMESTAMP",
+        "AUTO_BACKUP_LAST_OK",
+        "AUTO_BACKUP_LAST_FAILED",
+        "AUTO_BACKUP_ENABLED",
+        "AUTO_BACKUP_TREE_URI"
     )
     const val OWN_OPENS_PREFIX = "OWN_OPENS_"
 

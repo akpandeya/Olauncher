@@ -379,6 +379,11 @@
     <string name="export_backup">Export backup</string>
     <string name="backup_exported">Backup exported</string>
     <string name="backup_export_failed">Backup export failed</string>
+    <string name="nightly_backup">Nightly backup</string>
+    <string name="nightly_backup_message">Saves a backup every night to a folder you pick.</string>
+    <string name="nightly_backup_last">Last backup: %1$s</string>
+    <string name="nightly_backup_waiting">First backup runs tonight</string>
+    <string name="nightly_backup_failed">Last backup failed – tap to pick the folder again</string>
     <string name="import_backup">Import backup</string>
     <string name="not_a_thumbline_backup">Not a Thumbline backup</string>
     <string name="backup_restore_confirm">Replace all Thumbline settings with this backup from %1$s?\n\nDevice admin and accessibility grants are not restored.</string>

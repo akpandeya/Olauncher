@@ -2545,6 +2545,44 @@
                 </FrameLayout>
 
                 <FrameLayout
+                    android:id="@+id/autoBackupLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp">
+
+                    <TextView
+                        android:id="@+id/autoBackupTitle"
+                        style="@style/TextSmall"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginEnd="80dp"
+                        android:paddingVertical="8dp"
+                        android:text="@string/nightly_backup"
+                        android:textColor="?attr/primaryColor" />
+
+                    <TextView
+                        android:id="@+id/autoBackup"
+                        style="@style/TextSettingsValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end|bottom"
+                        android:layout_marginEnd="4dp"
+                        android:padding="8dp"
+                        android:text="@string/off" />
+                </FrameLayout>
+
+                <TextView
+                    android:id="@+id/autoBackupStatus"
+                    style="@style/TextSmall"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:paddingVertical="4dp"
+                    android:textColor="?attr/primaryColor"
+                    android:visibility="gone" />
+
+                <FrameLayout
                     android:id="@+id/importBackupLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
