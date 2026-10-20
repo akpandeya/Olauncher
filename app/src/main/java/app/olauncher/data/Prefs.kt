@@ -61,6 +61,7 @@ class Prefs(context: Context) : PauseLogStorage {
         const val NUDGE_WINDOW_END_MIN = "NUDGE_WINDOW_END_MIN"
         const val NUDGE_WATER_INTERVAL_MIN = "NUDGE_WATER_INTERVAL_MIN"
         const val NUDGE_WALK_INTERVAL_MIN = "NUDGE_WALK_INTERVAL_MIN"
+        const val HEALTH_CONNECT_ENABLED = "HEALTH_CONNECT_ENABLED"
         const val NUDGE_DONE_DAY = "NUDGE_DONE_DAY"
         const val NUDGE_DONE_PREFIX = "NUDGE_DONE_"
         const val NUDGE_SOCIAL_THRESHOLD_MIN = "NUDGE_SOCIAL_THRESHOLD_MIN"
@@ -1281,6 +1282,10 @@ class Prefs(context: Context) : PauseLogStorage {
     var nudgeWalkIntervalMin: Int
         get() = prefs.getInt(NUDGE_WALK_INTERVAL_MIN, 0)
         set(value) = prefs.edit { putInt(NUDGE_WALK_INTERVAL_MIN, value).apply() }
+
+    var healthConnectEnabled: Boolean
+        get() = prefs.getBoolean(HEALTH_CONNECT_ENABLED, false)
+        set(value) = prefs.edit { putBoolean(HEALTH_CONNECT_ENABLED, value).apply() }
 
     fun checkAndResetNudgeDoneDay() {
         val today = epochDaySupplier()

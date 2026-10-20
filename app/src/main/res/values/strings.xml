@@ -274,6 +274,12 @@
     <string name="pause_usage_access_message">Thumbline can show real open counts if you allow usage access</string>
     <string name="pause_notification_notice">Opens from notifications aren\'t paused</string>
     <string name="pause_notifications_held_until">Notifications from this app are held until %s</string>
+    <string name="use_health_connect">Use Health Connect</string>
+    <string name="health_connect_explain">Reads steps, sleep, heart rate and exercise to show on Today and skip walk nudges when you\'ve moved</string>
+    <string name="health_connect_allow">Allow</string>
+    <string name="health_connect_unavailable">Health Connect is not available on this phone</string>
+    <string name="health_connect_denied">Health Connect access was not granted</string>
+    <string name="health_connect_rationale">Thumbline reads steps, sleep, heart rate and exercise from Health Connect, read-only. Nothing leaves your phone.</string>
     <string name="hold_notifications_from_distracting_apps">Hold notifications from distracting apps</string>
     <string name="hold_notifications_access_message">Thumbline holds notifications from your distracting apps and shows them later. Nothing leaves your phone.</string>
     <string name="release_at">Release at</string>
