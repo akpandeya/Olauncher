@@ -20,6 +20,7 @@ import app.olauncher.glance.NextUpFormatting
 import app.olauncher.glance.NextUpLabels
 import app.olauncher.glance.NextUpPlanner
 import app.olauncher.helper.OpenTargets
+import app.olauncher.helper.getColorFromAttr
 import app.olauncher.ui.today.TodayCard
 import app.olauncher.ui.today.TodayOrder
 import kotlinx.coroutines.CoroutineScope
@@ -128,12 +129,18 @@ internal class NextUpCardView(
                 )
 
                 val plan = NextUpPlanner.plan(events, now, zone, expanded)
-                for (event in plan.rows) {
+                for ((index, event) in plan.rows.withIndex()) {
                     val itemBinding = ItemNextUpBinding.inflate(inflater, currentBinding.eventsContainer, false)
                     val row = NextUpFormatting.row(event, now, zone, is24Hour, labels)
                     itemBinding.tvEventTime.text = row.lead
                     itemBinding.tvEventTime.isVisible = row.lead.isNotEmpty()
                     itemBinding.tvEventLine.text = row.title
+                    if (index == 0) {
+                        // Current or next event: follows the accent (same as the text colour when accent is off).
+                        val accent = context.getColorFromAttr(R.attr.accentColor)
+                        itemBinding.tvEventTime.setTextColor(accent)
+                        itemBinding.tvEventLine.setTextColor(accent)
+                    }
                     if (OpenTargets.canOpenEvent(event.id)) {
                         itemBinding.root.setOnClickListener {
                             NextUpCard.openEvent(context, event)
