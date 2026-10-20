@@ -20,7 +20,12 @@ data class ContextLabels(
 sealed class ContextItem {
     abstract val text: String
 
-    data class Media(override val text: String, val packageName: String) : ContextItem()
+    data class Media(
+        override val text: String,
+        val packageName: String,
+        val title: String = "",
+        val playing: Boolean = true,
+    ) : ContextItem()
     data class Event(override val text: String, val eventId: Long) : ContextItem()
 }
 
@@ -29,17 +34,19 @@ object ContextLine {
     const val LOOKAHEAD_MINUTES = 30L
     private const val MINUTE_MS = 60_000L
 
-    /** Playing media wins; else an event starting within 30 min or running now; else null (hide the line). */
+    /** Media (playing or recently paused) wins; else an event starting within 30 min or running now; else null (hide the line). */
     fun pick(
         media: MediaInfo?,
         event: CalendarEvent?,
         now: Instant,
         labels: ContextLabels = ContextLabels(),
     ): ContextItem? {
-        if (media != null && media.playing && media.title.isNotBlank()) {
+        if (media != null && media.title.isNotBlank()) {
             val artist = media.artist?.trim().orEmpty()
-            val text = if (artist.isEmpty()) "▶ ${media.title.trim()}" else "▶ ${media.title.trim()} — $artist"
-            return ContextItem.Media(text, media.packageName)
+            val icon = if (media.playing) "▶" else "❚❚"
+            val title = media.title.trim()
+            val text = if (artist.isEmpty()) "$icon $title" else "$icon $title — $artist"
+            return ContextItem.Media(text, media.packageName, title, media.playing)
         }
         if (event == null || event.allDay || event.title.isBlank()) return null
         val nowMs = now.toEpochMilli()
