@@ -2,6 +2,7 @@ package app.olauncher.helper
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -171,5 +172,29 @@ class MusicPulseTest {
         assertEquals(1f, range.high, 0.0001f)
         assertEquals(0.35f * 100f / 67f, range.low, 0.0001f)
         assertTrue(range.low < range.high)
+    }
+
+    @Test
+    fun glowCacheKeyIsStableForTheSameTrackAndArt() {
+        val first = MusicPulse.glowCacheKey("com.yt", "Core", "Dhadkan", "https://art/1", 544, 544)
+        val again = MusicPulse.glowCacheKey("com.yt", "Core", "Dhadkan", "https://art/1", 544, 544)
+        assertEquals(first, again)
+    }
+
+    @Test
+    fun glowCacheKeyChangesWhenArtArrives() {
+        val before = MusicPulse.glowCacheKey("com.yt", "Core", "Dhadkan", "https://art/1", 0, 0)
+        val after = MusicPulse.glowCacheKey("com.yt", "Core", "Dhadkan", "https://art/1", 544, 544)
+        assertNotEquals(before, after)
+    }
+
+    @Test
+    fun glowCacheKeyChangesForEachField() {
+        val base = MusicPulse.glowCacheKey("com.yt", "Core", "Dhadkan", "https://art/1", 544, 544)
+        assertNotEquals(base, MusicPulse.glowCacheKey("com.sp", "Core", "Dhadkan", "https://art/1", 544, 544))
+        assertNotEquals(base, MusicPulse.glowCacheKey("com.yt", "Other", "Dhadkan", "https://art/1", 544, 544))
+        assertNotEquals(base, MusicPulse.glowCacheKey("com.yt", "Core", "Aditya", "https://art/1", 544, 544))
+        assertNotEquals(base, MusicPulse.glowCacheKey("com.yt", "Core", "Dhadkan", "https://art/2", 544, 544))
+        assertNotEquals(base, MusicPulse.glowCacheKey("com.yt", "Core", "Dhadkan", "https://art/1", 300, 300))
     }
 }

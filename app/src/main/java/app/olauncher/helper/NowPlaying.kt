@@ -29,6 +29,7 @@ data class MediaSession(
     val positionAtMs: Long = 0L,
     val durationMs: Long = 0L,
     val speed: Float = 1f,
+    val artworkUri: String? = null,
 )
 
 /** Context-free choice of which media session to show. */
@@ -57,6 +58,7 @@ object MediaPicker {
         positionAtMs = positionAtMs,
         durationMs = durationMs,
         speed = speed,
+        artworkUri = artworkUri,
     )
 }
 
@@ -138,6 +140,7 @@ class NowPlaying(private val context: Context, private val onChange: () -> Unit)
                 positionAtMs = state?.lastPositionUpdateTime ?: 0L,
                 durationMs = metadata?.getLong(MediaMetadata.METADATA_KEY_DURATION) ?: 0L,
                 speed = state?.playbackSpeed ?: 1f,
+                artworkUri = artworkUrl,
             )
         }
         return synchronized(this) { MediaPicker.pick(sessions, lastPlayingMs, now) }
@@ -151,8 +154,11 @@ class NowPlaying(private val context: Context, private val onChange: () -> Unit)
      * Cached per track, so the palette runs once per song rather than on every refresh.
      */
     fun glowColor(media: MediaInfo): Int? {
-        // The artwork identity is part of the key, so art that arrives after the title still gets a colour.
-        val key = "${media.packageName}|${media.title}|${media.artist.orEmpty()}|${media.artwork?.let { System.identityHashCode(it) }}"
+        // Each refresh reads a fresh bitmap copy over IPC, so the key uses the art link and size, not object identity.
+        val artwork = media.artwork
+        val key = MusicPulse.glowCacheKey(
+            media.packageName, media.title, media.artist, media.artworkUri, artwork?.width ?: 0, artwork?.height ?: 0,
+        )
         if (key == glowKey) return glowCached
         val bitmap = media.artwork
         val color = if (bitmap == null) null else {

@@ -112,6 +112,21 @@ object MusicPulse {
         candidates.map { it?.trim() }.firstOrNull { isLoadableArtwork(it) }
 
     /**
+     * Cache key for the glow colour of a track. Built from stable values only: players hand out a
+     * new bitmap object on every read, so object identity would miss the cache on every refresh.
+     * The art size is included so art that arrives after the title (0 x 0 before) still gets a colour.
+     */
+    fun glowCacheKey(
+        packageName: String,
+        title: String,
+        artist: String?,
+        artworkUri: String?,
+        artworkWidth: Int,
+        artworkHeight: Int,
+    ): String = listOf(packageName, title, artist.orEmpty(), artworkUri.orEmpty(), "${artworkWidth}x$artworkHeight")
+        .joinToString("|")
+
+    /**
      * The glow colour: the most populous swatch that is saturated and not too dark or light.
      * Falls back to a plain grey swatch in the same lightness range. Null when none fit.
      */
