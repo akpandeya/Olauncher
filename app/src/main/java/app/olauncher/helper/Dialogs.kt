@@ -32,6 +32,7 @@ fun View.showPopupMenu(
     if (menuRes != 0) popup.menuInflater.inflate(menuRes, popup.menu)
     configure(popup.menu)
     popup.setOnMenuItemClickListener { item ->
+        Haptics.perform(this, Haptics.Kind.MENU)
         onItemClick(item)
         true
     }
@@ -102,12 +103,17 @@ fun Context.createDialog(
         binding.contentContainer.isVisible = true
     }
     dialog.setView(binding.root)
-    binding.ivClose.setOnClickListener { dialog.dismiss() }
+    binding.ivClose.setOnClickListener {
+        Haptics.perform(it, Haptics.Kind.MENU)
+        dialog.dismiss()
+    }
     binding.tvNeutral.setOnClickListener {
+        Haptics.perform(it, Haptics.Kind.MENU)
         onNeutral()
         dialog.dismiss()
     }
     binding.tvAction.setOnClickListener {
+        Haptics.perform(it, Haptics.Kind.MENU)
         onAction()
         dialog.dismiss()
     }
@@ -189,12 +195,14 @@ fun Context.showWaitDialog(
 
     dialog.setView(binding.root)
     binding.ivClose.setOnClickListener {
+        Haptics.perform(it, Haptics.Kind.MENU)
         isCancelled = true
         timerRunnable?.let { handler.removeCallbacks(it) }
         dialog.dismiss()
     }
     binding.tvAction.setOnClickListener {
         if (remaining <= 0 && !isCancelled) {
+            Haptics.perform(it, Haptics.Kind.MENU)
             onConfirm()
             dialog.dismiss()
         }
