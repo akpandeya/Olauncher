@@ -230,6 +230,7 @@ class SettingsSectionsResourceTest {
             assertTrue(sectionIds[1].contains("batteryModeTitle"))
             assertTrue(sectionIds[1].contains("infoLineLayout"))
             assertTrue(sectionIds[1].contains("contextLineLayout"))
+            assertTrue(sectionIds[1].contains("homeNextEventLayout"))
             assertTrue(sectionIds[1].contains("alignment"))
             assertTrue(sectionIds[1].contains("swapSides"))
             assertTrue(sectionIds[1].contains("swapSidesLayout"))
@@ -475,6 +476,9 @@ class SettingsSectionsResourceTest {
             "contextLineLayout",
             "contextLineTitle",
             "contextLineValue",
+            "homeNextEventLayout",
+            "homeNextEventTitle",
+            "homeNextEventValue",
             "dateTime",
             "deutschSection",
             "distractingApps",
