@@ -140,6 +140,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     private var nowPlaying: NowPlaying? = null
     private var glowAnimator: ObjectAnimator? = null
     private var glowShownColor: Int? = null
+    private var glowShownStrength: Int? = null
     private var homeVisible = false
     private val musicTick = Runnable { refreshContextLine() }
     private var contextItem: ContextItem? = null
@@ -1668,13 +1669,21 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             stopMusicPulse()
             return
         }
-        val glow = nowPlaying?.glowColor(media)
-        if (glow != glowShownColor) {
+        val strength = prefs.homeGlowStrength
+        val glow = nowPlaying?.glowColor(media)?.takeIf { MusicPulse.isGlowVisible(strength) }
+        val strengthChanged = strength != glowShownStrength
+        if (glow != glowShownColor || strengthChanged) {
             glowShownColor = glow
-            binding.musicGlow.background = glow?.let { glowDrawable(it) }
+            glowShownStrength = strength
+            binding.musicGlow.background = glow?.let { glowDrawable(it, strength) }
         }
         binding.musicGlow.isVisible = glow != null
-        if (glow != null && glowAnimator?.isRunning != true) startGlowPulse()
+        if (glow == null) {
+            glowAnimator?.cancel()
+            glowAnimator = null
+        } else if (strengthChanged || glowAnimator?.isRunning != true) {
+            startGlowPulse(strength)
+        }
         val fraction = MusicPulse.progress(
             media.positionMs, media.positionAtMs, SystemClock.elapsedRealtime(), media.speed, media.playing, media.durationMs,
         )
@@ -1698,10 +1707,11 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         binding.mediaProgress.isVisible = false
     }
 
-    /** Slow alpha breathing of the glow; about 6 seconds per half cycle. */
-    private fun startGlowPulse() {
+    /** Slow alpha breathing of the glow; about 6 seconds per half cycle. The range scales with [strength]. */
+    private fun startGlowPulse(strength: Int) {
         glowAnimator?.cancel()
-        glowAnimator = ObjectAnimator.ofFloat(binding.musicGlow, View.ALPHA, 0.35f, 0.8f).apply {
+        val range = MusicPulse.glowPulseRange(strength)
+        glowAnimator = ObjectAnimator.ofFloat(binding.musicGlow, View.ALPHA, range.low, range.high).apply {
             duration = 6_000L
             repeatCount = ObjectAnimator.INFINITE
             repeatMode = ObjectAnimator.REVERSE
@@ -1710,10 +1720,11 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     }
 
     /** Radial glow that is strongest at the centre and fades to fully transparent at its edge. */
-    private fun glowDrawable(argb: Int): GradientDrawable = GradientDrawable().apply {
+    private fun glowDrawable(argb: Int, strength: Int): GradientDrawable = GradientDrawable().apply {
         gradientType = GradientDrawable.RADIAL_GRADIENT
         gradientRadius = resources.getDimension(R.dimen.music_glow_height) / 2f
-        colors = intArrayOf(0xAA000000.toInt() or (argb and 0x00FFFFFF), argb and 0x00FFFFFF)
+        val centreAlpha = MusicPulse.glowCentreAlpha(strength) shl 24
+        colors = intArrayOf(centreAlpha or (argb and 0x00FFFFFF), argb and 0x00FFFFFF)
     }
 
     /** Sets the weather layer from the cached forecast. Hidden unless Weather effects is on and a forecast is cached. */
@@ -1755,6 +1766,9 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     override fun onDestroyView() {
         glowAnimator?.cancel()
         glowAnimator = null
+        // The next view starts without a glow background, so forget what was drawn.
+        glowShownColor = null
+        glowShownStrength = null
         _binding?.root?.removeCallbacks(musicTick)
         originalShadows.clear()
         originalShadowColors.clear()

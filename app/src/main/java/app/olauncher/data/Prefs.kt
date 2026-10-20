@@ -8,6 +8,7 @@ import androidx.core.content.edit
 
 import java.util.Locale
 import app.olauncher.helper.HomeSet
+import app.olauncher.helper.MusicPulse
 import app.olauncher.helper.HomeSetStarts
 import app.olauncher.helper.HomeSets
 import app.olauncher.wellbeing.SystemGrey
@@ -172,6 +173,7 @@ class Prefs(context: Context) : PauseLogStorage {
     private val HOME_WASH_LEVEL = "HOME_WASH_LEVEL"
     private val HOME_TEXT_BRIGHTNESS = "HOME_TEXT_BRIGHTNESS"
     private val HOME_MUSIC_PULSE = "HOME_MUSIC_PULSE"
+    private val HOME_GLOW_STRENGTH = "HOME_GLOW_STRENGTH"
     private val HOME_WEATHER_EFFECTS = "HOME_WEATHER_EFFECTS"
     private val SHORTCUT_COUNT = "SHORTCUT_COUNT"
     private val SHORTCUT_SIZE_STEP = "SHORTCUT_SIZE_STEP"
@@ -463,6 +465,11 @@ class Prefs(context: Context) : PauseLogStorage {
     var homeMusicPulse: Boolean
         get() = prefs.getBoolean(HOME_MUSIC_PULSE, true)
         set(value) = prefs.edit { putBoolean(HOME_MUSIC_PULSE, value).apply() }
+
+    /** Music pulse glow strength in percent, 0 to 100. 0 hides the glow. */
+    var homeGlowStrength: Int
+        get() = MusicPulse.clampGlowStrength(prefs.getInt(HOME_GLOW_STRENGTH, MusicPulse.GLOW_STRENGTH_DEFAULT))
+        set(value) = prefs.edit { putInt(HOME_GLOW_STRENGTH, MusicPulse.clampGlowStrength(value)).apply() }
 
     /** Weather animation (sun, rain, snow, fog, clouds, storm) drawn over the wallpaper. */
     var homeWeatherEffects: Boolean

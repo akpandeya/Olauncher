@@ -23,6 +23,7 @@ import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import android.widget.SeekBar
 import android.widget.Toast
 import android.view.WindowManager
 import android.Manifest
@@ -39,6 +40,7 @@ import androidx.core.widget.doAfterTextChanged
 import android.view.WindowInsets
 import android.widget.TextView
 import app.olauncher.helper.DrawerScrollHelper
+import app.olauncher.helper.MusicPulse
 import app.olauncher.helper.HandSide
 import app.olauncher.helper.HomeSet
 import app.olauncher.helper.HomeSets
@@ -321,6 +323,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateHomeDarkness()
         populateTextBrightness()
         populateMusicPulse()
+        setupGlowStrength()
         populateWeatherEffects()
         populateAlignment()
         populateShortcutIcons()
@@ -494,6 +497,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.homeWashLayout, binding.homeWashTitle, R.id.homeDarkness),
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.textBrightnessLayout, binding.textBrightnessTitle, R.id.textBrightness),
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.musicPulseLayout, binding.musicPulseTitle, R.id.musicPulse),
+            RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.glowStrengthLayout, binding.glowStrengthTitle, R.id.glowStrength),
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.weatherEffectsLayout, binding.weatherEffectsTitle, R.id.weatherEffects),
 
             // Gestures
@@ -2385,6 +2389,28 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
 
     private fun populateMusicPulse() {
         binding.musicPulse.text = getString(if (prefs.homeMusicPulse) R.string.on else R.string.off)
+    }
+
+    /** Slider for the music pulse glow strength. Saves on every change; Home picks it up on its next music tick. */
+    private fun setupGlowStrength() {
+        binding.glowStrengthSeekBar.max = MusicPulse.GLOW_STRENGTH_MAX
+        binding.glowStrengthSeekBar.progress = prefs.homeGlowStrength
+        populateGlowStrength(prefs.homeGlowStrength)
+        binding.glowStrengthSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
+                if (!fromUser) return
+                prefs.homeGlowStrength = progress
+                populateGlowStrength(prefs.homeGlowStrength)
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar) = Unit
+
+            override fun onStopTrackingTouch(seekBar: SeekBar) = Unit
+        })
+    }
+
+    private fun populateGlowStrength(percent: Int) {
+        binding.glowStrength.text = getString(R.string.glow_strength_percent, percent)
     }
 
     private fun toggleWeatherEffects() {

@@ -10,6 +10,9 @@ data class SwatchColor(
     val lightness: Float,
 )
 
+/** View alpha range the glow breathes between. [low] is the dimmest point, [high] the brightest. */
+data class GlowPulseRange(val low: Float, val high: Float)
+
 /** Playback progress maths and glow colour choice for the Home music pulse. Context-free. */
 object MusicPulse {
     /** Glows that are nearly black or nearly white disappear on Home, so they are skipped. */
@@ -18,6 +21,36 @@ object MusicPulse {
 
     /** Saturation a swatch needs to be preferred over a grey one. */
     const val MIN_SATURATION = 0.15f
+
+    /** Glow strength in percent. The default (67) gives centre alpha 0xAA, the original look. */
+    const val GLOW_STRENGTH_MIN = 0
+    const val GLOW_STRENGTH_MAX = 100
+    const val GLOW_STRENGTH_DEFAULT = 67
+
+    /** Breathing range at the default strength. */
+    const val GLOW_PULSE_LOW = 0.35f
+    const val GLOW_PULSE_HIGH = 0.8f
+
+    /** Keeps a stored or slider strength inside 0 to 100. */
+    fun clampGlowStrength(percent: Int): Int = percent.coerceIn(GLOW_STRENGTH_MIN, GLOW_STRENGTH_MAX)
+
+    /** True when the glow should be drawn at all; 0 hides it. */
+    fun isGlowVisible(percent: Int): Boolean = clampGlowStrength(percent) > 0
+
+    /** Alpha (0 to 255) of the glow centre for a strength in percent. 67 gives 0xAA, 100 gives 0xFF. */
+    fun glowCentreAlpha(percent: Int): Int = clampGlowStrength(percent) * 255 / GLOW_STRENGTH_MAX
+
+    /**
+     * Breathing range for a strength. Both ends scale with the strength relative to the default,
+     * so the low-to-high ratio (the breathing feel) stays the same. The high end is capped at 1,
+     * and the low end is scaled by the same factor so it never passes the high end.
+     */
+    fun glowPulseRange(percent: Int): GlowPulseRange {
+        val factor = clampGlowStrength(percent).toFloat() / GLOW_STRENGTH_DEFAULT
+        val high = (GLOW_PULSE_HIGH * factor).coerceAtMost(1f)
+        val low = (GLOW_PULSE_LOW * factor).coerceAtMost(high)
+        return GlowPulseRange(low, high)
+    }
 
     /**
      * Playback position now. While playing, the last reported position moves on with the clock
