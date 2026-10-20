@@ -1,21 +1,16 @@
 package app.olauncher.ui
 
+import android.Manifest
 import android.app.WallpaperColors
 import android.app.WallpaperManager
-import android.Manifest
 import android.content.BroadcastReceiver
-import android.content.pm.PackageManager
-import android.text.format.DateFormat
-import androidx.core.content.ContextCompat
-import app.olauncher.glance.HomeNextEvent
-import app.olauncher.glance.NextUpPlanner
-import java.time.ZoneId
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.content.ContentUris
 import android.content.pm.LauncherApps
+import android.content.pm.PackageManager
 import android.provider.CalendarContract
 import android.content.res.Configuration
 import android.os.BatteryManager
@@ -23,6 +18,7 @@ import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.text.format.DateFormat
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -37,6 +33,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.ContextCompat
 import androidx.core.os.bundleOf
 import androidx.core.view.AccessibilityDelegateCompat
 import androidx.core.view.ViewCompat
@@ -65,6 +62,9 @@ import app.olauncher.data.SlotCount
 import app.olauncher.helper.HomeFit
 import app.olauncher.databinding.FragmentHomeBinding
 import app.olauncher.glance.CalendarRepository
+import app.olauncher.glance.HomeNextEvent
+import app.olauncher.glance.HomeNextEventLine
+import app.olauncher.glance.NextUpPlanner
 import app.olauncher.glance.WeatherCache
 import app.olauncher.glance.WeatherFormatting
 import app.olauncher.glance.WeatherLocation
@@ -110,6 +110,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.time.Instant
+import java.time.ZoneId
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
@@ -879,9 +880,9 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         if (_binding == null) return
         val ctx = context ?: return
         val appContext = ctx.applicationContext
-        if (!prefs.homeNextEvent ||
-            ContextCompat.checkSelfPermission(ctx, Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED
-        ) {
+        val prefOn = prefs.homeNextEvent
+        val granted = ContextCompat.checkSelfPermission(ctx, Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED
+        if (!HomeNextEvent.shouldShow(prefOn, granted, HomeNextEventLine("", 0))) {
             nextEventId = null
             binding.nextEventLine.isVisible = false
             return
@@ -900,7 +901,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             if (_binding == null) return@launch
             nextEventId = line?.eventId
             binding.nextEventLine.text = line?.text
-            binding.nextEventLine.isVisible = line != null
+            binding.nextEventLine.isVisible = HomeNextEvent.shouldShow(prefOn, granted, line)
         }
     }
 

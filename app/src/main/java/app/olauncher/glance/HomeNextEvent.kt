@@ -18,6 +18,10 @@ object HomeNextEvent {
             .minWithOrNull(compareBy<CalendarEvent>({ it.startMillis }, { it.endMillis }))
     }
 
+    /** Home shows the line only when the pref is on, calendar permission is granted, and there is an event. */
+    fun shouldShow(prefOn: Boolean, permissionGranted: Boolean, line: HomeNextEventLine?): Boolean =
+        prefOn && permissionGranted && line != null
+
     fun line(
         events: List<CalendarEvent>,
         now: Instant,
