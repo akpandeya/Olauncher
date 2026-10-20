@@ -7,7 +7,7 @@
     <dimen name="app_padding_vertical">12dp</dimen>
     <dimen name="home_app_padding_vertical">10dp</dimen>
 
-    <dimen name="time_size">66sp</dimen>
+    <dimen name="time_size">80sp</dimen>
     <dimen name="date_size">18sp</dimen>
     <dimen name="text_weather">48sp</dimen>
     <dimen name="text_drawer_action">12sp</dimen>
