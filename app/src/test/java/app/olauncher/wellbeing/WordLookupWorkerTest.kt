@@ -1,6 +1,7 @@
 package app.olauncher.wellbeing
 
 import androidx.work.ListenableWorker.Result
+import app.olauncher.data.store.WiktionaryApi
 import app.olauncher.data.store.WordsStore
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -37,7 +38,7 @@ class WordLookupWorkerTest {
             runAttemptCount = 0
         ) {
             fetchCalled = true
-            WordLookupWorker.FetchOutcome.NotFound
+            WiktionaryApi.FetchOutcome.NotFound
         }
 
         assertEquals(Result.success(), result)
@@ -56,7 +57,7 @@ class WordLookupWorkerTest {
             runAttemptCount = 0
         ) {
             fetchCalled = true
-            WordLookupWorker.FetchOutcome.Success("Wiktionary Definition")
+            WiktionaryApi.FetchOutcome.Success("Wiktionary Definition")
         }
 
         assertEquals(Result.success(), result)
@@ -78,9 +79,9 @@ class WordLookupWorkerTest {
         ) { candidate ->
             attempted.add(candidate)
             if (candidate == "Fernweh") {
-                WordLookupWorker.FetchOutcome.Success("wanderlust (desire to travel)")
+                WiktionaryApi.FetchOutcome.Success("wanderlust (desire to travel)")
             } else {
-                WordLookupWorker.FetchOutcome.NotFound
+                WiktionaryApi.FetchOutcome.NotFound
             }
         }
 
@@ -103,7 +104,7 @@ class WordLookupWorkerTest {
             runAttemptCount = 0
         ) { candidate ->
             attempted.add(candidate)
-            WordLookupWorker.FetchOutcome.NotFound
+            WiktionaryApi.FetchOutcome.NotFound
         }
 
         assertEquals(Result.success(), result)
@@ -123,7 +124,7 @@ class WordLookupWorkerTest {
             store = store,
             runAttemptCount = 0
         ) {
-            WordLookupWorker.FetchOutcome.IoError(IOException("Connection timed out"))
+            WiktionaryApi.FetchOutcome.IoError(IOException("Connection timed out"))
         }
         assertEquals(Result.retry(), attempt0)
 
@@ -132,7 +133,7 @@ class WordLookupWorkerTest {
             store = store,
             runAttemptCount = 1
         ) {
-            WordLookupWorker.FetchOutcome.IoError(IOException("Connection reset"))
+            WiktionaryApi.FetchOutcome.IoError(IOException("Connection reset"))
         }
         assertEquals(Result.retry(), attempt1)
     }
@@ -146,7 +147,7 @@ class WordLookupWorkerTest {
             store = store,
             runAttemptCount = 2
         ) {
-            WordLookupWorker.FetchOutcome.IoError(IOException("Host unreachable"))
+            WiktionaryApi.FetchOutcome.IoError(IOException("Host unreachable"))
         }
         assertEquals(Result.failure(), attempt2)
     }

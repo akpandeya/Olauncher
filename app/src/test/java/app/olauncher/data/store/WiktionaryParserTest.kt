@@ -156,4 +156,17 @@ class WiktionaryParserTest {
         assertEquals(listOf("auf Wiedersehen"), WiktionaryParser.candidates("auf Wiedersehen"))
         assertEquals(listOf("guten Tag"), WiktionaryParser.candidates("guten Tag"))
     }
+
+    @Test
+    fun `candidates adds phrase without leading article`() {
+        assertEquals(listOf("der Hund", "Hund"), WiktionaryParser.candidates("der Hund"))
+        assertEquals(listOf("Die Katze", "Katze"), WiktionaryParser.candidates("Die Katze"))
+        assertEquals(listOf("eine schöne Frau", "schöne Frau"), WiktionaryParser.candidates("eine schöne Frau"))
+    }
+
+    @Test
+    fun `candidates unchanged for single word and lone article`() {
+        assertEquals(listOf("Fernweh", "fernweh"), WiktionaryParser.candidates("Fernweh"))
+        assertEquals(listOf("das", "Das"), WiktionaryParser.candidates("das"))
+    }
 }
