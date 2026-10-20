@@ -55,6 +55,7 @@ import app.olauncher.data.ShortcutAction
 import app.olauncher.data.ShortcutOffset
 import app.olauncher.data.ShortcutSize
 import app.olauncher.data.SlotCount
+import app.olauncher.helper.HomeFit
 import app.olauncher.databinding.FragmentHomeBinding
 import app.olauncher.glance.CalendarRepository
 import app.olauncher.glance.WeatherCache
@@ -150,6 +151,12 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         initClickListeners()
         initAccessibilityActions()
         initWeatherListener()
+        binding.dateTimeLayout.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
+            if (bottom - top != oldBottom - oldTop) {
+                capClockSize()
+                applyHomeFit()
+            }
+        }
     }
 
     override fun onResume() {
@@ -1027,10 +1034,12 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         val homeAppsNum = prefs.homeAppsNum
         if (homeAppsNum == 0) return
 
+        capClockSize()
         val views = homeAppViews()
+        val fitting = fittingHomeAppCount(homeAppsNum)
         for (slot in 1..homeAppsNum.coerceAtMost(views.size)) {
             val view = views[slot - 1]
-            view.visibility = View.VISIBLE
+            view.visibility = if (slot <= fitting) View.VISIBLE else View.GONE
             val shown = setHomeAppText(
                 view,
                 prefs.getAppName(slot, set),
@@ -1040,6 +1049,47 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
                 prefs.getShortcutId(slot, set),
             )
             if (!shown) prefs.clearHomeSlotApp(set, slot)
+        }
+    }
+
+    /** Keeps the clock block under the max share of the screen height, whatever the font scale. */
+    private fun capClockSize() {
+        val screenPx = resources.displayMetrics.heightPixels.toFloat()
+        val maxPx = screenPx * resources.getFraction(R.dimen.clock_max_height_fraction, 1, 1)
+        fun capped(view: TextView, sizePx: Float, lines: Int) {
+            val fm = view.paint.fontMetrics
+            val lineRatio = (fm.descent - fm.ascent) / view.paint.textSize.coerceAtLeast(1f)
+            val limit = maxPx / (lines * lineRatio.coerceAtLeast(1f))
+            view.setTextSize(TypedValue.COMPLEX_UNIT_PX, sizePx.coerceAtMost(limit))
+        }
+        capped(binding.clock, resources.getDimension(R.dimen.time_size), 1)
+        capped(binding.clockWords, resources.getDimension(R.dimen.time_words_size), 2)
+    }
+
+    /** How many of [wanted] home app rows fit under the clock block without overlapping it. */
+    private fun fittingHomeAppCount(wanted: Int): Int {
+        val metrics = resources.displayMetrics
+        val density = metrics.density.takeIf { it > 0f } ?: 1f
+        val first = binding.homeApp1
+        val fm = first.paint.fontMetrics
+        val rowPx = (fm.descent - fm.ascent) + first.paddingTop + first.paddingBottom
+        val clockBottomPx = if (binding.dateTimeLayout.isVisible) {
+            val lp = binding.dateTimeLayout.layoutParams as ViewGroup.MarginLayoutParams
+            lp.topMargin + binding.dateTimeLayout.height
+        } else 0
+        val topPx = maxOf(clockBottomPx.toFloat(), resources.getDimension(R.dimen.home_apps_top_min))
+        val reservedPx = topPx + resources.getDimension(R.dimen.home_apps_bottom_reserved)
+        return HomeFit.visibleCount(
+            metrics.heightPixels / density, rowPx / density, reservedPx / density, wanted,
+        )
+    }
+
+    private fun applyHomeFit() {
+        val num = prefs.homeAppsNum
+        if (num == 0) return
+        val fitting = fittingHomeAppCount(num)
+        homeAppViews().forEachIndexed { index, view ->
+            if (index < num) view.visibility = if (index + 1 <= fitting) View.VISIBLE else View.GONE
         }
     }
 
