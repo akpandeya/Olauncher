@@ -44,7 +44,9 @@ class WordCaptureActivity : AppCompatActivity() {
             }
             val components = listOf(
                 ComponentName(context, WordCaptureActivity::class.java),
-                ComponentName(context, "app.olauncher.helper.WordShareAlias")
+                ComponentName(context, "app.olauncher.helper.WordShareAlias"),
+                ComponentName(context, WordLookupActivity::class.java),
+                ComponentName(context, "app.olauncher.helper.WordLookupShareAlias")
             )
             components.forEach {
                 context.packageManager.setComponentEnabledSetting(it, state, PackageManager.DONT_KILL_APP)

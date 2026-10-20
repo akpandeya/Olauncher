@@ -112,6 +112,28 @@
         </activity-alias>
 
         <activity
+            android:name=".helper.WordLookupActivity"
+            android:enabled="false"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:label="@string/look_up_word_thumbline"
+            android:taskAffinity=""
+            android:theme="@style/Theme.WordCapture" />
+
+        <activity-alias
+            android:name=".helper.WordLookupShareAlias"
+            android:enabled="false"
+            android:exported="true"
+            android:label="@string/look_up_word_thumbline"
+            android:targetActivity=".helper.WordLookupActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity-alias>
+
+        <activity
             android:name=".helper.FakeHomeActivity"
             android:enabled="false"
             android:exported="false"
