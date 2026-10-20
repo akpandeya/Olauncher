@@ -5,6 +5,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.SystemClock
 import android.media.MediaMetadata
 import android.media.session.MediaController
 import android.media.session.MediaSessionManager
@@ -75,9 +76,14 @@ class NowPlaying(private val context: Context, private val onChange: () -> Unit)
     private val lastPlayingMs = HashMap<String, Long>()
     private val playingPackages = HashSet<String>()
 
-    /** Artwork fetched from a URL, keyed by URL. A null value means the fetch failed. Guarded by this. */
-    private val artworkCache = object : LinkedHashMap<String, Bitmap?>(8, 0.75f, true) {
-        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Bitmap?>?) = size > ARTWORK_CACHE_SIZE
+    /** Artwork fetched from a URL, keyed by URL. Only successful fetches are kept. Guarded by this. */
+    private val artworkCache = object : LinkedHashMap<String, Bitmap>(8, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Bitmap>?) = size > ARTWORK_CACHE_SIZE
+    }
+
+    /** When a fetch for a URL last failed (elapsed realtime), so it is retried later, not forever skipped. Guarded by this. */
+    private val artworkFailedAtMs = object : LinkedHashMap<String, Long>(8, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Long>?) = size > ARTWORK_CACHE_SIZE
     }
     private val artworkPending = HashSet<String>()
 
@@ -179,22 +185,29 @@ class NowPlaying(private val context: Context, private val onChange: () -> Unit)
         if (config == Bitmap.Config.HARDWARE) copy(Bitmap.Config.ARGB_8888, false) else this
 
     /**
-     * Artwork bitmap for [url], fetched once in the background. Returns null until the fetch
-     * finishes; then [onChange] runs so the glow appears without waiting for the next tick.
+     * Artwork bitmap for [url], fetched in the background. Returns null until the fetch
+     * succeeds; then [onChange] runs so the glow appears without waiting for the next tick.
+     * A failed fetch (say, no network) is retried after [MusicPulse.ARTWORK_RETRY_MS].
      */
     private fun artworkFromUrl(url: String?): Bitmap? {
         if (url == null) return null
         synchronized(this) {
-            if (artworkCache.containsKey(url)) return artworkCache[url]
+            artworkCache[url]?.let { return it }
+            if (!MusicPulse.shouldFetchArtwork(artworkFailedAtMs[url], SystemClock.elapsedRealtime())) return null
             if (!artworkPending.add(url)) return null
         }
         artworkExecutor.execute {
             val bitmap = fetchBitmap(url)
             synchronized(this) {
                 artworkPending.remove(url)
-                artworkCache[url] = bitmap
+                if (bitmap != null) {
+                    artworkCache[url] = bitmap
+                    artworkFailedAtMs.remove(url)
+                } else {
+                    artworkFailedAtMs[url] = SystemClock.elapsedRealtime()
+                }
             }
-            onChange()
+            if (bitmap != null) onChange()
         }
         return null
     }

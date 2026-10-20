@@ -197,4 +197,18 @@ class MusicPulseTest {
         assertNotEquals(base, MusicPulse.glowCacheKey("com.yt", "Core", "Dhadkan", "https://art/2", 544, 544))
         assertNotEquals(base, MusicPulse.glowCacheKey("com.yt", "Core", "Dhadkan", "https://art/1", 300, 300))
     }
+
+    @Test
+    fun artworkThatNeverFailedIsFetched() {
+        assertTrue(MusicPulse.shouldFetchArtwork(null, 5_000L))
+    }
+
+    @Test
+    fun failedArtworkWaitsAMinuteBeforeRetry() {
+        val failedAt = 1_000_000L
+        assertFalse(MusicPulse.shouldFetchArtwork(failedAt, failedAt))
+        assertFalse(MusicPulse.shouldFetchArtwork(failedAt, failedAt + MusicPulse.ARTWORK_RETRY_MS - 1))
+        assertTrue(MusicPulse.shouldFetchArtwork(failedAt, failedAt + MusicPulse.ARTWORK_RETRY_MS))
+        assertTrue(MusicPulse.shouldFetchArtwork(failedAt, failedAt + 10 * MusicPulse.ARTWORK_RETRY_MS))
+    }
 }
