@@ -521,4 +521,7 @@
     <string name="word_saved_de" translatable="false">Gespeichert: %1$s</string>
     <string name="words_saved_de" translatable="false">%1$d Wörter gespeichert</string>
     <string name="words_already_saved_suffix_de" translatable="false">, %1$d schon da</string>
+    <string name="word_picker_select_all">Select all</string>
+    <string name="word_picker_saved_mark">saved</string>
+    <string name="word_picker_save_n">Save %1$d</string>
 </resources>

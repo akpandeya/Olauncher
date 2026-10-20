@@ -19,6 +19,19 @@
         android:paddingTop="20dp"
         android:paddingBottom="28dp">
 
+        <TextView
+            android:id="@+id/selectAll"
+            style="@style/TextMedium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackground"
+            android:minHeight="48dp"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="10dp"
+            android:text="@string/word_picker_select_all"
+            android:textColor="?attr/primaryColor"
+            android:visibility="gone" />
+
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -30,6 +43,30 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
         </ScrollView>
+
+        <TextView
+            android:id="@+id/meaningLine"
+            style="@style/TextSmall"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:paddingHorizontal="10dp"
+            android:textColor="?attr/primaryColor"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/saveButton"
+            style="@style/TextLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginTop="8dp"
+            android:background="?attr/selectableItemBackground"
+            android:minHeight="48dp"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="10dp"
+            android:textColor="?attr/primaryColor"
+            android:visibility="gone" />
 
     </LinearLayout>
 
