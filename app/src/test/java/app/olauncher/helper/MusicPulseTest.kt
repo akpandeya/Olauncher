@@ -301,9 +301,75 @@ class MusicPulseTest {
     }
 
     @Test
-    fun progressLineFollowsGlowElseText() {
-        assertEquals(0xFF336699.toInt(), MusicPulse.progressLineColor(0xFF336699.toInt(), 0xFFEEEEEE.toInt()))
-        assertEquals(0xFFEEEEEE.toInt(), MusicPulse.progressLineColor(null, 0xFFEEEEEE.toInt()))
+    fun progressLineUsesTextColourWithoutAlbumColours() {
+        assertEquals(0xFFEEEEEE.toInt(), MusicPulse.progressLineColor(emptyList(), 0xFFEEEEEE.toInt()))
+    }
+
+    @Test
+    fun contrastRatioMatchesWcag() {
+        assertEquals(21f, MusicPulse.contrastRatio(0xFF000000.toInt(), 0xFFFFFFFF.toInt()), 0.01f)
+        assertEquals(1f, MusicPulse.contrastRatio(0xFF336699.toInt(), 0xFF336699.toInt()), 0.001f)
+        // Mid grey #777777 on white is about 4.48.
+        assertEquals(4.48f, MusicPulse.contrastRatio(0xFF777777.toInt(), 0xFFFFFFFF.toInt()), 0.02f)
+    }
+
+    @Test
+    fun lineBackgroundIsOppositeOfText() {
+        assertEquals(0xFFFFFFFF.toInt(), MusicPulse.lineBackground(0xFF111111.toInt()))
+        assertEquals(0xFF000000.toInt(), MusicPulse.lineBackground(0xFFF0F0F0.toInt()))
+    }
+
+    @Test
+    fun progressLinePicksAlbumColourWithBestContrastOnLightWallpaper() {
+        val paleYellow = 0xFFF2E27A.toInt()
+        val darkBlue = 0xFF1A3A80.toInt()
+        val midRed = 0xFFC04040.toInt()
+        // Dark text means a light wallpaper, so the darkest album colour wins, whatever the order.
+        assertEquals(darkBlue, MusicPulse.progressLineColor(listOf(paleYellow, midRed, darkBlue), 0xFF101010.toInt()))
+    }
+
+    @Test
+    fun progressLinePicksAlbumColourWithBestContrastOnDarkWallpaper() {
+        val paleYellow = 0xFFF2E27A.toInt()
+        val darkBlue = 0xFF1A3A80.toInt()
+        assertEquals(paleYellow, MusicPulse.progressLineColor(listOf(darkBlue, paleYellow), 0xFFFAFAFA.toInt()))
+    }
+
+    @Test
+    fun faintAlbumColourIsMixedTowardsTextUntilReadable() {
+        val paleYellow = 0xFFF2E27A.toInt()
+        val text = 0xFF101010.toInt()
+        val white = 0xFFFFFFFF.toInt()
+        assertTrue(MusicPulse.contrastRatio(paleYellow, white) < MusicPulse.LINE_MIN_CONTRAST)
+        val line = MusicPulse.progressLineColor(listOf(paleYellow), text)
+        assertTrue(MusicPulse.contrastRatio(line, white) >= MusicPulse.LINE_MIN_CONTRAST)
+        // Still a tint of the album colour, not the plain text colour.
+        assertNotEquals(text, line)
+        assertEquals(0xFF, line ushr 24)
+    }
+
+    @Test
+    fun readableAlbumColourIsKeptAsItIs() {
+        val darkBlue = 0xFF1A3A80.toInt()
+        assertEquals(darkBlue, MusicPulse.progressLineColor(listOf(darkBlue), 0xFF101010.toInt()))
+    }
+
+    @Test
+    fun mixColorBlendsChannels() {
+        assertEquals(0xFF000000.toInt(), MusicPulse.mixColor(0xFF000000.toInt(), 0xFFFFFFFF.toInt(), 0f))
+        assertEquals(0xFFFFFFFF.toInt(), MusicPulse.mixColor(0xFF000000.toInt(), 0xFFFFFFFF.toInt(), 1f))
+        assertEquals(0xFF804020.toInt(), MusicPulse.mixColor(0xFF000000.toInt(), 0xFFFF8040.toInt(), 0.5f))
+    }
+
+    @Test
+    fun unplayedTrackFadesOutEarlyInTheSong() {
+        assertEquals(MusicPulse.WAVE_TRACK_ALPHA, MusicPulse.waveTrackAlpha(0f))
+        val half = MusicPulse.waveTrackAlpha(MusicPulse.WAVE_TRACK_FADE_END / 2)
+        assertTrue(half in 1 until MusicPulse.WAVE_TRACK_ALPHA)
+        assertEquals(0, MusicPulse.waveTrackAlpha(MusicPulse.WAVE_TRACK_FADE_END))
+        assertEquals(0, MusicPulse.waveTrackAlpha(0.6f))
+        assertEquals(0, MusicPulse.waveTrackAlpha(1f))
+        assertEquals(0x00336699, MusicPulse.waveTrackColor(0xFF336699.toInt(), 0.5f))
     }
 
     @Test
