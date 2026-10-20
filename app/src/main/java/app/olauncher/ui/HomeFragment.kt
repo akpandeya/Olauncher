@@ -60,6 +60,9 @@ import app.olauncher.data.ShortcutOffset
 import app.olauncher.data.ShortcutSize
 import app.olauncher.data.SlotCount
 import app.olauncher.helper.HomeFit
+import app.olauncher.helper.HomeMetaLine
+import app.olauncher.helper.HomeWash
+import app.olauncher.helper.PosterClock
 import app.olauncher.databinding.FragmentHomeBinding
 import app.olauncher.glance.CalendarRepository
 import app.olauncher.glance.HomeNextEvent
@@ -165,6 +168,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
                 capClockSize()
                 applyHomeFit()
             }
+            if (bottom != oldBottom) binding.homeWash.post { sizeHomeWash() }
         }
     }
 
@@ -225,17 +229,27 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         val context = context ?: return
         val themeIsDark = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
             Configuration.UI_MODE_NIGHT_YES
-        val supportsDarkText: Boolean? = if (prefs.homeTextContrast == Prefs.TEXT_CONTRAST_THEME) {
+        val autoContrast = prefs.homeTextContrast != Prefs.TEXT_CONTRAST_THEME
+        val colors: WallpaperColors? = if (!autoContrast) {
             null
         } else {
-            val colors: WallpaperColors? = try {
+            try {
                 WallpaperManager.getInstance(context).getWallpaperColors(WallpaperManager.FLAG_SYSTEM)
             } catch (e: Exception) {
                 null
             }
-            colors?.let { (it.colorHints and WallpaperColors.HINT_SUPPORTS_DARK_TEXT) != 0 }
         }
+        val supportsDarkText: Boolean? =
+            colors?.let { (it.colorHints and WallpaperColors.HINT_SUPPORTS_DARK_TEXT) != 0 }
         val treatment = ContrastPolicy.decide(supportsDarkText, themeIsDark)
+        binding.homeWash.isVisible = HomeWash.shouldShow(
+            autoContrast = autoContrast,
+            themeIsDark = themeIsDark,
+            supportsDarkText = supportsDarkText,
+            wallpaperColors = listOfNotNull(colors?.primaryColor, colors?.secondaryColor, colors?.tertiaryColor)
+                .map { it.toArgb() },
+        )
+        sizeHomeWash()
         val views = listOf(
             binding.clock, binding.clockWords, binding.date, binding.weatherSeparator,
             binding.weather, binding.contextLine, binding.nextEventLine, binding.intentionLine, binding.tvScreenTime,
@@ -1121,8 +1135,66 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             val limit = maxPx / (lines * lineRatio.coerceAtLeast(1f))
             view.setTextSize(TypedValue.COMPLEX_UNIT_PX, sizePx.coerceAtMost(limit))
         }
-        capped(binding.clock, resources.getDimension(R.dimen.time_size), 1)
         capped(binding.clockWords, resources.getDimension(R.dimen.time_words_size), 2)
+
+        // Poster clock: as big as the dimen asks, shrunk so "23:59" fits the row at any font scale.
+        val clock = binding.clock
+        val desiredPx = resources.getDimension(R.dimen.time_size)
+        clock.setTextSize(TypedValue.COMPLEX_UNIT_PX, desiredPx)
+        val fm = clock.paint.fontMetrics
+        val lineRatio = (fm.descent - fm.ascent) / desiredPx.coerceAtLeast(1f)
+        val sampleWidth = clock.paint.measureText(PosterClock.WIDEST_SAMPLE) +
+            clock.paddingStart + clock.paddingEnd
+        val fitted = PosterClock.fitTextSizePx(
+            desiredPx = desiredPx,
+            sampleWidthAtDesiredPx = sampleWidth,
+            availableWidthPx = topTextAvailableWidthPx(),
+            maxLineHeightPx = maxPx,
+            lineHeightRatio = lineRatio,
+        )
+        clock.setTextSize(TypedValue.COMPLEX_UNIT_PX, fitted)
+    }
+
+    /** Width the clock and info lines can use: the screen minus the top block's side margins. */
+    private fun topTextAvailableWidthPx(): Float {
+        val lp = binding.dateTimeLayout.layoutParams as ViewGroup.MarginLayoutParams
+        val parentWidth = binding.mainLayout.width.takeIf { it > 0 } ?: resources.displayMetrics.widthPixels
+        return (parentWidth - lp.marginStart - lp.marginEnd -
+            binding.dateTimeLayout.paddingStart - binding.dateTimeLayout.paddingEnd).toFloat()
+    }
+
+    /** Puts the weather under the date when both do not fit on one row. */
+    private fun layoutDateWeatherRow() {
+        val binding = _binding ?: return
+        fun widthOf(view: TextView): Float {
+            if (!view.isVisible) return 0f
+            val text = view.text?.toString().orEmpty().uppercase(Locale.getDefault())
+            return view.paint.measureText(text) + view.paddingStart + view.paddingEnd
+        }
+        val stacked = HomeMetaLine.shouldStack(
+            dateWidthPx = widthOf(binding.date),
+            separatorWidthPx = binding.weatherSeparator.paint.measureText("·") +
+                binding.weatherSeparator.paddingStart + binding.weatherSeparator.paddingEnd,
+            weatherWidthPx = widthOf(binding.weather),
+            weatherShown = binding.weather.isVisible && binding.date.isVisible,
+            availableWidthPx = topTextAvailableWidthPx(),
+        )
+        binding.dateWeatherRow.orientation = if (stacked) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
+        binding.weatherSeparator.isVisible = HomeMetaLine.showSeparator(
+            binding.date.isVisible, binding.weather.isVisible, stacked,
+        )
+    }
+
+    /** Stretches the wash from the top of the screen to just under the top text, then fades it out. */
+    private fun sizeHomeWash() {
+        val binding = _binding ?: return
+        val bottom = if (binding.dateTimeLayout.isVisible) binding.dateTimeLayout.bottom else 0
+        val height = if (bottom > 0) bottom + resources.getDimensionPixelSize(R.dimen.home_wash_fade) else 0
+        val lp = binding.homeWash.layoutParams
+        if (lp.height != height) {
+            lp.height = height
+            binding.homeWash.layoutParams = lp
+        }
     }
 
     /** How many of [wanted] home app rows fit under the clock block without overlapping it. */
@@ -1576,8 +1648,8 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         } else {
             binding.weather.isVisible = false
         }
-        // Only show the dot between the two when both are visible.
-        binding.weatherSeparator.isVisible = binding.weather.isVisible && binding.date.isVisible
+        // Only show the dot between the two when both are visible side by side.
+        layoutDateWeatherRow()
     }
 
     override fun onDestroyView() {

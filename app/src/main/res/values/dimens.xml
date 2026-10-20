@@ -22,5 +22,11 @@
     <dimen name="home_apps_bottom_reserved">48dp</dimen>
     <dimen name="home_apps_top_min">112dp</dimen>
     <!-- Small tracked caps for the date and weather line under the home clock -->
-    <dimen name="home_meta_size">14sp</dimen>
+    <dimen name="home_meta_size">15sp</dimen>
+    <!-- Serif italic intention (quote) line on home -->
+    <dimen name="home_quote_size">19sp</dimen>
+    <!-- Smallest tap height for the next-event and now-playing lines -->
+    <dimen name="home_info_min_height">48dp</dimen>
+    <!-- How far the home wash fades out below the top text -->
+    <dimen name="home_wash_fade">72dp</dimen>
 </resources>
