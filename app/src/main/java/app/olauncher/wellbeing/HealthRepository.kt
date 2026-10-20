@@ -6,6 +6,7 @@ import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ExerciseSessionRecord
+import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.records.RestingHeartRateRecord
 import androidx.health.connect.client.records.SleepSessionRecord
 import androidx.health.connect.client.records.StepsRecord
@@ -67,6 +68,14 @@ class HealthRepository(
             }
         } else null
 
+        val heartRate = if (HealthPermission.getReadPermission(HeartRateRecord::class) in granted) {
+            safe {
+                val samples = c.readRecords(ReadRecordsRequest(HeartRateRecord::class, sinceStart)).records
+                    .flatMap { record -> record.samples.map { it.beatsPerMinute } }
+                HealthSummaryFormatting.averageBpm(samples)
+            }
+        } else null
+
         val exercise = if (HealthPermission.getReadPermission(ExerciseSessionRecord::class) in granted) {
             safe {
                 val minutes = c.readRecords(ReadRecordsRequest(ExerciseSessionRecord::class, sinceStart)).records
@@ -75,7 +84,7 @@ class HealthRepository(
             }
         } else null
 
-        return HealthSummary(steps, sleep, resting, exercise)
+        return HealthSummary(steps, sleep, resting, exercise, heartRate)
     }
 
     /**
@@ -118,6 +127,7 @@ class HealthRepository(
             HealthPermission.getReadPermission(StepsRecord::class),
             HealthPermission.getReadPermission(SleepSessionRecord::class),
             HealthPermission.getReadPermission(RestingHeartRateRecord::class),
+            HealthPermission.getReadPermission(HeartRateRecord::class),
             HealthPermission.getReadPermission(ExerciseSessionRecord::class),
         )
 

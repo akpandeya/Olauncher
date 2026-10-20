@@ -8,7 +8,7 @@ import org.junit.Test
 
 class WalkNudgePolicyTest {
 
-    private val labels = HealthLabels("%1\$s steps", "Slept %1\$s", "Resting HR %1\$s", "Exercise %1\$s min")
+    private val labels = HealthLabels("%1\$s steps", "Slept %1\$s", "Resting HR %1\$s", "Exercise %1\$s min", "Heart rate %1\$s")
 
     private val start = 1_000_000L
     private val end = 4_600_000L

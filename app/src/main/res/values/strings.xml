@@ -372,6 +372,7 @@
     <string name="health_line_slept">Slept %1$s</string>
     <string name="health_line_resting_hr">Resting HR %1$s</string>
     <string name="health_line_exercise">Exercise %1$s min</string>
+    <string name="health_line_heart_rate">Heart rate %1$s</string>
     <string name="wellbeing_water_chip" translatable="false">💧 %d</string>
     <string name="wellbeing_walk_chip" translatable="false">🚶 %d</string>
     <string name="wellbeing_distracting_stats">%1$s %2$s · %3$s</string>
