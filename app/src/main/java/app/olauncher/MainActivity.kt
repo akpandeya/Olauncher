@@ -35,6 +35,7 @@ import app.olauncher.data.Prefs
 import app.olauncher.wellbeing.NudgeScheduler
 import app.olauncher.wellbeing.UsageSnapshotWorker
 import app.olauncher.databinding.ActivityMainBinding
+import app.olauncher.helper.BackRules
 import app.olauncher.helper.HomeReturnPolicy
 import app.olauncher.helper.MotionPolicy
 import app.olauncher.helper.WordCaptureActivity
@@ -137,14 +138,19 @@ class MainActivity : AppCompatActivity() {
         applyNavigationMotion()
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
 
-        val onBackPressedCallback = object : OnBackPressedCallback(true) {
+        // Enabled only off home, so back on home stays with the system (predictive-back preview)
+        val onBackPressedCallback = object : OnBackPressedCallback(false) {
             override fun handleOnBackPressed() {
-                // Back never leaves the home screen; elsewhere it pops the nav stack
-                if (navController.currentDestination?.id != R.id.mainFragment)
-                    navController.popBackStack()
+                navController.popBackStack()
             }
         }
         onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
+        navController.addOnDestinationChangedListener { _, destination, _ ->
+            onBackPressedCallback.isEnabled = BackRules.shouldConsumeBack(
+                isHome = destination.id == R.id.mainFragment,
+                searchOpen = false
+            )
+        }
 
         if (prefs.firstOpen) {
             viewModel.firstOpen(true)
