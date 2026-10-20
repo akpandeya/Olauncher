@@ -211,4 +211,71 @@ class MusicPulseTest {
         assertTrue(MusicPulse.shouldFetchArtwork(failedAt, failedAt + MusicPulse.ARTWORK_RETRY_MS))
         assertTrue(MusicPulse.shouldFetchArtwork(failedAt, failedAt + 10 * MusicPulse.ARTWORK_RETRY_MS))
     }
+
+    private fun swatch(argb: Int, population: Int, saturation: Float = 0.6f, lightness: Float = 0.5f) =
+        SwatchColor(argb, population, saturation, lightness)
+
+    @Test
+    fun glowColorsStartWithTheSingleGlowColourThenFollowPopulation() {
+        val swatches = listOf(
+            swatch(0xFF110000.toInt(), 50),
+            swatch(0xFF220000.toInt(), 400),
+            swatch(0xFF330000.toInt(), 200),
+            swatch(0xFF440000.toInt(), 100),
+        )
+        val colors = MusicPulse.glowColors(swatches)
+        assertEquals(MusicPulse.glowColor(swatches), colors.first())
+        assertEquals(listOf(0xFF220000.toInt(), 0xFF330000.toInt(), 0xFF440000.toInt()), colors)
+    }
+
+    @Test
+    fun glowColorsDropSwatchesThatFailTheFilters() {
+        val swatches = listOf(
+            swatch(0xFF220000.toInt(), 400),
+            swatch(0xFF010101.toInt(), 900, lightness = 0.05f),
+            swatch(0xFFFEFEFE.toInt(), 800, lightness = 0.95f),
+            swatch(0xFF808080.toInt(), 700, saturation = 0.05f),
+            swatch(0xFF330000.toInt(), 0),
+            swatch(0xFF440000.toInt(), 100),
+        )
+        assertEquals(listOf(0xFF220000.toInt(), 0xFF440000.toInt()), MusicPulse.glowColors(swatches))
+    }
+
+    @Test
+    fun glowColorsFallBackToOneGreyWhenNothingIsSaturated() {
+        val swatches = listOf(
+            swatch(0xFF808080.toInt(), 700, saturation = 0.05f),
+            swatch(0xFF606060.toInt(), 300, saturation = 0.02f),
+        )
+        assertEquals(listOf(0xFF808080.toInt()), MusicPulse.glowColors(swatches))
+    }
+
+    @Test
+    fun glowColorsAreEmptyWithoutUsableSwatches() {
+        assertTrue(MusicPulse.glowColors(emptyList()).isEmpty())
+        assertTrue(MusicPulse.glowColors(listOf(swatch(0xFF010101.toInt(), 900, lightness = 0.01f))).isEmpty())
+        assertTrue(MusicPulse.glowColors(listOf(swatch(0xFF220000.toInt(), 400)), max = 0).isEmpty())
+    }
+
+    @Test
+    fun glowColorsSkipDuplicates() {
+        val swatches = listOf(swatch(0xFF220000.toInt(), 400), swatch(0xFF220000.toInt(), 300), swatch(0xFF330000.toInt(), 100))
+        assertEquals(listOf(0xFF220000.toInt(), 0xFF330000.toInt()), MusicPulse.glowColors(swatches))
+    }
+
+    @Test
+    fun nextGlowColorIndexWrapsAround() {
+        assertEquals(1, MusicPulse.nextGlowColorIndex(0, 3))
+        assertEquals(2, MusicPulse.nextGlowColorIndex(1, 3))
+        assertEquals(0, MusicPulse.nextGlowColorIndex(2, 3))
+        assertEquals(0, MusicPulse.nextGlowColorIndex(0, 1))
+        assertEquals(0, MusicPulse.nextGlowColorIndex(5, 0))
+        assertEquals(1, MusicPulse.nextGlowColorIndex(3, 3))
+    }
+
+    @Test
+    fun glowColourCycleIsAboutNineSeconds() {
+        val cycle = MusicPulse.GLOW_COLOR_HOLD_MS + MusicPulse.GLOW_COLOR_FADE_MS
+        assertTrue(cycle in 8_000L..10_000L)
+    }
 }
