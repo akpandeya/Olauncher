@@ -25,6 +25,7 @@ import androidx.navigation.NavOptions
 import androidx.navigation.findNavController
 import androidx.work.ExistingWorkPolicy
 import androidx.work.WorkManager
+import app.olauncher.data.store.WordLookup
 import app.olauncher.quiet.QuietAccess
 import app.olauncher.quiet.ReleaseWorker
 import app.olauncher.data.Accent
@@ -96,7 +97,7 @@ class MainActivity : AppCompatActivity() {
         prefs = Prefs(this)
         prefs.checkRollovers()
         UsageSnapshotWorker.syncWithDistractingApps(this, prefs.distractingApps)
-        WordCaptureActivity.setEnabled(this, prefs.germanEnabled)
+        WordCaptureActivity.setEnabled(this, prefs.germanEnabled, WordLookup.isLookupAllowed(prefs.germanEnabled, prefs.germanLookup))
         WordScreenService.setEnabled(this, prefs.germanEnabled && prefs.germanScreenPick)
         WorkManager.getInstance(this).cancelUniqueWork(Constants.WALLPAPER_WORKER_NAME)
         prefs.dailyWallpaper = false

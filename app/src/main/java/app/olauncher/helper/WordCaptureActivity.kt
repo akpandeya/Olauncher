@@ -36,20 +36,29 @@ import kotlinx.coroutines.withContext
 class WordCaptureActivity : AppCompatActivity() {
 
     companion object {
-        fun setEnabled(context: Context, enabled: Boolean) {
+        fun setEnabled(context: Context, enabled: Boolean, lookupEnabled: Boolean) {
             val state = if (enabled) {
                 PackageManager.COMPONENT_ENABLED_STATE_ENABLED
             } else {
                 PackageManager.COMPONENT_ENABLED_STATE_DISABLED
             }
-            val components = listOf(
+            val lookupState = if (lookupEnabled) {
+                PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+            } else {
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+            }
+            listOf(
                 ComponentName(context, WordCaptureActivity::class.java),
                 ComponentName(context, "app.olauncher.helper.WordShareAlias"),
+            ).forEach {
+                context.packageManager.setComponentEnabledSetting(it, state, PackageManager.DONT_KILL_APP)
+            }
+            // The look-up share entry is useless while look-ups are switched off.
+            listOf(
                 ComponentName(context, WordLookupActivity::class.java),
                 ComponentName(context, "app.olauncher.helper.WordLookupShareAlias")
-            )
-            components.forEach {
-                context.packageManager.setComponentEnabledSetting(it, state, PackageManager.DONT_KILL_APP)
+            ).forEach {
+                context.packageManager.setComponentEnabledSetting(it, lookupState, PackageManager.DONT_KILL_APP)
             }
         }
     }

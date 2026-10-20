@@ -11,6 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import app.olauncher.R
 import app.olauncher.data.Prefs
 import app.olauncher.data.store.WiktionaryApi
+import app.olauncher.data.store.WiktionaryCache
 import app.olauncher.data.store.WordEdit
 import app.olauncher.data.store.WordLookup
 import app.olauncher.data.store.WordLookupShare
@@ -69,7 +70,11 @@ class WordLookupActivity : AppCompatActivity() {
 
         showMeaning(getString(R.string.word_row_looking_up))
         lifecycleScope.launch {
-            val result = withContext(Dispatchers.IO) { WiktionaryApi.lookup(word) }
+            val appContext = applicationContext
+            val result = withContext(Dispatchers.IO) {
+                val cache = WiktionaryCache(appContext)
+                cache.get(word) ?: WiktionaryApi.lookup(word).also { cache.put(word, it) }
+            }
             when (result) {
                 is WiktionaryApi.LookupResult.Found -> {
                     foundMeaning = result.meaning

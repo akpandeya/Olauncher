@@ -415,7 +415,6 @@
     <string name="words_footer">%1$s · %2$d due · %3$d learned</string>
     <string name="words_count_single">1 word</string>
     <string name="words_count_plural">%d words</string>
-    <string name="words_no_meaning">No meaning yet</string>
     <string name="words_wiktionary_suffix">" · Wiktionary"</string>
     <string name="words_know_it">Know it</string>
     <string name="words_again">Again</string>

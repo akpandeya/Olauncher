@@ -44,7 +44,7 @@ object WordsCardLogic {
 
     fun formatMeaning(context: Context, meaning: String, meaningSource: String): String {
         if (meaning.isBlank()) {
-            return context.getString(R.string.words_no_meaning)
+            return context.getString(R.string.word_row_no_meaning_yet)
         }
         return if (meaningSource.equals("wiktionary", ignoreCase = true)) {
             "$meaning${context.getString(R.string.words_wiktionary_suffix)}"

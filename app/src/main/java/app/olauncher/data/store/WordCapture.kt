@@ -115,9 +115,7 @@ object WordCapture {
         }
 
         // Check Sentence candidate: longer selections up to 400 chars, tokens = the words without punctuation
-        val tokens = trimmed.split(Regex("""\s+"""))
-            .map { it.filter { c -> c !in PUNCTUATION_SET }.trim() }
-            .filter { it.isNotBlank() && it.any { c -> c.isLetterOrDigit() } }
+        val tokens = tokenize(trimmed)
 
         if (tokens.size >= 2) {
             return Capture.Sentence(text = trimmed, tokens = tokens)
