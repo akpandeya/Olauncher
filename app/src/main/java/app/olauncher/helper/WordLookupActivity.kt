@@ -4,7 +4,6 @@ import android.content.Intent
 import android.graphics.Typeface
 import android.os.Bundle
 import android.view.View
-import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.lifecycle.lifecycleScope
@@ -43,7 +42,6 @@ class WordLookupActivity : AppCompatActivity() {
         setContentView(binding.root)
         binding.lookupScrim.setOnClickListener { finish() }
         binding.lookupSheet.setOnClickListener { }
-        onBackPressedDispatcher.addCallback(this) { finish() }
         val sheetBottomPad = binding.lookupSheet.paddingBottom
         binding.lookupSheet.setOnApplyWindowInsetsListener { v, insets ->
             @Suppress("DEPRECATION")
