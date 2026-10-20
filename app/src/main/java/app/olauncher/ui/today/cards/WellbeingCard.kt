@@ -14,12 +14,15 @@ import app.olauncher.helper.appUsagePermissionGranted
 import app.olauncher.ui.pause.PauseFormatting
 import app.olauncher.ui.today.TodayCard
 import app.olauncher.ui.today.TodayOrder
+import app.olauncher.wellbeing.HealthRepository
+import app.olauncher.wellbeing.HealthSummaryFormatting
 import app.olauncher.wellbeing.Nudges
 import app.olauncher.wellbeing.UsageRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.time.ZonedDateTime
 
 object WellbeingCardLogic {
@@ -80,6 +83,7 @@ object WellbeingCard : TodayCard {
     internal var binding: CardWellbeingBinding? = null
     private var cardFragment: Fragment? = null
     private var usageJob: Job? = null
+    private var healthJob: Job? = null
 
     fun getUsageRepository(context: Context): UsageRepository {
         return usageRepositoryProvider?.invoke(context) ?: UsageRepository(context)
@@ -119,6 +123,8 @@ object WellbeingCard : TodayCard {
                 if (binding === viewBinding) {
                     usageJob?.cancel()
                     usageJob = null
+                    healthJob?.cancel()
+                    healthJob = null
                     binding = null
                     cardFragment = null
                 }
@@ -152,6 +158,31 @@ object WellbeingCard : TodayCard {
         renderLine1()
         renderLine2()
         renderPauseWins()
+        renderHealthLine()
+    }
+
+    fun renderHealthLine() {
+        val b = binding ?: return
+        val context = b.root.context ?: return
+        val prefs = Prefs(context)
+        healthJob?.cancel()
+        if (!prefs.healthConnectEnabled) {
+            b.tvHealth.isVisible = false
+            return
+        }
+        val scope = scopeProvider?.invoke()
+            ?: (try { cardFragment?.viewLifecycleOwner?.lifecycleScope } catch (_: Exception) { null }
+                ?: cardFragment?.lifecycleScope
+                ?: CoroutineScope(Dispatchers.Main))
+        healthJob = scope.launch {
+            val summary = withContext(Dispatchers.IO) {
+                HealthRepository(context, { prefs.healthConnectEnabled }).readToday()
+            }
+            val line = summary?.let { HealthSummaryFormatting.formatLine(it) }
+            val current = binding ?: return@launch
+            current.tvHealth.isVisible = line != null
+            if (line != null) current.tvHealth.text = line
+        }
     }
 
     fun renderLine1() {
