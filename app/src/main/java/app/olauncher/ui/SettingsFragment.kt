@@ -1,5 +1,197 @@
 package app.olauncher.ui
 
+import app.olauncher.ui.settings.adjustShortcutHeightPreview
+import app.olauncher.ui.settings.adjustTextSizePreview
+import app.olauncher.ui.settings.applyShortcutOffsetStep
+import app.olauncher.ui.settings.applyTextSizeScale
+import app.olauncher.ui.settings.askContextLineNotificationAccess
+import app.olauncher.ui.settings.confirmImportBackup
+import app.olauncher.ui.settings.copySystemGreyCommand
+import app.olauncher.ui.settings.cycleHomeDarkness
+import app.olauncher.ui.settings.cyclePhotoWallpaperTarget
+import app.olauncher.ui.settings.cycleTextBrightness
+import app.olauncher.ui.settings.enableAutoBackup
+import app.olauncher.ui.settings.enableUseMyLocation
+import app.olauncher.ui.settings.exportBackup
+import app.olauncher.ui.settings.formatMinutes
+import app.olauncher.ui.settings.formatScale
+import app.olauncher.ui.settings.formatSocialThreshold
+import app.olauncher.ui.settings.formatWalkInterval
+import app.olauncher.ui.settings.formatWaterInterval
+import app.olauncher.ui.settings.handleAddedPhotos
+import app.olauncher.ui.settings.handleImportBackup
+import app.olauncher.ui.settings.handlePickedPhotos
+import app.olauncher.ui.settings.handleUseMyLocation
+import app.olauncher.ui.settings.hasContactsPermission
+import app.olauncher.ui.settings.isNotificationAccessGranted
+import app.olauncher.ui.settings.launchAutoBackupFolderPicker
+import app.olauncher.ui.settings.launchExportBackup
+import app.olauncher.ui.settings.launchImportBackup
+import app.olauncher.ui.settings.loadFontOrNull
+import app.olauncher.ui.settings.nextPhotoNow
+import app.olauncher.ui.settings.openPhotoPicker
+import app.olauncher.ui.settings.openPhotoPickerForAdd
+import app.olauncher.ui.settings.pendingOrCurrentShortcutOffsetStep
+import app.olauncher.ui.settings.pendingOrCurrentTextSizeScale
+import app.olauncher.ui.settings.populateAccent
+import app.olauncher.ui.settings.populateActiveHours
+import app.olauncher.ui.settings.populateAlignment
+import app.olauncher.ui.settings.populateAppThemeText
+import app.olauncher.ui.settings.populateAutoBackup
+import app.olauncher.ui.settings.populateBatteryMode
+import app.olauncher.ui.settings.populateBoldFont
+import app.olauncher.ui.settings.populateCommitLock
+import app.olauncher.ui.settings.populateContextLine
+import app.olauncher.ui.settings.populateCurrencyRates
+import app.olauncher.ui.settings.populateDateTime
+import app.olauncher.ui.settings.populateDistractingApps
+import app.olauncher.ui.settings.populateDrawerBottomSearch
+import app.olauncher.ui.settings.populateDrawerLetterStrip
+import app.olauncher.ui.settings.populateDrawerNewFirst
+import app.olauncher.ui.settings.populateDrawerRecents
+import app.olauncher.ui.settings.populateFontFamily
+import app.olauncher.ui.settings.populateGerman
+import app.olauncher.ui.settings.populateGlowStrength
+import app.olauncher.ui.settings.populateHaptics
+import app.olauncher.ui.settings.populateHealthConnect
+import app.olauncher.ui.settings.populateHoldNotifications
+import app.olauncher.ui.settings.populateHomeDarkness
+import app.olauncher.ui.settings.populateHomeNextEvent
+import app.olauncher.ui.settings.populateHomeSets
+import app.olauncher.ui.settings.populateInfoLine
+import app.olauncher.ui.settings.populateIntentionOnHome
+import app.olauncher.ui.settings.populateKeyboardText
+import app.olauncher.ui.settings.populateLockSettings
+import app.olauncher.ui.settings.populateMusicPulse
+import app.olauncher.ui.settings.populateNudgeSocial
+import app.olauncher.ui.settings.populateNudgeWalk
+import app.olauncher.ui.settings.populateNudgeWater
+import app.olauncher.ui.settings.populatePauseAllowance
+import app.olauncher.ui.settings.populatePauseAskWhy
+import app.olauncher.ui.settings.populatePauseBeforeApps
+import app.olauncher.ui.settings.populatePauseEscalate
+import app.olauncher.ui.settings.populatePhotoWallpaperText
+import app.olauncher.ui.settings.populateQuietReleaseTimes
+import app.olauncher.ui.settings.populateScreenTimeCue
+import app.olauncher.ui.settings.populateScreenTimeOnOff
+import app.olauncher.ui.settings.populateSearchContacts
+import app.olauncher.ui.settings.populateSearchEngine
+import app.olauncher.ui.settings.populateShortcutIcons
+import app.olauncher.ui.settings.populateStatusBar
+import app.olauncher.ui.settings.populateSwipeApps
+import app.olauncher.ui.settings.populateSystemGrey
+import app.olauncher.ui.settings.populateTextBrightness
+import app.olauncher.ui.settings.populateTextContrast
+import app.olauncher.ui.settings.populateTextSize
+import app.olauncher.ui.settings.populateTodayCards
+import app.olauncher.ui.settings.populateTodayOrder
+import app.olauncher.ui.settings.populateWeather
+import app.olauncher.ui.settings.populateWeatherEffects
+import app.olauncher.ui.settings.populateWindDown
+import app.olauncher.ui.settings.populateWindDownGrey
+import app.olauncher.ui.settings.previousPhotoNow
+import app.olauncher.ui.settings.restoreBackupNow
+import app.olauncher.ui.settings.searchCity
+import app.olauncher.ui.settings.selectAccent
+import app.olauncher.ui.settings.selectFontFamily
+import app.olauncher.ui.settings.setAppTheme
+import app.olauncher.ui.settings.setupGlowStrength
+import app.olauncher.ui.settings.showAccentMenu
+import app.olauncher.ui.settings.showAccessibilityDialog
+import app.olauncher.ui.settings.showActiveHoursDialog
+import app.olauncher.ui.settings.showAlignmentMenu
+import app.olauncher.ui.settings.showAppListIfEnabled
+import app.olauncher.ui.settings.showAppThemeMenu
+import app.olauncher.ui.settings.showBatteryModeMenu
+import app.olauncher.ui.settings.showCitySearchDialog
+import app.olauncher.ui.settings.showCustomSearchEngineDialog
+import app.olauncher.ui.settings.showDateTimeMenu
+import app.olauncher.ui.settings.showDialog
+import app.olauncher.ui.settings.showDistractingAppsDialog
+import app.olauncher.ui.settings.showFirstTimePausePermissionDialog
+import app.olauncher.ui.settings.showFontDialog
+import app.olauncher.ui.settings.showGermanClockMenu
+import app.olauncher.ui.settings.showHoldNotificationsAccessDialog
+import app.olauncher.ui.settings.showHomeAppsNumMenu
+import app.olauncher.ui.settings.showHomeSetSlotsDialog
+import app.olauncher.ui.settings.showHomeSetStartPicker
+import app.olauncher.ui.settings.showImportConfirmationDialog
+import app.olauncher.ui.settings.showNudgeSocialMenu
+import app.olauncher.ui.settings.showNudgeWalkMenu
+import app.olauncher.ui.settings.showNudgeWaterMenu
+import app.olauncher.ui.settings.showPauseAllowanceMenu
+import app.olauncher.ui.settings.showPauseOffChoices
+import app.olauncher.ui.settings.showPhotoWallpaperFrequencyDialog
+import app.olauncher.ui.settings.showPhotoWallpaperMenu
+import app.olauncher.ui.settings.showPlaceSelectionDialog
+import app.olauncher.ui.settings.showReleaseTimesEditor
+import app.olauncher.ui.settings.showRemovePhotosDialog
+import app.olauncher.ui.settings.showScreenTimeStyleMenu
+import app.olauncher.ui.settings.showScreenTimeTargetMenu
+import app.olauncher.ui.settings.showSearchEngineMenu
+import app.olauncher.ui.settings.showShortcutCountDialog
+import app.olauncher.ui.settings.showShortcutHeightDialog
+import app.olauncher.ui.settings.showShortcutIconStyleDialog
+import app.olauncher.ui.settings.showShortcutSizeDialog
+import app.olauncher.ui.settings.showSocialNudgeUsageAccessDialog
+import app.olauncher.ui.settings.showSwipeRightMenu
+import app.olauncher.ui.settings.showTextSizeDialog
+import app.olauncher.ui.settings.showTimeOptionsDialog
+import app.olauncher.ui.settings.showTimePicker
+import app.olauncher.ui.settings.showToast
+import app.olauncher.ui.settings.showTodayCardsDialog
+import app.olauncher.ui.settings.showWeatherMenu
+import app.olauncher.ui.settings.showWindDownMenu
+import app.olauncher.ui.settings.showWindDownTimePicker
+import app.olauncher.ui.settings.swapSides
+import app.olauncher.ui.settings.syncWordShareEntries
+import app.olauncher.ui.settings.toggleAutoBackup
+import app.olauncher.ui.settings.toggleBoldFont
+import app.olauncher.ui.settings.toggleCommitLock
+import app.olauncher.ui.settings.toggleContextLine
+import app.olauncher.ui.settings.toggleCurrencyRates
+import app.olauncher.ui.settings.toggleDateTime
+import app.olauncher.ui.settings.toggleDrawerBottomSearch
+import app.olauncher.ui.settings.toggleDrawerLetterStrip
+import app.olauncher.ui.settings.toggleDrawerNewFirst
+import app.olauncher.ui.settings.toggleDrawerRecents
+import app.olauncher.ui.settings.toggleGerman
+import app.olauncher.ui.settings.toggleGermanLookup
+import app.olauncher.ui.settings.toggleGermanPauseWord
+import app.olauncher.ui.settings.toggleGermanScreenPick
+import app.olauncher.ui.settings.toggleGermanSpellSuggest
+import app.olauncher.ui.settings.toggleGermanUi
+import app.olauncher.ui.settings.toggleHaptics
+import app.olauncher.ui.settings.toggleHealthConnect
+import app.olauncher.ui.settings.toggleHoldNotifications
+import app.olauncher.ui.settings.toggleHomeNextEvent
+import app.olauncher.ui.settings.toggleHomeSets
+import app.olauncher.ui.settings.toggleInfoLine
+import app.olauncher.ui.settings.toggleIntentionOnHome
+import app.olauncher.ui.settings.toggleKeyboardText
+import app.olauncher.ui.settings.toggleMusicPulse
+import app.olauncher.ui.settings.togglePauseAskWhy
+import app.olauncher.ui.settings.togglePauseBeforeApps
+import app.olauncher.ui.settings.togglePauseEscalate
+import app.olauncher.ui.settings.togglePhotoWallpaperHomeMenu
+import app.olauncher.ui.settings.toggleSearchContacts
+import app.olauncher.ui.settings.toggleShortcutIcons
+import app.olauncher.ui.settings.toggleShortcutSide
+import app.olauncher.ui.settings.toggleStatusBar
+import app.olauncher.ui.settings.toggleSwipeLeft
+import app.olauncher.ui.settings.toggleSwipeRight
+import app.olauncher.ui.settings.toggleSystemGrey
+import app.olauncher.ui.settings.toggleTextContrast
+import app.olauncher.ui.settings.toggleTodayOrder
+import app.olauncher.ui.settings.toggleWeatherEffects
+import app.olauncher.ui.settings.toggleWindDown
+import app.olauncher.ui.settings.toggleWindDownGrey
+import app.olauncher.ui.settings.turnOffPhotoWallpaper
+import app.olauncher.ui.settings.updateHomeBottomAlignment
+import app.olauncher.ui.settings.updateNudgeInterval
+import app.olauncher.ui.settings.updateSocialNudgeThreshold
+import app.olauncher.ui.settings.updateTextSizeSample
+import app.olauncher.ui.settings.updateTheme
 import android.app.TimePickerDialog
 import android.content.Context
 import android.content.Intent
@@ -141,17 +333,17 @@ import java.text.Collator
 
 class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListener {
 
-    private lateinit var prefs: Prefs
-    private lateinit var viewModel: MainViewModel
+    internal lateinit var prefs: Prefs
+    internal lateinit var viewModel: MainViewModel
 
-    private var _binding: FragmentSettingsBinding? = null
-    private val binding get() = _binding!!
-    private var dialog: AlertDialog? = null
+    internal var _binding: FragmentSettingsBinding? = null
+    internal val binding get() = _binding!!
+    internal var dialog: AlertDialog? = null
 
-    private var currentSectionKey: String? = null
-    private var initialTargetApplied = false
+    internal var currentSectionKey: String? = null
+    internal var initialTargetApplied = false
 
-    private val backCallback = object : OnBackPressedCallback(false) {
+    internal val backCallback = object : OnBackPressedCallback(false) {
         override fun handleOnBackPressed() {
             if (_binding != null && !binding.settingsSearch.text.isNullOrEmpty()) {
                 binding.settingsSearch.setText("")
@@ -161,7 +353,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         }
     }
 
-    private val pickMultipleMedia = registerForActivityResult(
+    internal val pickMultipleMedia = registerForActivityResult(
         ActivityResultContracts.PickMultipleVisualMedia(MediaStore.getPickImagesMaxLimit())
     ) { uris ->
         if (uris.isNotEmpty()) {
@@ -169,7 +361,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         }
     }
 
-    private val pickMultipleMediaForAdd = registerForActivityResult(
+    internal val pickMultipleMediaForAdd = registerForActivityResult(
         ActivityResultContracts.PickMultipleVisualMedia(MediaStore.getPickImagesMaxLimit())
     ) { uris ->
         if (uris.isNotEmpty()) {
@@ -177,7 +369,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         }
     }
 
-    private val exportBackupLauncher = registerForActivityResult(
+    internal val exportBackupLauncher = registerForActivityResult(
         ActivityResultContracts.CreateDocument("application/json")
     ) { uri ->
         if (uri != null) {
@@ -185,7 +377,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         }
     }
 
-    private val autoBackupFolderLauncher = registerForActivityResult(
+    internal val autoBackupFolderLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocumentTree()
     ) { uri ->
         if (uri != null) {
@@ -193,7 +385,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         }
     }
 
-    private val importBackupLauncher = registerForActivityResult(
+    internal val importBackupLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocument()
     ) { uri ->
         if (uri != null) {
@@ -201,7 +393,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         }
     }
 
-    private val locationPermissionLauncher = registerForActivityResult(
+    internal val locationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         if (isGranted) {
@@ -211,7 +403,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         }
     }
 
-    private val healthConnectPermissionLauncher = registerForActivityResult(
+    internal val healthConnectPermissionLauncher = registerForActivityResult(
         HealthRepository.permissionContract()
     ) { granted ->
         // Partial grants are fine; no grant at all leaves the switch off.
@@ -221,18 +413,18 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         if (_binding != null) populateHealthConnect()
     }
 
-    private val contactsPermissionLauncher = registerForActivityResult(
+    internal val contactsPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         prefs.searchContacts = isGranted
         if (_binding != null) populateSearchContacts()
     }
 
-    private var pendingCalendarCardIndex: Int? = null
-    private var todayCardsDialog: AlertDialog? = null
-    private var todayCardsCheckedState: BooleanArray? = null
+    internal var pendingCalendarCardIndex: Int? = null
+    internal var todayCardsDialog: AlertDialog? = null
+    internal var todayCardsCheckedState: BooleanArray? = null
 
-    private val calendarPermissionLauncher = registerForActivityResult(
+    internal val calendarPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
         val idx = pendingCalendarCardIndex
@@ -255,7 +447,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         }
     }
 
-    private val contextLineCalendarLauncher = registerForActivityResult(
+    internal val contextLineCalendarLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) {
         // Granted or not, the line stays on; ask for notification access next.
@@ -263,7 +455,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     }
 
     // A denial leaves the switch on and changes nothing else.
-    private val homeNextEventCalendarLauncher = registerForActivityResult(
+    internal val homeNextEventCalendarLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) {}
 
@@ -402,7 +594,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
 
     private var runtimeRows: List<RuntimeSettingsRow> = emptyList()
 
-    private fun getFirstTextView(parent: View): TextView {
+    internal fun getFirstTextView(parent: View): TextView {
         if (parent is ViewGroup) {
             for (i in 0 until parent.childCount) {
                 val child = parent.getChildAt(i)
@@ -412,7 +604,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         error("Expected TextView in parent $parent")
     }
 
-    private fun initRuntimeRows() {
+    internal fun initRuntimeRows() {
         runtimeRows = listOf(
             // Home
             RuntimeSettingsRow(SettingsSections.KEY_HOME, binding.homeAppsNum.parent as View, getFirstTextView(binding.homeAppsNum.parent as View), R.id.homeAppsNum),
@@ -525,7 +717,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         }
     }
 
-    private fun isRowAvailable(viewId: Int): Boolean = SettingsRowAvailability.isAvailable(
+    internal fun isRowAvailable(viewId: Int): Boolean = SettingsRowAvailability.isAvailable(
         viewId = viewId,
         shortcutsOn = prefs.homeShortcuts,
         germanOn = prefs.germanEnabled,
@@ -541,7 +733,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         }
     }
 
-    private fun setupSearchInsets() {
+    internal fun setupSearchInsets() {
         binding.root.setOnApplyWindowInsetsListener { root, insets ->
             val imeBottom = insets.getInsets(WindowInsets.Type.ime()).bottom
             val navBarBottom = insets.getInsets(WindowInsets.Type.navigationBars()).bottom
@@ -563,13 +755,13 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.root.requestApplyInsets()
     }
 
-    private fun initSearch() {
+    internal fun initSearch() {
         binding.settingsSearch.doAfterTextChanged { text ->
             onSearchQueryChanged(text?.toString().orEmpty())
         }
     }
 
-    private fun onSearchQueryChanged(query: String) {
+    internal fun onSearchQueryChanged(query: String) {
         if (query.isBlank()) {
             if (currentSectionKey == null) {
                 showSectionList()
@@ -679,7 +871,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     }
 
     /** Only explicit fragment arguments ([ARG_SECTION] key or [ARG_ROW] view id) open a section. */
-    private fun resolveTargetSection(): SettingsSection? {
+    internal fun resolveTargetSection(): SettingsSection? {
         val args = arguments ?: return null
         return SettingsSections.resolveTarget(
             sectionKey = args.getString(ARG_SECTION),
@@ -818,7 +1010,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         return true
     }
 
-    private fun initClickListeners() {
+    internal fun initClickListeners() {
         binding.olauncherHiddenApps.setOnClickListener(this)
         binding.appInfo.setOnClickListener(this)
         binding.setLauncher.setOnClickListener(this)
@@ -1041,7 +1233,6 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.sectionRowGestures.setOnClickListener(this)
         binding.sectionRowBackup.setOnClickListener(this)
 
-
         binding.photoWallpaper.setOnLongClickListener(this)
         binding.photoWallpaperTitle.setOnLongClickListener(this)
         binding.photoWallpaperLayout.setOnLongClickListener(this)
@@ -1056,7 +1247,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.toggleLock.setOnLongClickListener(this)
     }
 
-    private fun initObservers() {
+    internal fun initObservers() {
         prefs.firstSettingsOpen = false
         viewModel.isOlauncherDefault.observe(viewLifecycleOwner) {
             if (it) {
@@ -1075,743 +1266,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
 
     // Popup menus
 
-    private fun showHomeAppsNumMenu(anchor: View) {
-        anchor.showPopupMenu(
-            configure = { menu ->
-                for (num in 0..8) menu.add(Menu.NONE, num, num, num.toString())
-            }
-        ) { item -> updateHomeAppsNum(item.itemId) }
-    }
-
-    private fun showDateTimeMenu(anchor: View) {
-        anchor.showPopupMenu(R.menu.date_time) { item ->
-            when (item.itemId) {
-                R.id.dateTimeOn -> toggleDateTime(Constants.DateTime.ON)
-                R.id.dateTimeOff -> toggleDateTime(Constants.DateTime.OFF)
-                R.id.dateOnly -> toggleDateTime(Constants.DateTime.DATE_ONLY)
-            }
-        }
-    }
-
-    private fun showAlignmentMenu(anchor: View) {
-        anchor.showPopupMenu(
-            R.menu.alignment,
-            configure = { menu ->
-                val leftLabel = getString(R.string.left)
-                val centerLabel = getString(R.string.center)
-                val rightLabel = getString(R.string.right)
-                menu.findItem(R.id.alignmentLeft)?.title = SpannableString(leftLabel).apply {
-                    setSpan(
-                        AlignmentSpan.Standard(Layout.Alignment.ALIGN_NORMAL),
-                        0,
-                        leftLabel.length,
-                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                    )
-                }
-                menu.findItem(R.id.alignmentCenter)?.title = SpannableString(centerLabel).apply {
-                    setSpan(
-                        AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER),
-                        0,
-                        centerLabel.length,
-                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                    )
-                }
-                menu.findItem(R.id.alignmentRight)?.title = SpannableString(rightLabel).apply {
-                    setSpan(
-                        AlignmentSpan.Standard(Layout.Alignment.ALIGN_OPPOSITE),
-                        0,
-                        rightLabel.length,
-                        Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
-                    )
-                }
-                menu.findItem(R.id.alignmentBottom)?.setTitle(
-                    if (prefs.homeBottomAlignment) R.string.bottom_on else R.string.bottom_off
-                )
-            }
-        ) { item ->
-            when (item.itemId) {
-                R.id.alignmentLeft -> viewModel.updateHomeAlignment(Gravity.START)
-                R.id.alignmentCenter -> viewModel.updateHomeAlignment(Gravity.CENTER)
-                R.id.alignmentRight -> viewModel.updateHomeAlignment(Gravity.END)
-                R.id.alignmentBottom -> updateHomeBottomAlignment()
-            }
-        }
-    }
-
-    private fun showShortcutCountDialog() {
-        val counts = (SlotCount.MIN..SlotCount.MAX).toList()
-        val items = counts.map { it.toString() }.toTypedArray()
-        val checkedIndex = counts.indexOf(prefs.shortcutCount)
-
-        val builder = AlertDialog.Builder(requireContext())
-            .setTitle(R.string.icons)
-            .setSingleChoiceItems(items, checkedIndex) { dialogInterface, which ->
-                prefs.shortcutCount = counts[which]
-                populateShortcutIcons()
-                viewModel.updateHomeAlignment(prefs.homeAlignment)
-                dialogInterface.dismiss()
-            }
-            .setNegativeButton(R.string.cancel, null)
-
-        val alertDialog = builder.create()
-        dialog?.dismiss()
-        dialog = alertDialog
-        val window = alertDialog.window
-        if (window != null && !prefs.showStatusBar) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-            alertDialog.show()
-            window.hideStatusBar()
-            window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-        } else {
-            alertDialog.show()
-        }
-    }
-
-    private fun showShortcutSizeDialog() {
-        val sizes = listOf(
-            ShortcutSize.SMALL,
-            ShortcutSize.MEDIUM,
-            ShortcutSize.LARGE,
-        )
-        val items = arrayOf(
-            getString(R.string.icon_size_small),
-            getString(R.string.icon_size_medium),
-            getString(R.string.icon_size_large),
-        )
-        val checkedIndex = sizes.indexOf(prefs.shortcutSizeStep).coerceAtLeast(0)
-
-        val builder = AlertDialog.Builder(requireContext())
-            .setTitle(R.string.icon_size)
-            .setSingleChoiceItems(items, checkedIndex) { dialogInterface, which ->
-                prefs.shortcutSizeStep = sizes[which]
-                populateShortcutIcons()
-                viewModel.updateHomeAlignment(prefs.homeAlignment)
-                dialogInterface.dismiss()
-            }
-            .setNegativeButton(R.string.cancel, null)
-
-        val alertDialog = builder.create()
-        dialog?.dismiss()
-        dialog = alertDialog
-        val window = alertDialog.window
-        if (window != null && !prefs.showStatusBar) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-            alertDialog.show()
-            window.hideStatusBar()
-            window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-        } else {
-            alertDialog.show()
-        }
-    }
-
-    private fun showShortcutIconStyleDialog() {
-        val styles = listOf(
-            ShortcutIconStyle.ORIGINAL,
-            ShortcutIconStyle.MONOCHROME,
-            ShortcutIconStyle.TEXT_COLOUR,
-        )
-        val items = arrayOf(
-            getString(R.string.icon_style_original),
-            getString(R.string.icon_style_monochrome),
-            getString(R.string.icon_style_text_colour),
-        )
-        val checkedIndex = styles.indexOf(prefs.shortcutIconStyle).coerceAtLeast(0)
-
-        val builder = AlertDialog.Builder(requireContext())
-            .setTitle(R.string.icon_style)
-            .setSingleChoiceItems(items, checkedIndex) { dialogInterface, which ->
-                prefs.shortcutIconStyle = styles[which]
-                populateShortcutIcons()
-                viewModel.updateHomeAlignment(prefs.homeAlignment)
-                dialogInterface.dismiss()
-            }
-            .setNegativeButton(R.string.cancel, null)
-
-        val alertDialog = builder.create()
-        dialog?.dismiss()
-        dialog = alertDialog
-        val window = alertDialog.window
-        if (window != null && !prefs.showStatusBar) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-            alertDialog.show()
-            window.hideStatusBar()
-            window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-        } else {
-            alertDialog.show()
-        }
-    }
-
-    // "System" stays hidden unless the row is long pressed
-    private fun showAppThemeMenu(anchor: View, showSystem: Boolean) {
-        anchor.showPopupMenu(
-            R.menu.app_theme,
-            configure = { menu -> menu.findItem(R.id.themeSystem).isVisible = showSystem }
-        ) { item ->
-            when (item.itemId) {
-                R.id.themeLight -> updateTheme(AppCompatDelegate.MODE_NIGHT_NO)
-                R.id.themeDark -> updateTheme(AppCompatDelegate.MODE_NIGHT_YES)
-                R.id.themeSystem -> updateTheme(AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM)
-            }
-        }
-    }
-
-    // Dialogs
-
-    private fun showDialog(newDialog: OlDialog) {
-        dialog?.dismiss()
-        dialog = newDialog
-        newDialog.showRespectingStatusBar()
-    }
-
-    private fun showTextSizeDialog() {
-        var applied = false
-        val initialScale = prefs.textSizeScale
-        pendingTextSizeScale = initialScale
-        var stepper: DialogTextSizeBinding? = null
-        val dialog = requireContext().createDialog(
-            title = R.string.text_size,
-            action = R.string.apply,
-            neutral = R.string.cancel,
-            onAction = {
-                applied = true
-                applyTextSizeScale()
-            },
-            onNeutral = {
-                // Cancelled
-            }
-        ) { container ->
-            DialogTextSizeBinding.inflate(layoutInflater, container, false).also { stepper = it }.root
-        }
-        stepper?.apply {
-            textSizeSample.isVisible = true
-            updateTextSizeSample(textSizeSample, pendingTextSizeScale)
-            textSizeCurrent.text = formatScale(pendingTextSizeScale)
-            textSizeMinus.setOnClickListener { adjustTextSizePreview(-0.1f, this) }
-            textSizePlus.setOnClickListener { adjustTextSizePreview(0.1f, this) }
-        }
-        dialog.setOnDismissListener {
-            if (!applied) {
-                pendingTextSizeScale = -1f
-                populateTextSize()
-            }
-        }
-        showDialog(dialog)
-    }
-
-    private fun showShortcutHeightDialog() {
-        pendingShortcutOffsetStep = prefs.shortcutOffsetStep
-        var stepper: DialogTextSizeBinding? = null
-        val dialog = requireContext().createDialog(R.string.icons_height, R.string.okay) { container ->
-            DialogTextSizeBinding.inflate(layoutInflater, container, false).also { stepper = it }.root
-        }
-        stepper?.apply {
-            textSizeSample.isVisible = false
-            textSizeCurrent.text = ShortcutOffset.format(pendingOrCurrentShortcutOffsetStep())
-            textSizeMinus.setOnClickListener { adjustShortcutHeightPreview(-1, this) }
-            textSizePlus.setOnClickListener { adjustShortcutHeightPreview(1, this) }
-        }
-        dialog.setOnDismissListener { applyShortcutOffsetStep() }
-        showDialog(dialog)
-    }
-
-    // Prominent disclosure before sending the user to accessibility settings
-    private fun showAccessibilityDialog() {
-        val serviceEnabled = isAccessServiceEnabled(requireContext())
-        showDialog(
-            requireContext().createDialog(
-                title = R.string.gestures,
-                action = if (serviceEnabled) R.string.disable else R.string.enable,
-                message = R.string.accessibility_disclosure,
-                neutral = R.string.not_working,
-                onNeutral = { requireContext().openUrl(Constants.URL_DOUBLE_TAP) },
-                onAction = { openAccessibilityService() },
-            )
-        )
-    }
-
-    private fun toggleSwipeLeft() {
-        prefs.swipeLeftEnabled = !prefs.swipeLeftEnabled
-        if (prefs.swipeLeftEnabled) {
-            binding.swipeLeftApp.setTextColor(requireContext().getColorFromAttr(R.attr.primaryColor))
-            requireContext().showToast(getString(R.string.swipe_left_app_enabled))
-        } else {
-            binding.swipeLeftApp.setTextColor(requireContext().getColorFromAttr(R.attr.primaryColorTrans50))
-            requireContext().showToast(getString(R.string.swipe_left_app_disabled))
-        }
-    }
-
-    private fun toggleSwipeRight() {
-        prefs.swipeRightEnabled = !prefs.swipeRightEnabled
-        if (prefs.swipeRightEnabled) {
-            binding.swipeRightApp.setTextColor(requireContext().getColorFromAttr(R.attr.primaryColor))
-            requireContext().showToast(getString(R.string.swipe_right_app_enabled))
-        } else {
-            binding.swipeRightApp.setTextColor(requireContext().getColorFromAttr(R.attr.primaryColorTrans50))
-            requireContext().showToast(getString(R.string.swipe_right_app_disabled))
-        }
-    }
-
-    private fun toggleStatusBar() {
-        prefs.showStatusBar = !prefs.showStatusBar
-        populateStatusBar()
-    }
-
-    private fun populateStatusBar() {
-        if (prefs.showStatusBar) {
-            requireActivity().window.showStatusBar()
-            binding.statusBar.text = getString(R.string.on)
-        } else {
-            requireActivity().window.hideStatusBar()
-            binding.statusBar.text = getString(R.string.off)
-        }
-    }
-
-    private fun toggleDateTime(selected: Int) {
-        prefs.dateTimeVisibility = selected
-        populateDateTime()
-        viewModel.toggleDateTime()
-    }
-
-    private fun populateDateTime() {
-        binding.dateTime.text = getString(
-            when (prefs.dateTimeVisibility) {
-                Constants.DateTime.DATE_ONLY -> R.string.date
-                Constants.DateTime.ON -> R.string.on
-                else -> R.string.off
-            }
-        )
-    }
-
-    private fun showBatteryModeMenu(anchor: View) {
-        val options = listOf(
-            Prefs.BATTERY_MODE_AUTO to getString(R.string.auto),
-            Prefs.BATTERY_MODE_ALWAYS to getString(R.string.always),
-            Prefs.BATTERY_MODE_OFF to getString(R.string.off),
-        )
-        anchor.showPopupMenu(
-            configure = { menu ->
-                options.forEach { (id, label) ->
-                    menu.add(Menu.NONE, id, id, label)
-                }
-            }
-        ) { item ->
-            prefs.batteryMode = item.itemId
-            populateBatteryMode()
-            viewModel.toggleDateTime()
-        }
-    }
-
-    private fun populateBatteryMode() {
-        binding.batteryMode.text = getString(
-            when (prefs.batteryMode) {
-                Prefs.BATTERY_MODE_ALWAYS -> R.string.always
-                Prefs.BATTERY_MODE_OFF -> R.string.off
-                else -> R.string.auto
-            }
-        )
-    }
-
-    private fun populateHomeSets() {
-        binding.homeSets.text = getString(if (prefs.homeSets) R.string.on else R.string.off)
-        binding.morningStart.text = formatMinutes(prefs.homeSetMorningStart)
-        binding.dayStart.text = formatMinutes(prefs.homeSetDayStart)
-        binding.eveningStart.text = formatMinutes(prefs.homeSetEveningStart)
-    }
-
-    private fun formatMinutes(minutes: Int): String =
-        String.format("%02d:%02d", minutes / 60, minutes % 60)
-
-    private fun toggleHomeSets() {
-        prefs.homeSets = !prefs.homeSets
-        populateHomeSets()
-        viewModel.refreshHome(false)
-    }
-
-    private fun showHomeSetStartPicker(set: HomeSet, @StringRes title: Int) {
-        val current = prefs.homeSetStart(set)
-        showTimePicker(title, current / 60, current % 60) { hour, minute ->
-            prefs.setHomeSetStart(set, HomeSets.minutesOfDay(hour, minute))
-            populateHomeSets()
-            viewModel.refreshHome(false)
-        }
-    }
-
-    private fun showHomeSetSlotsDialog(set: HomeSet) {
-        val num = prefs.homeAppsNum.coerceIn(0, HomeSets.MAX_SLOTS)
-        if (num == 0) {
-            requireContext().showToast(R.string.home_set_no_slots)
-            return
-        }
-        val empty = getString(R.string.home_set_slot_empty)
-        val labels = Array(num) { i ->
-            val name = prefs.getAppName(i + 1, set)
-            "${i + 1}. ${name.ifEmpty { empty }}"
-        }
-        AlertDialog.Builder(requireContext())
-            .setTitle(if (set == HomeSet.MORNING) R.string.edit_morning_apps else R.string.edit_evening_apps)
-            .setItems(labels) { _, which -> showAppListIfEnabled(HomeSets.flagFor(set, which + 1)) }
-            .show()
-    }
-
-    private fun toggleInfoLine() {
-        prefs.homeInfoCombined = !prefs.homeInfoCombined
-        populateInfoLine()
-        viewModel.toggleDateTime()
-    }
-
-    private fun populateInfoLine() {
-        binding.infoLine.text = getString(
-            if (prefs.homeInfoCombined) R.string.info_line_combined else R.string.info_line_separate
-        )
-    }
-
-    private fun toggleContextLine() {
-        prefs.homeContextLine = !prefs.homeContextLine
-        populateContextLine()
-        viewModel.toggleDateTime()
-        if (!prefs.homeContextLine) return
-        // Permissions are asked only now, when the line is first switched on. Denial leaves it working.
-        val calendarGranted = ContextCompat.checkSelfPermission(
-            requireContext(), Manifest.permission.READ_CALENDAR
-        ) == PackageManager.PERMISSION_GRANTED
-        if (calendarGranted) {
-            askContextLineNotificationAccess()
-        } else {
-            dialog?.dismiss()
-            dialog = requireContext().showMessageDialog(
-                title = R.string.context_line,
-                message = R.string.calendar_permission_message,
-                action = R.string.allow,
-            ) {
-                contextLineCalendarLauncher.launch(Manifest.permission.READ_CALENDAR)
-            }
-        }
-    }
-
-    private fun askContextLineNotificationAccess() {
-        if (isNotificationAccessGranted()) return
-        dialog?.dismiss()
-        dialog = requireContext().showMessageDialog(
-            title = R.string.context_line,
-            message = R.string.context_line_access_message,
-            action = R.string.allow,
-        ) {
-            try {
-                startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
-            } catch (_: Exception) {
-                requireContext().showToast(getString(R.string.unable_to_open_app))
-            }
-        }
-    }
-
-    private fun populateContextLine() {
-        binding.contextLineValue.text = getString(if (prefs.homeContextLine) R.string.on else R.string.off)
-    }
-
-    private fun toggleHomeNextEvent() {
-        prefs.homeNextEvent = !prefs.homeNextEvent
-        populateHomeNextEvent()
-        if (!prefs.homeNextEvent) return
-        // Permission is asked only now, when the line is switched on. Denial leaves it on.
-        val calendarGranted = ContextCompat.checkSelfPermission(
-            requireContext(), Manifest.permission.READ_CALENDAR
-        ) == PackageManager.PERMISSION_GRANTED
-        if (calendarGranted) return
-        dialog?.dismiss()
-        dialog = requireContext().showMessageDialog(
-            title = R.string.home_next_event,
-            message = R.string.calendar_permission_message,
-            action = R.string.allow,
-        ) {
-            homeNextEventCalendarLauncher.launch(Manifest.permission.READ_CALENDAR)
-        }
-    }
-
-    private fun populateHomeNextEvent() {
-        binding.homeNextEventValue.text = getString(if (prefs.homeNextEvent) R.string.on else R.string.off)
-    }
-
-    private fun showSearchEngineMenu(anchor: View) {
-        val options = listOf(
-            SearchEngine.PHONE_DEFAULT to getString(R.string.search_engine_phone_default),
-            SearchEngine.GOOGLE to getString(R.string.search_engine_google),
-            SearchEngine.DUCKDUCKGO to getString(R.string.search_engine_duckduckgo),
-            SearchEngine.BING to getString(R.string.search_engine_bing),
-            SearchEngine.CUSTOM to getString(R.string.search_engine_custom),
-        )
-        anchor.showPopupMenu(
-            configure = { menu ->
-                options.forEachIndexed { index, (_, label) ->
-                    menu.add(Menu.NONE, index, index, label)
-                }
-            }
-        ) { item ->
-            val (engineId, _) = options.getOrNull(item.itemId) ?: return@showPopupMenu
-            if (engineId == SearchEngine.CUSTOM) {
-                showCustomSearchEngineDialog()
-            } else {
-                prefs.searchEngine = engineId
-                populateSearchEngine()
-            }
-        }
-    }
-
-    private fun populateSearchEngine() {
-        binding.searchEngine.text = getString(
-            when (prefs.searchEngine) {
-                SearchEngine.GOOGLE -> R.string.search_engine_google
-                SearchEngine.DUCKDUCKGO -> R.string.search_engine_duckduckgo
-                SearchEngine.BING -> R.string.search_engine_bing
-                SearchEngine.CUSTOM -> R.string.search_engine_custom
-                else -> R.string.search_engine_phone_default
-            }
-        )
-    }
-
-    private fun showCustomSearchEngineDialog() {
-        var dialogEditText: AppCompatEditText? = null
-        var customDialog: OlDialog? = null
-
-        fun save() {
-            val text = dialogEditText?.text?.toString().orEmpty()
-            if (SearchEngine.isValidTemplate(text)) {
-                prefs.searchEngineCustomUrl = text.trim()
-                prefs.searchEngine = SearchEngine.CUSTOM
-                populateSearchEngine()
-            } else {
-                showToast(R.string.search_engine_custom_invalid)
-            }
-        }
-
-        val dialog = requireContext().createDialog(
-            title = R.string.search_engine,
-            action = R.string.save,
-            onAction = {
-                save()
-            }
-        ) { container ->
-            val context = container.context
-            val layout = LinearLayout(context).apply {
-                orientation = LinearLayout.VERTICAL
-                layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                )
-            }
-            val editText = AppCompatEditText(context).apply {
-                hint = context.getString(R.string.search_engine_custom_hint)
-                setText(prefs.searchEngineCustomUrl)
-                setSingleLine(true)
-                imeOptions = EditorInfo.IME_ACTION_DONE
-                inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
-                setTextColor(context.getColorFromAttr(R.attr.primaryColor))
-                setHintTextColor(context.getColorFromAttr(R.attr.primaryColorTrans80))
-                background = null
-                setOnEditorActionListener { _, actionId, _ ->
-                    if (actionId == EditorInfo.IME_ACTION_DONE) {
-                        customDialog?.dismiss()
-                        save()
-                        true
-                    } else false
-                }
-            }
-            dialogEditText = editText
-            layout.addView(editText)
-            layout
-        }
-        customDialog = dialog
-        dialog.showRespectingStatusBar()
-        dialogEditText?.apply {
-            setSelection(text?.length ?: 0)
-            post {
-                requestFocus()
-                val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
-                imm?.showSoftInput(this, InputMethodManager.SHOW_IMPLICIT)
-            }
-        }
-    }
-
-    private fun showToast(@StringRes resId: Int) {
-        requireContext().showToast(resId)
-    }
-
-    private fun populateWeather() {
-        binding.weather.text = if (prefs.weatherEnabled) {
-            val place = WeatherLocation.placeName(requireContext())
-            if (place.isNotBlank()) place else getString(R.string.off)
-        } else {
-            getString(R.string.off)
-        }
-    }
-
-    private fun handleUseMyLocation() {
-        if (WeatherLocation.hasPermission(requireContext())) {
-            enableUseMyLocation()
-        } else {
-            requireContext().showMessageDialog(
-                title = R.string.weather,
-                message = R.string.weather_location_permission_message,
-                action = R.string.allow,
-            ) {
-                locationPermissionLauncher.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
-            }
-        }
-    }
-
-    private fun enableUseMyLocation() {
-        prefs.weatherUseLocation = true
-        prefs.weatherEnabled = true
-        WeatherWorker.schedulePeriodic(requireContext())
-        WeatherLocation.refreshIfStale(requireContext(), force = true)
-        populateWeather()
-    }
-
-    private fun showWeatherMenu(anchor: View) {
-        anchor.showPopupMenu(
-            configure = { menu ->
-                menu.add(Menu.NONE, 1, 1, getString(R.string.celsius))
-                menu.add(Menu.NONE, 2, 2, getString(R.string.fahrenheit))
-                if (prefs.weatherEnabled) {
-                    menu.add(Menu.NONE, 3, 3, getString(R.string.off))
-                }
-            }
-        ) { item ->
-            when (item.itemId) {
-                1 -> {
-                    if (prefs.weatherUnit != Prefs.WEATHER_UNIT_C) {
-                        prefs.weatherUnit = Prefs.WEATHER_UNIT_C
-                        if (prefs.weatherEnabled) {
-                            WeatherWorker.runOnce(requireContext())
-                        }
-                    }
-                }
-                2 -> {
-                    if (prefs.weatherUnit != Prefs.WEATHER_UNIT_F) {
-                        prefs.weatherUnit = Prefs.WEATHER_UNIT_F
-                        if (prefs.weatherEnabled) {
-                            WeatherWorker.runOnce(requireContext())
-                        }
-                    }
-                }
-                3 -> {
-                    prefs.weatherEnabled = false
-                    WeatherWorker.cancel(requireContext())
-                    populateWeather()
-                }
-            }
-        }
-    }
-
-    private fun showCitySearchDialog() {
-        var dialogEditText: AppCompatEditText? = null
-        var cityDialog: OlDialog? = null
-        val dialog = requireContext().createDialog(
-            title = R.string.weather,
-            action = R.string.search,
-            neutral = R.string.use_my_location,
-            onNeutral = {
-                handleUseMyLocation()
-            },
-            onAction = {
-                val query = dialogEditText?.text?.toString()?.trim().orEmpty()
-                if (query.isNotEmpty()) {
-                    searchCity(query)
-                }
-            }
-        ) { container ->
-            val context = container.context
-            val layout = LinearLayout(context).apply {
-                orientation = LinearLayout.VERTICAL
-                layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                )
-            }
-            val editText = AppCompatEditText(context).apply {
-                hint = context.getString(R.string.city)
-                setText(if (prefs.weatherEnabled) prefs.weatherPlaceName else "")
-                setSingleLine(true)
-                imeOptions = EditorInfo.IME_ACTION_SEARCH
-                inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_CAP_WORDS
-                setTextColor(context.getColorFromAttr(R.attr.primaryColor))
-                setHintTextColor(context.getColorFromAttr(R.attr.primaryColorTrans80))
-                background = null
-                setOnEditorActionListener { _, actionId, _ ->
-                    if (actionId == EditorInfo.IME_ACTION_SEARCH || actionId == EditorInfo.IME_ACTION_DONE) {
-                        val q = text?.toString()?.trim().orEmpty()
-                        if (q.isNotEmpty()) {
-                            cityDialog?.dismiss()
-                            searchCity(q)
-                        }
-                        true
-                    } else false
-                }
-            }
-            dialogEditText = editText
-            layout.addView(editText)
-            layout
-        }
-        cityDialog = dialog
-        dialog.showRespectingStatusBar()
-        dialogEditText?.apply {
-            setSelection(text?.length ?: 0)
-            post {
-                requestFocus()
-                val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
-                imm?.showSoftInput(this, InputMethodManager.SHOW_IMPLICIT)
-            }
-        }
-    }
-
-    private fun searchCity(query: String) {
-        viewLifecycleOwner.lifecycleScope.launch {
-            val places = withContext(Dispatchers.IO) {
-                WeatherApi.searchPlaces(query)
-            }
-            if (!isAdded) return@launch
-            if (places.isEmpty()) {
-                requireContext().showToast(getString(R.string.weather_no_results))
-                return@launch
-            }
-            showPlaceSelectionDialog(places)
-        }
-    }
-
-    private fun showPlaceSelectionDialog(places: List<Place>) {
-        val items = places.map { it.displayName() }.toTypedArray()
-        val checkedIndex = 0
-
-        val builder = AlertDialog.Builder(requireContext())
-            .setTitle(R.string.weather)
-            .setSingleChoiceItems(items, checkedIndex) { dialogInterface, which ->
-                val place = places[which]
-                prefs.weatherPlaceName = place.name
-                prefs.weatherLat = String.format(Locale.US, "%.2f", place.lat)
-                prefs.weatherLon = String.format(Locale.US, "%.2f", place.lon)
-                prefs.weatherUseLocation = false
-                prefs.weatherEnabled = true
-                WeatherWorker.schedulePeriodic(requireContext())
-                WeatherWorker.runOnce(requireContext())
-                populateWeather()
-                dialogInterface.dismiss()
-            }
-            .setNegativeButton(R.string.cancel, null)
-
-        val alertDialog = builder.create()
-        dialog?.dismiss()
-        dialog = alertDialog
-        val window = alertDialog.window
-        if (window != null && !prefs.showStatusBar) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-            alertDialog.show()
-            window.hideStatusBar()
-            window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-        } else {
-            alertDialog.show()
-        }
-    }
-
-    private fun showHiddenApps() {
+    internal fun showHiddenApps() {
         if (prefs.hiddenApps.isEmpty()) {
             requireContext().showToast(getString(R.string.no_hidden_apps))
             return
@@ -1823,13 +1278,13 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         )
     }
 
-    private fun openAccessibilityService() {
+    internal fun openAccessibilityService() {
         // prefs.lockModeOn = true
         populateLockSettings()
         startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
     }
 
-    private fun toggleLockMode() {
+    internal fun toggleLockMode() {
         if (!prefs.lockModeOn && !isAccessServiceEnabled(requireContext())) {
             showAccessibilityDialog()
             return
@@ -1838,2086 +1293,17 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateLockSettings()
     }
 
-    private fun updateHomeAppsNum(num: Int) {
+    internal fun updateHomeAppsNum(num: Int) {
         binding.homeAppsNum.text = num.toString()
         prefs.homeAppsNum = num
         viewModel.refreshHome(true)
     }
 
-    private var pendingTextSizeScale: Float = -1f
+    internal var pendingTextSizeScale: Float = -1f
 
-    private fun pendingOrCurrentTextSizeScale(): Float =
-        if (pendingTextSizeScale > 0) pendingTextSizeScale else prefs.textSizeScale
+    internal var pendingShortcutOffsetStep: Int = -1
 
-    private fun formatScale(scale: Float): String = String.format("%.1f", scale)
-
-    private fun adjustTextSizePreview(delta: Float, dialogBinding: DialogTextSizeBinding) {
-        val maxScale = if (isTablet(requireContext())) 2.0f else 1.5f
-        val current = pendingOrCurrentTextSizeScale()
-        val newScale = Math.round((current + delta) * 10f) / 10f
-        val clamped = newScale.coerceIn(0.5f, maxScale)
-        if (clamped == current) return
-        pendingTextSizeScale = clamped
-        val formatted = formatScale(clamped)
-        binding.textSizeValue.text = formatted
-        dialogBinding.textSizeCurrent.text = formatted
-        updateTextSizeSample(dialogBinding.textSizeSample, clamped)
-    }
-
-    private fun updateTextSizeSample(sampleView: TextView, scale: Float) {
-        val typedValue = TypedValue()
-        resources.getValue(R.dimen.text_large, typedValue, true)
-        val baseSp = TypedValue.complexToFloat(typedValue.data)
-        val basePx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, baseSp, resources.displayMetrics)
-        sampleView.setTextSize(TypedValue.COMPLEX_UNIT_PX, basePx * scale)
-    }
-
-    private fun applyTextSizeScale() {
-        if (pendingTextSizeScale < 0 || prefs.textSizeScale == pendingTextSizeScale) {
-            pendingTextSizeScale = -1f
-            return
-        }
-        prefs.textSizeScale = pendingTextSizeScale
-        pendingTextSizeScale = -1f
-        val activity = activity ?: return
-        if (activity.isChangingConfigurations.not())
-            activity.recreate()
-    }
-
-    private var pendingShortcutOffsetStep: Int = -1
-
-    private fun pendingOrCurrentShortcutOffsetStep(): Int =
-        if (pendingShortcutOffsetStep in ShortcutOffset.MIN_STEP..ShortcutOffset.MAX_STEP) {
-            pendingShortcutOffsetStep
-        } else {
-            prefs.shortcutOffsetStep
-        }
-
-    private fun adjustShortcutHeightPreview(delta: Int, dialogBinding: DialogTextSizeBinding) {
-        val current = pendingOrCurrentShortcutOffsetStep()
-        val clamped = ShortcutOffset.clamp(current + delta)
-        if (clamped == current) return
-        pendingShortcutOffsetStep = clamped
-        binding.shortcutHeight.text = ShortcutOffset.format(clamped)
-        dialogBinding.textSizeCurrent.text = ShortcutOffset.format(clamped)
-    }
-
-    private fun applyShortcutOffsetStep() {
-        if (pendingShortcutOffsetStep < 0 || prefs.shortcutOffsetStep == pendingShortcutOffsetStep) {
-            pendingShortcutOffsetStep = -1
-            populateShortcutIcons()
-            return
-        }
-        prefs.shortcutOffsetStep = pendingShortcutOffsetStep
-        pendingShortcutOffsetStep = -1
-        populateShortcutIcons()
-        viewModel.updateHomeAlignment(prefs.homeAlignment)
-    }
-
-    private fun toggleKeyboardText() {
-        if (prefs.autoShowKeyboard && prefs.keyboardMessageShown.not()) {
-            viewModel.showDialog.postValue(Constants.Dialog.KEYBOARD)
-            prefs.keyboardMessageShown = true
-        } else {
-            prefs.autoShowKeyboard = !prefs.autoShowKeyboard
-            populateKeyboardText()
-        }
-    }
-
-    private fun updateTheme(appTheme: Int) {
-        if (AppCompatDelegate.getDefaultNightMode() == appTheme) return
-        prefs.appTheme = appTheme
-        populateAppThemeText(appTheme)
-        setAppTheme(appTheme)
-    }
-
-    private fun setAppTheme(theme: Int) {
-        if (AppCompatDelegate.getDefaultNightMode() == theme) return
-        if (prefs.photoWallpaperCount > 0) {
-            PhotoWallpaper.applyCurrent(requireContext(), prefs)
-        } else {
-            setPlainWallpaperByTheme(requireContext(), theme)
-        }
-        requireActivity().recreate()
-    }
-
-    private fun openPhotoPicker() {
-        viewModel.isAwaitingActivityResult = true
-        pickMultipleMedia.launch(
-            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-        )
-    }
-
-    private fun openPhotoPickerForAdd() {
-        viewModel.isAwaitingActivityResult = true
-        pickMultipleMediaForAdd.launch(
-            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
-        )
-    }
-
-    private fun handlePickedPhotos(uris: List<Uri>) {
-        if (uris.size == 1) {
-            requireContext().showToast(getString(R.string.saving_photo))
-        } else {
-            requireContext().showToast(getString(R.string.saving_photos, uris.size))
-        }
-        // Use the activity scope and app context so leaving Settings mid-save does not cancel it
-        val appContext = requireContext().applicationContext
-        requireActivity().lifecycleScope.launch {
-            PhotoWallpaper.withEditLock {
-            val savedCount = PhotoWallpaper.savePickedPhotos(appContext, uris)
-            if (savedCount > 0) {
-                prefs.photoWallpaperCount = savedCount
-                prefs.photoWallpaperIndex = 0
-                PhotoWallpaper.markChanged(prefs)
-                if (_binding != null) populatePhotoWallpaperText()
-
-                WallpaperRotateWorker.schedulePeriodic(appContext)
-                WallpaperRotateWorker.runOnce(appContext)
-                withContext(Dispatchers.IO) {
-                    PhotoWallpaper.applyCurrent(appContext, prefs)
-                }
-            } else {
-                appContext.showToast(R.string.wallpaper_photos_save_failed)
-            }
-            }
-        }
-    }
-
-    private fun handleAddedPhotos(uris: List<Uri>) {
-        if (uris.size == 1) {
-            requireContext().showToast(getString(R.string.saving_photo))
-        } else {
-            requireContext().showToast(getString(R.string.saving_photos, uris.size))
-        }
-        val appContext = requireContext().applicationContext
-        requireActivity().lifecycleScope.launch {
-            PhotoWallpaper.withEditLock {
-                val saved = PhotoWallpaper.appendPickedPhotos(appContext, uris, startIndex = prefs.photoWallpaperCount)
-                if (saved > 0) {
-                    prefs.photoWallpaperCount += saved
-                    if (_binding != null) populatePhotoWallpaperText()
-                } else {
-                    appContext.showToast(R.string.wallpaper_photos_save_failed)
-                }
-            }
-        }
-    }
-
-    private fun populatePhotoWallpaperText() {
-        if (_binding == null) return
-        val count = prefs.photoWallpaperCount
-        binding.photoWallpaper.text = when {
-            count == 0 -> getString(R.string.off)
-            count == 1 -> getString(R.string.wallpaper_photo_count, 1)
-            else -> getString(R.string.wallpaper_photos_count, count)
-        }
-    }
-
-    private fun showPhotoWallpaperMenu(anchor: View) {
-        if (PhotoSet.rowTapAction(prefs.photoWallpaperCount) == PhotoSet.RowTapAction.OPEN_PICKER) {
-            openPhotoPicker()
-            return
-        }
-        anchor.showPopupMenu(
-            R.menu.photo_wallpaper,
-            configure = { menu ->
-                val targetTitle = when (prefs.photoWallpaperTarget) {
-                    PhotoWallpaper.TARGET_HOME -> R.string.set_on_home
-                    PhotoWallpaper.TARGET_LOCK -> R.string.set_on_lock
-                    PhotoWallpaper.TARGET_BOTH -> R.string.set_on_both
-                    else -> R.string.set_on_home
-                }
-                menu.findItem(R.id.photoWallpaperTarget).setTitle(targetTitle)
-                val currentInterval = RotationInterval.fromId(prefs.photoWallpaperInterval)
-                val frequencyLabel = getString(intervalToStringRes(currentInterval))
-                menu.findItem(R.id.photoWallpaperFrequency).title =
-                    getString(R.string.photo_wallpaper_frequency, frequencyLabel)
-                menu.findItem(R.id.photoWallpaperHomeMenu).isChecked = prefs.photoWallpaperHomeMenu
-            }
-        ) { item ->
-            when (item.itemId) {
-                R.id.photoWallpaperAdd -> openPhotoPickerForAdd()
-                R.id.photoWallpaperRemove -> showRemovePhotosDialog()
-                R.id.photoWallpaperChange -> openPhotoPicker()
-                R.id.photoWallpaperTarget -> cyclePhotoWallpaperTarget()
-                R.id.photoWallpaperFrequency -> showPhotoWallpaperFrequencyDialog()
-                R.id.photoWallpaperNext -> nextPhotoNow()
-                R.id.photoWallpaperPrevious -> previousPhotoNow()
-                R.id.photoWallpaperHomeMenu -> togglePhotoWallpaperHomeMenu()
-                R.id.photoWallpaperOff -> {
-                    val appContext = requireContext().applicationContext
-                    requireActivity().lifecycleScope.launch {
-                        PhotoWallpaper.withEditLock { turnOffPhotoWallpaper(appContext) }
-                    }
-                }
-            }
-        }
-    }
-
-    private fun showPhotoWallpaperFrequencyDialog() {
-        val intervals = RotationInterval.entries
-        val items = intervals.map { getString(intervalToStringRes(it)) }.toTypedArray()
-        val currentInterval = RotationInterval.fromId(prefs.photoWallpaperInterval)
-        val checkedIndex = intervals.indexOf(currentInterval)
-
-        val builder = AlertDialog.Builder(requireContext())
-            .setSingleChoiceItems(items, checkedIndex) { dialogInterface, which ->
-                val interval = intervals[which]
-                prefs.photoWallpaperInterval = interval.id
-                WallpaperRotateWorker.schedulePeriodic(requireContext().applicationContext)
-                dialogInterface.dismiss()
-            }
-            .setNegativeButton(R.string.cancel, null)
-
-        val alertDialog = builder.create()
-        dialog?.dismiss()
-        dialog = alertDialog
-        val window = alertDialog.window
-        if (window != null && !prefs.showStatusBar) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-            alertDialog.show()
-            window.hideStatusBar()
-            window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-        } else {
-            alertDialog.show()
-        }
-    }
-
-    private fun showRemovePhotosDialog() {
-        val count = prefs.photoWallpaperCount
-        if (count <= 0) return
-
-        val currentIndex = prefs.photoWallpaperIndex.coerceIn(0, count - 1)
-        val labels = Array(count) { i ->
-            if (i == currentIndex) {
-                getString(R.string.photo_label_current, i + 1)
-            } else {
-                getString(R.string.photo_label, i + 1)
-            }
-        }
-        val checked = BooleanArray(count)
-
-        val builder = AlertDialog.Builder(requireContext())
-            .setTitle(R.string.remove_photos)
-            .setMultiChoiceItems(labels, checked) { _, which, isChecked ->
-                checked[which] = isChecked
-            }
-            .setPositiveButton(R.string.remove) { _, _ ->
-                val checkedIndices = checked.indices.filter { checked[it] }.toSet()
-                if (checkedIndices.isEmpty()) return@setPositiveButton
-
-                val appContext = requireContext().applicationContext
-                requireActivity().lifecycleScope.launch {
-                    PhotoWallpaper.withEditLock {
-                        // Plan under the lock so it matches the set as it is now.
-                        val currentCount = prefs.photoWallpaperCount
-                        if (currentCount <= 0 || checkedIndices.any { it >= currentCount }) return@withEditLock
-                        val plan = PhotoSet.planRemoval(
-                            currentCount,
-                            prefs.photoWallpaperIndex,
-                            checkedIndices
-                        )
-                        if (plan.newCount == 0) {
-                            turnOffPhotoWallpaper(appContext)
-                            return@withEditLock
-                        }
-                        withContext(Dispatchers.IO) {
-                            val success = PhotoWallpaper.removePhotos(appContext, plan)
-                            if (success) {
-                                prefs.photoWallpaperCount = plan.newCount
-                                prefs.photoWallpaperIndex = plan.newIndex
-                                if (plan.currentRemoved) {
-                                    PhotoWallpaper.applyCurrent(appContext, prefs)
-                                }
-                            } else {
-                                val recoveredCount = PhotoSet.countContiguous(PhotoWallpaper.getWallpaperDir(appContext))
-                                prefs.photoWallpaperCount = recoveredCount
-                                if (recoveredCount == 0) {
-                                    withContext(Dispatchers.Main) {
-                                        turnOffPhotoWallpaper(appContext)
-                                    }
-                                } else {
-                                    prefs.photoWallpaperIndex = prefs.photoWallpaperIndex.coerceIn(0, recoveredCount - 1)
-                                }
-                                withContext(Dispatchers.Main) {
-                                    appContext.showToast(R.string.wallpaper_photos_remove_failed)
-                                }
-                            }
-                        }
-                        if (_binding != null) {
-                            populatePhotoWallpaperText()
-                        }
-                    }
-                }
-            }
-            .setNegativeButton(R.string.cancel, null)
-
-        val alertDialog = builder.create()
-        dialog?.dismiss()
-        dialog = alertDialog
-        val window = alertDialog.window
-        if (window != null && !prefs.showStatusBar) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-            alertDialog.show()
-            window.hideStatusBar()
-            window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-        } else {
-            alertDialog.show()
-        }
-    }
-
-    private fun cyclePhotoWallpaperTarget() {
-        prefs.photoWallpaperTarget = when (prefs.photoWallpaperTarget) {
-            PhotoWallpaper.TARGET_HOME -> PhotoWallpaper.TARGET_LOCK
-            PhotoWallpaper.TARGET_LOCK -> PhotoWallpaper.TARGET_BOTH
-            else -> PhotoWallpaper.TARGET_HOME
-        }
-        val targetRes = when (prefs.photoWallpaperTarget) {
-            PhotoWallpaper.TARGET_HOME -> R.string.set_on_home
-            PhotoWallpaper.TARGET_LOCK -> R.string.set_on_lock
-            PhotoWallpaper.TARGET_BOTH -> R.string.set_on_both
-            else -> R.string.set_on_home
-        }
-        requireContext().showToast(targetRes)
-        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-            PhotoWallpaper.applyCurrent(requireContext(), prefs)
-        }
-    }
-
-    private fun nextPhotoNow() {
-        val appContext = requireContext().applicationContext
-        viewLifecycleOwner.lifecycleScope.launch {
-            PhotoWallpaper.stepManually(appContext, prefs, forward = true)
-        }
-    }
-
-    private fun previousPhotoNow() {
-        val appContext = requireContext().applicationContext
-        viewLifecycleOwner.lifecycleScope.launch {
-            PhotoWallpaper.stepManually(appContext, prefs, forward = false)
-        }
-    }
-
-    private fun togglePhotoWallpaperHomeMenu() {
-        prefs.photoWallpaperHomeMenu = !prefs.photoWallpaperHomeMenu
-        showToast(if (prefs.photoWallpaperHomeMenu) R.string.on else R.string.off)
-    }
-
-    private fun turnOffPhotoWallpaper(context: Context = requireContext()) {
-        WallpaperRotateWorker.cancel(context)
-        PhotoWallpaper.deleteAll(context)
-        prefs.photoWallpaperCount = 0
-        prefs.photoWallpaperIndex = 0
-        setPlainWallpaperByTheme(context, prefs.appTheme)
-        if (_binding != null) populatePhotoWallpaperText()
-    }
-
-    private fun populateAppThemeText(appTheme: Int = prefs.appTheme) {
-        when (appTheme) {
-            AppCompatDelegate.MODE_NIGHT_YES -> binding.appThemeText.text = getString(R.string.dark)
-            AppCompatDelegate.MODE_NIGHT_NO -> binding.appThemeText.text = getString(R.string.light)
-            else -> binding.appThemeText.text = getString(R.string.system_default)
-        }
-    }
-
-    private fun populateAccent() {
-        binding.accent.text = when (Accent.fromId(prefs.accent)) {
-            Accent.OFF -> getString(R.string.off)
-            Accent.SYSTEM -> getString(R.string.accent_system)
-            Accent.SAGE -> getString(R.string.accent_sage)
-            Accent.SAND -> getString(R.string.accent_sand)
-            Accent.SKY -> getString(R.string.accent_sky)
-            Accent.ROSE -> getString(R.string.accent_rose)
-        }
-    }
-
-    private fun selectAccent(accent: Accent) {
-        if (prefs.accent == accent.id) return
-        prefs.accent = accent.id
-        populateAccent()
-        requireActivity().recreate()
-    }
-
-    private fun showAccentMenu(anchor: View) {
-        val options = listOf(
-            Accent.OFF to getString(R.string.off),
-            Accent.SYSTEM to getString(R.string.accent_system),
-            Accent.SAGE to getString(R.string.accent_sage),
-            Accent.SAND to getString(R.string.accent_sand),
-            Accent.SKY to getString(R.string.accent_sky),
-            Accent.ROSE to getString(R.string.accent_rose),
-        )
-
-        anchor.showPopupMenu(
-            configure = { menu ->
-                options.forEach { (accent, label) ->
-                    menu.add(Menu.NONE, accent.id, accent.id, label)
-                }
-            }
-        ) { item ->
-            selectAccent(Accent.fromId(item.itemId))
-        }
-    }
-
-    private fun populateFontFamily() {
-        val resource = FontFamilyResources.forId(prefs.fontFamily)
-        binding.fontFamily.text = getString(resource.labelRes)
-    }
-
-    private fun selectFontFamily(family: Int) {
-        if (prefs.fontFamily == family) return
-        prefs.fontFamily = family
-        populateFontFamily()
-        requireActivity().recreate()
-    }
-
-    private fun showFontDialog() {
-        val interTypeface = loadFontOrNull(FontFamilyResources.INTER.fontRes)
-        val plexTypeface = loadFontOrNull(FontFamilyResources.PLEX.fontRes)
-
-        var fontDialog: OlDialog? = null
-        val dialog = requireContext().createDialog(
-            title = R.string.font,
-            action = R.string.cancel,
-        ) { container ->
-            val fontBinding = DialogFontFamilyBinding.inflate(layoutInflater, container, false)
-            fontBinding.fontOptionSystem.typeface = Typeface.DEFAULT
-            fontBinding.fontOptionInter.typeface = interTypeface ?: Typeface.DEFAULT
-            fontBinding.fontOptionPlex.typeface = plexTypeface ?: Typeface.DEFAULT
-
-            fontBinding.fontOptionSystem.setOnClickListener {
-                fontDialog?.dismiss()
-                selectFontFamily(Constants.FontFamily.SYSTEM)
-            }
-            fontBinding.fontOptionInter.setOnClickListener {
-                fontDialog?.dismiss()
-                selectFontFamily(Constants.FontFamily.INTER)
-            }
-            fontBinding.fontOptionPlex.setOnClickListener {
-                fontDialog?.dismiss()
-                selectFontFamily(Constants.FontFamily.PLEX)
-            }
-            fontBinding.root
-        }
-        fontDialog = dialog
-        showDialog(dialog)
-    }
-
-    private fun loadFontOrNull(@FontRes fontRes: Int?): Typeface? {
-        if (fontRes == null) return null
-        return try {
-            ResourcesCompat.getFont(requireContext(), fontRes)
-        } catch (e: Exception) {
-            Log.w("SettingsFragment", "Failed to load font $fontRes", e)
-            null
-        }
-    }
-
-    private fun populateTextSize() {
-        binding.textSizeValue.text = formatScale(prefs.textSizeScale)
-    }
-
-    private fun toggleBoldFont() {
-        prefs.boldFont = !prefs.boldFont
-        populateBoldFont()
-        requireActivity().recreate()
-    }
-
-    private fun populateBoldFont() {
-        binding.boldFont.text = getString(if (prefs.boldFont) R.string.on else R.string.off)
-    }
-
-    private fun toggleTextContrast() {
-        prefs.homeTextContrast =
-            if (prefs.homeTextContrast == Prefs.TEXT_CONTRAST_AUTO) Prefs.TEXT_CONTRAST_THEME else Prefs.TEXT_CONTRAST_AUTO
-        populateTextContrast()
-        viewModel.toggleDateTime()
-    }
-
-    private fun populateTextContrast() {
-        binding.textContrast.text = getString(
-            if (prefs.homeTextContrast == Prefs.TEXT_CONTRAST_THEME) R.string.text_contrast_follow_theme else R.string.auto
-        )
-    }
-
-    private fun cycleHomeDarkness() {
-        prefs.homeWashLevel = when (prefs.homeWashLevel) {
-            Prefs.WASH_AUTO -> Prefs.WASH_STRONG
-            Prefs.WASH_STRONG -> Prefs.WASH_OFF
-            else -> Prefs.WASH_AUTO
-        }
-        populateHomeDarkness()
-        viewModel.toggleDateTime()
-    }
-
-    private fun populateHomeDarkness() {
-        binding.homeDarkness.text = getString(
-            when (prefs.homeWashLevel) {
-                Prefs.WASH_STRONG -> R.string.home_darkness_strong
-                Prefs.WASH_OFF -> R.string.off
-                else -> R.string.auto
-            }
-        )
-    }
-
-    private fun cycleTextBrightness() {
-        prefs.homeTextBrightness = when (prefs.homeTextBrightness) {
-            Prefs.BRIGHTNESS_FULL -> Prefs.BRIGHTNESS_SOFT
-            Prefs.BRIGHTNESS_SOFT -> Prefs.BRIGHTNESS_DIM
-            else -> Prefs.BRIGHTNESS_FULL
-        }
-        populateTextBrightness()
-        viewModel.toggleDateTime()
-    }
-
-    private fun populateTextBrightness() {
-        binding.textBrightness.text = getString(
-            when (prefs.homeTextBrightness) {
-                Prefs.BRIGHTNESS_SOFT -> R.string.text_brightness_soft
-                Prefs.BRIGHTNESS_DIM -> R.string.text_brightness_dim
-                else -> R.string.text_brightness_full
-            }
-        )
-    }
-
-    private fun toggleMusicPulse() {
-        prefs.homeMusicPulse = !prefs.homeMusicPulse
-        populateMusicPulse()
-        viewModel.toggleDateTime()
-    }
-
-    private fun populateMusicPulse() {
-        binding.musicPulse.text = getString(if (prefs.homeMusicPulse) R.string.on else R.string.off)
-    }
-
-    /** Slider for the music pulse glow strength. Saves on every change; Home picks it up on its next music tick. */
-    private fun setupGlowStrength() {
-        binding.glowStrengthSeekBar.max = MusicPulse.GLOW_STRENGTH_MAX
-        binding.glowStrengthSeekBar.progress = prefs.homeGlowStrength
-        populateGlowStrength(prefs.homeGlowStrength)
-        binding.glowStrengthSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-                if (!fromUser) return
-                prefs.homeGlowStrength = progress
-                populateGlowStrength(prefs.homeGlowStrength)
-            }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar) = Unit
-
-            override fun onStopTrackingTouch(seekBar: SeekBar) = Unit
-        })
-    }
-
-    private fun populateGlowStrength(percent: Int) {
-        binding.glowStrength.text = getString(R.string.glow_strength_percent, percent)
-    }
-
-    private fun toggleWeatherEffects() {
-        prefs.homeWeatherEffects = !prefs.homeWeatherEffects
-        populateWeatherEffects()
-        viewModel.toggleDateTime()
-    }
-
-    private fun populateWeatherEffects() {
-        binding.weatherEffects.text = getString(if (prefs.homeWeatherEffects) R.string.on else R.string.off)
-    }
-
-    private fun toggleHaptics() {
-        prefs.haptics = !prefs.haptics
-        populateHaptics()
-    }
-
-    private fun populateHaptics() {
-        binding.haptics.text = getString(if (prefs.haptics) R.string.on else R.string.off)
-    }
-
-    private fun populateScreenTimeCue() {
-        binding.screenTimeStyle.text = getString(
-            if (prefs.screenTimeStyle == ScreenTimeCue.STYLE_CUE) R.string.screen_time_style_cue
-            else R.string.screen_time_style_number
-        )
-        binding.screenTimeTarget.text = getString(R.string.screen_time_target_hours, prefs.screenTimeTargetMin / 60)
-    }
-
-    private fun showScreenTimeStyleMenu(anchor: View) {
-        val items = listOf(
-            ScreenTimeCue.STYLE_NUMBER to getString(R.string.screen_time_style_number),
-            ScreenTimeCue.STYLE_CUE to getString(R.string.screen_time_style_cue),
-        )
-        anchor.showPopupMenu(
-            configure = { menu ->
-                items.forEachIndexed { index, pair -> menu.add(Menu.NONE, index, index, pair.second) }
-            }
-        ) { item ->
-            val chosen = items.getOrNull(item.itemId)?.first ?: return@showPopupMenu
-            prefs.screenTimeStyle = chosen
-            populateScreenTimeCue()
-            // The cue needs usage access; ask once, a denial just leaves the cue off.
-            if (chosen == ScreenTimeCue.STYLE_CUE && !requireContext().appUsagePermissionGranted()) {
-                viewModel.showDialog.postValue(Constants.Dialog.DIGITAL_WELLBEING)
-            }
-        }
-    }
-
-    private fun showScreenTimeTargetMenu(anchor: View) {
-        val choices = ScreenTimeCue.TARGET_CHOICES_MIN
-        anchor.showPopupMenu(
-            configure = { menu ->
-                choices.forEachIndexed { index, min ->
-                    menu.add(Menu.NONE, index, index, getString(R.string.screen_time_target_hours, min / 60))
-                }
-            }
-        ) { item ->
-            val chosen = choices.getOrNull(item.itemId) ?: return@showPopupMenu
-            prefs.screenTimeTargetMin = chosen
-            populateScreenTimeCue()
-        }
-    }
-
-    private fun populateScreenTimeOnOff() {
-        if (requireContext().appUsagePermissionGranted()) binding.screenTimeOnOff.text = getString(R.string.on)
-        else binding.screenTimeOnOff.text = getString(R.string.off)
-    }
-
-    private fun populateDistractingApps() {
-        val count = prefs.distractingApps.size
-        binding.distractingApps.text = if (count == 1) {
-            getString(R.string.distracting_app_count, count)
-        } else {
-            getString(R.string.distracting_apps_count, count)
-        }
-    }
-
-    private fun populatePauseBeforeApps() {
-        val snoozeUntil = prefs.pauseSnoozeUntil
-        binding.pauseBeforeAppsOnOff.text = if (prefs.pauseEnabled && PauseSnooze.isActive(snoozeUntil, System.currentTimeMillis())) {
-            getString(R.string.pause_off_until, PauseSnooze.formatUntil(snoozeUntil, ZoneId.systemDefault()))
-        } else {
-            getString(if (prefs.pauseEnabled) R.string.on else R.string.off)
-        }
-    }
-
-    private fun showPauseOffChoices(anchor: View) {
-        anchor.showPopupMenu(
-            configure = { menu ->
-                menu.add(Menu.NONE, 1, 1, getString(R.string.snooze_hour))
-                menu.add(Menu.NONE, 2, 2, getString(R.string.snooze_tomorrow))
-                menu.add(Menu.NONE, 3, 3, getString(R.string.snooze_turn_off))
-            }
-        ) { item ->
-            val choice = when (item.itemId) {
-                1 -> PauseSnooze.Choice.HOUR
-                2 -> PauseSnooze.Choice.TOMORROW
-                3 -> null
-                else -> return@showPopupMenu
-            }
-            val apply: () -> Unit = {
-                if (choice == null) {
-                    prefs.pauseEnabled = false
-                } else {
-                    prefs.pauseSnoozeUntil = PauseSnooze.until(choice, System.currentTimeMillis(), ZoneId.systemDefault())
-                }
-                if (_binding != null) populatePauseBeforeApps()
-            }
-            val change = if (choice == null) {
-                FrictionChange.Pause(false)
-            } else {
-                FrictionChange.Snooze(PauseSnooze.until(choice, System.currentTimeMillis(), ZoneId.systemDefault()))
-            }
-            if (CommitLock.needsWait(prefs.commitLock, change)) {
-                dialog?.dismiss()
-                dialog = requireContext().showWaitDialog(
-                    message = getString(R.string.commit_lock_desc)
-                ) { apply() }
-            } else {
-                apply()
-            }
-        }
-    }
-
-    private fun togglePauseBeforeApps() {
-        if (prefs.pauseEnabled) {
-            if (PauseSnooze.isActive(prefs.pauseSnoozeUntil, System.currentTimeMillis())) {
-                // Tapping while on a break ends the break (tightening, no wait).
-                prefs.pauseSnoozeUntil = 0L
-                populatePauseBeforeApps()
-            } else {
-                showPauseOffChoices(binding.pauseBeforeAppsOnOff)
-            }
-        } else {
-            if (prefs.firstPauseEnable) {
-                prefs.firstPauseEnable = false
-                prefs.pauseEnabled = true
-                populatePauseBeforeApps()
-                if (!requireContext().appUsagePermissionGranted()) {
-                    showFirstTimePausePermissionDialog()
-                }
-            } else {
-                prefs.pauseEnabled = true
-                populatePauseBeforeApps()
-            }
-        }
-    }
-
-    private fun showFirstTimePausePermissionDialog() {
-        val dialog = requireContext().createDialog(
-            title = R.string.distracting_apps,
-            action = R.string.allow,
-            message = R.string.pause_usage_access_message,
-            neutral = R.string.skip,
-            onAction = {
-                try {
-                    startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
-                } catch (_: Exception) {
-                    requireContext().showToast(getString(R.string.unable_to_open_app))
-                }
-            },
-            onNeutral = {}
-        )
-        dialog.showRespectingStatusBar()
-    }
-
-    private fun populatePauseAllowance() {
-        val min = PausePolicy.effectiveAllowanceMin(
-            savedMin = prefs.pauseAllowanceMin,
-            usageAccessGranted = requireContext().appUsagePermissionGranted(),
-        )
-        binding.pauseAllowance.text = if (min <= 0) {
-            getString(R.string.off)
-        } else {
-            getString(R.string.pause_allowance_min, min)
-        }
-    }
-
-    private fun showPauseAllowanceMenu(anchor: View) {
-        val choices = listOf(0, 15, 30, 45, 60, 90, 120)
-        val items = choices.map { min ->
-            min to if (min == 0) getString(R.string.off) else getString(R.string.pause_allowance_min, min)
-        }
-        anchor.showPopupMenu(
-            configure = { menu ->
-                items.forEachIndexed { index, pair ->
-                    menu.add(Menu.NONE, index, index, pair.second)
-                }
-            }
-        ) { item ->
-            val chosen = items.getOrNull(item.itemId)?.first ?: return@showPopupMenu
-            val change = FrictionChange.Allowance(
-                currentMin = PausePolicy.effectiveAllowanceMin(
-                    savedMin = prefs.pauseAllowanceMin,
-                    usageAccessGranted = requireContext().appUsagePermissionGranted(),
-                ),
-                updatedMin = chosen,
-            )
-            val applyAllowance = {
-                if (chosen <= 0) {
-                    prefs.pauseAllowanceMin = 0
-                    populatePauseAllowance()
-                } else if (!requireContext().appUsagePermissionGranted()) {
-                    // Keep the chosen value; it only applies once usage access is granted.
-                    prefs.pauseAllowanceMin = chosen
-                    populatePauseAllowance()
-                    showFirstTimePausePermissionDialog()
-                } else {
-                    prefs.pauseAllowanceMin = chosen
-                    populatePauseAllowance()
-                }
-            }
-
-            if (CommitLock.needsWait(prefs.commitLock, change)) {
-                dialog?.dismiss()
-                dialog = requireContext().showWaitDialog(
-                    message = getString(R.string.commit_lock_desc)
-                ) {
-                    applyAllowance()
-                }
-            } else {
-                applyAllowance()
-            }
-        }
-    }
-
-    private fun populatePauseEscalate() {
-        binding.pauseEscalateOnOff.text = getString(if (prefs.pauseEscalate) R.string.on else R.string.off)
-    }
-
-    private fun togglePauseEscalate() {
-        if (prefs.pauseEscalate) {
-            val change = FrictionChange.Escalate(false)
-            if (CommitLock.needsWait(prefs.commitLock, change)) {
-                dialog?.dismiss()
-                dialog = requireContext().showWaitDialog(
-                    message = getString(R.string.commit_lock_desc)
-                ) {
-                    prefs.pauseEscalate = false
-                    populatePauseEscalate()
-                }
-                return
-            }
-            prefs.pauseEscalate = false
-            populatePauseEscalate()
-        } else {
-            prefs.pauseEscalate = true
-            populatePauseEscalate()
-        }
-    }
-
-    private fun populatePauseAskWhy() {
-        binding.pauseAskWhyOnOff.text = getString(if (prefs.pauseAskWhy) R.string.on else R.string.off)
-    }
-
-    private fun togglePauseAskWhy() {
-        if (prefs.pauseAskWhy) {
-            val change = FrictionChange.AskWhy(false)
-            if (CommitLock.needsWait(prefs.commitLock, change)) {
-                dialog?.dismiss()
-                dialog = requireContext().showWaitDialog(
-                    message = getString(R.string.commit_lock_desc)
-                ) {
-                    prefs.pauseAskWhy = false
-                    populatePauseAskWhy()
-                }
-                return
-            }
-            prefs.pauseAskWhy = false
-            populatePauseAskWhy()
-        } else {
-            prefs.pauseAskWhy = true
-            populatePauseAskWhy()
-        }
-    }
-
-    private fun populateWindDown() {
-        // Idempotent: also fixes a missed start/end and reschedules after a time or toggle change.
-        WindDownWorker.syncAsync(requireContext())
-        binding.windDown.text = if (prefs.windDown) {
-            "${formatMinutes(prefs.windDownStart)}\u2013${formatMinutes(prefs.windDownEnd)}"
-        } else {
-            getString(R.string.off)
-        }
-    }
-
-    private fun populateWindDownGrey() {
-        binding.windDownGreyOnOff.text = getString(if (prefs.windDownGrey) R.string.on else R.string.off)
-    }
-
-    private fun toggleWindDownGrey() {
-        prefs.windDownGrey = !prefs.windDownGrey
-        populateWindDownGrey()
-        WindDownWorker.syncAsync(requireContext())
-    }
-
-    private fun populateSystemGrey() {
-        val granted = SystemGrey.isGranted(requireContext())
-        binding.systemGreyOnOff.text = getString(if (prefs.windDownSystemGrey) R.string.on else R.string.off)
-        binding.systemGreyStatus.text = getString(if (granted) R.string.system_grey_ready else R.string.system_grey_needs_grant)
-        binding.systemGreyActions.visibility = if (granted) View.GONE else View.VISIBLE
-    }
-
-    private fun toggleSystemGrey() {
-        prefs.windDownSystemGrey = !prefs.windDownSystemGrey
-        populateSystemGrey()
-        // Off restores the colour settings right away; on applies grey if wind-down is already active.
-        WindDownWorker.syncAsync(requireContext())
-    }
-
-    private fun copySystemGreyCommand() {
-        requireContext().copyToClipboard(SystemGrey.GRANT_COMMAND)
-        requireContext().showToast(R.string.system_grey_copied)
-    }
-
-    private fun showWindDownMenu() {
-        val labels = arrayOf(
-            getString(if (prefs.windDown) R.string.wind_down_turn_off else R.string.wind_down_turn_on),
-            getString(R.string.wind_down_starts) + "  " + formatMinutes(prefs.windDownStart),
-            getString(R.string.wind_down_ends) + "  " + formatMinutes(prefs.windDownEnd),
-        )
-        dialog?.dismiss()
-        dialog = AlertDialog.Builder(requireContext())
-            .setTitle(R.string.wind_down)
-            .setMessage(R.string.wind_down_desc)
-            .setItems(labels) { _, which ->
-                when (which) {
-                    0 -> toggleWindDown()
-                    1 -> showWindDownTimePicker(isStart = true)
-                    2 -> showWindDownTimePicker(isStart = false)
-                }
-            }
-            .show()
-    }
-
-    private fun toggleWindDown() {
-        if (prefs.windDown) {
-            val change = FrictionChange.WindDownToggle(false)
-            if (CommitLock.needsWait(prefs.commitLock, change)) {
-                dialog?.dismiss()
-                dialog = requireContext().showWaitDialog(
-                    message = getString(R.string.commit_lock_desc)
-                ) {
-                    prefs.windDown = false
-                    populateWindDown()
-                    viewModel.refreshHome(false)
-                }
-                return
-            }
-            prefs.windDown = false
-        } else {
-            prefs.windDown = true
-        }
-        populateWindDown()
-        viewModel.refreshHome(false)
-    }
-
-    private fun showWindDownTimePicker(isStart: Boolean) {
-        val current = if (isStart) prefs.windDownStart else prefs.windDownEnd
-        showTimePicker(
-            if (isStart) R.string.wind_down_starts else R.string.wind_down_ends,
-            current / 60,
-            current % 60,
-        ) { hour, minute ->
-            val minutes = HomeSets.minutesOfDay(hour, minute)
-            if (isStart) prefs.windDownStart = minutes else prefs.windDownEnd = minutes
-            populateWindDown()
-            viewModel.refreshHome(false)
-        }
-    }
-
-    private fun populateCommitLock() {
-        binding.commitLockOnOff.text = getString(if (prefs.commitLock) R.string.on else R.string.off)
-    }
-
-    private fun toggleCommitLock() {
-        if (prefs.commitLock) {
-            val change = FrictionChange.Lock(false)
-            if (CommitLock.needsWait(prefs.commitLock, change)) {
-                dialog?.dismiss()
-                dialog = requireContext().showWaitDialog(
-                    message = getString(R.string.commit_lock_desc)
-                ) {
-                    prefs.commitLock = false
-                    populateCommitLock()
-                }
-                return
-            }
-            prefs.commitLock = false
-            populateCommitLock()
-        } else {
-            prefs.commitLock = true
-            populateCommitLock()
-        }
-    }
-
-    private fun isNotificationAccessGranted(): Boolean {
-        return NotificationManagerCompat.getEnabledListenerPackages(requireContext())
-            .contains(requireContext().packageName)
-    }
-
-    private fun populateHealthConnect() {
-        binding.healthConnectOnOff.text = getString(if (prefs.healthConnectEnabled) R.string.on else R.string.off)
-    }
-
-    private fun toggleHealthConnect() {
-        if (prefs.healthConnectEnabled) {
-            prefs.healthConnectEnabled = false
-            populateHealthConnect()
-            return
-        }
-        if (!HealthRepository.isAvailable(requireContext())) {
-            requireContext().showToast(R.string.health_connect_unavailable)
-            return
-        }
-        // Explain first, then ask. The switch only turns on after a grant.
-        requireContext().showMessageDialog(
-            R.string.use_health_connect,
-            R.string.health_connect_explain,
-            R.string.health_connect_allow
-        ) {
-            healthConnectPermissionLauncher.launch(HealthRepository.READ_PERMISSIONS)
-        }
-    }
-
-    private fun populateHoldNotifications() {
-        val isOn = prefs.quietEnabled && isNotificationAccessGranted()
-        binding.holdNotificationsOnOff.text = getString(if (isOn) R.string.on else R.string.off)
-    }
-
-    private fun toggleHoldNotifications() {
-        val accessGranted = isNotificationAccessGranted()
-        val currentlyActive = prefs.quietEnabled && accessGranted
-        if (currentlyActive) {
-            prefs.quietEnabled = false
-            populateHoldNotifications()
-            ReleaseWorker.cancel(requireContext())
-        } else {
-            prefs.quietEnabled = true
-            if (!accessGranted) {
-                populateHoldNotifications()
-                showHoldNotificationsAccessDialog()
-            } else {
-                populateHoldNotifications()
-                ReleaseWorker.schedule(requireContext())
-            }
-        }
-    }
-
-    private fun populateQuietReleaseTimes() {
-        val times = QuietRelease.parseTimes(prefs.quietReleaseTimes)
-        binding.quietReleaseTimes.text = QuietRelease.formatReleaseTimesRow(times)
-    }
-
-    private fun showReleaseTimesEditor() {
-        val times = QuietRelease.parseTimes(prefs.quietReleaseTimes).toMutableList()
-        val items = mutableListOf<String>()
-        for (time in times) {
-            items.add(QuietRelease.formatTime(time))
-        }
-        if (times.size < 3) {
-            items.add(getString(R.string.quiet_release_add_time))
-        }
-
-        val builder = AlertDialog.Builder(requireContext())
-            .setTitle(R.string.quiet_release_times)
-            .setItems(items.toTypedArray()) { _, which ->
-                if (which == times.size && times.size < 3) {
-                    showTimePicker(
-                        title = R.string.quiet_release_add_time,
-                        initialHour = 12,
-                        initialMinute = 0,
-                    ) { hour, minute ->
-                        val newTime = hour * 60 + minute
-                        if (newTime !in times) {
-                            times.add(newTime)
-                            val sorted = times.sorted()
-                            prefs.quietReleaseTimes = QuietRelease.formatTimes(sorted)
-                            populateQuietReleaseTimes()
-                            if (prefs.quietEnabled) {
-                                ReleaseWorker.schedule(requireContext())
-                            }
-                        }
-                    }
-                } else if (which in times.indices) {
-                    val selectedTime = times[which]
-                    if (times.size == 1) {
-                        showTimePicker(
-                            title = R.string.quiet_release_edit_time,
-                            initialHour = selectedTime / 60,
-                            initialMinute = selectedTime % 60,
-                        ) { hour, minute ->
-                            times[which] = hour * 60 + minute
-                            val sorted = times.distinct().sorted()
-                            prefs.quietReleaseTimes = QuietRelease.formatTimes(sorted)
-                            populateQuietReleaseTimes()
-                            if (prefs.quietEnabled) {
-                                ReleaseWorker.schedule(requireContext())
-                            }
-                        }
-                    } else {
-                        showTimeOptionsDialog(times, which)
-                    }
-                }
-            }
-            .setNegativeButton(R.string.cancel, null)
-
-        val alertDialog = builder.create()
-        dialog?.dismiss()
-        dialog = alertDialog
-        val window = alertDialog.window
-        if (window != null && !prefs.showStatusBar) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-            alertDialog.show()
-            window.hideStatusBar()
-            window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-        } else {
-            alertDialog.show()
-        }
-    }
-
-    private fun showTimeOptionsDialog(times: MutableList<Int>, index: Int) {
-        val selectedTime = times[index]
-        val options = arrayOf(
-            getString(R.string.quiet_release_edit_time),
-            getString(R.string.quiet_release_remove_time),
-        )
-        val builder = AlertDialog.Builder(requireContext())
-            .setTitle(QuietRelease.formatTime(selectedTime))
-            .setItems(options) { _, whichOption ->
-                when (whichOption) {
-                    0 -> {
-                        showTimePicker(
-                            title = R.string.quiet_release_edit_time,
-                            initialHour = selectedTime / 60,
-                            initialMinute = selectedTime % 60,
-                        ) { hour, minute ->
-                            times[index] = hour * 60 + minute
-                            val sorted = times.distinct().sorted()
-                            prefs.quietReleaseTimes = QuietRelease.formatTimes(sorted)
-                            populateQuietReleaseTimes()
-                            if (prefs.quietEnabled) {
-                                ReleaseWorker.schedule(requireContext())
-                            }
-                        }
-                    }
-                    1 -> {
-                        times.removeAt(index)
-                        val sorted = times.distinct().sorted()
-                        prefs.quietReleaseTimes = QuietRelease.formatTimes(sorted)
-                        populateQuietReleaseTimes()
-                        if (prefs.quietEnabled) {
-                            ReleaseWorker.schedule(requireContext())
-                        }
-                    }
-                }
-            }
-            .setNegativeButton(R.string.cancel, null)
-
-        val alertDialog = builder.create()
-        dialog?.dismiss()
-        dialog = alertDialog
-        val window = alertDialog.window
-        if (window != null && !prefs.showStatusBar) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-            alertDialog.show()
-            window.hideStatusBar()
-            window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-        } else {
-            alertDialog.show()
-        }
-    }
-
-    private fun showHoldNotificationsAccessDialog() {
-        dialog?.dismiss()
-        dialog = requireContext().showMessageDialog(
-            title = R.string.hold_notifications_from_distracting_apps,
-            message = R.string.hold_notifications_access_message,
-            action = R.string.allow,
-        ) {
-            try {
-                startActivity(Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))
-            } catch (_: Exception) {
-                requireContext().showToast(getString(R.string.unable_to_open_app))
-            }
-        }
-    }
-
-    private fun showDistractingAppsDialog() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            val apps = getAppsList(requireContext(), prefs, includeRegularApps = true, includeHiddenApps = true)
-                .filterIsInstance<AppModel.App>()
-                .distinctBy { it.appPackage }
-                .sortedWith(compareBy(Collator.getInstance()) { it.appLabel })
-
-            if (!isAdded) return@launch
-
-            val installedPackages = apps.map { it.appPackage }.toSet()
-            val selectedPackages = DistractingApps.initialSelection(
-                installedPackages = installedPackages,
-                saved = prefs.distractingApps,
-                hasSaved = prefs.hasSavedDistractingApps()
-            ).toMutableSet()
-
-            val labels = apps.map { it.appLabel }.toTypedArray()
-            val checked = BooleanArray(apps.size) { i -> apps[i].appPackage in selectedPackages }
-
-            val builder = AlertDialog.Builder(requireContext())
-                .setTitle(R.string.distracting_apps)
-                .setMultiChoiceItems(labels, checked) { _, which, isChecked ->
-                    checked[which] = isChecked
-                    val pkg = apps[which].appPackage
-                    if (isChecked) {
-                        selectedPackages.add(pkg)
-                    } else {
-                        selectedPackages.remove(pkg)
-                    }
-                }
-                .setPositiveButton(R.string.okay) { _, _ ->
-                    val change = FrictionChange.DistractingApps(
-                        current = prefs.distractingApps,
-                        updated = selectedPackages,
-                    )
-                    if (CommitLock.needsWait(prefs.commitLock, change)) {
-                        dialog?.dismiss()
-                        val appContext = requireContext().applicationContext
-                        dialog = requireContext().showWaitDialog(
-                            message = getString(R.string.commit_lock_desc)
-                        ) {
-                            prefs.distractingApps = selectedPackages
-                            UsageSnapshotWorker.syncWithDistractingApps(appContext, selectedPackages)
-                            if (_binding != null) populateDistractingApps()
-                        }
-                    } else {
-                        prefs.distractingApps = selectedPackages
-                        UsageSnapshotWorker.syncWithDistractingApps(requireContext().applicationContext, selectedPackages)
-                        populateDistractingApps()
-                    }
-                }
-                .setNegativeButton(R.string.cancel, null)
-
-            val alertDialog = builder.create()
-            dialog?.dismiss()
-            dialog = alertDialog
-            val window = alertDialog.window
-            if (window != null && !prefs.showStatusBar) {
-                window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-                alertDialog.show()
-                window.hideStatusBar()
-                window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-            } else {
-                alertDialog.show()
-            }
-        }
-    }
-
-    private fun populateKeyboardText() {
-        if (prefs.autoShowKeyboard) binding.autoShowKeyboard.text = getString(R.string.on)
-        else binding.autoShowKeyboard.text = getString(R.string.off)
-    }
-
-    private fun populateDrawerBottomSearch() {
-        if (prefs.drawerBottomSearch) binding.drawerBottomSearch.text = getString(R.string.on)
-        else binding.drawerBottomSearch.text = getString(R.string.off)
-    }
-
-    private fun toggleDrawerBottomSearch() {
-        prefs.drawerBottomSearch = !prefs.drawerBottomSearch
-        populateDrawerBottomSearch()
-    }
-
-    private fun populateDrawerNewFirst() {
-        if (prefs.drawerNewFirst) binding.drawerNewFirst.text = getString(R.string.on)
-        else binding.drawerNewFirst.text = getString(R.string.off)
-    }
-
-    private fun toggleDrawerNewFirst() {
-        prefs.drawerNewFirst = !prefs.drawerNewFirst
-        populateDrawerNewFirst()
-    }
-
-    private fun populateDrawerLetterStrip() {
-        if (prefs.drawerLetterStrip) binding.drawerLetterStrip.text = getString(R.string.on)
-        else binding.drawerLetterStrip.text = getString(R.string.off)
-    }
-
-    private fun toggleDrawerLetterStrip() {
-        prefs.drawerLetterStrip = !prefs.drawerLetterStrip
-        populateDrawerLetterStrip()
-    }
-
-    private fun populateDrawerRecents() {
-        if (prefs.drawerRecents) binding.drawerRecents.text = getString(R.string.on)
-        else binding.drawerRecents.text = getString(R.string.off)
-    }
-
-    private fun toggleDrawerRecents() {
-        prefs.drawerRecents = !prefs.drawerRecents
-        populateDrawerRecents()
-    }
-
-    private fun hasContactsPermission(): Boolean =
-        ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED
-
-    private fun populateSearchContacts() {
-        if (prefs.searchContacts && !hasContactsPermission()) prefs.searchContacts = false
-        binding.searchContacts.text = getString(if (prefs.searchContacts) R.string.on else R.string.off)
-    }
-
-    private fun populateCurrencyRates() {
-        binding.currencyRates.text = getString(if (prefs.currencyRates) R.string.currency_rates_on else R.string.off)
-    }
-
-    private fun toggleCurrencyRates() {
-        prefs.currencyRates = !prefs.currencyRates
-        if (prefs.currencyRates) {
-            RatesWorker.schedulePeriodic(requireContext())
-            RatesWorker.runOnce(requireContext())
-        } else {
-            RatesWorker.cancel(requireContext())
-        }
-        populateCurrencyRates()
-    }
-
-    private fun toggleSearchContacts() {
-        if (prefs.searchContacts) {
-            prefs.searchContacts = false
-            populateSearchContacts()
-        } else if (hasContactsPermission()) {
-            prefs.searchContacts = true
-            populateSearchContacts()
-        } else {
-            requireContext().showMessageDialog(
-                title = R.string.search_contacts,
-                message = R.string.search_contacts_permission_message,
-                action = R.string.allow,
-            ) {
-                contactsPermissionLauncher.launch(Manifest.permission.READ_CONTACTS)
-            }
-        }
-    }
-
-    private fun updateHomeBottomAlignment() {
-        if (viewModel.isOlauncherDefault.value != true) {
-            requireContext().showToast(getString(R.string.please_set_olauncher_as_default_first), Toast.LENGTH_LONG)
-            return
-        }
-        prefs.homeBottomAlignment = !prefs.homeBottomAlignment
-        populateAlignment()
-        viewModel.updateHomeAlignment(prefs.homeAlignment)
-    }
-
-    private fun populateAlignment() {
-        when (prefs.homeAlignment) {
-            Gravity.START -> binding.alignment.text = getString(R.string.left)
-            Gravity.CENTER -> binding.alignment.text = getString(R.string.center)
-            Gravity.END -> binding.alignment.text = getString(R.string.right)
-        }
-    }
-
-    private fun swapSides() {
-        val layout = HandSide.swap(prefs.shortcutSideStart, prefs.homeAlignment)
-        prefs.shortcutSideStart = layout.shortcutSideStart
-        viewModel.updateHomeAlignment(layout.alignment)
-        populateAlignment()
-        populateShortcutIcons()
-    }
-
-    private fun toggleShortcutIcons() {
-        prefs.homeShortcuts = !prefs.homeShortcuts
-        populateShortcutIcons()
-        viewModel.updateHomeAlignment(prefs.homeAlignment)
-    }
-
-    private fun toggleShortcutSide() {
-        prefs.shortcutSideStart = !prefs.shortcutSideStart
-        populateShortcutIcons()
-        viewModel.updateHomeAlignment(prefs.homeAlignment)
-    }
-
-    private fun populateShortcutIcons() {
-        val shortcutsOn = prefs.homeShortcuts
-        binding.shortcutIconsOnOff.text = getString(if (shortcutsOn) R.string.on else R.string.off)
-        binding.shortcutCountLayout.visibility = if (shortcutsOn) View.VISIBLE else View.GONE
-        binding.shortcutSizeLayout.visibility = if (shortcutsOn) View.VISIBLE else View.GONE
-        binding.shortcutSideLayout.visibility = if (shortcutsOn) View.VISIBLE else View.GONE
-        binding.shortcutHeightLayout.visibility = if (shortcutsOn) View.VISIBLE else View.GONE
-        binding.shortcutIconStyleLayout.visibility = if (shortcutsOn) View.VISIBLE else View.GONE
-
-        val displayMetrics = resources.displayMetrics
-        val density = displayMetrics.density.takeIf { it > 0f } ?: 1f
-        val columnHeightDp = (displayMetrics.heightPixels / density).toInt()
-        val viewSizeDp = ShortcutSize.slotSizeDp(prefs.shortcutSizeStep)
-        val bottomMarginDp = ShortcutOffset.bottomMarginDp(prefs.shortcutOffsetStep)
-        val requested = prefs.shortcutCount
-        val fitting = SlotCount.fitting(requested, columnHeightDp, viewSizeDp, bottomMarginDp)
-        binding.shortcutCount.text = if (fitting < requested) {
-            getString(R.string.icons_fit, requested, fitting)
-        } else {
-            requested.toString()
-        }
-
-        binding.shortcutSize.text = when (prefs.shortcutSizeStep) {
-            ShortcutSize.SMALL -> getString(R.string.icon_size_small)
-            ShortcutSize.MEDIUM -> getString(R.string.icon_size_medium)
-            ShortcutSize.LARGE -> getString(R.string.icon_size_large)
-            else -> getString(R.string.icon_size_medium)
-        }
-        binding.shortcutSide.text = getString(if (prefs.shortcutSideStart) R.string.left else R.string.right)
-        binding.shortcutHeight.text = ShortcutOffset.format(prefs.shortcutOffsetStep)
-        binding.shortcutIconStyle.text = when (prefs.shortcutIconStyle) {
-            ShortcutIconStyle.ORIGINAL -> getString(R.string.icon_style_original)
-            ShortcutIconStyle.MONOCHROME -> getString(R.string.icon_style_monochrome)
-            ShortcutIconStyle.TEXT_COLOUR -> getString(R.string.icon_style_text_colour)
-            else -> getString(R.string.icon_style_original)
-        }
-    }
-
-    // Home button for recents feature disabled
-    // private fun toggleHomeButtonRecents() {
-    //     if (!prefs.homeButtonShowRecents && !isAccessServiceEnabled(requireContext())) {
-    //         showAccessibilityDialog()
-    //         return
-    //     }
-    //     prefs.homeButtonShowRecents = !prefs.homeButtonShowRecents
-    //     populateHomeButtonRecents()
-    // }
-
-    // private fun populateHomeButtonRecents() {
-    //     binding.homeButtonRecents.text = getString(
-    //         if (prefs.homeButtonShowRecents && isAccessServiceEnabled(requireContext())) R.string.on
-    //         else R.string.off
-    //     )
-    // }
-
-    private fun populateLockSettings() {
-        binding.toggleLock.text = getString(
-            if (prefs.lockModeOn && isAccessServiceEnabled(requireContext())) R.string.on
-            else R.string.off
-        )
-    }
-
-    private fun populateSwipeApps() {
-        binding.swipeLeftApp.text = prefs.appNameSwipeLeft
-        binding.swipeRightApp.text = if (prefs.swipeRightAction == Prefs.SWIPE_RIGHT_ACTION_TODAY) {
-            getString(R.string.today_page)
-        } else {
-            prefs.appNameSwipeRight.ifEmpty { getString(R.string.choose_app) }
-        }
-        if (!prefs.swipeLeftEnabled)
-            binding.swipeLeftApp.setTextColor(requireContext().getColorFromAttr(R.attr.primaryColorTrans50))
-        else
-            binding.swipeLeftApp.setTextColor(requireContext().getColorFromAttr(R.attr.primaryColor))
-        if (!prefs.swipeRightEnabled)
-            binding.swipeRightApp.setTextColor(requireContext().getColorFromAttr(R.attr.primaryColorTrans50))
-        else
-            binding.swipeRightApp.setTextColor(requireContext().getColorFromAttr(R.attr.primaryColor))
-    }
-
-    private fun toggleIntentionOnHome() {
-        prefs.intentionOnHome = !prefs.intentionOnHome
-        populateIntentionOnHome()
-    }
-
-    private fun populateIntentionOnHome() {
-        binding.intentionOnHome.text = getString(if (prefs.intentionOnHome) R.string.on else R.string.off)
-    }
-
-    private fun toggleTodayOrder() {
-        prefs.todayOrderSmart = !prefs.todayOrderSmart
-        populateTodayOrder()
-    }
-
-    private fun populateTodayOrder() {
-        binding.todayOrder.text = getString(
-            if (prefs.todayOrderSmart) R.string.today_order_smart else R.string.today_order_fixed
-        )
-    }
-
-    private fun populateTodayCards() {
-        val total = TodayCards.all.size
-        if (total == 0) {
-            binding.todayCards.text = ""
-        } else {
-            val enabled = TodayCards.all.count { prefs.isTodayCardEnabled(it.key) }
-            binding.todayCards.text = "$enabled/$total"
-        }
-    }
-
-    private fun showSwipeRightMenu(anchor: View) {
-        if (!prefs.swipeRightEnabled) {
-            requireContext().showToast(getString(R.string.long_press_to_enable))
-            return
-        }
-        anchor.showPopupMenu(
-            configure = { menu ->
-                menu.add(Menu.NONE, 1, 1, R.string.today_page)
-                menu.add(Menu.NONE, 2, 2, R.string.choose_app)
-            }
-        ) { item ->
-            when (item.itemId) {
-                1 -> {
-                    prefs.swipeRightAction = Prefs.SWIPE_RIGHT_ACTION_TODAY
-                    populateSwipeApps()
-                }
-                2 -> {
-                    showAppListIfEnabled(Constants.FLAG_SET_SWIPE_RIGHT_APP)
-                }
-            }
-        }
-    }
-
-    private fun showTodayCardsDialog() {
-        val cards = TodayCards.all
-        val titles = cards.map { getString(it.titleRes) }.toTypedArray()
-        val checked = BooleanArray(cards.size) { i -> prefs.isTodayCardEnabled(cards[i].key) }
-        todayCardsCheckedState = checked
-
-        val builder = AlertDialog.Builder(requireContext())
-            .setTitle(R.string.today_cards)
-            .setMultiChoiceItems(titles, checked) { dialogInterface, which, isChecked ->
-                val card = cards[which]
-                if (card.key == NextUpCard.KEY && isChecked) {
-                    if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
-                        (dialogInterface as? AlertDialog)?.listView?.setItemChecked(which, false)
-                        checked[which] = false
-                        requireContext().showMessageDialog(
-                            title = R.string.next_up,
-                            message = R.string.calendar_permission_message,
-                            action = R.string.allow,
-                        ) {
-                            pendingCalendarCardIndex = which
-                            calendarPermissionLauncher.launch(Manifest.permission.READ_CALENDAR)
-                        }
-                        return@setMultiChoiceItems
-                    }
-                }
-                checked[which] = isChecked
-            }
-            .setPositiveButton(R.string.okay) { _, _ ->
-                cards.forEachIndexed { i, card ->
-                    prefs.setTodayCardEnabled(card.key, checked[i])
-                }
-                populateTodayCards()
-            }
-            .setNegativeButton(R.string.cancel, null)
-
-        val alertDialog = builder.create()
-        alertDialog.setOnDismissListener {
-            if (todayCardsDialog === alertDialog) {
-                todayCardsDialog = null
-                todayCardsCheckedState = null
-            }
-        }
-        dialog?.dismiss()
-        dialog = alertDialog
-        todayCardsDialog = alertDialog
-        val window = alertDialog.window
-        if (window != null && !prefs.showStatusBar) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-            alertDialog.show()
-            window.hideStatusBar()
-            window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-        } else {
-            alertDialog.show()
-        }
-    }
-
-//    private fun populateDigitalWellbeing() {
-//        binding.digitalWellbeing.isVisible = requireContext().isPackageInstalled(Constants.DIGITAL_WELLBEING_PACKAGE_NAME).not()
-//                && requireContext().isPackageInstalled(Constants.DIGITAL_WELLBEING_SAMSUNG_PACKAGE_NAME).not()
-//                && prefs.hideDigitalWellbeing.not()
-//    }
-
-    private fun showAppListIfEnabled(flag: Int) {
-        if ((flag == Constants.FLAG_SET_SWIPE_LEFT_APP) and !prefs.swipeLeftEnabled) {
-            requireContext().showToast(getString(R.string.long_press_to_enable))
-            return
-        }
-        if ((flag == Constants.FLAG_SET_SWIPE_RIGHT_APP) and !prefs.swipeRightEnabled) {
-            requireContext().showToast(getString(R.string.long_press_to_enable))
-            return
-        }
-        viewModel.getAppList(true)
-        findNavController().navigate(
-            R.id.action_settingsFragment_to_appListFragment,
-            bundleOf(Constants.Key.FLAG to flag)
-        )
-    }
-
-    private fun populateNudgeWater() {
-        binding.nudgeWater.text = formatWaterInterval(prefs.nudgeWaterIntervalMin)
-    }
-
-    private fun populateNudgeWalk() {
-        binding.nudgeWalk.text = formatWalkInterval(prefs.nudgeWalkIntervalMin)
-    }
-
-    private fun populateActiveHours() {
-        binding.nudgeActiveHours.text = NudgeFormatting.formatActiveHours(
-            prefs.nudgeWindowStartMin,
-            prefs.nudgeWindowEndMin,
-        )
-    }
-
-    private fun formatWaterInterval(intervalMin: Int): String = when (intervalMin) {
-        60 -> getString(R.string.nudge_every_1_h)
-        90 -> getString(R.string.nudge_every_1_5_h)
-        120 -> getString(R.string.nudge_every_2_h)
-        180 -> getString(R.string.nudge_every_3_h)
-        else -> getString(R.string.off)
-    }
-
-    private fun formatWalkInterval(intervalMin: Int): String = when (intervalMin) {
-        120 -> getString(R.string.nudge_every_2_h)
-        180 -> getString(R.string.nudge_every_3_h)
-        240 -> getString(R.string.nudge_every_4_h)
-        else -> getString(R.string.off)
-    }
-
-    private fun showNudgeWaterMenu(anchor: View) {
-        val intervals = listOf(
-            0 to getString(R.string.off),
-            60 to getString(R.string.nudge_every_1_h),
-            90 to getString(R.string.nudge_every_1_5_h),
-            120 to getString(R.string.nudge_every_2_h),
-            180 to getString(R.string.nudge_every_3_h),
-        )
-        anchor.showPopupMenu(
-            configure = { menu ->
-                intervals.forEachIndexed { index, pair ->
-                    menu.add(Menu.NONE, index, index, pair.second)
-                }
-            }
-        ) { item ->
-            val chosen = intervals.getOrNull(item.itemId)?.first ?: return@showPopupMenu
-            updateNudgeInterval(Nudges.WATER, chosen)
-        }
-    }
-
-    private fun showNudgeWalkMenu(anchor: View) {
-        val intervals = listOf(
-            0 to getString(R.string.off),
-            120 to getString(R.string.nudge_every_2_h),
-            180 to getString(R.string.nudge_every_3_h),
-            240 to getString(R.string.nudge_every_4_h),
-        )
-        anchor.showPopupMenu(
-            configure = { menu ->
-                intervals.forEachIndexed { index, pair ->
-                    menu.add(Menu.NONE, index, index, pair.second)
-                }
-            }
-        ) { item ->
-            val chosen = intervals.getOrNull(item.itemId)?.first ?: return@showPopupMenu
-            updateNudgeInterval(Nudges.WALK, chosen)
-        }
-    }
-
-    private fun updateNudgeInterval(type: String, intervalMin: Int) {
-        if (intervalMin <= 0) {
-            when (type) {
-                Nudges.WATER -> {
-                    prefs.nudgeWaterIntervalMin = 0
-                    NudgeScheduler.cancel(requireContext(), Nudges.WATER)
-                    Nudges.cancel(requireContext(), Nudges.WATER)
-                    populateNudgeWater()
-                }
-                Nudges.WALK -> {
-                    prefs.nudgeWalkIntervalMin = 0
-                    NudgeScheduler.cancel(requireContext(), Nudges.WALK)
-                    Nudges.cancel(requireContext(), Nudges.WALK)
-                    populateNudgeWalk()
-                }
-            }
-            return
-        }
-
-        NotificationPermission.request(this) { isGranted ->
-            if (!isAdded) return@request
-            if (isGranted) {
-                when (type) {
-                    Nudges.WATER -> {
-                        prefs.nudgeWaterIntervalMin = intervalMin
-                        NudgeScheduler.schedule(requireContext(), Nudges.WATER)
-                        populateNudgeWater()
-                    }
-                    Nudges.WALK -> {
-                        prefs.nudgeWalkIntervalMin = intervalMin
-                        NudgeScheduler.schedule(requireContext(), Nudges.WALK)
-                        populateNudgeWalk()
-                    }
-                }
-            } else {
-                when (type) {
-                    Nudges.WATER -> {
-                        prefs.nudgeWaterIntervalMin = 0
-                        NudgeScheduler.cancel(requireContext(), Nudges.WATER)
-                        Nudges.cancel(requireContext(), Nudges.WATER)
-                        populateNudgeWater()
-                    }
-                    Nudges.WALK -> {
-                        prefs.nudgeWalkIntervalMin = 0
-                        NudgeScheduler.cancel(requireContext(), Nudges.WALK)
-                        Nudges.cancel(requireContext(), Nudges.WALK)
-                        populateNudgeWalk()
-                    }
-                }
-                requireContext().showToast(R.string.notifications_off_for_thumbline)
-            }
-        }
-    }
-
-    private fun populateNudgeSocial() {
-        binding.nudgeSocial.text = formatSocialThreshold(prefs.nudgeSocialThresholdMin)
-    }
-
-    private fun formatSocialThreshold(thresholdMin: Int): String = when (thresholdMin) {
-        15, 30, 45, 60, 90 -> getString(R.string.nudge_social_after_min, thresholdMin)
-        else -> getString(R.string.off)
-    }
-
-    private fun showNudgeSocialMenu(anchor: View) {
-        val thresholds = listOf(0, 15, 30, 45, 60, 90)
-        val items = thresholds.map { min ->
-            min to if (min == 0) getString(R.string.off) else getString(R.string.nudge_social_after_min, min)
-        }
-        anchor.showPopupMenu(
-            configure = { menu ->
-                items.forEachIndexed { index, pair ->
-                    menu.add(Menu.NONE, index, index, pair.second)
-                }
-            }
-        ) { item ->
-            val chosen = items.getOrNull(item.itemId)?.first ?: return@showPopupMenu
-            updateSocialNudgeThreshold(chosen)
-        }
-    }
-
-    private fun updateSocialNudgeThreshold(thresholdMin: Int) {
-        if (thresholdMin <= 0) {
-            prefs.nudgeSocialThresholdMin = 0
-            prefs.nudgeSocialLastBucket = -1
-            NudgeScheduler.cancel(requireContext(), Nudges.SOCIAL)
-            Nudges.cancel(requireContext(), Nudges.SOCIAL)
-            populateNudgeSocial()
-            return
-        }
-
-        NotificationPermission.request(this) { isGranted ->
-            if (!isAdded) return@request
-            if (!isGranted) {
-                prefs.nudgeSocialThresholdMin = 0
-                prefs.nudgeSocialLastBucket = -1
-                NudgeScheduler.cancel(requireContext(), Nudges.SOCIAL)
-                Nudges.cancel(requireContext(), Nudges.SOCIAL)
-                populateNudgeSocial()
-                requireContext().showToast(R.string.notifications_off_for_thumbline)
-                return@request
-            }
-
-            if (!requireContext().appUsagePermissionGranted()) {
-                prefs.nudgeSocialThresholdMin = 0
-                prefs.nudgeSocialLastBucket = -1
-                NudgeScheduler.cancel(requireContext(), Nudges.SOCIAL)
-                Nudges.cancel(requireContext(), Nudges.SOCIAL)
-                populateNudgeSocial()
-                requireContext().showToast(R.string.usage_access_off_for_thumbline)
-                showSocialNudgeUsageAccessDialog()
-                return@request
-            }
-
-            prefs.nudgeSocialThresholdMin = thresholdMin
-            prefs.nudgeSocialLastBucket = -1
-            NudgeScheduler.scheduleSocial(requireContext())
-            populateNudgeSocial()
-        }
-    }
-
-    private fun showSocialNudgeUsageAccessDialog() {
-        requireContext().showMessageDialog(
-            R.string.nudge_social,
-            R.string.nudge_social_usage_access_message,
-            R.string.allow,
-        ) {
-            try {
-                startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
-            } catch (_: Exception) {
-                requireContext().showToast(getString(R.string.unable_to_open_app))
-            }
-        }
-    }
-
-    private fun showActiveHoursDialog() {
-        val currentStart = prefs.nudgeWindowStartMin
-        val currentEnd = prefs.nudgeWindowEndMin
-        showTimePicker(
-            title = R.string.nudge_start_time,
-            initialHour = currentStart / 60,
-            initialMinute = currentStart % 60,
-        ) { startHour, startMinute ->
-            val chosenStart = startHour * 60 + startMinute
-            showTimePicker(
-                title = R.string.nudge_end_time,
-                initialHour = currentEnd / 60,
-                initialMinute = currentEnd % 60,
-            ) { endHour, endMinute ->
-                val chosenEnd = endHour * 60 + endMinute
-                if (NudgeFormatting.isValidActiveHours(chosenStart, chosenEnd)) {
-                    prefs.nudgeWindowStartMin = chosenStart
-                    prefs.nudgeWindowEndMin = chosenEnd
-                    populateActiveHours()
-                    NudgeScheduler.rescheduleAll(requireContext())
-                } else {
-                    requireContext().showToast(R.string.nudge_active_hours_invalid)
-                }
-            }
-        }
-    }
-
-    private fun showTimePicker(
-        @StringRes title: Int,
-        initialHour: Int,
-        initialMinute: Int,
-        onTimeSet: (Int, Int) -> Unit,
-    ) {
-        val picker = TimePickerDialog(
-            requireContext(),
-            { _, hour, minute -> onTimeSet(hour, minute) },
-            initialHour,
-            initialMinute,
-            DateFormat.is24HourFormat(requireContext()),
-        )
-        picker.setTitle(getString(title))
-        val window = picker.window
-        if (window != null && !prefs.showStatusBar) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-            picker.show()
-            window.hideStatusBar()
-            window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-        } else {
-            picker.show()
-        }
-    }
-
-    private fun launchExportBackup() {
-        viewModel.isAwaitingActivityResult = true
-        exportBackupLauncher.launch(Backup.defaultBackupFileName())
-    }
-
-    private fun exportBackup(uri: Uri) {
-        val appContext = context?.applicationContext ?: return
-        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-            val success = try {
-                Backup.export(appContext, uri)
-                true
-            } catch (e: Exception) {
-                e.printStackTrace()
-                false
-            }
-            withContext(Dispatchers.Main) {
-                appContext.showToast(if (success) R.string.backup_exported else R.string.backup_export_failed)
-            }
-        }
-    }
-
-    private fun populateAutoBackup() {
-        binding.autoBackup.text = getString(if (prefs.autoBackupEnabled) R.string.on else R.string.off)
-        val status = AutoBackupStatus.of(prefs.autoBackupEnabled, prefs.autoBackupLastOk, prefs.autoBackupLastFailed)
-        binding.autoBackupStatus.isVisible = status != AutoBackupStatus.HIDDEN
-        binding.autoBackupStatus.text = when (status) {
-            AutoBackupStatus.FAILED -> getString(R.string.nightly_backup_failed)
-            AutoBackupStatus.LAST_OK -> getString(
-                R.string.nightly_backup_last,
-                java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.MEDIUM, java.text.DateFormat.SHORT)
-                    .format(java.util.Date(prefs.autoBackupLastOk))
-            )
-            else -> getString(R.string.nightly_backup_waiting)
-        }
-    }
-
-    private fun toggleAutoBackup() {
-        if (prefs.autoBackupEnabled) {
-            prefs.autoBackupEnabled = false
-            AutoBackupWorker.cancel(requireContext().applicationContext)
-            populateAutoBackup()
-            return
-        }
-        dialog?.dismiss()
-        dialog = requireContext().showMessageDialog(
-            title = R.string.nightly_backup,
-            message = R.string.nightly_backup_message,
-            action = R.string.allow,
-        ) {
-            launchAutoBackupFolderPicker()
-        }
-    }
-
-    private fun launchAutoBackupFolderPicker() {
-        viewModel.isAwaitingActivityResult = true
-        autoBackupFolderLauncher.launch(null)
-    }
-
-    private fun enableAutoBackup(uri: Uri) {
-        val appContext = requireContext().applicationContext
-        try {
-            appContext.contentResolver.takePersistableUriPermission(
-                uri,
-                Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
-            )
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return
-        }
-        prefs.autoBackupTreeUri = uri.toString()
-        prefs.autoBackupLastFailed = false
-        prefs.autoBackupEnabled = true
-        AutoBackupWorker.schedulePeriodic(appContext)
-        AutoBackupWorker.runOnce(appContext)
-        populateAutoBackup()
-    }
-
-    private fun launchImportBackup() {
-        viewModel.isAwaitingActivityResult = true
-        importBackupLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
-    }
-
-    private fun handleImportBackup(uri: Uri) {
-        val appContext = context?.applicationContext ?: return
-        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-            val backupData = try {
-                Backup.readBackup(appContext, uri)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                null
-            }
-            withContext(Dispatchers.Main) {
-                if (!isAdded) return@withContext
-                if (backupData == null) {
-                    appContext.showToast(R.string.not_a_thumbline_backup)
-                    return@withContext
-                }
-                showImportConfirmationDialog(backupData)
-            }
-        }
-    }
-
-    private fun showImportConfirmationDialog(backupData: BackupData) {
-        val message = if (backupData.appVersion.isNotBlank()) {
-            getString(R.string.backup_restore_confirm, backupData.appVersion)
-        } else {
-            getString(R.string.backup_restore_confirm_no_version)
-        }
-        dialog?.dismiss()
-        dialog = requireContext().showMessageDialog(
-            title = R.string.import_backup,
-            message = message,
-            action = R.string.replace,
-        ) {
-            confirmImportBackup(backupData)
-        }
-    }
-
-    private fun confirmImportBackup(backupData: BackupData) {
-        val before = FrictionSettings(
-            pauseEnabled = prefs.pauseEnabled,
-            distractingApps = prefs.distractingApps,
-            allowanceMin = prefs.pauseAllowanceMin,
-            escalate = prefs.pauseEscalate,
-            askWhy = prefs.pauseAskWhy,
-            commitLock = prefs.commitLock,
-        )
-        val after = FrictionSettings.fromPrefsMap(backupData.prefs)
-        if (CommitLock.restoreNeedsWait(prefs.commitLock, before, after)) {
-            dialog?.dismiss()
-            dialog = requireContext().showWaitDialog(
-                message = getString(R.string.commit_lock_desc)
-            ) {
-                restoreBackupNow(backupData)
-            }
-        } else {
-            restoreBackupNow(backupData)
-        }
-    }
-
-    private fun restoreBackupNow(backupData: BackupData) {
-        val appContext = context?.applicationContext ?: return
-        viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                Backup.restore(appContext, backupData)
-            } catch (e: Exception) {
-                e.printStackTrace()
-                withContext(Dispatchers.Main) {
-                    if (isAdded) {
-                        appContext.showToast(R.string.not_a_thumbline_backup)
-                    }
-                }
-                return@launch
-            }
-            withContext(Dispatchers.Main) {
-                if (!isAdded) return@withContext
-                WordCaptureActivity.setEnabled(
-                    appContext, prefs.germanEnabled, WordLookup.isLookupAllowed(prefs.germanEnabled, prefs.germanLookup)
-                )
-                WordScreenService.setEnabled(appContext, prefs.germanEnabled && prefs.germanScreenPick)
-                NudgeScheduler.rescheduleAll(appContext)
-                UsageSnapshotWorker.syncWithDistractingApps(appContext, prefs.distractingApps)
-                activity?.recreate()
-            }
-        }
-    }
-
-    private fun toggleGerman() {
-        prefs.germanEnabled = !prefs.germanEnabled
-        syncWordShareEntries()
-        WordScreenService.setEnabled(requireContext(), prefs.germanEnabled && prefs.germanScreenPick)
-        populateGerman()
-    }
-
-    private fun toggleGermanScreenPick() {
-        prefs.germanScreenPick = !prefs.germanScreenPick
-        val on = prefs.germanEnabled && prefs.germanScreenPick
-        WordScreenService.setEnabled(requireContext(), on)
-        populateGerman()
-        if (on) {
-            dialog?.dismiss()
-            dialog = requireContext().showMessageDialog(
-                title = R.string.german_screen_pick,
-                message = R.string.german_screen_pick_message,
-                action = R.string.open_settings,
-            ) {
-                try {
-                    startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-                } catch (_: Exception) {
-                    requireContext().showToast(getString(R.string.unable_to_open_app))
-                }
-            }
-        }
-    }
-
-    private fun toggleGermanSpellSuggest() {
-        prefs.germanSpellSuggest = !prefs.germanSpellSuggest
-        populateGerman()
-    }
-
-    private fun toggleGermanLookup() {
-        prefs.germanLookup = !prefs.germanLookup
-        syncWordShareEntries()
-        populateGerman()
-    }
-
-    private fun syncWordShareEntries() {
-        WordCaptureActivity.setEnabled(
-            requireContext(), prefs.germanEnabled, WordLookup.isLookupAllowed(prefs.germanEnabled, prefs.germanLookup)
-        )
-    }
-
-    private fun toggleGermanPauseWord() {
-        prefs.germanPauseWord = !prefs.germanPauseWord
-        populateGerman()
-    }
-
-    private fun toggleGermanUi() {
-        prefs.germanUi = !prefs.germanUi
-        populateGerman()
-    }
-
-    private fun populateGerman() {
-        binding.germanOnOff.text = getString(if (prefs.germanEnabled) R.string.on else R.string.off)
-        binding.germanClockLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
-        binding.germanClock.text = when (prefs.germanClock) {
-            Prefs.GERMAN_CLOCK_DEUTSCH -> getString(R.string.deutsch_de)
-            Prefs.GERMAN_CLOCK_IN_WORTEN -> getString(R.string.in_worten_de)
-            else -> getString(R.string.system_default)
-        }
-        binding.germanLookupLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
-        binding.germanLookupOnOff.text = getString(if (prefs.germanLookup) R.string.on else R.string.off)
-        binding.germanSpellSuggestLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
-        binding.germanSpellSuggestOnOff.text = getString(if (prefs.germanSpellSuggest) R.string.on else R.string.off)
-        binding.germanScreenPickLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
-        binding.germanScreenPickOnOff.text = getString(if (prefs.germanScreenPick) R.string.on else R.string.off)
-        binding.germanPauseWordLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
-        binding.germanPauseWordOnOff.text = getString(if (prefs.germanPauseWord) R.string.on else R.string.off)
-        binding.germanUiLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
-        binding.germanUiOnOff.text = getString(if (prefs.germanUi) R.string.on else R.string.off)
-    }
-
-    private fun showGermanClockMenu(anchor: View) {
-        val options = listOf(
-            Prefs.GERMAN_CLOCK_SYSTEM to getString(R.string.system_default),
-            Prefs.GERMAN_CLOCK_DEUTSCH to getString(R.string.deutsch_de),
-            Prefs.GERMAN_CLOCK_IN_WORTEN to getString(R.string.in_worten_de),
-        )
-        anchor.showPopupMenu(
-            configure = { menu ->
-                options.forEach { (id, label) ->
-                    menu.add(Menu.NONE, id, id, label)
-                }
-            }
-        ) { item ->
-            prefs.germanClock = item.itemId
-            populateGerman()
-        }
-    }
-
-    private fun populateFooter() {
+    internal fun populateFooter() {
         binding.footer.text = getString(R.string.settings_footer, BuildConfig.VERSION_NAME, "Olauncher")
     }
 
