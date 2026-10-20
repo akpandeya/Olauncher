@@ -105,4 +105,18 @@ class NextUpPlanTest {
         assertEquals("Standup", p.rows.first().title)
         assertEquals(1, titles(p).count { it == "Maha Ashtami" })
     }
+
+    @Test
+    fun eventJustAfterMidnightWithinThreeHoursIsInSoonGroup() {
+        val lateNow = today.atTime(23, 30).atZone(zone).toInstant()
+        fun startingAt(id: Long, title: String, h: Int, m: Int): CalendarEvent {
+            val start = today.plusDays(1).atTime(h, m).atZone(zone).toInstant().toEpochMilli()
+            return CalendarEvent(id, title, start, start + 3_600_000L)
+        }
+        val inWindow = startingAt(2, "Early flight", 0, 45)
+        val atEdge = startingAt(3, "Edge", 2, 30)
+        val outside = startingAt(4, "Breakfast", 2, 31)
+        val p = NextUpPlanner.plan(listOf(outside, allDay(1, "Holiday"), atEdge, inWindow), lateNow, zone)
+        assertEquals(listOf("Early flight", "Edge", "Holiday", "Breakfast"), titles(p))
+    }
 }

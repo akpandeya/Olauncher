@@ -1,9 +1,7 @@
 package app.olauncher.glance
 
 import java.time.Instant
-import java.time.LocalDate
 import java.time.ZoneId
-import java.time.ZoneOffset
 
 /** What the Next up card shows: [rows] in display order and how many more of today's events are [hiddenCount]. */
 data class NextUpPlan(val rows: List<CalendarEvent>, val hiddenCount: Int)
@@ -34,7 +32,7 @@ object NextUpPlanner {
 
         for (e in live) {
             if (e.allDay) {
-                if (localStartDate(e.startMillis, zone) <= today && today < localEndDate(e.endMillis, zone)) {
+                if (AllDayDates.dateOf(e.startMillis, zone) <= today && today < AllDayDates.dateOf(e.endMillis, zone)) {
                     allDayToday += e
                 } else {
                     after += e
@@ -59,16 +57,5 @@ object NextUpPlanner {
             expanded -> NextUpPlan(head, total - MAX_ROWS)
             else -> NextUpPlan(head.take(MAX_ROWS), total - MAX_ROWS)
         }
-    }
-
-    // All-day events use UTC-midnight bounds; same rule as NextUpFormatting.line.
-    private fun localStartDate(millis: Long, zone: ZoneId): LocalDate = allDayDate(millis, zone)
-
-    private fun localEndDate(millis: Long, zone: ZoneId): LocalDate = allDayDate(millis, zone)
-
-    private fun allDayDate(millis: Long, zone: ZoneId): LocalDate {
-        val utc = Instant.ofEpochMilli(millis).atZone(ZoneOffset.UTC)
-        return if (utc.hour == 0 && utc.minute == 0) utc.toLocalDate()
-        else Instant.ofEpochMilli(millis).atZone(zone).toLocalDate()
     }
 }
