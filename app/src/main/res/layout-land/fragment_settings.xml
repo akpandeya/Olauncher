@@ -2417,6 +2417,52 @@
                         tools:text="@string/on" />
                 </FrameLayout>
 
+                <LinearLayout
+                    android:id="@+id/glowStrengthLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="vertical">
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <TextView
+                            android:id="@+id/glowStrengthTitle"
+                            style="@style/TextSmall"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:labelFor="@+id/glowStrengthSeekBar"
+                            android:paddingVertical="8dp"
+                            android:text="@string/glow_strength"
+                            android:textColor="?attr/primaryColor" />
+
+                        <TextView
+                            android:id="@+id/glowStrength"
+                            style="@style/TextSettingsValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="end|bottom"
+                            android:layout_marginEnd="4dp"
+                            android:padding="8dp"
+                            tools:text="67%" />
+                    </FrameLayout>
+
+                    <SeekBar
+                        android:id="@+id/glowStrengthSeekBar"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/glow_strength"
+                        android:max="100"
+                        android:paddingVertical="8dp"
+                        android:progressBackgroundTint="?attr/primaryColorTrans50"
+                        android:progressTint="?attr/primaryColor"
+                        android:thumbTint="?attr/primaryColor"
+                        tools:progress="67" />
+                </LinearLayout>
+
                 <FrameLayout
                     android:id="@+id/weatherEffectsLayout"
                     android:layout_width="match_parent"

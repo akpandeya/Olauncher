@@ -122,4 +122,54 @@ class MusicPulseTest {
         assertNull(MusicPulse.loadableArtworkUri(null, "", "ftp://media/2"))
         assertNull(MusicPulse.loadableArtworkUri())
     }
+
+    @Test
+    fun glowStrengthIsClampedToZeroToHundred() {
+        assertEquals(0, MusicPulse.clampGlowStrength(-5))
+        assertEquals(100, MusicPulse.clampGlowStrength(250))
+        assertEquals(42, MusicPulse.clampGlowStrength(42))
+    }
+
+    @Test
+    fun defaultGlowStrengthKeepsTheOriginalCentreAlpha() {
+        assertEquals(0xAA, MusicPulse.glowCentreAlpha(MusicPulse.GLOW_STRENGTH_DEFAULT))
+    }
+
+    @Test
+    fun glowCentreAlphaMapsPercentToByte() {
+        assertEquals(0, MusicPulse.glowCentreAlpha(0))
+        assertEquals(127, MusicPulse.glowCentreAlpha(50))
+        assertEquals(0xFF, MusicPulse.glowCentreAlpha(100))
+        assertEquals(0xFF, MusicPulse.glowCentreAlpha(140))
+        assertEquals(0, MusicPulse.glowCentreAlpha(-20))
+    }
+
+    @Test
+    fun zeroGlowStrengthHidesTheGlow() {
+        assertFalse(MusicPulse.isGlowVisible(0))
+        assertFalse(MusicPulse.isGlowVisible(-3))
+        assertTrue(MusicPulse.isGlowVisible(1))
+    }
+
+    @Test
+    fun defaultGlowPulseRangeIsTheOriginalBreathing() {
+        val range = MusicPulse.glowPulseRange(MusicPulse.GLOW_STRENGTH_DEFAULT)
+        assertEquals(0.35f, range.low, 0.0001f)
+        assertEquals(0.8f, range.high, 0.0001f)
+    }
+
+    @Test
+    fun weakerGlowPulseKeepsTheSameRatio() {
+        val range = MusicPulse.glowPulseRange(33)
+        assertTrue(range.high < 0.8f)
+        assertEquals(0.35f / 0.8f, range.low / range.high, 0.0001f)
+    }
+
+    @Test
+    fun strongestGlowPulseIsCappedAtFullAlpha() {
+        val range = MusicPulse.glowPulseRange(100)
+        assertEquals(1f, range.high, 0.0001f)
+        assertEquals(0.35f * 100f / 67f, range.low, 0.0001f)
+        assertTrue(range.low < range.high)
+    }
 }
