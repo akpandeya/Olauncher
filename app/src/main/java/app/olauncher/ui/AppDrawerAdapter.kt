@@ -38,6 +38,7 @@ import app.olauncher.helper.UnitConvert
 import app.olauncher.helper.ContactSearch
 import app.olauncher.helper.ContactSource
 import app.olauncher.helper.DialMatch
+import app.olauncher.helper.DrawerCommand
 import app.olauncher.helper.DrawerOrdering
 import app.olauncher.helper.RecentApp
 import app.olauncher.helper.RecentApps
@@ -64,6 +65,9 @@ class AppDrawerAdapter(
     var calendarRowsProvider: ((String) -> List<AppModel.Result>)? = null,
     var currencyRowsProvider: ((String) -> List<AppModel.Result>)? = null,
     var contactLongClickListener: ((AppModel.Result) -> Unit)? = null,
+    var germanEnabledProvider: (() -> Boolean)? = null,
+    var lookUpRowsProvider: ((String) -> List<AppModel.Result>)? = null,
+    var wiktionaryLongClickListener: ((AppModel.Result) -> Unit)? = null,
 ) : ListAdapter<AppModel, RecyclerView.ViewHolder>(DIFF_CALLBACK), Filterable {
 
     companion object {
@@ -193,6 +197,7 @@ class AppDrawerAdapter(
                             appModel,
                             appClickListener,
                             contactLongClickListener,
+                            wiktionaryLongClickListener,
                         )
                     }
                 }
@@ -323,6 +328,26 @@ class AppDrawerAdapter(
                             )
                         )
                     }
+                    val command = try {
+                        DrawerCommand.parse(query, germanEnabledProvider?.invoke() ?: false)
+                    } catch (_: Exception) {
+                        null
+                    }
+                    when (command) {
+                        is DrawerCommand.SaveWords -> {
+                            if (command.items.isNotEmpty()) {
+                                resultRows.add(saveWordsRow(command.items))
+                            }
+                        }
+                        is DrawerCommand.LookUp -> {
+                            try {
+                                lookUpRowsProvider?.invoke(command.text)?.let { resultRows.addAll(it) }
+                            } catch (_: Exception) {
+                                // No word rows on failure.
+                            }
+                        }
+                        null -> Unit
+                    }
                     // Runs on the Filter worker thread; a newer query supersedes this one.
                     val source = try { contactSourceProvider?.invoke() } catch (_: Exception) { null }
                     if (source != null) {
@@ -371,6 +396,18 @@ class AppDrawerAdapter(
                 }
             }
         }
+    }
+
+    private fun saveWordsRow(items: List<String>): AppModel.Result {
+        val ctx = context ?: adapterContext
+        val text = if (items.size == 1) {
+            ctx?.getString(R.string.save_word_row, items[0]) ?: "Save word: ${items[0]}"
+        } else {
+            val shown = items.take(2).joinToString(", ") + if (items.size > 2) ", …" else ""
+            ctx?.getString(R.string.save_words_row, items.size, shown)
+                ?: "Save ${items.size} words: $shown"
+        }
+        return AppModel.Result(text = text, action = AppModel.Result.Action.SaveWords(items))
     }
 
     private fun autoLaunch() {
@@ -469,6 +506,7 @@ class AppDrawerAdapter(
             result: AppModel.Result,
             clickListener: (AppModel) -> Unit,
             longClickListener: ((AppModel.Result) -> Unit)? = null,
+            wiktionaryLongClickListener: ((AppModel.Result) -> Unit)? = null,
         ) = with(binding) {
             renameLayout.visibility = View.GONE
             otherProfileIndicator.visibility = View.GONE
@@ -476,10 +514,13 @@ class AppDrawerAdapter(
             appTitle.text = result.text
             appTitle.gravity = appLabelGravity or Gravity.CENTER_VERTICAL
             appTitle.setOnClickListener { clickListener(result) }
-            val onLong: View.OnLongClickListener? =
-                if (result.action is AppModel.Result.Action.Contact && longClickListener != null) {
+            val onLong: View.OnLongClickListener? = when {
+                result.action is AppModel.Result.Action.Contact && longClickListener != null ->
                     View.OnLongClickListener { longClickListener(result); true }
-                } else null
+                result.action is AppModel.Result.Action.OpenWiktionary && wiktionaryLongClickListener != null ->
+                    View.OnLongClickListener { wiktionaryLongClickListener(result); true }
+                else -> null
+            }
             appTitle.setOnLongClickListener(onLong)
             root.setOnClickListener { clickListener(result) }
             root.setOnLongClickListener(onLong)

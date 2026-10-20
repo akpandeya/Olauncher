@@ -74,6 +74,14 @@ import app.olauncher.helper.isSystemApp
 import app.olauncher.helper.openAppInfo
 import app.olauncher.helper.openSearch
 import app.olauncher.helper.openUrl
+import app.olauncher.helper.DrawerCommand
+import app.olauncher.data.store.WiktionaryApi
+import app.olauncher.data.store.WiktionaryCache
+import app.olauncher.data.store.WordLookup
+import app.olauncher.data.store.WordsStore
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import java.net.URLEncoder
 import app.olauncher.helper.showKeyboard
 import app.olauncher.helper.showToast
 import app.olauncher.helper.uninstall
@@ -84,6 +92,12 @@ class AppDrawerFragment : BaseFragment() {
     private lateinit var adapter: AppDrawerAdapter
     private lateinit var linearLayoutManager: LinearLayoutManager
     private var searchTextView: TextView? = null
+    private val LOOKUP_DEBOUNCE_MS = 600L
+    private val LOOKUP_DEBOUNCE_ON_ENTER_MS = 0L
+    private var lookupJob: Job? = null
+    /** Text being looked up and its result; a null result means still loading. */
+    @Volatile
+    private var lookupState: Pair<String, WiktionaryApi.LookupResult?>? = null
     private var cachedIsCjkKeyboard: Boolean? = null
 
     private var flag = Constants.FLAG_LAUNCH_APP
@@ -196,6 +210,7 @@ class AppDrawerFragment : BaseFragment() {
                     return true
                 }
 
+                scheduleLookup(query.orEmpty(), LOOKUP_DEBOUNCE_ON_ENTER_MS)
                 val topItem = adapter.getTopItem()
                 val topScore = adapter.getTopScore()
                 when (val action = EnterPolicy.resolve(query, topItem, topScore, adapter.getTopApp())) {
@@ -214,6 +229,12 @@ class AppDrawerFragment : BaseFragment() {
 
             override fun onQueryTextChange(newText: String): Boolean {
                 try {
+                    val lookUpText = (parseCommand(newText) as? DrawerCommand.LookUp)?.text
+                    if (lookUpText == null || !lookUpText.equals(lookupState?.first, ignoreCase = true)) {
+                        lookupJob?.cancel()
+                        lookupState = null
+                    }
+                    scheduleLookup(newText, LOOKUP_DEBOUNCE_MS)
                     adapter.allowAutoLaunch = !isSearchComposing()
                     adapter.filter.filter(newText)
                     binding.appRename.visibility =
@@ -226,6 +247,109 @@ class AppDrawerFragment : BaseFragment() {
                 return false
             }
         })
+    }
+
+    private fun parseCommand(query: String): DrawerCommand? =
+        DrawerCommand.parse(query, prefs.germanEnabled)
+
+    private fun lookupAllowed(): Boolean =
+        WordLookup.isLookupAllowed(prefs.germanEnabled, prefs.germanLookup)
+
+    private fun savedWord(ctx: Context, text: String) =
+        WordsStore(ctx).all().firstOrNull { it.text.equals(text.trim(), ignoreCase = true) }
+
+    /** Starts the Wiktionary lookup for a `:w` query after [delayMs]; no-op for anything else. */
+    private fun scheduleLookup(query: String, delayMs: Long) {
+        val text = (parseCommand(query) as? DrawerCommand.LookUp)?.text ?: return
+        if (!lookupAllowed()) return
+        if (text.equals(lookupState?.first, ignoreCase = true)) return
+        val ctx = context?.applicationContext ?: return
+        lookupJob?.cancel()
+        lookupJob = viewLifecycleOwner.lifecycleScope.launch {
+            if (delayMs > 0) delay(delayMs)
+            lookupState = text to null
+            val result = withContext(Dispatchers.IO) {
+                if (savedWord(ctx, text) != null) return@withContext null
+                val cache = WiktionaryCache(ctx)
+                cache.get(text) ?: WiktionaryApi.lookup(text).also { cache.put(text, it) }
+            } ?: return@launch
+            if (!isAdded || _binding == null) return@launch
+            lookupState = text to result
+            adapter.filter.filter(binding.search.query)
+        }
+    }
+
+    private fun lookUpRows(text: String): List<AppModel.Result> {
+        val ctx = context ?: return emptyList()
+        val saved = savedWord(ctx, text)
+        if (saved != null) {
+            val meaning = saved.meaning.ifBlank { ctx.getString(R.string.word_row_no_meaning_yet) }
+            return listOf(
+                AppModel.Result(
+                    text = ctx.getString(R.string.word_row_meaning, saved.text, meaning),
+                    action = AppModel.Result.Action.OpenWiktionary(saved.text, openOnTap = false)
+                )
+            )
+        }
+        if (!lookupAllowed()) {
+            return listOf(
+                AppModel.Result(
+                    text = ctx.getString(R.string.word_row_open_wiktionary, text),
+                    action = AppModel.Result.Action.OpenWiktionary(text)
+                )
+            )
+        }
+        val state = lookupState?.takeIf { it.first.equals(text, ignoreCase = true) }
+        val silent = AppModel.Result.Action.OpenWiktionary(text, openOnTap = false)
+        val row = when (val result = state?.second) {
+            null -> AppModel.Result(ctx.getString(R.string.word_row_looking_up), silent)
+            is WiktionaryApi.LookupResult.Found -> AppModel.Result(
+                ctx.getString(R.string.word_row_wiktionary_meaning, text, result.meaning),
+                AppModel.Result.Action.SaveWords(listOf(text), result.meaning)
+            )
+            WiktionaryApi.LookupResult.NotFound ->
+                AppModel.Result(ctx.getString(R.string.word_row_no_meaning_found), silent)
+            WiktionaryApi.LookupResult.Failed ->
+                AppModel.Result(ctx.getString(R.string.word_row_unreachable), silent)
+        }
+        return listOf(row)
+    }
+
+    private fun openWiktionary(text: String) {
+        try {
+            val encoded = URLEncoder.encode(text.trim(), "UTF-8").replace("+", "%20")
+            requireContext().openUrl("https://en.wiktionary.org/wiki/$encoded")
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+    }
+
+    private fun saveWords(action: AppModel.Result.Action.SaveWords) {
+        val ctx = context?.applicationContext ?: return
+        viewLifecycleOwner.lifecycleScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                val store = WordsStore(ctx)
+                val res = store.addAll(action.items)
+                if (action.meaning.isNotBlank() && action.items.size == 1) {
+                    res.added.firstOrNull()?.let {
+                        store.update(it.copy(meaning = action.meaning, meaningSource = "wiktionary"))
+                    }
+                }
+                res.added.forEach { WordLookup.enqueue(ctx, it.id) }
+                res
+            }
+            val base = when {
+                result.added.size == 1 -> ctx.getString(R.string.word_saved_de, result.added[0].text)
+                result.added.isEmpty() && result.alreadySaved.size == 1 ->
+                    ctx.getString(R.string.word_saved_de, result.alreadySaved[0].text)
+                else -> ctx.getString(R.string.words_saved_de, result.added.size)
+            }
+            val suffix = if (result.added.isNotEmpty() && result.alreadySaved.isNotEmpty()) {
+                ctx.getString(R.string.words_already_saved_suffix_de, result.alreadySaved.size)
+            } else ""
+            ctx.showToast(base + suffix)
+            if (_binding != null) binding.search.setQuery("", false)
+        }
     }
 
     private fun isSearchComposing(): Boolean {
@@ -406,6 +530,15 @@ class AppDrawerFragment : BaseFragment() {
                                 findNavController().popBackStack(R.id.mainFragment, false)
                             }
 
+                            is AppModel.Result.Action.SaveWords -> saveWords(action)
+
+                            is AppModel.Result.Action.OpenWiktionary -> {
+                                if (action.openOnTap) {
+                                    openWiktionary(action.text)
+                                    findNavController().popBackStack(R.id.mainFragment, false)
+                                }
+                            }
+
                             is AppModel.Result.Action.Dial -> {
                                 try {
                                     val intent = Intent(Intent.ACTION_DIAL).apply {
@@ -525,6 +658,12 @@ class AppDrawerFragment : BaseFragment() {
             contactLongClickListener = { result ->
                 val action = result.action as? AppModel.Result.Action.Contact
                 if (action != null) dialContact(action.lookupUri)
+            },
+            germanEnabledProvider = { prefs.germanEnabled },
+            lookUpRowsProvider = { text -> lookUpRows(text) },
+            wiktionaryLongClickListener = { result ->
+                val action = result.action as? AppModel.Result.Action.OpenWiktionary
+                if (action != null) openWiktionary(action.text)
             },
             recentAppsProvider = { RecentApps.decode(prefs.recentApps) },
             hiddenAppsProvider = { prefs.hiddenApps },
@@ -703,6 +842,9 @@ class AppDrawerFragment : BaseFragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        lookupJob?.cancel()
+        lookupJob = null
+        lookupState = null
         searchTextView = null
         lastSelectedLetter = null
         letterPosList = emptyList()
