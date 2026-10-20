@@ -10,6 +10,7 @@ data class HealthSummary(
     val sleepMinutes: Long? = null,
     val restingHeartRate: Long? = null,
     val exerciseMinutes: Long? = null,
+    val heartRate: Long? = null,
 )
 
 /** A sleep session as epoch milliseconds. It may start the evening before. */
@@ -21,6 +22,7 @@ data class HealthLabels(
     val slept: String,
     val restingHr: String,
     val exercise: String,
+    val heartRate: String,
 )
 
 object HealthSummaryFormatting {
@@ -37,6 +39,10 @@ object HealthSummaryFormatting {
         return if (total > 0) total else null
     }
 
+    /** Average of heart rate samples in bpm, rounded half up, or null when there are none. */
+    fun averageBpm(samples: List<Long>): Long? =
+        if (samples.isEmpty()) null else (samples.sum() * 2 + samples.size) / (samples.size * 2L)
+
     /** Total of today's exercise sessions in minutes, or null when there are none. */
     fun exerciseMinutesTotal(sessionMinutes: List<Long>): Long? {
         val total = sessionMinutes.filter { it > 0 }.sum()
@@ -44,7 +50,7 @@ object HealthSummaryFormatting {
     }
 
     /**
-     * One line like "6,240 steps · Slept 7 h 10 · Resting HR 58 · Exercise 30 min".
+     * One line like "6,240 steps · Slept 7 h 10 · Resting HR 58 · Heart rate 72 · Exercise 30 min".
      * Parts with no data (null or zero) are left out. Returns null when no part remains,
      * so the caller hides the line.
      */
@@ -53,6 +59,7 @@ object HealthSummaryFormatting {
             summary.steps?.takeIf { it > 0 }?.let { add(labels.steps.format(String.format(Locale.US, "%,d", it))) }
             summary.sleepMinutes?.takeIf { it > 0 }?.let { add(labels.slept.format(formatDuration(it))) }
             summary.restingHeartRate?.takeIf { it > 0 }?.let { add(labels.restingHr.format(it.toString())) }
+            summary.heartRate?.takeIf { it > 0 }?.let { add(labels.heartRate.format(it.toString())) }
             summary.exerciseMinutes?.takeIf { it > 0 }?.let { add(labels.exercise.format(it.toString())) }
         }
         return if (parts.isEmpty()) null else parts.joinToString(" · ")

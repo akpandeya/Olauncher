@@ -6,7 +6,7 @@ import org.junit.Test
 
 class HealthSummaryTest {
 
-    private val labels = HealthLabels("%1\$s steps", "Slept %1\$s", "Resting HR %1\$s", "Exercise %1\$s min")
+    private val labels = HealthLabels("%1\$s steps", "Slept %1\$s", "Resting HR %1\$s", "Exercise %1\$s min", "Heart rate %1\$s")
 
     private val hour = 3_600_000L
     private val min = 60_000L
@@ -50,5 +50,33 @@ class HealthSummaryTest {
     fun exerciseIsTotalOfSessions() {
         assertEquals(50L, HealthSummaryFormatting.exerciseMinutesTotal(listOf(30, 20)))
         assertNull(HealthSummaryFormatting.exerciseMinutesTotal(emptyList()))
+    }
+
+    @Test
+    fun averageBpmRoundsHalfUp() {
+        assertEquals(61L, HealthSummaryFormatting.averageBpm(listOf(60, 61)))
+        assertEquals(61L, HealthSummaryFormatting.averageBpm(listOf(60, 61, 61)))
+        assertEquals(3L, HealthSummaryFormatting.averageBpm(listOf(2, 3)))
+        assertNull(HealthSummaryFormatting.averageBpm(emptyList()))
+    }
+
+    @Test
+    fun heartRateComesAfterRestingHr() {
+        val line = HealthSummaryFormatting.formatLine(
+            HealthSummary(steps = 100, restingHeartRate = 58, exerciseMinutes = 30, heartRate = 72),
+            labels,
+        )
+        assertEquals("100 steps · Resting HR 58 · Heart rate 72 · Exercise 30 min", line)
+    }
+
+    @Test
+    fun heartRateAloneGivesOnlyThatPart() {
+        assertEquals("Heart rate 72", HealthSummaryFormatting.formatLine(HealthSummary(heartRate = 72), labels))
+    }
+
+    @Test
+    fun noHeartRateLeavesLineUnchanged() {
+        val line = HealthSummaryFormatting.formatLine(HealthSummary(steps = 100, restingHeartRate = 58), labels)
+        assertEquals("100 steps · Resting HR 58", line)
     }
 }
