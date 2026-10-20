@@ -2,7 +2,6 @@ package app.olauncher.glance
 
 import java.time.Instant
 import java.time.ZoneId
-import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -38,9 +37,8 @@ object NextUpFormatting {
      */
     fun hasEnded(event: CalendarEvent, now: Instant, zone: ZoneId): Boolean {
         val end = if (event.allDay) {
-            val utcEnd = Instant.ofEpochMilli(event.endMillis).atZone(ZoneOffset.UTC)
-            if (utcEnd.hour == 0 && utcEnd.minute == 0) {
-                utcEnd.toLocalDate().atStartOfDay(zone).toInstant()
+            if (AllDayDates.isUtcMidnight(event.endMillis)) {
+                AllDayDates.dateOf(event.endMillis, zone).atStartOfDay(zone).toInstant()
             } else {
                 event.end
             }
@@ -62,19 +60,8 @@ object NextUpFormatting {
         val tomorrow = today.plusDays(1)
 
         if (event.allDay) {
-            val utcStart = Instant.ofEpochMilli(event.startMillis).atZone(ZoneOffset.UTC)
-            val eventStartDate = if (utcStart.hour == 0 && utcStart.minute == 0) {
-                utcStart.toLocalDate()
-            } else {
-                Instant.ofEpochMilli(event.startMillis).atZone(zone).toLocalDate()
-            }
-
-            val utcEnd = Instant.ofEpochMilli(event.endMillis).atZone(ZoneOffset.UTC)
-            val eventEndDate = if (utcEnd.hour == 0 && utcEnd.minute == 0) {
-                utcEnd.toLocalDate()
-            } else {
-                Instant.ofEpochMilli(event.endMillis).atZone(zone).toLocalDate()
-            }
+            val eventStartDate = AllDayDates.dateOf(event.startMillis, zone)
+            val eventEndDate = AllDayDates.dateOf(event.endMillis, zone)
 
             val prefix = when {
                 eventStartDate <= today && today < eventEndDate -> labels.today

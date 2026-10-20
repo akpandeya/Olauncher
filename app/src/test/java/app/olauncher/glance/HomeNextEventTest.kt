@@ -1,7 +1,9 @@
 package app.olauncher.glance
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Instant
 import java.time.ZoneId
@@ -69,5 +71,27 @@ class HomeNextEventTest {
         assertEquals("2:30 PM · Review", HomeNextEvent.line(listOf(e), now, zone, false, template)?.text)
         val running = timed(10, "Sync", at(8), at(15))
         assertEquals("Now · Sync (until 3:00 PM)", HomeNextEvent.line(listOf(running), now, zone, false, template)?.text)
+    }
+
+    private val shownLine = HomeNextEventLine("14:30 · Standup", 7)
+
+    @Test
+    fun hiddenWhenPrefOff() {
+        assertFalse(HomeNextEvent.shouldShow(prefOn = false, permissionGranted = true, line = shownLine))
+    }
+
+    @Test
+    fun hiddenWhenPermissionMissing() {
+        assertFalse(HomeNextEvent.shouldShow(prefOn = true, permissionGranted = false, line = shownLine))
+    }
+
+    @Test
+    fun shownWhenPrefOnPermissionGrantedAndEvent() {
+        assertTrue(HomeNextEvent.shouldShow(prefOn = true, permissionGranted = true, line = shownLine))
+    }
+
+    @Test
+    fun hiddenWhenPrefOnPermissionGrantedAndNoEvent() {
+        assertFalse(HomeNextEvent.shouldShow(prefOn = true, permissionGranted = true, line = null))
     }
 }
