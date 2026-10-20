@@ -62,6 +62,7 @@ import java.util.Locale
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import app.olauncher.wellbeing.HealthRepository
 import app.olauncher.wellbeing.NudgeFormatting
 import app.olauncher.wellbeing.NudgeScheduler
 import app.olauncher.wellbeing.Nudges
@@ -198,6 +199,16 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         }
     }
 
+    private val healthConnectPermissionLauncher = registerForActivityResult(
+        HealthRepository.permissionContract()
+    ) { granted ->
+        // Partial grants are fine; no grant at all leaves the switch off.
+        val anyGranted = granted.isNotEmpty()
+        prefs.healthConnectEnabled = anyGranted
+        if (!anyGranted) requireContext().showToast(R.string.health_connect_denied)
+        if (_binding != null) populateHealthConnect()
+    }
+
     private val contactsPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -284,6 +295,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateWindDownGrey()
         populateSystemGrey()
         populateHoldNotifications()
+        populateHealthConnect()
         populateQuietReleaseTimes()
         populateLockSettings()
         // Home button for recents feature disabled
@@ -351,6 +363,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateCommitLock()
         populateWindDown()
         populateHoldNotifications()
+        populateHealthConnect()
         populateQuietReleaseTimes()
         if (prefs.quietEnabled && isNotificationAccessGranted()) {
             ReleaseWorker.schedule(requireContext(), ExistingWorkPolicy.KEEP)
@@ -428,6 +441,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.systemGreyLayout, binding.systemGreyTitle, R.id.systemGreyOnOff),
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.commitLockLayout, binding.commitLockTitle, R.id.commitLockOnOff),
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.holdNotificationsLayout, binding.holdNotificationsTitle, R.id.holdNotificationsOnOff),
+            RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.healthConnectLayout, binding.healthConnectTitle, R.id.healthConnectOnOff),
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.quietReleaseTimesLayout, binding.quietReleaseTimesTitle, R.id.quietReleaseTimes),
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.screenTimeLayout, getFirstTextView(binding.screenTimeLayout), R.id.screenTimeOnOff),
             RuntimeSettingsRow(SettingsSections.KEY_WELLBEING, binding.screenTimeStyleLayout, binding.screenTimeStyleTitle, R.id.screenTimeStyle),
@@ -674,6 +688,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.systemGreyBedtime -> SystemGrey.openBedtimeMode(requireContext())
             R.id.commitLockOnOff, R.id.commitLockTitle, R.id.commitLockSubtitle, R.id.commitLockLayout -> toggleCommitLock()
             R.id.holdNotificationsOnOff, R.id.holdNotificationsTitle, R.id.holdNotificationsLayout -> toggleHoldNotifications()
+            R.id.healthConnectOnOff, R.id.healthConnectTitle, R.id.healthConnectLayout -> toggleHealthConnect()
             R.id.quietReleaseTimes, R.id.quietReleaseTimesTitle, R.id.quietReleaseTimesLayout -> showReleaseTimesEditor()
             R.id.screenTimeOnOff -> viewModel.showDialog.postValue(Constants.Dialog.DIGITAL_WELLBEING)
             R.id.screenTimeStyle, R.id.screenTimeStyleTitle, R.id.screenTimeStyleLayout -> showScreenTimeStyleMenu(binding.screenTimeStyle)
@@ -843,6 +858,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.commitLockTitle.setOnClickListener(this)
         binding.commitLockSubtitle.setOnClickListener(this)
         binding.commitLockLayout.setOnClickListener(this)
+        binding.healthConnectOnOff.setOnClickListener(this)
+        binding.healthConnectTitle.setOnClickListener(this)
+        binding.healthConnectLayout.setOnClickListener(this)
         binding.holdNotificationsOnOff.setOnClickListener(this)
         binding.holdNotificationsTitle.setOnClickListener(this)
         binding.holdNotificationsLayout.setOnClickListener(this)
@@ -2665,6 +2683,30 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     private fun isNotificationAccessGranted(): Boolean {
         return NotificationManagerCompat.getEnabledListenerPackages(requireContext())
             .contains(requireContext().packageName)
+    }
+
+    private fun populateHealthConnect() {
+        binding.healthConnectOnOff.text = getString(if (prefs.healthConnectEnabled) R.string.on else R.string.off)
+    }
+
+    private fun toggleHealthConnect() {
+        if (prefs.healthConnectEnabled) {
+            prefs.healthConnectEnabled = false
+            populateHealthConnect()
+            return
+        }
+        if (!HealthRepository.isAvailable(requireContext())) {
+            requireContext().showToast(R.string.health_connect_unavailable)
+            return
+        }
+        // Explain first, then ask. The switch only turns on after a grant.
+        requireContext().showMessageDialog(
+            R.string.use_health_connect,
+            R.string.health_connect_explain,
+            R.string.health_connect_allow
+        ) {
+            healthConnectPermissionLauncher.launch(HealthRepository.READ_PERMISSIONS)
+        }
     }
 
     private fun populateHoldNotifications() {
