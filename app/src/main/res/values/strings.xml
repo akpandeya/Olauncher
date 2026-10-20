@@ -49,6 +49,8 @@
     <string name="text_brightness_full">Full</string>
     <string name="text_brightness_soft">Soft</string>
     <string name="text_brightness_dim">Dim</string>
+    <string name="music_pulse">Music pulse</string>
+    <string name="weather_effects">Weather effects</string>
     <string name="text_contrast_follow_theme">Follow theme</string>
     <string name="auto">Auto</string>
     <string name="always">Always</string>

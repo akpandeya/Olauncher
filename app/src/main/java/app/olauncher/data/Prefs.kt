@@ -171,6 +171,8 @@ class Prefs(context: Context) : PauseLogStorage {
     private val HOME_TEXT_CONTRAST = "HOME_TEXT_CONTRAST"
     private val HOME_WASH_LEVEL = "HOME_WASH_LEVEL"
     private val HOME_TEXT_BRIGHTNESS = "HOME_TEXT_BRIGHTNESS"
+    private val HOME_MUSIC_PULSE = "HOME_MUSIC_PULSE"
+    private val HOME_WEATHER_EFFECTS = "HOME_WEATHER_EFFECTS"
     private val SHORTCUT_COUNT = "SHORTCUT_COUNT"
     private val SHORTCUT_SIZE_STEP = "SHORTCUT_SIZE_STEP"
     private val SHORTCUT_SIDE_START = "SHORTCUT_SIDE_START"
@@ -456,6 +458,16 @@ class Prefs(context: Context) : PauseLogStorage {
     var homeTextBrightness: Int
         get() = prefs.getInt(HOME_TEXT_BRIGHTNESS, BRIGHTNESS_FULL)
         set(value) = prefs.edit { putInt(HOME_TEXT_BRIGHTNESS, value).apply() }
+
+    /** Slow album-colour glow and a progress line while media plays. */
+    var homeMusicPulse: Boolean
+        get() = prefs.getBoolean(HOME_MUSIC_PULSE, true)
+        set(value) = prefs.edit { putBoolean(HOME_MUSIC_PULSE, value).apply() }
+
+    /** Weather animation (sun, rain, snow, fog, clouds, storm) drawn over the wallpaper. */
+    var homeWeatherEffects: Boolean
+        get() = prefs.getBoolean(HOME_WEATHER_EFFECTS, false)
+        set(value) = prefs.edit { putBoolean(HOME_WEATHER_EFFECTS, value).apply() }
 
     var homeShortcuts: Boolean
         get() = prefs.getBoolean(HOME_SHORTCUTS, false)

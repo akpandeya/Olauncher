@@ -67,6 +67,9 @@ dependencies {
     implementation libs.appcompat
     implementation libs.recyclerview
 
+    // Album-art colour for the music pulse on Home
+    implementation libs.palette
+
     // Android lifecycle
     implementation libs.lifecycle.extensions
     implementation libs.lifecycle.viewmodel.ktx

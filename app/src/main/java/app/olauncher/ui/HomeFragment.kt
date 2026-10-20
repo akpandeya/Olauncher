@@ -1,6 +1,7 @@
 package app.olauncher.ui
 
 import android.Manifest
+import android.animation.ObjectAnimator
 import android.app.WallpaperColors
 import android.app.WallpaperManager
 import android.content.BroadcastReceiver
@@ -11,6 +12,8 @@ import android.content.SharedPreferences
 import android.content.ContentUris
 import android.content.pm.LauncherApps
 import android.content.pm.PackageManager
+import android.graphics.drawable.GradientDrawable
+import android.os.SystemClock
 import android.provider.CalendarContract
 import android.content.res.Configuration
 import android.os.BatteryManager
@@ -82,7 +85,11 @@ import app.olauncher.helper.GermanTime
 import app.olauncher.helper.AppTarget
 import app.olauncher.helper.Haptics
 import app.olauncher.helper.OpenTargets
+import app.olauncher.helper.MediaInfo
+import app.olauncher.helper.MusicPulse
 import app.olauncher.helper.NowPlaying
+import app.olauncher.helper.WeatherEffect
+import app.olauncher.helper.WeatherEffects
 import app.olauncher.helper.InfoLine
 import app.olauncher.helper.Intention
 import java.time.LocalDateTime
@@ -131,6 +138,10 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     private var latestScreenTime: String? = null
     private var contextTickReceiver: BroadcastReceiver? = null
     private var nowPlaying: NowPlaying? = null
+    private var glowAnimator: ObjectAnimator? = null
+    private var glowShownColor: Int? = null
+    private var homeVisible = false
+    private val musicTick = Runnable { refreshContextLine() }
     private var contextItem: ContextItem? = null
     private var nextEventId: Long? = null
     private var contextJob: Job? = null
@@ -176,10 +187,12 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
     override fun onResume() {
         super.onResume()
+        homeVisible = true
         setHomeAlignment()
         populateHomeScreen(false)
         populateShortcuts()
         populateWeather()
+        applyWeatherEffects()
         applyTextContrast()
         WeatherLocation.refreshIfStale(requireContext())
         viewModel.isOlauncherDefault()
@@ -286,6 +299,8 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
     override fun onPause() {
         super.onPause()
+        homeVisible = false
+        _binding?.weatherEffects?.setRunning(false)
         unregisterTimeTickReceiver()
         unregisterBatteryReceiver()
         stopContextLine()
@@ -837,7 +852,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     }
 
     private fun startContextLine() {
-        if (!prefs.homeContextLine) {
+        if (!prefs.homeContextLine && !prefs.homeMusicPulse) {
             binding.contextLine.isVisible = false
             return
         }
@@ -862,6 +877,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
     private fun stopContextLine() {
         nowPlaying?.stop()
+        stopMusicPulse()
         contextJob?.cancel()
         contextTickReceiver?.let {
             try {
@@ -875,13 +891,14 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
     private fun refreshContextLine() {
         if (_binding == null) return
+        val media = if (prefs.homeContextLine || prefs.homeMusicPulse) nowPlaying?.current() else null
+        updateMusicPulse(media)
         if (!prefs.homeContextLine) {
             contextItem = null
             binding.contextLine.isVisible = false
             return
         }
         val appContext = context?.applicationContext ?: return
-        val media = nowPlaying?.current()
         val labels = ContextLabels(
             inMinutes = getString(R.string.context_line_in_minutes),
             now = getString(R.string.context_line_now),
@@ -1635,11 +1652,77 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
                     if (_binding != null) {
                         if (prefs.homeInfoCombined) populateDateTime()
                         populateWeather()
+                        applyWeatherEffects()
                     }
                 }
             }
         }
         prefs.registerPreferenceChangeListener(weatherPrefsListener!!)
+    }
+
+    /** Shows the album-colour glow and progress line while media plays; hides them and stops their timer otherwise. */
+    private fun updateMusicPulse(media: MediaInfo?) {
+        val binding = _binding ?: return
+        binding.root.removeCallbacks(musicTick)
+        if (media == null || !media.playing || !prefs.homeMusicPulse) {
+            stopMusicPulse()
+            return
+        }
+        val glow = nowPlaying?.glowColor(media)
+        if (glow != glowShownColor) {
+            glowShownColor = glow
+            binding.musicGlow.background = glow?.let { glowDrawable(it) }
+        }
+        binding.musicGlow.isVisible = glow != null
+        if (glow != null && glowAnimator?.isRunning != true) startGlowPulse()
+        val fraction = MusicPulse.progress(
+            media.positionMs, media.positionAtMs, SystemClock.elapsedRealtime(), media.speed, media.playing, media.durationMs,
+        )
+        binding.mediaProgress.isVisible = fraction != null
+        if (fraction != null) {
+            binding.mediaProgress.pivotX = 0f
+            binding.mediaProgress.scaleX = fraction
+        }
+        // Re-check every second so the progress line keeps moving while the song plays.
+        binding.root.postDelayed(musicTick, 1_000L)
+    }
+
+    private fun stopMusicPulse() {
+        val binding = _binding ?: return
+        binding.root.removeCallbacks(musicTick)
+        glowAnimator?.cancel()
+        glowAnimator = null
+        binding.musicGlow.isVisible = false
+        binding.mediaProgress.isVisible = false
+    }
+
+    /** Slow alpha breathing of the glow; about 6 seconds per half cycle. */
+    private fun startGlowPulse() {
+        glowAnimator?.cancel()
+        glowAnimator = ObjectAnimator.ofFloat(binding.musicGlow, View.ALPHA, 0.35f, 0.8f).apply {
+            duration = 6_000L
+            repeatCount = ObjectAnimator.INFINITE
+            repeatMode = ObjectAnimator.REVERSE
+            start()
+        }
+    }
+
+    /** Radial glow that is strongest at the centre and fades to fully transparent at its edge. */
+    private fun glowDrawable(argb: Int): GradientDrawable = GradientDrawable().apply {
+        gradientType = GradientDrawable.RADIAL_GRADIENT
+        gradientRadius = resources.getDimension(R.dimen.music_glow_height) / 2f
+        colors = intArrayOf(0x66000000 or (argb and 0x00FFFFFF), argb and 0x00FFFFFF)
+    }
+
+    /** Sets the weather layer from the cached forecast. Hidden unless Weather effects is on and a forecast is cached. */
+    private fun applyWeatherEffects() {
+        val binding = _binding ?: return
+        val context = context ?: return
+        val forecast = WeatherCache(context).read()?.first
+        val effect = WeatherEffects.select(prefs.homeWeatherEffects, forecast?.nowCode)
+        binding.weatherEffects.setEffect(effect, WeatherEffects.tint(effect, forecast?.isDay ?: true))
+        binding.weatherEffects.isVisible = effect != WeatherEffect.NONE
+        binding.weatherEffects.setRunning(homeVisible && effect != WeatherEffect.NONE)
     }
 
     private fun populateWeather() {
@@ -1668,6 +1751,9 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     }
 
     override fun onDestroyView() {
+        glowAnimator?.cancel()
+        glowAnimator = null
+        _binding?.root?.removeCallbacks(musicTick)
         originalShadows.clear()
         originalShadowColors.clear()
         unregisterTimeTickReceiver()

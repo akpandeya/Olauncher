@@ -26,7 +26,9 @@
     <!-- Serif italic intention (quote) line on home -->
     <dimen name="home_quote_size">19sp</dimen>
     <!-- Smallest tap height for the next-event and now-playing lines -->
-    <dimen name="home_info_min_height">48dp</dimen>
+    <dimen name="home_info_min_height">36dp</dimen>
     <!-- How far the home wash fades out below the top text -->
     <dimen name="home_wash_fade">72dp</dimen>
+    <!-- Height of the album-colour glow behind the home clock (music pulse) -->
+    <dimen name="music_glow_height">300dp</dimen>
 </resources>
