@@ -1,5 +1,6 @@
 package app.olauncher.ui
 
+import android.util.Log
 import android.app.WallpaperColors
 import android.app.WallpaperManager
 import android.content.res.Configuration
@@ -24,6 +25,7 @@ internal fun HomeFragment.applyTextContrast() {
         try {
             WallpaperManager.getInstance(context).getWallpaperColors(WallpaperManager.FLAG_SYSTEM)
         } catch (e: Exception) {
+            Log.w("HomeFragment", "Failed to read wallpaper colors", e)
             null
         }
     }
