@@ -77,6 +77,9 @@ dependencies {
     // Work Manager
     implementation libs.work.runtime.ktx
 
+    // Health Connect (read-only, on-device)
+    implementation libs.health.connect.client
+
     //Material dependency
     implementation libs.material
 
