@@ -174,11 +174,11 @@
             tools:text="▶ Song — Artist"
             tools:visibility="visible" />
 
-        <!-- Thin progress line under the now-playing text while music plays (HomeFragment) -->
-        <View
+        <!-- Wavy progress line under the now-playing text while music plays (HomeFragment) -->
+        <app.olauncher.ui.WavyProgressView
             android:id="@+id/mediaProgress"
             android:layout_width="match_parent"
-            android:layout_height="2dp"
+            android:layout_height="12dp"
             android:layout_marginHorizontal="3dp"
             android:importantForAccessibility="no"
             android:visibility="gone" />
