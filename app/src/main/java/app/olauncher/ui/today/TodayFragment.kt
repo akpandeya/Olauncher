@@ -10,7 +10,10 @@ import android.view.inputmethod.InputMethodManager
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import app.olauncher.R
 import app.olauncher.data.Prefs
+import app.olauncher.data.store.IntentionHistory
+import app.olauncher.data.store.IntentionHistoryStore
 import app.olauncher.databinding.FragmentTodayBinding
 import app.olauncher.databinding.ItemTodayPanelBinding
 import app.olauncher.glance.HeroFormatting
@@ -24,6 +27,7 @@ import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 class TodayFragment : BaseFragment() {
@@ -32,6 +36,7 @@ class TodayFragment : BaseFragment() {
     private val binding get() = _binding!!
     private lateinit var prefs: Prefs
     private var panelsJob: Job? = null
+    private var pastIntentionsOpen = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -47,12 +52,17 @@ class TodayFragment : BaseFragment() {
         prefs = Prefs(requireContext())
         initSwipeTouchListener()
         initIntention()
+        binding.tvPastIntentions.setOnClickListener {
+            pastIntentionsOpen = !pastIntentionsOpen
+            refreshPastIntentions()
+        }
         populateCards()
     }
 
     override fun onResume() {
         super.onResume()
         refreshIntention()
+        refreshPastIntentions()
         // Rebuilds every card; each card renders itself in createView.
         populateCards()
     }
@@ -95,8 +105,28 @@ class TodayFragment : BaseFragment() {
     private fun saveIntention(raw: String?) {
         val text = Intention.clean(raw)
         prefs.intentionText = text
-        prefs.intentionDay = Intention.dayOf(LocalDateTime.now())
+        val day = Intention.dayOf(LocalDateTime.now())
+        prefs.intentionDay = day
+        IntentionHistoryStore(requireContext().filesDir).put(day, text)
         _binding?.etIntention?.setText(text)
+        refreshPastIntentions()
+    }
+
+    /** Collapsible list of earlier days' intentions; hidden when there are none. */
+    private fun refreshPastIntentions() {
+        val b = _binding ?: return
+        val today = Intention.dayOf(LocalDateTime.now())
+        val store = IntentionHistoryStore(requireContext().filesDir)
+        val past = IntentionHistory.pastEntries(store.load(prefs.intentionText, prefs.intentionDay), today)
+        b.tvPastIntentions.isVisible = past.isNotEmpty()
+        val showList = past.isNotEmpty() && pastIntentionsOpen
+        b.tvPastIntentionsList.isVisible = showList
+        b.tvPastIntentions.setText(if (showList) R.string.intention_past_header_open else R.string.intention_past_header)
+        if (!showList) return
+        val format = DateTimeFormatter.ofPattern("EEE d MMM", Locale.getDefault())
+        b.tvPastIntentionsList.text = past.joinToString("\n") {
+            "${LocalDate.ofEpochDay(it.day).format(format)} · ${it.text}"
+        }
     }
 
     private fun populateCards() {
