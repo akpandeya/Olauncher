@@ -8,6 +8,8 @@ object WordLookupShare {
     /** The word or short phrase (up to [MAX_WORDS] words) to look up, or null if the text is not one. */
     fun parse(raw: String): String? {
         if (WordCapture.classify(raw) == Capture.Invalid) return null
+        val trimmed = raw.trim()
+        if (trimmed.any { it == ',' || it == ';' || it == '\n' }) return null
         val tokens = WordCapture.tokenize(raw)
         if (tokens.isEmpty() || tokens.size > MAX_WORDS) return null
         val phrase = tokens.joinToString(" ")
