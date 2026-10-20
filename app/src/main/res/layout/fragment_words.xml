@@ -5,6 +5,7 @@
     android:layout_height="match_parent"
     android:clickable="true"
     android:focusable="true"
+    android:importantForAccessibility="no"
     tools:context=".ui.words.WordsFragment">
 
     <ScrollView
