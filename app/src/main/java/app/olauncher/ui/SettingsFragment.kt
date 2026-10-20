@@ -110,6 +110,7 @@ import app.olauncher.helper.setPlainWallpaperByTheme
 import app.olauncher.wellbeing.SystemGrey
 import app.olauncher.wellbeing.WindDownWorker
 import app.olauncher.helper.WordCaptureActivity
+import app.olauncher.helper.WordScreenService
 import app.olauncher.helper.OlDialog
 import app.olauncher.helper.showMessageDialog
 import app.olauncher.helper.showPopupMenu
@@ -438,6 +439,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             RuntimeSettingsRow(SettingsSections.KEY_DEUTSCH, binding.germanLayout, binding.germanTitle, R.id.germanOnOff),
             RuntimeSettingsRow(SettingsSections.KEY_DEUTSCH, binding.germanClockLayout, binding.germanClockTitle, R.id.germanClock),
             RuntimeSettingsRow(SettingsSections.KEY_DEUTSCH, binding.germanLookupLayout, binding.germanLookupTitle, R.id.germanLookupOnOff),
+            RuntimeSettingsRow(SettingsSections.KEY_DEUTSCH, binding.germanScreenPickLayout, binding.germanScreenPickTitle, R.id.germanScreenPickOnOff),
             RuntimeSettingsRow(SettingsSections.KEY_DEUTSCH, binding.germanPauseWordLayout, binding.germanPauseWordTitle, R.id.germanPauseWordOnOff),
             RuntimeSettingsRow(SettingsSections.KEY_DEUTSCH, binding.germanUiLayout, binding.germanUiTitle, R.id.germanUiOnOff),
 
@@ -727,6 +729,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.germanOnOff, R.id.germanTitle, R.id.germanLayout -> toggleGerman()
             R.id.germanClock, R.id.germanClockTitle, R.id.germanClockLayout -> showGermanClockMenu(binding.germanClock)
             R.id.germanLookupOnOff, R.id.germanLookupTitle, R.id.germanLookupSubtitle, R.id.germanLookupLayout -> toggleGermanLookup()
+            R.id.germanScreenPickOnOff, R.id.germanScreenPickTitle, R.id.germanScreenPickSubtitle, R.id.germanScreenPickLayout -> toggleGermanScreenPick()
             R.id.germanPauseWordOnOff, R.id.germanPauseWordTitle, R.id.germanPauseWordLayout -> toggleGermanPauseWord()
             R.id.germanUiOnOff, R.id.germanUiTitle, R.id.germanUiLayout -> toggleGermanUi()
             R.id.exportBackup, R.id.exportBackupLayout -> launchExportBackup()
@@ -918,6 +921,10 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.germanLookupTitle.setOnClickListener(this)
         binding.germanLookupSubtitle.setOnClickListener(this)
         binding.germanLookupLayout.setOnClickListener(this)
+        binding.germanScreenPickOnOff.setOnClickListener(this)
+        binding.germanScreenPickTitle.setOnClickListener(this)
+        binding.germanScreenPickSubtitle.setOnClickListener(this)
+        binding.germanScreenPickLayout.setOnClickListener(this)
         binding.germanPauseWordOnOff.setOnClickListener(this)
         binding.germanPauseWordTitle.setOnClickListener(this)
         binding.germanPauseWordLayout.setOnClickListener(this)
@@ -3538,6 +3545,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             withContext(Dispatchers.Main) {
                 if (!isAdded) return@withContext
                 WordCaptureActivity.setEnabled(appContext, prefs.germanEnabled)
+                WordScreenService.setEnabled(appContext, prefs.germanEnabled && prefs.germanScreenPick)
                 NudgeScheduler.rescheduleAll(appContext)
                 UsageSnapshotWorker.syncWithDistractingApps(appContext, prefs.distractingApps)
                 activity?.recreate()
@@ -3548,7 +3556,29 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     private fun toggleGerman() {
         prefs.germanEnabled = !prefs.germanEnabled
         WordCaptureActivity.setEnabled(requireContext(), prefs.germanEnabled)
+        WordScreenService.setEnabled(requireContext(), prefs.germanEnabled && prefs.germanScreenPick)
         populateGerman()
+    }
+
+    private fun toggleGermanScreenPick() {
+        prefs.germanScreenPick = !prefs.germanScreenPick
+        val on = prefs.germanEnabled && prefs.germanScreenPick
+        WordScreenService.setEnabled(requireContext(), on)
+        populateGerman()
+        if (on) {
+            dialog?.dismiss()
+            dialog = requireContext().showMessageDialog(
+                title = R.string.german_screen_pick,
+                message = R.string.german_screen_pick_message,
+                action = R.string.open_settings,
+            ) {
+                try {
+                    startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                } catch (_: Exception) {
+                    requireContext().showToast(getString(R.string.unable_to_open_app))
+                }
+            }
+        }
     }
 
     private fun toggleGermanLookup() {
@@ -3576,6 +3606,8 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         }
         binding.germanLookupLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
         binding.germanLookupOnOff.text = getString(if (prefs.germanLookup) R.string.on else R.string.off)
+        binding.germanScreenPickLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
+        binding.germanScreenPickOnOff.text = getString(if (prefs.germanScreenPick) R.string.on else R.string.off)
         binding.germanPauseWordLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
         binding.germanPauseWordOnOff.text = getString(if (prefs.germanPauseWord) R.string.on else R.string.off)
         binding.germanUiLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE

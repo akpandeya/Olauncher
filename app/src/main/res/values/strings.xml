@@ -382,6 +382,12 @@
     <string name="saved_word_de" translatable="false">Gespeichert: %s</string>
     <string name="select_word_or_sentence">Select a word or a sentence</string>
     <string name="german_lookup">Look up meanings online</string>
+    <string name="german_screen_pick">Pick words from the screen</string>
+    <string name="german_screen_pick_subtitle">Uses the accessibility button. Reads the screen only when you press it</string>
+    <string name="german_screen_pick_message">Turn on \"Thumbline: pick words\" in accessibility settings. Then press the accessibility button to pick words from any screen.</string>
+    <string name="word_screen_service_label">Thumbline: pick words</string>
+    <string name="word_screen_service_description">Reads the text on screen only when you press the accessibility button, and shows it so you can save German words. Nothing is stored or sent.</string>
+    <string name="nothing_to_pick_here">Nothing to pick here</string>
     <string name="german_lookup_subtitle">Sends the saved word to Wiktionary</string>
     <string name="german_pause_word">Word on the pause screen</string>
     <string name="german_ui">Nudges and pause in German</string>

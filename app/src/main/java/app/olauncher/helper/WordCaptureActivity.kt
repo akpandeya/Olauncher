@@ -12,6 +12,7 @@ import android.text.Spanned
 import android.text.style.RelativeSizeSpan
 import android.util.TypedValue
 import android.view.View
+import android.view.ViewGroup
 import android.widget.TextView
 import androidx.lifecycle.lifecycleScope
 import androidx.activity.addCallback
@@ -22,8 +23,10 @@ import app.olauncher.data.Prefs
 import app.olauncher.data.store.Capture
 import app.olauncher.data.store.WiktionaryApi
 import app.olauncher.data.store.WiktionaryCache
+import app.olauncher.data.store.ScreenText
 import app.olauncher.data.store.WordCapture
 import app.olauncher.data.store.WordLookup
+import app.olauncher.data.store.Word
 import app.olauncher.data.store.WordsStore
 import app.olauncher.databinding.ActivityWordCaptureBinding
 import kotlinx.coroutines.Dispatchers
@@ -54,6 +57,21 @@ class WordCaptureActivity : AppCompatActivity() {
         AppCompatDelegate.setDefaultNightMode(prefs.appTheme)
         if (prefs.boldFont) theme.applyStyle(R.style.BoldFontOverlay, true)
         super.onCreate(savedInstanceState)
+
+        val screenLines = intent?.getStringArrayListExtra(WordScreenService.EXTRA_SCREEN_LINES)
+        if (screenLines != null) {
+            val screenChoices = ScreenText.choices(screenLines)
+            if (screenChoices.isEmpty()) {
+                showToast(R.string.nothing_to_pick_here)
+                finish()
+            } else {
+                showPicker(
+                    screenChoices.map { it.text }, context = "", showSelectAll = false, prefs = prefs,
+                    contexts = screenChoices.associate { it.text.lowercase() to it.context }
+                )
+            }
+            return
+        }
 
         val rawText = readIncomingText()
 
@@ -111,7 +129,38 @@ class WordCaptureActivity : AppCompatActivity() {
         showToast(base + suffix)
     }
 
-    private fun showPicker(choices: List<String>, context: String, showSelectAll: Boolean, prefs: Prefs) {
+    private fun saveSelectedByLine(texts: List<String>, contexts: Map<String, String>) {
+        val store = WordsStore(this)
+        val added = mutableListOf<Word>()
+        val already = mutableListOf<Word>()
+        texts.groupBy { contexts[it.lowercase()].orEmpty() }.forEach { (line, group) ->
+            val result = store.addAll(group, line)
+            added.addAll(result.added)
+            already.addAll(result.alreadySaved)
+        }
+        added.forEach { WordLookup.enqueue(this, it.id) }
+        val base = when {
+            added.size == 1 -> getString(R.string.word_saved_de, added[0].text)
+            added.isEmpty() && already.size == 1 -> getString(R.string.word_saved_de, already[0].text)
+            else -> getString(R.string.words_saved_de, added.size)
+        }
+        val suffix = if (added.isNotEmpty() && already.isNotEmpty()) {
+            getString(R.string.words_already_saved_suffix_de, already.size)
+        } else ""
+        showToast(base + suffix)
+    }
+
+    /**
+     * [contexts] (screen pick only) maps a lowercase choice to its own line; choices are grouped by
+     * that line and each saved word keeps its line as context. Otherwise [context] is used for all.
+     */
+    private fun showPicker(
+        choices: List<String>,
+        context: String,
+        showSelectAll: Boolean,
+        prefs: Prefs,
+        contexts: Map<String, String>? = null,
+    ) {
         val binding = ActivityWordCaptureBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -198,7 +247,17 @@ class WordCaptureActivity : AppCompatActivity() {
             }
         }
 
+        var lastLine: String? = null
         for (choice in choices) {
+            val line = contexts?.get(choice.lowercase())
+            if (line != null && lastLine != null && line != lastLine) {
+                // A full-width spacer forces the next line's words onto a new row
+                binding.wordsContainer.addView(
+                    View(this),
+                    ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, paddingVertical)
+                )
+            }
+            lastLine = line ?: lastLine
             val saved = isSaved(choice)
             val textView = TextView(this).apply {
                 text = if (saved) {
@@ -243,7 +302,11 @@ class WordCaptureActivity : AppCompatActivity() {
         binding.meaningLine.typeface = typeface
         binding.saveButton.setOnClickListener {
             if (selected.isEmpty()) return@setOnClickListener
-            saveSelected(selected.toList(), context)
+            if (contexts == null) {
+                saveSelected(selected.toList(), context)
+            } else {
+                saveSelectedByLine(selected.toList(), contexts)
+            }
             finish()
         }
     }

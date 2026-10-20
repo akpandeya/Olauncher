@@ -70,6 +70,7 @@ class Prefs(context: Context) : PauseLogStorage {
         const val GERMAN_ENABLED = "GERMAN_ENABLED"
         const val GERMAN_UI = "GERMAN_UI"
         const val GERMAN_LOOKUP = "GERMAN_LOOKUP"
+        const val GERMAN_SCREEN_PICK = "GERMAN_SCREEN_PICK"
         const val GERMAN_PAUSE_WORD = "GERMAN_PAUSE_WORD"
         const val GERMAN_PAUSE_LAST_WORD_ID = "GERMAN_PAUSE_LAST_WORD_ID"
         const val GERMAN_CLOCK = "GERMAN_CLOCK"
@@ -580,6 +581,10 @@ class Prefs(context: Context) : PauseLogStorage {
     var germanLookup: Boolean
         get() = prefs.getBoolean(GERMAN_LOOKUP, true)
         set(value) = prefs.edit { putBoolean(GERMAN_LOOKUP, value).apply() }
+
+    var germanScreenPick: Boolean
+        get() = prefs.getBoolean(GERMAN_SCREEN_PICK, false)
+        set(value) = prefs.edit { putBoolean(GERMAN_SCREEN_PICK, value).apply() }
 
     var germanPauseWord: Boolean
         get() = prefs.getBoolean(GERMAN_PAUSE_WORD, true)
