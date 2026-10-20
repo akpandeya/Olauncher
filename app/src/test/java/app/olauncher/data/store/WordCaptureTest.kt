@@ -122,6 +122,44 @@ class WordCaptureTest {
     }
 
     @Test
+    fun `comma separated words classify as List`() {
+        assertEquals(Capture.List(listOf("Fernweh", "Heimweh")), WordCapture.classify("Fernweh, Heimweh"))
+        assertEquals(
+            Capture.List(listOf("Fernweh", "Heimweh", "Sehnsucht")),
+            WordCapture.classify("Fernweh; Heimweh; Sehnsucht")
+        )
+    }
+
+    @Test
+    fun `numbered five line vocabulary list classifies as List without numbering`() {
+        val input = "1. der Hund\n2. die Katze\n3) das Pferd\n4. der Vogel\n5. die Maus"
+        assertEquals(
+            Capture.List(listOf("der Hund", "die Katze", "das Pferd", "der Vogel", "die Maus")),
+            WordCapture.classify(input)
+        )
+    }
+
+    @Test
+    fun `bulleted lines keep phrases whole`() {
+        val input = "- sich freuen auf\n• Fernweh\n* Heimweh"
+        assertEquals(
+            Capture.List(listOf("sich freuen auf", "Fernweh", "Heimweh")),
+            WordCapture.classify(input)
+        )
+    }
+
+    @Test
+    fun `sentence with one comma stays Sentence`() {
+        val result = WordCapture.classify("Ja, ich komme morgen gern")
+        assertTrue(result is Capture.Sentence)
+    }
+
+    @Test
+    fun `single word with trailing newline stays Word`() {
+        assertEquals(Capture.Word("Fernweh"), WordCapture.classify("Fernweh\n"))
+    }
+
+    @Test
     fun `lookup is allowed only when German and lookup are both on`() {
         assertTrue(WordLookup.isLookupAllowed(germanEnabled = true, germanLookup = true))
         assertFalse(WordLookup.isLookupAllowed(germanEnabled = false, germanLookup = true))
