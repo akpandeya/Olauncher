@@ -19,12 +19,24 @@ object Backup {
     )
     const val OWN_OPENS_PREFIX = "OWN_OPENS_"
 
+    const val FILE_SAVED_ITEMS = "saved_items.json"
+    const val FILE_WORD_PROGRESS = "word_progress.json"
+    const val FILE_WORDS = "words.json"
+    const val FILE_USAGE_DAYS = "usage_days.json"
+    const val FILE_INTENTION_HISTORY = "intention_history.json"
+
+    // Files in filesDir that are deliberately NOT exported:
+    // - weather.json (WeatherCache) and rates.json (RatesCache): refetched from the network.
+    // - held.json (HeldStore): short-lived queue of held notifications; stale after a restore.
+    // - wallpapers/ (PhotoWallpaper): large binary images, not JSON data.
+    // - wiktionary_cache.json / wiktionary suggest cache live in cacheDir and are pure caches.
+    // Health Connect data is read live and never stored.
     val EXPORTED_FILES = listOf(
-        "saved_items.json",
-        "word_progress.json",
-        "words.json",
-        "usage_days.json",
-        "intention_history.json"
+        FILE_SAVED_ITEMS,
+        FILE_WORD_PROGRESS,
+        FILE_WORDS,
+        FILE_USAGE_DAYS,
+        FILE_INTENTION_HISTORY
     )
 
     fun isVolatileKey(key: String): Boolean {
