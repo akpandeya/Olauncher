@@ -18,6 +18,7 @@ import app.olauncher.glance.CalendarEvent
 import app.olauncher.glance.CalendarRepository
 import app.olauncher.glance.NextUpFormatting
 import app.olauncher.glance.NextUpLabels
+import app.olauncher.glance.NextUpPlanner
 import app.olauncher.helper.OpenTargets
 import app.olauncher.ui.today.TodayCard
 import app.olauncher.ui.today.TodayOrder
@@ -93,6 +94,7 @@ internal class NextUpCardView(
     private val fragment: Fragment,
 ) {
     private var job: Job? = null
+    private var expanded = false
 
     fun render() {
         val context = binding.root.context ?: return
@@ -105,7 +107,7 @@ internal class NextUpCardView(
         job = scope.launch {
             val repo = NextUpCard.getCalendarRepository(context)
             val now = NextUpCard.nowSupplier()
-            val events = repo.next(now, hours = 48, limit = 4)
+            val events = repo.next(now, hours = 48, limit = NextUpPlanner.FETCH_LIMIT)
 
             val currentBinding = binding
             if (events.isEmpty()) {
@@ -125,7 +127,8 @@ internal class NextUpCardView(
                     tomorrowEventTemplate = context.getString(R.string.next_up_tomorrow_event),
                 )
 
-                for (event in events) {
+                val plan = NextUpPlanner.plan(events, now, zone, expanded)
+                for (event in plan.rows) {
                     val itemBinding = ItemNextUpBinding.inflate(inflater, currentBinding.eventsContainer, false)
                     val row = NextUpFormatting.row(event, now, zone, is24Hour, labels)
                     itemBinding.tvEventTime.text = row.lead
@@ -140,6 +143,23 @@ internal class NextUpCardView(
                         itemBinding.root.isFocusable = false
                     }
                     currentBinding.eventsContainer.addView(itemBinding.root)
+                }
+
+                if (plan.hiddenCount > 0) {
+                    val toggle = ItemNextUpBinding.inflate(inflater, currentBinding.eventsContainer, false)
+                    toggle.tvEventTime.isVisible = false
+                    toggle.tvEventLine.text = if (expanded) {
+                        context.getString(R.string.next_up_less)
+                    } else {
+                        context.getString(R.string.next_up_more, plan.hiddenCount)
+                    }
+                    toggle.root.isClickable = true
+                    toggle.root.isFocusable = true
+                    toggle.root.setOnClickListener {
+                        expanded = !expanded
+                        render()
+                    }
+                    currentBinding.eventsContainer.addView(toggle.root)
                 }
             }
         }
