@@ -380,6 +380,10 @@
     <string name="in_worten_de" translatable="false">In Worten</string>
     <string name="save_word">Save word</string>
     <string name="save_word_thumbline">Thumbline: save word</string>
+    <string name="look_up_word_thumbline">Thumbline: look up word</string>
+    <string name="not_a_word_to_look_up">Not a word to look up</string>
+    <string name="word_lookup_saved">Saved</string>
+    <string name="a11y_word_lookup_sheet">Look up a word</string>
     <string name="saved_word_de" translatable="false">Gespeichert: %s</string>
     <string name="select_word_or_sentence">Select a word or a sentence</string>
     <string name="german_lookup">Look up meanings online</string>
