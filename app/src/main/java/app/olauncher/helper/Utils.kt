@@ -66,8 +66,8 @@ suspend fun getAppsList(
         val appList: MutableList<AppModel> = mutableListOf()
 
         try {
-            if (!Prefs(context).hiddenAppsUpdated) upgradeHiddenApps(Prefs(context))
-            val hiddenApps = Prefs(context).hiddenApps
+            if (!prefs.hiddenAppsUpdated) upgradeHiddenApps(prefs)
+            val hiddenApps = prefs.hiddenApps
 
             val userManager = context.getSystemService(Context.USER_SERVICE) as UserManager
             val launcherApps =
@@ -77,8 +77,10 @@ suspend fun getAppsList(
             for (profile in userManager.userProfiles) {
                 if (isPrivateSpaceProfile(context, profile)) continue
                 for (app in launcherApps.getActivityList(null, profile)) {
-                    val appLabelShown = prefs.getAppRenameLabel(app.applicationInfo.packageName)
-                        .ifBlank { app.label.toString() }
+                    val appLabelShown = AppListBuilder.displayLabel(
+                        prefs.getAppRenameLabel(app.applicationInfo.packageName),
+                        app.label.toString(),
+                    )
                     val isArchived = app.applicationInfo.isArchived
                     val appModel = AppModel.App(
                         appLabel = appLabelShown,
@@ -91,19 +93,16 @@ suspend fun getAppsList(
                         isArchived = isArchived,
                     )
 
-                    // if the current app is not OLauncher
-                    if (app.applicationInfo.packageName != BuildConfig.APPLICATION_ID) {
-                        // is this a hidden app?
-                        if (hiddenApps.contains(app.applicationInfo.packageName + "|" + profile.toString())) {
-                            if (includeHiddenApps) {
-                                appList.add(appModel)
-                            }
-                        } else {
-                            // this is a regular app
-                            if (includeRegularApps) {
-                                appList.add(appModel)
-                            }
-                        }
+                    if (AppListBuilder.shouldInclude(
+                            packageName = app.applicationInfo.packageName,
+                            userString = profile.toString(),
+                            ownPackage = BuildConfig.APPLICATION_ID,
+                            hiddenApps = hiddenApps,
+                            includeRegularApps = includeRegularApps,
+                            includeHiddenApps = includeHiddenApps,
+                        )
+                    ) {
+                        appList.add(appModel)
                     }
                 }
             }
@@ -118,7 +117,7 @@ suspend fun getAppsList(
                 appList.addAll(pinned)
             }
 
-            appList.sortWith(compareBy(collator) { it.appLabel })
+            AppListBuilder.sortByLabel(appList, collator) { it.appLabel }
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -231,9 +230,11 @@ suspend fun getPrivateSpaceApps(
             val collator = Collator.getInstance()
 
             for (app in launcherApps.getActivityList(null, privateSpaceHandle)) {
-                if (app.applicationInfo.packageName == BuildConfig.APPLICATION_ID) continue
-                val appLabelShown = prefs.getAppRenameLabel(app.applicationInfo.packageName)
-                    .ifBlank { app.label.toString() }
+                if (!AppListBuilder.shouldIncludePrivate(app.applicationInfo.packageName, BuildConfig.APPLICATION_ID)) continue
+                val appLabelShown = AppListBuilder.displayLabel(
+                    prefs.getAppRenameLabel(app.applicationInfo.packageName),
+                    app.label.toString(),
+                )
                 val isArchived = app.applicationInfo.isArchived
                 appList.add(
                     AppModel.App(
@@ -248,7 +249,7 @@ suspend fun getPrivateSpaceApps(
                     )
                 )
             }
-            appList.sortWith(compareBy(collator) { it.appLabel })
+            AppListBuilder.sortByLabel(appList, collator) { it.appLabel }
         } catch (e: Exception) {
             e.printStackTrace()
         }
