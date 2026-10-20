@@ -274,6 +274,46 @@ class MusicPulseTest {
     }
 
     @Test
+    fun wavePhaseWrapsEachPeriod() {
+        assertEquals(0f, MusicPulse.wavePhase(0L, 3_000L), 1e-6f)
+        assertEquals(0.25f, MusicPulse.wavePhase(750L, 3_000L), 1e-6f)
+        assertEquals(0.5f, MusicPulse.wavePhase(4_500L, 3_000L), 1e-6f)
+        assertEquals(0f, MusicPulse.wavePhase(6_000L, 3_000L), 1e-6f)
+        assertEquals(0f, MusicPulse.wavePhase(1_234L, 0L), 1e-6f)
+        assertTrue(MusicPulse.wavePhase(2_999L) < 1f)
+    }
+
+    @Test
+    fun waveOffsetIsSineOfAmplitude() {
+        // Wavelength 24, amplitude 3: zero at 0, peak at a quarter, zero at half, trough at three quarters.
+        assertEquals(0f, MusicPulse.waveOffset(0f, 24f, 3f, 0f), 1e-4f)
+        assertEquals(3f, MusicPulse.waveOffset(6f, 24f, 3f, 0f), 1e-4f)
+        assertEquals(0f, MusicPulse.waveOffset(12f, 24f, 3f, 0f), 1e-4f)
+        assertEquals(-3f, MusicPulse.waveOffset(18f, 24f, 3f, 0f), 1e-4f)
+        assertEquals(0f, MusicPulse.waveOffset(6f, 0f, 3f, 0f), 1e-6f)
+    }
+
+    @Test
+    fun waveOffsetMovesForwardWithPhase() {
+        // A quarter phase shifts the peak from x=6 to x=12.
+        assertEquals(3f, MusicPulse.waveOffset(12f, 24f, 3f, 0.25f), 1e-4f)
+        assertEquals(MusicPulse.waveOffset(5f, 24f, 3f, 0f), MusicPulse.waveOffset(29f, 24f, 3f, 0f), 1e-4f)
+    }
+
+    @Test
+    fun progressLineFollowsGlowElseText() {
+        assertEquals(0xFF336699.toInt(), MusicPulse.progressLineColor(0xFF336699.toInt(), 0xFFEEEEEE.toInt()))
+        assertEquals(0xFFEEEEEE.toInt(), MusicPulse.progressLineColor(null, 0xFFEEEEEE.toInt()))
+    }
+
+    @Test
+    fun waveTrackColorFadesAlphaOnly() {
+        assertEquals(0x4D336699, MusicPulse.waveTrackColor(0xFF336699.toInt()))
+        assertEquals(0x26112233, MusicPulse.waveTrackColor(0x80112233.toInt()))
+        assertEquals(0x00112233, MusicPulse.waveTrackColor(0x00112233))
+    }
+
+    @Test
     fun glowColourCycleIsAboutNineSeconds() {
         val cycle = MusicPulse.GLOW_COLOR_HOLD_MS + MusicPulse.GLOW_COLOR_FADE_MS
         assertTrue(cycle in 8_000L..10_000L)

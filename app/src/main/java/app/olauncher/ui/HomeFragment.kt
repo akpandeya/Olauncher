@@ -144,6 +144,8 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     private var glowShownColors: List<Int> = emptyList()
     private var glowColorIndex = 0
     private var glowColorAnimator: ValueAnimator? = null
+    /** Glow colour drawn now, including mid-fade; the progress line follows it. Null without a glow. */
+    private var glowCurrentColor: Int? = null
     private var glowRotating = false
     private val glowRotationStep = Runnable { fadeToNextGlowColor() }
     private var glowShownStrength: Int? = null
@@ -1688,6 +1690,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             glowShownColors = colors
             glowShownStrength = strength
             glowColorIndex = 0
+            glowCurrentColor = glow
             binding.musicGlow.background = glow?.let { glowDrawable(it, strength) }
         }
         binding.musicGlow.isVisible = glow != null
@@ -1703,11 +1706,13 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         )
         binding.mediaProgress.isVisible = fraction != null
         if (fraction != null) {
-            // The bar is a plain view, so it needs a colour; follow the now-playing text so it tracks the text settings.
-            binding.mediaProgress.setBackgroundColor(binding.contextLine.currentTextColor)
-            binding.mediaProgress.pivotX = 0f
-            binding.mediaProgress.scaleX = fraction
+            // Follow the glow colour; without a glow, follow the now-playing text so it tracks the text settings.
+            binding.mediaProgress.setLineColor(
+                MusicPulse.progressLineColor(glowCurrentColor, binding.contextLine.currentTextColor)
+            )
+            binding.mediaProgress.setProgress(fraction)
         }
+        binding.mediaProgress.setRunning(fraction != null && homeVisible)
         // Re-check every second so the progress line keeps moving while the song plays.
         binding.root.postDelayed(musicTick, 1_000L)
     }
@@ -1719,6 +1724,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         glowAnimator = null
         stopGlowRotation()
         binding.musicGlow.isVisible = false
+        binding.mediaProgress.setRunning(false)
         binding.mediaProgress.isVisible = false
     }
 
@@ -1752,7 +1758,12 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         glowColorAnimator?.cancel()
         glowColorAnimator = ValueAnimator.ofObject(ArgbEvaluator(), from, to).apply {
             duration = MusicPulse.GLOW_COLOR_FADE_MS
-            addUpdateListener { drawable.setColors(glowGradient(it.animatedValue as Int, strength)) }
+            addUpdateListener {
+                val color = it.animatedValue as Int
+                drawable.setColors(glowGradient(color, strength))
+                glowCurrentColor = color
+                _binding?.mediaProgress?.setLineColor(color)
+            }
             start()
         }
         // The next fade starts once this one has run and the colour has rested.
@@ -1827,7 +1838,9 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         stopGlowRotation()
         glowShownColors = emptyList()
         glowShownStrength = null
+        glowCurrentColor = null
         _binding?.root?.removeCallbacks(musicTick)
+        _binding?.mediaProgress?.setRunning(false)
         originalShadows.clear()
         originalShadowColors.clear()
         unregisterTimeTickReceiver()

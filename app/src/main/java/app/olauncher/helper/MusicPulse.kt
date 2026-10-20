@@ -166,6 +166,40 @@ object MusicPulse {
     fun nextGlowColorIndex(index: Int, count: Int): Int =
         if (count <= 0) 0 else (index + 1).mod(count)
 
+    /** Time for the progress wave to move on by one wavelength. Slow, so it reads as calm motion. */
+    const val WAVE_PERIOD_MS = 3_000L
+
+    /** Frames per second of the wave motion. Low to save battery; the wave moves slowly anyway. */
+    const val WAVE_MAX_FPS = 20
+    const val WAVE_FRAME_INTERVAL_MS = 1000L / WAVE_MAX_FPS
+
+    /** Alpha (0 to 255) of the faded straight track line, before the line colour's own alpha. */
+    const val WAVE_TRACK_ALPHA = 0x4D
+
+    /** Wave phase, 0 (inclusive) to 1 (exclusive), after [elapsedMs] of motion. 0 when [periodMs] is not positive. */
+    fun wavePhase(elapsedMs: Long, periodMs: Long = WAVE_PERIOD_MS): Float {
+        if (periodMs <= 0L) return 0f
+        return (elapsedMs.mod(periodMs)).toFloat() / periodMs
+    }
+
+    /**
+     * Vertical offset of the progress wave at [x]. A sine of [amplitude] with one cycle per [wavelength];
+     * a growing [phase] (0 to 1 per wavelength) moves the wave forward. 0 for a non-positive wavelength.
+     */
+    fun waveOffset(x: Float, wavelength: Float, amplitude: Float, phase: Float): Float {
+        if (wavelength <= 0f) return 0f
+        return amplitude * kotlin.math.sin(2.0 * Math.PI * (x / wavelength - phase)).toFloat()
+    }
+
+    /** Colour of the progress line: the glow colour shown now, or the now-playing text colour without a glow. */
+    fun progressLineColor(glowColor: Int?, textColor: Int): Int = glowColor ?: textColor
+
+    /** Faded track colour: [argb] with its alpha scaled by [WAVE_TRACK_ALPHA] out of 255. */
+    fun waveTrackColor(argb: Int): Int {
+        val alpha = (argb ushr 24) * WAVE_TRACK_ALPHA / 255
+        return (alpha shl 24) or (argb and 0x00FFFFFF)
+    }
+
     /**
      * The glow colour: the most populous swatch that is saturated and not too dark or light.
      * Falls back to a plain grey swatch in the same lightness range. Null when none fit.
