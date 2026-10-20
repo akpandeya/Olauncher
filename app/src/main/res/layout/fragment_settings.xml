@@ -1906,6 +1906,53 @@
                 </FrameLayout>
 
                 <FrameLayout
+                    android:id="@+id/germanSpellSuggestLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="4dp">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="start|center_vertical"
+                        android:layout_marginEnd="64dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/germanSpellSuggestTitle"
+                            style="@style/TextSmall"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:text="@string/german_spell_suggest"
+                            android:textColor="?attr/primaryColor" />
+
+                        <TextView
+                            android:id="@+id/germanSpellSuggestSubtitle"
+                            style="@style/TextSmall"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:layout_marginTop="2dp"
+                            android:alpha="0.7"
+                            android:text="@string/german_spell_suggest_subtitle"
+                            android:textColor="?attr/primaryColor"
+                            android:textSize="@dimen/text_subtitle" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/germanSpellSuggestOnOff"
+                        style="@style/TextSmallBold"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="end|center_vertical"
+                        android:layout_marginEnd="4dp"
+                        android:padding="8dp"
+                        tools:text="@string/on" />
+                </FrameLayout>
+
+                <FrameLayout
                     android:id="@+id/germanScreenPickLayout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -2471,6 +2518,19 @@
                 android:layout_marginTop="24dp"
                 android:gravity="center"
                 android:padding="12dp" />
+
+            <TextView
+                android:id="@+id/licenseNote"
+                style="@style/TextSmall"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:autoLink="web"
+                android:gravity="center"
+                android:linksClickable="true"
+                android:paddingHorizontal="12dp"
+                android:paddingBottom="12dp"
+                android:text="@string/wiktionary_license_note"
+                android:textSize="@dimen/text_subtitle" />
 
         </LinearLayout>
 

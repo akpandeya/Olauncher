@@ -77,6 +77,8 @@ import app.olauncher.helper.openUrl
 import app.olauncher.helper.DrawerCommand
 import app.olauncher.data.store.WiktionaryApi
 import app.olauncher.data.store.WiktionaryCache
+import app.olauncher.data.store.WiktionarySuggestCache
+import app.olauncher.helper.WordSuggest
 import app.olauncher.data.store.WordLookup
 import app.olauncher.data.store.WordsStore
 import kotlinx.coroutines.Job
@@ -98,6 +100,14 @@ class AppDrawerFragment : BaseFragment() {
     /** Text being looked up and its result; a null result means still loading. */
     @Volatile
     private var lookupState: Pair<String, WiktionaryApi.LookupResult?>? = null
+    private val SUGGEST_MAX_ONLINE_ITEMS = 5
+    private var suggestJob: Job? = null
+    /** Saved German words; loaded when the drawer opens and after each save. */
+    @Volatile
+    private var savedWordTexts: List<String> = emptyList()
+    /** Online suggestions for the items of the current `:sw` query (the key); null result per item is not stored. */
+    @Volatile
+    private var suggestState: Pair<List<String>, Map<String, List<String>>>? = null
     private var cachedIsCjkKeyboard: Boolean? = null
 
     private var flag = Constants.FLAG_LAUNCH_APP
@@ -134,6 +144,7 @@ class AppDrawerFragment : BaseFragment() {
         setupLetterStripLayout()
         initViews()
         initSearch()
+        refreshSavedWords()
         initAdapter()
         initObservers()
         initClickListeners()
@@ -235,6 +246,7 @@ class AppDrawerFragment : BaseFragment() {
                         lookupState = null
                     }
                     scheduleLookup(newText, LOOKUP_DEBOUNCE_MS)
+                    scheduleSuggest(newText, LOOKUP_DEBOUNCE_MS)
                     adapter.allowAutoLaunch = !isSearchComposing()
                     adapter.filter.filter(newText)
                     binding.appRename.visibility =
@@ -277,6 +289,73 @@ class AppDrawerFragment : BaseFragment() {
             lookupState = text to result
             adapter.filter.filter(binding.search.query)
         }
+    }
+
+    private fun refreshSavedWords() {
+        if (!prefs.germanEnabled) return
+        val ctx = context?.applicationContext ?: return
+        viewLifecycleOwner.lifecycleScope.launch {
+            savedWordTexts = withContext(Dispatchers.IO) { WordsStore(ctx).all().map { it.text } }
+        }
+    }
+
+    private fun suggestItems(query: String): List<String> =
+        (parseCommand(query) as? DrawerCommand.SaveWords)?.items.orEmpty()
+
+    private fun suggestOnlineAllowed(): Boolean = prefs.germanEnabled && prefs.germanSpellSuggest
+
+    /** Cancels any pending online suggestion and, when allowed, starts one for the unmatched `:sw` items. */
+    private fun scheduleSuggest(query: String, delayMs: Long) {
+        val items = suggestItems(query)
+        if (items == suggestState?.first) return
+        suggestJob?.cancel()
+        suggestState = null
+        if (!suggestOnlineAllowed() || items.isEmpty()) return
+        val unmatched = items.filter { !WordSuggest.hasExact(savedWordTexts, it) }
+            .take(SUGGEST_MAX_ONLINE_ITEMS)
+        if (unmatched.isEmpty()) return
+        suggestJob = viewLifecycleOwner.lifecycleScope.launch {
+            delay(delayMs)
+            val found = withContext(Dispatchers.IO) {
+                val map = LinkedHashMap<String, List<String>>()
+                for (item in unmatched) {
+                    val words = WiktionarySuggestCache.get(item) ?: when (val r = WiktionaryApi.suggest(item)) {
+                        is WiktionaryApi.SuggestResult.Suggestions -> r.words.also { WiktionarySuggestCache.put(item, it) }
+                        WiktionaryApi.SuggestResult.Failed -> emptyList()
+                    }
+                    map[item] = words
+                }
+                map
+            }
+            if (!isAdded || _binding == null) return@launch
+            // Never show an old answer: the text must still produce the same items.
+            if (suggestItems(binding.search.query.toString()) != items) return@launch
+            suggestState = items to found
+            adapter.filter.filter(binding.search.query)
+        }
+    }
+
+    /** "Did you mean" rows per unmatched item: offline from saved words first, then online ones. */
+    private fun spellRows(items: List<String>): List<AppModel.Result> {
+        val ctx = context ?: return emptyList()
+        val offline = WordSuggest.suggestForItems(savedWordTexts, items)
+        val online = suggestState?.takeIf { it.first == items && suggestOnlineAllowed() }?.second.orEmpty()
+        val rows = ArrayList<AppModel.Result>()
+        for ((item, local) in offline) {
+            val seen = HashSet<String>()
+            seen.add(item.trim().lowercase())
+            val options = ArrayList<String>()
+            for (candidate in local + online[item].orEmpty()) {
+                if (options.size >= WordSuggest.MAX_SUGGESTIONS) break
+                if (seen.add(candidate.trim().lowercase())) options.add(candidate)
+            }
+            for (option in options) {
+                val text = if (items.size == 1) ctx.getString(R.string.did_you_mean_row, option)
+                else ctx.getString(R.string.did_you_mean_for_row, option, item)
+                rows.add(AppModel.Result(text, AppModel.Result.Action.SaveWords(listOf(option))))
+            }
+        }
+        return rows
     }
 
     private fun lookUpRows(text: String): List<AppModel.Result> {
@@ -348,6 +427,7 @@ class AppDrawerFragment : BaseFragment() {
                 ctx.getString(R.string.words_already_saved_suffix_de, result.alreadySaved.size)
             } else ""
             ctx.showToast(base + suffix)
+            savedWordTexts = withContext(Dispatchers.IO) { WordsStore(ctx).all().map { it.text } }
             if (_binding != null) binding.search.setQuery("", false)
         }
     }
@@ -660,6 +740,7 @@ class AppDrawerFragment : BaseFragment() {
                 if (action != null) dialContact(action.lookupUri)
             },
             germanEnabledProvider = { prefs.germanEnabled },
+            spellRowsProvider = { items -> spellRows(items) },
             lookUpRowsProvider = { text -> lookUpRows(text) },
             wiktionaryLongClickListener = { result ->
                 val action = result.action as? AppModel.Result.Action.OpenWiktionary

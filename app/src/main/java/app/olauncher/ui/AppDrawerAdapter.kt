@@ -66,6 +66,7 @@ class AppDrawerAdapter(
     var currencyRowsProvider: ((String) -> List<AppModel.Result>)? = null,
     var contactLongClickListener: ((AppModel.Result) -> Unit)? = null,
     var germanEnabledProvider: (() -> Boolean)? = null,
+    var spellRowsProvider: ((List<String>) -> List<AppModel.Result>)? = null,
     var lookUpRowsProvider: ((String) -> List<AppModel.Result>)? = null,
     var wiktionaryLongClickListener: ((AppModel.Result) -> Unit)? = null,
 ) : ListAdapter<AppModel, RecyclerView.ViewHolder>(DIFF_CALLBACK), Filterable {
@@ -336,6 +337,11 @@ class AppDrawerAdapter(
                     when (command) {
                         is DrawerCommand.SaveWords -> {
                             if (command.items.isNotEmpty()) {
+                                try {
+                                    spellRowsProvider?.invoke(command.items)?.let { resultRows.addAll(it) }
+                                } catch (_: Exception) {
+                                    // No suggestion rows on failure.
+                                }
                                 resultRows.add(saveWordsRow(command.items))
                             }
                         }
