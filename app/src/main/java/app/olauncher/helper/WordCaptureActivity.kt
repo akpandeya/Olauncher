@@ -164,6 +164,27 @@ class WordCaptureActivity : AppCompatActivity() {
         val binding = ActivityWordCaptureBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Cap the word list so the meaning line and Save button stay on screen.
+        val maxListPx = SheetHeight.maxListHeight(resources.displayMetrics.heightPixels, 0.5)
+        binding.wordsScroll.viewTreeObserver.addOnPreDrawListener(object : android.view.ViewTreeObserver.OnPreDrawListener {
+            override fun onPreDraw(): Boolean {
+                val scroll = binding.wordsScroll
+                if (scroll.layoutParams.height == ViewGroup.LayoutParams.WRAP_CONTENT && scroll.measuredHeight > maxListPx) {
+                    scroll.layoutParams.height = maxListPx
+                    scroll.requestLayout()
+                    return false
+                }
+                return true
+            }
+        })
+        // Keep the sheet clear of the navigation bar.
+        val sheetBottomPad = binding.captureSheet.paddingBottom
+        binding.captureSheet.setOnApplyWindowInsetsListener { v, insets ->
+            @Suppress("DEPRECATION")
+            v.setPadding(v.paddingLeft, v.paddingTop, v.paddingRight, sheetBottomPad + insets.systemWindowInsetBottom)
+            insets
+        }
+
         binding.captureScrim.setOnClickListener { finish() }
         // Prevent clicks inside the sheet from dismissing via scrim
         binding.captureSheet.setOnClickListener { }

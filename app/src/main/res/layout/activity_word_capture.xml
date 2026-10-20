@@ -33,6 +33,7 @@
             android:visibility="gone" />
 
         <ScrollView
+            android:id="@+id/wordsScroll"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:overScrollMode="never"
