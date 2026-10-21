@@ -589,4 +589,29 @@
     <string name="word_picker_select_all">Select all</string>
     <string name="word_picker_saved_mark">saved</string>
     <string name="word_picker_save_n">Save %1$d</string>
+    <string name="privacy_intro" tools:ignore="MissingTranslation">Everything Thumbline can use, and what it is for. Nothing leaves your phone except the network items below.</string>
+    <string name="privacy_state_granted" tools:ignore="MissingTranslation">Granted</string>
+    <string name="privacy_state_not_granted" tools:ignore="MissingTranslation">Not granted</string>
+    <string name="privacy_state_not_applicable" tools:ignore="MissingTranslation">Not applicable</string>
+    <string name="privacy_revoke" tools:ignore="MissingTranslation">Revoke</string>
+    <string name="privacy_revoke_feature_off" tools:ignore="MissingTranslation">Turn off in Settings</string>
+    <string name="privacy_purpose_haptics" tools:ignore="MissingTranslation">Vibrate for touch feedback</string>
+    <string name="privacy_purpose_wallpaper" tools:ignore="MissingTranslation">Set your wallpaper when you choose a photo</string>
+    <string name="privacy_purpose_status_bar" tools:ignore="MissingTranslation">Open the notification shade with a swipe</string>
+    <string name="privacy_purpose_app_list" tools:ignore="MissingTranslation">List the apps you have installed</string>
+    <string name="privacy_purpose_uninstall" tools:ignore="MissingTranslation">Ask the system to uninstall an app when you choose to</string>
+    <string name="privacy_purpose_alarm" tools:ignore="MissingTranslation">Open the alarm clock from the home screen</string>
+    <string name="privacy_purpose_usage_stats" tools:ignore="MissingTranslation">Read your screen time, only on this phone</string>
+    <string name="privacy_purpose_private_space" tools:ignore="MissingTranslation">Show apps in your private space</string>
+    <string name="privacy_purpose_nudges" tools:ignore="MissingTranslation">Show gentle nudges and wellbeing notices</string>
+    <string name="privacy_purpose_network" tools:ignore="MissingTranslation">Allow the optional network features below</string>
+    <string name="privacy_purpose_weather_location" tools:ignore="MissingTranslation">Find your approximate location for the weather</string>
+    <string name="privacy_purpose_calendar" tools:ignore="MissingTranslation">Show your next event on Today</string>
+    <string name="privacy_purpose_contacts" tools:ignore="MissingTranslation">Search your contacts from the drawer</string>
+    <string name="privacy_purpose_health" tools:ignore="MissingTranslation">Show steps, sleep and heart rate from Health Connect</string>
+    <string name="privacy_purpose_system_grey" tools:ignore="MissingTranslation">Turn the whole screen grey (set only through a computer)</string>
+    <string name="privacy_purpose_weather_network" tools:ignore="MissingTranslation">Weather: sends your rounded location to Open-Meteo</string>
+    <string name="privacy_purpose_dictionary_network" tools:ignore="MissingTranslation">Word meanings: sends the word to Wiktionary</string>
+    <string name="privacy_purpose_rates_network" tools:ignore="MissingTranslation">Currency rates: asks Frankfurter for exchange rates</string>
+    <string name="privacy_purpose_artwork_network" tools:ignore="MissingTranslation">Now playing: fetches album artwork</string>
 </resources>

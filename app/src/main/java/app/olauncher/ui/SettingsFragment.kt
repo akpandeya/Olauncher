@@ -1250,6 +1250,11 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         binding.sectionRowAppearance.setOnClickListener(this)
         binding.sectionRowGestures.setOnClickListener(this)
         binding.sectionRowBackup.setOnClickListener(this)
+        // Tag, not id: FragmentSettingsBinding is at the 255-parameter constructor limit.
+        binding.sectionListLayout.findViewWithTag<View>("sectionRowPrivacy")?.setOnClickListener {
+            Haptics.tick(it)
+            findNavController().navigate(R.id.action_settingsFragment_to_privacyFragment)
+        }
 
         binding.photoWallpaper.setOnLongClickListener(this)
         binding.photoWallpaperTitle.setOnLongClickListener(this)
