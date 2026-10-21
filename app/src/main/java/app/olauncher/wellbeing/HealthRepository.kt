@@ -135,8 +135,11 @@ class HealthRepository(
 
         val steps = if (HealthPermission.getReadPermission(StepsRecord::class) in granted) {
             safe {
-                c.readRecords(ReadRecordsRequest(StepsRecord::class, range)).records.map {
-                    StepSpan(it.startTime.toEpochMilli(), it.endTime.toEpochMilli(), it.count, it.metadata.dataOrigin.packageName)
+                readAllPages { token ->
+                    val response = c.readRecords(ReadRecordsRequest(StepsRecord::class, range, pageToken = token))
+                    response.records.map {
+                        StepSpan(it.startTime.toEpochMilli(), it.endTime.toEpochMilli(), it.count, it.metadata.dataOrigin.packageName)
+                    } to response.pageToken
                 }
             }
         } else null
@@ -144,7 +147,7 @@ class HealthRepository(
         val sessions = if (HealthPermission.getReadPermission(ExerciseSessionRecord::class) in granted) {
             safe {
                 c.readRecords(ReadRecordsRequest(ExerciseSessionRecord::class, range)).records
-                    .filter { it.exerciseType == EXERCISE_TYPE_WALKING }
+                    .filter { it.exerciseType == ExerciseSessionRecord.EXERCISE_TYPE_WALKING }
                     .map { WalkSpan(it.startTime.toEpochMilli(), it.endTime.toEpochMilli()) }
             }
         } else null
@@ -160,9 +163,6 @@ class HealthRepository(
     }
 
     companion object {
-        /** ExerciseSessionRecord.EXERCISE_TYPE_WALKING. */
-        private const val EXERCISE_TYPE_WALKING = 79
-
         val READ_PERMISSIONS: Set<String> = setOf(
             HealthPermission.getReadPermission(StepsRecord::class),
             HealthPermission.getReadPermission(SleepSessionRecord::class),
