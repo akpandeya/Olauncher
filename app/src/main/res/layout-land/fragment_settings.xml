@@ -215,13 +215,14 @@
                     android:layout_marginTop="12dp">
 
                     <TextView
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/apps_on_home_screen"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/homeAppsNum"
@@ -239,13 +240,14 @@
                     android:layout_marginTop="12dp">
 
                     <TextView
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/show_date_time"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/dateTime"
@@ -266,13 +268,14 @@
 
                     <TextView
                         android:id="@+id/batteryModeTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/battery"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/batteryMode"
@@ -293,13 +296,14 @@
 
                     <TextView
                         android:id="@+id/infoLineTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/info_line"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/infoLine"
@@ -320,13 +324,14 @@
 
                     <TextView
                         android:id="@+id/homeSetsTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/app_sets"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/homeSets"
@@ -347,13 +352,14 @@
 
                     <TextView
                         android:id="@+id/editMorningAppsTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/edit_morning_apps"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                 </FrameLayout>
 
@@ -365,13 +371,14 @@
 
                     <TextView
                         android:id="@+id/editEveningAppsTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/edit_evening_apps"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                 </FrameLayout>
 
@@ -383,13 +390,14 @@
 
                     <TextView
                         android:id="@+id/morningStartTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/morning_starts"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/morningStart"
@@ -410,13 +418,14 @@
 
                     <TextView
                         android:id="@+id/dayStartTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/day_starts"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/dayStart"
@@ -437,13 +446,14 @@
 
                     <TextView
                         android:id="@+id/eveningStartTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/evening_starts"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/eveningStart"
@@ -464,13 +474,14 @@
 
                     <TextView
                         android:id="@+id/contextLineTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/context_line"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/contextLineValue"
@@ -491,13 +502,14 @@
 
                     <TextView
                         android:id="@+id/homeNextEventTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/home_next_event"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/homeNextEventValue"
@@ -516,13 +528,14 @@
                     android:layout_marginTop="12dp">
 
                     <TextView
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/home_layout_alignment"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/alignment"
@@ -544,13 +557,14 @@
 
                     <TextView
                         android:id="@+id/swapSides"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/swap_sides"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
                 </FrameLayout>
 
             </LinearLayout>
@@ -584,13 +598,14 @@
 
                     <TextView
                         android:id="@+id/shortcutIconsOnOffTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/shortcut_icons"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/shortcutIconsOnOff"
@@ -611,13 +626,14 @@
 
                     <TextView
                         android:id="@+id/shortcutCountTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/icons"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/shortcutCount"
@@ -638,13 +654,14 @@
 
                     <TextView
                         android:id="@+id/shortcutSizeTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/size"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/shortcutSize"
@@ -665,13 +682,14 @@
 
                     <TextView
                         android:id="@+id/shortcutSideTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/side"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/shortcutSide"
@@ -692,13 +710,14 @@
 
                     <TextView
                         android:id="@+id/shortcutHeightTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/height"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/shortcutHeight"
@@ -720,13 +739,14 @@
 
                     <TextView
                         android:id="@+id/shortcutIconStyleTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/style"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/shortcutIconStyle"
@@ -767,14 +787,15 @@
                     android:layout_marginTop="12dp">
 
                     <TextView
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:layout_marginEnd="80dp"
                         android:paddingVertical="8dp"
                         android:text="@string/auto_show_keyboard"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/autoShowKeyboard"
@@ -796,14 +817,15 @@
 
                     <TextView
                         android:id="@+id/drawerBottomSearchTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:layout_marginEnd="80dp"
                         android:paddingVertical="8dp"
                         android:text="@string/search_at_bottom"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/drawerBottomSearch"
@@ -825,14 +847,15 @@
 
                     <TextView
                         android:id="@+id/searchEngineTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:layout_marginEnd="80dp"
                         android:paddingVertical="8dp"
                         android:text="@string/search_engine"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/searchEngine"
@@ -854,14 +877,15 @@
 
                     <TextView
                         android:id="@+id/drawerNewFirstTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:layout_marginEnd="80dp"
                         android:paddingVertical="8dp"
                         android:text="@string/new_apps_first"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/drawerNewFirst"
@@ -883,14 +907,15 @@
 
                     <TextView
                         android:id="@+id/drawerLetterStripTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:layout_marginEnd="80dp"
                         android:paddingVertical="8dp"
                         android:text="@string/letter_strip"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/drawerLetterStrip"
@@ -912,14 +937,15 @@
 
                     <TextView
                         android:id="@+id/drawerRecentsTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:layout_marginEnd="80dp"
                         android:paddingVertical="8dp"
                         android:text="@string/recent_apps"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/drawerRecents"
@@ -941,14 +967,15 @@
 
                     <TextView
                         android:id="@+id/searchContactsTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:layout_marginEnd="80dp"
                         android:paddingVertical="8dp"
                         android:text="@string/search_contacts"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/searchContacts"
@@ -970,14 +997,15 @@
 
                     <TextView
                         android:id="@+id/currencyRatesTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:layout_marginEnd="80dp"
                         android:paddingVertical="8dp"
                         android:text="@string/currency_rates"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/currencyRates"
@@ -1020,13 +1048,14 @@
 
                     <TextView
                         android:id="@+id/distractingAppsTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/distracting_apps"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/distractingApps"
@@ -1047,13 +1076,14 @@
 
                     <TextView
                         android:id="@+id/pauseBeforeAppsTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/pause_before_distracting_apps"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/pauseBeforeAppsOnOff"
@@ -1074,13 +1104,14 @@
 
                     <TextView
                         android:id="@+id/pauseAllowanceTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/pause_daily_allowance_needs_access"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/pauseAllowance"
@@ -1101,13 +1132,14 @@
 
                     <TextView
                         android:id="@+id/pauseEscalateTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/pause_longer_with_each_open"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/pauseEscalateOnOff"
@@ -1135,13 +1167,14 @@
 
                         <TextView
                             android:id="@+id/pauseAskWhyTitle"
-                            style="@style/TextSmall"
+                            style="@style/TextLabel"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
                             android:paddingVertical="8dp"
                             android:text="@string/pause_ask_why"
-                            android:textColor="?attr/primaryColor" />
+                            android:textColor="?attr/primaryColor"
+                            android:textSize="@dimen/text_small" />
 
                         <TextView
                             style="@style/TextSmall"
@@ -1173,14 +1206,15 @@
 
                     <TextView
                         android:id="@+id/windDownTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="start|center_vertical"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/wind_down"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/windDown"
@@ -1208,13 +1242,14 @@
 
                         <TextView
                             android:id="@+id/windDownGreyTitle"
-                            style="@style/TextSmall"
+                            style="@style/TextLabel"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
                             android:paddingVertical="8dp"
                             android:text="@string/wind_down_grey"
-                            android:textColor="?attr/primaryColor" />
+                            android:textColor="?attr/primaryColor"
+                            android:textSize="@dimen/text_small" />
 
                         <TextView
                             style="@style/TextSmall"
@@ -1253,13 +1288,14 @@
 
                         <TextView
                             android:id="@+id/systemGreyTitle"
-                            style="@style/TextSmall"
+                            style="@style/TextLabel"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
                             android:paddingVertical="8dp"
                             android:text="@string/system_grey"
-                            android:textColor="?attr/primaryColor" />
+                            android:textColor="?attr/primaryColor"
+                            android:textSize="@dimen/text_small" />
 
                         <TextView
                             android:id="@+id/systemGreyStatus"
@@ -1323,12 +1359,13 @@
 
                         <TextView
                             android:id="@+id/commitLockTitle"
-                            style="@style/TextSmall"
+                            style="@style/TextLabel"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
                             android:text="@string/commit_lock"
-                            android:textColor="?attr/primaryColor" />
+                            android:textColor="?attr/primaryColor"
+                            android:textSize="@dimen/text_small" />
 
                         <TextView
                             android:id="@+id/commitLockSubtitle"
@@ -1361,13 +1398,14 @@
 
                     <TextView
                         android:id="@+id/holdNotificationsTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/hold_notifications_from_distracting_apps"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/holdNotificationsOnOff"
@@ -1388,13 +1426,14 @@
 
                     <TextView
                         android:id="@+id/healthConnectTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/use_health_connect"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/healthConnectOnOff"
@@ -1415,13 +1454,14 @@
 
                     <TextView
                         android:id="@+id/quietReleaseTimesTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/release_at"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/quietReleaseTimes"
@@ -1441,13 +1481,14 @@
                     android:layout_marginTop="12dp">
 
                     <TextView
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/screen_time"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/screenTimeOnOff"
@@ -1468,13 +1509,14 @@
 
                     <TextView
                         android:id="@+id/screenTimeStyleTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/screen_time_style"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/screenTimeStyle"
@@ -1495,13 +1537,14 @@
 
                     <TextView
                         android:id="@+id/screenTimeTargetTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/screen_time_target"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/screenTimeTarget"
@@ -1532,13 +1575,14 @@
 
                     <TextView
                         android:id="@+id/nudgeWaterTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/nudge_water"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/nudgeWater"
@@ -1559,13 +1603,14 @@
 
                     <TextView
                         android:id="@+id/nudgeWalkTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/nudge_walk"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/nudgeWalk"
@@ -1586,13 +1631,14 @@
 
                     <TextView
                         android:id="@+id/nudgeSocialTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/nudge_social"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/nudgeSocial"
@@ -1614,13 +1660,14 @@
 
                     <TextView
                         android:id="@+id/nudgeActiveHoursTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/nudge_active_hours"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/nudgeActiveHours"
@@ -1665,7 +1712,7 @@
 
                     <TextView
                         android:id="@+id/todayCardsTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
@@ -1674,7 +1721,8 @@
                         android:lines="1"
                         android:paddingVertical="8dp"
                         android:text="@string/today_cards"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/todayCards"
@@ -1697,7 +1745,7 @@
 
                     <TextView
                         android:id="@+id/todayOrderTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
@@ -1706,7 +1754,8 @@
                         android:lines="1"
                         android:paddingVertical="8dp"
                         android:text="@string/today_card_order"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/todayOrder"
@@ -1729,7 +1778,7 @@
 
                     <TextView
                         android:id="@+id/intentionOnHomeTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
@@ -1738,7 +1787,8 @@
                         android:lines="1"
                         android:paddingVertical="8dp"
                         android:text="@string/intention_on_home"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/intentionOnHome"
@@ -1782,13 +1832,14 @@
 
                     <TextView
                         android:id="@+id/weatherTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/weather"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/weather"
@@ -1834,13 +1885,14 @@
 
                     <TextView
                         android:id="@+id/germanTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/german"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/germanOnOff"
@@ -1862,13 +1914,14 @@
 
                     <TextView
                         android:id="@+id/germanClockTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/clock"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/germanClock"
@@ -1897,12 +1950,13 @@
 
                         <TextView
                             android:id="@+id/germanLookupTitle"
-                            style="@style/TextSmall"
+                            style="@style/TextLabel"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
                             android:text="@string/german_lookup"
-                            android:textColor="?attr/primaryColor" />
+                            android:textColor="?attr/primaryColor"
+                            android:textSize="@dimen/text_small" />
 
                         <TextView
                             android:id="@+id/germanLookupSubtitle"
@@ -1943,12 +1997,13 @@
 
                         <TextView
                             android:id="@+id/germanSpellSuggestTitle"
-                            style="@style/TextSmall"
+                            style="@style/TextLabel"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
                             android:text="@string/german_spell_suggest"
-                            android:textColor="?attr/primaryColor" />
+                            android:textColor="?attr/primaryColor"
+                            android:textSize="@dimen/text_small" />
 
                         <TextView
                             android:id="@+id/germanSpellSuggestSubtitle"
@@ -1989,12 +2044,13 @@
 
                         <TextView
                             android:id="@+id/germanScreenPickTitle"
-                            style="@style/TextSmall"
+                            style="@style/TextLabel"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
                             android:text="@string/german_screen_pick"
-                            android:textColor="?attr/primaryColor" />
+                            android:textColor="?attr/primaryColor"
+                            android:textSize="@dimen/text_small" />
 
                         <TextView
                             android:id="@+id/germanScreenPickSubtitle"
@@ -2028,13 +2084,14 @@
 
                     <TextView
                         android:id="@+id/germanPauseWordTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/german_pause_word"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/germanPauseWordOnOff"
@@ -2056,13 +2113,14 @@
 
                     <TextView
                         android:id="@+id/germanUiTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/german_ui"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/germanUiOnOff"
@@ -2105,13 +2163,14 @@
 
                     <TextView
                         android:id="@+id/photoWallpaperTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/wallpaper_photos"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/photoWallpaper"
@@ -2130,13 +2189,14 @@
                     android:layout_marginTop="16dp">
 
                     <TextView
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/notification_bar"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/statusBar"
@@ -2155,13 +2215,14 @@
                     android:layout_marginTop="12dp">
 
                     <TextView
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/theme_mode"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/appThemeText"
@@ -2180,13 +2241,14 @@
                     android:layout_marginTop="12dp">
 
                     <TextView
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/accent_color"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/accent"
@@ -2205,13 +2267,14 @@
                     android:layout_marginTop="12dp">
 
                     <TextView
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/font"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/fontFamily"
@@ -2230,13 +2293,14 @@
                     android:layout_marginTop="12dp">
 
                     <TextView
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/bold_font"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/boldFont"
@@ -2255,13 +2319,14 @@
                     android:layout_marginTop="12dp">
 
                     <TextView
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/text_size"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/textSizeValue"
@@ -2283,13 +2348,14 @@
                     android:layout_marginBottom="4dp">
 
                     <TextView
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/haptics"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/haptics"
@@ -2310,13 +2376,14 @@
 
                     <TextView
                         android:id="@+id/textContrastTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/text_on_wallpaper"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/textContrast"
@@ -2337,13 +2404,14 @@
 
                     <TextView
                         android:id="@+id/homeWashTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/home_darkness"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/homeDarkness"
@@ -2364,13 +2432,14 @@
 
                     <TextView
                         android:id="@+id/textBrightnessTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/text_brightness"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/textBrightness"
@@ -2391,13 +2460,14 @@
 
                     <TextView
                         android:id="@+id/musicPulseTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/music_pulse"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/musicPulse"
@@ -2423,14 +2493,15 @@
 
                         <TextView
                             android:id="@+id/glowStrengthTitle"
-                            style="@style/TextSmall"
+                            style="@style/TextLabel"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
                             android:labelFor="@+id/glowStrengthSeekBar"
                             android:paddingVertical="8dp"
                             android:text="@string/glow_strength"
-                            android:textColor="?attr/primaryColor" />
+                            android:textColor="?attr/primaryColor"
+                            android:textSize="@dimen/text_small" />
 
                         <TextView
                             android:id="@+id/glowStrength"
@@ -2464,13 +2535,14 @@
 
                     <TextView
                         android:id="@+id/weatherEffectsTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/weather_effects"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/weatherEffects"
@@ -2512,7 +2584,7 @@
                     android:orientation="horizontal">
 
                     <TextView
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
@@ -2521,7 +2593,8 @@
                         android:lines="1"
                         android:paddingVertical="8dp"
                         android:text="@string/swipe_left_app"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/swipeLeftApp"
@@ -2542,7 +2615,7 @@
                     android:orientation="horizontal">
 
                     <TextView
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
@@ -2551,7 +2624,8 @@
                         android:lines="1"
                         android:paddingVertical="8dp"
                         android:text="@string/swipe_right_app"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/swipeRightApp"
@@ -2572,12 +2646,13 @@
                     android:visibility="visible">
 
                     <TextView
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:paddingVertical="8dp"
                         android:text="@string/double_tap_to_lock_screen"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/toggleLock"
@@ -2598,13 +2673,14 @@
                     android:visibility="visible">
 
                     <TextView
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginEnd="80dp"
                         android:paddingVertical="8dp"
                         android:text="@string/home_button_show_recents"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/homeButtonRecents"
@@ -2647,13 +2723,14 @@
 
                     <TextView
                         android:id="@+id/exportBackup"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/export_backup"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
                 </FrameLayout>
 
                 <FrameLayout
@@ -2664,14 +2741,15 @@
 
                     <TextView
                         android:id="@+id/autoBackupTitle"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:layout_marginEnd="80dp"
                         android:paddingVertical="8dp"
                         android:text="@string/nightly_backup"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
 
                     <TextView
                         android:id="@+id/autoBackup"
@@ -2703,13 +2781,14 @@
 
                     <TextView
                         android:id="@+id/importBackup"
-                        style="@style/TextSmall"
+                        style="@style/TextLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="8dp"
                         android:paddingVertical="8dp"
                         android:text="@string/import_backup"
-                        android:textColor="?attr/primaryColor" />
+                        android:textColor="?attr/primaryColor"
+                        android:textSize="@dimen/text_small" />
                 </FrameLayout>
 
             </LinearLayout>
