@@ -47,11 +47,13 @@ import app.olauncher.helper.BatteryReading
 import app.olauncher.helper.ContextItem
 import app.olauncher.helper.DefaultLauncherCheck
 import app.olauncher.helper.GermanTime
+import app.olauncher.helper.HomeTick
 import app.olauncher.helper.AppTarget
 import app.olauncher.helper.OpenTargets
 import app.olauncher.helper.NowPlaying
 import app.olauncher.helper.InfoLine
 import app.olauncher.helper.Intention
+import java.time.LocalDate
 import java.time.LocalDateTime
 import app.olauncher.helper.appUsagePermissionGranted
 import app.olauncher.helper.dpToPx
@@ -82,7 +84,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     private var lastBatteryReading: BatteryReading? = null
     internal var weatherPrefsListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
     internal var latestScreenTime: String? = null
-    internal var contextTickReceiver: BroadcastReceiver? = null
+    private var lastRenderedEpochDay: Long? = null
     internal var nowPlaying: NowPlaying? = null
     internal var glowAnimator: ObjectAnimator? = null
     internal var glowShownColors: List<Int> = emptyList()
@@ -150,7 +152,13 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         viewModel.isOlauncherDefault()
         if (prefs.showStatusBar) showStatusBar()
         else hideStatusBar()
-        if (prefs.homeSets || GermanTime.isWordsClockOn(prefs.germanEnabled, prefs.germanClock)) registerTimeTickReceiver()
+        if (HomeTick.needsTick(
+                prefs.homeSets,
+                GermanTime.isWordsClockOn(prefs.germanEnabled, prefs.germanClock),
+                prefs.homeContextLine,
+                prefs.homeMusicPulse,
+            )
+        ) registerTimeTickReceiver()
         registerBatteryReceiver()
         startContextLine()
         populateNextEventLine()
@@ -424,6 +432,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
 
     internal fun populateDateTime() {
+        lastRenderedEpochDay = LocalDate.now().toEpochDay()
         binding.dateTimeLayout.isVisible = prefs.dateTimeVisibility != Constants.DateTime.OFF
         val isTimeVisible = Constants.DateTime.isTimeVisible(prefs.dateTimeVisibility)
         val isDateVisible = Constants.DateTime.isDateVisible(prefs.dateTimeVisibility)
@@ -550,6 +559,8 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
                     if (intent?.action == Intent.ACTION_TIME_TICK) {
                         if (GermanTime.isWordsClockOn(prefs.germanEnabled, prefs.germanClock)) updateClockWords()
                         refreshHomeSetIfChanged()
+                        if (prefs.homeContextLine || prefs.homeMusicPulse) refreshContextLine()
+                        if (_binding != null && HomeTick.dayChanged(lastRenderedEpochDay, LocalDate.now().toEpochDay())) populateDateTime()
                     }
                 }
             }
