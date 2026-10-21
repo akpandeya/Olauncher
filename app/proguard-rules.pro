@@ -19,3 +19,9 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+# androidTest runner (AndroidJUnitRunner) loads these at start; R8 on the debug variant strips them.
+# AndroidJUnitRunner calls androidx.tracing.Trace at onCreate.
+-keep class androidx.tracing.** { *; }
+# Test runner and its helpers are reached by reflection from the instrumentation.
+-keep class androidx.test.** { *; }
+-dontwarn androidx.test.**
