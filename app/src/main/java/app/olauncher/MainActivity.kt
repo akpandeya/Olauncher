@@ -240,6 +240,7 @@ class MainActivity : AppCompatActivity() {
         viewModel.isAwaitingActivityResult = false
         reloadAppList(AppListReloadTrigger.RESUME)
         advanceWelcomeIfDefault()
+        NudgeScheduler.syncSocial(this)
     }
 
     /** A welcome still on step 1 moves on once the user has made Thumbline the default launcher. */
