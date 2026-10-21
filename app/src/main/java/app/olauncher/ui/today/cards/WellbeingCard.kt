@@ -84,11 +84,6 @@ object WellbeingCard : TodayCard {
     var usageRepositoryProvider: ((Context) -> UsageRepository)? = null
     var scopeProvider: (() -> CoroutineScope)? = null
 
-    internal var binding: CardWellbeingBinding? = null
-    private var cardFragment: Fragment? = null
-    private var usageJob: Job? = null
-    private var healthJob: Job? = null
-
     fun getUsageRepository(context: Context): UsageRepository {
         return usageRepositoryProvider?.invoke(context) ?: UsageRepository(context)
     }
@@ -117,45 +112,67 @@ object WellbeingCard : TodayCard {
         TodayOrder.wellbeingPriority(now.hour, super.priority(context, now))
 
     override fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View {
-        cardFragment = fragment
-        val viewBinding = CardWellbeingBinding.inflate(inflater, parent, false)
-        binding = viewBinding
+        val binding = CardWellbeingBinding.inflate(inflater, parent, false)
+        val cardView = WellbeingCardView(binding, fragment)
+        binding.root.tag = cardView
 
-        viewBinding.root.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
+        binding.root.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
             override fun onViewAttachedToWindow(v: View) {}
             override fun onViewDetachedFromWindow(v: View) {
-                if (binding === viewBinding) {
-                    usageJob?.cancel()
-                    usageJob = null
-                    healthJob?.cancel()
-                    healthJob = null
-                    binding = null
-                    cardFragment = null
-                }
+                cardView.release()
             }
         })
 
-        viewBinding.tvWater.setOnClickListener {
+        binding.tvWater.setOnClickListener {
             Haptics.tick(it)
-            onNudgeClicked(viewBinding.root.context, Nudges.WATER)
+            cardView.onNudgeClicked(Nudges.WATER)
         }
 
-        viewBinding.tvWalk.setOnClickListener {
+        binding.tvWalk.setOnClickListener {
             Haptics.tick(it)
-            onNudgeClicked(viewBinding.root.context, Nudges.WALK)
+            cardView.onNudgeClicked(Nudges.WALK)
         }
 
-        render()
-        return viewBinding.root
+        cardView.render()
+        return binding.root
     }
 
-    override fun onResume() {
-        render()
+    override fun onResume(view: View) {
+        (view.tag as? WellbeingCardView)?.render()
+    }
+}
+
+/** Per-view state of the Wellbeing card; lives and dies with the card's root view. */
+internal class WellbeingCardView(
+    private val binding: CardWellbeingBinding,
+    fragment: Fragment,
+) {
+    private var fragment: Fragment? = fragment
+    private var released = false
+    private var usageJob: Job? = null
+    private var healthJob: Job? = null
+
+    /** Walks found automatically in Health Connect today; null when unavailable. */
+    private var autoWalks: Int? = null
+
+    fun release() {
+        released = true
+        usageJob?.cancel()
+        usageJob = null
+        healthJob?.cancel()
+        healthJob = null
+        fragment = null
     }
 
-    fun onNudgeClicked(context: Context, type: String) {
-        val prefs = Prefs(context)
-        prefs.incrementNudgeDone(type)
+    private fun scope(): CoroutineScope? {
+        if (released) return null
+        return WellbeingCard.scopeProvider?.invoke()
+            ?: (try { fragment?.viewLifecycleOwner?.lifecycleScope } catch (_: IllegalStateException) { null })
+    }
+
+    fun onNudgeClicked(type: String) {
+        val context = binding.root.context
+        Prefs(context).incrementNudgeDone(type)
         Nudges.cancel(context, type)
         renderLine1()
     }
@@ -167,11 +184,8 @@ object WellbeingCard : TodayCard {
         renderHealthLine()
     }
 
-    /** Walks found automatically in Health Connect today; null when unavailable. */
-    private var autoWalks: Int? = null
-
     fun renderHealthLine() {
-        val b = binding ?: return
+        val b = binding
         val context = b.root.context ?: return
         val prefs = Prefs(context)
         healthJob?.cancel()
@@ -180,10 +194,7 @@ object WellbeingCard : TodayCard {
             autoWalks = null
             return
         }
-        val scope = scopeProvider?.invoke()
-            ?: (try { cardFragment?.viewLifecycleOwner?.lifecycleScope } catch (_: Exception) { null }
-                ?: cardFragment?.lifecycleScope
-                ?: CoroutineScope(Dispatchers.Main))
+        val scope = scope() ?: return
         healthJob = scope.launch {
             val repo = HealthRepository(context, { prefs.healthConnectEnabled })
             val summary = withContext(Dispatchers.IO) { repo.readToday() }
@@ -201,14 +212,14 @@ object WellbeingCard : TodayCard {
                 heartRate = context.getString(R.string.health_line_heart_rate),
             )
             val line = summary?.let { HealthSummaryFormatting.formatLine(it, labels) }
-            val current = binding ?: return@launch
-            current.tvHealth.isVisible = line != null
-            if (line != null) current.tvHealth.text = line
+            if (released) return@launch
+            b.tvHealth.isVisible = line != null
+            if (line != null) b.tvHealth.text = line
         }
     }
 
     fun renderLine1() {
-        val b = binding ?: return
+        val b = binding
         val context = b.root.context ?: return
         val prefs = Prefs(context)
 
@@ -231,12 +242,11 @@ object WellbeingCard : TodayCard {
             if (walkOn) {
                 b.tvWalk.text = context.getString(R.string.wellbeing_walk_chip, walkCount)
             }
-
         }
     }
 
     fun renderPauseWins() {
-        val b = binding ?: return
+        val b = binding
         val context = b.root.context ?: return
         val notNow = Prefs(context).pauseLog.today().notNow
         val text = WellbeingCardLogic.formatPauseWins(notNow, context.getString(R.string.wellbeing_pause_wins, notNow))
@@ -245,7 +255,7 @@ object WellbeingCard : TodayCard {
     }
 
     fun renderLine2() {
-        val b = binding ?: return
+        val b = binding
         val context = b.root.context ?: return
         val prefs = Prefs(context)
 
@@ -255,20 +265,17 @@ object WellbeingCard : TodayCard {
             return
         }
 
-        val scope = scopeProvider?.invoke()
-            ?: (try { cardFragment?.viewLifecycleOwner?.lifecycleScope } catch (_: Exception) { null }
-                ?: cardFragment?.lifecycleScope
-                ?: CoroutineScope(Dispatchers.Main))
+        val scope = scope() ?: return
 
         usageJob?.cancel()
         usageJob = scope.launch {
-            val repo = getUsageRepository(context)
+            val repo = WellbeingCard.getUsageRepository(context)
             val millis = repo.foregroundMillisToday(distractingPkgs)
             val opens = repo.openCountToday(distractingPkgs)
 
-            val currentBinding = binding ?: return@launch
+            if (released) return@launch
             if (millis == null || opens == null) {
-                currentBinding.tvDistractingApps.isVisible = false
+                b.tvDistractingApps.isVisible = false
                 return@launch
             }
 
@@ -279,9 +286,9 @@ object WellbeingCard : TodayCard {
                 context.getString(R.string.wellbeing_open_plural, opens)
             }
             val label = context.getString(R.string.distracting_apps)
-            currentBinding.tvDistractingApps.text =
+            b.tvDistractingApps.text =
                 context.getString(R.string.wellbeing_distracting_stats, label, durationText, opensText)
-            currentBinding.tvDistractingApps.isVisible = true
+            b.tvDistractingApps.isVisible = true
         }
     }
 }
