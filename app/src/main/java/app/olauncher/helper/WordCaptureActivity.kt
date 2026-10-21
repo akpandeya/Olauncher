@@ -4,7 +4,6 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Typeface
 import android.os.Bundle
 import android.graphics.Paint
 import android.text.SpannableStringBuilder
@@ -65,7 +64,7 @@ class WordCaptureActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val prefs = Prefs(this)
         AppCompatDelegate.setDefaultNightMode(prefs.appTheme)
-        if (prefs.boldFont) theme.applyStyle(R.style.BoldFontOverlay, true)
+        prefs.applyFontOverlay(theme)
         super.onCreate(savedInstanceState)
 
         val screenLines = intent?.getStringArrayListExtra(WordScreenService.EXTRA_SCREEN_LINES)
@@ -204,7 +203,7 @@ class WordCaptureActivity : AppCompatActivity() {
         val isSaved = { choice: String -> savedByText.containsKey(choice.trim().lowercase()) }
         val lookupAllowed = WordLookup.isLookupAllowed(prefs.germanEnabled, prefs.germanLookup)
 
-        val typeface = Typeface.create(if (prefs.boldFont) "sans-serif" else "sans-serif-light", Typeface.NORMAL)
+        val typeface = mainTypeface()
         val primaryColor = getColorFromAttr(R.attr.primaryColor)
         val accentColor = getColorFromAttr(R.attr.accentColor)
         val hasAccent = accentColor != primaryColor

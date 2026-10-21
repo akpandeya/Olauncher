@@ -10,18 +10,30 @@
     <!-- Font family overlays applied over AppTheme -->
     <style name="FontInterOverlay">
         <item name="mainFontFamily">@font/inter</item>
+        <item name="displayFontFamily">@font/inter_bold</item>
+        <item name="labelFontFamily">@font/inter</item>
+        <item name="quoteFontFamily">@font/inter</item>
     </style>
 
     <style name="FontInterBoldOverlay">
         <item name="mainFontFamily">@font/inter_bold</item>
+        <item name="displayFontFamily">@font/inter_bold</item>
+        <item name="labelFontFamily">@font/inter_bold</item>
+        <item name="quoteFontFamily">@font/inter_bold</item>
     </style>
 
     <style name="FontPlexOverlay">
         <item name="mainFontFamily">@font/ibm_plex_sans</item>
+        <item name="displayFontFamily">@font/ibm_plex_sans_bold</item>
+        <item name="labelFontFamily">@font/ibm_plex_sans</item>
+        <item name="quoteFontFamily">@font/ibm_plex_sans</item>
     </style>
 
     <style name="FontPlexBoldOverlay">
         <item name="mainFontFamily">@font/ibm_plex_sans_bold</item>
+        <item name="displayFontFamily">@font/ibm_plex_sans_bold</item>
+        <item name="labelFontFamily">@font/ibm_plex_sans_bold</item>
+        <item name="quoteFontFamily">@font/ibm_plex_sans_bold</item>
     </style>
 
     <!-- Accent theme overlays applied over AppTheme -->
@@ -73,6 +85,20 @@
         <item name="android:shadowDx">0</item>
         <item name="android:shadowDy">2</item>
         <item name="android:shadowRadius">6</item>
+    </style>
+
+    <!-- Home type roles; fonts follow the font setting through the theme attributes -->
+    <style name="TextDisplay" parent="TextDefault">
+        <item name="android:fontFamily">?attr/displayFontFamily</item>
+    </style>
+
+    <style name="TextLabel" parent="TextDefault">
+        <item name="android:fontFamily">?attr/labelFontFamily</item>
+    </style>
+
+    <style name="TextQuote" parent="TextDefault">
+        <item name="android:fontFamily">?attr/quoteFontFamily</item>
+        <item name="android:textStyle">italic</item>
     </style>
 
     <style name="TextLarge" parent="TextDefault">
