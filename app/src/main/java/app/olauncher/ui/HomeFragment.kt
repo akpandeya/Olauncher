@@ -32,6 +32,8 @@ import app.olauncher.MainViewModel
 import app.olauncher.R
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
+import app.olauncher.helper.Haptics
+import app.olauncher.helper.hapticLongClick
 import app.olauncher.helper.HomeSet
 import app.olauncher.helper.HomeSets
 import app.olauncher.data.ShortcutOffset
@@ -198,7 +200,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
     override fun onClick(view: View) {
         when (view.id) {
-            R.id.lock -> {}
+            R.id.lock -> Haptics.confirm(view)
             // Home button for recents feature disabled
             // R.id.recents -> {}
             R.id.clock, R.id.clockWords -> openClockApp()
@@ -342,8 +344,8 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             contextItem is ContextItem.Media
         }
         binding.nextEventLine.setOnClickListener(this)
-        binding.clock.setOnLongClickListener(this)
-        binding.clockWords.setOnLongClickListener(this)
+        binding.clock.hapticLongClick { onLongClick(binding.clock) }
+        binding.clockWords.hapticLongClick { onLongClick(binding.clockWords) }
         binding.date.setOnLongClickListener(this)
         binding.weather.setOnLongClickListener(this)
         binding.setDefaultLauncher.setOnClickListener(this)
@@ -360,14 +362,14 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         binding.homeApp6.setOnClickListener(this)
         binding.homeApp7.setOnClickListener(this)
         binding.homeApp8.setOnClickListener(this)
-        binding.homeApp1.setOnLongClickListener(this)
-        binding.homeApp2.setOnLongClickListener(this)
-        binding.homeApp3.setOnLongClickListener(this)
-        binding.homeApp4.setOnLongClickListener(this)
-        binding.homeApp5.setOnLongClickListener(this)
-        binding.homeApp6.setOnLongClickListener(this)
-        binding.homeApp7.setOnLongClickListener(this)
-        binding.homeApp8.setOnLongClickListener(this)
+        binding.homeApp1.hapticLongClick { onLongClick(binding.homeApp1) }
+        binding.homeApp2.hapticLongClick { onLongClick(binding.homeApp2) }
+        binding.homeApp3.hapticLongClick { onLongClick(binding.homeApp3) }
+        binding.homeApp4.hapticLongClick { onLongClick(binding.homeApp4) }
+        binding.homeApp5.hapticLongClick { onLongClick(binding.homeApp5) }
+        binding.homeApp6.hapticLongClick { onLongClick(binding.homeApp6) }
+        binding.homeApp7.hapticLongClick { onLongClick(binding.homeApp7) }
+        binding.homeApp8.hapticLongClick { onLongClick(binding.homeApp8) }
     }
 
     internal fun setHomeAlignment(horizontalGravity: Int = prefs.homeAlignment) {
