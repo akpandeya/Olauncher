@@ -3,10 +3,7 @@ package app.olauncher.ui
 import android.animation.ArgbEvaluator
 import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.ContentUris
 import android.graphics.drawable.GradientDrawable
 import android.os.SystemClock
@@ -39,14 +36,6 @@ internal fun HomeFragment.startContextLine() {
         }
     }
     nowPlaying?.start()
-    if (contextTickReceiver == null) {
-        contextTickReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context?, intent: Intent?) {
-                if (intent?.action == Intent.ACTION_TIME_TICK) refreshContextLine()
-            }
-        }
-        context.registerReceiver(contextTickReceiver, IntentFilter(Intent.ACTION_TIME_TICK))
-    }
     refreshContextLine()
 }
 
@@ -54,14 +43,6 @@ internal fun HomeFragment.stopContextLine() {
     nowPlaying?.stop()
     stopMusicPulse()
     contextJob?.cancel()
-    contextTickReceiver?.let {
-        try {
-            requireContext().unregisterReceiver(it)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-        contextTickReceiver = null
-    }
 }
 
 internal fun HomeFragment.refreshContextLine() {
