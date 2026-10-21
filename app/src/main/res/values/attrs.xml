@@ -16,4 +16,9 @@
     <attr name="todayPanelColor" format="color" />
     <attr name="todayChipColor" format="color" />
     <attr name="accentColor" format="color" />
+    <attr name="ink" format="color" />
+    <attr name="inkMuted" format="color" />
+    <attr name="surface" format="color" />
+    <attr name="scrim" format="color" />
+    <attr name="accent" format="color" />
 </resources>
