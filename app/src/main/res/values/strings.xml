@@ -25,7 +25,7 @@
     <string name="app_text_color">Text color</string>
     <string name="double_tap_to_lock_screen">Double tap to lock</string>
     <string name="home_button_show_recents">Home button for recents</string>
-    <string name="admin_permission_message">Thumbline promises to use the accessibility permission responsibly. Thumbline does not collect or share any data.</string>
+    <string name="admin_permission_message">Thumbline promises to use the accessibility permission responsibly. The accessibility service does not collect or send any data.</string>
     <string name="about">About</string>
     <string name="off">Off</string>
     <string name="currency_rates">Currency rates</string>
@@ -170,7 +170,7 @@
     <string name="tip_start_typing_for_rename">Tip: Start typing for app RENAME option</string>
     <string name="hidden_apps_message">Note: Tap on \'Thumbline\' at the top of this Settings page to find your hidden apps.</string>
     <string name="accessibility_disclosure">Please turn on Thumbline\'s accessibility service in your device\'s settings to enable Double tap to lock gesture.
-    \n\nPlease note that this service is only used for this particular feature. Our accessibility service does not collect or share any data.</string>
+    \n\nPlease note that this service is only used for this particular feature. The accessibility service does not collect or send any data.</string>
     <string name="accept">Accept</string>
     <string name="permission">Permission</string>
     <string name="double_tap_lock">Double tap to lock</string>
@@ -589,7 +589,7 @@
     <string name="word_picker_select_all">Select all</string>
     <string name="word_picker_saved_mark">saved</string>
     <string name="word_picker_save_n">Save %1$d</string>
-    <string name="privacy_intro" tools:ignore="MissingTranslation">Everything Thumbline can use, and what it is for. Nothing leaves your phone except the network items below.</string>
+    <string name="privacy_intro" tools:ignore="MissingTranslation">Thumbline does not send your data to any analytics or ads service. Some features fetch data from the internet (weather, dictionary, currency, now-playing artwork), listed below.</string>
     <string name="privacy_state_granted" tools:ignore="MissingTranslation">Granted</string>
     <string name="privacy_state_not_granted" tools:ignore="MissingTranslation">Not granted</string>
     <string name="privacy_state_not_applicable" tools:ignore="MissingTranslation">Not applicable</string>
