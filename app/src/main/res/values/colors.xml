@@ -49,4 +49,30 @@
     <color name="accentRoseDark">#DE9FA7</color>
     <color name="accentRoseLight">#82444E</color>
 
+    <!--Colour roles (light). Dark values are in values-night/colors.xml.-->
+    <color name="ink">#000000</color>
+    <color name="inkInverse">#FFFFFF</color>
+    <color name="inkTrans50">#80000000</color>
+    <color name="inkTrans80">#CC000000</color>
+    <color name="inkInverseTrans10">#1AFFFFFF</color>
+    <color name="inkInverseTrans25">#40FFFFFF</color>
+    <color name="inkInverseTrans50">#80FFFFFF</color>
+    <color name="inkInverseTrans80">#CCFFFFFF</color>
+    <color name="inkInverseTrans90">#E6FFFFFF</color>
+    <!--70% ink, the old android:alpha="0.7" on Settings subtitles-->
+    <color name="inkMuted">#B3000000</color>
+    <color name="surface">@color/todayPanelLight</color>
+    <color name="todayScrim">@color/todayScrimLight</color>
+    <color name="todayPanel">@color/todayPanelLight</color>
+    <color name="todayChip">@color/todayChipLight</color>
+    <!--Black washes; the same in light and dark-->
+    <color name="scrim">#80000000</color>
+    <color name="scrimHomeTop">#61000000</color>
+    <color name="scrimHomeFull">#59000000</color>
+    <color name="accentSystem">@android:color/system_accent1_600</color>
+    <color name="accentSage">@color/accentSageLight</color>
+    <color name="accentSand">@color/accentSandLight</color>
+    <color name="accentSky">@color/accentSkyLight</color>
+    <color name="accentRose">@color/accentRoseLight</color>
+
 </resources>
