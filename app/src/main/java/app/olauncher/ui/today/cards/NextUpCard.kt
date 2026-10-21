@@ -12,6 +12,7 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import app.olauncher.R
+import app.olauncher.helper.Haptics
 import app.olauncher.databinding.CardNextUpBinding
 import app.olauncher.databinding.ItemNextUpBinding
 import app.olauncher.glance.CalendarEvent
@@ -152,6 +153,7 @@ internal class NextUpCardView(
                     }
                     if (OpenTargets.canOpenEvent(event.id)) {
                         itemBinding.root.setOnClickListener {
+                            Haptics.tick(it)
                             NextUpCard.openEvent(context, event)
                         }
                     } else {
@@ -172,6 +174,7 @@ internal class NextUpCardView(
                     toggle.root.isClickable = true
                     toggle.root.isFocusable = true
                     toggle.root.setOnClickListener {
+                        Haptics.tick(it)
                         expanded = !expanded
                         render()
                     }

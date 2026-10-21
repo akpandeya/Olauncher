@@ -26,6 +26,7 @@ import app.olauncher.helper.DrawerScrollHelper
 import app.olauncher.helper.createDialog
 import app.olauncher.helper.dpToPx
 import app.olauncher.helper.getColorFromAttr
+import app.olauncher.helper.hapticLongClick
 import app.olauncher.helper.openUrl
 import app.olauncher.helper.showMessageDialog
 import app.olauncher.helper.showPopupMenu
@@ -121,9 +122,8 @@ class WordsFragment : BaseFragment() {
             item.tvStatus.text = formatStatus(context, status)
             if (status == WordsListLogic.Status.Due) item.tvStatus.setTextColor(accent)
             item.root.setOnClickListener { showEditDialog(context, word) }
-            item.root.setOnLongClickListener {
+            item.root.hapticLongClick {
                 showWordPopup(item.tvWord, word)
-                true
             }
             b.wordsContainer.addView(item.root)
         }

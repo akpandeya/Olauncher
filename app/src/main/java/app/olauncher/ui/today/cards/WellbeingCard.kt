@@ -8,6 +8,7 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import app.olauncher.R
+import app.olauncher.helper.Haptics
 import app.olauncher.data.Prefs
 import app.olauncher.databinding.CardWellbeingBinding
 import app.olauncher.helper.appUsagePermissionGranted
@@ -133,10 +134,12 @@ object WellbeingCard : TodayCard {
         })
 
         viewBinding.tvWater.setOnClickListener {
+            Haptics.tick(it)
             onNudgeClicked(viewBinding.root.context, Nudges.WATER)
         }
 
         viewBinding.tvWalk.setOnClickListener {
+            Haptics.tick(it)
             onNudgeClicked(viewBinding.root.context, Nudges.WALK)
         }
 
