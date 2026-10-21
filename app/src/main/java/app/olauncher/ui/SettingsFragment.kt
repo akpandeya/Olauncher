@@ -895,17 +895,17 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
 
     override fun onClick(view: View) {
         when (view.id) {
-            R.id.settingsBack, R.id.settingsBackLayout -> showSectionList()
-            R.id.sectionRowHome -> showSection(SettingsSections.HOME)
-            R.id.sectionRowShortcuts -> showSection(SettingsSections.SHORTCUTS)
-            R.id.sectionRowDrawer -> showSection(SettingsSections.DRAWER)
-            R.id.sectionRowWellbeing -> showSection(SettingsSections.WELLBEING)
-            R.id.sectionRowToday -> showSection(SettingsSections.TODAY)
-            R.id.sectionRowDeutsch -> showSection(SettingsSections.DEUTSCH)
-            R.id.sectionRowAppearance -> showSection(SettingsSections.APPEARANCE)
-            R.id.sectionRowGestures -> showSection(SettingsSections.GESTURES)
-            R.id.sectionRowBackup -> showSection(SettingsSections.BACKUP)
-            R.id.olauncherHiddenApps -> showHiddenApps()
+            R.id.settingsBack, R.id.settingsBackLayout -> { Haptics.tick(view); showSectionList() }
+            R.id.sectionRowHome -> { Haptics.tick(view); showSection(SettingsSections.HOME) }
+            R.id.sectionRowShortcuts -> { Haptics.tick(view); showSection(SettingsSections.SHORTCUTS) }
+            R.id.sectionRowDrawer -> { Haptics.tick(view); showSection(SettingsSections.DRAWER) }
+            R.id.sectionRowWellbeing -> { Haptics.tick(view); showSection(SettingsSections.WELLBEING) }
+            R.id.sectionRowToday -> { Haptics.tick(view); showSection(SettingsSections.TODAY) }
+            R.id.sectionRowDeutsch -> { Haptics.tick(view); showSection(SettingsSections.DEUTSCH) }
+            R.id.sectionRowAppearance -> { Haptics.tick(view); showSection(SettingsSections.APPEARANCE) }
+            R.id.sectionRowGestures -> { Haptics.tick(view); showSection(SettingsSections.GESTURES) }
+            R.id.sectionRowBackup -> { Haptics.tick(view); showSection(SettingsSections.BACKUP) }
+            R.id.olauncherHiddenApps -> { if (prefs.hiddenApps.isNotEmpty()) Haptics.tick(view); showHiddenApps() }
             R.id.distractingApps, R.id.distractingAppsTitle, R.id.distractingAppsLayout -> showDistractingAppsDialog()
             R.id.pauseBeforeAppsOnOff, R.id.pauseBeforeAppsTitle, R.id.pauseBeforeAppsLayout -> tickOnChange(view) { togglePauseBeforeApps() }
             R.id.pauseAllowance, R.id.pauseAllowanceTitle, R.id.pauseAllowanceLayout -> showPauseAllowanceMenu(binding.pauseAllowance)
