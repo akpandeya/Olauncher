@@ -7,6 +7,6 @@
         android:centerColor="#26000000"
         android:centerY="0.55"
         android:endColor="#00000000"
-        android:startColor="#61000000"
+        android:startColor="@color/scrimHomeTop"
         android:type="linear" />
 </shape>

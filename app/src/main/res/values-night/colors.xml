@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--Colour roles (dark). Same names as values/colors.xml.-->
+    <color name="ink">#FFFFFF</color>
+    <color name="inkInverse">#000000</color>
+    <color name="inkTrans50">#80FFFFFF</color>
+    <color name="inkTrans80">#CCFFFFFF</color>
+    <color name="inkInverseTrans10">#1A000000</color>
+    <color name="inkInverseTrans25">#40000000</color>
+    <color name="inkInverseTrans50">#80000000</color>
+    <color name="inkInverseTrans80">#CC000000</color>
+    <color name="inkInverseTrans90">#E6000000</color>
+    <color name="inkMuted">#B3FFFFFF</color>
+    <color name="surface">@color/todayPanelDark</color>
+    <color name="todayScrim">@color/todayScrimDark</color>
+    <color name="todayPanel">@color/todayPanelDark</color>
+    <color name="todayChip">@color/todayChipDark</color>
+    <color name="accentSystem">@android:color/system_accent1_200</color>
+    <color name="accentSage">@color/accentSageDark</color>
+    <color name="accentSand">@color/accentSandDark</color>
+    <color name="accentSky">@color/accentSkyDark</color>
+    <color name="accentRose">@color/accentRoseDark</color>
+</resources>

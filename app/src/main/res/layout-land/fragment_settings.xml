@@ -1149,9 +1149,8 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
                             android:layout_marginTop="2dp"
-                            android:alpha="0.7"
                             android:text="@string/pause_ask_why_desc"
-                            android:textColor="?attr/primaryColor"
+                            android:textColor="?attr/inkMuted"
                             android:textSize="@dimen/text_subtitle" />
                     </LinearLayout>
 
@@ -1223,9 +1222,8 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
                             android:layout_marginTop="2dp"
-                            android:alpha="0.7"
                             android:text="@string/wind_down_grey_desc"
-                            android:textColor="?attr/primaryColor"
+                            android:textColor="?attr/inkMuted"
                             android:textSize="@dimen/text_subtitle" />
                     </LinearLayout>
 
@@ -1270,8 +1268,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
                             android:layout_marginTop="2dp"
-                            android:alpha="0.7"
-                            android:textColor="?attr/primaryColor"
+                            android:textColor="?attr/inkMuted"
                             android:textSize="@dimen/text_subtitle"
                             tools:text="Needs a one-time grant from a computer" />
 
@@ -1340,9 +1337,8 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
                             android:layout_marginTop="2dp"
-                            android:alpha="0.7"
                             android:text="@string/commit_lock_desc"
-                            android:textColor="?attr/primaryColor"
+                            android:textColor="?attr/inkMuted"
                             android:textSize="@dimen/text_subtitle" />
                     </LinearLayout>
 
@@ -1915,9 +1911,8 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
                             android:layout_marginTop="2dp"
-                            android:alpha="0.7"
                             android:text="@string/german_lookup_subtitle"
-                            android:textColor="?attr/primaryColor"
+                            android:textColor="?attr/inkMuted"
                             android:textSize="@dimen/text_subtitle" />
                     </LinearLayout>
 
@@ -1962,9 +1957,8 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
                             android:layout_marginTop="2dp"
-                            android:alpha="0.7"
                             android:text="@string/german_spell_suggest_subtitle"
-                            android:textColor="?attr/primaryColor"
+                            android:textColor="?attr/inkMuted"
                             android:textSize="@dimen/text_subtitle" />
                     </LinearLayout>
 
@@ -2009,9 +2003,8 @@
                             android:layout_height="wrap_content"
                             android:layout_marginStart="8dp"
                             android:layout_marginTop="2dp"
-                            android:alpha="0.7"
                             android:text="@string/german_screen_pick_subtitle"
-                            android:textColor="?attr/primaryColor"
+                            android:textColor="?attr/inkMuted"
                             android:textSize="@dimen/text_subtitle" />
                     </LinearLayout>
 

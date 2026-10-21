@@ -1,0 +1,68 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Shared base theme. Light and dark differ only in values/colors.xml and values-night/colors.xml. -->
+    <style name="Theme.Thumbline.Base" parent="Theme.AppCompat.DayNight.NoActionBar">
+
+        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
+
+        <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="o_mr1">shortEdges
+        </item>
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+        <item name="android:colorEdgeEffect">@android:color/transparent</item>
+
+        <item name="android:fitsSystemWindows">false</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowFullscreen">false</item>
+        <item name="android:windowLightStatusBar">@bool/lightSystemBars</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">@bool/lightSystemBars</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowAnimationStyle">@style/WindowAnimationTransition</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
+
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <!--        <item name="android:enforceStatusBarContrast">false</item>-->
+        <item name="android:enforceNavigationBarContrast" tools:targetApi="q">false</item>
+        <!--        <item name="android:windowTranslucentStatus">false</item>-->
+        <!--        <item name="android:windowTranslucentNavigation">true</item>-->
+
+        <item name="colorPrimary">@color/ink</item>
+        <item name="colorPrimaryDark">@android:color/darker_gray</item>
+        <item name="colorAccent">?attr/accentColor</item>
+
+        <item name="primaryColor">@color/ink</item>
+        <item name="primaryInverseColor">@color/inkInverse</item>
+        <item name="primaryTextShadowColor">@color/inkInverseTrans50</item>
+        <item name="primaryColorTrans50">@color/inkTrans50</item>
+        <item name="primaryColorTrans80">@color/inkTrans80</item>
+        <item name="primaryColorInverseTrans50">@color/inkInverseTrans50</item>
+        <item name="primaryColorInverseTrans80">@color/inkInverseTrans80</item>
+        <item name="primaryColorInverseTrans90">@color/inkInverseTrans90</item>
+        <item name="primaryShadeColor">@color/inkInverseTrans10</item>
+        <item name="primaryShadeDarkColor">@color/inkInverseTrans25</item>
+        <item name="todayScrimColor">@color/todayScrim</item>
+        <item name="todayPanelColor">@color/todayPanel</item>
+        <item name="todayChipColor">@color/todayChip</item>
+        <item name="dialogShadeColor">@color/inkInverseTrans50</item>
+        <item name="accentColor">?attr/primaryColor</item>
+        <item name="accent">?attr/primaryColor</item>
+
+        <!-- Colour roles -->
+        <item name="ink">@color/ink</item>
+        <item name="inkMuted">@color/inkMuted</item>
+        <item name="surface">@color/surface</item>
+        <item name="scrim">@color/scrim</item>
+
+        <item name="mainFontFamily">sans-serif-light</item>
+
+        <!-- Popup menus and dialogs used by settings -->
+        <item name="popupMenuStyle">@style/OlPopupMenu</item>
+        <item name="textAppearanceLargePopupMenu">@style/OlPopupMenuText</item>
+        <item name="textAppearanceSmallPopupMenu">@style/OlPopupMenuText</item>
+        <item name="alertDialogTheme">@style/OlAlertDialog</item>
+
+    </style>
+
+</resources>

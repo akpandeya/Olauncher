@@ -166,7 +166,7 @@ class TypeScaleResourceTest {
         val resDir = resolveDir("src/main/res")
         val styleFiles = listOf(
             File(resDir, "values/styles.xml"),
-            File(resDir, "values-night/styles.xml"),
+            File(resDir, "values/themes_base.xml"),
         )
 
         for (file in styleFiles) {

@@ -1,61 +1,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
-
-        <item name="android:forceDarkAllowed" tools:targetApi="q">false</item>
-
-        <item name="android:windowLayoutInDisplayCutoutMode" tools:targetApi="o_mr1">shortEdges
-        </item>
-        <item name="android:windowTranslucentStatus">true</item>
-        <item name="android:windowTranslucentNavigation">true</item>
-        <item name="android:colorEdgeEffect">@android:color/transparent</item>
-
-        <item name="android:fitsSystemWindows">false</item>
-        <item name="android:windowShowWallpaper">true</item>
-        <item name="android:windowBackground">@android:color/transparent</item>
-        <item name="android:windowFullscreen">false</item>
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
-        <item name="android:windowContentOverlay">@null</item>
-        <item name="android:windowAnimationStyle">@style/WindowAnimationTransition</item>
-        <item name="android:colorBackgroundCacheHint">@null</item>
-
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@android:color/transparent</item>
-        <!--        <item name="android:enforceStatusBarContrast">false</item>-->
-        <item name="android:enforceNavigationBarContrast" tools:targetApi="q">false</item>
-        <!--        <item name="android:windowTranslucentStatus">false</item>-->
-        <!--        <item name="android:windowTranslucentNavigation">true</item>-->
-
-        <item name="colorPrimary">@color/black</item>
-        <item name="colorPrimaryDark">@android:color/darker_gray</item>
-        <item name="colorAccent">?attr/accentColor</item>
-
-        <item name="primaryColor">@color/black</item>
-        <item name="primaryInverseColor">@color/blackInverse</item>
-        <item name="primaryTextShadowColor">@color/blackInverseTrans50</item>
-        <item name="primaryColorTrans50">@color/blackTrans50</item>
-        <item name="primaryColorTrans80">@color/blackTrans80</item>
-        <item name="primaryColorInverseTrans50">@color/blackInverseTrans50</item>
-        <item name="primaryColorInverseTrans80">@color/blackInverseTrans80</item>
-        <item name="primaryColorInverseTrans90">@color/blackInverseTrans90</item>
-        <item name="primaryShadeColor">@color/blackInverseTrans10</item>
-        <item name="primaryShadeDarkColor">@color/blackInverseTrans25</item>
-        <item name="todayScrimColor">@color/todayScrimLight</item>
-        <item name="todayPanelColor">@color/todayPanelLight</item>
-        <item name="todayChipColor">@color/todayChipLight</item>
-        <item name="dialogShadeColor">@color/blackInverseTrans50</item>
-        <item name="accentColor">?attr/primaryColor</item>
-
-        <item name="mainFontFamily">sans-serif-light</item>
-
-        <!-- Popup menus and dialogs used by settings -->
-        <item name="popupMenuStyle">@style/OlPopupMenu</item>
-        <item name="textAppearanceLargePopupMenu">@style/OlPopupMenuText</item>
-        <item name="textAppearanceSmallPopupMenu">@style/OlPopupMenuText</item>
-        <item name="alertDialogTheme">@style/OlAlertDialog</item>
-
-    </style>
+    <style name="AppTheme" parent="Theme.Thumbline.Base" />
 
     <!-- Applied over AppTheme when bold font is enabled -->
     <style name="BoldFontOverlay">
@@ -81,23 +26,28 @@
 
     <!-- Accent theme overlays applied over AppTheme -->
     <style name="AccentSystemOverlay">
-        <item name="accentColor">@android:color/system_accent1_600</item>
+        <item name="accentColor">@color/accentSystem</item>
+        <item name="accent">@color/accentSystem</item>
     </style>
 
     <style name="AccentSageOverlay">
-        <item name="accentColor">@color/accentSageLight</item>
+        <item name="accentColor">@color/accentSage</item>
+        <item name="accent">@color/accentSage</item>
     </style>
 
     <style name="AccentSandOverlay">
-        <item name="accentColor">@color/accentSandLight</item>
+        <item name="accentColor">@color/accentSand</item>
+        <item name="accent">@color/accentSand</item>
     </style>
 
     <style name="AccentSkyOverlay">
-        <item name="accentColor">@color/accentSkyLight</item>
+        <item name="accentColor">@color/accentSky</item>
+        <item name="accent">@color/accentSky</item>
     </style>
 
     <style name="AccentRoseOverlay">
-        <item name="accentColor">@color/accentRoseLight</item>
+        <item name="accentColor">@color/accentRose</item>
+        <item name="accent">@color/accentRose</item>
     </style>
 
     <style name="WindowAnimationTransition">
