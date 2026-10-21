@@ -13,6 +13,7 @@ Thumbline is a minimalist Android launcher forked from Olauncher (licensed under
 
 - Releases must ship the **debug** variant (`app.thumbline.debug` is the installed package).
 - Releases are signed with the committed `app/debug.keystore` so that every CI build has consistent signing and can update in place (e.g., via Obtainium).
+- **Version code** is `113 + GITHUB_RUN_NUMBER` (see `app/build.gradle*`). Local builds use `0`, so they are older than any CI build and `adb install` fails with `INSTALL_FAILED_VERSION_DOWNGRADE`. To install a local build over a CI build on a device, build with the same number the device runs: `GITHUB_RUN_NUMBER=<n> ./gradlew assembleDebug` (device version code = 113 + n). Check the device with `adb shell dumpsys package app.thumbline.debug | grep versionCode`. `install -d` does not bypass this for this app.
 
 ## Standing rules for every agy task
 
