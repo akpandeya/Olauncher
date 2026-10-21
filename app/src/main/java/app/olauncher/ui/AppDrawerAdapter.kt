@@ -34,15 +34,10 @@ import app.olauncher.helper.isSystemApp
 import app.olauncher.helper.showKeyboard
 import app.olauncher.helper.AppMatcher
 import app.olauncher.helper.ArchivedAppsHelper
-import app.olauncher.helper.Calc
-import app.olauncher.helper.UnitConvert
-import app.olauncher.helper.ContactSearch
 import app.olauncher.helper.ContactSource
-import app.olauncher.helper.DialMatch
-import app.olauncher.helper.DrawerCommand
-import app.olauncher.helper.DrawerOrdering
+import app.olauncher.helper.DrawerSearch
+import app.olauncher.helper.DrawerSearchInput
 import app.olauncher.helper.RecentApp
-import app.olauncher.helper.RecentApps
 
 class AppDrawerAdapter(
     private var flag: Int,
@@ -251,139 +246,34 @@ class AppDrawerAdapter(
     private fun createAppFilter(): Filter {
         return object : Filter() {
             override fun performFiltering(charSearch: CharSequence?): FilterResults {
-                val queryStr = charSearch?.toString().orEmpty()
-                val bangSearch = charSearch?.startsWith("!") ?: false
-                val shouldAutoLaunch = allowAutoLaunch
-                    && (charSearch?.startsWith(" ")?.not() ?: true)
-                    && (charSearch?.trimStart()?.startsWith(":")?.not() ?: true)
-                val appsSnapshot = appsList
-
-                val filterResults = FilterResults()
-                if (charSearch.isNullOrBlank()) {
-                    val recentAppsToDisplay = if (flag == Constants.FLAG_LAUNCH_APP && drawerRecents) {
-                        val recentDecoded = recentAppsProvider?.invoke() ?: emptyList()
-                        val hiddenApps = hiddenAppsProvider?.invoke() ?: emptySet()
-                        recentDecoded.mapNotNull { entry ->
-                            val matching = appsSnapshot.filterIsInstance<AppModel.App>().firstOrNull {
-                                it.appPackage == entry.packageName &&
-                                it.user.toString() == entry.user &&
-                                !it.isArchived &&
-                                it.appLabel.isNotBlank() &&
-                                !hiddenApps.contains(it.appPackage + "|" + it.user.toString())
-                            } ?: return@mapNotNull null
-                            matching.copy(isRecent = true)
-                        }.take(3)
-                    } else {
-                        emptyList()
-                    }
-
-                    val ctx = context ?: adapterContext
-                    val caption = ctx?.getString(R.string.recent) ?: "Recent"
-                    val blankItems = RecentApps.forEmptySearch(
-                        appsList = appsSnapshot,
-                        recentApps = recentAppsToDisplay,
-                        recentCaption = caption,
+                val ctx = context ?: adapterContext
+                val result = DrawerSearch.run(
+                    DrawerSearchInput(
+                        query = charSearch,
+                        apps = appsList,
+                        flag = flag,
                         bottomSearch = bottomSearch,
+                        drawerRecents = drawerRecents,
+                        allowAutoLaunch = allowAutoLaunch,
+                        germanEnabled = { germanEnabledProvider?.invoke() ?: false },
+                        recentApps = { recentAppsProvider?.invoke() ?: emptyList() },
+                        hiddenApps = { hiddenAppsProvider?.invoke() ?: emptySet() },
+                        recentCaption = ctx?.getString(R.string.recent) ?: "Recent",
+                        callRowText = { ctx?.getString(R.string.call_number, it) ?: "Call $it" },
+                        saveWordRowText = { ctx?.getString(R.string.save_word_row, it) ?: "Save word: $it" },
+                        saveWordsRowText = { count, shown ->
+                            ctx?.getString(R.string.save_words_row, count, shown) ?: "Save $count words: $shown"
+                        },
+                        contactSource = { contactSourceProvider?.invoke() },
+                        calendarRows = { calendarRowsProvider?.invoke(it) ?: emptyList() },
+                        currencyRows = { currencyRowsProvider?.invoke(it) ?: emptyList() },
+                        spellRows = { spellRowsProvider?.invoke(it) ?: emptyList() },
+                        lookUpRows = { lookUpRowsProvider?.invoke(it) ?: emptyList() },
                     )
-
-                    filterResults.values = FilterPayload(blankItems, emptyList(), queryStr, bangSearch, shouldAutoLaunch)
-                    return filterResults
-                }
-
-                val query = charSearch.toString()
-                val scoredApps = appsSnapshot.mapNotNull { app ->
-                    if (app is AppModel.PrivateSpaceHeader || app is AppModel.Result || app is AppModel.RecentHeader) return@mapNotNull null
-                    val score = AppMatcher.score(app.appLabel, query) ?: return@mapNotNull null
-                    app to score
-                }.sortedWith(
-                    compareByDescending<Pair<AppModel, Int>> { it.second }
-                        .thenBy(String.CASE_INSENSITIVE_ORDER) { it.first.appLabel }
                 )
-
-                val resultRows = mutableListOf<AppModel.Result>()
-                if (flag == Constants.FLAG_LAUNCH_APP) {
-                    val calcResult = if (DialMatch.showCalcRow(query)) Calc.evaluate(query) else null
-                    if (calcResult != null) {
-                        resultRows.add(
-                            AppModel.Result(
-                                text = "= $calcResult",
-                                action = AppModel.Result.Action.Copy(calcResult)
-                            )
-                        )
-                    }
-                    val unitResult = if (calcResult == null) UnitConvert.evaluate(query) else null
-                    if (unitResult != null) {
-                        resultRows.add(
-                            AppModel.Result(
-                                text = "= $unitResult",
-                                action = AppModel.Result.Action.Copy(unitResult)
-                            )
-                        )
-                    }
-                    try {
-                        currencyRowsProvider?.invoke(query)?.let { resultRows.addAll(it) }
-                    } catch (_: Exception) {
-                        // No currency rows on failure.
-                    }
-                    val dialNumber = if (DialMatch.showDialRow(query)) DialMatch.number(query) else null
-                    if (dialNumber != null) {
-                        val ctx = context ?: adapterContext
-                        val callText = ctx?.getString(R.string.call_number, dialNumber) ?: "Call $dialNumber"
-                        resultRows.add(
-                            AppModel.Result(
-                                text = callText,
-                                action = AppModel.Result.Action.Dial(dialNumber)
-                            )
-                        )
-                    }
-                    val command = try {
-                        DrawerCommand.parse(query, germanEnabledProvider?.invoke() ?: false)
-                    } catch (_: Exception) {
-                        null
-                    }
-                    when (command) {
-                        is DrawerCommand.SaveWords -> {
-                            if (command.items.isNotEmpty()) {
-                                try {
-                                    spellRowsProvider?.invoke(command.items)?.let { resultRows.addAll(it) }
-                                } catch (_: Exception) {
-                                    // No suggestion rows on failure.
-                                }
-                                resultRows.add(saveWordsRow(command.items))
-                            }
-                        }
-                        is DrawerCommand.LookUp -> {
-                            try {
-                                lookUpRowsProvider?.invoke(command.text)?.let { resultRows.addAll(it) }
-                            } catch (_: Exception) {
-                                // No word rows on failure.
-                            }
-                        }
-                        null -> Unit
-                    }
-                    // Runs on the Filter worker thread; a newer query supersedes this one.
-                    val source = try { contactSourceProvider?.invoke() } catch (_: Exception) { null }
-                    if (source != null) {
-                        try {
-                            ContactSearch.search(source, query).forEach {
-                                resultRows.add(ContactSearch.toResult(it))
-                            }
-                        } catch (_: Exception) {
-                            // Permission revoked or provider failure: no contact rows.
-                        }
-                    }
-                    try {
-                        calendarRowsProvider?.invoke(query)?.let { resultRows.addAll(it) }
-                    } catch (_: Exception) {
-                        // Permission revoked or provider failure: no event rows.
-                    }
+                return FilterResults().apply {
+                    values = FilterPayload(result.items, result.scores, result.searchQuery, result.isBangSearch, result.autoLaunch)
                 }
-
-                val rawItems = resultRows + scoredApps.map { it.first }
-                val items = DrawerOrdering.forSearchPosition(rawItems, bottomSearch)
-                val scores = scoredApps.map { it.second }
-                filterResults.values = FilterPayload(items, scores, queryStr, bangSearch, shouldAutoLaunch)
-                return filterResults
             }
 
             override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
@@ -412,18 +302,6 @@ class AppDrawerAdapter(
                 }
             }
         }
-    }
-
-    private fun saveWordsRow(items: List<String>): AppModel.Result {
-        val ctx = context ?: adapterContext
-        val text = if (items.size == 1) {
-            ctx?.getString(R.string.save_word_row, items[0]) ?: "Save word: ${items[0]}"
-        } else {
-            val shown = items.take(2).joinToString(", ") + if (items.size > 2) ", …" else ""
-            ctx?.getString(R.string.save_words_row, items.size, shown)
-                ?: "Save ${items.size} words: $shown"
-        }
-        return AppModel.Result(text = text, action = AppModel.Result.Action.SaveWords(items))
     }
 
     private fun autoLaunch() {
