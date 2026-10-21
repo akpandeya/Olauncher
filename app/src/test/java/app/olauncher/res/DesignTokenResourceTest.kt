@@ -15,11 +15,7 @@ class DesignTokenResourceTest {
     private val rawRadius = Regex("\\b(android:)?(\\w*[rR]adius)\\s*=\\s*\"(-?[0-9.]+)dp\"")
 
     // Known exceptions, to be cleaned up in a follow-up. Keep this short.
-    // Scrim gradients with raw alpha-black stops; should move to scrim colour tokens.
-    private val hexAllowList = setOf(
-        "drawable/home_full_wash.xml",
-        "drawable/home_top_wash.xml",
-    )
+    private val hexAllowList = emptySet<String>()
 
     // Hard-coded font families; should move to the text styles.
     private val fontFamilyAllowList = setOf(
