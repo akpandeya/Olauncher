@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.view.isVisible
+import app.olauncher.MainActivity
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
 import app.olauncher.helper.HomeMetaLine
@@ -90,10 +91,19 @@ internal fun HomeFragment.initWeatherListener() {
 internal fun HomeFragment.applyWeatherEffects() {
     val binding = _binding ?: return
     val forecast = cachedForecast()?.first
-    val effect = WeatherEffects.select(prefs.homeWeatherEffects, forecast?.nowCode)
-    binding.weatherEffects.setEffect(effect, WeatherEffects.tint(effect, forecast?.isDay ?: true))
-    binding.weatherEffects.isVisible = effect != WeatherEffect.NONE
-    binding.weatherEffects.setRunning(homeVisible && effect != WeatherEffect.NONE)
+    val spec = WeatherEffects.selectSpec(prefs.homeWeatherEffects, forecast?.nowCode)
+    val effect = spec.effect
+    val view = binding.weatherEffects
+    view.setEffect(spec, WeatherEffects.tint(effect, forecast?.isDay ?: true))
+    view.isVisible = effect != WeatherEffect.NONE
+    // With system animations off the view stays visible and draws one still frame.
+    view.setRunning(WeatherEffects.shouldAnimate(homeVisible, effect, MainActivity.animatorsEnabledSupplier()))
+    view.post {
+        if (_binding == null) return@post
+        val clock = binding.dateTimeLayout
+        val apps = binding.homeAppsLayout
+        view.setTextBands(clock.top, clock.bottom, apps.top, apps.bottom)
+    }
 }
 
 internal fun HomeFragment.populateWeather() {

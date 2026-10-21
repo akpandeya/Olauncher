@@ -3,6 +3,17 @@ package app.olauncher.helper
 /** Animated weather layer drawn over the wallpaper on Home. */
 enum class WeatherEffect { NONE, SUN, FOG, RAIN, SNOW, STORM, CLOUDS }
 
+/** How strong the weather is, from the WMO code. */
+enum class Intensity { LIGHT, MODERATE, HEAVY }
+
+/** One effect with its strength; [freezing] is freezing rain or drizzle, [hail] a thunderstorm with hail. */
+data class EffectSpec(
+    val effect: WeatherEffect,
+    val intensity: Intensity,
+    val freezing: Boolean = false,
+    val hail: Boolean = false,
+)
+
 /** Colours for one effect: [primary] is the main element, [secondary] the storm flash. */
 data class EffectTint(val primary: Int, val secondary: Int)
 
@@ -12,16 +23,35 @@ object WeatherEffects {
     /** Minimum gap between two drawn frames; 33 ms gives at most 30 fps. */
     const val FRAME_INTERVAL_MS = 1000L / MAX_FPS
 
-    /** The effect for a WMO code; NONE for unknown codes. */
-    fun forCode(code: Int): WeatherEffect = when (code) {
-        0, 1 -> WeatherEffect.SUN
-        2, 3 -> WeatherEffect.CLOUDS
-        45, 48 -> WeatherEffect.FOG
-        51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 80, 81, 82 -> WeatherEffect.RAIN
-        71, 73, 75, 77, 85, 86 -> WeatherEffect.SNOW
-        95, 96, 99 -> WeatherEffect.STORM
-        else -> WeatherEffect.NONE
+    /** Effect, strength and freezing/hail flags for a WMO code; NONE for unknown codes. */
+    fun specFor(code: Int): EffectSpec = when (code) {
+        0, 1 -> EffectSpec(WeatherEffect.SUN, Intensity.MODERATE)
+        2, 3 -> EffectSpec(WeatherEffect.CLOUDS, Intensity.MODERATE)
+        45, 48 -> EffectSpec(WeatherEffect.FOG, Intensity.MODERATE)
+        51, 61, 80 -> EffectSpec(WeatherEffect.RAIN, Intensity.LIGHT)
+        53, 63, 81 -> EffectSpec(WeatherEffect.RAIN, Intensity.MODERATE)
+        55, 65, 82 -> EffectSpec(WeatherEffect.RAIN, Intensity.HEAVY)
+        56, 66 -> EffectSpec(WeatherEffect.RAIN, Intensity.LIGHT, freezing = true)
+        57, 67 -> EffectSpec(WeatherEffect.RAIN, Intensity.HEAVY, freezing = true)
+        71, 77, 85 -> EffectSpec(WeatherEffect.SNOW, Intensity.LIGHT)
+        73 -> EffectSpec(WeatherEffect.SNOW, Intensity.MODERATE)
+        75, 86 -> EffectSpec(WeatherEffect.SNOW, Intensity.HEAVY)
+        95 -> EffectSpec(WeatherEffect.STORM, Intensity.MODERATE)
+        96 -> EffectSpec(WeatherEffect.STORM, Intensity.MODERATE, hail = true)
+        99 -> EffectSpec(WeatherEffect.STORM, Intensity.HEAVY, hail = true)
+        else -> EffectSpec(WeatherEffect.NONE, Intensity.LIGHT)
     }
+
+    /** The effect for a WMO code; NONE for unknown codes. */
+    fun forCode(code: Int): WeatherEffect = specFor(code).effect
+
+    /** The spec for the cached code, or a NONE spec when the setting is off or there is no code. */
+    fun selectSpec(enabled: Boolean, code: Int?): EffectSpec =
+        if (!enabled || code == null) specFor(Int.MIN_VALUE) else specFor(code)
+
+    /** Frames move only while Home is visible, an effect is shown and system animations are on. */
+    fun shouldAnimate(homeVisible: Boolean, effect: WeatherEffect, animatorsEnabled: Boolean): Boolean =
+        homeVisible && effect != WeatherEffect.NONE && animatorsEnabled
 
     /** NONE when the setting is off or there is no cached weather code. */
     fun select(enabled: Boolean, code: Int?): WeatherEffect {
