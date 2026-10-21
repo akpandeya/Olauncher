@@ -11,6 +11,7 @@ import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
 import app.olauncher.databinding.SheetAppActionsBinding
+import app.olauncher.helper.Haptics
 import app.olauncher.helper.hideStatusBar
 import com.google.android.material.bottomsheet.BottomSheetDialog
 
@@ -85,6 +86,7 @@ class AppActionsSheet(
             onRename()
         }
         binding.actionHide.setOnClickListener {
+            Haptics.perform(it, Haptics.Kind.REJECT)
             dismiss()
             onHide()
         }
@@ -97,6 +99,7 @@ class AppActionsSheet(
             onAppInfo()
         }
         binding.actionUninstall.setOnClickListener {
+            Haptics.perform(it, Haptics.Kind.REJECT)
             dismiss()
             onUninstall()
         }
