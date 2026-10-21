@@ -90,7 +90,7 @@ internal fun HomeFragment.refreshContextLine() {
             } catch (_: Exception) {
                 emptyList()
             }
-            ContextLine.relevantEvent(events, now)
+            ContextLine.relevantEvent(events, now, nextEventId)
         }
         if (_binding == null) return@launch
         val item = ContextLine.pick(media, event, now, labels)
