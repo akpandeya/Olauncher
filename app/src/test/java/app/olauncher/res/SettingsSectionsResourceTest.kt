@@ -357,6 +357,7 @@ class SettingsSectionsResourceTest {
             "@string/appearance",
             "@string/gestures",
             "@string/backup",
+            "@string/privacy",
         )
 
         val layoutFiles = listOf(
