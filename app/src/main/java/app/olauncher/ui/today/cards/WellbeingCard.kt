@@ -17,6 +17,7 @@ import app.olauncher.ui.today.TodayCard
 import app.olauncher.ui.today.TodayOrder
 import app.olauncher.wellbeing.HealthLabels
 import app.olauncher.wellbeing.HealthRepository
+import app.olauncher.wellbeing.WalkCount
 import app.olauncher.wellbeing.HealthSummaryFormatting
 import app.olauncher.wellbeing.Nudges
 import app.olauncher.wellbeing.UsageRepository
@@ -218,7 +219,7 @@ object WellbeingCard : TodayCard {
 
         if (line1Visible) {
             val waterCount = prefs.nudgeDone(Nudges.WATER)
-            val walkCount = max(prefs.nudgeDone(Nudges.WALK), autoWalks ?: 0)
+            val walkCount = WalkCount.shown(autoWalks, prefs.nudgeDone(Nudges.WALK))
 
             b.tvWater.isVisible = waterOn
             if (waterOn) {

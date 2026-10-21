@@ -20,11 +20,11 @@ class WalkDetectorTest {
     }
 
     @Test fun boutOfExactly200StepsCounts() {
-        assertEquals(WalkDetection(1, 0, 1), detect(listOf(steps(0, 4, 200))))
+        assertEquals(WalkDetection(1, 0, 1), detect(listOf(steps(0, 3, 200))))
     }
 
     @Test fun boutOf199StepsDoesNot() {
-        assertEquals(WalkDetection(0, 0, 0), detect(listOf(steps(0, 4, 199))))
+        assertEquals(WalkDetection(0, 0, 0), detect(listOf(steps(0, 3, 199))))
     }
 
     @Test fun gapOfFiveMinutesMerges() {
@@ -54,11 +54,6 @@ class WalkDetectorTest {
         assertEquals(WalkDetection(2, 1, 1), r)
     }
 
-    @Test fun sessionsOtherThanWalkingAreNotPassedIn() {
-        // Type filtering happens in HealthRepository; a detector with no sessions and few steps is zero.
-        assertEquals(WalkDetection(0, 0, 0), detect(listOf(steps(0, 3, 50))))
-    }
-
     @Test fun dailyAggregateRecordIsIgnored() {
         val aggregate = StepSpan(dayStart, dayEnd, 9_674, "com.samsung.shealth")
         val r = detect(listOf(aggregate, steps(0, 3, 90)))
@@ -68,8 +63,23 @@ class WalkDetectorTest {
     @Test fun recordOverTwelveHoursIsIgnoredButTwelveHoursIsKept() {
         val over = StepSpan(dayStart, dayStart + 12 * hour + min, 5_000, "x")
         assertEquals(WalkDetection(0, 0, 0), detect(listOf(over)))
-        val exact = StepSpan(dayStart, dayStart + 12 * hour, 7_200, "x")
+        val exact = StepSpan(dayStart, dayStart + 12 * hour, 43_200, "x")
         assertEquals(1, detect(listOf(exact)).boutWalks)
+    }
+
+    @Test fun slowSpreadUnderPaceIsNotAWalk() {
+        // 12 h at 10 steps/min is not walking.
+        val slow = StepSpan(dayStart, dayStart + 12 * hour, 7_200, "x")
+        assertEquals(WalkDetection(0, 0, 0), detect(listOf(slow)))
+        // 300 steps over 10 min = 30/min: not a walk; 600 over 10 min = 60/min: a walk.
+        assertEquals(WalkDetection(0, 0, 0), detect(listOf(steps(0, 10, 300))))
+        assertEquals(WalkDetection(1, 0, 1), detect(listOf(steps(0, 10, 600))))
+    }
+
+    @Test fun shownWalksAreAutoPlusManualTaps() {
+        assertEquals(4, WalkCount.shown(3, 1))
+        assertEquals(1, WalkCount.shown(null, 1))
+        assertEquals(3, WalkCount.shown(3, 0))
     }
 
     @Test fun stepsCrossingMidnightAreClippedToDay() {
@@ -86,5 +96,15 @@ class WalkDetectorTest {
         assertEquals(WalkDetection(1, 1, 0), detect(emptyList(), listOf(s)))
         val before = WalkSpan(dayStart - 20 * min, dayStart)
         assertEquals(WalkDetection(0, 0, 0), detect(emptyList(), listOf(before)))
+    }
+
+    @Test fun allPagesAreReadAndBoutsFromBothPagesCount() = kotlinx.coroutines.runBlocking {
+        val pages = mapOf<String?, Pair<List<StepSpan>, String?>>(
+            null to (listOf(steps(0, 3, 300)) to "p2"),
+            "p2" to (listOf(steps(60, 3, 300)) to null),
+        )
+        val all = readAllPages { token -> pages.getValue(token) }
+        assertEquals(2, all.size)
+        assertEquals(WalkDetection(2, 0, 2), detect(all))
     }
 }
