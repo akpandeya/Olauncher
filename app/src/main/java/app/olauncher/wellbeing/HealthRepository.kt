@@ -116,6 +116,43 @@ class HealthRepository(
         return WalkWindowReading(steps, exercise)
     }
 
+    /**
+     * Walks detected today (walking sessions plus step bouts). Null when the switch is off,
+     * Health Connect is unavailable, or the steps and exercise permissions are missing.
+     */
+    suspend fun readWalkDay(now: Instant = Instant.now()): WalkDetection? {
+        if (!isEnabled()) return null
+        val c = client ?: return null
+        val granted = try {
+            c.permissionController.getGrantedPermissions()
+        } catch (_: Exception) {
+            return null
+        }
+        val today = LocalDate.ofInstant(now, zone)
+        val dayStart = today.atStartOfDay(zone).toInstant()
+        val dayEnd = today.plusDays(1).atStartOfDay(zone).toInstant()
+        val range = TimeRangeFilter.between(dayStart, now)
+
+        val steps = if (HealthPermission.getReadPermission(StepsRecord::class) in granted) {
+            safe {
+                c.readRecords(ReadRecordsRequest(StepsRecord::class, range)).records.map {
+                    StepSpan(it.startTime.toEpochMilli(), it.endTime.toEpochMilli(), it.count, it.metadata.dataOrigin.packageName)
+                }
+            }
+        } else null
+
+        val sessions = if (HealthPermission.getReadPermission(ExerciseSessionRecord::class) in granted) {
+            safe {
+                c.readRecords(ReadRecordsRequest(ExerciseSessionRecord::class, range)).records
+                    .filter { it.exerciseType == EXERCISE_TYPE_WALKING }
+                    .map { WalkSpan(it.startTime.toEpochMilli(), it.endTime.toEpochMilli()) }
+            }
+        } else null
+
+        if (steps == null && sessions == null) return null
+        return WalkDetector.detect(steps.orEmpty(), sessions.orEmpty(), dayStart.toEpochMilli(), dayEnd.toEpochMilli())
+    }
+
     private inline fun <T> safe(block: () -> T?): T? = try {
         block()
     } catch (_: Exception) {
@@ -123,6 +160,9 @@ class HealthRepository(
     }
 
     companion object {
+        /** ExerciseSessionRecord.EXERCISE_TYPE_WALKING. */
+        private const val EXERCISE_TYPE_WALKING = 79
+
         val READ_PERMISSIONS: Set<String> = setOf(
             HealthPermission.getReadPermission(StepsRecord::class),
             HealthPermission.getReadPermission(SleepSessionRecord::class),
