@@ -2368,6 +2368,100 @@
                         tools:text="@string/on" />
                 </FrameLayout>
 
+                <LinearLayout
+                    android:id="@+id/hapticStrengthLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="vertical">
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <TextView
+                            android:id="@+id/hapticStrengthTitle"
+                            style="@style/TextLabel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:labelFor="@+id/hapticStrengthSeekBar"
+                            android:paddingVertical="8dp"
+                            android:text="@string/haptic_strength"
+                            android:textColor="?attr/primaryColor"
+                            android:textSize="@dimen/text_small" />
+
+                        <TextView
+                            android:id="@+id/hapticStrength"
+                            style="@style/TextSettingsValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="end|bottom"
+                            android:layout_marginEnd="4dp"
+                            android:padding="8dp"
+                            tools:text="70%" />
+                    </FrameLayout>
+
+                    <SeekBar
+                        android:id="@+id/hapticStrengthSeekBar"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/haptic_strength"
+                        android:max="100"
+                        android:paddingVertical="8dp"
+                        android:progressBackgroundTint="?attr/primaryColorTrans50"
+                        android:progressTint="?attr/primaryColor"
+                        android:thumbTint="?attr/primaryColor"
+                        tools:progress="70" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/hapticDurationLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:orientation="vertical">
+
+                    <FrameLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <TextView
+                            android:id="@+id/hapticDurationTitle"
+                            style="@style/TextLabel"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:labelFor="@+id/hapticDurationSeekBar"
+                            android:paddingVertical="8dp"
+                            android:text="@string/haptic_duration"
+                            android:textColor="?attr/primaryColor"
+                            android:textSize="@dimen/text_small" />
+
+                        <TextView
+                            android:id="@+id/hapticDuration"
+                            style="@style/TextSettingsValue"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="end|bottom"
+                            android:layout_marginEnd="4dp"
+                            android:padding="8dp"
+                            tools:text="25 ms" />
+                    </FrameLayout>
+
+                    <SeekBar
+                        android:id="@+id/hapticDurationSeekBar"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/haptic_duration"
+                        android:max="190"
+                        android:paddingVertical="8dp"
+                        android:progressBackgroundTint="?attr/primaryColorTrans50"
+                        android:progressTint="?attr/primaryColor"
+                        android:thumbTint="?attr/primaryColor"
+                        tools:progress="15" />
+                </LinearLayout>
+
                 <FrameLayout
                     android:id="@+id/textContrastLayout"
                     android:layout_width="match_parent"
