@@ -37,7 +37,13 @@ import app.olauncher.wellbeing.UsageSnapshotWorker
 import app.olauncher.databinding.ActivityMainBinding
 import app.olauncher.helper.AppListReloadPolicy
 import app.olauncher.helper.AppListReloadTrigger
+import app.olauncher.databinding.DialogOnboardingDefaultBinding
 import app.olauncher.helper.BackRules
+import app.olauncher.helper.Onboarding
+import app.olauncher.helper.OnboardingState
+import app.olauncher.helper.OnboardingStep
+import app.olauncher.helper.OnboardingStore
+import app.olauncher.helper.createDialog
 import app.olauncher.helper.HomeReturnPolicy
 import app.olauncher.helper.MotionPolicy
 import app.olauncher.helper.WordCaptureActivity
@@ -145,12 +151,20 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
+        val welcomeShown = savedInstanceState == null &&
+            OnboardingStore.shouldShow(prefs.onboardingState, prefs.firstOpen)
+        if (welcomeShown)
+            showOnboardingStep(OnboardingStore.stateFor(prefs.onboardingState))
+        else if (prefs.onboardingState.isEmpty())
+            prefs.onboardingState = OnboardingStore.COMPLETE
+
         if (prefs.firstOpen) {
             viewModel.firstOpen(true)
             prefs.firstOpen = false
             prefs.firstOpenTime = System.currentTimeMillis()
             viewModel.setDefaultClockApp()
-            viewModel.resetLauncherLiveData.call()
+            if (OnboardingStore.shouldAutoRequestHomeRole(welcomeShown))
+                viewModel.resetLauncherLiveData.call()
         }
 
         initObservers(viewModel)
@@ -468,6 +482,41 @@ class MainActivity : AppCompatActivity() {
             } catch (_: Exception) {
                 navController.navigate(R.id.pauseFragment, bundle)
             }
+        }
+    }
+
+    /** First-run welcome. Only step 1 exists for now; Next and Skip both finish onboarding. */
+    private fun showOnboardingStep(state: OnboardingState) {
+        if (state.currentStep != OnboardingStep.SET_DEFAULT_LAUNCHER) return
+        messageDialog?.dismiss()
+        // Persist progress now so a restart resumes here instead of looking like an old install.
+        prefs.onboardingState = OnboardingStore.encode(state)
+        val dialog = createDialog(
+            title = R.string.onboarding_title,
+            action = R.string.onboarding_next,
+            message = R.string.onboarding_default_launcher_message,
+            neutral = R.string.skip,
+            onNeutral = { prefs.onboardingState = OnboardingStore.encode(Onboarding.skipped(state)) },
+            onAction = { prefs.onboardingState = OnboardingStore.encode(Onboarding.advancedFrom(lastStepOf(state))) },
+            content = { parent ->
+                val binding = DialogOnboardingDefaultBinding.inflate(layoutInflater, parent, false)
+                binding.tvOpenHomeSettings.setOnClickListener { openHomeSettings() }
+                binding.root
+            },
+        )
+        dialog.showRespectingStatusBar()
+        messageDialog = dialog
+    }
+
+    // Steps 2 and 3 come later; until then Next finishes onboarding.
+    private fun lastStepOf(state: OnboardingState) =
+        state.copy(currentStep = OnboardingStep.values().last())
+
+    private fun openHomeSettings() {
+        try {
+            startActivity(Intent(Settings.ACTION_HOME_SETTINGS))
+        } catch (_: Exception) {
+            // No home settings screen on this device; the app keeps working.
         }
     }
 
