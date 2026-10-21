@@ -39,6 +39,7 @@ import app.olauncher.helper.AppListReloadPolicy
 import app.olauncher.helper.AppListReloadTrigger
 import app.olauncher.databinding.DialogOnboardingDefaultBinding
 import app.olauncher.helper.BackRules
+import app.olauncher.helper.HomeAppHelper
 import app.olauncher.helper.Onboarding
 import app.olauncher.helper.OnboardingState
 import app.olauncher.helper.OnboardingStep
@@ -145,6 +146,12 @@ class MainActivity : AppCompatActivity() {
         }
         onBackPressedDispatcher.addCallback(this, onBackPressedCallback)
         navController.addOnDestinationChangedListener { _, destination, _ ->
+            // Back from the home app picker: bring the welcome step back.
+            if (destination.id == R.id.mainFragment && messageDialog?.isShowing != true) {
+                val saved = OnboardingStore.stateFor(prefs.onboardingState)
+                if (prefs.onboardingState == OnboardingStep.PICK_HOME_APPS.name)
+                    showOnboardingStep(saved)
+            }
             onBackPressedCallback.isEnabled = BackRules.shouldConsumeBack(
                 isHome = destination.id == R.id.mainFragment,
                 searchOpen = false
@@ -485,32 +492,59 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** First-run welcome. Only step 1 exists for now; Next and Skip both finish onboarding. */
+    /** First-run welcome. Steps 1 and 2 exist; Skip finishes onboarding from either. */
     private fun showOnboardingStep(state: OnboardingState) {
-        if (state.currentStep != OnboardingStep.SET_DEFAULT_LAUNCHER) return
+        if (state.isComplete) return
+        val isPickStep = when (state.currentStep) {
+            OnboardingStep.SET_DEFAULT_LAUNCHER -> false
+            OnboardingStep.PICK_HOME_APPS -> true
+            else -> return
+        }
         messageDialog?.dismiss()
         // Persist progress now so a restart resumes here instead of looking like an old install.
         prefs.onboardingState = OnboardingStore.encode(state)
         val dialog = createDialog(
             title = R.string.onboarding_title,
             action = R.string.onboarding_next,
-            message = R.string.onboarding_default_launcher_message,
+            message = if (isPickStep) R.string.onboarding_pick_apps_message else R.string.onboarding_default_launcher_message,
             neutral = R.string.skip,
             onNeutral = { prefs.onboardingState = OnboardingStore.encode(Onboarding.skipped(state)) },
-            onAction = { prefs.onboardingState = OnboardingStore.encode(Onboarding.advancedFrom(lastStepOf(state))) },
+            onAction = {
+                val next = OnboardingStore.nextPressed(state)
+                prefs.onboardingState = OnboardingStore.encode(next)
+                if (!next.isComplete) showOnboardingStep(next)
+            },
             content = { parent ->
-                val binding = DialogOnboardingDefaultBinding.inflate(layoutInflater, parent, false)
-                binding.tvOpenHomeSettings.setOnClickListener { openHomeSettings() }
-                binding.root
+                if (isPickStep) {
+                    val binding = DialogOnboardingDefaultBinding.inflate(layoutInflater, parent, false)
+                    binding.tvOpenHomeSettings.setText(R.string.onboarding_pick_apps_action)
+                    binding.tvOpenHomeSettings.setOnClickListener { openHomeAppPicker() }
+                    binding.root
+                } else {
+                    val binding = DialogOnboardingDefaultBinding.inflate(layoutInflater, parent, false)
+                    binding.tvOpenHomeSettings.setOnClickListener { openHomeSettings() }
+                    binding.root
+                }
             },
         )
         dialog.showRespectingStatusBar()
         messageDialog = dialog
     }
 
-    // Steps 2 and 3 come later; until then Next finishes onboarding.
-    private fun lastStepOf(state: OnboardingState) =
-        state.copy(currentStep = OnboardingStep.values().last())
+    /** Opens the same app list a long-press on a home slot opens, on the first free slot. */
+    private fun openHomeAppPicker() {
+        messageDialog?.dismiss()
+        val slot = HomeAppHelper.findTargetSlot(prefs) ?: 1
+        viewModel.getAppList(false)
+        try {
+            navController.navigate(
+                R.id.action_mainFragment_to_appListFragment,
+                bundleOf(Constants.Key.FLAG to slot, Constants.Key.RENAME to false),
+            )
+        } catch (_: Exception) {
+            // Not on home; the welcome returns when home is shown again.
+        }
+    }
 
     private fun openHomeSettings() {
         try {

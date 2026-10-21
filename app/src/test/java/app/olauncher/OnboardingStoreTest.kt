@@ -43,4 +43,23 @@ class OnboardingStoreTest {
         assertEquals(OnboardingStep.PICK_HOME_APPS, OnboardingStore.stateFor("PICK_HOME_APPS").currentStep)
         assertEquals(OnboardingStep.SET_DEFAULT_LAUNCHER, OnboardingStore.stateFor("junk").currentStep)
     }
+
+    @Test
+    fun step1NextSavesPickHomeApps() {
+        val next = OnboardingStore.nextPressed(Onboarding.initialState())
+        assertEquals(OnboardingStep.PICK_HOME_APPS, next.currentStep)
+        assertEquals("PICK_HOME_APPS", OnboardingStore.encode(next))
+    }
+
+    @Test
+    fun step2NextAndSkipBothSaveComplete() {
+        val step2 = OnboardingStore.stateFor("PICK_HOME_APPS")
+        assertEquals(OnboardingStore.COMPLETE, OnboardingStore.encode(OnboardingStore.nextPressed(step2)))
+        assertEquals(OnboardingStore.COMPLETE, OnboardingStore.encode(Onboarding.skipped(step2)))
+    }
+
+    @Test
+    fun step2NextIsNotSkipped() {
+        assertFalse(OnboardingStore.nextPressed(OnboardingStore.stateFor("PICK_HOME_APPS")).skipped)
+    }
 }
