@@ -8,6 +8,7 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import app.olauncher.MainViewModel
+import app.olauncher.helper.Haptics
 import app.olauncher.R
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
@@ -137,6 +138,7 @@ object HeldCard : TodayCard {
         })
 
         viewBinding.tvClearAll.setOnClickListener {
+            Haptics.tick(it)
             val context = viewBinding.root.context ?: return@setOnClickListener
             getStore(context).clearAll()
             render()
@@ -189,6 +191,7 @@ object HeldCard : TodayCard {
             itemBinding.tvHeldLine.text = HeldCardLogic.formatAppLine(summary, zone)
             if (fragment != null && summary.pkg.isNotBlank()) {
                 itemBinding.root.setOnClickListener {
+                    Haptics.tick(it)
                     store.clear(summary.pkg)
                     render()
                     openApp(fragment, summary.pkg, summary.label)

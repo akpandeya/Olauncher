@@ -8,6 +8,7 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import app.olauncher.R
+import app.olauncher.helper.Haptics
 import app.olauncher.data.Prefs
 import app.olauncher.data.store.Leitner
 import app.olauncher.data.store.Word
@@ -105,8 +106,8 @@ internal class WordsCardView(
 
     init {
         // The summary lines lead to the Words page, where every word and meaning can be edited.
-        binding.tvFooter.setOnClickListener { onOpenWords() }
-        binding.tvEmpty.setOnClickListener { onOpenWords() }
+        binding.tvFooter.setOnClickListener { Haptics.tick(it); onOpenWords() }
+        binding.tvEmpty.setOnClickListener { Haptics.tick(it); onOpenWords() }
     }
 
     fun render() {
