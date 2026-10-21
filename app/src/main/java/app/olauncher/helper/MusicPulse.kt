@@ -274,21 +274,12 @@ object MusicPulse {
         return color
     }
 
-    /** Song fraction over which the straight unplayed track fades out. After it, only the played wave shows. */
-    const val WAVE_TRACK_FADE_END = 0.1f
+    /** Track colour: [argb] with its alpha scaled by [WAVE_TRACK_ALPHA] out of 255. Constant for the whole song. */
+    fun waveTrackColor(argb: Int): Int =
+        (scaledAlpha(argb, WAVE_TRACK_ALPHA) shl 24) or (argb and 0x00FFFFFF)
 
-    /**
-     * Alpha (0 to 255) of the straight unplayed track at [progress]: [WAVE_TRACK_ALPHA] at the start,
-     * falling evenly to 0 at [WAVE_TRACK_FADE_END], then hidden for the rest of the song.
-     */
-    fun waveTrackAlpha(progress: Float): Int {
-        val left = 1f - progress.coerceIn(0f, 1f) / WAVE_TRACK_FADE_END
-        return Math.round(WAVE_TRACK_ALPHA * left.coerceIn(0f, 1f))
-    }
-
-    /** Track colour at [progress]: [argb] with its alpha scaled by [waveTrackAlpha] out of 255. */
-    fun waveTrackColor(argb: Int, progress: Float = 0f): Int =
-        (scaledAlpha(argb, waveTrackAlpha(progress)) shl 24) or (argb and 0x00FFFFFF)
+    /** True when both the played wave and the unplayed track show, so the divider between them is drawn. */
+    fun waveDividerVisible(progress: Float): Boolean = progress > 0f && progress < 1f
 
     /**
      * Dark outline drawn under a stroke of colour [argb]: black at [WAVE_OUTLINE_ALPHA] out of 255,

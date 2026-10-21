@@ -362,21 +362,19 @@ class MusicPulseTest {
     }
 
     @Test
-    fun unplayedTrackFadesOutEarlyInTheSong() {
-        assertEquals(MusicPulse.WAVE_TRACK_ALPHA, MusicPulse.waveTrackAlpha(0f))
-        val half = MusicPulse.waveTrackAlpha(MusicPulse.WAVE_TRACK_FADE_END / 2)
-        assertTrue(half in 1 until MusicPulse.WAVE_TRACK_ALPHA)
-        assertEquals(0, MusicPulse.waveTrackAlpha(MusicPulse.WAVE_TRACK_FADE_END))
-        assertEquals(0, MusicPulse.waveTrackAlpha(0.6f))
-        assertEquals(0, MusicPulse.waveTrackAlpha(1f))
-        assertEquals(0x00336699, MusicPulse.waveTrackColor(0xFF336699.toInt(), 0.5f))
-    }
-
-    @Test
-    fun waveTrackColorFadesAlphaOnly() {
+    fun waveTrackColorKeepsConstantAlpha() {
         assertEquals(0x99336699.toInt(), MusicPulse.waveTrackColor(0xFF336699.toInt()))
         assertEquals(0x4C112233, MusicPulse.waveTrackColor(0x80112233.toInt()))
         assertEquals(0x00112233, MusicPulse.waveTrackColor(0x00112233))
+    }
+
+    @Test
+    fun dividerShowsOnlyBetweenStartAndEnd() {
+        assertFalse(MusicPulse.waveDividerVisible(0f))
+        assertTrue(MusicPulse.waveDividerVisible(0.01f))
+        assertTrue(MusicPulse.waveDividerVisible(0.5f))
+        assertTrue(MusicPulse.waveDividerVisible(0.99f))
+        assertFalse(MusicPulse.waveDividerVisible(1f))
     }
 
     @Test
