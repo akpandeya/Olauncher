@@ -25,6 +25,7 @@ import app.olauncher.data.store.PauseWordPicker
 import app.olauncher.data.store.WordsStore
 import app.olauncher.databinding.FragmentPauseBinding
 import app.olauncher.helper.Haptics
+import app.olauncher.helper.hapticLongClick
 import app.olauncher.helper.OlDialog
 import app.olauncher.helper.appUsagePermissionGranted
 import app.olauncher.helper.getColorFromAttr
@@ -132,14 +133,12 @@ class PauseFragment : Fragment() {
             openApp()
         }
 
-        binding.btnOpen.setOnLongClickListener {
+        binding.btnOpen.hapticLongClick {
             offerStopPausing(binding.btnOpen)
-            true
         }
 
-        binding.btnOpenContainer.setOnLongClickListener {
+        binding.btnOpenContainer.hapticLongClick {
             offerStopPausing(binding.btnOpen)
-            true
         }
 
         binding.openSettings.setOnClickListener {

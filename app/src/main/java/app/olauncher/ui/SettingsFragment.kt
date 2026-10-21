@@ -232,6 +232,7 @@ import androidx.core.widget.doAfterTextChanged
 import android.view.WindowInsets
 import android.widget.TextView
 import app.olauncher.helper.DrawerScrollHelper
+import app.olauncher.helper.Haptics
 import app.olauncher.helper.MusicPulse
 import app.olauncher.helper.HandSide
 import app.olauncher.helper.HomeSet
@@ -879,6 +880,19 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         )
     }
 
+    /** Runs [action] and gives one tick if it changed any pref; none for dialogs or denied toggles. */
+    private fun tickOnChange(view: View, action: () -> Unit) {
+        var changed = false
+        val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, _ -> changed = true }
+        prefs.registerPreferenceChangeListener(listener)
+        try {
+            action()
+        } finally {
+            prefs.unregisterPreferenceChangeListener(listener)
+        }
+        if (changed) Haptics.perform(view, Haptics.Kind.CLOCK_TICK)
+    }
+
     override fun onClick(view: View) {
         when (view.id) {
             R.id.settingsBack, R.id.settingsBackLayout -> showSectionList()
@@ -893,74 +907,74 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.sectionRowBackup -> showSection(SettingsSections.BACKUP)
             R.id.olauncherHiddenApps -> showHiddenApps()
             R.id.distractingApps, R.id.distractingAppsTitle, R.id.distractingAppsLayout -> showDistractingAppsDialog()
-            R.id.pauseBeforeAppsOnOff, R.id.pauseBeforeAppsTitle, R.id.pauseBeforeAppsLayout -> togglePauseBeforeApps()
+            R.id.pauseBeforeAppsOnOff, R.id.pauseBeforeAppsTitle, R.id.pauseBeforeAppsLayout -> tickOnChange(view) { togglePauseBeforeApps() }
             R.id.pauseAllowance, R.id.pauseAllowanceTitle, R.id.pauseAllowanceLayout -> showPauseAllowanceMenu(binding.pauseAllowance)
-            R.id.pauseEscalateOnOff, R.id.pauseEscalateTitle, R.id.pauseEscalateLayout -> togglePauseEscalate()
-            R.id.pauseAskWhyOnOff, R.id.pauseAskWhyTitle, R.id.pauseAskWhyLayout -> togglePauseAskWhy()
+            R.id.pauseEscalateOnOff, R.id.pauseEscalateTitle, R.id.pauseEscalateLayout -> tickOnChange(view) { togglePauseEscalate() }
+            R.id.pauseAskWhyOnOff, R.id.pauseAskWhyTitle, R.id.pauseAskWhyLayout -> tickOnChange(view) { togglePauseAskWhy() }
             R.id.windDown, R.id.windDownTitle, R.id.windDownLayout -> showWindDownMenu()
-            R.id.windDownGreyOnOff, R.id.windDownGreyTitle, R.id.windDownGreyLayout -> toggleWindDownGrey()
-            R.id.systemGreyOnOff, R.id.systemGreyTitle, R.id.systemGreyLayout -> toggleSystemGrey()
+            R.id.windDownGreyOnOff, R.id.windDownGreyTitle, R.id.windDownGreyLayout -> tickOnChange(view) { toggleWindDownGrey() }
+            R.id.systemGreyOnOff, R.id.systemGreyTitle, R.id.systemGreyLayout -> tickOnChange(view) { toggleSystemGrey() }
             R.id.systemGreyCopy -> copySystemGreyCommand()
             R.id.systemGreyBedtime -> SystemGrey.openBedtimeMode(requireContext())
-            R.id.commitLockOnOff, R.id.commitLockTitle, R.id.commitLockSubtitle, R.id.commitLockLayout -> toggleCommitLock()
-            R.id.holdNotificationsOnOff, R.id.holdNotificationsTitle, R.id.holdNotificationsLayout -> toggleHoldNotifications()
-            R.id.healthConnectOnOff, R.id.healthConnectTitle, R.id.healthConnectLayout -> toggleHealthConnect()
+            R.id.commitLockOnOff, R.id.commitLockTitle, R.id.commitLockSubtitle, R.id.commitLockLayout -> tickOnChange(view) { toggleCommitLock() }
+            R.id.holdNotificationsOnOff, R.id.holdNotificationsTitle, R.id.holdNotificationsLayout -> tickOnChange(view) { toggleHoldNotifications() }
+            R.id.healthConnectOnOff, R.id.healthConnectTitle, R.id.healthConnectLayout -> tickOnChange(view) { toggleHealthConnect() }
             R.id.quietReleaseTimes, R.id.quietReleaseTimesTitle, R.id.quietReleaseTimesLayout -> showReleaseTimesEditor()
             R.id.screenTimeOnOff -> viewModel.showDialog.postValue(Constants.Dialog.DIGITAL_WELLBEING)
             R.id.screenTimeStyle, R.id.screenTimeStyleTitle, R.id.screenTimeStyleLayout -> showScreenTimeStyleMenu(binding.screenTimeStyle)
             R.id.screenTimeTarget, R.id.screenTimeTargetTitle, R.id.screenTimeTargetLayout -> showScreenTimeTargetMenu(binding.screenTimeTarget)
             R.id.appInfo -> openAppInfo(requireContext(), Process.myUserHandle(), BuildConfig.APPLICATION_ID)
             R.id.setLauncher -> viewModel.resetLauncherLiveData.call()
-            R.id.toggleLock -> toggleLockMode()
+            R.id.toggleLock -> tickOnChange(view) { toggleLockMode() }
             // Home button for recents feature disabled
             // R.id.homeButtonRecents -> toggleHomeButtonRecents()
-            R.id.autoShowKeyboard -> toggleKeyboardText()
-            R.id.drawerBottomSearch, R.id.drawerBottomSearchTitle, R.id.drawerBottomSearchLayout -> toggleDrawerBottomSearch()
-            R.id.drawerNewFirst, R.id.drawerNewFirstTitle, R.id.drawerNewFirstLayout -> toggleDrawerNewFirst()
-            R.id.drawerLetterStrip, R.id.drawerLetterStripTitle, R.id.drawerLetterStripLayout -> toggleDrawerLetterStrip()
-            R.id.drawerRecents, R.id.drawerRecentsTitle, R.id.drawerRecentsLayout -> toggleDrawerRecents()
-            R.id.searchContacts, R.id.searchContactsTitle, R.id.searchContactsLayout -> toggleSearchContacts()
-            R.id.currencyRates, R.id.currencyRatesTitle, R.id.currencyRatesLayout -> toggleCurrencyRates()
+            R.id.autoShowKeyboard -> tickOnChange(view) { toggleKeyboardText() }
+            R.id.drawerBottomSearch, R.id.drawerBottomSearchTitle, R.id.drawerBottomSearchLayout -> tickOnChange(view) { toggleDrawerBottomSearch() }
+            R.id.drawerNewFirst, R.id.drawerNewFirstTitle, R.id.drawerNewFirstLayout -> tickOnChange(view) { toggleDrawerNewFirst() }
+            R.id.drawerLetterStrip, R.id.drawerLetterStripTitle, R.id.drawerLetterStripLayout -> tickOnChange(view) { toggleDrawerLetterStrip() }
+            R.id.drawerRecents, R.id.drawerRecentsTitle, R.id.drawerRecentsLayout -> tickOnChange(view) { toggleDrawerRecents() }
+            R.id.searchContacts, R.id.searchContactsTitle, R.id.searchContactsLayout -> tickOnChange(view) { toggleSearchContacts() }
+            R.id.currencyRates, R.id.currencyRatesTitle, R.id.currencyRatesLayout -> tickOnChange(view) { toggleCurrencyRates() }
             R.id.searchEngine, R.id.searchEngineTitle, R.id.searchEngineLayout -> showSearchEngineMenu(binding.searchEngine)
             R.id.homeAppsNum -> showHomeAppsNumMenu(view)
             R.id.alignment -> showAlignmentMenu(view)
             R.id.swapSides, R.id.swapSidesLayout -> swapSides()
-            R.id.shortcutIconsOnOff, R.id.shortcutIconsOnOffTitle, R.id.shortcutIconsOnOffLayout -> toggleShortcutIcons()
+            R.id.shortcutIconsOnOff, R.id.shortcutIconsOnOffTitle, R.id.shortcutIconsOnOffLayout -> tickOnChange(view) { toggleShortcutIcons() }
             R.id.shortcutCount, R.id.shortcutCountTitle, R.id.shortcutCountLayout -> showShortcutCountDialog()
             R.id.shortcutSize, R.id.shortcutSizeTitle, R.id.shortcutSizeLayout -> showShortcutSizeDialog()
-            R.id.shortcutSide, R.id.shortcutSideTitle, R.id.shortcutSideLayout -> toggleShortcutSide()
+            R.id.shortcutSide, R.id.shortcutSideTitle, R.id.shortcutSideLayout -> tickOnChange(view) { toggleShortcutSide() }
             R.id.shortcutHeight, R.id.shortcutHeightTitle, R.id.shortcutHeightLayout -> showShortcutHeightDialog()
             R.id.shortcutIconStyle, R.id.shortcutIconStyleTitle, R.id.shortcutIconStyleLayout -> showShortcutIconStyleDialog()
-            R.id.statusBar -> toggleStatusBar()
+            R.id.statusBar -> tickOnChange(view) { toggleStatusBar() }
             R.id.dateTime -> showDateTimeMenu(view)
             R.id.batteryMode, R.id.batteryModeTitle, R.id.batteryModeLayout -> showBatteryModeMenu(binding.batteryMode)
-            R.id.infoLine, R.id.infoLineTitle, R.id.infoLineLayout -> toggleInfoLine()
-            R.id.homeSets, R.id.homeSetsTitle, R.id.homeSetsLayout -> toggleHomeSets()
+            R.id.infoLine, R.id.infoLineTitle, R.id.infoLineLayout -> tickOnChange(view) { toggleInfoLine() }
+            R.id.homeSets, R.id.homeSetsTitle, R.id.homeSetsLayout -> tickOnChange(view) { toggleHomeSets() }
             R.id.editMorningAppsTitle, R.id.editMorningAppsLayout -> showHomeSetSlotsDialog(HomeSet.MORNING)
             R.id.editEveningAppsTitle, R.id.editEveningAppsLayout -> showHomeSetSlotsDialog(HomeSet.EVENING)
             R.id.morningStart, R.id.morningStartTitle, R.id.morningStartLayout -> showHomeSetStartPicker(HomeSet.MORNING, R.string.morning_starts)
             R.id.dayStart, R.id.dayStartTitle, R.id.dayStartLayout -> showHomeSetStartPicker(HomeSet.DAY, R.string.day_starts)
             R.id.eveningStart, R.id.eveningStartTitle, R.id.eveningStartLayout -> showHomeSetStartPicker(HomeSet.EVENING, R.string.evening_starts)
-            R.id.contextLineValue, R.id.contextLineTitle, R.id.contextLineLayout -> toggleContextLine()
-            R.id.homeNextEventValue, R.id.homeNextEventTitle, R.id.homeNextEventLayout -> toggleHomeNextEvent()
+            R.id.contextLineValue, R.id.contextLineTitle, R.id.contextLineLayout -> tickOnChange(view) { toggleContextLine() }
+            R.id.homeNextEventValue, R.id.homeNextEventTitle, R.id.homeNextEventLayout -> tickOnChange(view) { toggleHomeNextEvent() }
             R.id.appThemeText -> showAppThemeMenu(view, showSystem = false)
             R.id.accent -> showAccentMenu(view)
             R.id.fontFamily -> showFontDialog()
             R.id.textSizeValue -> showTextSizeDialog()
-            R.id.boldFont -> toggleBoldFont()
-            R.id.haptics -> toggleHaptics()
-            R.id.textContrast, R.id.textContrastTitle, R.id.textContrastLayout -> toggleTextContrast()
+            R.id.boldFont -> tickOnChange(view) { toggleBoldFont() }
+            R.id.haptics -> tickOnChange(view) { toggleHaptics() }
+            R.id.textContrast, R.id.textContrastTitle, R.id.textContrastLayout -> tickOnChange(view) { toggleTextContrast() }
             R.id.homeDarkness, R.id.homeWashTitle, R.id.homeWashLayout -> cycleHomeDarkness()
             R.id.textBrightness, R.id.textBrightnessTitle, R.id.textBrightnessLayout -> cycleTextBrightness()
-            R.id.musicPulse, R.id.musicPulseTitle, R.id.musicPulseLayout -> toggleMusicPulse()
-            R.id.weatherEffects, R.id.weatherEffectsTitle, R.id.weatherEffectsLayout -> toggleWeatherEffects()
+            R.id.musicPulse, R.id.musicPulseTitle, R.id.musicPulseLayout -> tickOnChange(view) { toggleMusicPulse() }
+            R.id.weatherEffects, R.id.weatherEffectsTitle, R.id.weatherEffectsLayout -> tickOnChange(view) { toggleWeatherEffects() }
 
             R.id.photoWallpaper, R.id.photoWallpaperTitle, R.id.photoWallpaperLayout -> showPhotoWallpaperMenu(binding.photoWallpaper)
             R.id.swipeLeftApp -> showAppListIfEnabled(Constants.FLAG_SET_SWIPE_LEFT_APP)
             R.id.swipeRightApp, R.id.swipeRightLayout -> showSwipeRightMenu(binding.swipeRightApp)
             R.id.todayCards, R.id.todayCardsTitle, R.id.todayCardsLayout -> showTodayCardsDialog()
-            R.id.todayOrder, R.id.todayOrderTitle, R.id.todayOrderLayout -> toggleTodayOrder()
-            R.id.intentionOnHome, R.id.intentionOnHomeTitle, R.id.intentionOnHomeLayout -> toggleIntentionOnHome()
+            R.id.todayOrder, R.id.todayOrderTitle, R.id.todayOrderLayout -> tickOnChange(view) { toggleTodayOrder() }
+            R.id.intentionOnHome, R.id.intentionOnHomeTitle, R.id.intentionOnHomeLayout -> tickOnChange(view) { toggleIntentionOnHome() }
             R.id.weatherTitle, R.id.weatherLayout -> showCitySearchDialog()
             R.id.weather -> {
                 if (prefs.weatherEnabled) {
@@ -973,16 +987,16 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.nudgeWalk, R.id.nudgeWalkTitle, R.id.nudgeWalkLayout -> showNudgeWalkMenu(binding.nudgeWalk)
             R.id.nudgeSocial, R.id.nudgeSocialTitle, R.id.nudgeSocialLayout -> showNudgeSocialMenu(binding.nudgeSocial)
             R.id.nudgeActiveHours, R.id.nudgeActiveHoursTitle, R.id.nudgeActiveHoursLayout -> showActiveHoursDialog()
-            R.id.germanOnOff, R.id.germanTitle, R.id.germanLayout -> toggleGerman()
+            R.id.germanOnOff, R.id.germanTitle, R.id.germanLayout -> tickOnChange(view) { toggleGerman() }
             R.id.germanClock, R.id.germanClockTitle, R.id.germanClockLayout -> showGermanClockMenu(binding.germanClock)
-            R.id.germanLookupOnOff, R.id.germanLookupTitle, R.id.germanLookupSubtitle, R.id.germanLookupLayout -> toggleGermanLookup()
-            R.id.germanSpellSuggestOnOff, R.id.germanSpellSuggestTitle, R.id.germanSpellSuggestSubtitle, R.id.germanSpellSuggestLayout -> toggleGermanSpellSuggest()
-            R.id.germanScreenPickOnOff, R.id.germanScreenPickTitle, R.id.germanScreenPickSubtitle, R.id.germanScreenPickLayout -> toggleGermanScreenPick()
-            R.id.germanPauseWordOnOff, R.id.germanPauseWordTitle, R.id.germanPauseWordLayout -> toggleGermanPauseWord()
-            R.id.germanUiOnOff, R.id.germanUiTitle, R.id.germanUiLayout -> toggleGermanUi()
+            R.id.germanLookupOnOff, R.id.germanLookupTitle, R.id.germanLookupSubtitle, R.id.germanLookupLayout -> tickOnChange(view) { toggleGermanLookup() }
+            R.id.germanSpellSuggestOnOff, R.id.germanSpellSuggestTitle, R.id.germanSpellSuggestSubtitle, R.id.germanSpellSuggestLayout -> tickOnChange(view) { toggleGermanSpellSuggest() }
+            R.id.germanScreenPickOnOff, R.id.germanScreenPickTitle, R.id.germanScreenPickSubtitle, R.id.germanScreenPickLayout -> tickOnChange(view) { toggleGermanScreenPick() }
+            R.id.germanPauseWordOnOff, R.id.germanPauseWordTitle, R.id.germanPauseWordLayout -> tickOnChange(view) { toggleGermanPauseWord() }
+            R.id.germanUiOnOff, R.id.germanUiTitle, R.id.germanUiLayout -> tickOnChange(view) { toggleGermanUi() }
             R.id.exportBackup, R.id.exportBackupLayout -> launchExportBackup()
             R.id.importBackup, R.id.importBackupLayout -> launchImportBackup()
-            R.id.autoBackup, R.id.autoBackupTitle, R.id.autoBackupLayout -> toggleAutoBackup()
+            R.id.autoBackup, R.id.autoBackupTitle, R.id.autoBackupLayout -> tickOnChange(view) { toggleAutoBackup() }
             R.id.autoBackupStatus -> if (prefs.autoBackupLastFailed) launchAutoBackupFolderPicker()
             R.id.footer -> requireContext().openUrl(Constants.URL_SOURCE)
         }
@@ -1003,8 +1017,8 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
                 showWeatherMenu(binding.weather)
             }
             R.id.appThemeText -> showAppThemeMenu(view, showSystem = true)
-            R.id.swipeLeftApp -> toggleSwipeLeft()
-            R.id.swipeRightApp, R.id.swipeRightLayout -> toggleSwipeRight()
+            R.id.swipeLeftApp -> tickOnChange(view) { toggleSwipeLeft() }
+            R.id.swipeRightApp, R.id.swipeRightLayout -> tickOnChange(view) { toggleSwipeRight() }
             R.id.toggleLock -> startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
         }
         return true

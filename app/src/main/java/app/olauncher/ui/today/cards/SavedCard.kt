@@ -9,6 +9,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import app.olauncher.R
+import app.olauncher.helper.Haptics
 import app.olauncher.data.Prefs
 import app.olauncher.data.store.SavedItem
 import app.olauncher.data.store.SavedItemsStore
@@ -129,11 +130,13 @@ object SavedCard : TodayCard {
         })
 
         viewBinding.tvMore.setOnClickListener {
+            Haptics.tick(it)
             isActiveExpanded = true
             render()
         }
 
         viewBinding.tvArchived.setOnClickListener {
+            Haptics.tick(it)
             isArchivedExpanded = !isArchivedExpanded
             render()
         }
@@ -180,6 +183,7 @@ object SavedCard : TodayCard {
             itemBinding.tvTitle.text = item.title.ifBlank { SavedCardLogic.formatHost(item.url) }
             itemBinding.tvSubtitle.text = SavedCardLogic.formatSubtitle(item.url, item.savedAt)
             itemBinding.root.setOnClickListener {
+                Haptics.tick(it)
                 openItem(context, item)
             }
             itemBinding.root.setOnLongClickListener {
@@ -206,6 +210,7 @@ object SavedCard : TodayCard {
                 itemBinding.tvTitle.text = item.title.ifBlank { SavedCardLogic.formatHost(item.url) }
                 itemBinding.tvSubtitle.text = SavedCardLogic.formatSubtitle(item.url, item.savedAt)
                 itemBinding.root.setOnClickListener {
+                    Haptics.tick(it)
                     openItem(context, item)
                 }
                 itemBinding.root.setOnLongClickListener {

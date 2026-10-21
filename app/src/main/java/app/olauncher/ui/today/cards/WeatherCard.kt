@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import app.olauncher.MainViewModel
+import app.olauncher.helper.Haptics
 import app.olauncher.R
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
@@ -164,7 +165,7 @@ internal class WeatherCardView(
     private val onOpenWeather: () -> Unit = {},
 ) {
     init {
-        binding.root.setOnClickListener { onOpenWeather() }
+        binding.root.setOnClickListener { Haptics.tick(it); onOpenWeather() }
     }
 
     fun render() {
