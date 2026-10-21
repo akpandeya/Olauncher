@@ -5,7 +5,7 @@
     <gradient
         android:angle="270"
         android:centerColor="@color/scrimHomeFull"
-        android:endColor="#73000000"
-        android:startColor="#73000000"
+        android:endColor="@color/scrimHomeFullEdge"
+        android:startColor="@color/scrimHomeFullEdge"
         android:type="linear" />
 </shape>
