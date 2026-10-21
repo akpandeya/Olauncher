@@ -3,18 +3,22 @@ package app.olauncher
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.ActivityInfo
 import android.content.pm.LauncherApps
+import android.content.pm.PackageManager
 import android.content.pm.ShortcutInfo
 import android.content.res.Configuration
 import android.os.Bundle
 import android.provider.Settings
 import android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS
 import androidx.activity.OnBackPressedCallback
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.bundleOf
@@ -32,7 +36,11 @@ import app.olauncher.data.Accent
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
+import app.olauncher.glance.WeatherLocation
+import app.olauncher.glance.WeatherWorker
+import app.olauncher.wellbeing.NotificationPermission
 import app.olauncher.wellbeing.NudgeScheduler
+import app.olauncher.wellbeing.Nudges
 import app.olauncher.wellbeing.UsageSnapshotWorker
 import app.olauncher.databinding.ActivityMainBinding
 import app.olauncher.helper.AppListReloadPolicy
@@ -79,6 +87,7 @@ class MainActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_NAVIGATE_TO = "navigate_to"
         const val DESTINATION_TODAY = "todayFragment"
+        private const val ONBOARDING_WATER_INTERVAL_MIN = 120
         var animatorsEnabledSupplier: () -> Boolean = { ValueAnimator.areAnimatorsEnabled() }
     }
 
@@ -91,6 +100,27 @@ class MainActivity : AppCompatActivity() {
     private var profileReceiver: BroadcastReceiver? = null
     private var launcherAppsCallback: LauncherApps.Callback? = null
     private var messageDialog: OlDialog? = null
+    private var onboardingRowsRefresh: (() -> Unit)? = null
+
+    // Welcome step 3 launchers. Each switches its feature on only when the permission is granted.
+    private val onboardingWeatherPermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) enableOnboardingWeather()
+        onboardingRowsRefresh?.invoke()
+    }
+    private val onboardingCalendarPermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) prefs.homeNextEvent = true
+        onboardingRowsRefresh?.invoke()
+    }
+    private val onboardingNotificationPermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) enableOnboardingWaterNudge()
+        onboardingRowsRefresh?.invoke()
+    }
 
 //    override fun onBackPressed() {
 //        if (navController.currentDestination?.id != R.id.mainFragment)
@@ -492,21 +522,23 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** First-run welcome. Steps 1 and 2 exist; Skip finishes onboarding from either. */
+    /** First-run welcome, three steps; Skip finishes onboarding from any of them. */
     private fun showOnboardingStep(state: OnboardingState) {
         if (state.isComplete) return
-        val isPickStep = when (state.currentStep) {
-            OnboardingStep.SET_DEFAULT_LAUNCHER -> false
-            OnboardingStep.PICK_HOME_APPS -> true
-            else -> return
-        }
+        val step = state.currentStep
+        val isPickStep = step == OnboardingStep.PICK_HOME_APPS
+        val isFeaturesStep = step == OnboardingStep.OPTIONAL_FEATURES
         messageDialog?.dismiss()
         // Persist progress now so a restart resumes here instead of looking like an old install.
         prefs.onboardingState = OnboardingStore.encode(state)
         val dialog = createDialog(
             title = R.string.onboarding_title,
             action = R.string.onboarding_next,
-            message = if (isPickStep) R.string.onboarding_pick_apps_message else R.string.onboarding_default_launcher_message,
+            message = when (step) {
+                OnboardingStep.SET_DEFAULT_LAUNCHER -> R.string.onboarding_default_launcher_message
+                OnboardingStep.PICK_HOME_APPS -> R.string.onboarding_pick_apps_message
+                OnboardingStep.OPTIONAL_FEATURES -> R.string.onboarding_features_message
+            },
             neutral = R.string.skip,
             onNeutral = { prefs.onboardingState = OnboardingStore.encode(Onboarding.skipped(state)) },
             onAction = {
@@ -515,7 +547,9 @@ class MainActivity : AppCompatActivity() {
                 if (!next.isComplete) showOnboardingStep(next)
             },
             content = { parent ->
-                if (isPickStep) {
+                if (isFeaturesStep) {
+                    buildOnboardingFeatureRows()
+                } else if (isPickStep) {
                     val binding = DialogOnboardingDefaultBinding.inflate(layoutInflater, parent, false)
                     binding.tvOpenHomeSettings.setText(R.string.onboarding_pick_apps_action)
                     binding.tvOpenHomeSettings.setOnClickListener { openHomeAppPicker() }
@@ -529,6 +563,79 @@ class MainActivity : AppCompatActivity() {
         )
         dialog.showRespectingStatusBar()
         messageDialog = dialog
+    }
+
+    /** One tappable row per optional feature; a row shows "is on" once its setting is on. */
+    private fun buildOnboardingFeatureRows(): android.view.View {
+        val column = android.widget.LinearLayout(this).apply { orientation = android.widget.LinearLayout.VERTICAL }
+        fun addRow(@androidx.annotation.StringRes label: Int, isOn: () -> Boolean, turnOn: () -> Unit): () -> Unit {
+            val row = DialogOnboardingDefaultBinding.inflate(layoutInflater, column, false)
+            val refresh = {
+                row.tvOpenHomeSettings.text = getString(
+                    if (isOn()) R.string.onboarding_feature_is_on else R.string.onboarding_feature_turn_on,
+                    getString(label),
+                )
+            }
+            row.tvOpenHomeSettings.setOnClickListener { if (!isOn()) turnOn() }
+            refresh()
+            column.addView(row.root)
+            return refresh
+        }
+        val refreshers = listOf(
+            addRow(R.string.weather, { prefs.weatherEnabled }, ::askOnboardingWeather),
+            addRow(R.string.home_next_event, { prefs.homeNextEvent }, ::askOnboardingCalendar),
+            addRow(R.string.onboarding_wellbeing_label, { prefs.nudgeWaterIntervalMin > 0 }, ::askOnboardingWellbeing),
+        )
+        onboardingRowsRefresh = { refreshers.forEach { it() } }
+        return column
+    }
+
+    // The actions below mirror the Settings toggles (weather location, next event on home, water nudge).
+    private fun enableOnboardingWeather() {
+        prefs.weatherUseLocation = true
+        prefs.weatherEnabled = true
+        WeatherWorker.schedulePeriodic(this)
+        WeatherLocation.refreshIfStale(this, force = true)
+    }
+
+    private fun enableOnboardingWaterNudge() {
+        prefs.nudgeWaterIntervalMin = ONBOARDING_WATER_INTERVAL_MIN
+        NudgeScheduler.schedule(this, Nudges.WATER)
+    }
+
+    private fun askOnboardingWeather() {
+        if (WeatherLocation.hasPermission(this)) {
+            enableOnboardingWeather()
+            onboardingRowsRefresh?.invoke()
+            return
+        }
+        showMessageDialog(R.string.weather, R.string.weather_location_permission_message, R.string.allow) {
+            onboardingWeatherPermission.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+        }
+    }
+
+    private fun askOnboardingCalendar() {
+        val granted = ContextCompat.checkSelfPermission(this, Manifest.permission.READ_CALENDAR) ==
+            PackageManager.PERMISSION_GRANTED
+        if (granted) {
+            prefs.homeNextEvent = true
+            onboardingRowsRefresh?.invoke()
+            return
+        }
+        showMessageDialog(R.string.home_next_event, R.string.calendar_permission_message, R.string.allow) {
+            onboardingCalendarPermission.launch(Manifest.permission.READ_CALENDAR)
+        }
+    }
+
+    private fun askOnboardingWellbeing() {
+        if (NotificationPermission.isGranted(this)) {
+            enableOnboardingWaterNudge()
+            onboardingRowsRefresh?.invoke()
+            return
+        }
+        showMessageDialog(R.string.nudges, R.string.notification_permission_message, R.string.allow) {
+            onboardingNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
     }
 
     /** Opens the same app list a long-press on a home slot opens, on the first free slot. */
