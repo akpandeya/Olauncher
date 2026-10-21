@@ -72,7 +72,10 @@ object ContextLine {
         return ContextItem.Event(String.format(labels.inMinutes, title, minutes), event.id)
     }
 
-    /** First event from a start-ordered list that is running now or starts within the lookahead. */
-    fun relevantEvent(events: List<CalendarEvent>, now: Instant): CalendarEvent? =
-        events.firstOrNull { pick(null, it, now) != null }
+    /**
+     * First event from a start-ordered list that is running now or starts within the lookahead.
+     * [excludeEventId] skips the event the next-event line already shows.
+     */
+    fun relevantEvent(events: List<CalendarEvent>, now: Instant, excludeEventId: Long? = null): CalendarEvent? =
+        events.firstOrNull { it.id != excludeEventId && pick(null, it, now) != null }
 }
