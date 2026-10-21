@@ -4,9 +4,9 @@
     android:shape="rectangle">
     <gradient
         android:angle="270"
-        android:centerColor="#26000000"
+        android:centerColor="@color/scrimHomeTopFade"
         android:centerY="0.55"
-        android:endColor="#00000000"
+        android:endColor="@color/scrimClear"
         android:startColor="@color/scrimHomeTop"
         android:type="linear" />
 </shape>
