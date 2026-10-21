@@ -142,6 +142,7 @@ class PauseFragment : Fragment() {
         }
 
         binding.openSettings.setOnClickListener {
+            Haptics.tick(it)
             openSettingsOnPause()
         }
 
