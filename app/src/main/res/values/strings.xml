@@ -305,6 +305,8 @@
     <string name="onboarding_title" tools:ignore="MissingTranslation">Welcome to Thumbline</string>
     <string name="onboarding_default_launcher_message" tools:ignore="MissingTranslation">Setting Thumbline as your default launcher makes it your home screen, so the Home button always brings you here.</string>
     <string name="onboarding_open_home_settings" tools:ignore="MissingTranslation">Choose default launcher</string>
+    <string name="onboarding_pick_apps_message" tools:ignore="MissingTranslation">Pick your home apps. These sit at the bottom of your home screen, one tap away.</string>
+    <string name="onboarding_pick_apps_action" tools:ignore="MissingTranslation">Choose home apps</string>
     <string name="onboarding_next" tools:ignore="MissingTranslation">Next</string>
     <string name="pause_open">Open</string>
     <string name="pause_open_countdown">Open (%d)</string>

@@ -24,4 +24,13 @@ object OnboardingStore {
     fun shouldAutoRequestHomeRole(welcomeShown: Boolean): Boolean = !welcomeShown
 
     fun stateFor(saved: String?): OnboardingState = Onboarding.resumedFrom(saved)
+
+    /**
+     * Next in the shipped welcome. Step 3 has no screen yet, so Next on step 2 finishes
+     * (through [Onboarding.advancedFrom] on the last step). Remove when step 3 ships.
+     */
+    fun nextPressed(state: OnboardingState): OnboardingState =
+        if (state.currentStep == OnboardingStep.PICK_HOME_APPS)
+            Onboarding.advancedFrom(state.copy(currentStep = OnboardingStep.values().last()))
+        else Onboarding.advancedFrom(state)
 }
