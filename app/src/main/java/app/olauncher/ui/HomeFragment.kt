@@ -43,6 +43,7 @@ import app.olauncher.helper.PosterClock
 import app.olauncher.databinding.FragmentHomeBinding
 import app.olauncher.glance.WeatherLocation
 import app.olauncher.helper.BatteryFormatting
+import app.olauncher.helper.BatteryReading
 import app.olauncher.helper.ContextItem
 import app.olauncher.helper.DefaultLauncherCheck
 import app.olauncher.helper.GermanTime
@@ -78,6 +79,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     internal var timeTickReceiver: BroadcastReceiver? = null
     internal var renderedHomeSet: HomeSet? = null
     internal var batteryReceiver: BroadcastReceiver? = null
+    private var lastBatteryReading: BatteryReading? = null
     internal var weatherPrefsListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
     internal var latestScreenTime: String? = null
     internal var contextTickReceiver: BroadcastReceiver? = null
@@ -438,50 +440,73 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             binding.clock.isVisible = isTimeVisible
         }
 
-        val dateFormat = if (isGerman) {
-            SimpleDateFormat("EEEE, d. MMMM", Locale.GERMAN)
-        } else {
-            SimpleDateFormat("EEE, d MMM", Locale.getDefault())
-        }
-        val dateText = dateFormat.format(Date())
-
-        val batteryIntent = context?.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-        val level = batteryIntent?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
-        val scale = batteryIntent?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1
-        val percent = if (level >= 0 && scale > 0) (level * 100) / scale else -1
-        val plugged = batteryIntent?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0
-        val charging = plugged != 0
-
+        val reading = currentBatteryReading()
+        lastBatteryReading = reading
+        composeDateLine(reading)
         if (prefs.homeInfoCombined) {
-            val combinedDate = if (isGerman) {
-                SimpleDateFormat("EEEE d. MMMM", Locale.GERMAN)
-            } else {
-                SimpleDateFormat("EEE d MMM", Locale.getDefault())
-            }.format(Date())
-            val screenTimeGranted = context?.appUsagePermissionGranted() == true
-            if (screenTimeGranted) viewModel.getTodaysScreenTime()
-            val showScreenTimeNumber = screenTimeGranted && !isScreenTimeCueOn()
-            binding.date.text = InfoLine.compose(
-                date = combinedDate,
-                weather = combinedWeatherText(),
-                battery = BatteryFormatting.infoText(percent, charging, prefs.batteryMode, prefs.showStatusBar),
-                screenTime = if (showScreenTimeNumber) latestScreenTime else null
-            )
+            if (context?.appUsagePermissionGranted() == true) viewModel.getTodaysScreenTime()
             binding.tvScreenTime.isVisible = false
         } else {
-            binding.date.text = BatteryFormatting.dateLine(
-                date = dateText,
-                percent = percent,
-                charging = charging,
-                mode = prefs.batteryMode,
-                statusBarShown = prefs.showStatusBar
-            )
             populateScreenTime()
         }
         binding.date.isVisible = isDateVisible
         populateWeather()
         refreshContextLine()
         refreshIntentionLine()
+    }
+
+    /** Sets the date line text from cached values only: no screen-time, weather or calendar calls. */
+    private fun composeDateLine(reading: BatteryReading) {
+        val isGerman = prefs.germanEnabled && prefs.germanClock != Prefs.GERMAN_CLOCK_SYSTEM
+        val percent = reading.percent
+        val charging = reading.charging
+        if (prefs.homeInfoCombined) {
+            val combinedDate = if (isGerman) {
+                SimpleDateFormat("EEEE d. MMMM", Locale.GERMAN)
+            } else {
+                SimpleDateFormat("EEE d MMM", Locale.getDefault())
+            }.format(Date())
+            val showScreenTimeNumber = context?.appUsagePermissionGranted() == true && !isScreenTimeCueOn()
+            binding.date.text = InfoLine.compose(
+                date = combinedDate,
+                weather = combinedWeatherText(),
+                battery = BatteryFormatting.infoText(percent, charging, prefs.batteryMode, prefs.showStatusBar),
+                screenTime = if (showScreenTimeNumber) latestScreenTime else null
+            )
+        } else {
+            val dateFormat = if (isGerman) {
+                SimpleDateFormat("EEEE, d. MMMM", Locale.GERMAN)
+            } else {
+                SimpleDateFormat("EEE, d MMM", Locale.getDefault())
+            }
+            binding.date.text = BatteryFormatting.dateLine(
+                date = dateFormat.format(Date()),
+                percent = percent,
+                charging = charging,
+                mode = prefs.batteryMode,
+                statusBarShown = prefs.showStatusBar
+            )
+        }
+    }
+
+    private fun readingFrom(intent: Intent?): BatteryReading {
+        val level = intent?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: -1
+        val scale = intent?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: -1
+        val percent = if (level >= 0 && scale > 0) (level * 100) / scale else -1
+        val plugged = intent?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0
+        return BatteryReading(percent, plugged != 0)
+    }
+
+    private fun currentBatteryReading(): BatteryReading =
+        readingFrom(context?.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED)))
+
+    private fun onBatteryBroadcast(intent: Intent?) {
+        if (_binding == null) return
+        val source = if (intent?.action == Intent.ACTION_BATTERY_CHANGED) intent else null
+        val reading = if (source != null) readingFrom(source) else currentBatteryReading()
+        if (!BatteryFormatting.readingChanged(lastBatteryReading, reading)) return
+        lastBatteryReading = reading
+        composeDateLine(reading)
     }
 
     internal fun refreshIntentionLine() {
@@ -547,7 +572,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         if (batteryReceiver == null) {
             batteryReceiver = object : BroadcastReceiver() {
                 override fun onReceive(context: Context?, intent: Intent?) {
-                    populateDateTime()
+                    onBatteryBroadcast(intent)
                 }
             }
             val filter = IntentFilter().apply {
@@ -568,6 +593,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             }
             batteryReceiver = null
         }
+        lastBatteryReading = null
     }
 
     internal fun isScreenTimeCueOn(): Boolean =

@@ -2,7 +2,12 @@ package app.olauncher.helper
 
 import app.olauncher.data.Prefs
 
+data class BatteryReading(val percent: Int, val charging: Boolean)
+
 object BatteryFormatting {
+
+    fun readingChanged(previous: BatteryReading?, current: BatteryReading): Boolean =
+        previous != current
 
     const val CHARGING_SYMBOL = " \u26A1\uFE0E"
 
