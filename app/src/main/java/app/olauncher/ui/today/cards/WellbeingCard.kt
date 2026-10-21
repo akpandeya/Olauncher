@@ -188,6 +188,7 @@ object WellbeingCard : TodayCard {
             val repo = HealthRepository(context, { prefs.healthConnectEnabled })
             val summary = withContext(Dispatchers.IO) { repo.readToday() }
             val walks = withContext(Dispatchers.IO) { repo.readWalkDay()?.totalWalks }
+            if (walks != null) prefs.autoWalksToday = walks
             if (walks != autoWalks) {
                 autoWalks = walks
                 renderLine1()

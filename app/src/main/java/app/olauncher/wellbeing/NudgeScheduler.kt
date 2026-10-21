@@ -175,7 +175,11 @@ class NudgeWorker(
         val prefs = Prefs(applicationContext)
         val interval = NudgeScheduler.intervalMinForType(prefs, type)
         if (interval > 0) {
-            val count = prefs.nudgeDone(type)
+            val count = if (type == Nudges.WALK) {
+                WalkNudgePolicy.shownWalks(prefs.nudgeDone(type), prefs.autoWalksToday)
+            } else {
+                prefs.nudgeDone(type)
+            }
             val useGerman = prefs.isGermanUi
             val text = when (type) {
                 Nudges.WATER -> applicationContext.getString(
