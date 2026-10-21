@@ -247,7 +247,9 @@ object SettingsSections : List<SettingsSection> {
             R.id.fontFamily,
             R.id.boldFont,
             R.id.textSizeValue,
-            R.id.haptics -> APPEARANCE
+            R.id.haptics,
+            R.id.hapticStrength,
+            R.id.hapticDuration -> APPEARANCE
 
             R.id.gesturesSection,
             R.id.swipeLeftApp,

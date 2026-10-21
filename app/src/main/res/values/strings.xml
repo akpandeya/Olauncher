@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name" translatable="false">Thumbline</string>
     <string name="github" translatable="false">Github</string>
     <string name="lock_layout_description" translatable="false">lock layout description to be used a unique id to lock screen</string>
@@ -108,6 +108,9 @@
     <string name="show_date_time">Show date time</string>
     <string name="appearance">Appearance</string>
     <string name="haptics">Haptics</string>
+    <string name="haptic_strength" tools:ignore="MissingTranslation">Haptic strength</string>
+    <string name="haptic_duration" tools:ignore="MissingTranslation">Haptic duration</string>
+    <string name="haptic_duration_ms" tools:ignore="MissingTranslation">%1$d ms</string>
     <string name="gestures">Gestures</string>
     <string name="theme_mode">Theme mode</string>
     <string name="system_default">System</string>

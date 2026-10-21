@@ -1,6 +1,8 @@
 package app.olauncher.helper
 
 import android.content.Context
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.view.HapticFeedbackConstants
 import android.view.View
 import app.olauncher.data.Prefs
@@ -42,6 +44,25 @@ object Haptics {
         }
     }
 
+    /** What [perform] should do for one haptic. Pure so the wiring can be unit tested. */
+    sealed class Plan {
+        object Skip : Plan()
+        data class System(val constant: Int) : Plan()
+        data class Custom(val amplitude: Int, val durationMs: Int) : Plan()
+    }
+
+    /**
+     * Decides how to play a haptic. Disabled or strength 0 means [Plan.Skip]. Untouched sliders, or a
+     * device without amplitude control, use the system haptic constant (the original feel). Otherwise
+     * the user's strength and duration are played as a one-shot vibration.
+     */
+    fun planFor(kind: Kind, enabled: Boolean, strength: Int, durationMs: Int, hasAmplitudeControl: Boolean): Plan {
+        val constant = constantFor(kind, enabled) ?: return Plan.Skip
+        if (!hasAmplitudeControl || !HapticTuning.isCustom(strength, durationMs)) return Plan.System(constant)
+        val amplitude = HapticTuning.amplitudeFor(strength) ?: return Plan.Skip
+        return Plan.Custom(amplitude, HapticTuning.clampDurationMs(durationMs))
+    }
+
     fun tick(view: View?): Boolean = perform(view, Kind.TICK)
 
     fun confirm(view: View?): Boolean = perform(view, Kind.CONFIRM)
@@ -50,9 +71,24 @@ object Haptics {
 
     fun perform(view: View?, kind: Kind): Boolean {
         if (view == null) return false
-        val enabled = isEnabled(view.context)
-        val constant = constantFor(kind, enabled) ?: return false
-        return view.performHapticFeedback(constant)
+        val context = view.context
+        val prefs = Prefs(context)
+        val vibrator = context.getSystemService(Vibrator::class.java)
+        // Devices without amplitude control cannot honour the strength slider, so planFor falls back
+        // to the existing performHapticFeedback path for them.
+        val plan = planFor(
+            kind, isEnabled(context), prefs.hapticStrength, prefs.hapticDurationMs,
+            vibrator?.hasAmplitudeControl() == true,
+        )
+        return when (plan) {
+            Plan.Skip -> false
+            is Plan.System -> view.performHapticFeedback(plan.constant)
+            is Plan.Custom -> {
+                // Plays through the Vibrator, so it does not depend on the system "Touch vibration" setting.
+                vibrator?.vibrate(VibrationEffect.createOneShot(plan.durationMs.toLong(), plan.amplitude))
+                true
+            }
+        }
     }
 }
 

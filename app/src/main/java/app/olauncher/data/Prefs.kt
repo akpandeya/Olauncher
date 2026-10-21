@@ -1,5 +1,6 @@
 package app.olauncher.data
 
+import app.olauncher.helper.HapticTuning
 import android.content.Context
 import android.content.SharedPreferences
 import android.view.Gravity
@@ -131,6 +132,8 @@ class Prefs(context: Context) : PauseLogStorage {
         const val FONT_FAMILY = "FONT_FAMILY"
         const val ACCENT = "ACCENT"
         const val HAPTICS = "HAPTICS"
+        const val HAPTIC_STRENGTH = "HAPTIC_STRENGTH"
+        const val HAPTIC_DURATION_MS = "HAPTIC_DURATION_MS"
 
         fun nudgeDoneKey(type: String): String = "$NUDGE_DONE_PREFIX${type.uppercase()}"
 
@@ -558,6 +561,14 @@ class Prefs(context: Context) : PauseLogStorage {
     var haptics: Boolean
         get() = prefs.getBoolean(HAPTICS, true)
         set(value) = prefs.edit { putBoolean(HAPTICS, value).apply() }
+
+    var hapticStrength: Int
+        get() = HapticTuning.clampStrength(prefs.getInt(HAPTIC_STRENGTH, HapticTuning.DEFAULT_STRENGTH))
+        set(value) = prefs.edit { putInt(HAPTIC_STRENGTH, HapticTuning.clampStrength(value)).apply() }
+
+    var hapticDurationMs: Int
+        get() = HapticTuning.clampDurationMs(prefs.getInt(HAPTIC_DURATION_MS, HapticTuning.DEFAULT_DURATION_MS))
+        set(value) = prefs.edit { putInt(HAPTIC_DURATION_MS, HapticTuning.clampDurationMs(value)).apply() }
 
     var proMessageShown: Boolean
         get() = prefs.getBoolean(PRO_MESSAGE_SHOWN, false)

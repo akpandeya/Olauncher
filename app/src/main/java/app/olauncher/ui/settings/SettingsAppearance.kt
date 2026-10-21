@@ -1,5 +1,7 @@
 package app.olauncher.ui.settings
 
+import app.olauncher.helper.HapticTuning
+import app.olauncher.helper.Haptics
 import app.olauncher.ui.*
 import app.olauncher.ui.SettingsFragment
 import android.app.TimePickerDialog
@@ -452,4 +454,49 @@ internal fun SettingsFragment.toggleHaptics() {
 
 internal fun SettingsFragment.populateHaptics() {
     binding.haptics.text = getString(if (prefs.haptics) R.string.on else R.string.off)
+}
+
+/** Strength and duration sliders. Save on every change and buzz once on release so the user can feel the new setting. */
+internal fun SettingsFragment.setupHapticSliders() {
+    binding.hapticStrengthSeekBar.max = HapticTuning.STRENGTH_MAX
+    binding.hapticStrengthSeekBar.progress = prefs.hapticStrength
+    populateHapticStrength(prefs.hapticStrength)
+    binding.hapticStrengthSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+        override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
+            if (!fromUser) return
+            prefs.hapticStrength = progress
+            populateHapticStrength(prefs.hapticStrength)
+        }
+
+        override fun onStartTrackingTouch(seekBar: SeekBar) = Unit
+
+        override fun onStopTrackingTouch(seekBar: SeekBar) {
+            Haptics.confirm(seekBar)
+        }
+    })
+
+    binding.hapticDurationSeekBar.max = HapticTuning.DURATION_MAX_MS - HapticTuning.DURATION_MIN_MS
+    binding.hapticDurationSeekBar.progress = prefs.hapticDurationMs - HapticTuning.DURATION_MIN_MS
+    populateHapticDuration(prefs.hapticDurationMs)
+    binding.hapticDurationSeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+        override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
+            if (!fromUser) return
+            prefs.hapticDurationMs = progress + HapticTuning.DURATION_MIN_MS
+            populateHapticDuration(prefs.hapticDurationMs)
+        }
+
+        override fun onStartTrackingTouch(seekBar: SeekBar) = Unit
+
+        override fun onStopTrackingTouch(seekBar: SeekBar) {
+            Haptics.confirm(seekBar)
+        }
+    })
+}
+
+internal fun SettingsFragment.populateHapticStrength(percent: Int) {
+    binding.hapticStrength.text = getString(R.string.glow_strength_percent, percent)
+}
+
+internal fun SettingsFragment.populateHapticDuration(ms: Int) {
+    binding.hapticDuration.text = getString(R.string.haptic_duration_ms, ms)
 }

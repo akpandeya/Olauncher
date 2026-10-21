@@ -53,6 +53,7 @@ import app.olauncher.ui.settings.populateFontFamily
 import app.olauncher.ui.settings.populateGerman
 import app.olauncher.ui.settings.populateGlowStrength
 import app.olauncher.ui.settings.populateHaptics
+import app.olauncher.ui.settings.setupHapticSliders
 import app.olauncher.ui.settings.populateHealthConnect
 import app.olauncher.ui.settings.populateHoldNotifications
 import app.olauncher.ui.settings.populateHomeDarkness
@@ -512,6 +513,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateTextSize()
         populateBoldFont()
         populateHaptics()
+        setupHapticSliders()
         populateTextContrast()
         populateHomeDarkness()
         populateTextBrightness()
@@ -686,6 +688,8 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.boldFont.parent as View, getFirstTextView(binding.boldFont.parent as View), R.id.boldFont),
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.textSizeValue.parent as View, getFirstTextView(binding.textSizeValue.parent as View), R.id.textSizeValue),
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.haptics.parent as View, getFirstTextView(binding.haptics.parent as View), R.id.haptics),
+            RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.hapticStrengthLayout, binding.hapticStrengthTitle, R.id.hapticStrength),
+            RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.hapticDurationLayout, binding.hapticDurationTitle, R.id.hapticDuration),
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.textContrastLayout, binding.textContrastTitle, R.id.textContrast),
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.homeWashLayout, binding.homeWashTitle, R.id.homeDarkness),
             RuntimeSettingsRow(SettingsSections.KEY_APPEARANCE, binding.textBrightnessLayout, binding.textBrightnessTitle, R.id.textBrightness),
