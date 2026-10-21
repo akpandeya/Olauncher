@@ -25,7 +25,6 @@ import app.olauncher.helper.getColorFromAttr
 import app.olauncher.ui.today.TodayCard
 import app.olauncher.ui.today.TodayOrder
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -110,9 +109,8 @@ internal class NextUpCardView(
     fun render() {
         val context = binding.root.context ?: return
         val scope = NextUpCard.scopeProvider?.invoke()
-            ?: (try { fragment.viewLifecycleOwner.lifecycleScope } catch (_: Exception) { null }
-                ?: fragment.lifecycleScope
-                ?: CoroutineScope(Dispatchers.Main))
+            ?: (try { fragment.viewLifecycleOwner.lifecycleScope } catch (_: IllegalStateException) { null })
+            ?: return
 
         job?.cancel()
         job = scope.launch {
