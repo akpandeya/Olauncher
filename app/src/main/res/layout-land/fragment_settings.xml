@@ -187,6 +187,16 @@
                     android:text="@string/backup"
                     android:textColor="?attr/primaryColor" />
 
+                <TextView
+                    android:tag="sectionRowPrivacy"
+                    style="@style/TextLarge"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:paddingVertical="8dp"
+                    android:text="@string/privacy"
+                    android:textColor="?attr/primaryColor" />
+
             </LinearLayout>
 
             <LinearLayout

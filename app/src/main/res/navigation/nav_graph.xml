@@ -72,6 +72,13 @@
             app:exitAnim="@animator/fade_exit"
             app:popEnterAnim="@animator/fade_enter"
             app:popExitAnim="@animator/fade_exit" />
+        <action
+            android:id="@+id/action_settingsFragment_to_privacyFragment"
+            app:destination="@id/privacyFragment"
+            app:enterAnim="@animator/fade_enter"
+            app:exitAnim="@animator/fade_exit"
+            app:popEnterAnim="@animator/fade_enter"
+            app:popExitAnim="@animator/fade_exit" />
     </fragment>
 
     <fragment
@@ -124,5 +131,11 @@
         android:name="app.olauncher.ui.words.WordsFragment"
         android:label="WordsFragment"
         tools:layout="@layout/fragment_words" />
+
+    <fragment
+        android:id="@+id/privacyFragment"
+        android:name="app.olauncher.ui.privacy.PrivacyFragment"
+        android:label="PrivacyFragment"
+        tools:layout="@layout/fragment_privacy" />
 
 </navigation>
