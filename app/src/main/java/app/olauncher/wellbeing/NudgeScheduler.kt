@@ -11,6 +11,7 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import app.olauncher.R
 import app.olauncher.data.Prefs
+import app.olauncher.helper.appUsagePermissionGranted
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.time.ZoneId
@@ -25,6 +26,22 @@ object NudgeScheduler {
     const val KEY_TYPE = "type"
 
     fun workName(type: String): String = "$WORK_NAME_PREFIX$type"
+
+    /** The social job runs only when a threshold is set and usage access is granted. */
+    fun socialJobWanted(thresholdMin: Int, usageAccessGranted: Boolean): Boolean =
+        thresholdMin > 0 && usageAccessGranted
+
+    private fun socialWanted(context: Context, prefs: Prefs): Boolean =
+        socialJobWanted(prefs.nudgeSocialThresholdMin, context.appUsagePermissionGranted())
+
+    /** Starts or stops the social job to match the threshold and usage access. */
+    fun syncSocial(context: Context) {
+        if (socialWanted(context, Prefs(context))) {
+            scheduleSocial(context, ExistingPeriodicWorkPolicy.KEEP)
+        } else {
+            cancel(context, Nudges.SOCIAL)
+        }
+    }
 
     /**
      * Enqueues unique one-time work for the given nudge [type].
@@ -86,7 +103,7 @@ object NudgeScheduler {
         policy: ExistingPeriodicWorkPolicy = ExistingPeriodicWorkPolicy.KEEP,
     ) {
         val prefs = Prefs(context)
-        if (prefs.nudgeSocialThresholdMin <= 0) {
+        if (!socialWanted(context, prefs)) {
             cancel(context, Nudges.SOCIAL)
             return
         }
@@ -117,7 +134,7 @@ object NudgeScheduler {
                 Nudges.cancel(context, type)
             }
         }
-        if (prefs.nudgeSocialThresholdMin > 0) {
+        if (socialWanted(context, prefs)) {
             scheduleSocial(
                 context,
                 if (policy == ExistingWorkPolicy.REPLACE) ExistingPeriodicWorkPolicy.UPDATE
