@@ -123,7 +123,7 @@ internal fun HomeFragment.launchApp(appName: String, packageName: String, activi
 internal fun HomeFragment.homeAppClicked(location: Int, view: View? = null) {
     val appName = prefs.getAppName(location)
     if (appName.isNotEmpty()) {
-        Haptics.tick(view ?: binding.root)
+        Haptics.confirm(view ?: binding.root)
     }
     launchAppOrShortcut(
         appName = appName,
