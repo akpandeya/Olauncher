@@ -107,18 +107,23 @@ class AppDrawerAdapter(
     var allowAutoLaunch = true
     private var appFilteredScores: List<Int> = emptyList()
     private data class FilterPayload(
-        val items: MutableList<AppModel>,
+        val items: List<AppModel>,
         val scores: List<Int>,
+        val searchQuery: String,
+        val isBangSearch: Boolean,
+        val autoLaunch: Boolean,
     )
     private val appFilter = createAppFilter()
     private val myUserHandle = android.os.Process.myUserHandle()
     private var adapterContext: Context? = context
 
     val hasResultRow: Boolean
-        get() = appFilteredList.any { it is AppModel.Result }
+        get() = currentList.any { it is AppModel.Result }
 
-    var appsList: MutableList<AppModel> = mutableListOf()
-    var appFilteredList: MutableList<AppModel> = mutableListOf()
+    /** Replaced as a whole only, never mutated in place (read by the filter worker thread). */
+    @Volatile
+    var appsList: List<AppModel> = emptyList()
+        private set
     var recyclerView: RecyclerView? = null
 
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
@@ -132,7 +137,8 @@ class AppDrawerAdapter(
     }
 
     override fun getItemViewType(position: Int): Int {
-        return when (appFilteredList.getOrNull(position)) {
+        if (position !in 0 until itemCount) return VIEW_TYPE_APP
+        return when (getItem(position)) {
             is AppModel.PrivateSpaceHeader -> VIEW_TYPE_PRIVATE_HEADER
             is AppModel.Result -> VIEW_TYPE_RESULT
             is AppModel.RecentHeader -> VIEW_TYPE_RECENT_HEADER
@@ -181,8 +187,8 @@ class AppDrawerAdapter(
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         try {
-            if (appFilteredList.isEmpty() || position == RecyclerView.NO_POSITION) return
-            val appModel = appFilteredList[holder.bindingAdapterPosition]
+            if (position !in 0 until itemCount) return
+            val appModel = getItem(position)
             when (holder) {
                 is PrivateSpaceHeaderViewHolder -> {
                     holder.bind(
@@ -246,11 +252,11 @@ class AppDrawerAdapter(
         return object : Filter() {
             override fun performFiltering(charSearch: CharSequence?): FilterResults {
                 val queryStr = charSearch?.toString().orEmpty()
-                searchQuery = queryStr
-                isBangSearch = charSearch?.startsWith("!") ?: false
-                autoLaunch = allowAutoLaunch
+                val bangSearch = charSearch?.startsWith("!") ?: false
+                val shouldAutoLaunch = allowAutoLaunch
                     && (charSearch?.startsWith(" ")?.not() ?: true)
                     && (charSearch?.trimStart()?.startsWith(":")?.not() ?: true)
+                val appsSnapshot = appsList
 
                 val filterResults = FilterResults()
                 if (charSearch.isNullOrBlank()) {
@@ -258,7 +264,7 @@ class AppDrawerAdapter(
                         val recentDecoded = recentAppsProvider?.invoke() ?: emptyList()
                         val hiddenApps = hiddenAppsProvider?.invoke() ?: emptySet()
                         recentDecoded.mapNotNull { entry ->
-                            val matching = appsList.filterIsInstance<AppModel.App>().firstOrNull {
+                            val matching = appsSnapshot.filterIsInstance<AppModel.App>().firstOrNull {
                                 it.appPackage == entry.packageName &&
                                 it.user.toString() == entry.user &&
                                 !it.isArchived &&
@@ -274,18 +280,18 @@ class AppDrawerAdapter(
                     val ctx = context ?: adapterContext
                     val caption = ctx?.getString(R.string.recent) ?: "Recent"
                     val blankItems = RecentApps.forEmptySearch(
-                        appsList = appsList,
+                        appsList = appsSnapshot,
                         recentApps = recentAppsToDisplay,
                         recentCaption = caption,
                         bottomSearch = bottomSearch,
-                    ).toMutableList()
+                    )
 
-                    filterResults.values = FilterPayload(blankItems, emptyList())
+                    filterResults.values = FilterPayload(blankItems, emptyList(), queryStr, bangSearch, shouldAutoLaunch)
                     return filterResults
                 }
 
                 val query = charSearch.toString()
-                val scoredApps = appsList.mapNotNull { app ->
+                val scoredApps = appsSnapshot.mapNotNull { app ->
                     if (app is AppModel.PrivateSpaceHeader || app is AppModel.Result || app is AppModel.RecentHeader) return@mapNotNull null
                     val score = AppMatcher.score(app.appLabel, query) ?: return@mapNotNull null
                     app to score
@@ -374,29 +380,32 @@ class AppDrawerAdapter(
                 }
 
                 val rawItems = resultRows + scoredApps.map { it.first }
-                val items = DrawerOrdering.forSearchPosition(rawItems, bottomSearch).toMutableList()
+                val items = DrawerOrdering.forSearchPosition(rawItems, bottomSearch)
                 val scores = scoredApps.map { it.second }
-                filterResults.values = FilterPayload(items, scores)
+                filterResults.values = FilterPayload(items, scores, queryStr, bangSearch, shouldAutoLaunch)
                 return filterResults
             }
 
-            @Suppress("UNCHECKED_CAST")
             override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
                 searchQuery = constraint?.toString().orEmpty()
                 val payload = results?.values as? FilterPayload
+                val items: List<AppModel>
                 if (payload != null) {
-                    appFilteredList = payload.items
+                    items = payload.items
                     appFilteredScores = payload.scores
+                    searchQuery = payload.searchQuery
+                    isBangSearch = payload.isBangSearch
+                    autoLaunch = payload.autoLaunch
                 } else {
-                    appFilteredList = (results?.values as? MutableList<AppModel>) ?: mutableListOf()
+                    items = emptyList()
                     appFilteredScores = emptyList()
                 }
                 (recyclerView?.layoutManager as? LinearLayoutManager)?.let { lm ->
                     lm.stackFromEnd = bottomSearch
                 }
-                submitList(appFilteredList) {
-                    if (appFilteredList.isNotEmpty()) {
-                        val targetPosition = if (bottomSearch) appFilteredList.size - 1 else 0
+                submitList(items) {
+                    if (items.isNotEmpty()) {
+                        val targetPosition = if (bottomSearch) items.size - 1 else 0
                         recyclerView?.scrollToPosition(targetPosition)
                     }
                     autoLaunch()
@@ -420,7 +429,7 @@ class AppDrawerAdapter(
     private fun autoLaunch() {
         try {
             val strongMatches = appFilteredScores.count { it >= AppMatcher.SCORE_SUBSTRING }
-            val first = if (bottomSearch) appFilteredList.lastOrNull() else appFilteredList.firstOrNull()
+            val first = if (bottomSearch) currentList.lastOrNull() else currentList.firstOrNull()
             if (ArchivedAppsHelper.canAutoLaunch(
                     query = searchQuery,
                     hasResultRow = hasResultRow,
@@ -438,23 +447,27 @@ class AppDrawerAdapter(
         }
     }
 
-    fun setAppList(appsList: MutableList<AppModel>) {
-        // Add empty app for bottom padding in recyclerview and assign to list
-        appsList.add(
-            AppModel.App(
-                appLabel = "",
-                key = null,
-                appPackage = "",
-                activityClassName = "",
-                isNew = false,
-                user = android.os.Process.myUserHandle()
-            )
+    fun setAppList(incoming: List<AppModel>) {
+        // Copy, then add empty app for bottom padding in recyclerview
+        val newList = incoming + AppModel.App(
+            appLabel = "",
+            key = null,
+            appPackage = "",
+            activityClassName = "",
+            isNew = false,
+            user = android.os.Process.myUserHandle()
         )
-        this.appsList = appsList
-        this.appFilteredList = appsList
+        this.appsList = newList
         this.appFilteredScores = emptyList()
         this.searchQuery = ""
-        submitList(appsList)
+        submitList(newList)
+    }
+
+    /** Removes an app from the full and displayed lists without mutating either in place. */
+    fun removeApp(app: AppModel) {
+        val matches = { it: AppModel -> it.appPackage == app.appPackage && it.user == app.user }
+        appsList = appsList.filterNot(matches)
+        submitList(currentList.filterNot(matches))
     }
 
     fun launchFirstInList() {
@@ -464,24 +477,24 @@ class AppDrawerAdapter(
     /** Best app match nearest the search box, skipping result rows and headers. */
     fun getTopApp(): AppModel? {
         val isApp = { it: AppModel -> it !is AppModel.PrivateSpaceHeader && it !is AppModel.Result && it !is AppModel.RecentHeader && it.appLabel.isNotBlank() }
-        return if (bottomSearch) appFilteredList.lastOrNull(isApp) else appFilteredList.firstOrNull(isApp)
+        return if (bottomSearch) currentList.lastOrNull(isApp) else currentList.firstOrNull(isApp)
     }
 
     fun getTopItem(): AppModel? =
         if (bottomSearch) {
-            appFilteredList.lastOrNull { it !is AppModel.RecentHeader && it.appLabel.isNotBlank() }
+            currentList.lastOrNull { it !is AppModel.RecentHeader && it.appLabel.isNotBlank() }
         } else {
-            appFilteredList.firstOrNull { it !is AppModel.RecentHeader && it.appLabel.isNotBlank() }
+            currentList.firstOrNull { it !is AppModel.RecentHeader && it.appLabel.isNotBlank() }
         }
 
     fun getTargetPositionForOrderedIndex(orderedIndex: Int): Int {
         if (itemCount <= 0) return 0
         return if (bottomSearch) {
             // Full list is reversed, then the recents block sits after it.
-            (appsList.size - 1 - orderedIndex).coerceIn(0, itemCount - 1)
+            (currentList.size - 1 - orderedIndex).coerceIn(0, itemCount - 1)
         } else {
             // Recents block (header + recents) sits before the full list.
-            val offset = appFilteredList.count { it is AppModel.RecentHeader || (it is AppModel.App && it.isRecent) }
+            val offset = currentList.count { it is AppModel.RecentHeader || (it is AppModel.App && it.isRecent) }
             (orderedIndex + offset).coerceIn(0, itemCount - 1)
         }
     }
