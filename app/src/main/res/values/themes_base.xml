@@ -56,6 +56,9 @@
         <item name="scrim">@color/scrim</item>
 
         <item name="mainFontFamily">sans-serif-light</item>
+        <item name="displayFontFamily">sans-serif-black</item>
+        <item name="labelFontFamily">sans-serif-medium</item>
+        <item name="quoteFontFamily">serif</item>
 
         <!-- Popup menus and dialogs used by settings -->
         <item name="popupMenuStyle">@style/OlPopupMenu</item>

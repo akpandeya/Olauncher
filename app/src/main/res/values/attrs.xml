@@ -12,6 +12,9 @@
     <attr name="dialogShadeColor" format="color" />
     <attr name="primaryShadeDarkColor" format="color" />
     <attr name="mainFontFamily" format="string|reference" />
+    <attr name="displayFontFamily" format="string|reference" />
+    <attr name="labelFontFamily" format="string|reference" />
+    <attr name="quoteFontFamily" format="string|reference" />
     <attr name="todayScrimColor" format="color" />
     <attr name="todayPanelColor" format="color" />
     <attr name="todayChipColor" format="color" />
