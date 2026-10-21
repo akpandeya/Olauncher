@@ -38,6 +38,7 @@ import app.olauncher.helper.HomeSet
 import app.olauncher.helper.HomeSets
 import app.olauncher.data.ShortcutOffset
 import app.olauncher.data.ShortcutSize
+import app.olauncher.helper.HomeDateText
 import app.olauncher.helper.HomeFit
 import app.olauncher.helper.PosterClock
 import app.olauncher.databinding.FragmentHomeBinding
@@ -55,6 +56,7 @@ import app.olauncher.helper.InfoLine
 import app.olauncher.helper.Intention
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import app.olauncher.helper.appUsagePermissionGranted
 import app.olauncher.helper.dpToPx
 import app.olauncher.helper.getChangedAppTheme
@@ -68,9 +70,6 @@ import app.olauncher.wellbeing.WindDownWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
 import java.util.Locale
 
 class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListener {
@@ -470,11 +469,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         val percent = reading.percent
         val charging = reading.charging
         if (prefs.homeInfoCombined) {
-            val combinedDate = if (isGerman) {
-                SimpleDateFormat("EEEE d. MMMM", Locale.GERMAN)
-            } else {
-                SimpleDateFormat("EEE d MMM", Locale.getDefault())
-            }.format(Date())
+            val combinedDate = HomeDateText.format(LocalDate.now(), isGerman, true, Locale.getDefault())
             val showScreenTimeNumber = context?.appUsagePermissionGranted() == true && !isScreenTimeCueOn()
             binding.date.text = InfoLine.compose(
                 date = combinedDate,
@@ -483,13 +478,8 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
                 screenTime = if (showScreenTimeNumber) latestScreenTime else null
             )
         } else {
-            val dateFormat = if (isGerman) {
-                SimpleDateFormat("EEEE, d. MMMM", Locale.GERMAN)
-            } else {
-                SimpleDateFormat("EEE, d MMM", Locale.getDefault())
-            }
             binding.date.text = BatteryFormatting.dateLine(
-                date = dateFormat.format(Date()),
+                date = HomeDateText.format(LocalDate.now(), isGerman, false, Locale.getDefault()),
                 percent = percent,
                 charging = charging,
                 mode = prefs.batteryMode,
@@ -541,10 +531,8 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
     internal fun updateClockWords() {
         if (_binding == null) return
-        val calendar = Calendar.getInstance()
-        val hour = calendar.get(Calendar.HOUR_OF_DAY)
-        val minute = calendar.get(Calendar.MINUTE)
-        binding.clockWords.text = GermanTime.words(hour, minute)
+        val now = LocalTime.now()
+        binding.clockWords.text = GermanTime.words(now.hour, now.minute)
     }
 
     internal fun refreshHomeSetIfChanged() {
