@@ -143,6 +143,7 @@ class Prefs(context: Context) : PauseLogStorage {
 
     private val PREFS_FILENAME = "app.olauncher"
 
+    private val ONBOARDING_STATE = "ONBOARDING_STATE"
     private val FIRST_OPEN = "FIRST_OPEN"
     private val FIRST_OPEN_TIME = "FIRST_OPEN_TIME"
     private val GESTURE_HINT_INDEX = "GESTURE_HINT_INDEX"
@@ -297,6 +298,11 @@ class Prefs(context: Context) : PauseLogStorage {
 
     var onNudgeDoneRollover: ((epochDay: Long, water: Int, walk: Int) -> Unit)? = null
     var onPauseLogRollover: ((previous: PauseDay) -> Unit)? = null
+
+    /** Saved first-run progress, see OnboardingStore. Empty until onboarding starts. */
+    var onboardingState: String
+        get() = prefs.getString(ONBOARDING_STATE, "") ?: ""
+        set(value) = prefs.edit { putString(ONBOARDING_STATE, value).apply() }
 
     var firstOpen: Boolean
         get() = prefs.getBoolean(FIRST_OPEN, true)
