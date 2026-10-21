@@ -24,8 +24,10 @@ internal fun HomeFragment.populateNextEventLine() {
     val prefOn = prefs.homeNextEvent
     val granted = ContextCompat.checkSelfPermission(ctx, Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED
     if (!HomeNextEvent.shouldShow(prefOn, granted, HomeNextEventLine("", 0))) {
+        val changed = nextEventId != null
         nextEventId = null
         binding.nextEventLine.isVisible = false
+        if (changed) refreshContextLine()
         return
     }
     val nowTemplate = getString(R.string.next_up_now)
@@ -40,9 +42,12 @@ internal fun HomeFragment.populateNextEventLine() {
             null
         }
         if (_binding == null) return@launch
+        val changed = nextEventId != line?.eventId
         nextEventId = line?.eventId
         binding.nextEventLine.text = line?.text
         binding.nextEventLine.isVisible = HomeNextEvent.shouldShow(prefOn, granted, line)
+        // The context line skips this event, so redraw it when the shown event changes.
+        if (changed) refreshContextLine()
     }
 }
 

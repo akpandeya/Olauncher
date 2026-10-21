@@ -75,4 +75,15 @@ class ContextLineTest {
         assertEquals(3L, ContextLine.relevantEvent(list, now)?.id)
         assertNull(ContextLine.relevantEvent(list.take(2), now))
     }
+
+    @Test
+    fun `relevantEvent skips the event the next-event line shows`() {
+        val running = event(-10, 20, "Roundtable", id = 4242)
+        val soon = event(15, 45, "Review", id = 9191)
+        val list = listOf(running, soon)
+        assertEquals(4242L, ContextLine.relevantEvent(list, now)?.id)
+        assertEquals(9191L, ContextLine.relevantEvent(list, now, excludeEventId = 4242L)?.id)
+        assertNull(ContextLine.relevantEvent(listOf(running), now, excludeEventId = 4242L))
+        assertEquals(4242L, ContextLine.relevantEvent(list, now, excludeEventId = 5L)?.id)
+    }
 }
