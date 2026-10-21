@@ -52,14 +52,27 @@ class OnboardingStoreTest {
     }
 
     @Test
-    fun step2NextAndSkipBothSaveComplete() {
+    fun step2NextSavesOptionalFeaturesAndSkipSavesComplete() {
         val step2 = OnboardingStore.stateFor("PICK_HOME_APPS")
-        assertEquals(OnboardingStore.COMPLETE, OnboardingStore.encode(OnboardingStore.nextPressed(step2)))
+        val next = OnboardingStore.nextPressed(step2)
+        assertEquals(OnboardingStep.OPTIONAL_FEATURES, next.currentStep)
+        assertFalse(next.isComplete)
+        assertEquals("OPTIONAL_FEATURES", OnboardingStore.encode(next))
         assertEquals(OnboardingStore.COMPLETE, OnboardingStore.encode(Onboarding.skipped(step2)))
     }
 
     @Test
-    fun step2NextIsNotSkipped() {
-        assertFalse(OnboardingStore.nextPressed(OnboardingStore.stateFor("PICK_HOME_APPS")).skipped)
+    fun step3NextSavesCompleteNotSkipped() {
+        val next = OnboardingStore.nextPressed(OnboardingStore.stateFor("OPTIONAL_FEATURES"))
+        assertTrue(next.isComplete)
+        assertFalse(next.skipped)
+        assertEquals(OnboardingStore.COMPLETE, OnboardingStore.encode(next))
+    }
+
+    @Test
+    fun step3SkipSavesCompleteAsSkipped() {
+        val skipped = Onboarding.skipped(OnboardingStore.stateFor("OPTIONAL_FEATURES"))
+        assertTrue(skipped.skipped)
+        assertEquals(OnboardingStore.COMPLETE, OnboardingStore.encode(skipped))
     }
 }

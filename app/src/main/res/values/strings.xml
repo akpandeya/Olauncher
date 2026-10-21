@@ -307,6 +307,10 @@
     <string name="onboarding_open_home_settings" tools:ignore="MissingTranslation">Choose default launcher</string>
     <string name="onboarding_pick_apps_message" tools:ignore="MissingTranslation">Pick your home apps. These sit at the bottom of your home screen, one tap away.</string>
     <string name="onboarding_pick_apps_action" tools:ignore="MissingTranslation">Choose home apps</string>
+    <string name="onboarding_features_message" tools:ignore="MissingTranslation">Optional. Switch on what you want now; each asks for its permission only when you turn it on. You can change all of these later in Settings.</string>
+    <string name="onboarding_feature_turn_on" tools:ignore="MissingTranslation">Turn on: %s</string>
+    <string name="onboarding_feature_is_on" tools:ignore="MissingTranslation">%s is on</string>
+    <string name="onboarding_wellbeing_label" tools:ignore="MissingTranslation">Wellbeing: water reminders</string>
     <string name="onboarding_next" tools:ignore="MissingTranslation">Next</string>
     <string name="pause_open">Open</string>
     <string name="pause_open_countdown">Open (%d)</string>
