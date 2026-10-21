@@ -37,7 +37,8 @@ object Haptics {
             Kind.LONG_PRESS -> HapticFeedbackConstants.LONG_PRESS
             Kind.REJECT -> HapticFeedbackConstants.REJECT
             Kind.GESTURE -> HapticFeedbackConstants.SEGMENT_TICK
-            Kind.MENU -> HapticFeedbackConstants.CONTEXT_CLICK
+            // CONTEXT_CLICK plays nothing on many phones, so menu choices use CONFIRM.
+            Kind.MENU -> HapticFeedbackConstants.CONFIRM
         }
     }
 
