@@ -1,7 +1,6 @@
 package app.olauncher.helper
 
 import android.content.Intent
-import android.graphics.Typeface
 import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
@@ -28,7 +27,7 @@ class WordLookupActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val prefs = Prefs(this)
         AppCompatDelegate.setDefaultNightMode(prefs.appTheme)
-        if (prefs.boldFont) theme.applyStyle(R.style.BoldFontOverlay, true)
+        prefs.applyFontOverlay(theme)
         super.onCreate(savedInstanceState)
 
         val word = WordLookupShare.parse(readIncomingText())
@@ -49,7 +48,7 @@ class WordLookupActivity : AppCompatActivity() {
             insets
         }
 
-        val typeface = Typeface.create(if (prefs.boldFont) "sans-serif" else "sans-serif-light", Typeface.NORMAL)
+        val typeface = mainTypeface()
         listOf(binding.lookupWord, binding.lookupMeaning, binding.lookupOpen, binding.lookupSave)
             .forEach { it.typeface = typeface }
         binding.lookupWord.text = word

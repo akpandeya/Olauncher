@@ -40,6 +40,7 @@ import app.olauncher.helper.HomeReturnPolicy
 import app.olauncher.helper.MotionPolicy
 import app.olauncher.helper.WordCaptureActivity
 import app.olauncher.helper.WordScreenService
+import app.olauncher.helper.applyFontOverlay
 import app.olauncher.helper.getColorFromAttr
 import app.olauncher.helper.hasBeenDays
 import app.olauncher.helper.hasBeenHours
@@ -109,17 +110,7 @@ class MainActivity : AppCompatActivity() {
         if (isEinkDisplay()) prefs.appTheme = AppCompatDelegate.MODE_NIGHT_NO
         AppCompatDelegate.setDefaultNightMode(prefs.appTheme)
         super.onCreate(savedInstanceState)
-        when (prefs.fontFamily) {
-            Constants.FontFamily.INTER -> {
-                theme.applyStyle(if (prefs.boldFont) R.style.FontInterBoldOverlay else R.style.FontInterOverlay, true)
-            }
-            Constants.FontFamily.PLEX -> {
-                theme.applyStyle(if (prefs.boldFont) R.style.FontPlexBoldOverlay else R.style.FontPlexOverlay, true)
-            }
-            else -> {
-                if (prefs.boldFont) theme.applyStyle(R.style.BoldFontOverlay, true)
-            }
-        }
+        prefs.applyFontOverlay(theme)
         val accentOverlay = Accent.resolve(Accent.fromId(prefs.accent), 0) {
             when (it) {
                 Accent.SYSTEM -> R.style.AccentSystemOverlay
