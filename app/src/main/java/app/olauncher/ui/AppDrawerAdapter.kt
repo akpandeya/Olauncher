@@ -28,6 +28,7 @@ import app.olauncher.databinding.AdapterAppDrawerBinding
 import app.olauncher.databinding.AdapterPrivateSpaceHeaderBinding
 import app.olauncher.databinding.AdapterRecentHeaderBinding
 import app.olauncher.helper.getColorFromAttr
+import app.olauncher.helper.hapticLongClick
 import app.olauncher.helper.hideKeyboard
 import app.olauncher.helper.isSystemApp
 import app.olauncher.helper.showKeyboard
@@ -636,7 +637,7 @@ class AppDrawerAdapter(
                 }
             }
 
-            appTitle.setOnLongClickListener {
+            appTitle.hapticLongClick {
                 if (appModel.appPackage.isNotEmpty()) {
                     root.hideKeyboard()
                     val sheet = AppActionsSheet(
@@ -655,7 +656,6 @@ class AppDrawerAdapter(
                     )
                     sheet.showRespectingStatusBar()
                 }
-                true
             }
 
             // Configure rename behavior
