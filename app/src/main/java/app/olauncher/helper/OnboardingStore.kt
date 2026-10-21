@@ -27,4 +27,14 @@ object OnboardingStore {
 
     /** Next in the welcome: advances one step, finishing (not skipped) after the last. */
     fun nextPressed(state: OnboardingState): OnboardingState = Onboarding.advancedFrom(state)
+
+    /**
+     * Step 1 only asks for the default launcher, so once the home role is held
+     * (for example set in system settings) the welcome moves on by itself.
+     * Any other step, a finished welcome, or an unknown answer stays as is.
+     */
+    fun advancedIfDefault(state: OnboardingState, isDefault: Boolean?): OnboardingState =
+        if (!state.isComplete && state.currentStep == OnboardingStep.SET_DEFAULT_LAUNCHER && isDefault == true)
+            Onboarding.advancedFrom(state)
+        else state
 }

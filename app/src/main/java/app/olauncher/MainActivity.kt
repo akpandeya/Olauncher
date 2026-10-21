@@ -239,6 +239,15 @@ class MainActivity : AppCompatActivity() {
         viewModel.isPrivateSpaceToggling = false
         viewModel.isAwaitingActivityResult = false
         reloadAppList(AppListReloadTrigger.RESUME)
+        advanceWelcomeIfDefault()
+    }
+
+    /** A welcome still on step 1 moves on once the user has made Thumbline the default launcher. */
+    private fun advanceWelcomeIfDefault() {
+        if (prefs.onboardingState != OnboardingStep.SET_DEFAULT_LAUNCHER.name) return
+        val current = OnboardingStore.stateFor(prefs.onboardingState)
+        val next = OnboardingStore.advancedIfDefault(current, isOlauncherDefault(this))
+        if (next != current) showOnboardingStep(next)
     }
 
     private fun reloadAppList(trigger: AppListReloadTrigger) {
