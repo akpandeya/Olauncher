@@ -33,6 +33,12 @@ class OnboardingStoreTest {
     }
 
     @Test
+    fun autoHomeRoleRequestSkippedWhenWelcomeShown() {
+        assertFalse(OnboardingStore.shouldAutoRequestHomeRole(welcomeShown = true))
+        assertTrue(OnboardingStore.shouldAutoRequestHomeRole(welcomeShown = false))
+    }
+
+    @Test
     fun resumeFromSavedStep() {
         assertEquals(OnboardingStep.PICK_HOME_APPS, OnboardingStore.stateFor("PICK_HOME_APPS").currentStep)
         assertEquals(OnboardingStep.SET_DEFAULT_LAUNCHER, OnboardingStore.stateFor("junk").currentStep)

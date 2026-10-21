@@ -151,7 +151,9 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
-        if (savedInstanceState == null && OnboardingStore.shouldShow(prefs.onboardingState, prefs.firstOpen))
+        val welcomeShown = savedInstanceState == null &&
+            OnboardingStore.shouldShow(prefs.onboardingState, prefs.firstOpen)
+        if (welcomeShown)
             showOnboardingStep(OnboardingStore.stateFor(prefs.onboardingState))
         else if (prefs.onboardingState.isEmpty())
             prefs.onboardingState = OnboardingStore.COMPLETE
@@ -161,7 +163,8 @@ class MainActivity : AppCompatActivity() {
             prefs.firstOpen = false
             prefs.firstOpenTime = System.currentTimeMillis()
             viewModel.setDefaultClockApp()
-            viewModel.resetLauncherLiveData.call()
+            if (OnboardingStore.shouldAutoRequestHomeRole(welcomeShown))
+                viewModel.resetLauncherLiveData.call()
         }
 
         initObservers(viewModel)

@@ -20,5 +20,8 @@ object OnboardingStore {
         return saved.isNullOrEmpty().not() || isFirstOpen
     }
 
+    /** The welcome's own button asks for the home role, so the automatic first-open request is skipped. */
+    fun shouldAutoRequestHomeRole(welcomeShown: Boolean): Boolean = !welcomeShown
+
     fun stateFor(saved: String?): OnboardingState = Onboarding.resumedFrom(saved)
 }
