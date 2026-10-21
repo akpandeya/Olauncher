@@ -31,4 +31,12 @@
     <dimen name="home_wash_fade">72dp</dimen>
     <!-- Height of the album-colour glow behind the home clock (music pulse) -->
     <dimen name="music_glow_height">300dp</dimen>
+
+    <!-- Corner radius set: use only these for surfaces -->
+    <dimen name="radiusSmall">12dp</dimen>
+    <dimen name="radiusMedium">20dp</dimen>
+    <dimen name="radiusLarge">28dp</dimen>
+    <dimen name="radiusPill">999dp</dimen>
+    <!-- Border width for outlined surfaces -->
+    <dimen name="strokeHairline">1dp</dimen>
 </resources>
