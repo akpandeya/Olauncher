@@ -35,6 +35,8 @@ import app.olauncher.data.Prefs
 import app.olauncher.wellbeing.NudgeScheduler
 import app.olauncher.wellbeing.UsageSnapshotWorker
 import app.olauncher.databinding.ActivityMainBinding
+import app.olauncher.helper.AppListReloadPolicy
+import app.olauncher.helper.AppListReloadTrigger
 import app.olauncher.helper.BackRules
 import app.olauncher.helper.HomeReturnPolicy
 import app.olauncher.helper.MotionPolicy
@@ -185,7 +187,13 @@ class MainActivity : AppCompatActivity() {
         isResumed = true
         viewModel.isPrivateSpaceToggling = false
         viewModel.isAwaitingActivityResult = false
-        viewModel.getAppList()
+        reloadAppList(AppListReloadTrigger.RESUME)
+    }
+
+    private fun reloadAppList(trigger: AppListReloadTrigger) {
+        if (AppListReloadPolicy.shouldReload(trigger, viewModel.appList.value != null)) {
+            viewModel.getAppList()
+        }
     }
 
     fun applyNavigationMotion() {
@@ -317,27 +325,33 @@ class MainActivity : AppCompatActivity() {
     private fun registerShortcutCallback() {
         val launcherApps = getSystemService(LauncherApps::class.java)
         launcherAppsCallback = object : LauncherApps.Callback() {
-            override fun onPackageRemoved(packageName: String, user: android.os.UserHandle) = Unit
-            override fun onPackageAdded(packageName: String, user: android.os.UserHandle) = Unit
-            override fun onPackageChanged(packageName: String, user: android.os.UserHandle) = Unit
+            override fun onPackageRemoved(packageName: String, user: android.os.UserHandle) =
+                reloadAppList(AppListReloadTrigger.PACKAGE_REMOVED)
+
+            override fun onPackageAdded(packageName: String, user: android.os.UserHandle) =
+                reloadAppList(AppListReloadTrigger.PACKAGE_ADDED)
+
+            override fun onPackageChanged(packageName: String, user: android.os.UserHandle) =
+                reloadAppList(AppListReloadTrigger.PACKAGE_CHANGED)
+
             override fun onPackagesAvailable(
                 packageNames: Array<out String>,
                 user: android.os.UserHandle,
                 replacing: Boolean,
-            ) = Unit
+            ) = reloadAppList(AppListReloadTrigger.PACKAGES_AVAILABILITY_CHANGED)
 
             override fun onPackagesUnavailable(
                 packageNames: Array<out String>,
                 user: android.os.UserHandle,
                 replacing: Boolean,
-            ) = Unit
+            ) = reloadAppList(AppListReloadTrigger.PACKAGES_AVAILABILITY_CHANGED)
 
             override fun onShortcutsChanged(
                 packageName: String,
                 shortcuts: MutableList<ShortcutInfo>,
                 user: android.os.UserHandle,
             ) {
-                viewModel.getAppList()
+                reloadAppList(AppListReloadTrigger.SHORTCUTS_CHANGED)
             }
         }
         launcherApps.registerCallback(launcherAppsCallback!!)
