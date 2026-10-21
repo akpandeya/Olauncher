@@ -28,6 +28,7 @@ import app.olauncher.wellbeing.PauseLog
 import app.olauncher.wellbeing.PauseSnooze
 import app.olauncher.wellbeing.PauseLogStorage
 import app.olauncher.wellbeing.UsageSnapshotStore
+import app.olauncher.wellbeing.WalkNudgePolicy
 
 class Prefs(context: Context) : PauseLogStorage {
     companion object {
@@ -70,6 +71,8 @@ class Prefs(context: Context) : PauseLogStorage {
         const val HEALTH_CONNECT_ENABLED = "HEALTH_CONNECT_ENABLED"
         const val NUDGE_DONE_DAY = "NUDGE_DONE_DAY"
         const val NUDGE_DONE_PREFIX = "NUDGE_DONE_"
+        const val NUDGE_AUTO_WALK_COUNT = "NUDGE_AUTO_WALK_COUNT"
+        const val NUDGE_AUTO_WALK_DAY = "NUDGE_AUTO_WALK_DAY"
         const val NUDGE_SOCIAL_THRESHOLD_MIN = "NUDGE_SOCIAL_THRESHOLD_MIN"
         const val NUDGE_SOCIAL_REPEAT_MIN = "NUDGE_SOCIAL_REPEAT_MIN"
         const val NUDGE_SOCIAL_LAST_BUCKET = "NUDGE_SOCIAL_LAST_BUCKET"
@@ -1343,6 +1346,22 @@ class Prefs(context: Context) : PauseLogStorage {
         get() = prefs.getBoolean(HEALTH_CONNECT_ENABLED, false)
         set(value) = prefs.edit { putBoolean(HEALTH_CONNECT_ENABLED, value).apply() }
 
+    /** Automatic walks found today; reads 0 when the stored count is from another day. */
+    var autoWalksToday: Int
+        get() = WalkNudgePolicy.autoWalksForDay(
+            prefs.getLong(NUDGE_AUTO_WALK_DAY, 0L),
+            prefs.getInt(NUDGE_AUTO_WALK_COUNT, 0),
+            epochDaySupplier(),
+        )
+        set(value) {
+            // Close a finished day first so its snapshot still sees the old automatic count.
+            checkAndResetNudgeDoneDay()
+            prefs.edit {
+                putInt(NUDGE_AUTO_WALK_COUNT, value)
+                putLong(NUDGE_AUTO_WALK_DAY, epochDaySupplier())
+            }
+        }
+
     fun checkAndResetNudgeDoneDay() {
         val today = epochDaySupplier()
         val savedDay = prefs.getLong(NUDGE_DONE_DAY, 0L)
@@ -1352,7 +1371,14 @@ class Prefs(context: Context) : PauseLogStorage {
         }
         if (savedDay != today) {
             val water = prefs.getInt(nudgeDoneKey(Nudges.WATER), 0)
-            val walk = prefs.getInt(nudgeDoneKey(Nudges.WALK), 0)
+            val walk = WalkNudgePolicy.shownWalks(
+                prefs.getInt(nudgeDoneKey(Nudges.WALK), 0),
+                WalkNudgePolicy.autoWalksForDay(
+                    prefs.getLong(NUDGE_AUTO_WALK_DAY, 0L),
+                    prefs.getInt(NUDGE_AUTO_WALK_COUNT, 0),
+                    savedDay,
+                ),
+            )
 
             val snapshot = DaySnapshot(
                 epochDay = savedDay,

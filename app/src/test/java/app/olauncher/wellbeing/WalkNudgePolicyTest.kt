@@ -10,6 +10,20 @@ class WalkNudgePolicyTest {
 
     private val labels = HealthLabels("%1\$s steps", "Slept %1\$s", "Resting HR %1\$s", "Exercise %1\$s min", "Heart rate %1\$s")
 
+    @Test
+    fun autoWalksForDay_readsStoredOnlyForSameDay() {
+        assertEquals(7, WalkNudgePolicy.autoWalksForDay(20_000L, 7, 20_000L))
+        assertEquals(0, WalkNudgePolicy.autoWalksForDay(19_999L, 7, 20_000L))
+        assertEquals(0, WalkNudgePolicy.autoWalksForDay(0L, 7, 20_000L))
+    }
+
+    @Test
+    fun shownWalks_addsManualAndAuto() {
+        assertEquals(9, WalkNudgePolicy.shownWalks(2, 7))
+        assertEquals(2, WalkNudgePolicy.shownWalks(2, 0))
+        assertEquals(7, WalkNudgePolicy.shownWalks(0, 7))
+    }
+
     private val start = 1_000_000L
     private val end = 4_600_000L
 
