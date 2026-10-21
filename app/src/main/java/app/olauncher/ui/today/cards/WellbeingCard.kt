@@ -26,6 +26,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.time.ZonedDateTime
+import kotlin.math.max
 
 object WellbeingCardLogic {
 
@@ -165,6 +166,9 @@ object WellbeingCard : TodayCard {
         renderHealthLine()
     }
 
+    /** Walks found automatically in Health Connect today; null when unavailable. */
+    private var autoWalks: Int? = null
+
     fun renderHealthLine() {
         val b = binding ?: return
         val context = b.root.context ?: return
@@ -172,6 +176,7 @@ object WellbeingCard : TodayCard {
         healthJob?.cancel()
         if (!prefs.healthConnectEnabled) {
             b.tvHealth.isVisible = false
+            autoWalks = null
             return
         }
         val scope = scopeProvider?.invoke()
@@ -179,8 +184,12 @@ object WellbeingCard : TodayCard {
                 ?: cardFragment?.lifecycleScope
                 ?: CoroutineScope(Dispatchers.Main))
         healthJob = scope.launch {
-            val summary = withContext(Dispatchers.IO) {
-                HealthRepository(context, { prefs.healthConnectEnabled }).readToday()
+            val repo = HealthRepository(context, { prefs.healthConnectEnabled })
+            val summary = withContext(Dispatchers.IO) { repo.readToday() }
+            val walks = withContext(Dispatchers.IO) { repo.readWalkDay()?.totalWalks }
+            if (walks != autoWalks) {
+                autoWalks = walks
+                renderLine1()
             }
             val labels = HealthLabels(
                 steps = context.getString(R.string.health_line_steps),
@@ -209,7 +218,7 @@ object WellbeingCard : TodayCard {
 
         if (line1Visible) {
             val waterCount = prefs.nudgeDone(Nudges.WATER)
-            val walkCount = prefs.nudgeDone(Nudges.WALK)
+            val walkCount = max(prefs.nudgeDone(Nudges.WALK), autoWalks ?: 0)
 
             b.tvWater.isVisible = waterOn
             if (waterOn) {
