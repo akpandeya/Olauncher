@@ -142,6 +142,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         populateShortcuts()
         populateWeather()
         applyWeatherEffects()
+        refreshWeatherMemory()
         applyTextContrast()
         WeatherLocation.refreshIfStale(requireContext())
         viewModel.isOlauncherDefault()

@@ -11,12 +11,40 @@ import app.olauncher.glance.WeatherCache
 import app.olauncher.glance.WeatherFormatting
 import app.olauncher.helper.WeatherEffect
 import app.olauncher.helper.WeatherEffects
+import androidx.lifecycle.lifecycleScope
+import app.olauncher.glance.Forecast
+import app.olauncher.helper.WeatherJsonCache
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.Locale
 
+private var weatherMemory: WeatherJsonCache<Pair<Forecast, Long>>? = null
+
+/** In-memory forecast; the disk is read only by [refreshWeatherMemory]. */
+private fun cachedForecast(): Pair<Forecast, Long>? = weatherMemory?.peek()
+
+/** Reads the cache file off the main thread when WeatherWorker has written a newer one, then repaints. */
+internal fun HomeFragment.refreshWeatherMemory() {
+    val appContext = context?.applicationContext ?: return
+    val memory = weatherMemory
+        ?: WeatherJsonCache { WeatherCache(appContext).read() }.also { weatherMemory = it }
+    val fetchedAt = prefs.weatherFetchedAt
+    if (memory.isCurrent(fetchedAt)) return
+    viewLifecycleOwner.lifecycleScope.launch {
+        val before = memory.peek()
+        val after = withContext(Dispatchers.IO) { memory.get(fetchedAt) }
+        if (after != before && _binding != null) {
+            if (prefs.homeInfoCombined) populateDateTime()
+            populateWeather()
+            applyWeatherEffects()
+        }
+    }
+}
+
 internal fun HomeFragment.combinedWeatherText(): String? {
-    val context = context ?: return null
     if (!prefs.weatherEnabled) return null
-    val cached = WeatherCache(context).read() ?: return null
+    val cached = cachedForecast() ?: return null
     return WeatherFormatting.homeLine(cached.first, cached.second)
 }
 
@@ -47,6 +75,7 @@ internal fun HomeFragment.initWeatherListener() {
         if (key == Prefs.WEATHER_FETCHED_AT || key == Prefs.WEATHER_ENABLED) {
             activity?.runOnUiThread {
                 if (_binding != null) {
+                    refreshWeatherMemory()
                     if (prefs.homeInfoCombined) populateDateTime()
                     populateWeather()
                     applyWeatherEffects()
@@ -60,8 +89,7 @@ internal fun HomeFragment.initWeatherListener() {
 /** Sets the weather layer from the cached forecast. Hidden unless Weather effects is on and a forecast is cached. */
 internal fun HomeFragment.applyWeatherEffects() {
     val binding = _binding ?: return
-    val context = context ?: return
-    val forecast = WeatherCache(context).read()?.first
+    val forecast = cachedForecast()?.first
     val effect = WeatherEffects.select(prefs.homeWeatherEffects, forecast?.nowCode)
     binding.weatherEffects.setEffect(effect, WeatherEffects.tint(effect, forecast?.isDay ?: true))
     binding.weatherEffects.isVisible = effect != WeatherEffect.NONE
@@ -70,13 +98,12 @@ internal fun HomeFragment.applyWeatherEffects() {
 
 internal fun HomeFragment.populateWeather() {
     val binding = _binding ?: return
-    val context = context ?: return
     if (prefs.homeInfoCombined || !prefs.weatherEnabled || prefs.dateTimeVisibility == Constants.DateTime.OFF) {
         binding.weather.isVisible = false
         binding.weatherSeparator.isVisible = false
         return
     }
-    val cached = WeatherCache(context).read()
+    val cached = cachedForecast()
     val line = if (cached != null) {
         WeatherFormatting.homeLine(cached.first, cached.second)
     } else {
