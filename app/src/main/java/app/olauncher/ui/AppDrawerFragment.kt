@@ -719,9 +719,7 @@ class AppDrawerFragment : BaseFragment() {
                 if (appModel is AppModel.Result || appModel is AppModel.RecentHeader) {
                     return@AppDrawerAdapter
                 }
-                adapter.appFilteredList.removeAt(position)
-                adapter.notifyItemRemoved(position)
-                adapter.appsList.removeAll { it.appPackage == appModel.appPackage && it.user == appModel.user }
+                adapter.removeApp(appModel)
 
                 val newSet = mutableSetOf<String>()
                 newSet.addAll(prefs.hiddenApps)
