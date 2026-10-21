@@ -43,17 +43,24 @@ class HapticsTest {
     }
 
     @Test
-    fun `new kinds map to distinct constants`() {
+    fun `reject and gesture map to distinct constants`() {
         val reject = Haptics.constantFor(Haptics.Kind.REJECT, enabled = true)
         val gesture = Haptics.constantFor(Haptics.Kind.GESTURE, enabled = true)
-        val menu = Haptics.constantFor(Haptics.Kind.MENU, enabled = true)
 
         assertEquals(HapticFeedbackConstants.REJECT, reject)
         assertEquals(HapticFeedbackConstants.SEGMENT_TICK, gesture)
-        assertEquals(HapticFeedbackConstants.CONTEXT_CLICK, menu)
-        assertEquals(3, setOf(reject, gesture, menu).size)
+        assertEquals(2, setOf(reject, gesture).size)
         val old = setOf(HapticFeedbackConstants.CLOCK_TICK, HapticFeedbackConstants.CONFIRM, HapticFeedbackConstants.LONG_PRESS)
-        assertTrue(old.none { it == reject || it == gesture || it == menu })
+        assertTrue(old.none { it == reject || it == gesture })
+    }
+
+    @Test
+    fun `menu maps to CONFIRM, which most phones play, not CONTEXT_CLICK`() {
+        val menu = Haptics.constantFor(Haptics.Kind.MENU, enabled = true)
+
+        assertEquals(HapticFeedbackConstants.CONFIRM, menu)
+        assertTrue(menu != HapticFeedbackConstants.CONTEXT_CLICK)
+        assertNull(Haptics.constantFor(Haptics.Kind.MENU, enabled = false))
     }
 
     @Test
