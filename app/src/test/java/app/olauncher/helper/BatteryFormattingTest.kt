@@ -2,6 +2,8 @@ package app.olauncher.helper
 
 import app.olauncher.data.Prefs
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BatteryFormattingTest {
@@ -223,5 +225,14 @@ class BatteryFormattingTest {
             statusBarShown = false
         )
         assertEquals("18, Oktober", hiddenWithDot)
+    }
+
+    @Test
+    fun readingChanged_detectsDifferences() {
+        val base = BatteryReading(47, false)
+        assertTrue(BatteryFormatting.readingChanged(null, base))
+        assertFalse(BatteryFormatting.readingChanged(base, BatteryReading(47, false)))
+        assertTrue(BatteryFormatting.readingChanged(base, BatteryReading(46, false)))
+        assertTrue(BatteryFormatting.readingChanged(base, BatteryReading(47, true)))
     }
 }
