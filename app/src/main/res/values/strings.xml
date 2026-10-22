@@ -521,6 +521,12 @@
     <string name="a11y_action_swipe_left_app">Open swipe-left app: %1$s</string>
     <string name="a11y_action_swipe_right_app">Open swipe-right app: %1$s</string>
     <string name="a11y_word_capture_sheet">Save a word</string>
+    <string name="command_help_timer" tools:ignore="MissingTranslation">Timer: :t 10 tea</string>
+    <string name="command_help_alarm" tools:ignore="MissingTranslation">Alarm: :a 7:30 wake up</string>
+    <string name="command_help_event" tools:ignore="MissingTranslation">Event: :e dentist tomorrow 15:00</string>
+    <string name="command_help_note" tools:ignore="MissingTranslation">Note: :n buy milk</string>
+    <string name="command_help_save_words" tools:ignore="MissingTranslation">Save words: :sw Fernweh, Heimat</string>
+    <string name="command_help_look_up" tools:ignore="MissingTranslation">Look up a word: :w Hund</string>
     <string name="save_word_row">Save word: %1$s</string>
     <string name="save_words_row">Save %1$d words: %2$s</string>
     <string name="word_row_meaning">%1$s — %2$s</string>

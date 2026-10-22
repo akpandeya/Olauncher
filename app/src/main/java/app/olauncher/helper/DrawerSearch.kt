@@ -17,6 +17,8 @@ class DrawerSearchInput(
     val recentCaption: String,
     val callRowText: (number: String) -> String,
     val saveWordRowText: (word: String) -> String,
+    /** One-line help row for a command, e.g. "Timer: :t 10 tea". */
+    val commandHelpRowText: (word: String) -> String = { ":$it" },
     val saveWordsRowText: (count: Int, shown: String) -> String,
     val contactSource: () -> ContactSource?,
     val calendarRows: (String) -> List<AppModel.Result>,
@@ -106,7 +108,11 @@ object DrawerSearch {
                 rows.add(saveWordsRow(input, command.items))
             }
             is DrawerCommand.LookUp -> safeAdd(rows) { input.lookUpRows(command.text) }
-            null -> Unit
+            is DrawerCommand.Help -> command.commands.forEach {
+                rows.add(AppModel.Result(input.commandHelpRowText(it.word), AppModel.Result.Action.FillQuery(it.prefix)))
+            }
+            // Handled by their own features.
+            is DrawerCommand.Timer, is DrawerCommand.Alarm, is DrawerCommand.Event, is DrawerCommand.Note, null -> Unit
         }
         // Runs on the Filter worker thread; a newer query supersedes this one.
         safeAdd(rows) {

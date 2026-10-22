@@ -262,6 +262,7 @@ class AppDrawerAdapter(
                         recentCaption = ctx?.getString(R.string.recent) ?: "Recent",
                         callRowText = { ctx?.getString(R.string.call_number, it) ?: "Call $it" },
                         saveWordRowText = { ctx?.getString(R.string.save_word_row, it) ?: "Save word: $it" },
+                        commandHelpRowText = { word -> commandHelpText(ctx, word) },
                         saveWordsRowText = { count, shown ->
                             ctx?.getString(R.string.save_words_row, count, shown) ?: "Save $count words: $shown"
                         },
@@ -612,4 +613,17 @@ class AppDrawerAdapter(
             }
         }
     }
+}
+
+private fun commandHelpText(ctx: android.content.Context?, word: String): String {
+    val res = when (word) {
+        "t" -> R.string.command_help_timer
+        "a" -> R.string.command_help_alarm
+        "e" -> R.string.command_help_event
+        "n" -> R.string.command_help_note
+        "sw" -> R.string.command_help_save_words
+        "w" -> R.string.command_help_look_up
+        else -> return ":$word"
+    }
+    return ctx?.getString(res) ?: ":$word"
 }
