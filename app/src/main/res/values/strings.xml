@@ -532,6 +532,16 @@
     <string name="profile_rule_delete" tools:ignore="MissingTranslation">Delete rule</string>
     <string name="profile_rule_every_day" tools:ignore="MissingTranslation">every day</string>
     <string name="profile_rule_no_days" tools:ignore="MissingTranslation">no days</string>
+    <string name="profile_event_add" tools:ignore="MissingTranslation">Add event rule</string>
+    <string name="profile_event_title" tools:ignore="MissingTranslation">While an event is on</string>
+    <string name="profile_event_calendar" tools:ignore="MissingTranslation">Calendar</string>
+    <string name="profile_event_any_calendar" tools:ignore="MissingTranslation">Any calendar</string>
+    <string name="profile_event_keyword" tools:ignore="MissingTranslation">Title contains</string>
+    <string name="profile_event_keyword_none" tools:ignore="MissingTranslation">any title</string>
+    <string name="profile_event_all_day" tools:ignore="MissingTranslation">All-day events</string>
+    <string name="profile_event_needs_access" tools:ignore="MissingTranslation">needs calendar access, skipped</string>
+    <string name="profile_event_label" tools:ignore="MissingTranslation">%1$s while %2$s</string>
+    <string name="profile_event_access_message" tools:ignore="MissingTranslation">Thumbline reads your calendar on this phone to follow your events</string>
     <string name="profile_name_morning" tools:ignore="MissingTranslation">Morning</string>
     <string name="profile_name_day" tools:ignore="MissingTranslation">Day</string>
     <string name="profile_name_evening" tools:ignore="MissingTranslation">Evening</string>
