@@ -9,10 +9,12 @@ import android.widget.ScrollView
 import android.widget.TextView
 import androidx.core.view.isVisible
 import androidx.core.widget.TextViewCompat
+import java.time.LocalDate
 import app.olauncher.R
 import app.olauncher.helper.Haptics
 import app.olauncher.helper.Note
 import app.olauncher.helper.NotesStore
+import app.olauncher.helper.Notes
 import app.olauncher.helper.UndoMessage
 import app.olauncher.helper.createDialog
 
@@ -21,7 +23,7 @@ private fun HomeFragment.notesStore() = NotesStore({ prefs.notesJson }, { prefs.
 /** Shows the oldest open note as one line, or hides the line when there is none or the setting is off. */
 internal fun HomeFragment.populateNoteLine() {
     if (_binding == null) return
-    val note = if (prefs.homeNotes) notesStore().top() else null
+    val note = if (prefs.homeNotes) notesStore().top(LocalDate.now()) else null
     val text = note?.let { getString(R.string.note_home_line, it.text) }
     // Skip unchanged text: the line is a live region and would be re-announced every second.
     if (binding.noteLine.text.toString() != text.orEmpty()) binding.noteLine.text = text
@@ -31,7 +33,7 @@ internal fun HomeFragment.populateNoteLine() {
 /** Tap on the note line: mark the shown note done, with Undo, and show the next one. */
 internal fun HomeFragment.markTopNoteDone() {
     val store = notesStore()
-    val note = store.top() ?: return
+    val note = store.top(LocalDate.now()) ?: return
     store.markDone(note.id)
     populateNoteLine()
     UndoMessage.show(activity, getString(R.string.note_marked_done)) {
@@ -67,7 +69,7 @@ private fun HomeFragment.noteRow(note: Note): View {
         gravity = Gravity.CENTER_VERTICAL
     }
     row.addView(
-        actionText(note.text).apply { maxLines = 2 },
+        actionText(listOfNotNull(note.text, Notes.dateLabel(note)).joinToString(" · ")).apply { maxLines = 2 },
         LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
     )
     row.addView(actionText(getString(R.string.done)).apply {
