@@ -44,7 +44,9 @@ internal fun HomeFragment.populateNextEventLine() {
         if (_binding == null) return@launch
         val changed = nextEventId != line?.eventId
         nextEventId = line?.eventId
-        binding.nextEventLine.text = line?.text
+        // Skip unchanged text: the line is a live region and would be re-announced every second.
+        val nextText = line?.text
+        if (binding.nextEventLine.text.toString() != nextText?.toString().orEmpty()) binding.nextEventLine.text = nextText
         binding.nextEventLine.isVisible = HomeNextEvent.shouldShow(prefOn, granted, line)
         // The context line skips this event, so redraw it when the shown event changes.
         if (changed) refreshContextLine()
