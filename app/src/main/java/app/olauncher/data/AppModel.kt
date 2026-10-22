@@ -56,6 +56,8 @@ sealed class AppModel : Comparable<AppModel> {
             data class LookUpWord(val text: String) : Action
             /** Tap puts [query] into the search box (command help rows). */
             data class FillQuery(val query: String) : Action
+            /** Tap starts a countdown timer in the clock app (`:t`). */
+            data class StartTimer(val seconds: Int, val label: String) : Action
             /** [openOnTap] false: tap does nothing, long-press still opens the page. */
             data class OpenWiktionary(val text: String, val openOnTap: Boolean = true) : Action
         }

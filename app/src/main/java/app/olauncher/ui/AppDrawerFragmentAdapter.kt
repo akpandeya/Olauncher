@@ -2,6 +2,7 @@ package app.olauncher.ui
 
 import android.util.Log
 import android.content.ContentUris
+import android.provider.AlarmClock
 import android.provider.CalendarContract
 import android.content.Intent
 import android.net.Uri
@@ -85,6 +86,22 @@ internal fun AppDrawerFragment.initAdapter() {
 
                         is AppModel.Result.Action.FillQuery ->
                             binding.search.setQuery(action.query, false)
+
+                        is AppModel.Result.Action.StartTimer -> {
+                            try {
+                                startActivity(
+                                    Intent(AlarmClock.ACTION_SET_TIMER).apply {
+                                        putExtra(AlarmClock.EXTRA_LENGTH, action.seconds)
+                                        putExtra(AlarmClock.EXTRA_MESSAGE, action.label)
+                                        putExtra(AlarmClock.EXTRA_SKIP_UI, true)
+                                    }
+                                )
+                            } catch (e: Exception) {
+                                Log.w(TAG, "start timer failed", e)
+                                requireContext().showToast(getString(R.string.timer_no_clock_app))
+                            }
+                            findNavController().popBackStack(R.id.mainFragment, false)
+                        }
 
                         is AppModel.Result.Action.OpenWiktionary -> {
                             if (action.openOnTap) {
