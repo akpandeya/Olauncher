@@ -129,6 +129,8 @@ object SettingsCatalog {
         primaryId = R.id.dayStart, layoutId = R.id.dayStartLayout, titleId = R.id.dayStartTitle, valueId = R.id.dayStart),
     row(key = "eveningStart", sectionKey = SettingsSections.KEY_HOME, titleRes = R.string.evening_starts, type = SettingsRowType.CHOICE,
         primaryId = R.id.eveningStart, layoutId = R.id.eveningStartLayout, titleId = R.id.eveningStartTitle, valueId = R.id.eveningStart),
+    row(key = "profileSchedule", sectionKey = SettingsSections.KEY_HOME, titleRes = R.string.profile_schedule, type = SettingsRowType.CHOICE,
+        primaryId = R.id.profileSchedule, layoutId = R.id.profileScheduleLayout, titleId = R.id.profileScheduleTitle, valueId = R.id.profileSchedule),
     row(key = "contextLineValue", sectionKey = SettingsSections.KEY_HOME, titleRes = R.string.context_line, type = SettingsRowType.TOGGLE,
         primaryId = R.id.contextLineValue, layoutId = R.id.contextLineLayout, titleId = R.id.contextLineTitle, valueId = R.id.contextLineValue),
     row(key = "homeNextEventValue", sectionKey = SettingsSections.KEY_HOME, titleRes = R.string.home_next_event, type = SettingsRowType.TOGGLE,

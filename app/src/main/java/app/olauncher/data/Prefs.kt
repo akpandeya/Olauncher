@@ -60,6 +60,7 @@ class Prefs(context: Context) :
         fun defaultWeatherUnit(country: String = Locale.getDefault().country): String =
             if (country == "US") WEATHER_UNIT_F else WEATHER_UNIT_C
 
+        private val HOME_SET_PROFILE_IDS = setOf(HomeSetProfiles.MORNING_ID, HomeSetProfiles.DAY_ID, HomeSetProfiles.EVENING_ID)
         const val HOME_SETS = "HOME_SETS"
         const val HOME_SET_MORNING_START = "HOME_SET_MORNING_START"
         const val HOME_SET_DAY_START = "HOME_SET_DAY_START"
@@ -287,11 +288,68 @@ class Prefs(context: Context) :
     fun isWindDownActive(nowMinutes: Int = currentMinutesOfDay()): Boolean =
         windDown && WindDown.isActive(nowMinutes, windDownStart, windDownEnd)
 
-    fun activeHomeSet(nowMinutes: Int = currentMinutesOfDay()): HomeSet {
-        // Wind-down shows the Evening set (when sets are on and Evening has apps).
-        if (homeSets && isWindDownActive(nowMinutes) && homeSetHasApps(HomeSet.EVENING)) return HomeSet.EVENING
-        return HomeSets.active(nowMinutes, homeSetStarts(), homeSets) { homeSetHasApps(it) }
+    /**
+     * The schedule in force: the saved one, else the one built from the old Home-set keys
+     * (read live, never removed), else nothing but the Day default when Home sets are off.
+     */
+    fun profileSchedule(): ProfileSchedule {
+        val saved = profileScheduleJson
+        if (saved.isNotBlank()) {
+            try {
+                return ProfileSchedule.fromJson(saved)
+            } catch (e: ProfileFormatException) {
+                // A damaged saved schedule falls back to the Home-set times.
+            }
+        }
+        return if (homeSets) HomeSetProfiles.scheduleFrom(homeSetStarts())
+        else ProfileSchedule(HomeSetProfiles.DAY_ID, emptyList())
     }
+
+    /** True when the user has saved their own schedule rules. */
+    val hasSavedProfileSchedule: Boolean
+        get() = profileScheduleJson.isNotBlank() && try {
+            ProfileSchedule.fromJson(profileScheduleJson)
+            true
+        } catch (e: ProfileFormatException) {
+            false
+        }
+
+    /** True when the active profile can change with time, so the home tick must run. */
+    val profileScheduleActive: Boolean
+        get() = homeSets || hasSavedProfileSchedule
+
+    fun activeProfileId(nowMinutes: Int = currentMinutesOfDay(), dayOfWeek: Int = currentDayOfWeek()): String =
+        ProfileScheduleResolver.activeProfileId(
+            schedule = profileSchedule(),
+            nowMinutes = nowMinutes,
+            dayOfWeek = dayOfWeek,
+            windDownActive = isWindDownActive(nowMinutes),
+            // Wind-down forces the Evening profile only when Home sets are on, as before.
+            windDownProfileId = if (homeSets) HomeSetProfiles.EVENING_ID else null,
+            hasApps = { if (it in HOME_SET_PROFILE_IDS) homeSetHasApps(HomeSetProfiles.setOf(it)) else true },
+        )
+
+    fun activeHomeSet(nowMinutes: Int = currentMinutesOfDay(), dayOfWeek: Int = currentDayOfWeek()): HomeSet =
+        HomeSetProfiles.setOf(activeProfileId(nowMinutes, dayOfWeek))
+
+    /**
+     * Applies the settings bundle of the active profile when it differs from the last one seen.
+     * Returns true when a bundle was written.
+     */
+    fun applyScheduledProfile(nowMinutes: Int = currentMinutesOfDay(), dayOfWeek: Int = currentDayOfWeek()): Boolean {
+        val activeId = activeProfileId(nowMinutes, dayOfWeek)
+        val profiles = try {
+            Profile.listFromJson(profilesJson)
+        } catch (e: ProfileFormatException) {
+            emptyList()
+        }
+        val toApply = ProfileScheduleResolver.profileToApply(activeId, appliedProfileId, profiles)
+        if (activeId != appliedProfileId) appliedProfileId = activeId
+        toApply?.settings?.apply(PrefsProfileTarget(this))
+        return toApply != null
+    }
+
+    private fun currentDayOfWeek(): Int = java.time.LocalDate.now().dayOfWeek.value
 
     private fun currentMinutesOfDay(): Int {
         val now = java.time.LocalTime.now()
