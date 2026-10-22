@@ -378,12 +378,14 @@ class Prefs(context: Context) :
         nowMinutes: Int = currentMinutesOfDay(),
         dayOfWeek: Int = currentDayOfWeek(),
         nowMillis: Long = System.currentTimeMillis(),
+        weatherGranted: Boolean = true,
     ) {
         val override = ManualOverride.create(profileId, profileSchedule(), nowMillis, nowMinutes, dayOfWeek)
         manualProfileId = override.profileId
         manualProfileUntil = override.untilMillis
         appliedProfileId = profileId
-        profiles().firstOrNull { it.id == profileId }?.settings?.apply(PrefsProfileTarget(this))
+        profiles().firstOrNull { it.id == profileId }
+            ?.let { ProfilePicker.applyBundle(it.settings, PrefsProfileTarget(this), weatherGranted) }
     }
 
     fun clearManualProfile() {

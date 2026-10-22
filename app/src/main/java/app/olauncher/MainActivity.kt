@@ -104,12 +104,24 @@ class MainActivity : AppCompatActivity() {
     private var messageDialog: OlDialog? = null
     private var onboardingRowsRefresh: (() -> Unit)? = null
     private var onboardingProfileChoice = ProfilePicker.initial
+    private var onboardingProfileWantsWeather = false
+    private var onboardingProfileWeatherEffects = false
 
     // Welcome step 3 launchers. Each switches its feature on only when the permission is granted.
     private val onboardingWeatherPermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
         if (granted) enableOnboardingWeather()
+        onboardingRowsRefresh?.invoke()
+    }
+    // A profile with weather asks here; weather and its effects switch on only if granted.
+    private val onboardingProfileWeatherPermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            enableOnboardingWeather()
+            prefs.homeWeatherEffects = onboardingProfileWeatherEffects
+        }
         onboardingRowsRefresh?.invoke()
     }
     private val onboardingCalendarPermission = registerForActivityResult(
@@ -557,12 +569,12 @@ class MainActivity : AppCompatActivity() {
             onNeutral = { prefs.onboardingState = OnboardingStore.encode(Onboarding.skipped(state)) },
             onAction = {
                 if (step == OnboardingStep.PICK_PROFILE) {
-                    ProfilePicker.profileIdToApply(onboardingProfileChoice)?.let { prefs.switchProfile(it) }
-                    onboardingProfileChoice = ProfilePicker.initial
+                    applyOnboardingProfile()
                 }
                 val next = OnboardingStore.nextPressed(state)
                 prefs.onboardingState = OnboardingStore.encode(next)
                 if (!next.isComplete) showOnboardingStep(next)
+                if (step == OnboardingStep.PICK_PROFILE) askProfileWeatherIfNeeded()
             },
             content = { parent ->
                 if (isFeaturesStep) {
@@ -583,6 +595,28 @@ class MainActivity : AppCompatActivity() {
         )
         dialog.showRespectingStatusBar()
         messageDialog = dialog
+    }
+
+    /**
+     * Applies the chosen profile. Weather needs the location permission, so when the profile wants
+     * weather and the permission is missing, weather stays as it was until the user allows it.
+     */
+    private fun applyOnboardingProfile() {
+        val id = ProfilePicker.profileIdToApply(onboardingProfileChoice) ?: return
+        prefs.switchProfile(id, weatherGranted = WeatherLocation.hasPermission(this))
+        val profiles = prefs.profiles()
+        onboardingProfileWantsWeather = ProfilePicker.wantsWeather(onboardingProfileChoice, profiles)
+        onboardingProfileWeatherEffects = ProfilePicker.weatherEffectsOf(onboardingProfileChoice, profiles)
+        onboardingProfileChoice = ProfilePicker.initial
+    }
+
+    private fun askProfileWeatherIfNeeded() {
+        val wanted = onboardingProfileWantsWeather
+        onboardingProfileWantsWeather = false
+        if (!wanted || WeatherLocation.hasPermission(this)) return
+        showMessageDialog(R.string.weather, R.string.weather_location_permission_message, R.string.allow) {
+            onboardingProfileWeatherPermission.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+        }
     }
 
     /** One tappable row per profile, plus "Keep defaults"; the chosen row is marked and applied on Next. */

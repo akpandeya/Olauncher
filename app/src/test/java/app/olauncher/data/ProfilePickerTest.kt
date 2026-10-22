@@ -129,6 +129,37 @@ class ProfilePickerTest {
     }
 
     @Test
+    fun richWithWeatherPermissionDeniedKeepsWeatherAndAppliesTheRest() {
+        val settings = PickerSettings()
+        assertTrue(ProfilePicker.wantsWeather(ProfilePickerOption.RICH, profiles))
+        assertFalse(ProfilePicker.wantsWeather(ProfilePickerOption.FOCUS, profiles))
+        assertTrue(ProfilePicker.apply(ProfilePickerOption.RICH, profiles, settings, weatherGranted = false))
+        // Weather and effects keep their earlier values (here: weather on, effects on at start).
+        val off = PickerSettings().apply { weatherEnabled = false; homeWeatherEffects = false }
+        assertTrue(ProfilePicker.apply(ProfilePickerOption.RICH, profiles, off, weatherGranted = false))
+        assertFalse(off.weatherEnabled)
+        assertFalse(off.homeWeatherEffects)
+        assertEquals(7, off.homeAppsNum)
+        assertEquals(4, off.shortcutCount)
+        assertTrue(off.homeShortcuts)
+        assertTrue(off.homeMusicPulse)
+        assertEquals(ProfileSettings.KNOWN_CARDS.toSet(), off.cards)
+        // Granted: weather and effects come on with the bundle.
+        val granted = PickerSettings().apply { weatherEnabled = false; homeWeatherEffects = false }
+        assertTrue(ProfilePicker.apply(ProfilePickerOption.RICH, profiles, granted, weatherGranted = true))
+        assertTrue(granted.weatherEnabled)
+        assertTrue(granted.homeWeatherEffects)
+    }
+
+    @Test
+    fun denialDoesNotAffectProfilesWithoutWeather() {
+        val settings = PickerSettings()
+        assertTrue(ProfilePicker.apply(ProfilePickerOption.BARE, profiles, settings, weatherGranted = false))
+        assertFalse(settings.weatherEnabled)
+        assertFalse(settings.homeWeatherEffects)
+    }
+
+    @Test
     fun choosingRichAppliesExactlyItsBundleAndProfilesDiffer() {
         val settings = PickerSettings()
         assertTrue(ProfilePicker.apply(ProfilePickerOption.RICH, profiles, settings))
