@@ -29,9 +29,6 @@ object WeekCard : TodayCard {
     var storeProvider: ((Context) -> UsageSnapshotStore)? = null
     var todaySupplier: () -> Long = { LocalDate.now().toEpochDay() }
 
-    internal var binding: CardWeekBinding? = null
-    internal var currentReview: Review? = null
-
     fun getUsageSnapshotStore(context: Context): UsageSnapshotStore {
         return storeProvider?.invoke(context) ?: UsageSnapshotStore(context)
     }
@@ -65,34 +62,27 @@ object WeekCard : TodayCard {
 
     override fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View {
         val viewBinding = CardWeekBinding.inflate(inflater, parent, false)
-        binding = viewBinding
-
-        viewBinding.root.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
-            override fun onViewAttachedToWindow(v: View) {}
-            override fun onViewDetachedFromWindow(v: View) {
-                if (binding === viewBinding) {
-                    binding = null
-                }
-            }
-        })
-
-        render()
+        val cardView = WeekCardView(viewBinding)
+        viewBinding.root.tag = cardView
+        cardView.render()
         return viewBinding.root
     }
 
-    override fun onResume() {
-        render()
-    }
-
     override fun onResume(view: View) {
-        render()
+        (view.tag as? WeekCardView)?.render()
     }
+}
+
+/** Per-view state of the Week card; lives and dies with the card's root view. */
+internal class WeekCardView(private val binding: CardWeekBinding) {
+
+    var currentReview: Review? = null
+        private set
 
     fun render(review: Review) {
         currentReview = review
-        val b = binding ?: return
+        val b = binding
         val context = b.root.context
-
         b.tvDistractingApps.isVisible = review.distractingAppsLine != null
         b.tvDistractingApps.text = review.distractingAppsLine?.let { WeekCardText.formatWithEmoji(context, it) }
 
@@ -113,12 +103,9 @@ object WeekCard : TodayCard {
     }
 
     fun render() {
-        val b = binding ?: return
-        val context = b.root.context ?: return
-        val store = getUsageSnapshotStore(context)
-        val today = todaySupplier()
-        val snapshots = store.getAll()
-        val review = WeeklyReview.summarise(snapshots, today)
-        render(review)
+        val context = binding.root.context ?: return
+        val store = WeekCard.getUsageSnapshotStore(context)
+        val today = WeekCard.todaySupplier()
+        render(WeeklyReview.summarise(store.getAll(), today))
     }
 }
