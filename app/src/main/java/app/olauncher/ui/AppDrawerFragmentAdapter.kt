@@ -103,6 +103,26 @@ internal fun AppDrawerFragment.initAdapter() {
                             findNavController().popBackStack(R.id.mainFragment, false)
                         }
 
+                        is AppModel.Result.Action.SetAlarm -> {
+                            try {
+                                startActivity(
+                                    Intent(AlarmClock.ACTION_SET_ALARM).apply {
+                                        putExtra(AlarmClock.EXTRA_HOUR, action.hour)
+                                        putExtra(AlarmClock.EXTRA_MINUTES, action.minute)
+                                        putExtra(AlarmClock.EXTRA_MESSAGE, action.label)
+                                        if (action.days.isNotEmpty()) {
+                                            putExtra(AlarmClock.EXTRA_DAYS, ArrayList(action.days))
+                                        }
+                                        putExtra(AlarmClock.EXTRA_SKIP_UI, true)
+                                    }
+                                )
+                            } catch (e: Exception) {
+                                Log.w(TAG, "set alarm failed", e)
+                                requireContext().showToast(getString(R.string.alarm_no_clock_app))
+                            }
+                            findNavController().popBackStack(R.id.mainFragment, false)
+                        }
+
                         is AppModel.Result.Action.OpenWiktionary -> {
                             if (action.openOnTap) {
                                 openWiktionary(action.text)

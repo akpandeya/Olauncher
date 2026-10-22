@@ -58,6 +58,8 @@ sealed class AppModel : Comparable<AppModel> {
             data class FillQuery(val query: String) : Action
             /** Tap starts a countdown timer in the clock app (`:t`). */
             data class StartTimer(val seconds: Int, val label: String) : Action
+            /** Tap sets an alarm in the clock app (`:a`). [days] are Calendar constants. */
+            data class SetAlarm(val hour: Int, val minute: Int, val days: List<Int>, val label: String) : Action
             /** [openOnTap] false: tap does nothing, long-press still opens the page. */
             data class OpenWiktionary(val text: String, val openOnTap: Boolean = true) : Action
         }
