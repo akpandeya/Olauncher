@@ -150,7 +150,7 @@ private fun SettingsFragment.handleAppearanceClick(view: View): Boolean {
 private fun SettingsFragment.handleTodayAndNudgesClick(view: View): Boolean {
     when (view.id) {
         R.id.photoWallpaper, R.id.photoWallpaperTitle, R.id.photoWallpaperLayout -> showPhotoWallpaperMenu(binding.photoWallpaper)
-        R.id.swipeLeftApp -> showAppListIfEnabled(Constants.FLAG_SET_SWIPE_LEFT_APP)
+        R.id.swipeLeftApp -> showSwipeLeftMenu(binding.swipeLeftApp)
         R.id.swipeRightApp, R.id.swipeRightLayout -> showSwipeRightMenu(binding.swipeRightApp)
         R.id.todayCards, R.id.todayCardsTitle, R.id.todayCardsLayout -> showTodayCardsDialog()
         R.id.todayOrder, R.id.todayOrderTitle, R.id.todayOrderLayout -> tickOnChange(view) { toggleTodayOrder() }
