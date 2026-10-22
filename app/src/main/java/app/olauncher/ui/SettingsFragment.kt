@@ -94,6 +94,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     internal var rowsAdapter: SettingsRowsAdapter? = null
     internal var dialog: AlertDialog? = null
 
+    /** Calendar id and name pairs for the profile schedule screens; read once, off the main thread. */
+    internal var profileCalendars: List<Pair<Long, String>>? = null
+
     internal var currentSectionKey: String? = null
     internal var initialTargetApplied = false
 

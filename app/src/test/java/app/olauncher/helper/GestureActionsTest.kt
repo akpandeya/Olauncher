@@ -30,8 +30,14 @@ class GestureActionsTest {
             assertEquals(GestureAction.NEXT_TRACK, resolve(slot, GestureAction.NEXT_TRACK))
             assertEquals(GestureAction.PREVIOUS_TRACK, resolve(slot, GestureAction.PREVIOUS_TRACK))
             assertEquals(GestureAction.NOTHING, resolve(slot, GestureAction.NOTHING, lockModeOn = true))
-            assertEquals(GestureAction.LOCK, resolve(slot, GestureAction.LOCK, lockModeOn = false))
+            if (slot != GestureSlot.DOUBLE_TAP) assertEquals(GestureAction.LOCK, resolve(slot, GestureAction.LOCK, lockModeOn = false))
         }
+    }
+
+    @Test
+    fun `double tap lock choice follows the lock switch`() {
+        assertEquals(GestureAction.LOCK, resolve(GestureSlot.DOUBLE_TAP, GestureAction.LOCK, lockModeOn = true))
+        assertEquals(GestureAction.NOTHING, resolve(GestureSlot.DOUBLE_TAP, GestureAction.LOCK, lockModeOn = false))
     }
 
     @Test

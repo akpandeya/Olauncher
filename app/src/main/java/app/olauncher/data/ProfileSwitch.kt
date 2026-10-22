@@ -4,7 +4,8 @@ import app.olauncher.helper.HomeSets
 
 /**
  * A profile picked by hand. It holds until [untilMillis] (the next scheduled boundary);
- * [NO_EXPIRY] means the schedule never changes profile, so it holds until the user switches again.
+ * With no upcoming boundary it holds for [NO_BOUNDARY_HOLD_MILLIS] only, so it can never block the
+ * schedule for good. [NO_EXPIRY] marks an empty (none) override.
  */
 data class ManualOverride(val profileId: String, val untilMillis: Long) {
     fun isActive(nowMillis: Long): Boolean =
@@ -13,6 +14,7 @@ data class ManualOverride(val profileId: String, val untilMillis: Long) {
     companion object {
         const val NO_EXPIRY = 0L
         const val MILLIS_PER_MINUTE = 60_000L
+        const val NO_BOUNDARY_HOLD_MILLIS = 24 * 60 * MILLIS_PER_MINUTE
         val NONE = ManualOverride("", NO_EXPIRY)
 
         /** Holds [profileId] from [nowMillis] until the scheduled profile next changes. */
@@ -24,7 +26,7 @@ data class ManualOverride(val profileId: String, val untilMillis: Long) {
             dayOfWeek: Int,
         ): ManualOverride {
             val ahead = ProfileSwitch.minutesToNextBoundary(schedule, nowMinutes, dayOfWeek)
-                ?: return ManualOverride(profileId, NO_EXPIRY)
+                ?: return ManualOverride(profileId, nowMillis + NO_BOUNDARY_HOLD_MILLIS)
             val startOfMinute = nowMillis / MILLIS_PER_MINUTE
             return ManualOverride(profileId, (startOfMinute + ahead) * MILLIS_PER_MINUTE)
         }
@@ -137,10 +139,15 @@ object ProfileCustom {
      * True when applying [profile]'s bundle to [current] would change something, that is, the user
      * changed a setting the bundle sets. Settings the bundle leaves alone (null) never count.
      */
-    fun isCustom(profile: Profile, current: ProfileSettingsSource): Boolean {
+    fun isCustom(
+        profile: Profile,
+        current: ProfileSettingsSource,
+        permissions: ProfilePermissions = ProfilePermissions.ALL,
+    ): Boolean {
         val before = MemorySettings.of(current)
         val after = before.duplicate()
-        profile.settings.apply(after)
+        // A feature skipped for a missing permission is not a change by the user.
+        ProfilePicker.applyBundle(profile.settings, after, permissions)
         return before != after
     }
 
@@ -150,10 +157,11 @@ object ProfileCustom {
         profiles: List<Profile>,
         nameOf: (String) -> String,
         current: ProfileSettingsSource,
+        permissions: ProfilePermissions = ProfilePermissions.ALL,
     ): ProfileState {
         if (appliedId.isEmpty()) return ProfileState.None
         val profile = profiles.firstOrNull { it.id == appliedId } ?: return ProfileState.Active(nameOf(appliedId))
-        return if (isCustom(profile, current)) ProfileState.Custom(profile) else ProfileState.Active(profile.name)
+        return if (isCustom(profile, current, permissions)) ProfileState.Custom(profile) else ProfileState.Active(profile.name)
     }
 
     /**

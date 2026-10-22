@@ -17,7 +17,7 @@ interface ProfilePrefs {
     /** Id of the profile the user switched to by hand. Empty when none. */
     var manualProfileId: String
 
-    /** Epoch millis at which the manual switch ends; 0 holds it until the user switches again. */
+    /** Epoch millis at which the manual switch ends; 0 when no switch is held. */
     var manualProfileUntil: Long
 }
 
@@ -34,7 +34,17 @@ internal class ProfilePrefsStore(private val prefs: SharedPreferences) : Profile
 
     override var profileScheduleJson: String
         get() = prefs.getString(PROFILE_SCHEDULE_JSON, "").orEmpty()
-        set(value) = prefs.edit { putString(PROFILE_SCHEDULE_JSON, value) }
+        set(value) {
+            val changed = value != profileScheduleJson
+            prefs.edit {
+                putString(PROFILE_SCHEDULE_JSON, value)
+                // New rules end a manual switch, so the schedule can show.
+                if (changed) {
+                    putString(MANUAL_PROFILE_ID, "")
+                    putLong(MANUAL_PROFILE_UNTIL, 0L)
+                }
+            }
+        }
 
     override var appliedProfileId: String
         get() = prefs.getString(APPLIED_PROFILE_ID, "").orEmpty()

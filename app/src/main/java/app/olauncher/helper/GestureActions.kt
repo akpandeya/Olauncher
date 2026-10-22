@@ -37,11 +37,13 @@ object GestureActions {
     /**
      * What a gesture does right now.
      * Double-tap DEFAULT is today's behaviour: lock when lock mode is on, otherwise nothing.
+     * A saved double-tap LOCK follows the same lock mode switch, so switching it off stops the lock.
      * Clock and date DEFAULT stay DEFAULT: the caller opens its own app. OPEN_APP without a saved app does nothing.
      */
     fun resolve(slot: GestureSlot, stored: GestureAction, lockModeOn: Boolean, hasApp: Boolean): GestureAction = when {
         stored == GestureAction.OPEN_APP && !hasApp -> GestureAction.NOTHING
-        stored == GestureAction.DEFAULT && slot == GestureSlot.DOUBLE_TAP ->
+        // "Double tap to lock" off stops double-tap locking, whether the choice is Default or Lock.
+        slot == GestureSlot.DOUBLE_TAP && (stored == GestureAction.DEFAULT || stored == GestureAction.LOCK) ->
             if (lockModeOn) GestureAction.LOCK else GestureAction.NOTHING
         else -> stored
     }

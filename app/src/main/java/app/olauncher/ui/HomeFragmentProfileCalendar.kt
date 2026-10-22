@@ -9,6 +9,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+internal fun HomeFragment.calendarReadable(): Boolean {
+    val ctx = context ?: return false
+    return ContextCompat.checkSelfPermission(ctx, Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED
+}
+
 /**
  * Reads the events running now for the "while an event is on" profile rules, off the main thread,
  * and redraws Home when that changes the active profile. Without calendar access the events stay
