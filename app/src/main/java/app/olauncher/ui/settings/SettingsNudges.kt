@@ -142,14 +142,9 @@ import kotlinx.coroutines.withContext
 import java.text.Collator
 
 internal fun SettingsFragment.showAppListIfEnabled(flag: Int) {
-    if ((flag == Constants.FLAG_SET_SWIPE_LEFT_APP) and !prefs.swipeLeftEnabled) {
-        requireContext().showToast(getString(R.string.long_press_to_enable))
-        return
-    }
-    if ((flag == Constants.FLAG_SET_SWIPE_RIGHT_APP) and !prefs.swipeRightEnabled) {
-        requireContext().showToast(getString(R.string.long_press_to_enable))
-        return
-    }
+    // Choosing an app for a swipe gesture switches that gesture on.
+    if (flag == Constants.FLAG_SET_SWIPE_LEFT_APP) prefs.swipeLeftEnabled = true
+    if (flag == Constants.FLAG_SET_SWIPE_RIGHT_APP) prefs.swipeRightEnabled = true
     viewModel.getAppList(true)
     findNavController().navigate(
         R.id.action_settingsFragment_to_appListFragment,
