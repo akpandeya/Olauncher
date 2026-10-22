@@ -1,16 +1,14 @@
 package app.olauncher.ui.today.cards
 
+import app.olauncher.helper.createChoiceDialog
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
-import androidx.appcompat.app.AlertDialog
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import app.olauncher.R
 import app.olauncher.helper.Haptics
-import app.olauncher.data.Prefs
 import app.olauncher.data.store.SavedItem
 import app.olauncher.data.store.SavedItemsStore
 import app.olauncher.data.store.UrlExtractor
@@ -230,25 +228,23 @@ internal class SavedCardView(private val binding: CardSavedBinding) {
             context.getString(R.string.saved_delete),
             context.getString(R.string.saved_copy_link)
         )
-        val builder = AlertDialog.Builder(context)
-            .setItems(options) { _, which ->
-                when (which) {
-                    0 -> {
-                        SavedCard.getStore(context).archive(item.id)
-                        SavedCard.isArchivedExpanded = true
-                        render()
-                    }
-                    1 -> {
-                        SavedCard.getStore(context).delete(item.id)
-                        render()
-                    }
-                    2 -> {
-                        context.copyToClipboard(item.url)
-                        context.showToast(R.string.copied)
-                    }
+        context.createChoiceDialog(items = options.toList()) { which ->
+            when (which) {
+                0 -> {
+                    SavedCard.getStore(context).archive(item.id)
+                    SavedCard.isArchivedExpanded = true
+                    render()
+                }
+                1 -> {
+                    SavedCard.getStore(context).delete(item.id)
+                    render()
+                }
+                2 -> {
+                    context.copyToClipboard(item.url)
+                    context.showToast(R.string.copied)
                 }
             }
-        showDialogRespectingStatusBar(context, builder)
+        }.showRespectingStatusBar()
     }
 
     private fun showArchivedItemDialog(context: Context, item: SavedItem) {
@@ -256,33 +252,17 @@ internal class SavedCardView(private val binding: CardSavedBinding) {
             context.getString(R.string.saved_restore),
             context.getString(R.string.saved_delete)
         )
-        val builder = AlertDialog.Builder(context)
-            .setItems(options) { _, which ->
-                when (which) {
-                    0 -> {
-                        SavedCard.getStore(context).unarchive(item.id)
-                        render()
-                    }
-                    1 -> {
-                        SavedCard.getStore(context).delete(item.id)
-                        render()
-                    }
+        context.createChoiceDialog(items = options.toList()) { which ->
+            when (which) {
+                0 -> {
+                    SavedCard.getStore(context).unarchive(item.id)
+                    render()
+                }
+                1 -> {
+                    SavedCard.getStore(context).delete(item.id)
+                    render()
                 }
             }
-        showDialogRespectingStatusBar(context, builder)
-    }
-
-    private fun showDialogRespectingStatusBar(context: Context, builder: AlertDialog.Builder): AlertDialog {
-        val dialog = builder.create()
-        val window = dialog.window
-        if (window == null || Prefs(context).showStatusBar) {
-            dialog.show()
-        } else {
-            window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-            dialog.show()
-            window.hideStatusBar()
-            window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-        }
-        return dialog
+        }.showRespectingStatusBar()
     }
 }

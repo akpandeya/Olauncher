@@ -1,5 +1,6 @@
 package app.olauncher.ui.settings
 
+import app.olauncher.helper.createChoiceDialog
 import app.olauncher.ui.*
 import app.olauncher.ui.SettingsFragment
 import android.app.TimePickerDialog
@@ -27,7 +28,6 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.Toast
-import android.view.WindowManager
 import android.Manifest
 import android.content.pm.PackageManager
 import android.text.InputType
@@ -53,7 +53,6 @@ import app.olauncher.ui.settings.SettingsSection
 import app.olauncher.ui.settings.SettingsSections
 import app.olauncher.ui.today.cards.NextUpCard
 import androidx.annotation.StringRes
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.app.NotificationManagerCompat
@@ -391,32 +390,23 @@ internal fun SettingsFragment.showPlaceSelectionDialog(places: List<Place>) {
     val items = places.map { it.displayName() }.toTypedArray()
     val checkedIndex = 0
 
-    val builder = AlertDialog.Builder(requireContext())
-        .setTitle(R.string.weather)
-        .setSingleChoiceItems(items, checkedIndex) { dialogInterface, which ->
-            val place = places[which]
-            prefs.weatherPlaceName = place.name
-            prefs.weatherLat = String.format(Locale.US, "%.2f", place.lat)
-            prefs.weatherLon = String.format(Locale.US, "%.2f", place.lon)
-            prefs.weatherUseLocation = false
-            prefs.weatherEnabled = true
-            WeatherWorker.schedulePeriodic(requireContext())
-            WeatherWorker.runOnce(requireContext())
-            populateWeather()
-            dialogInterface.dismiss()
-        }
-        .setNegativeButton(R.string.cancel, null)
-
-    val alertDialog = builder.create()
-    dialog?.dismiss()
-    dialog = alertDialog
-    val window = alertDialog.window
-    if (window != null && !prefs.showStatusBar) {
-        window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-        alertDialog.show()
-        window.hideStatusBar()
-        window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-    } else {
-        alertDialog.show()
+    val choiceDialog = requireContext().createChoiceDialog(
+        title = R.string.weather,
+        items = items.toList(),
+        checkedIndex = checkedIndex,
+    ) { which ->
+        val place = places[which]
+        prefs.weatherPlaceName = place.name
+        prefs.weatherLat = String.format(Locale.US, "%.2f", place.lat)
+        prefs.weatherLon = String.format(Locale.US, "%.2f", place.lon)
+        prefs.weatherUseLocation = false
+        prefs.weatherEnabled = true
+        WeatherWorker.schedulePeriodic(requireContext())
+        WeatherWorker.runOnce(requireContext())
+        populateWeather()
     }
+
+    dialog?.dismiss()
+    dialog = choiceDialog
+    choiceDialog.showRespectingStatusBar()
 }

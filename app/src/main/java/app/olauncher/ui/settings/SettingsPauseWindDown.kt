@@ -1,5 +1,6 @@
 package app.olauncher.ui.settings
 
+import app.olauncher.helper.createChoiceDialog
 import app.olauncher.ui.*
 import app.olauncher.ui.SettingsFragment
 import android.app.TimePickerDialog
@@ -27,7 +28,6 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.Toast
-import android.view.WindowManager
 import android.Manifest
 import android.content.pm.PackageManager
 import android.text.InputType
@@ -53,7 +53,6 @@ import app.olauncher.ui.settings.SettingsSection
 import app.olauncher.ui.settings.SettingsSections
 import app.olauncher.ui.today.cards.NextUpCard
 import androidx.annotation.StringRes
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.app.NotificationManagerCompat
@@ -87,7 +86,6 @@ import android.util.Log
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.FontFamilyResources
-import app.olauncher.data.Prefs
 import app.olauncher.data.SearchEngine
 import app.olauncher.helper.RatesWorker
 import app.olauncher.data.SlotCount
@@ -441,17 +439,19 @@ internal fun SettingsFragment.showWindDownMenu() {
         getString(R.string.wind_down_ends) + "  " + formatMinutes(prefs.windDownEnd),
     )
     dialog?.dismiss()
-    dialog = AlertDialog.Builder(requireContext())
-        .setTitle(R.string.wind_down)
-        .setMessage(R.string.wind_down_desc)
-        .setItems(labels) { _, which ->
-            when (which) {
-                0 -> toggleWindDown()
-                1 -> showWindDownTimePicker(isStart = true)
-                2 -> showWindDownTimePicker(isStart = false)
-            }
+    val menuDialog = requireContext().createChoiceDialog(
+        title = R.string.wind_down,
+        message = R.string.wind_down_desc,
+        items = labels.toList(),
+    ) { which ->
+        when (which) {
+            0 -> toggleWindDown()
+            1 -> showWindDownTimePicker(isStart = true)
+            2 -> showWindDownTimePicker(isStart = false)
         }
-        .show()
+    }
+    dialog = menuDialog
+    menuDialog.showRespectingStatusBar()
 }
 
 internal fun SettingsFragment.toggleWindDown() {

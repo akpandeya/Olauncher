@@ -13,7 +13,14 @@ import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.ViewOutlineProvider
 import android.view.WindowManager
+import android.graphics.Typeface
+import android.widget.CompoundButton
+import android.widget.LinearLayout
 import android.widget.PopupWindow
+import android.widget.ScrollView
+import android.widget.TextView
+import androidx.appcompat.widget.AppCompatCheckBox
+import androidx.core.widget.TextViewCompat
 import androidx.annotation.MenuRes
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
@@ -139,6 +146,9 @@ class OlDialog(context: Context) : AlertDialog(context) {
 
     private var blur: WindowBlur? = null
 
+    /** Set by [createMultiChoiceDialog]: ticks or unticks a row from outside, e.g. after a permission result. */
+    var setItemChecked: (index: Int, checked: Boolean) -> Unit = { _, _ -> }
+
     fun showRespectingStatusBar() {
         val window = window
         if (window == null || Prefs(context).showStatusBar) {
@@ -172,12 +182,14 @@ fun Context.createDialog(
     @StringRes neutral: Int = 0,
     onNeutral: () -> Unit = {},
     onAction: () -> Unit = {},
+    titleText: CharSequence? = null,
     content: ((ViewGroup) -> View)? = null,
 ): OlDialog {
     val dialog = OlDialog(this)
     val binding = DialogBaseBinding.inflate(LayoutInflater.from(dialog.context))
-    binding.tvTitle.setText(title)
-    binding.tvAction.setText(action)
+    if (title != 0) binding.tvTitle.setText(title) else binding.tvTitle.text = titleText
+    // action == 0: no action button, the close icon is the only way out (pick-one lists).
+    if (action != 0) binding.tvAction.setText(action) else binding.tvAction.isVisible = false
     if (message != 0) {
         binding.tvMessage.setText(message)
         binding.tvMessage.isVisible = true
@@ -207,6 +219,111 @@ fun Context.createDialog(
         Haptics.perform(it, Haptics.Kind.MENU)
         onAction()
         dialog.dismiss()
+    }
+    return dialog
+}
+
+private fun Context.dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
+
+private fun TextView.styleAsDialogRow(context: Context) {
+    TextViewCompat.setTextAppearance(this, R.style.TextSmall)
+    val ripple = TypedValue()
+    context.theme.resolveAttribute(android.R.attr.selectableItemBackground, ripple, true)
+    setBackgroundResource(ripple.resourceId)
+    minHeight = context.dp(44)
+    gravity = Gravity.CENTER_VERTICAL
+}
+
+private fun Context.scrollingRows(rows: List<View>): View {
+    val column = LinearLayout(this).apply {
+        orientation = LinearLayout.VERTICAL
+        rows.forEach { addView(it, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)) }
+    }
+    return ScrollView(this).apply {
+        addView(column)
+        layoutParams = ViewGroup.MarginLayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+            .apply { topMargin = dp(8) }
+    }
+}
+
+/**
+ * Pick-one list in the app's dialog: tapping a row runs [onPick] and closes the
+ * dialog; the close icon cancels. The row at [checkedIndex] is shown in bold.
+ */
+fun Context.createChoiceDialog(
+    @StringRes title: Int = 0,
+    titleText: CharSequence? = null,
+    @StringRes message: Int = 0,
+    items: List<CharSequence>,
+    checkedIndex: Int = -1,
+    onPick: (index: Int) -> Unit,
+): OlDialog {
+    val holder = arrayOfNulls<OlDialog>(1)
+    val dialog = createDialog(title, action = 0, message = message, titleText = titleText) { parent ->
+        val context = parent.context
+        context.scrollingRows(
+            items.mapIndexed { index, label ->
+                TextView(context).apply {
+                    styleAsDialogRow(context)
+                    text = label
+                    if (index == checkedIndex) setTypeface(typeface, Typeface.BOLD)
+                    setOnClickListener {
+                        Haptics.perform(it, Haptics.Kind.MENU)
+                        onPick(index)
+                        holder[0]?.dismiss()
+                    }
+                }
+            }
+        )
+    }
+    holder[0] = dialog
+    return dialog
+}
+
+/**
+ * Tick-many list in the app's dialog with an [action] button; the close icon cancels.
+ * [checked] is updated as the user ticks. [onToggle] runs on a user tick and may return
+ * false to reject it, which un-does the tick. [OlDialog.setItemChecked] ticks a row from outside.
+ */
+fun Context.createMultiChoiceDialog(
+    @StringRes title: Int,
+    items: List<CharSequence>,
+    checked: BooleanArray,
+    @StringRes action: Int,
+    onToggle: (index: Int, isChecked: Boolean) -> Boolean = { _, _ -> true },
+    onAction: () -> Unit,
+): OlDialog {
+    val boxes = mutableListOf<CompoundButton>()
+    var silent = false
+    val dialog = createDialog(title, action, onAction = onAction) { parent ->
+        val context = parent.context
+        context.scrollingRows(
+            items.mapIndexed { index, label ->
+                AppCompatCheckBox(context).also { box ->
+                    box.styleAsDialogRow(context)
+                    box.text = label
+                    box.isChecked = checked[index]
+                    box.setOnCheckedChangeListener { _, isChecked ->
+                        if (silent) return@setOnCheckedChangeListener
+                        Haptics.perform(box, Haptics.Kind.MENU)
+                        checked[index] = isChecked
+                        if (!onToggle(index, isChecked)) {
+                            checked[index] = !isChecked
+                            silent = true
+                            box.isChecked = !isChecked
+                            silent = false
+                        }
+                    }
+                    boxes.add(box)
+                }
+            }
+        )
+    }
+    dialog.setItemChecked = { index, isChecked ->
+        checked[index] = isChecked
+        silent = true
+        boxes.getOrNull(index)?.isChecked = isChecked
+        silent = false
     }
     return dialog
 }
