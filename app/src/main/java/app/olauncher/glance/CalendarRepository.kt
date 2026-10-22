@@ -17,6 +17,7 @@ data class CalendarEvent(
     val startMillis: Long,
     val endMillis: Long,
     val allDay: Boolean = false,
+    val calendarId: Long = 0L,
 ) {
     val start: Instant get() = Instant.ofEpochMilli(startMillis)
     val end: Instant get() = Instant.ofEpochMilli(endMillis)
@@ -133,6 +134,7 @@ open class CalendarRepository(private val context: Context) : CalendarEventSourc
                 CalendarContract.Instances.END,
                 CalendarContract.Instances.ALL_DAY,
                 CalendarContract.Instances.SELF_ATTENDEE_STATUS,
+                CalendarContract.Instances.CALENDAR_ID,
             )
             val selection = "${CalendarContract.Instances.VISIBLE} = 1 AND ${CalendarContract.Instances.SELF_ATTENDEE_STATUS} != ${CalendarContract.Attendees.ATTENDEE_STATUS_DECLINED}"
             context.contentResolver.query(
@@ -141,11 +143,31 @@ open class CalendarRepository(private val context: Context) : CalendarEventSourc
             )?.use { c ->
                 while (c.moveToNext()) {
                     val title = c.getString(1) ?: continue
-                    out.add(CalendarEvent(c.getLong(0), title, c.getLong(2), c.getLong(3), c.getInt(4) == 1))
+                    out.add(CalendarEvent(c.getLong(0), title, c.getLong(2), c.getLong(3), c.getInt(4) == 1, c.getLong(6)))
                 }
             }
         } catch (_: Exception) {
             // Permission revoked or provider unavailable: no rows.
+        }
+        return out
+    }
+
+    /** Calendars on the phone as id to display name. Empty without permission. Blocking. */
+    fun calendars(): List<Pair<Long, String>> {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
+            return emptyList()
+        }
+        val out = mutableListOf<Pair<Long, String>>()
+        try {
+            context.contentResolver.query(
+                CalendarContract.Calendars.CONTENT_URI,
+                arrayOf(CalendarContract.Calendars._ID, CalendarContract.Calendars.CALENDAR_DISPLAY_NAME),
+                null, null, CalendarContract.Calendars.CALENDAR_DISPLAY_NAME,
+            )?.use { c ->
+                while (c.moveToNext()) out.add(c.getLong(0) to (c.getString(1) ?: ""))
+            }
+        } catch (_: Exception) {
+            // Provider unavailable: no calendars.
         }
         return out
     }

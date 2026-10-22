@@ -549,6 +549,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
     internal fun refreshHomeSetIfChanged() {
         if (_binding == null) return
+        refreshProfileCalendarEvents()
         val applied = prefs.applyScheduledProfile()
         if (applied) {
             populateHomeScreen(true)
