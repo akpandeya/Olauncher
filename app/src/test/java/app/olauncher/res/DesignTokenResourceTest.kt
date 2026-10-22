@@ -19,7 +19,6 @@ class DesignTokenResourceTest {
 
     // Hard-coded font families; should move to the text styles.
     private val fontFamilyAllowList = setOf(
-        "layout/sheet_app_actions.xml",
         "layout-land/fragment_home.xml",
     )
 

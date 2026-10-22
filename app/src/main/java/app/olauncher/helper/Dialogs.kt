@@ -18,6 +18,7 @@ import androidx.core.view.isVisible
 import app.olauncher.R
 import app.olauncher.data.Prefs
 import app.olauncher.databinding.DialogBaseBinding
+import app.olauncher.ui.AppAction
 
 /**
  * Shows a popup menu hanging off the end edge of this view.
@@ -34,6 +35,31 @@ fun View.showPopupMenu(
     popup.setOnMenuItemClickListener { item ->
         Haptics.perform(this, Haptics.Kind.MENU)
         onItemClick(item)
+        true
+    }
+    popup.show()
+    return popup
+}
+
+/**
+ * Shows the long-press actions of an app as an anchored popup: the app name on
+ * top (not clickable), then every action. The popup sits next to this view and
+ * flips above it near the bottom of the screen.
+ */
+fun View.showAppActionPopup(
+    appName: String,
+    actions: List<AppAction>,
+    onAction: (AppAction) -> Unit,
+): PopupMenu {
+    val popup = PopupMenu(context, this, Gravity.END)
+    popup.menu.add(Menu.NONE, Menu.NONE, 0, appName).isEnabled = false
+    actions.forEachIndexed { index, action ->
+        popup.menu.add(Menu.NONE, index, index + 1, action.labelRes)
+    }
+    popup.setOnMenuItemClickListener { item ->
+        val action = actions.getOrNull(item.itemId) ?: return@setOnMenuItemClickListener true
+        Haptics.perform(this, if (action.isDestructive) Haptics.Kind.REJECT else Haptics.Kind.MENU)
+        onAction(action)
         true
     }
     popup.show()

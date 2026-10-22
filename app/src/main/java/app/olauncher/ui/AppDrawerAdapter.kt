@@ -31,6 +31,7 @@ import app.olauncher.helper.getColorFromAttr
 import app.olauncher.helper.hapticLongClick
 import app.olauncher.helper.hideKeyboard
 import app.olauncher.helper.isSystemApp
+import app.olauncher.helper.showAppActionPopup
 import app.olauncher.helper.showKeyboard
 import app.olauncher.helper.AppMatcher
 import app.olauncher.helper.ArchivedAppsHelper
@@ -519,21 +520,22 @@ class AppDrawerAdapter(
             appTitle.hapticLongClick {
                 if (appModel.appPackage.isNotEmpty()) {
                     root.hideKeyboard()
-                    val sheet = AppActionsSheet(
-                        context = root.context,
-                        appModel = appModel,
+                    val actions = AppActionList.build(
+                        isArchived = appModel.isArchived,
                         isHidden = isHidden,
                         isDistracting = isDistracting,
                         flag = flag,
-                        appLabelGravity = appLabelGravity,
-                        onAddToHome = { appAddToHomeListener?.invoke(appModel) },
-                        onRename = { showRenameEdit() },
-                        onHide = { appHideListener(appModel, bindingAdapterPosition) },
-                        onToggleDistracting = { appDistractingListener?.invoke(appModel) },
-                        onAppInfo = { appInfoListener(appModel) },
-                        onUninstall = { appDeleteListener(appModel) },
                     )
-                    sheet.showRespectingStatusBar()
+                    appTitle.showAppActionPopup(appModel.appLabel, actions) { action ->
+                        when (action.id) {
+                            AppAction.Id.ADD_TO_HOME -> appAddToHomeListener?.invoke(appModel)
+                            AppAction.Id.RENAME -> showRenameEdit()
+                            AppAction.Id.HIDE -> appHideListener(appModel, bindingAdapterPosition)
+                            AppAction.Id.DISTRACTING -> appDistractingListener?.invoke(appModel)
+                            AppAction.Id.APP_INFO -> appInfoListener(appModel)
+                            AppAction.Id.UNINSTALL -> appDeleteListener(appModel)
+                        }
+                    }
                 }
             }
 
