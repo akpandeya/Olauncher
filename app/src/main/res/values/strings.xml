@@ -557,4 +557,5 @@
     <string name="privacy_purpose_dictionary_network" tools:ignore="MissingTranslation">Word meanings: sends the word to Wiktionary</string>
     <string name="privacy_purpose_rates_network" tools:ignore="MissingTranslation">Currency rates: asks Frankfurter for exchange rates</string>
     <string name="privacy_purpose_artwork_network" tools:ignore="MissingTranslation">Now playing: fetches album artwork</string>
+    <string name="music_progress_description" tools:ignore="MissingTranslation">%1$s of %2$s</string>
 </resources>
