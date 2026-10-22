@@ -54,10 +54,11 @@ class OnboardingStoreTest {
     @Test
     fun step2NextSavesOptionalFeaturesAndSkipSavesComplete() {
         val step2 = OnboardingStore.stateFor("PICK_HOME_APPS")
-        val next = OnboardingStore.nextPressed(step2)
+        val next = OnboardingStore.nextPressed(OnboardingStore.nextPressed(step2))
         assertEquals(OnboardingStep.OPTIONAL_FEATURES, next.currentStep)
         assertFalse(next.isComplete)
         assertEquals("OPTIONAL_FEATURES", OnboardingStore.encode(next))
+        assertEquals("PICK_PROFILE", OnboardingStore.encode(OnboardingStore.nextPressed(step2)))
         assertEquals(OnboardingStore.COMPLETE, OnboardingStore.encode(Onboarding.skipped(step2)))
     }
 

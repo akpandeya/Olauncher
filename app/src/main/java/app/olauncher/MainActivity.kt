@@ -36,6 +36,8 @@ import app.olauncher.data.Accent
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
+import app.olauncher.data.ProfilePicker
+import app.olauncher.data.ProfilePickerOption
 import app.olauncher.glance.WeatherLocation
 import app.olauncher.glance.WeatherWorker
 import app.olauncher.wellbeing.NotificationPermission
@@ -101,6 +103,7 @@ class MainActivity : AppCompatActivity() {
     private var launcherAppsCallback: LauncherApps.Callback? = null
     private var messageDialog: OlDialog? = null
     private var onboardingRowsRefresh: (() -> Unit)? = null
+    private var onboardingProfileChoice = ProfilePicker.initial
 
     // Welcome step 3 launchers. Each switches its feature on only when the permission is granted.
     private val onboardingWeatherPermission = registerForActivityResult(
@@ -532,7 +535,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** First-run welcome, three steps; Skip finishes onboarding from any of them. */
+    /** First-run welcome, four steps; Skip finishes onboarding from any of them. */
     private fun showOnboardingStep(state: OnboardingState) {
         if (state.isComplete) return
         val step = state.currentStep
@@ -547,11 +550,16 @@ class MainActivity : AppCompatActivity() {
             message = when (step) {
                 OnboardingStep.SET_DEFAULT_LAUNCHER -> R.string.onboarding_default_launcher_message
                 OnboardingStep.PICK_HOME_APPS -> R.string.onboarding_pick_apps_message
+                OnboardingStep.PICK_PROFILE -> R.string.onboarding_profile_message
                 OnboardingStep.OPTIONAL_FEATURES -> R.string.onboarding_features_message
             },
             neutral = R.string.skip,
             onNeutral = { prefs.onboardingState = OnboardingStore.encode(Onboarding.skipped(state)) },
             onAction = {
+                if (step == OnboardingStep.PICK_PROFILE) {
+                    ProfilePicker.profileIdToApply(onboardingProfileChoice)?.let { prefs.switchProfile(it) }
+                    onboardingProfileChoice = ProfilePicker.initial
+                }
                 val next = OnboardingStore.nextPressed(state)
                 prefs.onboardingState = OnboardingStore.encode(next)
                 if (!next.isComplete) showOnboardingStep(next)
@@ -559,6 +567,8 @@ class MainActivity : AppCompatActivity() {
             content = { parent ->
                 if (isFeaturesStep) {
                     buildOnboardingFeatureRows()
+                } else if (step == OnboardingStep.PICK_PROFILE) {
+                    buildOnboardingProfileRows()
                 } else if (isPickStep) {
                     val binding = DialogOnboardingDefaultBinding.inflate(layoutInflater, parent, false)
                     binding.tvOpenHomeSettings.setText(R.string.onboarding_pick_apps_action)
@@ -573,6 +583,32 @@ class MainActivity : AppCompatActivity() {
         )
         dialog.showRespectingStatusBar()
         messageDialog = dialog
+    }
+
+    /** One tappable row per profile, plus "Keep defaults"; the chosen row is marked and applied on Next. */
+    private fun buildOnboardingProfileRows(): android.view.View {
+        onboardingProfileChoice = ProfilePicker.initial
+        val column = android.widget.LinearLayout(this).apply { orientation = android.widget.LinearLayout.VERTICAL }
+        val rows = ProfilePickerOption.values().map { option ->
+            val label = when (option) {
+                ProfilePickerOption.BARE -> R.string.onboarding_profile_bare
+                ProfilePickerOption.FOCUS -> R.string.onboarding_profile_focus
+                ProfilePickerOption.RICH -> R.string.onboarding_profile_rich
+                ProfilePickerOption.KEEP_DEFAULTS -> R.string.onboarding_profile_keep
+            }
+            Triple(option, label, DialogOnboardingDefaultBinding.inflate(layoutInflater, column, false))
+        }
+        fun refresh() = rows.forEach { (option, label, row) ->
+            val text = getString(label)
+            row.tvOpenHomeSettings.text =
+                if (option == onboardingProfileChoice) getString(R.string.onboarding_profile_selected, text) else text
+        }
+        rows.forEach { (option, _, row) ->
+            row.tvOpenHomeSettings.setOnClickListener { onboardingProfileChoice = option; refresh() }
+            column.addView(row.root)
+        }
+        refresh()
+        return column
     }
 
     /** One tappable row per optional feature; a row shows "is on" once its setting is on. */
