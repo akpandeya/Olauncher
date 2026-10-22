@@ -60,6 +60,8 @@ sealed class AppModel : Comparable<AppModel> {
             data class StartTimer(val seconds: Int, val label: String) : Action
             /** Tap sets an alarm in the clock app (`:a`). [days] are Calendar constants. */
             data class SetAlarm(val hour: Int, val minute: Int, val days: List<Int>, val label: String) : Action
+            /** Tap opens the calendar's new-event screen prefilled (`:e`). Millis follow CalendarContract. */
+            data class AddEvent(val title: String, val place: String, val beginMillis: Long, val endMillis: Long, val allDay: Boolean) : Action
             /** [openOnTap] false: tap does nothing, long-press still opens the page. */
             data class OpenWiktionary(val text: String, val openOnTap: Boolean = true) : Action
         }

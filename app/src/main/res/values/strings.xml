@@ -523,6 +523,7 @@
     <string name="a11y_word_capture_sheet">Save a word</string>
     <string name="timer_no_clock_app" tools:ignore="MissingTranslation">No clock app to start the timer</string>
     <string name="alarm_no_clock_app" tools:ignore="MissingTranslation">No clock app to set the alarm</string>
+    <string name="event_no_calendar_app" tools:ignore="MissingTranslation">No calendar app to add the event</string>
     <string name="command_help_timer" tools:ignore="MissingTranslation">Timer: :t 10 tea</string>
     <string name="command_help_alarm" tools:ignore="MissingTranslation">Alarm: :a 7:30 wake up</string>
     <string name="command_help_event" tools:ignore="MissingTranslation">Event: :e dentist tomorrow 15:00</string>
