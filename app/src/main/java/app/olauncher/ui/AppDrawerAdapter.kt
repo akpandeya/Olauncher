@@ -37,6 +37,7 @@ import app.olauncher.helper.ArchivedAppsHelper
 import app.olauncher.helper.ContactSource
 import app.olauncher.helper.DrawerSearch
 import app.olauncher.helper.DrawerSearchInput
+import app.olauncher.helper.LetterStripTarget
 import app.olauncher.helper.RecentApp
 import android.util.Log
 
@@ -369,15 +370,8 @@ class AppDrawerAdapter(
         }
 
     fun getTargetPositionForOrderedIndex(orderedIndex: Int): Int {
-        if (itemCount <= 0) return 0
-        return if (bottomSearch) {
-            // Full list is reversed, then the recents block sits after it.
-            (currentList.size - 1 - orderedIndex).coerceIn(0, itemCount - 1)
-        } else {
-            // Recents block (header + recents) sits before the full list.
-            val offset = currentList.count { it is AppModel.RecentHeader || (it is AppModel.App && it.isRecent) }
-            (orderedIndex + offset).coerceIn(0, itemCount - 1)
-        }
+        val recentRows = currentList.count { it is AppModel.RecentHeader || (it is AppModel.App && it.isRecent) }
+        return LetterStripTarget.position(orderedIndex, bottomSearch, currentList.size, recentRows)
     }
 
     fun getTopScore(): Int? =

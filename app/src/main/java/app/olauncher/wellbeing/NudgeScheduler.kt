@@ -175,6 +175,7 @@ class NudgeWorker(
         val prefs = Prefs(applicationContext)
         val interval = NudgeScheduler.intervalMinForType(prefs, type)
         if (interval > 0) {
+            if (type == Nudges.WALK) refreshAutoWalks(prefs)
             val count = if (type == Nudges.WALK) {
                 WalkNudgePolicy.shownWalks(prefs.nudgeDone(type), prefs.autoWalksToday)
             } else {
@@ -207,6 +208,18 @@ class NudgeWorker(
             NudgeScheduler.schedule(applicationContext, type)
         }
         Result.success()
+    }
+
+    /** Saves today's automatic walk count, as the Wellbeing card does, so the nudge and day-end snapshot see it. */
+    private suspend fun refreshAutoWalks(prefs: Prefs) {
+        if (!prefs.healthConnectEnabled) return
+        try {
+            val walks = HealthRepository(applicationContext, { prefs.healthConnectEnabled })
+                .readWalkDay()?.totalWalks
+            if (walks != null) prefs.autoWalksToday = walks
+        } catch (_: Exception) {
+            // Keep the last saved count.
+        }
     }
 
     /** True when Health Connect shows recent steps or exercise. Any read problem means post. */
