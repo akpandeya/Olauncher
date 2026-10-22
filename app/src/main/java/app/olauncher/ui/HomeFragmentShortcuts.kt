@@ -1,10 +1,10 @@
 package app.olauncher.ui
 
+import app.olauncher.helper.createChoiceDialog
 import android.content.Context
 import android.util.TypedValue
 import android.widget.ImageView
 import android.widget.LinearLayout
-import androidx.appcompat.app.AlertDialog
 import androidx.core.view.setPadding
 import androidx.navigation.fragment.findNavController
 import app.olauncher.R
@@ -124,11 +124,11 @@ internal fun HomeFragment.showBuiltinShortcutMenu(slot: Int) {
     val context = context ?: return
     val actions = ShortcutAction.values()
     val labels = actions.map { getString(it.labelRes) }.toTypedArray()
-    AlertDialog.Builder(context)
-        .setTitle(R.string.shortcut_choose_builtin)
-        .setItems(labels) { _, which ->
-            prefs.setShortcutBuiltin(slot, actions[which].id)
-            populateShortcuts()
-        }
-        .show()
+    context.createChoiceDialog(
+        title = R.string.shortcut_choose_builtin,
+        items = labels.toList(),
+    ) { which ->
+        prefs.setShortcutBuiltin(slot, actions[which].id)
+        populateShortcuts()
+    }.showRespectingStatusBar()
 }

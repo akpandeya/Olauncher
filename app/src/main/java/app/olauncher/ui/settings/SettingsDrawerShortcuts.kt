@@ -1,5 +1,6 @@
 package app.olauncher.ui.settings
 
+import app.olauncher.helper.createMultiChoiceDialog
 import app.olauncher.ui.*
 import app.olauncher.ui.SettingsFragment
 import android.app.TimePickerDialog
@@ -27,7 +28,6 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.Toast
-import android.view.WindowManager
 import android.Manifest
 import android.content.pm.PackageManager
 import android.text.InputType
@@ -53,7 +53,6 @@ import app.olauncher.ui.settings.SettingsSection
 import app.olauncher.ui.settings.SettingsSections
 import app.olauncher.ui.today.cards.NextUpCard
 import androidx.annotation.StringRes
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.app.NotificationManagerCompat
@@ -354,54 +353,45 @@ internal fun SettingsFragment.showTodayCardsDialog() {
     val checked = BooleanArray(cards.size) { i -> prefs.isTodayCardEnabled(cards[i].key) }
     todayCardsCheckedState = checked
 
-    val builder = AlertDialog.Builder(requireContext())
-        .setTitle(R.string.today_cards)
-        .setMultiChoiceItems(titles, checked) { dialogInterface, which, isChecked ->
+    val cardsDialog = requireContext().createMultiChoiceDialog(
+        title = R.string.today_cards,
+        items = titles.toList(),
+        checked = checked,
+        action = R.string.okay,
+        onToggle = { which, isChecked ->
             val card = cards[which]
-            if (card.key == NextUpCard.KEY && isChecked) {
-                if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED) {
-                    (dialogInterface as? AlertDialog)?.listView?.setItemChecked(which, false)
-                    checked[which] = false
-                    requireContext().showMessageDialog(
-                        title = R.string.next_up,
-                        message = R.string.calendar_permission_message,
-                        action = R.string.allow,
-                    ) {
-                        pendingCalendarCardIndex = which
-                        calendarPermissionLauncher.launch(Manifest.permission.READ_CALENDAR)
-                    }
-                    return@setMultiChoiceItems
+            if (card.key == NextUpCard.KEY && isChecked &&
+                ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_CALENDAR) != PackageManager.PERMISSION_GRANTED
+            ) {
+                requireContext().showMessageDialog(
+                    title = R.string.next_up,
+                    message = R.string.calendar_permission_message,
+                    action = R.string.allow,
+                ) {
+                    pendingCalendarCardIndex = which
+                    calendarPermissionLauncher.launch(Manifest.permission.READ_CALENDAR)
                 }
+                false
+            } else {
+                true
             }
-            checked[which] = isChecked
+        },
+    ) {
+        cards.forEachIndexed { i, card ->
+            prefs.setTodayCardEnabled(card.key, checked[i])
         }
-        .setPositiveButton(R.string.okay) { _, _ ->
-            cards.forEachIndexed { i, card ->
-                prefs.setTodayCardEnabled(card.key, checked[i])
-            }
-            populateTodayCards()
-        }
-        .setNegativeButton(R.string.cancel, null)
-
-    val alertDialog = builder.create()
-    alertDialog.setOnDismissListener {
-        if (todayCardsDialog === alertDialog) {
+        populateTodayCards()
+    }
+    cardsDialog.setOnDismissListener {
+        if (todayCardsDialog === cardsDialog) {
             todayCardsDialog = null
             todayCardsCheckedState = null
         }
     }
     dialog?.dismiss()
-    dialog = alertDialog
-    todayCardsDialog = alertDialog
-    val window = alertDialog.window
-    if (window != null && !prefs.showStatusBar) {
-        window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-        alertDialog.show()
-        window.hideStatusBar()
-        window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-    } else {
-        alertDialog.show()
-    }
+    dialog = cardsDialog
+    todayCardsDialog = cardsDialog
+    cardsDialog.showRespectingStatusBar()
 }
 
 //    private fun populateDigitalWellbeing() {

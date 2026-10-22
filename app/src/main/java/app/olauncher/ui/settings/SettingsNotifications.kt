@@ -1,5 +1,7 @@
 package app.olauncher.ui.settings
 
+import app.olauncher.helper.createChoiceDialog
+import app.olauncher.helper.createMultiChoiceDialog
 import app.olauncher.ui.*
 import app.olauncher.ui.SettingsFragment
 import android.app.TimePickerDialog
@@ -27,7 +29,6 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.Toast
-import android.view.WindowManager
 import android.Manifest
 import android.content.pm.PackageManager
 import android.text.InputType
@@ -53,7 +54,6 @@ import app.olauncher.ui.settings.SettingsSection
 import app.olauncher.ui.settings.SettingsSections
 import app.olauncher.ui.today.cards.NextUpCard
 import androidx.annotation.StringRes
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.app.NotificationManagerCompat
@@ -87,7 +87,6 @@ import android.util.Log
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.FontFamilyResources
-import app.olauncher.data.Prefs
 import app.olauncher.data.SearchEngine
 import app.olauncher.helper.RatesWorker
 import app.olauncher.data.SlotCount
@@ -209,61 +208,52 @@ internal fun SettingsFragment.showReleaseTimesEditor() {
         items.add(getString(R.string.quiet_release_add_time))
     }
 
-    val builder = AlertDialog.Builder(requireContext())
-        .setTitle(R.string.quiet_release_times)
-        .setItems(items.toTypedArray()) { _, which ->
-            if (which == times.size && times.size < 3) {
-                showTimePicker(
-                    title = R.string.quiet_release_add_time,
-                    initialHour = 12,
-                    initialMinute = 0,
-                ) { hour, minute ->
-                    val newTime = hour * 60 + minute
-                    if (newTime !in times) {
-                        times.add(newTime)
-                        val sorted = times.sorted()
-                        prefs.quietReleaseTimes = QuietRelease.formatTimes(sorted)
-                        populateQuietReleaseTimes()
-                        if (prefs.quietEnabled) {
-                            ReleaseWorker.schedule(requireContext())
-                        }
+    val choiceDialog = requireContext().createChoiceDialog(
+        title = R.string.quiet_release_times,
+        items = items,
+    ) { which ->
+        if (which == times.size && times.size < 3) {
+            showTimePicker(
+                title = R.string.quiet_release_add_time,
+                initialHour = 12,
+                initialMinute = 0,
+            ) { hour, minute ->
+                val newTime = hour * 60 + minute
+                if (newTime !in times) {
+                    times.add(newTime)
+                    val sorted = times.sorted()
+                    prefs.quietReleaseTimes = QuietRelease.formatTimes(sorted)
+                    populateQuietReleaseTimes()
+                    if (prefs.quietEnabled) {
+                        ReleaseWorker.schedule(requireContext())
                     }
-                }
-            } else if (which in times.indices) {
-                val selectedTime = times[which]
-                if (times.size == 1) {
-                    showTimePicker(
-                        title = R.string.quiet_release_edit_time,
-                        initialHour = selectedTime / 60,
-                        initialMinute = selectedTime % 60,
-                    ) { hour, minute ->
-                        times[which] = hour * 60 + minute
-                        val sorted = times.distinct().sorted()
-                        prefs.quietReleaseTimes = QuietRelease.formatTimes(sorted)
-                        populateQuietReleaseTimes()
-                        if (prefs.quietEnabled) {
-                            ReleaseWorker.schedule(requireContext())
-                        }
-                    }
-                } else {
-                    showTimeOptionsDialog(times, which)
                 }
             }
+        } else if (which in times.indices) {
+            val selectedTime = times[which]
+            if (times.size == 1) {
+                showTimePicker(
+                    title = R.string.quiet_release_edit_time,
+                    initialHour = selectedTime / 60,
+                    initialMinute = selectedTime % 60,
+                ) { hour, minute ->
+                    times[which] = hour * 60 + minute
+                    val sorted = times.distinct().sorted()
+                    prefs.quietReleaseTimes = QuietRelease.formatTimes(sorted)
+                    populateQuietReleaseTimes()
+                    if (prefs.quietEnabled) {
+                        ReleaseWorker.schedule(requireContext())
+                    }
+                }
+            } else {
+                showTimeOptionsDialog(times, which)
+            }
         }
-        .setNegativeButton(R.string.cancel, null)
-
-    val alertDialog = builder.create()
-    dialog?.dismiss()
-    dialog = alertDialog
-    val window = alertDialog.window
-    if (window != null && !prefs.showStatusBar) {
-        window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-        alertDialog.show()
-        window.hideStatusBar()
-        window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-    } else {
-        alertDialog.show()
     }
+
+    dialog?.dismiss()
+    dialog = choiceDialog
+    choiceDialog.showRespectingStatusBar()
 }
 
 internal fun SettingsFragment.showTimeOptionsDialog(times: MutableList<Int>, index: Int) {
@@ -272,27 +262,18 @@ internal fun SettingsFragment.showTimeOptionsDialog(times: MutableList<Int>, ind
         getString(R.string.quiet_release_edit_time),
         getString(R.string.quiet_release_remove_time),
     )
-    val builder = AlertDialog.Builder(requireContext())
-        .setTitle(QuietRelease.formatTime(selectedTime))
-        .setItems(options) { _, whichOption ->
-            when (whichOption) {
-                0 -> {
-                    showTimePicker(
-                        title = R.string.quiet_release_edit_time,
-                        initialHour = selectedTime / 60,
-                        initialMinute = selectedTime % 60,
-                    ) { hour, minute ->
-                        times[index] = hour * 60 + minute
-                        val sorted = times.distinct().sorted()
-                        prefs.quietReleaseTimes = QuietRelease.formatTimes(sorted)
-                        populateQuietReleaseTimes()
-                        if (prefs.quietEnabled) {
-                            ReleaseWorker.schedule(requireContext())
-                        }
-                    }
-                }
-                1 -> {
-                    times.removeAt(index)
+    val choiceDialog = requireContext().createChoiceDialog(
+        titleText = QuietRelease.formatTime(selectedTime),
+        items = options.toList(),
+    ) { whichOption ->
+        when (whichOption) {
+            0 -> {
+                showTimePicker(
+                    title = R.string.quiet_release_edit_time,
+                    initialHour = selectedTime / 60,
+                    initialMinute = selectedTime % 60,
+                ) { hour, minute ->
+                    times[index] = hour * 60 + minute
                     val sorted = times.distinct().sorted()
                     prefs.quietReleaseTimes = QuietRelease.formatTimes(sorted)
                     populateQuietReleaseTimes()
@@ -301,21 +282,21 @@ internal fun SettingsFragment.showTimeOptionsDialog(times: MutableList<Int>, ind
                     }
                 }
             }
+            1 -> {
+                times.removeAt(index)
+                val sorted = times.distinct().sorted()
+                prefs.quietReleaseTimes = QuietRelease.formatTimes(sorted)
+                populateQuietReleaseTimes()
+                if (prefs.quietEnabled) {
+                    ReleaseWorker.schedule(requireContext())
+                }
+            }
         }
-        .setNegativeButton(R.string.cancel, null)
-
-    val alertDialog = builder.create()
-    dialog?.dismiss()
-    dialog = alertDialog
-    val window = alertDialog.window
-    if (window != null && !prefs.showStatusBar) {
-        window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-        alertDialog.show()
-        window.hideStatusBar()
-        window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-    } else {
-        alertDialog.show()
     }
+
+    dialog?.dismiss()
+    dialog = choiceDialog
+    choiceDialog.showRespectingStatusBar()
 }
 
 internal fun SettingsFragment.showHoldNotificationsAccessDialog() {
@@ -352,51 +333,44 @@ internal fun SettingsFragment.showDistractingAppsDialog() {
         val labels = apps.map { it.appLabel }.toTypedArray()
         val checked = BooleanArray(apps.size) { i -> apps[i].appPackage in selectedPackages }
 
-        val builder = AlertDialog.Builder(requireContext())
-            .setTitle(R.string.distracting_apps)
-            .setMultiChoiceItems(labels, checked) { _, which, isChecked ->
-                checked[which] = isChecked
+        val distractingDialog = requireContext().createMultiChoiceDialog(
+            title = R.string.distracting_apps,
+            items = labels.toList(),
+            checked = checked,
+            action = R.string.okay,
+            onToggle = { which, isChecked ->
                 val pkg = apps[which].appPackage
                 if (isChecked) {
                     selectedPackages.add(pkg)
                 } else {
                     selectedPackages.remove(pkg)
                 }
-            }
-            .setPositiveButton(R.string.okay) { _, _ ->
-                val change = FrictionChange.DistractingApps(
-                    current = prefs.distractingApps,
-                    updated = selectedPackages,
-                )
-                if (CommitLock.needsWait(prefs.commitLock, change)) {
-                    dialog?.dismiss()
-                    val appContext = requireContext().applicationContext
-                    dialog = requireContext().showWaitDialog(
-                        message = getString(R.string.commit_lock_desc)
-                    ) {
-                        prefs.distractingApps = selectedPackages
-                        UsageSnapshotWorker.syncWithDistractingApps(appContext, selectedPackages)
-                        if (_binding != null) populateDistractingApps()
-                    }
-                } else {
+                true
+            },
+        ) {
+            val change = FrictionChange.DistractingApps(
+                current = prefs.distractingApps,
+                updated = selectedPackages,
+            )
+            if (CommitLock.needsWait(prefs.commitLock, change)) {
+                dialog?.dismiss()
+                val appContext = requireContext().applicationContext
+                dialog = requireContext().showWaitDialog(
+                    message = getString(R.string.commit_lock_desc)
+                ) {
                     prefs.distractingApps = selectedPackages
-                    UsageSnapshotWorker.syncWithDistractingApps(requireContext().applicationContext, selectedPackages)
-                    populateDistractingApps()
+                    UsageSnapshotWorker.syncWithDistractingApps(appContext, selectedPackages)
+                    if (_binding != null) populateDistractingApps()
                 }
+            } else {
+                prefs.distractingApps = selectedPackages
+                UsageSnapshotWorker.syncWithDistractingApps(requireContext().applicationContext, selectedPackages)
+                populateDistractingApps()
             }
-            .setNegativeButton(R.string.cancel, null)
-
-        val alertDialog = builder.create()
-        dialog?.dismiss()
-        dialog = alertDialog
-        val window = alertDialog.window
-        if (window != null && !prefs.showStatusBar) {
-            window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-            alertDialog.show()
-            window.hideStatusBar()
-            window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-        } else {
-            alertDialog.show()
         }
+
+        dialog?.dismiss()
+        dialog = distractingDialog
+        distractingDialog.showRespectingStatusBar()
     }
 }

@@ -1,5 +1,6 @@
 package app.olauncher.ui.settings
 
+import app.olauncher.helper.createChoiceDialog
 import app.olauncher.ui.*
 import app.olauncher.ui.SettingsFragment
 import android.app.TimePickerDialog
@@ -27,7 +28,6 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.Toast
-import android.view.WindowManager
 import android.Manifest
 import android.content.pm.PackageManager
 import android.text.InputType
@@ -53,7 +53,6 @@ import app.olauncher.ui.settings.SettingsSection
 import app.olauncher.ui.settings.SettingsSections
 import app.olauncher.ui.today.cards.NextUpCard
 import androidx.annotation.StringRes
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.app.NotificationManagerCompat
@@ -259,10 +258,11 @@ internal fun SettingsFragment.showHomeSetSlotsDialog(set: HomeSet) {
         val name = prefs.getAppName(i + 1, set)
         "${i + 1}. ${name.ifEmpty { empty }}"
     }
-    AlertDialog.Builder(requireContext())
-        .setTitle(if (set == HomeSet.MORNING) R.string.edit_morning_apps else R.string.edit_evening_apps)
-        .setItems(labels) { _, which -> showAppListIfEnabled(HomeSets.flagFor(set, which + 1)) }
-        .show()
+    requireContext().createChoiceDialog(
+        title = if (set == HomeSet.MORNING) R.string.edit_morning_apps else R.string.edit_evening_apps,
+        items = labels.toList(),
+    ) { which -> showAppListIfEnabled(HomeSets.flagFor(set, which + 1)) }
+        .showRespectingStatusBar()
 }
 
 internal fun SettingsFragment.toggleInfoLine() {

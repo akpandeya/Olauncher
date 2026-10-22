@@ -1,5 +1,7 @@
 package app.olauncher.ui.settings
 
+import app.olauncher.helper.createChoiceDialog
+import app.olauncher.helper.createMultiChoiceDialog
 import app.olauncher.ui.*
 import app.olauncher.ui.SettingsFragment
 import android.app.TimePickerDialog
@@ -27,7 +29,6 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.Toast
-import android.view.WindowManager
 import android.Manifest
 import android.content.pm.PackageManager
 import android.text.InputType
@@ -53,7 +54,6 @@ import app.olauncher.ui.settings.SettingsSection
 import app.olauncher.ui.settings.SettingsSections
 import app.olauncher.ui.today.cards.NextUpCard
 import androidx.annotation.StringRes
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.app.NotificationManagerCompat
@@ -87,7 +87,6 @@ import android.util.Log
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.FontFamilyResources
-import app.olauncher.data.Prefs
 import app.olauncher.data.SearchEngine
 import app.olauncher.helper.RatesWorker
 import app.olauncher.data.SlotCount
@@ -261,27 +260,18 @@ internal fun SettingsFragment.showPhotoWallpaperFrequencyDialog() {
     val currentInterval = RotationInterval.fromId(prefs.photoWallpaperInterval)
     val checkedIndex = intervals.indexOf(currentInterval)
 
-    val builder = AlertDialog.Builder(requireContext())
-        .setSingleChoiceItems(items, checkedIndex) { dialogInterface, which ->
-            val interval = intervals[which]
-            prefs.photoWallpaperInterval = interval.id
-            WallpaperRotateWorker.schedulePeriodic(requireContext().applicationContext)
-            dialogInterface.dismiss()
-        }
-        .setNegativeButton(R.string.cancel, null)
-
-    val alertDialog = builder.create()
-    dialog?.dismiss()
-    dialog = alertDialog
-    val window = alertDialog.window
-    if (window != null && !prefs.showStatusBar) {
-        window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-        alertDialog.show()
-        window.hideStatusBar()
-        window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-    } else {
-        alertDialog.show()
+    val choiceDialog = requireContext().createChoiceDialog(
+        items = items.toList(),
+        checkedIndex = checkedIndex,
+    ) { which ->
+        val interval = intervals[which]
+        prefs.photoWallpaperInterval = interval.id
+        WallpaperRotateWorker.schedulePeriodic(requireContext().applicationContext)
     }
+
+    dialog?.dismiss()
+    dialog = choiceDialog
+    choiceDialog.showRespectingStatusBar()
 }
 
 internal fun SettingsFragment.showRemovePhotosDialog() {
@@ -298,73 +288,63 @@ internal fun SettingsFragment.showRemovePhotosDialog() {
     }
     val checked = BooleanArray(count)
 
-    val builder = AlertDialog.Builder(requireContext())
-        .setTitle(R.string.remove_photos)
-        .setMultiChoiceItems(labels, checked) { _, which, isChecked ->
-            checked[which] = isChecked
-        }
-        .setPositiveButton(R.string.remove) { _, _ ->
-            val checkedIndices = checked.indices.filter { checked[it] }.toSet()
-            if (checkedIndices.isEmpty()) return@setPositiveButton
+    val removeDialog = requireContext().createMultiChoiceDialog(
+        title = R.string.remove_photos,
+        items = labels.toList(),
+        checked = checked,
+        action = R.string.remove,
+    ) {
+        val checkedIndices = checked.indices.filter { checked[it] }.toSet()
+        if (checkedIndices.isEmpty()) return@createMultiChoiceDialog
 
-            val appContext = requireContext().applicationContext
-            requireActivity().lifecycleScope.launch {
-                PhotoWallpaper.withEditLock {
-                    // Plan under the lock so it matches the set as it is now.
-                    val currentCount = prefs.photoWallpaperCount
-                    if (currentCount <= 0 || checkedIndices.any { it >= currentCount }) return@withEditLock
-                    val plan = PhotoSet.planRemoval(
-                        currentCount,
-                        prefs.photoWallpaperIndex,
-                        checkedIndices
-                    )
-                    if (plan.newCount == 0) {
-                        turnOffPhotoWallpaper(appContext)
-                        return@withEditLock
-                    }
-                    withContext(Dispatchers.IO) {
-                        val success = PhotoWallpaper.removePhotos(appContext, plan)
-                        if (success) {
-                            prefs.photoWallpaperCount = plan.newCount
-                            prefs.photoWallpaperIndex = plan.newIndex
-                            if (plan.currentRemoved) {
-                                PhotoWallpaper.applyCurrent(appContext, prefs)
+        val appContext = requireContext().applicationContext
+        requireActivity().lifecycleScope.launch {
+            PhotoWallpaper.withEditLock {
+                // Plan under the lock so it matches the set as it is now.
+                val currentCount = prefs.photoWallpaperCount
+                if (currentCount <= 0 || checkedIndices.any { it >= currentCount }) return@withEditLock
+                val plan = PhotoSet.planRemoval(
+                    currentCount,
+                    prefs.photoWallpaperIndex,
+                    checkedIndices
+                )
+                if (plan.newCount == 0) {
+                    turnOffPhotoWallpaper(appContext)
+                    return@withEditLock
+                }
+                withContext(Dispatchers.IO) {
+                    val success = PhotoWallpaper.removePhotos(appContext, plan)
+                    if (success) {
+                        prefs.photoWallpaperCount = plan.newCount
+                        prefs.photoWallpaperIndex = plan.newIndex
+                        if (plan.currentRemoved) {
+                            PhotoWallpaper.applyCurrent(appContext, prefs)
+                        }
+                    } else {
+                        val recoveredCount = PhotoSet.countContiguous(PhotoWallpaper.getWallpaperDir(appContext))
+                        prefs.photoWallpaperCount = recoveredCount
+                        if (recoveredCount == 0) {
+                            withContext(Dispatchers.Main) {
+                                turnOffPhotoWallpaper(appContext)
                             }
                         } else {
-                            val recoveredCount = PhotoSet.countContiguous(PhotoWallpaper.getWallpaperDir(appContext))
-                            prefs.photoWallpaperCount = recoveredCount
-                            if (recoveredCount == 0) {
-                                withContext(Dispatchers.Main) {
-                                    turnOffPhotoWallpaper(appContext)
-                                }
-                            } else {
-                                prefs.photoWallpaperIndex = prefs.photoWallpaperIndex.coerceIn(0, recoveredCount - 1)
-                            }
-                            withContext(Dispatchers.Main) {
-                                appContext.showToast(R.string.wallpaper_photos_remove_failed)
-                            }
+                            prefs.photoWallpaperIndex = prefs.photoWallpaperIndex.coerceIn(0, recoveredCount - 1)
+                        }
+                        withContext(Dispatchers.Main) {
+                            appContext.showToast(R.string.wallpaper_photos_remove_failed)
                         }
                     }
-                    if (_binding != null) {
-                        populatePhotoWallpaperText()
-                    }
+                }
+                if (_binding != null) {
+                    populatePhotoWallpaperText()
                 }
             }
         }
-        .setNegativeButton(R.string.cancel, null)
-
-    val alertDialog = builder.create()
-    dialog?.dismiss()
-    dialog = alertDialog
-    val window = alertDialog.window
-    if (window != null && !prefs.showStatusBar) {
-        window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-        alertDialog.show()
-        window.hideStatusBar()
-        window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-    } else {
-        alertDialog.show()
     }
+
+    dialog?.dismiss()
+    dialog = removeDialog
+    removeDialog.showRespectingStatusBar()
 }
 
 internal fun SettingsFragment.cyclePhotoWallpaperTarget() {

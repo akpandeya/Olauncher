@@ -1,5 +1,6 @@
 package app.olauncher.ui.settings
 
+import app.olauncher.helper.createChoiceDialog
 import app.olauncher.ui.*
 import app.olauncher.ui.SettingsFragment
 import android.app.TimePickerDialog
@@ -27,7 +28,6 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.SeekBar
 import android.widget.Toast
-import android.view.WindowManager
 import android.Manifest
 import android.content.pm.PackageManager
 import android.text.InputType
@@ -53,7 +53,6 @@ import app.olauncher.ui.settings.SettingsSection
 import app.olauncher.ui.settings.SettingsSections
 import app.olauncher.ui.today.cards.NextUpCard
 import androidx.annotation.StringRes
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.app.NotificationManagerCompat
@@ -87,7 +86,6 @@ import android.util.Log
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.FontFamilyResources
-import app.olauncher.data.Prefs
 import app.olauncher.data.SearchEngine
 import app.olauncher.helper.RatesWorker
 import app.olauncher.data.SlotCount
@@ -209,28 +207,19 @@ internal fun SettingsFragment.showShortcutCountDialog() {
     val items = counts.map { it.toString() }.toTypedArray()
     val checkedIndex = counts.indexOf(prefs.shortcutCount)
 
-    val builder = AlertDialog.Builder(requireContext())
-        .setTitle(R.string.icons)
-        .setSingleChoiceItems(items, checkedIndex) { dialogInterface, which ->
-            prefs.shortcutCount = counts[which]
-            populateShortcutIcons()
-            viewModel.updateHomeAlignment(prefs.homeAlignment)
-            dialogInterface.dismiss()
-        }
-        .setNegativeButton(R.string.cancel, null)
-
-    val alertDialog = builder.create()
-    dialog?.dismiss()
-    dialog = alertDialog
-    val window = alertDialog.window
-    if (window != null && !prefs.showStatusBar) {
-        window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-        alertDialog.show()
-        window.hideStatusBar()
-        window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-    } else {
-        alertDialog.show()
+    val choiceDialog = requireContext().createChoiceDialog(
+        title = R.string.icons,
+        items = items.toList(),
+        checkedIndex = checkedIndex,
+    ) { which ->
+        prefs.shortcutCount = counts[which]
+        populateShortcutIcons()
+        viewModel.updateHomeAlignment(prefs.homeAlignment)
     }
+
+    dialog?.dismiss()
+    dialog = choiceDialog
+    choiceDialog.showRespectingStatusBar()
 }
 
 internal fun SettingsFragment.showShortcutSizeDialog() {
@@ -246,28 +235,19 @@ internal fun SettingsFragment.showShortcutSizeDialog() {
     )
     val checkedIndex = sizes.indexOf(prefs.shortcutSizeStep).coerceAtLeast(0)
 
-    val builder = AlertDialog.Builder(requireContext())
-        .setTitle(R.string.icon_size)
-        .setSingleChoiceItems(items, checkedIndex) { dialogInterface, which ->
-            prefs.shortcutSizeStep = sizes[which]
-            populateShortcutIcons()
-            viewModel.updateHomeAlignment(prefs.homeAlignment)
-            dialogInterface.dismiss()
-        }
-        .setNegativeButton(R.string.cancel, null)
-
-    val alertDialog = builder.create()
-    dialog?.dismiss()
-    dialog = alertDialog
-    val window = alertDialog.window
-    if (window != null && !prefs.showStatusBar) {
-        window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-        alertDialog.show()
-        window.hideStatusBar()
-        window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-    } else {
-        alertDialog.show()
+    val choiceDialog = requireContext().createChoiceDialog(
+        title = R.string.icon_size,
+        items = items.toList(),
+        checkedIndex = checkedIndex,
+    ) { which ->
+        prefs.shortcutSizeStep = sizes[which]
+        populateShortcutIcons()
+        viewModel.updateHomeAlignment(prefs.homeAlignment)
     }
+
+    dialog?.dismiss()
+    dialog = choiceDialog
+    choiceDialog.showRespectingStatusBar()
 }
 
 internal fun SettingsFragment.showShortcutIconStyleDialog() {
@@ -283,28 +263,19 @@ internal fun SettingsFragment.showShortcutIconStyleDialog() {
     )
     val checkedIndex = styles.indexOf(prefs.shortcutIconStyle).coerceAtLeast(0)
 
-    val builder = AlertDialog.Builder(requireContext())
-        .setTitle(R.string.icon_style)
-        .setSingleChoiceItems(items, checkedIndex) { dialogInterface, which ->
-            prefs.shortcutIconStyle = styles[which]
-            populateShortcutIcons()
-            viewModel.updateHomeAlignment(prefs.homeAlignment)
-            dialogInterface.dismiss()
-        }
-        .setNegativeButton(R.string.cancel, null)
-
-    val alertDialog = builder.create()
-    dialog?.dismiss()
-    dialog = alertDialog
-    val window = alertDialog.window
-    if (window != null && !prefs.showStatusBar) {
-        window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-        alertDialog.show()
-        window.hideStatusBar()
-        window.clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
-    } else {
-        alertDialog.show()
+    val choiceDialog = requireContext().createChoiceDialog(
+        title = R.string.icon_style,
+        items = items.toList(),
+        checkedIndex = checkedIndex,
+    ) { which ->
+        prefs.shortcutIconStyle = styles[which]
+        populateShortcutIcons()
+        viewModel.updateHomeAlignment(prefs.homeAlignment)
     }
+
+    dialog?.dismiss()
+    dialog = choiceDialog
+    choiceDialog.showRespectingStatusBar()
 }
 
 // "System" stays hidden unless the row is long pressed
