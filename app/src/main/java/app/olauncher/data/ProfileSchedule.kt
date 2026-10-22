@@ -226,6 +226,14 @@ object ProfileScheduleResolver {
         return if (id != schedule.defaultProfileId && !hasApps(id)) schedule.defaultProfileId else id
     }
 
+    /**
+     * True when the profile must not be applied yet: event rules exist, the calendar can be read,
+     * but the running events were not read yet. Applying then would show the time rule's profile
+     * for a moment, and the event's profile after the read.
+     */
+    fun shouldDeferApply(hasEventRules: Boolean, calendarGranted: Boolean, eventsRead: Boolean): Boolean =
+        hasEventRules && calendarGranted && !eventsRead
+
     /** The profile whose settings bundle must be applied now, or null when nothing changed or it has no bundle. */
     fun profileToApply(activeId: String, lastAppliedId: String, profiles: List<Profile>): Profile? {
         if (activeId == lastAppliedId) return null
