@@ -105,6 +105,7 @@
     <string name="not_now">Not now</string>
     <string name="date">Date</string>
     <string name="date_only">Date only</string>
+    <string name="clock_only" tools:ignore="MissingTranslation">Clock only</string>
     <string name="bottom_on">Bottom: On</string>
     <string name="bottom_off">Bottom: Off</string>
     <string name="shortcut_icons">Shortcut icons</string>
