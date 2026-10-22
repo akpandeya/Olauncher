@@ -110,4 +110,12 @@ class ProfileEventRuleTest {
         } catch (_: ProfileFormatException) {
         }
     }
+
+    @Test
+    fun applyWaitsForTheCalendarReadOnlyWhenEventsMightRun() {
+        assertTrue(ProfileScheduleResolver.shouldDeferApply(hasEventRules = true, calendarGranted = true, eventsRead = false))
+        assertFalse(ProfileScheduleResolver.shouldDeferApply(hasEventRules = true, calendarGranted = true, eventsRead = true))
+        assertFalse(ProfileScheduleResolver.shouldDeferApply(hasEventRules = true, calendarGranted = false, eventsRead = false))
+        assertFalse(ProfileScheduleResolver.shouldDeferApply(hasEventRules = false, calendarGranted = true, eventsRead = false))
+    }
 }

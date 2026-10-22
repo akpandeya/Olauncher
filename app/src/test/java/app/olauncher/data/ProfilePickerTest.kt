@@ -175,4 +175,59 @@ class ProfilePickerTest {
         val bare = PickerSettings().also { ProfilePicker.apply(ProfilePickerOption.BARE, profiles, it) }
         assertNotEquals(bare.snapshot(), settings.snapshot())
     }
+
+    private val none = ProfilePermissions(weather = false, calendar = false, notificationAccess = false, contacts = false)
+
+    private fun richOnto(permissions: ProfilePermissions): PickerSettings {
+        val settings = PickerSettings().apply { homeNextEvent = false; homeContextLine = false; searchContacts = false }
+        assertTrue(ProfilePicker.apply(ProfilePickerOption.RICH, profiles, settings, permissions = permissions))
+        return settings
+    }
+
+    @Test
+    fun missingPermissionsKeepTheirFeaturesOffAndTheRestIsApplied() {
+        val s = richOnto(none)
+        assertFalse(s.homeNextEvent)
+        assertFalse(s.homeContextLine)
+        assertFalse(s.searchContacts)
+        assertTrue(s.homeMusicPulse == true)
+        assertEquals(7, s.homeAppsNum)
+    }
+
+    @Test
+    fun quietNotificationsStayAsTheyWereWithoutNotificationAccess() {
+        val focus = profiles.first { it.id == "focus" }
+        val s = PickerSettings().apply { quietEnabled = false }
+        ProfilePicker.applyBundle(focus.settings, s, none)
+        assertFalse(s.quietEnabled)
+        ProfilePicker.applyBundle(focus.settings, s, none.copy(notificationAccess = true))
+        assertTrue(s.quietEnabled)
+    }
+
+    @Test
+    fun eachPermissionOnlyUnlocksItsOwnFeature() {
+        val calendar = richOnto(none.copy(calendar = true))
+        assertTrue(calendar.homeNextEvent)
+        assertFalse(calendar.homeContextLine)
+        assertFalse(calendar.searchContacts)
+        val notif = richOnto(none.copy(notificationAccess = true))
+        assertTrue(notif.homeContextLine)
+        assertFalse(notif.homeNextEvent)
+        val contacts = richOnto(none.copy(contacts = true))
+        assertTrue(contacts.searchContacts)
+        assertFalse(contacts.homeNextEvent)
+        val all = richOnto(ProfilePermissions.ALL)
+        assertTrue(all.homeNextEvent && all.homeContextLine && all.searchContacts)
+    }
+
+    @Test
+    fun aSkippedFeatureDoesNotMakeTheProfileCustom() {
+        val rich = profiles.first { it.id == "rich" }
+        val s = richOnto(none)
+        assertFalse(ProfileCustom.isCustom(rich, s, none))
+        assertTrue(ProfileCustom.isCustom(rich, s, ProfilePermissions.ALL))
+        assertEquals(ProfileState.Active("Rich"), ProfileCustom.state("rich", profiles, { it }, s, none))
+        s.homeShortcuts = !s.homeShortcuts
+        assertTrue(ProfileCustom.isCustom(rich, s, none))
+    }
 }

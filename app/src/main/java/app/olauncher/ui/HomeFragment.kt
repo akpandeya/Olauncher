@@ -32,6 +32,7 @@ import app.olauncher.MainViewModel
 import app.olauncher.R
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
+import app.olauncher.data.ProfileScheduleResolver
 import app.olauncher.helper.Haptics
 import app.olauncher.helper.OlDialog
 import app.olauncher.helper.hapticLongClick
@@ -676,7 +677,13 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
         populateScreenTime()
 
-        prefs.applyScheduledProfile()
+        // While event rules might be running, wait for the calendar read before applying a profile.
+        if (ProfileScheduleResolver.shouldDeferApply(
+                hasEventRules = prefs.hasProfileEventRules,
+                calendarGranted = calendarReadable(),
+                eventsRead = prefs.profileCalendarEvents != null,
+            )
+        ) refreshProfileCalendarEvents() else prefs.applyScheduledProfile()
         val set = prefs.activeHomeSet()
         renderedHomeSet = set
         val homeAppsNum = prefs.homeAppsNum

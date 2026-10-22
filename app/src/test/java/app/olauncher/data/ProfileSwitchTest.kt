@@ -95,10 +95,21 @@ class ProfileSwitchTest {
     }
 
     @Test
-    fun overrideWithNoBoundaryNeverExpires() {
-        val o = ManualOverride.create("bare", ProfileSchedule("rich", emptyList()), 5L, hm(10), monday)
-        assertEquals(ManualOverride.NO_EXPIRY, o.untilMillis)
-        assertTrue(o.isActive(Long.MAX_VALUE))
+    fun overrideWithNoBoundaryHoldsForABoundedTimeThenExpires() {
+        val now = 5_000_000L
+        val o = ManualOverride.create("bare", ProfileSchedule("rich", emptyList()), now, hm(10), monday)
+        assertEquals(now + ManualOverride.NO_BOUNDARY_HOLD_MILLIS, o.untilMillis)
+        assertTrue(o.isActive(now))
+        assertTrue(o.isActive(now + ManualOverride.NO_BOUNDARY_HOLD_MILLIS - 1))
+        assertFalse(o.isActive(now + ManualOverride.NO_BOUNDARY_HOLD_MILLIS))
+    }
+
+    @Test
+    fun overrideWithOnlyEventRulesIsBoundedToo() {
+        val events = ProfileSchedule("rich", emptyList(), listOf(ProfileEventRule("bare", keyword = "work")))
+        val o = ManualOverride.create("focus", events, 7L, hm(10), monday)
+        assertEquals(7L + ManualOverride.NO_BOUNDARY_HOLD_MILLIS, o.untilMillis)
+        assertFalse(o.isActive(7L + ManualOverride.NO_BOUNDARY_HOLD_MILLIS))
     }
 
     @Test

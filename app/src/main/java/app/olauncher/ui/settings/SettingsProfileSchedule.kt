@@ -2,13 +2,12 @@ package app.olauncher.ui.settings
 
 import app.olauncher.R
 import app.olauncher.data.HomeSetProfiles
-import app.olauncher.data.Profile
-import app.olauncher.data.ProfileFormatException
 import app.olauncher.data.ProfileEventRule
 import app.olauncher.data.ProfileRule
 import app.olauncher.data.ProfileSchedule
 import app.olauncher.glance.CalendarRepository
 import app.olauncher.helper.createChoiceDialog
+import app.olauncher.helper.profileChoices
 import app.olauncher.helper.createDialog
 import app.olauncher.helper.showMessageDialog
 import app.olauncher.ui.SettingsFragment
@@ -21,6 +20,10 @@ import androidx.core.content.ContextCompat
 import java.time.DayOfWeek
 import java.time.format.TextStyle
 import java.util.Locale
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 internal fun SettingsFragment.populateProfileSchedule() {
     binding.profileSchedule.text = if (prefs.hasSavedProfileSchedule) {
@@ -30,18 +33,9 @@ internal fun SettingsFragment.populateProfileSchedule() {
     }
 }
 
-private fun SettingsFragment.savedProfiles(): List<Profile> = try {
-    Profile.listFromJson(prefs.profilesJson)
-} catch (e: ProfileFormatException) {
-    emptyList()
-}
-
+/** Every profile the `:p` list offers: the built-in ones, the Morning/Day/Evening ones and saved ones. */
 private fun SettingsFragment.profileChoices(): List<Pair<String, String>> =
-    listOf(
-        HomeSetProfiles.MORNING_ID to getString(R.string.profile_name_morning),
-        HomeSetProfiles.DAY_ID to getString(R.string.profile_name_day),
-        HomeSetProfiles.EVENING_ID to getString(R.string.profile_name_evening),
-    ) + savedProfiles().map { it.id to it.name }
+    prefs.profileChoices(requireContext(), includeSets = true).distinctBy { it.id }.map { it.id to it.name }
 
 private fun SettingsFragment.profileName(id: String): String =
     profileChoices().firstOrNull { it.first == id }?.second ?: id
@@ -69,7 +63,9 @@ private fun SettingsFragment.openDialog(next: app.olauncher.helper.OlDialog) {
 }
 
 /** The rule list. The first edit saves the schedule built from the old Home-set times. */
-internal fun SettingsFragment.showProfileScheduleDialog() {
+internal fun SettingsFragment.showProfileScheduleDialog() = withCalendars { showProfileScheduleList() }
+
+private fun SettingsFragment.showProfileScheduleList() {
     val schedule = prefs.profileSchedule()
     val items = schedule.rules.map { ruleLabel(it) }.toMutableList()
     items.add(getString(R.string.profile_schedule_add))
@@ -181,9 +177,27 @@ private fun SettingsFragment.askCalendarAccessIfMissing() {
     }
 }
 
+/** Runs [then] once the calendar names are cached; reads them off the main thread the first time. */
+private fun SettingsFragment.withCalendars(then: () -> Unit) {
+    if (profileCalendars != null || !calendarGranted()) {
+        then()
+        return
+    }
+    val repository = CalendarRepository(requireContext().applicationContext)
+    viewLifecycleOwner.lifecycleScope.launch {
+        val loaded = try {
+            withContext(Dispatchers.IO) { repository.calendars() }
+        } catch (e: RuntimeException) {
+            emptyList()
+        }
+        profileCalendars = loaded
+        if (isAdded) then()
+    }
+}
+
 private fun SettingsFragment.calendarName(id: Long?): String =
     if (id == null) getString(R.string.profile_event_any_calendar)
-    else CalendarRepository(requireContext()).calendars().firstOrNull { it.first == id }?.second ?: id.toString()
+    else profileCalendars.orEmpty().firstOrNull { it.first == id }?.second ?: id.toString()
 
 private fun SettingsFragment.eventRuleLabel(rule: ProfileEventRule): String {
     val what = listOfNotNull(
@@ -194,7 +208,10 @@ private fun SettingsFragment.eventRuleLabel(rule: ProfileEventRule): String {
     return if (calendarGranted()) label else "$label (${getString(R.string.profile_event_needs_access)})"
 }
 
-private fun SettingsFragment.showEventRuleDialog(schedule: ProfileSchedule, index: Int) {
+private fun SettingsFragment.showEventRuleDialog(schedule: ProfileSchedule, index: Int) =
+    withCalendars { showEventRule(schedule, index) }
+
+private fun SettingsFragment.showEventRule(schedule: ProfileSchedule, index: Int) {
     val rule = schedule.eventRules[index]
     fun update(changed: ProfileEventRule) {
         val next = schedule.copy(eventRules = schedule.eventRules.toMutableList().also { it[index] = changed })
@@ -227,7 +244,7 @@ private fun SettingsFragment.showEventRuleDialog(schedule: ProfileSchedule, inde
                         askCalendarAccessIfMissing()
                         return@createChoiceDialog
                     }
-                    val calendars = CalendarRepository(requireContext()).calendars()
+                    val calendars = profileCalendars.orEmpty()
                     val names = listOf(getString(R.string.profile_event_any_calendar)) + calendars.map { it.second }
                     openDialog(
                         requireContext().createChoiceDialog(

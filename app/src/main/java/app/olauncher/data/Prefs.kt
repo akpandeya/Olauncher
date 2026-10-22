@@ -40,7 +40,25 @@ class Prefs(context: Context) :
     ProfilePrefs by ProfilePrefsStore(context.appPrefs()),
     GesturePrefs by GesturePrefsStore(context.appPrefs()),
     OnboardingPrefs by OnboardingPrefsStore(context.appPrefs()) {
+    private val appContext: Context by lazy { context.applicationContext ?: context }
+
+    /** The permissions of the profile features, read now. Never asks for one. */
+    fun currentProfilePermissions(): ProfilePermissions = ProfilePermissions(
+        weather = app.olauncher.glance.WeatherLocation.hasPermission(appContext),
+        calendar = hasPermission(android.Manifest.permission.READ_CALENDAR),
+        notificationAccess = app.olauncher.quiet.QuietAccess.isNotificationAccessGranted(appContext),
+        contacts = hasPermission(android.Manifest.permission.READ_CONTACTS),
+    )
+
+    private fun hasPermission(permission: String): Boolean =
+        androidx.core.content.ContextCompat.checkSelfPermission(appContext, permission) ==
+            android.content.pm.PackageManager.PERMISSION_GRANTED
+
     companion object {
+        /** Shared by every [Prefs] instance, so a recreated screen keeps the events already read. */
+        @Volatile
+        private var sharedProfileCalendarEvents: List<CalendarEvent>? = null
+
         const val AUTO_BACKUP_ENABLED = "AUTO_BACKUP_ENABLED"
         const val AUTO_BACKUP_TREE_URI = "AUTO_BACKUP_TREE_URI"
         const val AUTO_BACKUP_LAST_OK = "AUTO_BACKUP_LAST_OK"
@@ -255,19 +273,36 @@ class Prefs(context: Context) :
     // Home app sets (Morning / Day / Evening)
     var homeSets: Boolean
         get() = prefs.getBoolean(HOME_SETS, false)
-        set(value) = prefs.edit { putBoolean(HOME_SETS, value) }
+        set(value) {
+            val changed = value != homeSets
+            prefs.edit { putBoolean(HOME_SETS, value) }
+            // A change to the schedule's rules ends a manual switch.
+            if (changed) clearManualProfile()
+        }
 
     var homeSetMorningStart: Int
         get() = prefs.getInt(HOME_SET_MORNING_START, HomeSets.DEFAULT_MORNING_START)
-        set(value) = prefs.edit { putInt(HOME_SET_MORNING_START, HomeSets.normalize(value)) }
+        set(value) {
+            val changed = HomeSets.normalize(value) != homeSetMorningStart
+            prefs.edit { putInt(HOME_SET_MORNING_START, HomeSets.normalize(value)) }
+            if (changed) clearManualProfile()
+        }
 
     var homeSetDayStart: Int
         get() = prefs.getInt(HOME_SET_DAY_START, HomeSets.DEFAULT_DAY_START)
-        set(value) = prefs.edit { putInt(HOME_SET_DAY_START, HomeSets.normalize(value)) }
+        set(value) {
+            val changed = HomeSets.normalize(value) != homeSetDayStart
+            prefs.edit { putInt(HOME_SET_DAY_START, HomeSets.normalize(value)) }
+            if (changed) clearManualProfile()
+        }
 
     var homeSetEveningStart: Int
         get() = prefs.getInt(HOME_SET_EVENING_START, HomeSets.DEFAULT_EVENING_START)
-        set(value) = prefs.edit { putInt(HOME_SET_EVENING_START, HomeSets.normalize(value)) }
+        set(value) {
+            val changed = HomeSets.normalize(value) != homeSetEveningStart
+            prefs.edit { putInt(HOME_SET_EVENING_START, HomeSets.normalize(value)) }
+            if (changed) clearManualProfile()
+        }
 
     fun homeSetStarts(): HomeSetStarts =
         HomeSetStarts(homeSetMorningStart, homeSetDayStart, homeSetEveningStart)
@@ -324,8 +359,11 @@ class Prefs(context: Context) :
      * Events running now, last read for the calendar rules; null while calendar access is missing or
      * nothing was read yet. Kept in memory only: the home screen refreshes it off the main thread.
      */
-    @Volatile
-    var profileCalendarEvents: List<CalendarEvent>? = null
+    var profileCalendarEvents: List<CalendarEvent>?
+        get() = sharedProfileCalendarEvents
+        set(value) {
+            sharedProfileCalendarEvents = value
+        }
 
     /** True when the saved schedule has rules that follow the calendar. */
     val hasProfileEventRules: Boolean
@@ -369,7 +407,7 @@ class Prefs(context: Context) :
         val profiles = profiles()
         val toApply = ProfileScheduleResolver.profileToApply(activeId, appliedProfileId, profiles)
         if (activeId != appliedProfileId) appliedProfileId = activeId
-        toApply?.settings?.apply(PrefsProfileTarget(this))
+        toApply?.let { ProfilePicker.applyBundle(it.settings, PrefsProfileTarget(this), currentProfilePermissions()) }
         return toApply != null
     }
 
@@ -393,14 +431,17 @@ class Prefs(context: Context) :
         nowMinutes: Int = currentMinutesOfDay(),
         dayOfWeek: Int = currentDayOfWeek(),
         nowMillis: Long = System.currentTimeMillis(),
-        weatherGranted: Boolean = true,
+        weatherGranted: Boolean? = null,
     ) {
         val override = ManualOverride.create(profileId, profileSchedule(), nowMillis, nowMinutes, dayOfWeek)
         manualProfileId = override.profileId
         manualProfileUntil = override.untilMillis
         appliedProfileId = profileId
         profiles().firstOrNull { it.id == profileId }
-            ?.let { ProfilePicker.applyBundle(it.settings, PrefsProfileTarget(this), weatherGranted) }
+            ?.let {
+                val permissions = currentProfilePermissions().let { p -> weatherGranted?.let { w -> p.copy(weather = w) } ?: p }
+                ProfilePicker.applyBundle(it.settings, PrefsProfileTarget(this), permissions)
+            }
     }
 
     fun clearManualProfile() {
@@ -410,7 +451,7 @@ class Prefs(context: Context) :
 
     /** What the profile row shows now: the applied profile, or Custom when its bundle was changed. */
     fun profileState(nameOf: (String) -> String): ProfileState =
-        ProfileCustom.state(appliedProfileId.ifEmpty { activeProfileId() }, profiles(), nameOf, PrefsProfileTarget(this))
+        ProfileCustom.state(appliedProfileId.ifEmpty { activeProfileId() }, profiles(), nameOf, PrefsProfileTarget(this), currentProfilePermissions())
 
     /** Stores the settings now in force as the bundle of [profile], keeping its other fields. */
     fun saveToProfile(profile: Profile) {
