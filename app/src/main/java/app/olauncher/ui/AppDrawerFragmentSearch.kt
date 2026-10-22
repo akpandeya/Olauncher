@@ -140,7 +140,8 @@ internal fun AppDrawerFragment.suggestItems(query: String): List<String> =
     when (val command = parseCommand(query)) {
         is DrawerCommand.SaveWords -> command.items
         is DrawerCommand.LookUp -> listOf(command.text)
-        null -> emptyList()
+        is DrawerCommand.Timer, is DrawerCommand.Alarm, is DrawerCommand.Event,
+        is DrawerCommand.Note, is DrawerCommand.Help, null -> emptyList()
     }
 
 internal fun AppDrawerFragment.suggestOnlineAllowed(): Boolean = prefs.germanEnabled && prefs.germanSpellSuggest

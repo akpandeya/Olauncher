@@ -57,14 +57,45 @@ class DrawerCommandTest {
 
     @Test
     fun `non commands are null`() {
-        assertNull(parse(":wx"))
-        assertNull(parse(":swim"))
-        assertNull(parse(":"))
         assertNull(parse("sw foo"))
+        assertNull(parse("t 10"))
+        assertNull(parse(":w"))
+    }
+
+    private val allWords = listOf("t", "a", "e", "n", "sw", "w")
+
+    @Test
+    fun `colon alone lists enabled commands`() {
+        assertEquals(allWords, (parse(":") as DrawerCommand.Help).commands.map { it.word })
+        val off = DrawerCommand.parse(":", germanEnabled = false) as DrawerCommand.Help
+        assertEquals(listOf("t", "a", "e", "n"), off.commands.map { it.word })
+        assertEquals(off, DrawerCommand.parse("  :", germanEnabled = false))
     }
 
     @Test
-    fun `german off is always null`() {
+    fun `unknown command lists commands`() {
+        assertEquals(DrawerCommand.Help(DrawerCommand.available(true)), parse(":xyz"))
+        assertEquals(DrawerCommand.Help(DrawerCommand.available(true)), parse(":swim"))
+        assertEquals(DrawerCommand.Help(DrawerCommand.available(false)), DrawerCommand.parse(":wx", germanEnabled = false))
+    }
+
+    @Test
+    fun `help row prefix fills command word`() {
+        assertEquals(listOf(":t ", ":a ", ":e ", ":n ", ":sw ", ":w "), DrawerCommand.available(true).map { it.prefix })
+    }
+
+    @Test
+    fun `t a e n work with german off`() {
+        for (german in listOf(false, true)) {
+            assertEquals(DrawerCommand.Timer("10"), DrawerCommand.parse(":t 10", german))
+            assertEquals(DrawerCommand.Alarm("7:30"), DrawerCommand.parse(":a 7:30", german))
+            assertEquals(DrawerCommand.Event("dentist"), DrawerCommand.parse(":E dentist", german))
+            assertEquals(DrawerCommand.Note("buy milk"), DrawerCommand.parse(":n buy milk", german))
+        }
+    }
+
+    @Test
+    fun `german off gates only sw and w`() {
         assertNull(DrawerCommand.parse(":sw Fernweh", germanEnabled = false))
         assertNull(DrawerCommand.parse(":w ging", germanEnabled = false))
     }
