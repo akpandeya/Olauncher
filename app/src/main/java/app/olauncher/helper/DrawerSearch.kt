@@ -25,9 +25,9 @@ class DrawerSearchInput(
     val currencyRows: (String) -> List<AppModel.Result>,
     val spellRows: (List<String>) -> List<AppModel.Result>,
     val lookUpRows: (String) -> List<AppModel.Result>,
-    /** Stable string for a user, matching [RecentApp.user] and hidden-app keys. */
     /** Current local time, injectable for tests. */
     val now: () -> java.time.LocalTime = { java.time.LocalTime.now() },
+    /** Stable string for a user, matching [RecentApp.user] and hidden-app keys. */
     val userKey: (android.os.UserHandle) -> String = { it.toString() },
 )
 
