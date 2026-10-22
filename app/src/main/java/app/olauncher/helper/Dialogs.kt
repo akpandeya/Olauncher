@@ -1,6 +1,9 @@
 package app.olauncher.helper
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Outline
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.Menu
@@ -8,10 +11,13 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
+import android.view.ViewOutlineProvider
 import android.view.WindowManager
+import android.widget.PopupWindow
 import androidx.annotation.MenuRes
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.appcompat.widget.PopupMenu
 import android.os.Handler
 import android.os.Looper
@@ -19,6 +25,8 @@ import androidx.core.view.isVisible
 import app.olauncher.R
 import app.olauncher.data.Prefs
 import app.olauncher.databinding.DialogBaseBinding
+import app.olauncher.databinding.ItemPopupActionBinding
+import app.olauncher.databinding.PopupAppActionsBinding
 import app.olauncher.ui.AppAction
 
 /**
@@ -43,60 +51,84 @@ fun View.showPopupMenu(
 }
 
 /**
- * Shows the long-press actions of an app as an anchored popup: the app name on
- * top (not clickable), then every action. The popup sits next to this view and
- * flips above it near the bottom of the screen or the keyboard.
+ * Shows the long-press actions of an app as a Thumbline card: the app name on
+ * top (a heading, not clickable), a hairline, then every action; destructive
+ * actions in the danger colour. The card hangs off the end edge of this view and
+ * flips above it near the bottom of the screen or the keyboard (see [PopupPlacement]).
  */
 fun View.showAppActionPopup(
     appName: String,
     actions: List<AppAction>,
     onAction: (AppAction) -> Unit,
-): PopupMenu {
-    val flipAnchor = flipAnchorIfNeeded(actions.size + 1)
-    val popup = PopupMenu(context, flipAnchor ?: this, Gravity.END)
-    popup.menu.add(Menu.NONE, Menu.NONE, 0, appName).isEnabled = false
-    actions.forEachIndexed { index, action ->
-        popup.menu.add(Menu.NONE, index, index + 1, action.labelRes)
+): PopupWindow {
+    val inflater = LayoutInflater.from(context)
+    val card = PopupAppActionsBinding.inflate(inflater)
+    card.tvPopupTitle.text = appName
+    val popup = PopupWindow(card.root, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true)
+    val dangerColor = context.getColorFromAttr(R.attr.dangerColor)
+    actions.forEach { action ->
+        val row = ItemPopupActionBinding.inflate(inflater, card.popupItems, false).root
+        row.setText(action.labelRes)
+        if (action.isDestructive) row.setTextColor(dangerColor)
+        row.setOnClickListener {
+            Haptics.perform(this, if (action.isDestructive) Haptics.Kind.REJECT else Haptics.Kind.MENU)
+            // Dismiss first so an action that opens the keyboard (rename) gets the window focus back.
+            popup.dismiss()
+            onAction(action)
+        }
+        card.popupItems.addView(row)
     }
-    popup.setOnMenuItemClickListener { item ->
-        val action = actions.getOrNull(item.itemId) ?: return@setOnMenuItemClickListener true
-        Haptics.perform(this, if (action.isDestructive) Haptics.Kind.REJECT else Haptics.Kind.MENU)
-        onAction(action)
-        true
-    }
-    if (flipAnchor != null) popup.setOnDismissListener { (flipAnchor.parent as? ViewGroup)?.removeView(flipAnchor) }
-    popup.show()
-    return popup
-}
 
-/**
- * When a menu of [itemCount] rows does not fit right below this view (above the
- * keyboard, if it is up), returns a 1px invisible view placed so a popup anchored
- * to it opens at the computed top: above this view, or moved up to clear the keyboard.
- * Returns null when the normal below placement is fine. The caller removes it on dismiss.
- */
-private fun View.flipAnchorIfNeeded(itemCount: Int): View? {
-    val root = rootView as? ViewGroup ?: return null
-    val density = resources.displayMetrics.density
-    val rowHeight = (48 * density * resources.configuration.fontScale.coerceAtLeast(1f)).toInt()
-    val menuHeight = itemCount * rowHeight + (16 * density).toInt()
+    val root = rootView
+    val margin = resources.getDimensionPixelSize(R.dimen.popup_card_screen_margin)
     val loc = IntArray(2)
     getLocationInWindow(loc)
     // Read the keyboard height now: the caller may have just asked it to hide.
     val imeBottom = root.rootWindowInsets?.getInsets(WindowInsets.Type.ime())?.bottom ?: 0
     val visibleBottom = PopupPlacement.visibleBottom(root.height, imeBottom)
-    val anchorBottom = loc[1] + height
-    val menuTop = PopupPlacement.menuTop(loc[1], anchorBottom, visibleTop = 0, visibleBottom, menuHeight)
-    if (menuTop == anchorBottom) return null
-    val anchorHeight = 1
-    val anchor = View(context)
-    val top = menuTop - anchorHeight
-    val params = android.widget.FrameLayout.LayoutParams(width, anchorHeight).apply {
-        leftMargin = loc[0]
-        topMargin = maxOf(0, top)
+    card.root.measure(
+        View.MeasureSpec.makeMeasureSpec(maxOf(0, root.width - 2 * margin), View.MeasureSpec.AT_MOST),
+        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+    )
+    val menuWidth = card.root.measuredWidth
+    val menuHeight = PopupPlacement.fitHeight(card.root.measuredHeight, visibleTop = 0, visibleBottom)
+    val top = PopupPlacement.menuTop(loc[1], loc[1] + height, visibleTop = 0, visibleBottom, menuHeight)
+    val left = PopupPlacement.menuLeft(
+        anchorLeft = loc[0],
+        anchorRight = loc[0] + width,
+        menuWidth = menuWidth,
+        screenWidth = root.width,
+        margin = margin,
+        isRtl = layoutDirection == View.LAYOUT_DIRECTION_RTL,
+    )
+
+    val animation = TypedValue()
+    popup.apply {
+        width = menuWidth
+        height = menuHeight
+        setBackgroundDrawable(AppCompatResources.getDrawable(context, R.drawable.bg_popup_card))
+        elevation = resources.getDimension(R.dimen.popup_card_elevation)
+        isOutsideTouchable = true
+        // Leave the keyboard as it is; the placement above already keeps the card clear of it.
+        inputMethodMode = PopupWindow.INPUT_METHOD_NOT_NEEDED
+        animationStyle = if (context.theme.resolveAttribute(R.attr.popupCardAnimationStyle, animation, true)) {
+            animation.resourceId
+        } else {
+            0
+        }
     }
-    (root as? android.widget.FrameLayout)?.addView(anchor, params) ?: return null
-    return anchor
+    // Clip the row ripples to the card's rounded corners.
+    card.root.clipToOutline = true
+    card.root.outlineProvider = object : ViewOutlineProvider() {
+        override fun getOutline(view: View, outline: Outline) {
+            outline.setRoundRect(0, 0, view.width, view.height, resources.getDimension(R.dimen.radiusMedium))
+        }
+    }
+    // Absolute LEFT: [left] is already resolved for right-to-left by PopupPlacement.menuLeft.
+    @SuppressLint("RtlHardcoded")
+    val gravity = Gravity.TOP or Gravity.LEFT
+    popup.showAtLocation(this, gravity, left, top)
+    return popup
 }
 
 /**

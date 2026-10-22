@@ -2,4 +2,6 @@
 <resources>
     <!-- Dialog fade in/out, shared by the window animation and the blur ramp -->
     <integer name="dialog_anim_duration">250</integer>
+    <!-- App long-press popup card fade in/out -->
+    <integer name="popup_card_anim_duration">120</integer>
 </resources>

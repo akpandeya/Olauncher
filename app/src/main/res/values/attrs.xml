@@ -24,4 +24,8 @@
     <attr name="surface" format="color" />
     <attr name="scrim" format="color" />
     <attr name="accent" format="color" />
+    <!-- Text colour for destructive actions (hide, delete, reset) -->
+    <attr name="dangerColor" format="color" />
+    <!-- Window animation of the app long-press popup card; none when animations are off -->
+    <attr name="popupCardAnimationStyle" format="reference" />
 </resources>

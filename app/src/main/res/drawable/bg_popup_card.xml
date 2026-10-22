@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- App long-press popup card: the bottom sheet's fill and hairline, rounded on all corners -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="?attr/primaryColorInverseTrans90" />
+    <corners android:radius="@dimen/radiusMedium" />
+    <stroke
+        android:width="@dimen/strokeHairline"
+        android:color="?attr/primaryColorTrans50" />
+</shape>

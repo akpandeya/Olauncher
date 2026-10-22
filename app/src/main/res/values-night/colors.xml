@@ -20,4 +20,5 @@
     <color name="accentSand">@color/accentSandDark</color>
     <color name="accentSky">@color/accentSkyDark</color>
     <color name="accentRose">@color/accentRoseDark</color>
+    <color name="danger">@color/accentRoseDark</color>
 </resources>
