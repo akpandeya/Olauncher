@@ -22,6 +22,9 @@ import app.olauncher.helper.dpToPx
 import app.olauncher.helper.getColorFromAttr
 import app.olauncher.helper.getUserHandleFromString
 import kotlin.math.roundToInt
+import android.util.Log
+
+private const val TAG = "ShortcutIconRenderer"
 
 /** A resolved shortcut icon: the drawable, the padding for its 48dp view, and whether it is an app icon. */
 data class RenderedShortcutIcon(
@@ -102,7 +105,7 @@ object ShortcutIconRenderer {
                         }
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    Log.w(TAG, "render failed", e)
                 }
             }
         }
