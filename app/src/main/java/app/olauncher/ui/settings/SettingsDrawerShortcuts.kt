@@ -121,6 +121,7 @@ import app.olauncher.helper.WordScreenService
 import app.olauncher.helper.OlDialog
 import app.olauncher.helper.showMessageDialog
 import app.olauncher.helper.showPopupMenu
+import app.olauncher.helper.SwipeSettingMenu
 import app.olauncher.helper.showStatusBar
 import app.olauncher.helper.copyToClipboard
 import app.olauncher.helper.showToast
@@ -324,25 +325,42 @@ internal fun SettingsFragment.populateTodayCards() {
     }
 }
 
-internal fun SettingsFragment.showSwipeRightMenu(anchor: View) {
-    if (!prefs.swipeRightEnabled) {
-        requireContext().showToast(getString(R.string.long_press_to_enable))
-        return
-    }
+internal fun SettingsFragment.showSwipeRightMenu(anchor: View) =
+    showSwipeMenu(anchor, SwipeSettingMenu.Side.RIGHT)
+
+internal fun SettingsFragment.showSwipeLeftMenu(anchor: View) =
+    showSwipeMenu(anchor, SwipeSettingMenu.Side.LEFT)
+
+/** A tap opens this menu: "Off" first, then what the gesture can do. */
+private fun SettingsFragment.showSwipeMenu(anchor: View, side: SwipeSettingMenu.Side) {
+    val options = SwipeSettingMenu.options(side)
     anchor.showPopupMenu(
         configure = { menu ->
-            menu.add(Menu.NONE, 1, 1, R.string.today_page)
-            menu.add(Menu.NONE, 2, 2, R.string.choose_app)
+            options.forEachIndexed { i, option ->
+                val title = when (option) {
+                    SwipeSettingMenu.Option.OFF -> R.string.off
+                    SwipeSettingMenu.Option.TODAY_PAGE -> R.string.today_page
+                    SwipeSettingMenu.Option.CHOOSE_APP -> R.string.choose_app
+                }
+                menu.add(Menu.NONE, i, i, title)
+            }
         }
     ) { item ->
-        when (item.itemId) {
-            1 -> {
-                prefs.swipeRightAction = Prefs.SWIPE_RIGHT_ACTION_TODAY
-                populateSwipeApps()
+        val outcome = SwipeSettingMenu.outcome(side, options[item.itemId])
+        when (side) {
+            SwipeSettingMenu.Side.LEFT -> prefs.swipeLeftEnabled = outcome.enabled
+            SwipeSettingMenu.Side.RIGHT -> {
+                prefs.swipeRightEnabled = outcome.enabled
+                if (outcome.rightOpensToday == true) prefs.swipeRightAction = Prefs.SWIPE_RIGHT_ACTION_TODAY
             }
-            2 -> {
-                showAppListIfEnabled(Constants.FLAG_SET_SWIPE_RIGHT_APP)
-            }
+        }
+        if (outcome.openAppPicker) {
+            showAppListIfEnabled(
+                if (side == SwipeSettingMenu.Side.LEFT) Constants.FLAG_SET_SWIPE_LEFT_APP
+                else Constants.FLAG_SET_SWIPE_RIGHT_APP
+            )
+        } else {
+            populateSwipeApps()
         }
     }
 }
