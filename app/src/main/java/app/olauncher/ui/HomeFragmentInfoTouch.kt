@@ -15,8 +15,11 @@ import app.olauncher.helper.dpToPx
 internal fun HomeFragment.initInfoLineTouchTargets() {
     val parent = binding.nextEventLine.parent as? ViewGroup ?: return
     val lines = listOf(binding.nextEventLine, binding.contextLine)
+    // Installed once: swapping the parent's delegate mid-gesture would drop the tap's ACTION_UP.
+    val group = InfoLineTouchDelegates(parent)
+    parent.touchDelegate = group
     val refresh = {
-        val group = InfoLineTouchDelegates(parent)
+        group.clear()
         val minPx = TouchTarget.MIN_TARGET_DP.dpToPx()
         for (line in lines) {
             if (line.visibility != View.VISIBLE || line.height <= 0) continue
@@ -25,7 +28,6 @@ internal fun HomeFragment.initInfoLineTouchTargets() {
             val bounds = Rect(line.left, line.top - extra, line.right, line.bottom + extra)
             group.add(TouchDelegate(bounds, line))
         }
-        parent.touchDelegate = if (group.isEmpty()) null else group
     }
     val listener = View.OnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> refresh() }
     lines.forEach { it.addOnLayoutChangeListener(listener) }
@@ -42,7 +44,9 @@ private class InfoLineTouchDelegates(parent: View) : TouchDelegate(Rect(), paren
         delegates.add(delegate)
     }
 
-    fun isEmpty() = delegates.isEmpty()
+    fun clear() {
+        delegates.clear()
+    }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (event.actionMasked == MotionEvent.ACTION_DOWN) {
