@@ -7,6 +7,7 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowInsets
 import android.view.WindowManager
 import androidx.annotation.MenuRes
 import androidx.annotation.StringRes
@@ -44,7 +45,7 @@ fun View.showPopupMenu(
 /**
  * Shows the long-press actions of an app as an anchored popup: the app name on
  * top (not clickable), then every action. The popup sits next to this view and
- * flips above it near the bottom of the screen.
+ * flips above it near the bottom of the screen or the keyboard.
  */
 fun View.showAppActionPopup(
     appName: String,
@@ -69,8 +70,9 @@ fun View.showAppActionPopup(
 }
 
 /**
- * When a menu of [itemCount] rows does not fit below this view, returns a 1px
- * invisible view placed so a popup anchored to it opens just above this view.
+ * When a menu of [itemCount] rows does not fit right below this view (above the
+ * keyboard, if it is up), returns a 1px invisible view placed so a popup anchored
+ * to it opens at the computed top: above this view, or moved up to clear the keyboard.
  * Returns null when the normal below placement is fine. The caller removes it on dismiss.
  */
 private fun View.flipAnchorIfNeeded(itemCount: Int): View? {
@@ -80,11 +82,15 @@ private fun View.flipAnchorIfNeeded(itemCount: Int): View? {
     val menuHeight = itemCount * rowHeight + (16 * density).toInt()
     val loc = IntArray(2)
     getLocationInWindow(loc)
-    val screenHeight = root.height
-    if (!PopupPlacement.showsAbove(loc[1], loc[1] + height, screenHeight, menuHeight)) return null
+    // Read the keyboard height now: the caller may have just asked it to hide.
+    val imeBottom = root.rootWindowInsets?.getInsets(WindowInsets.Type.ime())?.bottom ?: 0
+    val visibleBottom = PopupPlacement.visibleBottom(root.height, imeBottom)
+    val anchorBottom = loc[1] + height
+    val menuTop = PopupPlacement.menuTop(loc[1], anchorBottom, visibleTop = 0, visibleBottom, menuHeight)
+    if (menuTop == anchorBottom) return null
     val anchorHeight = 1
     val anchor = View(context)
-    val top = PopupPlacement.topWhenAbove(loc[1], menuHeight) - anchorHeight
+    val top = menuTop - anchorHeight
     val params = android.widget.FrameLayout.LayoutParams(width, anchorHeight).apply {
         leftMargin = loc[0]
         topMargin = maxOf(0, top)
