@@ -553,6 +553,17 @@
     <string name="a11y_action_lock_screen">Lock screen</string>
     <string name="a11y_action_swipe_left_app">Open swipe-left app: %1$s</string>
     <string name="a11y_action_swipe_right_app">Open swipe-right app: %1$s</string>
+    <string name="gesture_double_tap" tools:ignore="MissingTranslation">Double tap</string>
+    <string name="gesture_clock_tap" tools:ignore="MissingTranslation">Clock tap</string>
+    <string name="gesture_date_tap" tools:ignore="MissingTranslation">Date tap</string>
+    <string name="gesture_action_default" tools:ignore="MissingTranslation">Default</string>
+    <string name="gesture_action_lock" tools:ignore="MissingTranslation">Lock screen</string>
+    <string name="gesture_action_torch" tools:ignore="MissingTranslation">Torch</string>
+    <string name="gesture_action_next_track" tools:ignore="MissingTranslation">Next track</string>
+    <string name="gesture_action_previous_track" tools:ignore="MissingTranslation">Previous track</string>
+    <string name="gesture_action_open_app" tools:ignore="MissingTranslation">Open app</string>
+    <string name="gesture_action_nothing" tools:ignore="MissingTranslation">Nothing</string>
+    <string name="gesture_no_torch" tools:ignore="MissingTranslation">No torch on this phone</string>
     <string name="a11y_word_capture_sheet">Save a word</string>
     <string name="timer_no_clock_app" tools:ignore="MissingTranslation">No clock app to start the timer</string>
     <string name="alarm_no_clock_app" tools:ignore="MissingTranslation">No clock app to set the alarm</string>

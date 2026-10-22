@@ -26,8 +26,8 @@ class SettingsCatalogTest {
     fun `every setting of the old layout is present in its section`() {
         val actual = SettingsSections.all.associate { it.key to SettingsCatalog.rowsFor(it.key).map { row -> row.key } }
         assertEquals(INVENTORY, actual)
-        assertEquals(84, SettingsCatalog.rows.size)
-        assertEquals(83, SettingsCatalog.rows.count { it.searchable })
+        assertEquals(87, SettingsCatalog.rows.size)
+        assertEquals(86, SettingsCatalog.rows.count { it.searchable })
     }
 
     @Test
@@ -363,6 +363,9 @@ class SettingsCatalogTest {
             "swipeLeftApp",
             "swipeRightApp",
             "toggleLock",
+            "doubleTapAction",
+            "clockTapAction",
+            "dateTapAction",
         ),
         SettingsSections.KEY_BACKUP to listOf(
             "exportBackup",
