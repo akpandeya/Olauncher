@@ -144,6 +144,24 @@
     </style>
 
     <!-- Alert dialogs: the window only; content comes from layout/dialog_base.xml -->
+    <!-- App long-press popup card (showAppActionPopup) -->
+    <style name="PopupCardHeading" parent="TextSmallLight">
+        <item name="android:fontFamily">?attr/mainFontFamily</item>
+        <item name="android:textSize">@dimen/text_caption</item>
+        <item name="android:textColor">?attr/inkMuted</item>
+        <item name="android:shadowRadius">0</item>
+    </style>
+
+    <style name="PopupCardRow" parent="TextSmall">
+        <item name="android:fontFamily">?attr/mainFontFamily</item>
+        <item name="android:shadowRadius">0</item>
+    </style>
+
+    <style name="PopupCardAnimation" parent="android:Animation">
+        <item name="android:windowEnterAnimation">@anim/popup_card_enter</item>
+        <item name="android:windowExitAnimation">@anim/popup_card_exit</item>
+    </style>
+
     <style name="OlAlertDialog" parent="ThemeOverlay.AppCompat.Dialog.Alert">
         <item name="android:windowBackground">@drawable/bg_dialog</item>
         <item name="android:backgroundDimAmount">0.5</item>
@@ -163,6 +181,7 @@
     <style name="NoAnimationOverlay">
         <item name="popupMenuStyle">@style/OlPopupMenu.NoAnimation</item>
         <item name="alertDialogTheme">@style/OlAlertDialog.NoAnimation</item>
+        <item name="popupCardAnimationStyle">@style/NoWindowAnimation</item>
     </style>
 
     <style name="NoWindowAnimation" parent="android:Animation">

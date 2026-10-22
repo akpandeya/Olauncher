@@ -84,4 +84,39 @@ class PopupPlacementTest {
         // Neither side fits; below is larger, so it stays below but is lifted to end at visibleBottom.
         assertEquals(110, PopupPlacement.menuTop(100, 160, visibleTop = 0, visibleBottom = 710, menuHeight = 600))
     }
+
+    @Test
+    fun fitHeightKeepsMeasuredHeightWhenItFits() {
+        assertEquals(640, PopupPlacement.fitHeight(contentHeight = 640, visibleTop = 0, visibleBottom = 1130))
+    }
+
+    @Test
+    fun fitHeightCapsTallCardToVisibleArea() {
+        // Large font: the card scrolls instead of running under the keyboard.
+        assertEquals(1055, PopupPlacement.fitHeight(contentHeight = 1500, visibleTop = 75, visibleBottom = 1130))
+        assertEquals(0, PopupPlacement.fitHeight(contentHeight = 300, visibleTop = 500, visibleBottom = 400))
+    }
+
+    @Test
+    fun menuLeftAlignsEndEdgeWithAnchorInLeftToRight() {
+        assertEquals(530, PopupPlacement.menuLeft(anchorLeft = 100, anchorRight = 1030, menuWidth = 500, screenWidth = 1080, margin = 24, isRtl = false))
+    }
+
+    @Test
+    fun menuLeftAlignsWithAnchorStartInRightToLeft() {
+        assertEquals(130, PopupPlacement.menuLeft(anchorLeft = 130, anchorRight = 1030, menuWidth = 500, screenWidth = 1080, margin = 24, isRtl = true))
+    }
+
+    @Test
+    fun menuLeftStaysInsideScreenMargins() {
+        // Narrow anchor near the left edge: pushed right to the margin.
+        assertEquals(24, PopupPlacement.menuLeft(anchorLeft = 0, anchorRight = 200, menuWidth = 500, screenWidth = 1080, margin = 24, isRtl = false))
+        // RTL anchor near the right edge: pulled left so the end stays inside the margin.
+        assertEquals(556, PopupPlacement.menuLeft(anchorLeft = 900, anchorRight = 1080, menuWidth = 500, screenWidth = 1080, margin = 24, isRtl = true))
+    }
+
+    @Test
+    fun menuLeftCentresCardWiderThanTheMarginsAllow() {
+        assertEquals(10, PopupPlacement.menuLeft(anchorLeft = 0, anchorRight = 300, menuWidth = 1060, screenWidth = 1080, margin = 24, isRtl = false))
+    }
 }

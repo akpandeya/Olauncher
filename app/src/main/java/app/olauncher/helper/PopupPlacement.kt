@@ -41,4 +41,18 @@ object PopupPlacement {
         }
         return clampTop(top, menuHeight, visibleTop, visibleBottom)
     }
+
+    /** Height the menu window gets: its measured [contentHeight], but never taller than the visible area (it scrolls then). */
+    fun fitHeight(contentHeight: Int, visibleTop: Int, visibleBottom: Int): Int =
+        minOf(contentHeight, maxOf(0, visibleBottom - visibleTop))
+
+    /**
+     * Left edge of a menu of [menuWidth]: its end edge lines up with the anchor's end edge
+     * (right in left-to-right, left in right-to-left), kept [margin] inside a screen of [screenWidth].
+     */
+    fun menuLeft(anchorLeft: Int, anchorRight: Int, menuWidth: Int, screenWidth: Int, margin: Int, isRtl: Boolean): Int {
+        val left = if (isRtl) anchorLeft else anchorRight - menuWidth
+        val maxLeft = screenWidth - margin - menuWidth
+        return if (maxLeft < margin) maxOf(0, (screenWidth - menuWidth) / 2) else left.coerceIn(margin, maxLeft)
+    }
 }

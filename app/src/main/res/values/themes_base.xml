@@ -54,6 +54,7 @@
         <item name="inkMuted">@color/inkMuted</item>
         <item name="surface">@color/surface</item>
         <item name="scrim">@color/scrim</item>
+        <item name="dangerColor">@color/danger</item>
 
         <item name="mainFontFamily">sans-serif-light</item>
         <item name="displayFontFamily">sans-serif-black</item>
@@ -65,6 +66,7 @@
         <item name="textAppearanceLargePopupMenu">@style/OlPopupMenuText</item>
         <item name="textAppearanceSmallPopupMenu">@style/OlPopupMenuText</item>
         <item name="alertDialogTheme">@style/OlAlertDialog</item>
+        <item name="popupCardAnimationStyle">@style/PopupCardAnimation</item>
 
     </style>
 
