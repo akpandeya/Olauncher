@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- App long-press popup: app name heading, a hairline, then one row per action (added in code) -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/popupScroll"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:overScrollMode="never"
+    android:scrollbars="none">
+
+    <LinearLayout
+        android:id="@+id/popupItems"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:minWidth="@dimen/popup_card_min_width"
+        android:orientation="vertical"
+        android:paddingTop="@dimen/popup_card_padding_vertical"
+        android:paddingBottom="@dimen/popup_card_padding_vertical">
+
+        <TextView
+            android:id="@+id/tvPopupTitle"
+            style="@style/PopupCardHeading"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:accessibilityHeading="true"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:paddingStart="@dimen/popup_card_padding_horizontal"
+            android:paddingTop="8dp"
+            android:paddingEnd="@dimen/popup_card_padding_horizontal"
+            android:paddingBottom="10dp"
+            tools:text="@string/app_name" />
+
+        <View
+            android:id="@+id/popupDivider"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/strokeHairline"
+            android:layout_marginStart="@dimen/popup_card_padding_horizontal"
+            android:layout_marginEnd="@dimen/popup_card_padding_horizontal"
+            android:layout_marginBottom="4dp"
+            android:background="?attr/primaryColorTrans50"
+            android:importantForAccessibility="no" />
+
+    </LinearLayout>
+
+</ScrollView>

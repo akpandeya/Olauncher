@@ -56,5 +56,7 @@
     <color name="accentSand">@color/accentSandLight</color>
     <color name="accentSky">@color/accentSkyLight</color>
     <color name="accentRose">@color/accentRoseLight</color>
+    <!--Destructive action text (hide, delete, reset)-->
+    <color name="danger">@color/accentRoseLight</color>
 
 </resources>
