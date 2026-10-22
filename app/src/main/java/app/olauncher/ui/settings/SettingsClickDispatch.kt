@@ -122,6 +122,7 @@ private fun SettingsFragment.handleHomeAndShortcutsClick(view: View): Boolean {
         R.id.morningStart, R.id.morningStartTitle, R.id.morningStartLayout -> showHomeSetStartPicker(HomeSet.MORNING, R.string.morning_starts)
         R.id.dayStart, R.id.dayStartTitle, R.id.dayStartLayout -> showHomeSetStartPicker(HomeSet.DAY, R.string.day_starts)
         R.id.eveningStart, R.id.eveningStartTitle, R.id.eveningStartLayout -> showHomeSetStartPicker(HomeSet.EVENING, R.string.evening_starts)
+        R.id.profileSchedule, R.id.profileScheduleTitle, R.id.profileScheduleLayout -> showProfileScheduleDialog()
         R.id.contextLineValue, R.id.contextLineTitle, R.id.contextLineLayout -> tickOnChange(view) { toggleContextLine() }
         R.id.homeNextEventValue, R.id.homeNextEventTitle, R.id.homeNextEventLayout -> tickOnChange(view) { toggleHomeNextEvent() }
         R.id.homeNotesValue, R.id.homeNotesTitle, R.id.homeNotesLayout -> tickOnChange(view) { toggleHomeNotes() }
