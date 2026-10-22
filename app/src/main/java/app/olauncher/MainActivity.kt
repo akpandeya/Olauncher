@@ -129,7 +129,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun attachBaseContext(context: Context) {
         val newConfig = Configuration(context.resources.configuration)
-        newConfig.fontScale = Prefs(context).textSizeScale
+        newConfig.fontScale = app.olauncher.helper.effectiveFontScale(newConfig.fontScale, Prefs(context).textSizeScale)
         applyOverrideConfiguration(newConfig)
         super.attachBaseContext(context)
     }
