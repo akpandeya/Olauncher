@@ -528,7 +528,7 @@ class AppDrawerAdapter(
                     )
                     appTitle.showAppActionPopup(appModel.appLabel, actions) { action ->
                         when (action.id) {
-                            AppAction.Id.CHANGE_APP -> {} // home-only
+                            AppAction.Id.CHANGE_APP, AppAction.Id.CHOOSE_BUILTIN, AppAction.Id.RESET_SHORTCUT -> {} // home-only
                             AppAction.Id.ADD_TO_HOME -> appAddToHomeListener?.invoke(appModel)
                             AppAction.Id.RENAME -> showRenameEdit()
                             AppAction.Id.HIDE -> appHideListener(appModel, bindingAdapterPosition)

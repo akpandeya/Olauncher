@@ -35,7 +35,7 @@ internal fun HomeFragment.showHomeAppPopup(anchor: View, slot: Int) {
         val user = getUserHandleFromString(context, userString)
         when (action.id) {
             AppAction.Id.CHANGE_APP -> showAppList(flag, false, true)
-            AppAction.Id.ADD_TO_HOME -> {}
+            AppAction.Id.ADD_TO_HOME, AppAction.Id.CHOOSE_BUILTIN, AppAction.Id.RESET_SHORTCUT -> {}
             AppAction.Id.RENAME -> showAppList(flag, true, true)
             AppAction.Id.HIDE -> {
                 prefs.hiddenApps = prefs.hiddenApps.toMutableSet().apply {
