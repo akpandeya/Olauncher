@@ -293,6 +293,12 @@ object SettingsCatalog {
         primaryId = R.id.swipeRightApp, layoutId = R.id.swipeRightLayout, valueId = R.id.swipeRightApp),
     row(key = "toggleLock", sectionKey = SettingsSections.KEY_GESTURES, titleRes = R.string.double_tap_to_lock_screen, type = SettingsRowType.TOGGLE,
         primaryId = R.id.toggleLock, valueId = R.id.toggleLock),
+    row(key = "doubleTapAction", sectionKey = SettingsSections.KEY_GESTURES, titleRes = R.string.gesture_double_tap, type = SettingsRowType.CHOICE,
+        primaryId = R.id.doubleTapAction, valueId = R.id.doubleTapAction),
+    row(key = "clockTapAction", sectionKey = SettingsSections.KEY_GESTURES, titleRes = R.string.gesture_clock_tap, type = SettingsRowType.CHOICE,
+        primaryId = R.id.clockTapAction, valueId = R.id.clockTapAction),
+    row(key = "dateTapAction", sectionKey = SettingsSections.KEY_GESTURES, titleRes = R.string.gesture_date_tap, type = SettingsRowType.CHOICE,
+        primaryId = R.id.dateTapAction, valueId = R.id.dateTapAction),
     )
 
     private val backup: List<SettingsItem> = listOf(

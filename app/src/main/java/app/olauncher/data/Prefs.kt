@@ -38,6 +38,7 @@ class Prefs(context: Context) :
     WallpaperPrefs by WallpaperPrefsStore(context.appPrefs()),
     DrawerPrefs by DrawerPrefsStore(context.appPrefs()),
     ProfilePrefs by ProfilePrefsStore(context.appPrefs()),
+    GesturePrefs by GesturePrefsStore(context.appPrefs()),
     OnboardingPrefs by OnboardingPrefsStore(context.appPrefs()) {
     companion object {
         const val AUTO_BACKUP_ENABLED = "AUTO_BACKUP_ENABLED"

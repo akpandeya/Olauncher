@@ -150,7 +150,7 @@ class AppDrawerFragment : BaseFragment() {
     private fun initViews() {
         if (flag == Constants.FLAG_HIDDEN_APPS)
             binding.search.queryHint = getString(R.string.hidden_apps)
-        else if (flag in Constants.FLAG_SET_HOME_APP_1..Constants.FLAG_SET_WEATHER_APP
+        else if (flag in Constants.FLAG_SET_HOME_APP_1..Constants.FLAG_SET_GESTURE_APP_DATE_TAP
             || flag in Constants.FLAG_SET_SHORTCUT_1..Constants.FLAG_SET_SHORTCUT_12
             || HomeSets.fromFlag(flag) != null)
             binding.search.queryHint = "Please select an app"

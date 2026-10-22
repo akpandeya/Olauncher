@@ -88,6 +88,9 @@ object Constants {
     const val FLAG_SET_CALENDAR_APP = 14
     const val FLAG_SET_SCREEN_TIME_APP = 15
     const val FLAG_SET_WEATHER_APP = 16
+    const val FLAG_SET_GESTURE_APP_DOUBLE_TAP = 17
+    const val FLAG_SET_GESTURE_APP_CLOCK_TAP = 18
+    const val FLAG_SET_GESTURE_APP_DATE_TAP = 19
 
     const val FLAG_SET_SHORTCUT_1 = 21
     const val FLAG_SET_SHORTCUT_6 = 26

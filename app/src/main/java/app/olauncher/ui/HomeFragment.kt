@@ -39,6 +39,7 @@ import app.olauncher.helper.HomeSet
 import app.olauncher.helper.HomeSets
 import app.olauncher.data.ShortcutOffset
 import app.olauncher.data.ShortcutSize
+import app.olauncher.helper.GestureSlot
 import app.olauncher.helper.HomeDateText
 import app.olauncher.helper.HomeFit
 import app.olauncher.helper.PosterClock
@@ -220,8 +221,8 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             R.id.lock -> Haptics.confirm(view)
             // Home button for recents feature disabled
             // R.id.recents -> {}
-            R.id.clock, R.id.clockWords -> openClockApp()
-            R.id.date -> if (prefs.homeInfoCombined) openToday() else openCalendarApp()
+            R.id.clock, R.id.clockWords -> runGesture(GestureSlot.CLOCK_TAP) { openClockApp() }
+            R.id.date -> runGesture(GestureSlot.DATE_TAP) { if (prefs.homeInfoCombined) openToday() else openCalendarApp() }
             R.id.weather -> openWeatherApp()
             R.id.contextLine -> openContextItem()
             R.id.nextEventLine -> openNextEvent()

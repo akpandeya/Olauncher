@@ -17,7 +17,13 @@ import app.olauncher.R
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
 import app.olauncher.helper.Gesture
+import app.olauncher.helper.GestureAction
+import app.olauncher.helper.GestureActions
 import app.olauncher.helper.GestureHints
+import app.olauncher.helper.GestureSlot
+import app.olauncher.helper.MediaKeys
+import app.olauncher.helper.Torch
+import app.olauncher.helper.showToast
 import app.olauncher.helper.Haptics
 import app.olauncher.helper.expandNotificationDrawer
 import app.olauncher.helper.openCameraApp
@@ -36,7 +42,7 @@ internal fun HomeFragment.showGestureHint() {
     val enabled = buildSet {
         if (prefs.swipeRightEnabled && prefs.swipeRightAction == Prefs.SWIPE_RIGHT_ACTION_TODAY) add(Gesture.SWIPE_RIGHT)
         if (prefs.swipeLeftEnabled) add(Gesture.SWIPE_LEFT)
-        if (prefs.lockModeOn) add(Gesture.DOUBLE_TAP)
+        if (resolvedGesture(GestureSlot.DOUBLE_TAP) == GestureAction.LOCK) add(Gesture.DOUBLE_TAP)
         add(Gesture.LONG_PRESS)
         add(Gesture.SWIPE_UP)
         add(Gesture.SWIPE_DOWN)
@@ -67,8 +73,34 @@ internal fun HomeFragment.showGestureHint() {
     binding.firstRunTips.visibility = View.VISIBLE
 }
 
+/** What a gesture does right now, from the saved choice and the lock mode. */
+internal fun HomeFragment.resolvedGesture(slot: GestureSlot): GestureAction = GestureActions.resolve(
+    slot = slot,
+    stored = prefs.gestureAction(slot),
+    lockModeOn = prefs.lockModeOn,
+    hasApp = prefs.gestureApp(slot) != null,
+)
+
+/** Runs the chosen action of a gesture. [default] is the built-in behaviour for clock and date taps. */
+internal fun HomeFragment.runGesture(slot: GestureSlot, default: () -> Unit) {
+    val context = requireContext()
+    when (resolvedGesture(slot)) {
+        GestureAction.DEFAULT -> default()
+        GestureAction.LOCK -> binding.lock.performClick()
+        GestureAction.TORCH -> if (!Torch.toggle(context)) context.showToast(R.string.gesture_no_torch)
+        GestureAction.NEXT_TRACK -> MediaKeys.next(context)
+        GestureAction.PREVIOUS_TRACK -> MediaKeys.previous(context)
+        GestureAction.OPEN_APP -> prefs.gestureApp(slot)?.let {
+            launchApp(it.label, it.packageName, it.className, it.user)
+        }
+        GestureAction.NOTHING -> {}
+    }
+}
+
 internal fun HomeFragment.initSwipeTouchListener() {
     val context = requireContext()
+    // Follow the torch state, so the first torch tap flips the real state.
+    if (GestureSlot.values().any { prefs.gestureAction(it) == GestureAction.TORCH }) Torch.watch(context)
     binding.mainLayout.setOnTouchListener(getSwipeGestureListener(context))
     binding.homeApp1.setOnTouchListener(getViewSwipeTouchListener(context, binding.homeApp1))
     binding.homeApp2.setOnTouchListener(getViewSwipeTouchListener(context, binding.homeApp2))
@@ -252,8 +284,7 @@ internal fun HomeFragment.getSwipeGestureListener(context: Context): View.OnTouc
 
         override fun onDoubleClick() {
             super.onDoubleClick()
-            if (!prefs.lockModeOn) return
-            binding.lock.performClick()
+            runGesture(GestureSlot.DOUBLE_TAP) {}
         }
 
         override fun onClick() {

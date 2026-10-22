@@ -18,7 +18,7 @@ object ArchivedAppsHelper {
     }
 
     fun isPickerFlag(flag: Int): Boolean =
-        flag in Constants.FLAG_SET_HOME_APP_1..Constants.FLAG_SET_WEATHER_APP
+        flag in Constants.FLAG_SET_HOME_APP_1..Constants.FLAG_SET_GESTURE_APP_DATE_TAP
             || flag in Constants.FLAG_SET_SHORTCUT_1..Constants.FLAG_SET_SHORTCUT_12
             || HomeSets.fromFlag(flag) != null
 

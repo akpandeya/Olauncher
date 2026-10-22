@@ -288,6 +288,7 @@ internal fun SettingsFragment.populateLockSettings() {
 }
 
 internal fun SettingsFragment.populateSwipeApps() {
+    populateGestureActions()
     binding.swipeLeftApp.text = prefs.appNameSwipeLeft
     binding.swipeRightApp.text = if (prefs.swipeRightAction == Prefs.SWIPE_RIGHT_ACTION_TODAY) {
         getString(R.string.today_page)

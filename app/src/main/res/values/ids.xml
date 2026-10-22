@@ -209,6 +209,9 @@
     <item name="statusBar" type="id" />
     <item name="swapSides" type="id" />
     <item name="swapSidesLayout" type="id" />
+    <item name="doubleTapAction" type="id" />
+    <item name="clockTapAction" type="id" />
+    <item name="dateTapAction" type="id" />
     <item name="swipeLeftApp" type="id" />
     <item name="swipeRightApp" type="id" />
     <item name="swipeRightLayout" type="id" />
