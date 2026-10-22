@@ -64,6 +64,8 @@ sealed class AppModel : Comparable<AppModel> {
             data class AddEvent(val title: String, val place: String, val beginMillis: Long, val endMillis: Long, val allDay: Boolean) : Action
             /** Unreadable command input (`Can't read '…'`). Tap and Enter do nothing. */
             data object Error : Action
+            /** Tap saves an open note (`:n`). */
+            data class SaveNote(val text: String) : Action
             /** [openOnTap] false: tap does nothing, long-press still opens the page. */
             data class OpenWiktionary(val text: String, val openOnTap: Boolean = true) : Action
         }

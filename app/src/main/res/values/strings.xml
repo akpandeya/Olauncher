@@ -523,6 +523,13 @@
     <string name="a11y_word_capture_sheet">Save a word</string>
     <string name="timer_no_clock_app" tools:ignore="MissingTranslation">No clock app to start the timer</string>
     <string name="alarm_no_clock_app" tools:ignore="MissingTranslation">No clock app to set the alarm</string>
+    <string name="note_row" tools:ignore="MissingTranslation">Save note: %1$s</string>
+    <string name="note_saved" tools:ignore="MissingTranslation">Note saved</string>
+    <string name="note_home_line" tools:ignore="MissingTranslation">→ %1$s</string>
+    <string name="note_marked_done" tools:ignore="MissingTranslation">Note done</string>
+    <string name="notes_title" tools:ignore="MissingTranslation">Open notes</string>
+    <string name="note_delete" tools:ignore="MissingTranslation">Delete</string>
+    <string name="home_notes" tools:ignore="MissingTranslation">Notes on home</string>
     <string name="event_no_calendar_app" tools:ignore="MissingTranslation">No calendar app to add the event</string>
     <string name="command_help_timer" tools:ignore="MissingTranslation">Timer: :t 10 tea</string>
     <string name="command_help_alarm" tools:ignore="MissingTranslation">Alarm: :a 7:30 wake up</string>

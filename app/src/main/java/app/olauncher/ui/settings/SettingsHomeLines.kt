@@ -339,6 +339,15 @@ internal fun SettingsFragment.toggleHomeNextEvent() {
     }
 }
 
+internal fun SettingsFragment.toggleHomeNotes() {
+    prefs.homeNotes = !prefs.homeNotes
+    populateHomeNotes()
+}
+
+internal fun SettingsFragment.populateHomeNotes() {
+    binding.homeNotesValue.text = getString(if (prefs.homeNotes) R.string.on else R.string.off)
+}
+
 internal fun SettingsFragment.populateHomeNextEvent() {
     binding.homeNextEventValue.text = getString(if (prefs.homeNextEvent) R.string.on else R.string.off)
 }

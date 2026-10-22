@@ -25,6 +25,11 @@ interface HomeLookPrefs {
 
     var homeNextEvent: Boolean
 
+    var homeNotes: Boolean
+
+    /** Notes from `:n` as JSON (see Notes). */
+    var notesJson: String
+
     var intentionText: String
 
     var intentionDay: Long
@@ -82,6 +87,8 @@ internal class HomeLookPrefsStore(private val prefs: SharedPreferences) : HomeLo
     private val HOME_INFO_COMBINED = "HOME_INFO_COMBINED"
     private val HOME_CONTEXT_LINE = "HOME_CONTEXT_LINE"
     private val HOME_NEXT_EVENT = "HOME_NEXT_EVENT"
+    private val HOME_NOTES = "HOME_NOTES"
+    private val NOTES_JSON = "NOTES_JSON"
     private val INTENTION_TEXT = "INTENTION_TEXT"
     private val INTENTION_DAY = "INTENTION_DAY"
     private val INTENTION_ON_HOME = "INTENTION_ON_HOME"
@@ -121,6 +128,14 @@ internal class HomeLookPrefsStore(private val prefs: SharedPreferences) : HomeLo
     override var homeNextEvent: Boolean
         get() = prefs.getBoolean(HOME_NEXT_EVENT, true)
         set(value) = prefs.edit { putBoolean(HOME_NEXT_EVENT, value).apply() }
+
+    override var homeNotes: Boolean
+        get() = prefs.getBoolean(HOME_NOTES, true)
+        set(value) = prefs.edit { putBoolean(HOME_NOTES, value).apply() }
+
+    override var notesJson: String
+        get() = prefs.getString(NOTES_JSON, "").orEmpty()
+        set(value) = prefs.edit { putString(NOTES_JSON, value).apply() }
 
     override var intentionText: String
         get() = prefs.getString(INTENTION_TEXT, "").orEmpty()
