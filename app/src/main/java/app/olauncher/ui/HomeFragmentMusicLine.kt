@@ -19,6 +19,7 @@ import app.olauncher.helper.ContextLine
 import app.olauncher.helper.MediaInfo
 import app.olauncher.helper.MusicPulse
 import app.olauncher.helper.NowPlaying
+import app.olauncher.helper.SpokenTime
 import app.olauncher.helper.showToast
 import kotlinx.coroutines.launch
 import java.time.Instant
@@ -153,6 +154,12 @@ internal fun HomeFragment.updateMusicPulse(media: MediaInfo?) {
             MusicPulse.progressLineColor(colors, binding.contextLine.currentTextColor)
         )
         binding.mediaProgress.setProgress(fraction)
+        val spokenPosition = MusicPulse.positionMs(
+            media.positionMs, media.positionAtMs, SystemClock.elapsedRealtime(), media.speed, media.playing, media.durationMs,
+        )
+        binding.mediaProgress.contentDescription = getString(
+            R.string.music_progress_description, SpokenTime.format(spokenPosition), SpokenTime.format(media.durationMs),
+        )
     }
     binding.mediaProgress.setRunning(fraction != null && homeVisible && media.playing)
     // Re-check every second so the progress line keeps moving while the song plays; paused needs no tick.
