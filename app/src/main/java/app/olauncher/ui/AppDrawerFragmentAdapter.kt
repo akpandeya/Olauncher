@@ -83,6 +83,9 @@ internal fun AppDrawerFragment.initAdapter() {
                         is AppModel.Result.Action.LookUpWord ->
                             binding.search.setQuery(":w ${action.text}", false)
 
+                        is AppModel.Result.Action.FillQuery ->
+                            binding.search.setQuery(action.query, false)
+
                         is AppModel.Result.Action.OpenWiktionary -> {
                             if (action.openOnTap) {
                                 openWiktionary(action.text)

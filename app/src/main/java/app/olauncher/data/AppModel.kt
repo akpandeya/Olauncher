@@ -54,6 +54,8 @@ sealed class AppModel : Comparable<AppModel> {
             data class SaveWords(val items: List<String>, val meaning: String = "") : Action
             /** Tap re-runs the `:w` lookup for [text]. */
             data class LookUpWord(val text: String) : Action
+            /** Tap puts [query] into the search box (command help rows). */
+            data class FillQuery(val query: String) : Action
             /** [openOnTap] false: tap does nothing, long-press still opens the page. */
             data class OpenWiktionary(val text: String, val openOnTap: Boolean = true) : Action
         }

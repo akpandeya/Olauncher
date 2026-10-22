@@ -52,6 +52,7 @@ class DrawerSearchTest {
         hiddenApps = { hidden },
         recentCaption = "Zuletzt",
         callRowText = { "Anruf $it" },
+        commandHelpRowText = { "help $it" },
         saveWordRowText = { "Wort: $it" },
         saveWordsRowText = { n, shown -> "$n Wörter: $shown" },
         contactSource = contacts,
@@ -61,6 +62,16 @@ class DrawerSearchTest {
         lookUpRows = { emptyList() },
         userKey = { "u0" },
     )
+
+    @Test
+    fun `colon alone shows only enabled command rows that fill the query`() {
+        val off = DrawerSearch.run(input(":", german = false)).items.filterIsInstance<AppModel.Result>()
+        assertEquals(listOf("help t", "help a", "help e", "help n"), off.map { it.text })
+        assertEquals(AppModel.Result.Action.FillQuery(":t "), off[0].action)
+        val on = DrawerSearch.run(input(":", german = true)).items.filterIsInstance<AppModel.Result>()
+        assertEquals(listOf("help t", "help a", "help e", "help n", "help sw", "help w"), on.map { it.text })
+        assertEquals(AppModel.Result.Action.FillQuery(":sw "), on[4].action)
+    }
 
     @Test
     fun `prefix match scores above word start match`() {
