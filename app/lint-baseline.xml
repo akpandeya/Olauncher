@@ -5231,8 +5231,8 @@
         errorLine1="                                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(action.lookupUri)))"
         errorLine2="                                                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
         <location
-            file="src/main/java/app/olauncher/ui/AppDrawerFragment.kt"
-            line="637"
+            file="src/main/java/app/olauncher/ui/AppDrawerFragmentAdapter.kt"
+            line="71"
             column="78"/>
     </issue>
 
