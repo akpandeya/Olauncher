@@ -256,6 +256,12 @@
     <string name="onboarding_feature_turn_on" tools:ignore="MissingTranslation">Turn on: %s</string>
     <string name="onboarding_feature_is_on" tools:ignore="MissingTranslation">%s is on</string>
     <string name="onboarding_wellbeing_label" tools:ignore="MissingTranslation">Wellbeing: water reminders</string>
+    <string name="onboarding_profile_message" tools:ignore="MissingTranslation">Pick a starting profile, or keep things as they are. A profile sets home, pause, wellbeing and drawer options in one go. It never changes your wallpaper, theme, font, hidden apps or renamed apps. You can switch later in Settings.</string>
+    <string name="onboarding_profile_bare" tools:ignore="MissingTranslation">Bare: a quiet home with four apps and a clock, nothing else.</string>
+    <string name="onboarding_profile_focus" tools:ignore="MissingTranslation">Focus: five apps, a short pause before apps, quiet notifications and wind-down.</string>
+    <string name="onboarding_profile_rich" tools:ignore="MissingTranslation">Rich: seven apps, weather, music glow, shortcuts and every Today card.</string>
+    <string name="onboarding_profile_keep" tools:ignore="MissingTranslation">Keep defaults: change nothing.</string>
+    <string name="onboarding_profile_selected" tools:ignore="MissingTranslation">Selected: %s</string>
     <string name="onboarding_next" tools:ignore="MissingTranslation">Next</string>
     <string name="pause_open">Open</string>
     <string name="pause_open_countdown">Open (%d)</string>

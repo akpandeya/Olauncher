@@ -14,6 +14,7 @@ class OnboardingTest {
             listOf(
                 OnboardingStep.SET_DEFAULT_LAUNCHER,
                 OnboardingStep.PICK_HOME_APPS,
+                OnboardingStep.PICK_PROFILE,
                 OnboardingStep.OPTIONAL_FEATURES,
             ),
             OnboardingStep.values().toList(),
@@ -32,7 +33,8 @@ class OnboardingTest {
     @Test
     fun nextStepAfterFollowsOrder() {
         assertEquals(OnboardingStep.PICK_HOME_APPS, Onboarding.nextStepAfter(OnboardingStep.SET_DEFAULT_LAUNCHER))
-        assertEquals(OnboardingStep.OPTIONAL_FEATURES, Onboarding.nextStepAfter(OnboardingStep.PICK_HOME_APPS))
+        assertEquals(OnboardingStep.PICK_PROFILE, Onboarding.nextStepAfter(OnboardingStep.PICK_HOME_APPS))
+        assertEquals(OnboardingStep.OPTIONAL_FEATURES, Onboarding.nextStepAfter(OnboardingStep.PICK_PROFILE))
     }
 
     @Test
@@ -45,6 +47,8 @@ class OnboardingTest {
         var state = Onboarding.initialState()
         state = Onboarding.advancedFrom(state)
         assertEquals(OnboardingStep.PICK_HOME_APPS, state.currentStep)
+        state = Onboarding.advancedFrom(state)
+        assertEquals(OnboardingStep.PICK_PROFILE, state.currentStep)
         state = Onboarding.advancedFrom(state)
         assertEquals(OnboardingStep.OPTIONAL_FEATURES, state.currentStep)
         assertFalse(state.isComplete)
