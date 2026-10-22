@@ -101,64 +101,70 @@ class TypeScaleResourceTest {
         )
     }
 
+    private val textTokens = listOf(
+        "text_display", "text_large", "text_body", "text_small", "text_weather",
+        "text_drawer_action", "text_subtitle", "text_caption", "time_size", "date_size",
+    )
+
     @Test
-    fun `default dimens and all qualifier dimens define the four text size dimens`() {
+    fun `text tokens are defined once in default dimens and never in density folders`() {
         val resDir = resolveDir("src/main/res")
-        val dimenDirs = listOf(
-            "values",
-            "values-ldpi",
-            "values-mdpi",
-            "values-hdpi",
-            "values-xhdpi",
-            "values-xxhdpi",
-            "values-xxxhdpi",
-        )
-
-        for (dirName in dimenDirs) {
-            val dimensFile = File(resDir, "$dirName/dimens.xml")
-            assertTrue("Expected $dimensFile to exist", dimensFile.exists())
+        val defaults = parseDimens(File(resDir, "values/dimens.xml"))
+        for (token in textTokens) {
+            assertTrue("values must contain $token", defaults.containsKey(token))
+        }
+        val densityDirs = resDir.listFiles { f -> f.isDirectory && f.name.matches(Regex("values-[a-z]*dpi")) }
+            ?: emptyArray()
+        for (dir in densityDirs) {
+            val dimensFile = File(dir, "dimens.xml")
+            if (!dimensFile.exists()) continue
             val dimens = parseDimens(dimensFile)
-
-            assertTrue("$dirName must contain text_display", dimens.containsKey("text_display"))
-            assertTrue("$dirName must contain text_large", dimens.containsKey("text_large"))
-            assertTrue("$dirName must contain text_body", dimens.containsKey("text_body"))
-            assertTrue("$dirName must contain text_small", dimens.containsKey("text_small"))
+            for (token in textTokens) {
+                assertFalse("${dir.name} must not override $token", dimens.containsKey(token))
+            }
         }
     }
 
     @Test
-    fun `visual result on xxhdpi phone is within plus-minus 2sp of baseline`() {
+    fun `no text token is below 14sp in any width folder`() {
         val resDir = resolveDir("src/main/res")
-        val xxhdpiDimens = parseDimens(File(resDir, "values-xxhdpi/dimens.xml"))
+        val widthDirs = resDir.listFiles { f -> f.isDirectory && f.name.matches(Regex("values-sw[0-9]+dp")) }
+            ?: emptyArray()
+        val files = listOf(File(resDir, "values/dimens.xml")) + widthDirs.map { File(it, "dimens.xml") }
+        for (file in files) {
+            val dimens = parseDimens(file)
+            for (token in textTokens) {
+                val value = dimens[token] ?: continue
+                assertTrue("$token in ${file.parentFile.name} must be sp, was $value", value.endsWith("sp"))
+                assertTrue(
+                    "$token in ${file.parentFile.name} is below 14sp: $value",
+                    value.removeSuffix("sp").toFloat() >= 14f
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `typical phone width keeps the original sizes`() {
+        val resDir = resolveDir("src/main/res")
+        val dimens = parseDimens(File(resDir, "values/dimens.xml")) +
+            parseDimens(File(resDir, "values-sw360dp/dimens.xml"))
 
         fun spValue(key: String): Int {
-            val str = xxhdpiDimens[key] ?: error("Missing $key in values-xxhdpi/dimens.xml")
+            val str = dimens[key] ?: error("Missing $key")
             assertTrue("Expected $key to end with sp, was $str", str.endsWith("sp"))
             return str.removeSuffix("sp").toInt()
         }
 
-        // Four scale dimens on xxhdpi
-        val display = spValue("text_display")
-        val large = spValue("text_large")
-        val body = spValue("text_body")
-        val small = spValue("text_small")
-
-        // Today hero stays exactly 40sp (diff 0)
-        assertEquals(40, display)
-        // text_large exists at 30sp (diff 0)
-        assertEquals(30, large)
-        // text_body was hardcoded 20sp in TextMedium (diff 0)
-        assertEquals(20, body)
-        // text_small exists at 18sp (diff 0)
-        assertEquals(18, small)
-
-        // Named dimens for text keeping today's values
-        // Home clock raised to a poster size (design/home-poster-clock); PosterClock shrinks it to fit "23:59"
+        assertEquals(40, spValue("text_display"))
+        assertEquals(30, spValue("text_large"))
+        assertEquals(20, spValue("text_body"))
+        assertEquals(18, spValue("text_small"))
         assertEquals(150, spValue("time_size"))
         assertEquals(18, spValue("date_size"))
         assertEquals(48, spValue("text_weather"))
-        assertEquals(12, spValue("text_drawer_action"))
-        assertEquals(12, spValue("text_subtitle"))
+        assertEquals(14, spValue("text_drawer_action"))
+        assertEquals(14, spValue("text_subtitle"))
     }
 
     @Test
