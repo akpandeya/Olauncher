@@ -38,6 +38,13 @@ internal fun HomeFragment.showGestureHint() {
         if (prefs.swipeLeftEnabled) add(Gesture.SWIPE_LEFT)
         if (prefs.lockModeOn) add(Gesture.DOUBLE_TAP)
         add(Gesture.LONG_PRESS)
+        add(Gesture.SWIPE_UP)
+        add(Gesture.SWIPE_DOWN)
+        // The music and event lines live in the context line.
+        if (prefs.homeContextLine) {
+            add(Gesture.TAP_MUSIC)
+            add(Gesture.TAP_EVENT)
+        }
     }
     val today = prefs.epochDaySupplier()
     val hint = GestureHints.next(prefs.gestureHintIndex, prefs.gestureHintDay, today, enabled) ?: return
@@ -48,6 +55,10 @@ internal fun HomeFragment.showGestureHint() {
         Gesture.SWIPE_LEFT -> getString(R.string.hint_swipe_left_app, prefs.appNameSwipeLeft)
         Gesture.DOUBLE_TAP -> getString(R.string.hint_double_tap_lock)
         Gesture.LONG_PRESS -> getString(R.string.hint_long_press_settings)
+        Gesture.SWIPE_UP -> getString(R.string.hint_swipe_up_apps)
+        Gesture.SWIPE_DOWN -> getString(R.string.hint_swipe_down_notifications)
+        Gesture.TAP_MUSIC -> getString(R.string.hint_tap_music)
+        Gesture.TAP_EVENT -> getString(R.string.hint_tap_event)
     }
     // The index already moved past this hint, so a tap only hides it; the next one comes tomorrow.
     binding.firstRunTips.setOnClickListener {
