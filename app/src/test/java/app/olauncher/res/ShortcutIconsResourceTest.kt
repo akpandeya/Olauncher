@@ -1,5 +1,8 @@
 package app.olauncher.res
 
+import app.olauncher.R
+import app.olauncher.ui.settings.SettingsCatalog
+import app.olauncher.ui.settings.SettingsSections
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -12,7 +15,7 @@ import javax.xml.parsers.DocumentBuilderFactory
  * Verifies the resource definitions for the Shortcut icons section and alignment menu:
  * - alignment.xml keeps only Left, Center, Right, Bottom
  * - strings.xml defines the expected labels for the Shortcut icons section
- * - fragment_settings.xml places shortcutIconsSection right after the Home screen section
+ * - the Settings list places the Shortcut icons section right after the Home screen section
  */
 class ShortcutIconsResourceTest {
 
@@ -89,55 +92,27 @@ class ShortcutIconsResourceTest {
     }
 
     @Test
-    fun `settings layout contains shortcut icons section after home screen`() {
-        val layoutFiles = listOf(
-            resolveFile("src/main/res/layout/fragment_settings.xml"),
-            resolveFile("src/main/res/layout-land/fragment_settings.xml"),
+    fun `settings list contains shortcut icons section after home screen`() {
+        val order = SettingsSections.all.map { it.key }
+        val home = order.indexOf(SettingsSections.KEY_HOME)
+        val shortcuts = order.indexOf(SettingsSections.KEY_SHORTCUTS)
+        val appearance = order.indexOf(SettingsSections.KEY_APPEARANCE)
+        assertTrue("home screen exists", home != -1)
+        assertTrue("shortcut icons section exists", shortcuts != -1)
+        assertTrue("appearance exists", appearance != -1)
+        assertTrue("shortcut icons should sit after home screen and before appearance", home < shortcuts && shortcuts < appearance)
+
+        assertEquals(R.id.shortcutIconsSection, SettingsSections.SHORTCUTS.containerId)
+        assertEquals(
+            listOf(
+                R.id.shortcutIconsOnOffLayout,
+                R.id.shortcutCountLayout,
+                R.id.shortcutSizeLayout,
+                R.id.shortcutSideLayout,
+                R.id.shortcutHeightLayout,
+                R.id.shortcutIconStyleLayout,
+            ),
+            SettingsCatalog.rowsFor(SettingsSections.KEY_SHORTCUTS).map { it.layoutId },
         )
-
-        for (file in layoutFiles) {
-            val content = file.readText()
-            assertTrue(
-                "shortcutIconsSection must be in ${file.name}",
-                content.contains("android:id=\"@+id/shortcutIconsSection\"")
-            )
-            assertTrue(
-                "shortcutIconsOnOffLayout must be in ${file.name}",
-                content.contains("android:id=\"@+id/shortcutIconsOnOffLayout\"")
-            )
-            assertTrue(
-                "shortcutCountLayout must be in ${file.name}",
-                content.contains("android:id=\"@+id/shortcutCountLayout\"")
-            )
-            assertTrue(
-                "shortcutSizeLayout must be in ${file.name}",
-                content.contains("android:id=\"@+id/shortcutSizeLayout\"")
-            )
-            assertTrue(
-                "shortcutSideLayout must be in ${file.name}",
-                content.contains("android:id=\"@+id/shortcutSideLayout\"")
-            )
-            assertTrue(
-                "shortcutHeightLayout must be in ${file.name}",
-                content.contains("android:id=\"@+id/shortcutHeightLayout\"")
-            )
-            assertTrue(
-                "shortcutIconStyleLayout must be in ${file.name}",
-                content.contains("android:id=\"@+id/shortcutIconStyleLayout\"")
-            )
-
-            // Verify section ordering: home_screen -> shortcutIconsSection -> appearance
-            val homeScreenIdx = content.lastIndexOf("@string/home_screen")
-            val shortcutSectionIdx = content.indexOf("@+id/shortcutIconsSection")
-            val appearanceIdx = content.lastIndexOf("@string/appearance")
-
-            assertTrue("home_screen exists", homeScreenIdx != -1)
-            assertTrue("shortcutIconsSection exists", shortcutSectionIdx != -1)
-            assertTrue("appearance exists", appearanceIdx != -1)
-            assertTrue(
-                "shortcutIconsSection should sit after home_screen and before appearance in ${file.name}",
-                homeScreenIdx < shortcutSectionIdx && shortcutSectionIdx < appearanceIdx
-            )
-        }
     }
 }

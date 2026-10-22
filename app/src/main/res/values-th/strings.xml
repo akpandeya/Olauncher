@@ -16,7 +16,6 @@
     <string name="home_layout_alignment">การจัดวางแอป</string>
     <string name="swipe_left_app">แอปเมื่อปัดซ้าย</string>
     <string name="swipe_right_app">แอปเมื่อปัดขวา</string>
-    <string name="_8">8</string>
     <string name="okay">ตกลง</string>
     <string name="auto_show_keyboard">แสดงแป้นพิมพ์อัตโนมัติ</string>
     <string name="hide">ซ่อน</string>
