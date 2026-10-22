@@ -37,8 +37,9 @@ jobs:
           path: app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
 
+  # Runs beside build, not after it, and skips PRs. Release still waits for it on main.
   smoke:
-    needs: build
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
