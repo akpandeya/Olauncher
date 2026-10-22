@@ -56,6 +56,10 @@
     <string name="hint_swipe_left_app">Swipe left for %1$s</string>
     <string name="hint_double_tap_lock">Double tap to lock</string>
     <string name="hint_long_press_settings">Long-press for settings</string>
+    <string name="hint_swipe_up_apps" tools:ignore="MissingTranslation">Swipe up for all apps</string>
+    <string name="hint_swipe_down_notifications" tools:ignore="MissingTranslation">Swipe down for notifications</string>
+    <string name="hint_tap_music" tools:ignore="MissingTranslation">Tap the music line to play or pause</string>
+    <string name="hint_tap_event" tools:ignore="MissingTranslation">Tap the event line to open it</string>
     <string name="swipe_up_for_apps">1. Swipe up for all apps\n2. Long press anywhere for settings</string>
     <string name="apps_on_home_screen">Apps on home screen</string>
     <string name="left">Left</string>

@@ -33,7 +33,35 @@ class GestureHintsTest {
 
     @Test
     fun endsWhenRemainingAreDisabled() {
-        assertNull(GestureHints.next(3, 1L, 99L, all - Gesture.LONG_PRESS))
+        assertNull(GestureHints.next(3, 1L, 99L, Gesture.values().toSet().filter { it.ordinal < 3 }.toSet()))
         assertNull(GestureHints.next(0, 0L, 10L, emptySet()))
+    }
+
+    @Test
+    fun newGesturesFollowOldOnesAndEachShowsOnce() {
+        assertEquals(
+            listOf(
+                Gesture.SWIPE_RIGHT, Gesture.SWIPE_LEFT, Gesture.DOUBLE_TAP, Gesture.LONG_PRESS,
+                Gesture.SWIPE_UP, Gesture.SWIPE_DOWN, Gesture.TAP_MUSIC, Gesture.TAP_EVENT,
+            ),
+            GestureHints.order,
+        )
+        val shown = mutableListOf<Gesture>()
+        var index = 0
+        var day = 0L
+        while (true) {
+            day++
+            val hint = GestureHints.next(index, day - 1, day, all) ?: break
+            shown += hint.gesture
+            index = hint.position + 1
+        }
+        assertEquals(GestureHints.order, shown)
+    }
+
+    @Test
+    fun skipsMusicAndEventTipsWhenContextLineIsOff() {
+        val enabled = all - Gesture.TAP_MUSIC - Gesture.TAP_EVENT
+        assertEquals(Gesture.SWIPE_DOWN, GestureHints.next(5, 1L, 2L, enabled)?.gesture)
+        assertNull(GestureHints.next(6, 1L, 2L, enabled))
     }
 }
