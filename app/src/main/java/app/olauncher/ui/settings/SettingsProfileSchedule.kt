@@ -4,18 +4,27 @@ import app.olauncher.R
 import app.olauncher.data.HomeSetProfiles
 import app.olauncher.data.Profile
 import app.olauncher.data.ProfileFormatException
+import app.olauncher.data.ProfileEventRule
 import app.olauncher.data.ProfileRule
 import app.olauncher.data.ProfileSchedule
+import app.olauncher.glance.CalendarRepository
 import app.olauncher.helper.createChoiceDialog
+import app.olauncher.helper.createDialog
+import app.olauncher.helper.showMessageDialog
 import app.olauncher.ui.SettingsFragment
 import app.olauncher.helper.createMultiChoiceDialog
+import android.Manifest
+import android.content.pm.PackageManager
+import android.text.InputType
+import android.widget.EditText
+import androidx.core.content.ContextCompat
 import java.time.DayOfWeek
 import java.time.format.TextStyle
 import java.util.Locale
 
 internal fun SettingsFragment.populateProfileSchedule() {
     binding.profileSchedule.text = if (prefs.hasSavedProfileSchedule) {
-        getString(R.string.profile_schedule_rule_count, prefs.profileSchedule().rules.size)
+        getString(R.string.profile_schedule_rule_count, prefs.profileSchedule().rules.size + prefs.profileSchedule().eventRules.size)
     } else {
         getString(R.string.profile_schedule_from_sets)
     }
@@ -64,6 +73,10 @@ internal fun SettingsFragment.showProfileScheduleDialog() {
     val schedule = prefs.profileSchedule()
     val items = schedule.rules.map { ruleLabel(it) }.toMutableList()
     items.add(getString(R.string.profile_schedule_add))
+    val eventStart = items.size
+    items.addAll(schedule.eventRules.map { eventRuleLabel(it) })
+    val addEventIndex = items.size
+    items.add(getString(R.string.profile_event_add))
     val resetIndex = if (prefs.hasSavedProfileSchedule) items.size else -1
     if (resetIndex >= 0) items.add(getString(R.string.profile_schedule_reset))
     openDialog(
@@ -75,6 +88,14 @@ internal fun SettingsFragment.showProfileScheduleDialog() {
                     val next = schedule.copy(rules = schedule.rules + added)
                     saveProfileSchedule(next)
                     showProfileRuleDialog(next, next.rules.lastIndex)
+                }
+                which in eventStart until addEventIndex -> showEventRuleDialog(schedule, which - eventStart)
+                which == addEventIndex -> {
+                    val added = ProfileEventRule(HomeSetProfiles.DAY_ID, keyword = "work")
+                    val next = schedule.copy(eventRules = schedule.eventRules + added)
+                    saveProfileSchedule(next)
+                    showEventRuleDialog(next, next.eventRules.lastIndex)
+                    askCalendarAccessIfMissing()
                 }
                 which == resetIndex -> {
                     prefs.profileScheduleJson = ""
@@ -136,6 +157,112 @@ private fun SettingsFragment.showProfileRuleDialog(schedule: ProfileSchedule, in
                 }
                 4 -> {
                     val next = schedule.copy(rules = schedule.rules.filterIndexed { i, _ -> i != index })
+                    saveProfileSchedule(next)
+                    showProfileScheduleDialog()
+                }
+            }
+        }
+    )
+}
+
+private fun SettingsFragment.calendarGranted(): Boolean =
+    ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED
+
+/** Calendar access is asked only when the first event rule is added. A denial leaves the rule saved but skipped. */
+private fun SettingsFragment.askCalendarAccessIfMissing() {
+    if (calendarGranted()) return
+    dialog?.dismiss()
+    dialog = requireContext().showMessageDialog(
+        title = R.string.profile_event_title,
+        message = R.string.profile_event_access_message,
+        action = R.string.allow,
+    ) {
+        homeNextEventCalendarLauncher.launch(Manifest.permission.READ_CALENDAR)
+    }
+}
+
+private fun SettingsFragment.calendarName(id: Long?): String =
+    if (id == null) getString(R.string.profile_event_any_calendar)
+    else CalendarRepository(requireContext()).calendars().firstOrNull { it.first == id }?.second ?: id.toString()
+
+private fun SettingsFragment.eventRuleLabel(rule: ProfileEventRule): String {
+    val what = listOfNotNull(
+        rule.calendarId?.let { calendarName(it) },
+        rule.keyword.takeIf { it.isNotBlank() }?.let { "\"$it\"" },
+    ).joinToString(" ")
+    val label = getString(R.string.profile_event_label, profileName(rule.profileId), what)
+    return if (calendarGranted()) label else "$label (${getString(R.string.profile_event_needs_access)})"
+}
+
+private fun SettingsFragment.showEventRuleDialog(schedule: ProfileSchedule, index: Int) {
+    val rule = schedule.eventRules[index]
+    fun update(changed: ProfileEventRule) {
+        val next = schedule.copy(eventRules = schedule.eventRules.toMutableList().also { it[index] = changed })
+        saveProfileSchedule(next)
+        showEventRuleDialog(next, index)
+    }
+    val onOff = { on: Boolean -> getString(if (on) R.string.on else R.string.off) }
+    val items = listOf(
+        "${getString(R.string.profile_rule_profile)}: ${profileName(rule.profileId)}",
+        "${getString(R.string.profile_event_calendar)}: ${calendarName(rule.calendarId)}",
+        "${getString(R.string.profile_event_keyword)}: ${rule.keyword.ifBlank { getString(R.string.profile_event_keyword_none) }}",
+        "${getString(R.string.profile_event_all_day)}: ${onOff(rule.includeAllDay)}",
+        getString(R.string.profile_rule_delete),
+    )
+    openDialog(
+        requireContext().createChoiceDialog(titleText = eventRuleLabel(rule), items = items) { which ->
+            when (which) {
+                0 -> {
+                    val choices = profileChoices()
+                    openDialog(
+                        requireContext().createChoiceDialog(
+                            title = R.string.profile_rule_profile,
+                            items = choices.map { it.second },
+                            checkedIndex = choices.indexOfFirst { it.first == rule.profileId },
+                        ) { pick -> update(rule.copy(profileId = choices[pick].first)) }
+                    )
+                }
+                1 -> {
+                    if (!calendarGranted()) {
+                        askCalendarAccessIfMissing()
+                        return@createChoiceDialog
+                    }
+                    val calendars = CalendarRepository(requireContext()).calendars()
+                    val names = listOf(getString(R.string.profile_event_any_calendar)) + calendars.map { it.second }
+                    openDialog(
+                        requireContext().createChoiceDialog(
+                            title = R.string.profile_event_calendar,
+                            items = names,
+                            checkedIndex = calendars.indexOfFirst { it.first == rule.calendarId } + 1,
+                        ) { pick ->
+                            val id = if (pick == 0) null else calendars[pick - 1].first
+                            // A rule must keep a calendar or a keyword.
+                            if (id == null && rule.keyword.isBlank()) showEventRuleDialog(schedule, index) else update(rule.copy(calendarId = id))
+                        }
+                    )
+                }
+                2 -> {
+                    val input = EditText(requireContext()).apply {
+                        inputType = InputType.TYPE_CLASS_TEXT
+                        setSingleLine()
+                        setText(rule.keyword)
+                    }
+                    openDialog(
+                        requireContext().createDialog(
+                            title = R.string.profile_event_keyword,
+                            action = R.string.save,
+                            content = { input },
+                            onAction = {
+                                val word = input.text.toString().trim()
+                                if (word.isBlank() && rule.calendarId == null) showEventRuleDialog(schedule, index)
+                                else update(rule.copy(keyword = word))
+                            },
+                        )
+                    )
+                }
+                3 -> update(rule.copy(includeAllDay = !rule.includeAllDay))
+                4 -> {
+                    val next = schedule.copy(eventRules = schedule.eventRules.filterIndexed { i, _ -> i != index })
                     saveProfileSchedule(next)
                     showProfileScheduleDialog()
                 }

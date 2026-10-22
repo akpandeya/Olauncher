@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 
 import java.util.Locale
+import app.olauncher.glance.CalendarEvent
 import app.olauncher.helper.HomeSet
 import app.olauncher.helper.HomeSetStarts
 import app.olauncher.helper.HomeSets
@@ -318,6 +319,17 @@ class Prefs(context: Context) :
     val profileScheduleActive: Boolean
         get() = homeSets || hasSavedProfileSchedule
 
+    /**
+     * Events running now, last read for the calendar rules; null while calendar access is missing or
+     * nothing was read yet. Kept in memory only: the home screen refreshes it off the main thread.
+     */
+    @Volatile
+    var profileCalendarEvents: List<CalendarEvent>? = null
+
+    /** True when the saved schedule has rules that follow the calendar. */
+    val hasProfileEventRules: Boolean
+        get() = profileSchedule().eventRules.isNotEmpty()
+
     private fun manualOverride(): ManualOverride = ManualOverride(manualProfileId, manualProfileUntil)
 
     fun activeProfileId(
@@ -333,6 +345,8 @@ class Prefs(context: Context) :
             windDownActive = isWindDownActive(nowMinutes),
             // Wind-down forces the Evening profile only when Home sets are on, as before.
             windDownProfileId = if (homeSets) HomeSetProfiles.EVENING_ID else null,
+            runningEvents = profileCalendarEvents,
+            nowMillis = nowMillis,
             hasApps = { if (it in HOME_SET_PROFILE_IDS) homeSetHasApps(HomeSetProfiles.setOf(it)) else true },
         )
 
