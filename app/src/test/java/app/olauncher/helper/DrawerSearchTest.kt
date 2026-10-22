@@ -38,6 +38,7 @@ class DrawerSearchTest {
         recents: List<RecentApp> = emptyList(),
         hidden: Set<String> = emptySet(),
         contacts: () -> ContactSource? = { null },
+        profiles: List<app.olauncher.data.ProfileChoice> = emptyList(),
         calendar: (String) -> List<AppModel.Result> = { emptyList() },
         currency: (String) -> List<AppModel.Result> = { emptyList() },
     ) = DrawerSearchInput(
@@ -60,17 +61,18 @@ class DrawerSearchTest {
         currencyRows = currency,
         spellRows = { emptyList() },
         lookUpRows = { emptyList() },
+        profileChoices = { profiles },
         userKey = { "u0" },
     )
 
     @Test
     fun `colon alone shows only enabled command rows that fill the query`() {
         val off = DrawerSearch.run(input(":", german = false)).items.filterIsInstance<AppModel.Result>()
-        assertEquals(listOf("help t", "help a", "help e", "help n"), off.map { it.text })
+        assertEquals(listOf("help t", "help a", "help e", "help n", "help p"), off.map { it.text })
         assertEquals(AppModel.Result.Action.FillQuery(":t "), off[0].action)
         val on = DrawerSearch.run(input(":", german = true)).items.filterIsInstance<AppModel.Result>()
-        assertEquals(listOf("help t", "help a", "help e", "help n", "help sw", "help w"), on.map { it.text })
-        assertEquals(AppModel.Result.Action.FillQuery(":sw "), on[4].action)
+        assertEquals(listOf("help t", "help a", "help e", "help n", "help p", "help sw", "help w"), on.map { it.text })
+        assertEquals(AppModel.Result.Action.FillQuery(":sw "), on[5].action)
     }
 
     @Test
@@ -215,6 +217,19 @@ class DrawerSearchTest {
         val rows = commandRows(":n  call   Mama back")
         assertEquals("call Mama back", (rows.single().action as AppModel.Result.Action.SaveNote).text)
         assertTrue(commandRows(":n").isEmpty())
+    }
+
+    @Test
+    fun `profile command lists matching profiles and errors on none`() {
+        val choices = listOf(
+            app.olauncher.data.ProfileChoice("bare", "Bare"),
+            app.olauncher.data.ProfileChoice("focus", "Focus"),
+        )
+        fun rows(q: String) = DrawerSearch.run(input(q, profiles = choices)).items.filterIsInstance<AppModel.Result>()
+        assertEquals(AppModel.Result.Action.SwitchProfile("focus", "Focus"), rows(":p foc").single().action)
+        assertEquals(listOf("Switch to Bare", "Switch to Focus"), rows(":p").map { it.text })
+        assertEquals(AppModel.Result.Action.Error, rows(":p zzz").single().action)
+        assertEquals("No profile 'zzz'", rows(":p zzz").single().text)
     }
 
     @Test

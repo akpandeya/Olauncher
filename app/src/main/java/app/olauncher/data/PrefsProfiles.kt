@@ -13,12 +13,20 @@ interface ProfilePrefs {
 
     /** Id of the profile whose settings were last applied or passed over. Empty until a schedule runs. */
     var appliedProfileId: String
+
+    /** Id of the profile the user switched to by hand. Empty when none. */
+    var manualProfileId: String
+
+    /** Epoch millis at which the manual switch ends; 0 holds it until the user switches again. */
+    var manualProfileUntil: Long
 }
 
 internal class ProfilePrefsStore(private val prefs: SharedPreferences) : ProfilePrefs {
     private val PROFILES_JSON = "PROFILES_JSON"
     private val PROFILE_SCHEDULE_JSON = "PROFILE_SCHEDULE_JSON"
     private val APPLIED_PROFILE_ID = "APPLIED_PROFILE_ID"
+    private val MANUAL_PROFILE_ID = "MANUAL_PROFILE_ID"
+    private val MANUAL_PROFILE_UNTIL = "MANUAL_PROFILE_UNTIL"
 
     override var profilesJson: String
         get() = prefs.getString(PROFILES_JSON, "").orEmpty()
@@ -31,10 +39,18 @@ internal class ProfilePrefsStore(private val prefs: SharedPreferences) : Profile
     override var appliedProfileId: String
         get() = prefs.getString(APPLIED_PROFILE_ID, "").orEmpty()
         set(value) = prefs.edit { putString(APPLIED_PROFILE_ID, value) }
+
+    override var manualProfileId: String
+        get() = prefs.getString(MANUAL_PROFILE_ID, "").orEmpty()
+        set(value) = prefs.edit { putString(MANUAL_PROFILE_ID, value) }
+
+    override var manualProfileUntil: Long
+        get() = prefs.getLong(MANUAL_PROFILE_UNTIL, 0L)
+        set(value) = prefs.edit { putLong(MANUAL_PROFILE_UNTIL, value) }
 }
 
 /** Lets a profile write its settings into [Prefs]. */
-class PrefsProfileTarget(private val prefs: Prefs) : ProfileSettingsTarget {
+class PrefsProfileTarget(private val prefs: Prefs) : ProfileSettingsSource {
     override var homeAppsNum: Int by prefs::homeAppsNum
     override var dateTimeVisibility: Int by prefs::dateTimeVisibility
     override var weatherEnabled: Boolean by prefs::weatherEnabled
@@ -61,6 +77,7 @@ class PrefsProfileTarget(private val prefs: Prefs) : ProfileSettingsTarget {
     override var searchContacts: Boolean by prefs::searchContacts
 
     override fun setTodayCardEnabled(key: String, enabled: Boolean) = prefs.setTodayCardEnabled(key, enabled)
+    override fun isTodayCardEnabled(key: String): Boolean = prefs.isTodayCardEnabled(key)
 }
 
 /** The user's current home apps (active set, slots 1 to 8) as the start for built-in profiles. */

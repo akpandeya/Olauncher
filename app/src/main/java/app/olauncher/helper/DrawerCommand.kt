@@ -8,6 +8,8 @@ sealed class DrawerCommand {
     data class Alarm(val args: String) : DrawerCommand()
     data class Event(val args: String) : DrawerCommand()
     data class Note(val args: String) : DrawerCommand()
+    /** `:p focus`: switch profile; [args] is the profile name typed so far. */
+    data class Profile(val args: String) : DrawerCommand()
     /** `:` alone or an unknown `:xyz`: show [commands], the commands that are enabled. */
     data class Help(val commands: List<CommandInfo>) : DrawerCommand()
 
@@ -29,6 +31,7 @@ sealed class DrawerCommand {
             CommandInfo("a"),
             CommandInfo("e"),
             CommandInfo("n"),
+            CommandInfo("p"),
             CommandInfo("sw", germanOnly = true),
             CommandInfo("w", germanOnly = true),
         )
@@ -57,6 +60,7 @@ sealed class DrawerCommand {
                 "a" -> Alarm(args.trim())
                 "e" -> Event(args.trim())
                 "n" -> Note(args.trim())
+                "p" -> Profile(args.trim())
                 else -> Help(available(germanEnabled))
             }
         }

@@ -33,6 +33,7 @@ import app.olauncher.helper.isSystemAnimationsDisabled
 import app.olauncher.helper.isSystemApp
 import app.olauncher.helper.openAppInfo
 import app.olauncher.helper.showKeyboard
+import app.olauncher.helper.profileChoices
 import app.olauncher.helper.showToast
 import app.olauncher.helper.uninstall
 
@@ -101,6 +102,13 @@ internal fun AppDrawerFragment.initAdapter() {
                                 Log.w(TAG, "start timer failed", e)
                                 requireContext().showToast(getString(R.string.timer_no_clock_app))
                             }
+                            findNavController().popBackStack(R.id.mainFragment, false)
+                        }
+
+                        is AppModel.Result.Action.SwitchProfile -> {
+                            prefs.switchProfile(action.profileId)
+                            requireContext().showToast(getString(R.string.profile_switched, action.name))
+                            viewModel.refreshHome(true)
                             findNavController().popBackStack(R.id.mainFragment, false)
                         }
 
@@ -275,6 +283,7 @@ internal fun AppDrawerFragment.initAdapter() {
         germanEnabledProvider = { prefs.germanEnabled },
         spellRowsProvider = { items -> spellRows(items) },
         lookUpRowsProvider = { text -> lookUpRows(text) },
+        profileChoicesProvider = { context?.let { prefs.profileChoices(it) }.orEmpty() },
         wiktionaryLongClickListener = { result ->
             val action = result.action as? AppModel.Result.Action.OpenWiktionary
             if (action != null) openWiktionary(action.text)

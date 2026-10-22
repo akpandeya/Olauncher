@@ -318,8 +318,15 @@ class Prefs(context: Context) :
     val profileScheduleActive: Boolean
         get() = homeSets || hasSavedProfileSchedule
 
-    fun activeProfileId(nowMinutes: Int = currentMinutesOfDay(), dayOfWeek: Int = currentDayOfWeek()): String =
+    private fun manualOverride(): ManualOverride = ManualOverride(manualProfileId, manualProfileUntil)
+
+    fun activeProfileId(
+        nowMinutes: Int = currentMinutesOfDay(),
+        dayOfWeek: Int = currentDayOfWeek(),
+        nowMillis: Long = System.currentTimeMillis(),
+    ): String =
         ProfileScheduleResolver.activeProfileId(
+            manualProfileId = manualOverride().takeIf { it.isActive(nowMillis) }?.profileId,
             schedule = profileSchedule(),
             nowMinutes = nowMinutes,
             dayOfWeek = dayOfWeek,
@@ -336,17 +343,62 @@ class Prefs(context: Context) :
      * Applies the settings bundle of the active profile when it differs from the last one seen.
      * Returns true when a bundle was written.
      */
-    fun applyScheduledProfile(nowMinutes: Int = currentMinutesOfDay(), dayOfWeek: Int = currentDayOfWeek()): Boolean {
-        val activeId = activeProfileId(nowMinutes, dayOfWeek)
-        val profiles = try {
-            Profile.listFromJson(profilesJson)
-        } catch (e: ProfileFormatException) {
-            emptyList()
-        }
+    fun applyScheduledProfile(
+        nowMinutes: Int = currentMinutesOfDay(),
+        dayOfWeek: Int = currentDayOfWeek(),
+        nowMillis: Long = System.currentTimeMillis(),
+    ): Boolean {
+        // A manual switch ends at the next scheduled boundary; from then on the schedule decides.
+        if (manualProfileId.isNotEmpty() && !manualOverride().isActive(nowMillis)) clearManualProfile()
+        val activeId = activeProfileId(nowMinutes, dayOfWeek, nowMillis)
+        val profiles = profiles()
         val toApply = ProfileScheduleResolver.profileToApply(activeId, appliedProfileId, profiles)
         if (activeId != appliedProfileId) appliedProfileId = activeId
         toApply?.settings?.apply(PrefsProfileTarget(this))
         return toApply != null
+    }
+
+    /** Saved profiles, then the built-in ones that are not saved. Profiles with a bundle only. */
+    fun profiles(): List<Profile> {
+        val saved = try {
+            Profile.listFromJson(profilesJson)
+        } catch (e: ProfileFormatException) {
+            emptyList()
+        }
+        val savedIds = saved.map { it.id }.toSet()
+        return saved + BuiltInProfiles.all(currentHomeApps()).filter { it.id !in savedIds }
+    }
+
+    /**
+     * Switches to [profileId] by hand: applies its bundle (if it has one) and holds it until the
+     * next scheduled boundary. Also used to reset a Custom profile, as the bundle is applied again.
+     */
+    fun switchProfile(
+        profileId: String,
+        nowMinutes: Int = currentMinutesOfDay(),
+        dayOfWeek: Int = currentDayOfWeek(),
+        nowMillis: Long = System.currentTimeMillis(),
+    ) {
+        val override = ManualOverride.create(profileId, profileSchedule(), nowMillis, nowMinutes, dayOfWeek)
+        manualProfileId = override.profileId
+        manualProfileUntil = override.untilMillis
+        appliedProfileId = profileId
+        profiles().firstOrNull { it.id == profileId }?.settings?.apply(PrefsProfileTarget(this))
+    }
+
+    fun clearManualProfile() {
+        manualProfileId = ""
+        manualProfileUntil = ManualOverride.NO_EXPIRY
+    }
+
+    /** What the profile row shows now: the applied profile, or Custom when its bundle was changed. */
+    fun profileState(nameOf: (String) -> String): ProfileState =
+        ProfileCustom.state(appliedProfileId.ifEmpty { activeProfileId() }, profiles(), nameOf, PrefsProfileTarget(this))
+
+    /** Stores the settings now in force as the bundle of [profile], keeping its other fields. */
+    fun saveToProfile(profile: Profile) {
+        val updated = profile.copy(settings = ProfileCustom.capture(profile.settings, PrefsProfileTarget(this)))
+        profilesJson = Profile.listToJson(profiles().map { if (it.id == profile.id) updated else it })
     }
 
     private fun currentDayOfWeek(): Int = java.time.LocalDate.now().dayOfWeek.value
