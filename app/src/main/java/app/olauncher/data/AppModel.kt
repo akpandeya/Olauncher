@@ -62,6 +62,8 @@ sealed class AppModel : Comparable<AppModel> {
             data class SetAlarm(val hour: Int, val minute: Int, val days: List<Int>, val label: String) : Action
             /** Tap opens the calendar's new-event screen prefilled (`:e`). Millis follow CalendarContract. */
             data class AddEvent(val title: String, val place: String, val beginMillis: Long, val endMillis: Long, val allDay: Boolean) : Action
+            /** Unreadable command input (`Can't read '…'`). Tap and Enter do nothing. */
+            data object Error : Action
             /** [openOnTap] false: tap does nothing, long-press still opens the page. */
             data class OpenWiktionary(val text: String, val openOnTap: Boolean = true) : Action
         }

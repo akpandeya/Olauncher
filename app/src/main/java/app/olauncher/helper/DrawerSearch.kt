@@ -19,6 +19,10 @@ class DrawerSearchInput(
     val saveWordRowText: (word: String) -> String,
     /** One-line help row for a command, e.g. "Timer: :t 10 tea". */
     val commandHelpRowText: (word: String) -> String = { ":$it" },
+    /** Error row text for unreadable command input, e.g. "Can't read '25x'". */
+    val cantReadRowText: (token: String) -> String = { "Can't read '$it'" },
+    /** Error row text when `:e` has no title. */
+    val eventNoTitleRowText: () -> String = { "Can't add an event without a title" },
     val saveWordsRowText: (count: Int, shown: String) -> String,
     val contactSource: () -> ContactSource?,
     val calendarRows: (String) -> List<AppModel.Result>,
@@ -115,14 +119,31 @@ object DrawerSearch {
             is DrawerCommand.Help -> command.commands.forEach {
                 rows.add(AppModel.Result(input.commandHelpRowText(it.word), AppModel.Result.Action.FillQuery(it.prefix)))
             }
-            is DrawerCommand.Timer -> TimerCommand.parse(command.args)?.let {
-                rows.add(AppModel.Result(TimerCommand.previewText(it), AppModel.Result.Action.StartTimer(it.seconds, it.label)))
+            is DrawerCommand.Timer -> if (command.args.isNotBlank()) {
+                val timer = TimerCommand.parse(command.args)
+                rows.add(
+                    if (timer != null) AppModel.Result(TimerCommand.previewText(timer), AppModel.Result.Action.StartTimer(timer.seconds, timer.label))
+                    else errorRow(input.cantReadRowText(firstWord(command.args)))
+                )
             }
-            is DrawerCommand.Alarm -> AlarmCommand.parse(command.args, input.now())?.let {
-                rows.add(AppModel.Result(AlarmCommand.previewText(it), AppModel.Result.Action.SetAlarm(it.hour, it.minute, it.days, it.label)))
+            is DrawerCommand.Alarm -> if (command.args.isNotBlank()) {
+                val alarm = AlarmCommand.parse(command.args, input.now())
+                rows.add(
+                    if (alarm != null) AppModel.Result(AlarmCommand.previewText(alarm), AppModel.Result.Action.SetAlarm(alarm.hour, alarm.minute, alarm.days, alarm.label))
+                    else errorRow(input.cantReadRowText(firstWord(command.args)))
+                )
             }
-            is DrawerCommand.Event -> (EventCommand.parse(command.args, input.nowZoned()) as? EventCommand.Parsed.Ok)?.event?.let {
-                rows.add(AppModel.Result(EventCommand.previewText(it), AppModel.Result.Action.AddEvent(it.title, it.place, it.beginMillis, it.endMillis, it.allDay)))
+            is DrawerCommand.Event -> if (command.args.isNotBlank()) {
+                rows.add(
+                    when (val parsed = EventCommand.parse(command.args, input.nowZoned())) {
+                        is EventCommand.Parsed.Ok -> parsed.event.let {
+                            AppModel.Result(EventCommand.previewText(it), AppModel.Result.Action.AddEvent(it.title, it.place, it.beginMillis, it.endMillis, it.allDay))
+                        }
+                        is EventCommand.Parsed.Error -> errorRow(
+                            parsed.token?.let(input.cantReadRowText) ?: input.eventNoTitleRowText()
+                        )
+                    }
+                )
             }
             // Handled by their own features.
             is DrawerCommand.Note, null -> Unit
@@ -135,6 +156,10 @@ object DrawerSearch {
         safeAdd(rows) { input.calendarRows(query) }
         return rows
     }
+
+    private fun errorRow(text: String) = AppModel.Result(text, AppModel.Result.Action.Error)
+
+    private fun firstWord(args: String) = args.trim().split(Regex("""\s+""")).first()
 
     private fun copyRow(value: String) =
         AppModel.Result(text = "= $value", action = AppModel.Result.Action.Copy(value))

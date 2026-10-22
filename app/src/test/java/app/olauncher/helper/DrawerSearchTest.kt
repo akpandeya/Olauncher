@@ -196,4 +196,66 @@ class DrawerSearchTest {
 
         assertFalse(DrawerSearch.run(input("map", allowAutoLaunch = false)).autoLaunch)
     }
+
+    private fun commandRows(query: String) =
+        DrawerSearch.run(input(query)).items.filterIsInstance<AppModel.Result>()
+
+    @Test
+    fun `valid timer alarm and event show a preview row with an action`() {
+        val t = commandRows(":t 10 tea").first()
+        assertEquals(AppModel.Result.Action.StartTimer(600, "tea"), t.action)
+        val a = commandRows(":a 7:30 gym").first()
+        assertTrue(a.action is AppModel.Result.Action.SetAlarm)
+        val e = commandRows(":e dentist tomorrow 15:00").first()
+        assertTrue(e.action is AppModel.Result.Action.AddEvent)
+    }
+
+    @Test
+    fun `unreadable timer and alarm input show a cant-read error row with no action`() {
+        val t = commandRows(":t 25x tea")
+        assertEquals(listOf("Can't read '25x'"), t.map { it.text })
+        assertEquals(AppModel.Result.Action.Error, t[0].action)
+        val a = commandRows(":a 99:99")
+        assertEquals(listOf("Can't read '99:99'"), a.map { it.text })
+        assertEquals(AppModel.Result.Action.Error, a[0].action)
+    }
+
+    @Test
+    fun `unreadable event date shows an error row with no action`() {
+        val e = commandRows(":e dentist 25.13")
+        assertEquals(1, e.size)
+        assertEquals("Can't read '25.13'", e[0].text)
+        assertEquals(AppModel.Result.Action.Error, e[0].action)
+    }
+
+    @Test
+    fun `commands without arguments show no preview or error row`() {
+        assertTrue(commandRows(":t ").isEmpty())
+        assertTrue(commandRows(":a ").isEmpty())
+        assertTrue(commandRows(":e ").isEmpty())
+    }
+
+    @Test
+    fun `error row text comes from the provided strings`() {
+        val items = DrawerSearch.run(
+            DrawerSearchInput(
+                query = ":t zz", apps = emptyList(), flag = Constants.FLAG_LAUNCH_APP, bottomSearch = false,
+                drawerRecents = false, allowAutoLaunch = true, germanEnabled = { false },
+                recentApps = { emptyList() }, hiddenApps = { emptySet() }, recentCaption = "",
+                callRowText = { it }, saveWordRowText = { it }, saveWordsRowText = { _, s -> s },
+                contactSource = { null }, calendarRows = { emptyList() }, currencyRows = { emptyList() },
+                spellRows = { emptyList() }, lookUpRows = { emptyList() },
+                cantReadRowText = { "nicht lesbar: $it" },
+            )
+        ).items.filterIsInstance<AppModel.Result>()
+        assertEquals("nicht lesbar: zz", items.single().text)
+    }
+
+    @Test
+    fun `enter on an error row resolves to a result with the no-op error action`() {
+        val row = commandRows(":t 25x").first()
+        val action = EnterPolicy.resolve(":t 25x", row, null)
+        assertEquals(EnterPolicy.Action.ExecuteResult(row), action)
+        assertEquals(AppModel.Result.Action.Error, (row.action))
+    }
 }

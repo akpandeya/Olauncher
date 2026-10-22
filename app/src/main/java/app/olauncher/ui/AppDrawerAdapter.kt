@@ -263,6 +263,8 @@ class AppDrawerAdapter(
                         callRowText = { ctx?.getString(R.string.call_number, it) ?: "Call $it" },
                         saveWordRowText = { ctx?.getString(R.string.save_word_row, it) ?: "Save word: $it" },
                         commandHelpRowText = { word -> commandHelpText(ctx, word) },
+                        cantReadRowText = { ctx?.getString(R.string.command_cant_read, it) ?: "Can't read '$it'" },
+                        eventNoTitleRowText = { ctx?.getString(R.string.command_event_no_title) ?: "Can't add an event without a title" },
                         saveWordsRowText = { count, shown ->
                             ctx?.getString(R.string.save_words_row, count, shown) ?: "Save $count words: $shown"
                         },
@@ -400,6 +402,7 @@ class AppDrawerAdapter(
             otherProfileIndicator.visibility = View.GONE
             appTitle.visibility = View.VISIBLE
             appTitle.text = result.text
+            appTitle.alpha = if (result.action is AppModel.Result.Action.Error) 0.5f else 1f
             appTitle.gravity = appLabelGravity or Gravity.CENTER_VERTICAL
             appTitle.setOnClickListener { clickListener(result) }
             val onLong: View.OnLongClickListener? = when {
