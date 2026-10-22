@@ -109,6 +109,8 @@ private fun row(
 object SettingsCatalog {
 
     private val home: List<SettingsItem> = listOf(
+    row(key = "profileSwitch", sectionKey = SettingsSections.KEY_HOME, titleRes = R.string.profile_switch, type = SettingsRowType.CHOICE,
+        primaryId = R.id.profileSwitch, layoutId = R.id.profileSwitchLayout, titleId = R.id.profileSwitchTitle, valueId = R.id.profileSwitch),
     row(key = "homeAppsNum", sectionKey = SettingsSections.KEY_HOME, titleRes = R.string.apps_on_home_screen, type = SettingsRowType.CHOICE,
         primaryId = R.id.homeAppsNum, valueId = R.id.homeAppsNum),
     row(key = "dateTime", sectionKey = SettingsSections.KEY_HOME, titleRes = R.string.show_date_time, type = SettingsRowType.CHOICE,

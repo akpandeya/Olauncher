@@ -62,13 +62,13 @@ class DrawerCommandTest {
         assertNull(parse(":w"))
     }
 
-    private val allWords = listOf("t", "a", "e", "n", "sw", "w")
+    private val allWords = listOf("t", "a", "e", "n", "p", "sw", "w")
 
     @Test
     fun `colon alone lists enabled commands`() {
         assertEquals(allWords, (parse(":") as DrawerCommand.Help).commands.map { it.word })
         val off = DrawerCommand.parse(":", germanEnabled = false) as DrawerCommand.Help
-        assertEquals(listOf("t", "a", "e", "n"), off.commands.map { it.word })
+        assertEquals(listOf("t", "a", "e", "n", "p"), off.commands.map { it.word })
         assertEquals(off, DrawerCommand.parse("  :", germanEnabled = false))
     }
 
@@ -81,7 +81,7 @@ class DrawerCommandTest {
 
     @Test
     fun `help row prefix fills command word`() {
-        assertEquals(listOf(":t ", ":a ", ":e ", ":n ", ":sw ", ":w "), DrawerCommand.available(true).map { it.prefix })
+        assertEquals(listOf(":t ", ":a ", ":e ", ":n ", ":p ", ":sw ", ":w "), DrawerCommand.available(true).map { it.prefix })
     }
 
     @Test

@@ -137,7 +137,8 @@ object HomeSetProfiles {
 object ProfileScheduleResolver {
     /**
      * [windDownProfileId] is the profile wind-down forces (the Evening profile), or null when
-     * wind-down does not force one. A profile other than the default that has no apps
+     * wind-down does not force one. [manualProfileId] is a profile the user picked by hand; it beats
+     * the schedule and wind-down, and its expiry is handled by the caller. A profile other than the default that has no apps
      * ([hasApps] false) falls back to the default, as an empty Home set falls back to Day.
      */
     fun activeProfileId(
@@ -147,7 +148,11 @@ object ProfileScheduleResolver {
         windDownActive: Boolean,
         windDownProfileId: String?,
         hasApps: (String) -> Boolean = { true },
+        manualProfileId: String? = null,
     ): String {
+        if (manualProfileId != null) {
+            return if (manualProfileId != schedule.defaultProfileId && !hasApps(manualProfileId)) schedule.defaultProfileId else manualProfileId
+        }
         if (windDownActive && windDownProfileId != null && hasApps(windDownProfileId)) return windDownProfileId
         val id = schedule.resolve(nowMinutes, dayOfWeek)
         return if (id != schedule.defaultProfileId && !hasApps(id)) schedule.defaultProfileId else id
