@@ -1,11 +1,8 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name" translatable="false">Thumbline</string>
-    <string name="github" translatable="false">Github</string>
     <string name="lock_layout_description" translatable="false">lock layout description to be used a unique id to lock screen</string>
     <!-- Home button for recents feature disabled -->
     <!-- <string name="recents_layout_description" translatable="false">recents layout description to be used a unique id to show recent apps</string> -->
-    <string name="day_battery" formatted="false" translatable="false">%s, %d%%</string>
-    <string name="tag_0" translatable="false">0</string>
     <string name="tag_1" translatable="false">1</string>
     <string name="tag_2" translatable="false">2</string>
     <string name="tag_3" translatable="false">3</string>
@@ -21,12 +18,8 @@
     <string name="app">App</string>
     <string name="set_as_default_launcher">Set as default launcher</string>
     <string name="set_as_default_launcher_u"><u>Set as default launcher</u></string>
-    <string name="set_as_default_launcher_first">Set Thumbline default first</string>
-    <string name="app_text_color">Text color</string>
     <string name="double_tap_to_lock_screen">Double tap to lock</string>
     <string name="home_button_show_recents">Home button for recents</string>
-    <string name="admin_permission_message">Thumbline promises to use the accessibility permission responsibly. The accessibility service does not collect or send any data.</string>
-    <string name="about">About</string>
     <string name="off">Off</string>
     <string name="currency_rates">Currency rates</string>
     <string name="currency_rates_on">On (daily, from the ECB)</string>
@@ -56,24 +49,14 @@
     <string name="text_contrast_follow_theme">Follow theme</string>
     <string name="auto">Auto</string>
     <string name="always">Always</string>
-    <string name="black">Black</string>
-    <string name="white">White</string>
     <string name="change_default_launcher">Change default launcher</string>
     <string name="privacy">Privacy</string>
-    <string name="share">Share</string>
-    <string name="share_now">Share now</string>
-    <string name="rate">Rate</string>
-    <string name="rate_now">Rate now</string>
-    <string name="follow">Follow</string>
-    <string name="email">Email</string>
-    <string name="donate">Donate</string>
     <string name="hint_swipe_right_today">Swipe right for Today</string>
     <string name="hint_swipe_left_app">Swipe left for %1$s</string>
     <string name="hint_double_tap_lock">Double tap to lock</string>
     <string name="hint_long_press_settings">Long-press for settings</string>
     <string name="swipe_up_for_apps">1. Swipe up for all apps\n2. Long press anywhere for settings</string>
     <string name="apps_on_home_screen">Apps on home screen</string>
-    <string name="daily_wallpaper_update">Daily new wallpaper</string>
     <string name="left">Left</string>
     <string name="right">Right</string>
     <string name="center">Center</string>
@@ -81,18 +64,8 @@
     <string name="swap_sides">Swap sides</string>
     <string name="swipe_left_app">Swipe left app</string>
     <string name="swipe_right_app">Swipe right app</string>
-    <string name="_0">0</string>
-    <string name="_1">1</string>
-    <string name="_2">2</string>
-    <string name="_3">3</string>
-    <string name="_4">4</string>
-    <string name="_5">5</string>
-    <string name="_6">6</string>
-    <string name="_7">7</string>
     <string name="_8">8</string>
-    <string name="app_drawer_tips">Tip: Start typing an app name to auto-launch it</string>
     <string name="okay">Okay</string>
-    <string name="cool">Cool!</string>
     <string name="drawer">Drawer</string>
     <string name="auto_show_keyboard">Auto show keyboard</string>
     <string name="search_at_bottom">Search at bottom</string>
@@ -103,7 +76,6 @@
     <string name="search_contacts_permission_message">Thumbline reads your contacts on this phone to find people in search</string>
     <string name="recent">Recent</string>
     <string name="hide">Hide</string>
-    <string name="status_bar">Status bar on top</string>
     <string name="rename">Rename</string>
     <string name="show_date_time">Show date time</string>
     <string name="appearance">Appearance</string>
@@ -122,21 +94,15 @@
     <!--         \n\nIf you have a moment to spare, could you please share Thumbline with others? Thumbline needs people. More importantly, people need Thumbline.</string>-->
     <string name="keyboard_message">Hi, keyboard is the fastest way to find and launch apps in Thumbline. Can we request you to keep this On for a few more days and then decide?
         \n\nThe choice is always yours.</string>
-    <string name="digital_wellbeing_message">If you want to set time limits for certain apps, Digital Wellbeing feature of Android can help you do it.           Please search for Digital Wellbeing in your phone settings and enable it.</string>
     <string name="app_usage_message">To show/hide your screen time on the home screen, please allow or disallow the app usage permission.
         \n\nNote: No app usage data is collected. Everything is processed on your device.</string>
     <string name="accessibility_service_description">The accessibility permission is required to enable the gesture - double tap to lock . Any data acquired by Thumbline via this service will not leave your device.</string>
-    <string name="open">Open link</string>
-    <string name="copy">Copy</string>
     <string name="close">Close</string>
     <string name="not_now">Not now</string>
-    <string name="roadmap">Roadmap</string>
     <string name="date">Date</string>
     <string name="date_only">Date only</string>
     <string name="bottom_on">Bottom: On</string>
     <string name="bottom_off">Bottom: Off</string>
-    <string name="shortcuts_on">Shortcuts: On</string>
-    <string name="shortcuts_off">Shortcuts: Off</string>
     <string name="shortcut_icons">Shortcut icons</string>
     <string name="icons">Icons</string>
     <string name="size">Size</string>
@@ -148,9 +114,6 @@
     <string name="icon_size_medium">Medium</string>
     <string name="icon_size_large">Large</string>
     <string name="icons_fit">%1$d (%2$d fit)</string>
-    <string name="icons_count">Icons: %1$d</string>
-    <string name="icons_on_left">Icons on left</string>
-    <string name="icons_on_right">Icons on right</string>
     <string name="icons_height">Icons height</string>
     <string name="icon_style">Icon style</string>
     <string name="icon_style_original">Original</string>
@@ -166,25 +129,17 @@
     <string name="shortcut_choose_builtin">Choose built-in…</string>
     <string name="shortcut_reset">Reset to default</string>
     <string name="please_set_olauncher_as_default_first">Please set Thumbline as default first</string>
-    <string name="affiliate">Affiliate</string>
-    <string name="tip_start_typing_for_rename">Tip: Start typing for app RENAME option</string>
     <string name="hidden_apps_message">Note: Tap on \'Thumbline\' at the top of this Settings page to find your hidden apps.</string>
     <string name="accessibility_disclosure">Please turn on Thumbline\'s accessibility service in your device\'s settings to enable Double tap to lock gesture.
     \n\nPlease note that this service is only used for this particular feature. The accessibility service does not collect or send any data.</string>
-    <string name="accept">Accept</string>
     <string name="permission">Permission</string>
-    <string name="double_tap_lock">Double tap to lock</string>
     <string name="enable">Enable</string>
     <string name="disable">Disable</string>
     <string name="not_working"><u>Not working?</u></string>
-    <string name="info">Info</string>
     <string name="delete">Uninstall</string>
     <string name="text_size">Text size</string>
     <string name="bold_font">Bold font</string>
     <string name="enabled">Enabled</string>
-    <string name="disabled">Disabled</string>
-    <string name="please_turn_on_double_tap_to_unlock">Please turn on double tap to lock</string>
-    <string name="launcher_failed_to_lock_device">Thumbline failed to lock device.\nPlease check your app settings.</string>
     <string name="long_press_to_select_app">Long press to select app</string>
     <string name="unable_to_open_app">Unable to open app</string>
     <string name="unable_to_open_app_info">Unable to open app info</string>
@@ -192,29 +147,19 @@
     <string name="system_app_cannot_delete">System app, cannot delete</string>
     <string name="type_a_new_app_name_first">Type a new app name first</string>
     <string name="app_not_found">App not found</string>
-    <string name="unable_to_launch_app">Unable to launch app</string>
-    <string name="search_for_Launcher_or_home_app">Search for Launcher or Home app</string>
     <string name="swipe_left_app_enabled">Swipe left app enabled</string>
     <string name="swipe_right_app_enabled">Swipe right app enabled</string>
     <string name="swipe_left_app_disabled">Swipe left app disabled</string>
     <string name="swipe_right_app_disabled">Swipe right app disabled</string>
-    <string name="your_wallpaper_will_update_shortly">Your wallpaper will update shortly</string>
-    <string name="olauncher_is_not_default_launcher">Thumbline is not default. Wallpaper update will fail.</string>
     <string name="long_press_to_enable">Long press to enable</string>
     <string name="no_hidden_apps">No hidden apps</string>
     <string name="hidden_apps">Hidden apps</string>
-    <string name="adapter_show">Show</string>
-    <string name="adapter_hide">Hide</string>
-    <string name="are_you_using_your_phone_or_is_your_phone_using_you">Are you using your phone, or is your phone using you?</string>
     <string name="screen_time">Screen time</string>
     <string name="screen_time_style">Screen time style</string>
     <string name="screen_time_style_number">Number</string>
     <string name="screen_time_style_cue">Cue</string>
     <string name="screen_time_target">Screen time target</string>
     <string name="screen_time_target_hours">%d h</string>
-    <string name="learn_more">Learn more</string>
-    <string name="did_you_know">Did you know?</string>
-    <string name="leave_a_review">Leave a review</string>
     <string name="alignment_changed">Alignment changed ✅</string>
     <string name="home_screen">Home screen</string>
     <string name="hey">Hey</string>
@@ -264,16 +209,12 @@
     <string name="next_wallpaper">Next wallpaper</string>
     <string name="previous_wallpaper">Previous wallpaper</string>
     <string name="settings">Settings</string>
-    <string name="home">Home</string>
-    <string name="lock">Lock</string>
-    <string name="both">Both</string>
     <string name="distracting_apps">Distracting apps</string>
     <string name="distracting_apps_count">%d apps</string>
     <string name="distracting_app_count">%d app</string>
     <string name="cancel">Cancel</string>
     <string name="settings_footer">Thumbline %1$s · based on %2$s · GPLv3\nFonts: Inter, IBM Plex Sans · SIL OFL</string>
     <string name="pause_before_distracting_apps">Pause before distracting apps</string>
-    <string name="pause_daily_allowance">Daily allowance</string>
     <string name="pause_daily_allowance_needs_access">Daily allowance (needs usage access)</string>
     <string name="pause_longer_with_each_open">Longer pause with each open</string>
     <string name="pause_ask_why">Ask why before opening</string>
@@ -349,7 +290,6 @@
     <string name="today_order_smart">Smart</string>
     <string name="today_order_fixed">Fixed</string>
     <string name="choose_app">Choose app…</string>
-    <string name="nothing_here_yet">Nothing here yet</string>
     <string name="held">Held</string>
     <string name="nothing_held">Nothing held</string>
     <string name="clear_all">Clear all</string>
@@ -389,8 +329,6 @@
     <string name="nudge_social_usage_access_message">Allow usage access so Thumbline can measure distracting-app time</string>
     <string name="usage_access_off_for_thumbline">Usage access is off for Thumbline</string>
     <string name="wellbeing">Wellbeing</string>
-    <string name="wellbeing_water">Water %d</string>
-    <string name="wellbeing_walk">Walk %d</string>
     <string name="health_line_steps">%1$s steps</string>
     <string name="health_line_slept">Slept %1$s</string>
     <string name="health_line_resting_hr">Resting HR %1$s</string>
@@ -402,7 +340,6 @@
     <string name="wellbeing_open_single">1 open</string>
     <string name="wellbeing_open_plural">%d opens</string>
     <string name="wellbeing_pause_wins">🌿 Not now × %d today</string>
-    <string name="wellbeing_separator" translatable="false">" · "</string>
     <string name="backup">Backup</string>
     <string name="export_backup">Export backup</string>
     <string name="backup_exported">Backup exported</string>
@@ -421,7 +358,6 @@
     <string name="german">German</string>
     <string name="clock">Clock</string>
     <string name="in_worten_de" translatable="false">In Worten</string>
-    <string name="save_word">Save word</string>
     <string name="save_word_thumbline">Thumbline: save word</string>
     <string name="look_up_word_thumbline">Thumbline: look up word</string>
     <string name="not_a_word_to_look_up">Not a word to look up</string>
