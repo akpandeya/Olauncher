@@ -62,6 +62,7 @@ internal fun SettingsFragment.populateRow(spec: SettingsRowSpec) {
 internal fun SettingsFragment.populateAllRows() {
     populateHomeSets()
     populateProfileSchedule()
+    populateProfileSwitch()
     populatePhotoWallpaperText()
     populateKeyboardText()
     populateAutoBackup()

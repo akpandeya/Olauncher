@@ -2,6 +2,8 @@ package app.olauncher.helper
 
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
+import app.olauncher.data.ProfileChoice
+import app.olauncher.data.ProfileSwitch
 
 /** Everything one drawer search needs. Context-free: strings and row providers come in as values and lambdas. */
 class DrawerSearchInput(
@@ -25,6 +27,12 @@ class DrawerSearchInput(
     val eventNoTitleRowText: () -> String = { "Can't add an event without a title" },
     /** Preview row text for `:n`, e.g. "Save note: buy milk". */
     val noteRowText: (text: String) -> String = { "Save note: $it" },
+    /** Profiles `:p` can switch to. */
+    val profileChoices: () -> List<ProfileChoice> = { emptyList() },
+    /** Row text for `:p`, e.g. "Switch to Focus". */
+    val profileRowText: (name: String) -> String = { "Switch to $it" },
+    /** Error row text when `:p` names no profile. */
+    val profileNotFoundRowText: (query: String) -> String = { "No profile '$it'" },
     val saveWordsRowText: (count: Int, shown: String) -> String,
     val contactSource: () -> ContactSource?,
     val calendarRows: (String) -> List<AppModel.Result>,
@@ -154,6 +162,14 @@ object DrawerSearch {
                     val label = parsed.showFrom?.let { Notes.dateLabel(it) }
                     val rowText = input.noteRowText(parsed.text) + label?.let { " · $it" }.orEmpty()
                     rows.add(AppModel.Result(rowText, AppModel.Result.Action.SaveNote(parsed.text, parsed.showFrom)))
+                }
+            }
+            is DrawerCommand.Profile -> {
+                val choices = input.profileChoices()
+                val matches = ProfileSwitch.matching(command.args, choices)
+                if (matches.isEmpty()) rows.add(errorRow(input.profileNotFoundRowText(command.args)))
+                else matches.forEach {
+                    rows.add(AppModel.Result(input.profileRowText(it.name), AppModel.Result.Action.SwitchProfile(it.id, it.name)))
                 }
             }
             null -> Unit

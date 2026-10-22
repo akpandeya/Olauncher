@@ -72,6 +72,7 @@ class AppDrawerAdapter(
     var germanEnabledProvider: (() -> Boolean)? = null,
     var spellRowsProvider: ((List<String>) -> List<AppModel.Result>)? = null,
     var lookUpRowsProvider: ((String) -> List<AppModel.Result>)? = null,
+    var profileChoicesProvider: (() -> List<app.olauncher.data.ProfileChoice>)? = null,
     var wiktionaryLongClickListener: ((AppModel.Result) -> Unit)? = null,
 ) : ListAdapter<AppModel, RecyclerView.ViewHolder>(DIFF_CALLBACK), Filterable {
 
@@ -263,6 +264,9 @@ class AppDrawerAdapter(
                         callRowText = { ctx?.getString(R.string.call_number, it) ?: "Call $it" },
                         saveWordRowText = { ctx?.getString(R.string.save_word_row, it) ?: "Save word: $it" },
                         noteRowText = { ctx?.getString(R.string.note_row, it) ?: "Save note: $it" },
+                        profileChoices = { profileChoicesProvider?.invoke() ?: emptyList() },
+                        profileRowText = { ctx?.getString(R.string.profile_switch_row, it) ?: "Switch to $it" },
+                        profileNotFoundRowText = { ctx?.getString(R.string.profile_not_found, it) ?: "No profile '$it'" },
                         commandHelpRowText ={ word -> commandHelpText(ctx, word) },
                         cantReadRowText = { ctx?.getString(R.string.command_cant_read, it) ?: "Can't read '$it'" },
                         eventNoTitleRowText = { ctx?.getString(R.string.command_event_no_title) ?: "Can't add an event without a title" },
@@ -625,6 +629,7 @@ private fun commandHelpText(ctx: android.content.Context?, word: String): String
         "a" -> R.string.command_help_alarm
         "e" -> R.string.command_help_event
         "n" -> R.string.command_help_note
+        "p" -> R.string.command_help_profile
         "sw" -> R.string.command_help_save_words
         "w" -> R.string.command_help_look_up
         else -> return ":$word"

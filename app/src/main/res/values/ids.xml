@@ -133,6 +133,9 @@
     <item name="morningStart" type="id" />
     <item name="morningStartLayout" type="id" />
     <item name="morningStartTitle" type="id" />
+    <item name="profileSwitch" type="id" />
+    <item name="profileSwitchLayout" type="id" />
+    <item name="profileSwitchTitle" type="id" />
     <item name="profileSchedule" type="id" />
     <item name="profileScheduleLayout" type="id" />
     <item name="profileScheduleTitle" type="id" />
