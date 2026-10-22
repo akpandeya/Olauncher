@@ -4,6 +4,7 @@ package app.olauncher.helper
 enum class OnboardingStep {
     SET_DEFAULT_LAUNCHER,
     PICK_HOME_APPS,
+    PICK_PROFILE,
     OPTIONAL_FEATURES,
 }
 
