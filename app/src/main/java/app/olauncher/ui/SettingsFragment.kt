@@ -1,5 +1,6 @@
 package app.olauncher.ui
 
+import app.olauncher.helper.OlDialog
 import android.content.Intent
 import android.os.Bundle
 import android.provider.MediaStore
@@ -174,7 +175,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     }
 
     internal var pendingCalendarCardIndex: Int? = null
-    internal var todayCardsDialog: AlertDialog? = null
+    internal var todayCardsDialog: OlDialog? = null
     internal var todayCardsCheckedState: BooleanArray? = null
 
     internal val calendarPermissionLauncher = registerForActivityResult(
@@ -185,16 +186,14 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         val alert = todayCardsDialog
         if (isGranted) {
             if (idx != null && alert != null && alert.isShowing) {
-                alert.listView?.setItemChecked(idx, true)
-                todayCardsCheckedState?.set(idx, true)
+                alert.setItemChecked(idx, true)
             } else {
                 prefs.setTodayCardEnabled(NextUpCard.KEY, true)
                 populateTodayCards()
             }
         } else {
             if (idx != null && alert != null && alert.isShowing) {
-                alert.listView?.setItemChecked(idx, false)
-                todayCardsCheckedState?.set(idx, false)
+                alert.setItemChecked(idx, false)
             }
             requireContext().showToast(R.string.calendar_off_for_thumbline)
         }
