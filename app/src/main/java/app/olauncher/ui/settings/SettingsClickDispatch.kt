@@ -5,6 +5,7 @@ import android.view.View
 import app.olauncher.BuildConfig
 import app.olauncher.R
 import app.olauncher.data.Constants
+import app.olauncher.helper.GestureSlot
 import app.olauncher.helper.Haptics
 import app.olauncher.helper.HomeSet
 import app.olauncher.helper.openAppInfo
@@ -153,6 +154,9 @@ private fun SettingsFragment.handleAppearanceClick(view: View): Boolean {
 private fun SettingsFragment.handleTodayAndNudgesClick(view: View): Boolean {
     when (view.id) {
         R.id.photoWallpaper, R.id.photoWallpaperTitle, R.id.photoWallpaperLayout -> showPhotoWallpaperMenu(binding.photoWallpaper)
+        R.id.doubleTapAction -> showGestureActionMenu(GestureSlot.DOUBLE_TAP)
+        R.id.clockTapAction -> showGestureActionMenu(GestureSlot.CLOCK_TAP)
+        R.id.dateTapAction -> showGestureActionMenu(GestureSlot.DATE_TAP)
         R.id.swipeLeftApp -> showSwipeLeftMenu(binding.swipeLeftApp)
         R.id.swipeRightApp, R.id.swipeRightLayout -> showSwipeRightMenu(binding.swipeRightApp)
         R.id.todayCards, R.id.todayCardsTitle, R.id.todayCardsLayout -> showTodayCardsDialog()

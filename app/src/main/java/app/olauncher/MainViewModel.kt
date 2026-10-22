@@ -13,6 +13,9 @@ import androidx.lifecycle.viewModelScope
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
+import app.olauncher.helper.GestureAction
+import app.olauncher.helper.GestureApp
+import app.olauncher.helper.GestureSlot
 import app.olauncher.helper.HomeAppHelper
 import app.olauncher.helper.HomeSet
 import app.olauncher.helper.HomeSets
@@ -127,6 +130,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             Constants.FLAG_SET_CALENDAR_APP -> saveCalendarApp(appModel)
             Constants.FLAG_SET_SCREEN_TIME_APP -> saveScreenTimeApp(appModel)
             Constants.FLAG_SET_WEATHER_APP -> saveWeatherApp(appModel)
+            Constants.FLAG_SET_GESTURE_APP_DOUBLE_TAP -> saveGestureApp(appModel, GestureSlot.DOUBLE_TAP)
+            Constants.FLAG_SET_GESTURE_APP_CLOCK_TAP -> saveGestureApp(appModel, GestureSlot.CLOCK_TAP)
+            Constants.FLAG_SET_GESTURE_APP_DATE_TAP -> saveGestureApp(appModel, GestureSlot.DATE_TAP)
             in Constants.FLAG_SET_SHORTCUT_1..Constants.FLAG_SET_SHORTCUT_12 -> saveShortcutApp(appModel, flag - Constants.FLAG_SET_SHORTCUT_1 + 1)
         }
     }
@@ -220,6 +226,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 }
             }
         }
+        updateSwipeApps()
+    }
+
+    /** Saves the app a gesture opens and switches the gesture to "open app". */
+    private fun saveGestureApp(appModel: AppModel, slot: GestureSlot) {
+        if (appModel !is AppModel.App || appModel.isArchived) return
+        prefs.setGestureApp(
+            slot,
+            GestureApp(appModel.appLabel, appModel.appPackage, appModel.activityClassName, appModel.user.toString())
+        )
+        prefs.setGestureAction(slot, GestureAction.OPEN_APP)
         updateSwipeApps()
     }
 
