@@ -146,46 +146,6 @@ internal fun SettingsFragment.populateKeyboardText() {
     else binding.autoShowKeyboard.text = getString(R.string.off)
 }
 
-internal fun SettingsFragment.populateDrawerBottomSearch() {
-    if (prefs.drawerBottomSearch) binding.drawerBottomSearch.text = getString(R.string.on)
-    else binding.drawerBottomSearch.text = getString(R.string.off)
-}
-
-internal fun SettingsFragment.toggleDrawerBottomSearch() {
-    prefs.drawerBottomSearch = !prefs.drawerBottomSearch
-    populateDrawerBottomSearch()
-}
-
-internal fun SettingsFragment.populateDrawerNewFirst() {
-    if (prefs.drawerNewFirst) binding.drawerNewFirst.text = getString(R.string.on)
-    else binding.drawerNewFirst.text = getString(R.string.off)
-}
-
-internal fun SettingsFragment.toggleDrawerNewFirst() {
-    prefs.drawerNewFirst = !prefs.drawerNewFirst
-    populateDrawerNewFirst()
-}
-
-internal fun SettingsFragment.populateDrawerLetterStrip() {
-    if (prefs.drawerLetterStrip) binding.drawerLetterStrip.text = getString(R.string.on)
-    else binding.drawerLetterStrip.text = getString(R.string.off)
-}
-
-internal fun SettingsFragment.toggleDrawerLetterStrip() {
-    prefs.drawerLetterStrip = !prefs.drawerLetterStrip
-    populateDrawerLetterStrip()
-}
-
-internal fun SettingsFragment.populateDrawerRecents() {
-    if (prefs.drawerRecents) binding.drawerRecents.text = getString(R.string.on)
-    else binding.drawerRecents.text = getString(R.string.off)
-}
-
-internal fun SettingsFragment.toggleDrawerRecents() {
-    prefs.drawerRecents = !prefs.drawerRecents
-    populateDrawerRecents()
-}
-
 internal fun SettingsFragment.hasContactsPermission(): Boolean =
     ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.READ_CONTACTS) == PackageManager.PERMISSION_GRANTED
 
@@ -342,15 +302,6 @@ internal fun SettingsFragment.populateSwipeApps() {
         binding.swipeRightApp.setTextColor(requireContext().getColorFromAttr(R.attr.primaryColorTrans50))
     else
         binding.swipeRightApp.setTextColor(requireContext().getColorFromAttr(R.attr.primaryColor))
-}
-
-internal fun SettingsFragment.toggleIntentionOnHome() {
-    prefs.intentionOnHome = !prefs.intentionOnHome
-    populateIntentionOnHome()
-}
-
-internal fun SettingsFragment.populateIntentionOnHome() {
-    binding.intentionOnHome.text = getString(if (prefs.intentionOnHome) R.string.on else R.string.off)
 }
 
 internal fun SettingsFragment.toggleTodayOrder() {

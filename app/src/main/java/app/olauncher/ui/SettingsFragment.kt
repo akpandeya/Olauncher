@@ -27,8 +27,16 @@ import app.olauncher.helper.isAccessServiceEnabled
 import app.olauncher.helper.isOlauncherDefault
 import app.olauncher.helper.showToast
 import app.olauncher.quiet.ReleaseWorker
-import app.olauncher.ui.settings.RuntimeSettingsRow
 import app.olauncher.ui.settings.SettingsRow
+import app.olauncher.ui.settings.SettingsRowHolder
+import app.olauncher.ui.settings.SettingsRowSpec
+import app.olauncher.ui.settings.SettingsRowsAdapter
+import app.olauncher.ui.settings.SettingsRowsHost
+import app.olauncher.ui.settings.SettingsCatalog
+import app.olauncher.ui.settings.SettingsViews
+import app.olauncher.ui.settings.bindRow
+import app.olauncher.ui.settings.setupRowsList
+import app.olauncher.ui.settings.unbindRow
 import app.olauncher.ui.settings.SettingsRowAvailability
 import app.olauncher.ui.settings.SettingsSection
 import app.olauncher.ui.settings.SettingsSections
@@ -42,7 +50,6 @@ import app.olauncher.ui.settings.handleAddedPhotos
 import app.olauncher.ui.settings.handleImportBackup
 import app.olauncher.ui.settings.handlePickedPhotos
 import app.olauncher.ui.settings.initClickListeners
-import app.olauncher.ui.settings.initRuntimeRows
 import app.olauncher.ui.settings.initSearch
 import app.olauncher.ui.settings.isNotificationAccessGranted
 import app.olauncher.ui.settings.onSearchQueryChanged
@@ -58,20 +65,14 @@ import app.olauncher.ui.settings.populateContextLine
 import app.olauncher.ui.settings.populateCurrencyRates
 import app.olauncher.ui.settings.populateDateTime
 import app.olauncher.ui.settings.populateDistractingApps
-import app.olauncher.ui.settings.populateDrawerBottomSearch
-import app.olauncher.ui.settings.populateDrawerLetterStrip
-import app.olauncher.ui.settings.populateDrawerNewFirst
-import app.olauncher.ui.settings.populateDrawerRecents
 import app.olauncher.ui.settings.populateFontFamily
 import app.olauncher.ui.settings.populateGerman
-import app.olauncher.ui.settings.populateHaptics
 import app.olauncher.ui.settings.populateHealthConnect
 import app.olauncher.ui.settings.populateHoldNotifications
 import app.olauncher.ui.settings.populateHomeDarkness
 import app.olauncher.ui.settings.populateHomeNextEvent
 import app.olauncher.ui.settings.populateHomeSets
 import app.olauncher.ui.settings.populateInfoLine
-import app.olauncher.ui.settings.populateIntentionOnHome
 import app.olauncher.ui.settings.populateKeyboardText
 import app.olauncher.ui.settings.populateLockSettings
 import app.olauncher.ui.settings.populateMusicPulse
@@ -118,13 +119,14 @@ import app.olauncher.ui.today.cards.NextUpCard
 import app.olauncher.wellbeing.HealthRepository
 import app.olauncher.wellbeing.NotificationPermission
 
-class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListener {
+class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListener, SettingsRowsHost {
 
     internal lateinit var prefs: Prefs
     internal lateinit var viewModel: MainViewModel
 
-    internal var _binding: FragmentSettingsBinding? = null
+    internal var _binding: SettingsViews? = null
     internal val binding get() = _binding!!
+    internal var rowsAdapter: SettingsRowsAdapter? = null
     internal var dialog: AlertDialog? = null
 
     internal var currentSectionKey: String? = null
@@ -252,7 +254,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        _binding = FragmentSettingsBinding.inflate(inflater, container, false)
+        _binding = SettingsViews(FragmentSettingsBinding.inflate(inflater, container, false))
         return binding.root
     }
 
@@ -264,14 +266,10 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         } ?: throw Exception("Invalid Activity")
         viewModel.isOlauncherDefault()
 
-        binding.homeAppsNum.text = prefs.homeAppsNum.toString()
+        setupRowsList()
         populateHomeSets()
         populatePhotoWallpaperText()
         populateKeyboardText()
-        populateDrawerBottomSearch()
-        populateDrawerNewFirst()
-        populateDrawerLetterStrip()
-        populateDrawerRecents()
         populateAutoBackup()
         populateSearchContacts()
         populateCurrencyRates()
@@ -297,7 +295,6 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateFontFamily()
         populateTextSize()
         populateBoldFont()
-        populateHaptics()
         setupHapticSliders()
         populateTextContrast()
         populateHomeDarkness()
@@ -317,7 +314,6 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateSwipeApps()
         populateTodayCards()
         populateTodayOrder()
-        populateIntentionOnHome()
         populateWeather()
         populateNudgeWater()
         populateNudgeWalk()
@@ -326,7 +322,6 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateGerman()
         populateFooter()
         initClickListeners()
-        initRuntimeRows()
         initSearch()
         setupSearchInsets()
         initObservers()
@@ -373,33 +368,22 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         currentSectionKey?.let { outState.putString(KEY_SAVED_SECTION, it) }
     }
 
-    internal var runtimeRows: List<RuntimeSettingsRow> = emptyList()
-
-    internal fun getFirstTextView(parent: View): TextView {
-        if (parent is ViewGroup) {
-            for (i in 0 until parent.childCount) {
-                val child = parent.getChildAt(i)
-                if (child is TextView) return child
-            }
-        }
-        error("Expected TextView in parent $parent")
-    }
-
     internal fun isRowAvailable(viewId: Int): Boolean = SettingsRowAvailability.isAvailable(
         viewId = viewId,
         shortcutsOn = prefs.homeShortcuts,
         germanOn = prefs.germanEnabled,
     )
 
-    fun collectRows(): List<SettingsRow> {
-        return runtimeRows.filter { isRowAvailable(it.viewId) }.map { item ->
-            SettingsRow(
-                label = item.labelView.text.toString(),
-                sectionKey = item.sectionKey,
-                viewId = item.viewId,
-            )
-        }
-    }
+    /** Searchable rows that are not switched off by a parent setting, labelled as the user sees them. */
+    fun collectRows(): List<SettingsRow> = SettingsCatalog.rows
+        .filter { it.searchable && isRowAvailable(it.primaryId) }
+        .map { SettingsRow(label = getString(it.titleRes), sectionKey = it.sectionKey, viewId = it.primaryId) }
+
+    override fun isRowAvailable(spec: SettingsRowSpec): Boolean = isRowAvailable(spec.primaryId)
+
+    override fun onRowBound(spec: SettingsRowSpec, holder: SettingsRowHolder) = bindRow(spec, holder)
+
+    override fun onRowUnbound(spec: SettingsRowSpec, holder: SettingsRowHolder) = unbindRow(spec, holder)
 
     fun showSection(section: SettingsSection) = renderSection(section)
 
@@ -414,7 +398,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         )
     }
 
-    override fun onClick(view: View) = dispatchClick(view)
+    override fun onClick(view: View) {
+        dispatchClick(view)
+    }
 
     override fun onLongClick(view: View): Boolean {
         when (view.id) {
@@ -506,6 +492,8 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         dialog?.dismiss()
         dialog = null
         applyTextSizeScale()
+        _binding?.settingsRows?.adapter = null
+        rowsAdapter = null
         super.onDestroyView()
         _binding = null
     }

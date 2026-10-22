@@ -25,14 +25,22 @@ internal fun SettingsFragment.tickOnChange(view: View, action: () -> Unit) {
     if (changed) Haptics.perform(view, Haptics.Kind.CLOCK_TICK)
 }
 
-internal fun SettingsFragment.dispatchClick(view: View) {
+/** Runs the tap for [view]; false when no setting owns that view id. */
+internal fun SettingsFragment.dispatchClick(view: View): Boolean =
     handleNavigationClick(view)
+    || handleToggleRowClick(view)
     || handleWellbeingClick(view)
     || handleLauncherAndDrawerClick(view)
     || handleHomeAndShortcutsClick(view)
     || handleAppearanceClick(view)
     || handleTodayAndNudgesClick(view)
     || handleGermanBackupFooterClick(view)
+
+/** Plain on/off rows carry their pref in the row model, so one handler serves them all. */
+private fun SettingsFragment.handleToggleRowClick(view: View): Boolean {
+    val spec = SettingsCatalog.rowByViewId(view.id)?.takeIf { it.pref != null } ?: return false
+    tickOnChange(view) { toggleBooleanRow(spec) }
+    return true
 }
 
 private fun SettingsFragment.handleNavigationClick(view: View): Boolean {
@@ -85,10 +93,6 @@ private fun SettingsFragment.handleLauncherAndDrawerClick(view: View): Boolean {
         // Home button for recents feature disabled
         // R.id.homeButtonRecents -> toggleHomeButtonRecents()
         R.id.autoShowKeyboard -> tickOnChange(view) { toggleKeyboardText() }
-        R.id.drawerBottomSearch, R.id.drawerBottomSearchTitle, R.id.drawerBottomSearchLayout -> tickOnChange(view) { toggleDrawerBottomSearch() }
-        R.id.drawerNewFirst, R.id.drawerNewFirstTitle, R.id.drawerNewFirstLayout -> tickOnChange(view) { toggleDrawerNewFirst() }
-        R.id.drawerLetterStrip, R.id.drawerLetterStripTitle, R.id.drawerLetterStripLayout -> tickOnChange(view) { toggleDrawerLetterStrip() }
-        R.id.drawerRecents, R.id.drawerRecentsTitle, R.id.drawerRecentsLayout -> tickOnChange(view) { toggleDrawerRecents() }
         R.id.searchContacts, R.id.searchContactsTitle, R.id.searchContactsLayout -> tickOnChange(view) { toggleSearchContacts() }
         R.id.currencyRates, R.id.currencyRatesTitle, R.id.currencyRatesLayout -> tickOnChange(view) { toggleCurrencyRates() }
         R.id.searchEngine, R.id.searchEngineTitle, R.id.searchEngineLayout -> showSearchEngineMenu(binding.searchEngine)
@@ -132,7 +136,6 @@ private fun SettingsFragment.handleAppearanceClick(view: View): Boolean {
         R.id.fontFamily -> showFontDialog()
         R.id.textSizeValue -> showTextSizeDialog()
         R.id.boldFont -> tickOnChange(view) { toggleBoldFont() }
-        R.id.haptics -> tickOnChange(view) { toggleHaptics() }
         R.id.textContrast, R.id.textContrastTitle, R.id.textContrastLayout -> tickOnChange(view) { toggleTextContrast() }
         R.id.homeDarkness, R.id.homeWashTitle, R.id.homeWashLayout -> cycleHomeDarkness()
         R.id.textBrightness, R.id.textBrightnessTitle, R.id.textBrightnessLayout -> cycleTextBrightness()
@@ -151,7 +154,6 @@ private fun SettingsFragment.handleTodayAndNudgesClick(view: View): Boolean {
         R.id.swipeRightApp, R.id.swipeRightLayout -> showSwipeRightMenu(binding.swipeRightApp)
         R.id.todayCards, R.id.todayCardsTitle, R.id.todayCardsLayout -> showTodayCardsDialog()
         R.id.todayOrder, R.id.todayOrderTitle, R.id.todayOrderLayout -> tickOnChange(view) { toggleTodayOrder() }
-        R.id.intentionOnHome, R.id.intentionOnHomeTitle, R.id.intentionOnHomeLayout -> tickOnChange(view) { toggleIntentionOnHome() }
         R.id.weatherTitle, R.id.weatherLayout -> showCitySearchDialog()
         R.id.weather -> {
             if (prefs.weatherEnabled) {

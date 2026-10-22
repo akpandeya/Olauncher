@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="settings_scroll_margin_vertical">0dp</dimen>
+    <dimen name="settings_fading_edge">24dp</dimen>
+    <dimen name="settings_content_padding_vertical">56dp</dimen>
+    <dimen name="settings_scroll_padding_horizontal">100dp</dimen>
+</resources>

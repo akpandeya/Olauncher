@@ -36,7 +36,6 @@
     <string name="home_layout_alignment">应用对齐方式</string>
     <string name="swipe_left_app">左滑打开的应用</string>
     <string name="swipe_right_app">右滑打开的应用</string>
-    <string name="_8">8</string>
     <string name="auto_show_keyboard">自动显示键盘</string>
     <string name="hide">隐藏</string>
     <string name="rename">重命名</string>
