@@ -51,7 +51,8 @@ fun View.showAppActionPopup(
     actions: List<AppAction>,
     onAction: (AppAction) -> Unit,
 ): PopupMenu {
-    val popup = PopupMenu(context, this, Gravity.END)
+    val flipAnchor = flipAnchorIfNeeded(actions.size + 1)
+    val popup = PopupMenu(context, flipAnchor ?: this, Gravity.END)
     popup.menu.add(Menu.NONE, Menu.NONE, 0, appName).isEnabled = false
     actions.forEachIndexed { index, action ->
         popup.menu.add(Menu.NONE, index, index + 1, action.labelRes)
@@ -62,8 +63,34 @@ fun View.showAppActionPopup(
         onAction(action)
         true
     }
+    if (flipAnchor != null) popup.setOnDismissListener { (flipAnchor.parent as? ViewGroup)?.removeView(flipAnchor) }
     popup.show()
     return popup
+}
+
+/**
+ * When a menu of [itemCount] rows does not fit below this view, returns a 1px
+ * invisible view placed so a popup anchored to it opens just above this view.
+ * Returns null when the normal below placement is fine. The caller removes it on dismiss.
+ */
+private fun View.flipAnchorIfNeeded(itemCount: Int): View? {
+    val root = rootView as? ViewGroup ?: return null
+    val density = resources.displayMetrics.density
+    val rowHeight = (48 * density * resources.configuration.fontScale.coerceAtLeast(1f)).toInt()
+    val menuHeight = itemCount * rowHeight + (16 * density).toInt()
+    val loc = IntArray(2)
+    getLocationInWindow(loc)
+    val screenHeight = root.height
+    if (!PopupPlacement.showsAbove(loc[1], loc[1] + height, screenHeight, menuHeight)) return null
+    val anchorHeight = 1
+    val anchor = View(context)
+    val top = PopupPlacement.topWhenAbove(loc[1], menuHeight) - anchorHeight
+    val params = android.widget.FrameLayout.LayoutParams(width, anchorHeight).apply {
+        leftMargin = loc[0]
+        topMargin = maxOf(0, top)
+    }
+    (root as? android.widget.FrameLayout)?.addView(anchor, params) ?: return null
+    return anchor
 }
 
 /**
