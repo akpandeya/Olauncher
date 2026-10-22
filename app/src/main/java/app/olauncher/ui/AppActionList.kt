@@ -5,7 +5,7 @@ import app.olauncher.data.Constants
 
 /** One entry in an app's long-press menu. */
 data class AppAction(val id: Id, val labelRes: Int, val isDestructive: Boolean = false) {
-    enum class Id { CHANGE_APP, ADD_TO_HOME, RENAME, HIDE, DISTRACTING, APP_INFO, UNINSTALL, CHOOSE_BUILTIN, RESET_SHORTCUT }
+    enum class Id { CHANGE_APP, ADD_TO_HOME, RENAME, HIDE, REMOVE_FROM_HOME, DISTRACTING, APP_INFO, UNINSTALL, CHOOSE_BUILTIN, RESET_SHORTCUT }
 }
 
 /**

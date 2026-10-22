@@ -1,6 +1,8 @@
 package app.olauncher.ui.today.cards
 
+import android.app.Activity
 import app.olauncher.helper.createChoiceDialog
+import app.olauncher.helper.UndoMessage
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
@@ -8,6 +10,7 @@ import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import app.olauncher.R
+import app.olauncher.helper.ArchiveChange
 import app.olauncher.helper.Haptics
 import app.olauncher.data.store.SavedItem
 import app.olauncher.data.store.SavedItemsStore
@@ -231,9 +234,15 @@ internal class SavedCardView(private val binding: CardSavedBinding) {
         context.createChoiceDialog(items = options.toList()) { which ->
             when (which) {
                 0 -> {
-                    SavedCard.getStore(context).archive(item.id)
+                    val store = SavedCard.getStore(context)
+                    val change = ArchiveChange(item.id, item.archivedAt)
+                    store.archive(item.id)
                     SavedCard.isArchivedExpanded = true
                     render()
+                    UndoMessage.show(context as? Activity, context.getString(R.string.saved_archived_message)) {
+                        store.restoreArchivedAt(change.id, change.previousArchivedAt)
+                        render()
+                    }
                 }
                 1 -> {
                     SavedCard.getStore(context).delete(item.id)

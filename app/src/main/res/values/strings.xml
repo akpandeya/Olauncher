@@ -488,6 +488,14 @@
     <string name="apply">Apply</string>
     <string name="add_to_home">Add to home</string>
     <string name="unhide">Unhide</string>
+    <string name="undo" tools:ignore="MissingTranslation">Undo</string>
+    <string name="app_hidden" tools:ignore="MissingTranslation">App hidden</string>
+    <string name="app_unhidden" tools:ignore="MissingTranslation">App unhidden</string>
+    <string name="remove_from_home" tools:ignore="MissingTranslation">Remove from home</string>
+    <string name="removed_from_home" tools:ignore="MissingTranslation">Removed from home</string>
+    <string name="saved_archived_message" tools:ignore="MissingTranslation">Archived</string>
+    <string name="please_pick_an_app" tools:ignore="MissingTranslation">Please pick an app</string>
+    <string name="hiding_shortcuts_not_supported" tools:ignore="MissingTranslation">Hiding pinned shortcuts is not supported</string>
     <string name="mark_distracting">Mark distracting</string>
     <string name="not_distracting">Not distracting</string>
     <string name="app_info">App info</string>
