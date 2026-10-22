@@ -26,8 +26,8 @@ class SettingsCatalogTest {
     fun `every setting of the old layout is present in its section`() {
         val actual = SettingsSections.all.associate { it.key to SettingsCatalog.rowsFor(it.key).map { row -> row.key } }
         assertEquals(INVENTORY, actual)
-        assertEquals(81, SettingsCatalog.rows.size)
-        assertEquals(80, SettingsCatalog.rows.count { it.searchable })
+        assertEquals(82, SettingsCatalog.rows.size)
+        assertEquals(81, SettingsCatalog.rows.count { it.searchable })
     }
 
     @Test
@@ -281,6 +281,7 @@ class SettingsCatalogTest {
             "eveningStart",
             "contextLineValue",
             "homeNextEventValue",
+            "homeNotesValue",
             "alignment",
             "swapSides",
         ),

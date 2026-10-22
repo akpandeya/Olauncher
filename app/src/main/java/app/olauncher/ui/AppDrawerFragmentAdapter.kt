@@ -18,6 +18,7 @@ import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.helper.AppActionHandlers
 import app.olauncher.helper.HiddenChange
+import app.olauncher.helper.NotesStore
 import app.olauncher.helper.HomeAppHelper
 import app.olauncher.helper.UndoMessage
 import app.olauncher.wellbeing.UsageSnapshotWorker
@@ -100,6 +101,12 @@ internal fun AppDrawerFragment.initAdapter() {
                                 Log.w(TAG, "start timer failed", e)
                                 requireContext().showToast(getString(R.string.timer_no_clock_app))
                             }
+                            findNavController().popBackStack(R.id.mainFragment, false)
+                        }
+
+                        is AppModel.Result.Action.SaveNote -> {
+                            NotesStore({ prefs.notesJson }, { prefs.notesJson = it }).add(action.text, System.currentTimeMillis())
+                            requireContext().showToast(getString(R.string.note_saved))
                             findNavController().popBackStack(R.id.mainFragment, false)
                         }
 

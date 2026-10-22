@@ -14,7 +14,7 @@ import app.olauncher.helper.dpToPx
  */
 internal fun HomeFragment.initInfoLineTouchTargets() {
     val parent = binding.nextEventLine.parent as? ViewGroup ?: return
-    val lines = listOf(binding.nextEventLine, binding.contextLine)
+    val lines = listOf(binding.nextEventLine, binding.noteLine, binding.contextLine)
     // Installed once: swapping the parent's delegate mid-gesture would drop the tap's ACTION_UP.
     val group = InfoLineTouchDelegates(parent)
     parent.touchDelegate = group

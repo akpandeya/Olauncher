@@ -113,6 +113,9 @@
     <item name="homeNextEventLayout" type="id" />
     <item name="homeNextEventTitle" type="id" />
     <item name="homeNextEventValue" type="id" />
+    <item name="homeNotesLayout" type="id" />
+    <item name="homeNotesTitle" type="id" />
+    <item name="homeNotesValue" type="id" />
     <item name="homeSection" type="id" />
     <item name="homeSets" type="id" />
     <item name="homeSetsLayout" type="id" />

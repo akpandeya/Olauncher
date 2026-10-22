@@ -110,6 +110,7 @@ internal class SettingsViews(private val frame: FragmentSettingsBinding) {
     val homeAppsNum: TextView get() = textView(R.id.homeAppsNum)
     val homeDarkness: TextView get() = textView(R.id.homeDarkness)
     val homeNextEventValue: TextView get() = textView(R.id.homeNextEventValue)
+    val homeNotesValue: TextView get() = textView(R.id.homeNotesValue)
     val homeSets: TextView get() = textView(R.id.homeSets)
     val infoLine: TextView get() = textView(R.id.infoLine)
     val morningStart: TextView get() = textView(R.id.morningStart)
