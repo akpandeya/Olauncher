@@ -25,6 +25,8 @@ class DrawerSearchInput(
     val currencyRows: (String) -> List<AppModel.Result>,
     val spellRows: (List<String>) -> List<AppModel.Result>,
     val lookUpRows: (String) -> List<AppModel.Result>,
+    /** Current local time, injectable for tests. */
+    val now: () -> java.time.LocalTime = { java.time.LocalTime.now() },
     /** Stable string for a user, matching [RecentApp.user] and hidden-app keys. */
     val userKey: (android.os.UserHandle) -> String = { it.toString() },
 )
@@ -114,8 +116,11 @@ object DrawerSearch {
             is DrawerCommand.Timer -> TimerCommand.parse(command.args)?.let {
                 rows.add(AppModel.Result(TimerCommand.previewText(it), AppModel.Result.Action.StartTimer(it.seconds, it.label)))
             }
+            is DrawerCommand.Alarm -> AlarmCommand.parse(command.args, input.now())?.let {
+                rows.add(AppModel.Result(AlarmCommand.previewText(it), AppModel.Result.Action.SetAlarm(it.hour, it.minute, it.days, it.label)))
+            }
             // Handled by their own features.
-            is DrawerCommand.Alarm, is DrawerCommand.Event, is DrawerCommand.Note, null -> Unit
+            is DrawerCommand.Event, is DrawerCommand.Note, null -> Unit
         }
         // Runs on the Filter worker thread; a newer query supersedes this one.
         safeAdd(rows) {
