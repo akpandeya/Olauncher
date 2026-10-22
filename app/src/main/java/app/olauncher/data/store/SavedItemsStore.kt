@@ -142,6 +142,14 @@ class SavedItemsStore(
         }
     }
 
+    /** Puts an item's archive stamp back to [previousArchivedAt], in place (used by Undo). */
+    @Synchronized
+    fun restoreArchivedAt(id: Long, previousArchivedAt: Long?) {
+        val all = loadAll()
+        if (all.none { it.id == id }) return
+        saveAll(app.olauncher.helper.ArchiveChange(id, previousArchivedAt).undo(all))
+    }
+
     @Synchronized
     fun unarchive(id: Long) {
         val all = loadAll().toMutableList()

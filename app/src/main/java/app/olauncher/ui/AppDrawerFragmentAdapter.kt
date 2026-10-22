@@ -16,7 +16,9 @@ import app.olauncher.R
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.helper.AppActionHandlers
+import app.olauncher.helper.HiddenChange
 import app.olauncher.helper.HomeAppHelper
+import app.olauncher.helper.UndoMessage
 import app.olauncher.wellbeing.UsageSnapshotWorker
 import app.olauncher.helper.DrawerScrollHelper
 import app.olauncher.helper.RecentApps
@@ -142,7 +144,7 @@ internal fun AppDrawerFragment.initAdapter() {
                 return@AppDrawerAdapter
             }
             if (appModel is AppModel.PinnedShortcut) {
-                requireContext().showToast("Hiding pinned shortcuts is not supported")
+                requireContext().showToast(R.string.hiding_shortcuts_not_supported)
                 return@AppDrawerAdapter
             }
             if (appModel is AppModel.Result || appModel is AppModel.RecentHeader) {
@@ -150,14 +152,19 @@ internal fun AppDrawerFragment.initAdapter() {
             }
             adapter.removeApp(appModel)
 
-            val newSet = mutableSetOf<String>()
-            newSet.addAll(prefs.hiddenApps)
-            if (flag == Constants.FLAG_HIDDEN_APPS)
-                newSet.remove(appModel.appPackage + "|" + appModel.user.toString())
-            else
-                newSet.add(appModel.appPackage + "|" + appModel.user.toString())
+            val hiddenKey = appModel.appPackage + "|" + appModel.user.toString()
+            val change = HiddenChange(hiddenKey, wasHidden = flag == Constants.FLAG_HIDDEN_APPS)
+            val newSet = change.apply(prefs.hiddenApps.toSet()).toMutableSet()
 
             prefs.hiddenApps = newSet
+            UndoMessage.show(
+                activity,
+                getString(if (change.wasHidden) R.string.app_unhidden else R.string.app_hidden),
+            ) {
+                prefs.hiddenApps = change.undo(prefs.hiddenApps.toSet()).toMutableSet()
+                viewModel.getAppList()
+                viewModel.getHiddenApps()
+            }
             if (newSet.isEmpty())
                 findNavController().popBackStack()
             if (prefs.firstHide) {
