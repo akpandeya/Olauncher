@@ -41,23 +41,77 @@ internal fun SettingsFragment.bindRow(spec: SettingsRowSpec, holder: SettingsRow
         view.setOnLongClickListener(if (view.id in LONG_CLICK_IDS) this else null)
     }
     populateRow(spec)
+    populateAllRows()
 }
 
 internal fun SettingsFragment.unbindRow(spec: SettingsRowSpec, holder: SettingsRowHolder) {
     binding.unregister(spec, holder)
 }
 
-/** Writes the current pref state into [spec]'s views. */
+/** Writes the current pref state into [spec]'s view when it is a plain on/off row. */
 internal fun SettingsFragment.populateRow(spec: SettingsRowSpec) {
-    val pref = spec.pref
-    if (pref != null) {
-        populateBooleanRow(spec, pref)
-        return
-    }
-    when (spec.key) {
-        "homeAppsNum" -> binding.homeAppsNum.text = String.format(Locale.getDefault(), "%d", prefs.homeAppsNum)
+    val pref = spec.pref ?: return
+    populateBooleanRow(spec, pref)
+}
 
-    }
+/**
+ * Writes every row's value and wires every slider. Runs each time a row binds, so a row shows
+ * its value and works from the first frame. Rows that are not on screen write to stand-in
+ * views, which is harmless.
+ */
+internal fun SettingsFragment.populateAllRows() {
+    populateHomeSets()
+    populatePhotoWallpaperText()
+    populateKeyboardText()
+    populateAutoBackup()
+    populateSearchContacts()
+    populateCurrencyRates()
+    populateScreenTimeOnOff()
+    populateScreenTimeCue()
+    populateDistractingApps()
+    populatePauseBeforeApps()
+    populatePauseAllowance()
+    populatePauseEscalate()
+    populatePauseAskWhy()
+    populateCommitLock()
+    populateWindDown()
+    populateWindDownGrey()
+    populateSystemGrey()
+    populateHoldNotifications()
+    populateHealthConnect()
+    populateQuietReleaseTimes()
+    populateLockSettings()
+    populateAppThemeText()
+    populateAccent()
+    populateFontFamily()
+    populateTextSize()
+    populateBoldFont()
+    setupHapticSliders()
+    populateTextContrast()
+    populateHomeDarkness()
+    populateTextBrightness()
+    populateMusicPulse()
+    setupGlowStrength()
+    populateWeatherEffects()
+    populateAlignment()
+    populateShortcutIcons()
+    populateStatusBar()
+    populateDateTime()
+    populateBatteryMode()
+    populateInfoLine()
+    populateContextLine()
+    populateHomeNextEvent()
+    populateSearchEngine()
+    populateSwipeApps()
+    populateTodayCards()
+    populateTodayOrder()
+    populateWeather()
+    populateNudgeWater()
+    populateNudgeWalk()
+    populateNudgeSocial()
+    populateActiveHours()
+    populateGerman()
+    binding.homeAppsNum.text = String.format(Locale.getDefault(), "%d", prefs.homeAppsNum)
 }
 
 /** A plain on/off row: the value reads On or Off from its pref. */

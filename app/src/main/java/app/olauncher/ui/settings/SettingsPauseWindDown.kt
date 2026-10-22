@@ -398,8 +398,6 @@ internal fun SettingsFragment.togglePauseAskWhy() {
 }
 
 internal fun SettingsFragment.populateWindDown() {
-    // Idempotent: also fixes a missed start/end and reschedules after a time or toggle change.
-    WindDownWorker.syncAsync(requireContext())
     binding.windDown.text = if (prefs.windDown) {
         "${formatMinutes(prefs.windDownStart)}\u2013${formatMinutes(prefs.windDownEnd)}"
     } else {
