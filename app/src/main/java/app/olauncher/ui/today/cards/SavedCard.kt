@@ -105,8 +105,6 @@ object SavedCard : TodayCard {
 
     var storeProvider: ((Context) -> SavedItemsStore)? = null
 
-    private var binding: CardSavedBinding? = null
-
     fun getStore(context: Context): SavedItemsStore {
         return storeProvider?.invoke(context) ?: SavedItemsStore(context)
     }
@@ -118,41 +116,37 @@ object SavedCard : TodayCard {
 
     override fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View {
         val viewBinding = CardSavedBinding.inflate(inflater, parent, false)
-        binding = viewBinding
-
-        viewBinding.root.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
-            override fun onViewAttachedToWindow(v: View) {}
-            override fun onViewDetachedFromWindow(v: View) {
-                if (binding === viewBinding) {
-                    binding = null
-                }
-            }
-        })
+        val cardView = SavedCardView(viewBinding)
+        viewBinding.root.tag = cardView
 
         viewBinding.tvMore.setOnClickListener {
             Haptics.tick(it)
             isActiveExpanded = true
-            render()
+            cardView.render()
         }
 
         viewBinding.tvArchived.setOnClickListener {
             Haptics.tick(it)
             isArchivedExpanded = !isArchivedExpanded
-            render()
+            cardView.render()
         }
 
-        render()
+        cardView.render()
         return viewBinding.root
     }
 
-    override fun onResume() {
-        render()
+    override fun onResume(view: View) {
+        (view.tag as? SavedCardView)?.render()
     }
+}
+
+/** Per-view state of the Saved card; lives and dies with the card's root view. */
+internal class SavedCardView(private val binding: CardSavedBinding) {
 
     fun render() {
-        val b = binding ?: return
+        val b = binding
         val context = b.root.context ?: return
-        val store = getStore(context)
+        val store = SavedCard.getStore(context)
 
         val activeItems = store.active()
         val archivedItems = store.archived()
@@ -166,12 +160,12 @@ object SavedCard : TodayCard {
         // Active items (newest nearest the bottom, at most 20 unless expanded)
         val visibleActive = SavedCardLogic.getVisibleActiveItems(
             items = activeItems,
-            isExpanded = isActiveExpanded,
-            maxCount = MAX_ACTIVE_VISIBLE
+            isExpanded = SavedCard.isActiveExpanded,
+            maxCount = SavedCard.MAX_ACTIVE_VISIBLE
         )
-        val moreCount = SavedCardLogic.getMoreCount(totalActive, MAX_ACTIVE_VISIBLE)
+        val moreCount = SavedCardLogic.getMoreCount(totalActive, SavedCard.MAX_ACTIVE_VISIBLE)
 
-        b.tvMore.isVisible = !isActiveExpanded && moreCount > 0
+        b.tvMore.isVisible = !SavedCard.isActiveExpanded && moreCount > 0
         if (b.tvMore.isVisible) {
             b.tvMore.text = context.getString(R.string.saved_more, moreCount)
         }
@@ -198,10 +192,10 @@ object SavedCard : TodayCard {
         if (totalArchived > 0) {
             b.tvArchived.text = context.getString(R.string.saved_archived, totalArchived)
         } else {
-            isArchivedExpanded = false
+            SavedCard.isArchivedExpanded = false
         }
 
-        b.archivedContainer.isVisible = totalArchived > 0 && isArchivedExpanded
+        b.archivedContainer.isVisible = totalArchived > 0 && SavedCard.isArchivedExpanded
         b.archivedContainer.removeAllViews()
         if (b.archivedContainer.isVisible) {
             val sortedArchived = SavedCardLogic.sortArchivedItems(archivedItems)
@@ -240,12 +234,12 @@ object SavedCard : TodayCard {
             .setItems(options) { _, which ->
                 when (which) {
                     0 -> {
-                        getStore(context).archive(item.id)
-                        isArchivedExpanded = true
+                        SavedCard.getStore(context).archive(item.id)
+                        SavedCard.isArchivedExpanded = true
                         render()
                     }
                     1 -> {
-                        getStore(context).delete(item.id)
+                        SavedCard.getStore(context).delete(item.id)
                         render()
                     }
                     2 -> {
@@ -266,11 +260,11 @@ object SavedCard : TodayCard {
             .setItems(options) { _, which ->
                 when (which) {
                     0 -> {
-                        getStore(context).unarchive(item.id)
+                        SavedCard.getStore(context).unarchive(item.id)
                         render()
                     }
                     1 -> {
-                        getStore(context).delete(item.id)
+                        SavedCard.getStore(context).delete(item.id)
                         render()
                     }
                 }
