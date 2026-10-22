@@ -47,4 +47,11 @@ class AppActionListTest {
         val list = AppActionList.build(false, false, false)
         assertEquals(listOf(Id.HIDE, Id.UNINSTALL), list.filter { it.isDestructive }.map { it.id })
     }
+
+    @Test
+    fun shortcutListIsChangeAppBuiltinReset() {
+        val list = AppActionList.buildShortcut()
+        assertEquals(listOf(Id.CHANGE_APP, Id.CHOOSE_BUILTIN, Id.RESET_SHORTCUT), ids(list))
+        assertEquals(listOf(Id.RESET_SHORTCUT), list.filter { it.isDestructive }.map { it.id })
+    }
 }

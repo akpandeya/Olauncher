@@ -146,7 +146,7 @@ internal fun HomeFragment.getShortcutSwipeTouchListener(context: Context, view: 
         override fun onLongClick(view: View) {
             super.onLongClick(view)
             Haptics.longPress(view)
-            showShortcutMenu(slot)
+            showShortcutPopup(view, slot)
         }
 
         override fun onClick(view: View) {
