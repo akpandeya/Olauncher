@@ -31,9 +31,10 @@ object Constants {
         const val OFF = 0
         const val ON = 1
         const val DATE_ONLY = 2
+        const val CLOCK_ONLY = 3
 
         fun isTimeVisible(dateTimeVisibility: Int): Boolean {
-            return dateTimeVisibility == ON
+            return dateTimeVisibility == ON || dateTimeVisibility == CLOCK_ONLY
         }
 
         fun isDateVisible(dateTimeVisibility: Int): Boolean {
