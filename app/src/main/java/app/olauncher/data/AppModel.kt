@@ -65,7 +65,7 @@ sealed class AppModel : Comparable<AppModel> {
             /** Unreadable command input (`Can't read '…'`). Tap and Enter do nothing. */
             data object Error : Action
             /** Tap saves an open note (`:n`). */
-            data class SaveNote(val text: String) : Action
+            data class SaveNote(val text: String, val showFrom: java.time.LocalDate? = null) : Action
             /** [openOnTap] false: tap does nothing, long-press still opens the page. */
             data class OpenWiktionary(val text: String, val openOnTap: Boolean = true) : Action
         }

@@ -105,7 +105,7 @@ internal fun AppDrawerFragment.initAdapter() {
                         }
 
                         is AppModel.Result.Action.SaveNote -> {
-                            NotesStore({ prefs.notesJson }, { prefs.notesJson = it }).add(action.text, System.currentTimeMillis())
+                            NotesStore({ prefs.notesJson }, { prefs.notesJson = it }).add(action.text, System.currentTimeMillis(), action.showFrom)
                             requireContext().showToast(getString(R.string.note_saved))
                             findNavController().popBackStack(R.id.mainFragment, false)
                         }

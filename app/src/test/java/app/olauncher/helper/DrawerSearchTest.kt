@@ -218,6 +218,17 @@ class DrawerSearchTest {
     }
 
     @Test
+    fun `dated note row carries the date and unreadable date gives an error row`() {
+        val dated = commandRows(":n pay rent 1.11").single()
+        val action = dated.action as AppModel.Result.Action.SaveNote
+        assertEquals("pay rent", action.text)
+        assertEquals(java.time.LocalDate.now().let { t -> java.time.LocalDate.of(t.year, 11, 1).let { if (it.isBefore(t)) it.plusYears(1) else it } }, action.showFrom)
+        val bad = commandRows(":n pay rent 32.13")
+        assertEquals(listOf("Can't read '32.13'"), bad.map { it.text })
+        assertEquals(AppModel.Result.Action.Error, bad.single().action)
+    }
+
+    @Test
     fun `unreadable timer and alarm input show a cant-read error row with no action`() {
         val t = commandRows(":t 25x tea")
         assertEquals(listOf("Can't read '25x'"), t.map { it.text })
