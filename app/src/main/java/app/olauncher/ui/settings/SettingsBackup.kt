@@ -141,6 +141,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.Collator
 
+private const val TAG = "SettingsBackup"
+
 internal fun SettingsFragment.launchExportBackup() {
     viewModel.isAwaitingActivityResult = true
     exportBackupLauncher.launch(Backup.defaultBackupFileName())
@@ -153,7 +155,7 @@ internal fun SettingsFragment.exportBackup(uri: Uri) {
             Backup.export(appContext, uri)
             true
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.w(TAG, "exportBackup failed", e)
             false
         }
         withContext(Dispatchers.Main) {
@@ -207,7 +209,7 @@ internal fun SettingsFragment.enableAutoBackup(uri: Uri) {
             Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
         )
     } catch (e: Exception) {
-        e.printStackTrace()
+        Log.w(TAG, "enableAutoBackup failed", e)
         return
     }
     prefs.autoBackupTreeUri = uri.toString()
@@ -229,7 +231,7 @@ internal fun SettingsFragment.handleImportBackup(uri: Uri) {
         val backupData = try {
             Backup.readBackup(appContext, uri)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.w(TAG, "handleImportBackup failed", e)
             null
         }
         withContext(Dispatchers.Main) {
@@ -287,7 +289,7 @@ internal fun SettingsFragment.restoreBackupNow(backupData: BackupData) {
         try {
             Backup.restore(appContext, backupData)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.w(TAG, "restoreBackupNow failed", e)
             withContext(Dispatchers.Main) {
                 if (isAdded) {
                     appContext.showToast(R.string.not_a_thumbline_backup)

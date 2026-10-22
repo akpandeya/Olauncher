@@ -47,6 +47,8 @@ import java.text.Collator
 import kotlin.math.pow
 import kotlin.math.sqrt
 
+private const val TAG = "Utils"
+
 fun Context.showToast(message: String?, duration: Int = Toast.LENGTH_SHORT) {
     if (message.isNullOrBlank()) return
     Toast.makeText(this, message, duration).show()
@@ -120,7 +122,7 @@ suspend fun getAppsList(
 
             AppListBuilder.sortByLabel(appList, collator) { it.appLabel }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.w(TAG, "getAppsList failed", e)
         }
         appList
     }
@@ -166,7 +168,7 @@ private suspend fun getPinnedShortcuts(
                         }
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    Log.w(TAG, "getPinnedShortcuts failed", e)
                 }
             }
         }
@@ -254,7 +256,7 @@ suspend fun getPrivateSpaceApps(
             }
             AppListBuilder.sortByLabel(appList, collator) { it.appLabel }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.w(TAG, "getPrivateSpaceApps failed", e)
         }
         appList
     }
@@ -316,7 +318,7 @@ fun setPlainWallpaper(context: Context, color: Int) {
         manager.setBitmap(bitmap, null, false, WallpaperManager.FLAG_LOCK)
         bitmap.recycle()
     } catch (e: Exception) {
-        e.printStackTrace()
+        Log.w(TAG, "setPlainWallpaper failed", e)
     }
 }
 
@@ -387,7 +389,7 @@ fun expandNotificationDrawer(context: Context) {
         val method = statusBarManager.getMethod("expandNotificationsPanel")
         method.invoke(statusBarService)
     } catch (e: Exception) {
-        e.printStackTrace()
+        Log.w(TAG, "expandNotificationDrawer failed", e)
     }
 }
 
@@ -396,7 +398,7 @@ fun openDialerApp(context: Context) {
         val sendIntent = Intent(Intent.ACTION_DIAL)
         context.startActivity(sendIntent)
     } catch (e: Exception) {
-        e.printStackTrace()
+        Log.w(TAG, "openDialerApp failed", e)
     }
 }
 
@@ -405,7 +407,7 @@ fun openCameraApp(context: Context) {
         val sendIntent = Intent(MediaStore.INTENT_ACTION_STILL_IMAGE_CAMERA)
         context.startActivity(sendIntent)
     } catch (e: Exception) {
-        e.printStackTrace()
+        Log.w(TAG, "openCameraApp failed", e)
     }
 }
 
@@ -415,7 +417,7 @@ fun openGalleryApp(context: Context) {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         context.startActivity(intent)
     } catch (e: Exception) {
-        e.printStackTrace()
+        Log.w(TAG, "openGalleryApp failed", e)
     }
 }
 
@@ -425,7 +427,7 @@ fun openMessagesApp(context: Context) {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         context.startActivity(intent)
     } catch (e: Exception) {
-        e.printStackTrace()
+        Log.w(TAG, "openMessagesApp failed", e)
     }
 }
 
@@ -451,7 +453,7 @@ fun openCalendar(context: Context) {
             intent.addCategory(Intent.CATEGORY_APP_CALENDAR)
             context.startActivity(intent)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.w(TAG, "openCalendar failed", e)
         }
     }
 }
@@ -516,7 +518,7 @@ fun Context.isSystemApp(packageName: String, user: UserHandle? = null): Boolean 
                     || (applicationInfo.flags and ApplicationInfo.FLAG_UPDATED_SYSTEM_APP != 0))
         }
     } catch (e: Exception) {
-        e.printStackTrace()
+        Log.w(TAG, "isSystemApp failed", e)
         false
     }
 }

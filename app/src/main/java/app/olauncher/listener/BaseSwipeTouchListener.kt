@@ -15,6 +15,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+import android.util.Log
+
+private const val TAG = "BaseSwipeTouchListener"
 
 /*
 Shared swipe, double tap and long press gesture handling for a view.
@@ -107,7 +110,7 @@ internal abstract class BaseSwipeTouchListener(c: Context?) : OnTouchListener {
                     }
                 }
             } catch (exception: Exception) {
-                exception.printStackTrace()
+                Log.w(TAG, "onFling failed", exception)
             }
             return false
         }

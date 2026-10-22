@@ -38,6 +38,9 @@ import app.olauncher.helper.ContactSource
 import app.olauncher.helper.DrawerSearch
 import app.olauncher.helper.DrawerSearchInput
 import app.olauncher.helper.RecentApp
+import android.util.Log
+
+private const val TAG = "AppDrawerAdapter"
 
 class AppDrawerAdapter(
     private var flag: Int,
@@ -237,7 +240,7 @@ class AppDrawerAdapter(
                 }
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.w(TAG, "onBindViewHolder failed", e)
         }
     }
 
@@ -321,7 +324,7 @@ class AppDrawerAdapter(
                 appClickListener(first!!)
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.w(TAG, "autoLaunch failed", e)
         }
     }
 

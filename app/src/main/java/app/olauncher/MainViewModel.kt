@@ -33,6 +33,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Calendar
+import android.util.Log
+
+private const val TAG = "MainViewModel"
 
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -398,7 +401,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             userManager.requestQuietModeEnabled(!currentlyLocked, handle)
         } catch (e: Exception) {
             isPrivateSpaceToggling = false
-            e.printStackTrace()
+            Log.w(TAG, "togglePrivateSpaceLock failed", e)
         }
     }
 
@@ -413,7 +416,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     }
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.w(TAG, "setDefaultClockApp failed", e)
             }
         }
     }

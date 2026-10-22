@@ -90,6 +90,8 @@ import app.olauncher.helper.showKeyboard
 import app.olauncher.helper.showToast
 import app.olauncher.helper.uninstall
 
+private const val TAG = "AppDrawerFragment"
+
 class AppDrawerFragment : BaseFragment() {
 
     private lateinit var prefs: Prefs
@@ -218,7 +220,7 @@ class AppDrawerFragment : BaseFragment() {
             searchTextView = binding.search.findViewById(R.id.search_src_text)
             searchTextView?.gravity = prefs.appLabelAlignment
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.w(TAG, "initViews failed", e)
         }
     }
 
@@ -266,7 +268,7 @@ class AppDrawerFragment : BaseFragment() {
                     updateLetterStripVisibility(newText)
                     return true
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    Log.w(TAG, "onQueryTextChange failed", e)
                 }
                 return false
             }
@@ -427,7 +429,7 @@ class AppDrawerFragment : BaseFragment() {
             val encoded = URLEncoder.encode(text.trim(), "UTF-8").replace("+", "%20")
             requireContext().openUrl("https://en.wiktionary.org/wiki/$encoded")
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.w(TAG, "openWiktionary failed", e)
         }
     }
 
@@ -538,7 +540,7 @@ class AppDrawerFragment : BaseFragment() {
                 try {
                     requireContext().openSearch(target.query)
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    Log.w(TAG, "openWebSearch failed", e)
                 }
             }
             is SearchTarget.Url -> {
@@ -548,10 +550,10 @@ class AppDrawerFragment : BaseFragment() {
                     try {
                         requireContext().openSearch(query)
                     } catch (e2: Exception) {
-                        e2.printStackTrace()
+                        Log.w(TAG, "openWebSearch failed", e2)
                     }
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    Log.w(TAG, "openWebSearch failed", e)
                 }
             }
         }
@@ -591,7 +593,7 @@ class AppDrawerFragment : BaseFragment() {
                 }
                 startActivity(intent)
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.w(TAG, "dialContact failed", e)
             }
             findNavController().popBackStack(R.id.mainFragment, false)
         }
@@ -625,7 +627,7 @@ class AppDrawerFragment : BaseFragment() {
                                         )
                                     )
                                 } catch (e: Exception) {
-                                    e.printStackTrace()
+                                    Log.w(TAG, "initAdapter failed", e)
                                 }
                                 findNavController().popBackStack(R.id.mainFragment, false)
                             }
@@ -634,7 +636,7 @@ class AppDrawerFragment : BaseFragment() {
                                 try {
                                     startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(action.lookupUri)))
                                 } catch (e: Exception) {
-                                    e.printStackTrace()
+                                    Log.w(TAG, "initAdapter failed", e)
                                 }
                                 findNavController().popBackStack(R.id.mainFragment, false)
                             }
@@ -658,7 +660,7 @@ class AppDrawerFragment : BaseFragment() {
                                     }
                                     startActivity(intent)
                                 } catch (e: Exception) {
-                                    e.printStackTrace()
+                                    Log.w(TAG, "initAdapter failed", e)
                                 }
                                 findNavController().popBackStack(R.id.mainFragment, false)
                             }
