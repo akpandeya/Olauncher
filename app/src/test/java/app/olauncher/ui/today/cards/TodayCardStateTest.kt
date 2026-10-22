@@ -11,7 +11,7 @@ import java.lang.reflect.Modifier
 class TodayCardStateTest {
 
     /** Add a card object here when it has been moved to per-view state. */
-    private val cards: List<Any> = listOf(WellbeingCard, NextUpCard)
+    private val cards: List<Any> = listOf(WellbeingCard, NextUpCard, HeldCard, SavedCard)
 
     private val forbidden = listOf(
         View::class.java,
