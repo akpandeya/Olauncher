@@ -527,6 +527,8 @@
     <string name="command_help_timer" tools:ignore="MissingTranslation">Timer: :t 10 tea</string>
     <string name="command_help_alarm" tools:ignore="MissingTranslation">Alarm: :a 7:30 wake up</string>
     <string name="command_help_event" tools:ignore="MissingTranslation">Event: :e dentist tomorrow 15:00</string>
+    <string name="command_cant_read" tools:ignore="MissingTranslation">Can\'t read \'%1$s\'</string>
+    <string name="command_event_no_title" tools:ignore="MissingTranslation">Can\'t add an event without a title</string>
     <string name="command_help_note" tools:ignore="MissingTranslation">Note: :n buy milk</string>
     <string name="command_help_save_words" tools:ignore="MissingTranslation">Save words: :sw Fernweh, Heimat</string>
     <string name="command_help_look_up" tools:ignore="MissingTranslation">Look up a word: :w Hund</string>

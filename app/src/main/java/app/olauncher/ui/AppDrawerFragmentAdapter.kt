@@ -141,6 +141,8 @@ internal fun AppDrawerFragment.initAdapter() {
                             findNavController().popBackStack(R.id.mainFragment, false)
                         }
 
+                        is AppModel.Result.Action.Error -> Unit
+
                         is AppModel.Result.Action.OpenWiktionary -> {
                             if (action.openOnTap) {
                                 openWiktionary(action.text)
