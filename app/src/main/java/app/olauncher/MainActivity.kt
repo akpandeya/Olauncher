@@ -36,6 +36,9 @@ import app.olauncher.data.Accent
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
+import app.olauncher.data.ProfileFeature
+import app.olauncher.data.ProfilePermission
+import app.olauncher.data.ProfilePermissionRules
 import app.olauncher.data.ProfilePicker
 import app.olauncher.data.ProfilePickerOption
 import app.olauncher.glance.WeatherLocation
@@ -136,6 +139,17 @@ class MainActivity : AppCompatActivity() {
         if (granted) enableOnboardingWaterNudge()
         onboardingRowsRefresh?.invoke()
     }
+
+    // Manual profile switch: permissions offered for features the profile would turn on.
+    private var profilePendingId: String? = null
+    private var profileMissingBefore = 0
+    private var profileWantsListener = false
+    private var profileNeedsAppSettings = false
+    private var profileRecheckId: String? = null
+    private var profileRecheckLeft = false
+    private val profilePermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { result -> onProfilePermissionResult(result) }
 
 //    override fun onBackPressed() {
 //        if (navController.currentDestination?.id != R.id.mainFragment)
@@ -256,6 +270,136 @@ class MainActivity : AppCompatActivity() {
         reloadAppList(AppListReloadTrigger.RESUME)
         advanceWelcomeIfDefault()
         NudgeScheduler.syncSocial(this)
+        finishProfileRecheck()
+    }
+
+    /**
+     * Offers the permissions a profile's features need, when a manual switch left some features off.
+     * One dialog lists them; Allow asks for each in turn. A refusal is remembered per permission,
+     * so it is not asked again unless [ignoreDeclined] (the "Allow missing features" item).
+     * Features stay off on refusal; the rest of the profile already applies.
+     */
+    fun offerProfilePermissions(profileId: String, ignoreDeclined: Boolean = false) {
+        val profile = prefs.profiles().firstOrNull { it.id == profileId } ?: return
+        val missing = ProfilePermissionRules.missing(profile.settings, prefs.currentProfilePermissions())
+        val declined = ProfilePermissionRules.parseDeclined(prefs.profilePermissionDeclined)
+        val ask = ProfilePermissionRules.toAsk(missing, if (ignoreDeclined) emptySet() else declined)
+        if (ask.isEmpty()) return
+        val lines = ProfilePermissionRules.featuresFor(missing, ask).joinToString("\n") { "• " + getString(profileFeatureLabel(it)) }
+        var allowed = false
+        messageDialog?.dismiss()
+        val shown = showMessageDialog(
+            R.string.profile_permissions_title,
+            getString(R.string.profile_permissions_message, profile.name, lines),
+            R.string.allow,
+        ) {
+            allowed = true
+            requestProfilePermissions(profileId, ask, missing.size)
+        }
+        shown.setOnDismissListener { if (!allowed) markProfilePermissionsDeclined(ask) }
+        messageDialog = shown
+    }
+
+    private fun profileFeatureLabel(feature: ProfileFeature): Int = when (feature) {
+        ProfileFeature.WEATHER -> R.string.profile_feature_weather
+        ProfileFeature.CONTACTS_SEARCH -> R.string.profile_feature_contacts
+        ProfileFeature.NEXT_EVENT -> R.string.profile_feature_next_event
+        ProfileFeature.MUSIC_LINE -> R.string.profile_feature_music_line
+        ProfileFeature.MUSIC_PULSE -> R.string.profile_feature_music_pulse
+        ProfileFeature.QUIET -> R.string.profile_feature_quiet
+    }
+
+    private fun runtimePermissionOf(permission: ProfilePermission): String? = when (permission) {
+        ProfilePermission.LOCATION -> Manifest.permission.ACCESS_COARSE_LOCATION
+        ProfilePermission.CONTACTS -> Manifest.permission.READ_CONTACTS
+        ProfilePermission.CALENDAR -> Manifest.permission.READ_CALENDAR
+        ProfilePermission.NOTIFICATION_ACCESS -> null
+    }
+
+    private fun markProfilePermissionsDeclined(permissions: Collection<ProfilePermission>) {
+        val declined = ProfilePermissionRules.parseDeclined(prefs.profilePermissionDeclined) + permissions
+        prefs.profilePermissionDeclined = ProfilePermissionRules.declinedNames(declined)
+    }
+
+    private fun requestProfilePermissions(profileId: String, ask: List<ProfilePermission>, missingBefore: Int) {
+        profilePendingId = profileId
+        profileMissingBefore = missingBefore
+        val declined = ProfilePermissionRules.parseDeclined(prefs.profilePermissionDeclined)
+        // Android shows no prompt after two refusals; those go to app settings instead.
+        val blocked = ask.mapNotNull { p ->
+            runtimePermissionOf(p)?.takeIf {
+                p in declined && !shouldShowRequestPermissionRationale(it)
+            }?.let { p }
+        }
+        val runtime = ask.filter { it !in blocked }.mapNotNull { runtimePermissionOf(it) }
+        profileWantsListener = ProfilePermission.NOTIFICATION_ACCESS in ask
+        profileNeedsAppSettings = blocked.isNotEmpty()
+        if (runtime.isEmpty()) continueProfileRequest() else profilePermissionLauncher.launch(runtime.toTypedArray())
+    }
+
+    private fun onProfilePermissionResult(result: Map<String, Boolean>) {
+        val refused = ProfilePermission.values().filter { p ->
+            runtimePermissionOf(p)?.let { result[it] == false } == true
+        }
+        markProfilePermissionsDeclined(refused)
+        continueProfileRequest()
+    }
+
+    /** After the runtime prompts: app settings for blocked ones, then notification access, then apply. */
+    private fun continueProfileRequest() {
+        val id = profilePendingId ?: return
+        if (profileNeedsAppSettings) {
+            profileNeedsAppSettings = false
+            if (openProfileExternalSettings(id, Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.fromParts("package", packageName, null)))) return
+        }
+        if (profileWantsListener && !QuietAccess.isNotificationAccessGranted(this)) {
+            profileWantsListener = false
+            if (openProfileExternalSettings(id, Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))) return
+        }
+        profileWantsListener = false
+        reapplyProfileAfterPermissions(id)
+    }
+
+    private fun openProfileExternalSettings(profileId: String, intent: Intent): Boolean = try {
+        profileRecheckId = profileId
+        profileRecheckLeft = false
+        startActivity(intent)
+        true
+    } catch (_: Exception) {
+        profileRecheckId = null
+        false
+    }
+
+    /** Back from system settings: apply the profile again if that granted something. */
+    private fun finishProfileRecheck() {
+        val id = profileRecheckId ?: return
+        if (!profileRecheckLeft) return
+        profileRecheckId = null
+        profileRecheckLeft = false
+        if (profileWantsListener) {
+            // Still to do: notification access after app settings.
+            continueProfileRequest()
+            return
+        }
+        reapplyProfileAfterPermissions(id)
+    }
+
+    private fun reapplyProfileAfterPermissions(profileId: String) {
+        profilePendingId = null
+        val profile = prefs.profiles().firstOrNull { it.id == profileId } ?: return
+        val granted = prefs.currentProfilePermissions()
+        val stillMissing = ProfilePermissionRules.missing(profile.settings, granted)
+        if (stillMissing.size >= profileMissingBefore) {
+            // Nothing new was allowed: remember a refused notification access, leave the settings alone.
+            if (ProfileFeature.MUSIC_LINE in stillMissing || ProfileFeature.MUSIC_PULSE in stillMissing || ProfileFeature.QUIET in stillMissing) {
+                markProfilePermissionsDeclined(listOf(ProfilePermission.NOTIFICATION_ACCESS))
+            }
+            return
+        }
+        prefs.switchProfile(profileId)
+        if (prefs.weatherEnabled && WeatherLocation.hasPermission(this)) enableOnboardingWeather()
+        if (prefs.quietEnabled && QuietAccess.isNotificationAccessGranted(this)) ReleaseWorker.schedule(this, ExistingWorkPolicy.KEEP)
+        viewModel.refreshHome(true)
     }
 
     /** A welcome still on step 1 moves on once the user has made Thumbline the default launcher. */
@@ -435,6 +579,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStop() {
         isResumed = false
+        if (profileRecheckId != null) profileRecheckLeft = true
         backToHomeScreen()
         super.onStop()
     }

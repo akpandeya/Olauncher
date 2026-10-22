@@ -19,6 +19,9 @@ interface ProfilePrefs {
 
     /** Epoch millis at which the manual switch ends; 0 when no switch is held. */
     var manualProfileUntil: Long
+
+    /** Names of [ProfilePermission]s the user turned down at a profile switch. Asked again only on request. */
+    var profilePermissionDeclined: Set<String>
 }
 
 internal class ProfilePrefsStore(private val prefs: SharedPreferences) : ProfilePrefs {
@@ -27,6 +30,7 @@ internal class ProfilePrefsStore(private val prefs: SharedPreferences) : Profile
     private val APPLIED_PROFILE_ID = "APPLIED_PROFILE_ID"
     private val MANUAL_PROFILE_ID = "MANUAL_PROFILE_ID"
     private val MANUAL_PROFILE_UNTIL = "MANUAL_PROFILE_UNTIL"
+    private val PROFILE_PERMISSION_DECLINED = "PROFILE_PERMISSION_DECLINED"
 
     override var profilesJson: String
         get() = prefs.getString(PROFILES_JSON, "").orEmpty()
@@ -57,6 +61,10 @@ internal class ProfilePrefsStore(private val prefs: SharedPreferences) : Profile
     override var manualProfileUntil: Long
         get() = prefs.getLong(MANUAL_PROFILE_UNTIL, 0L)
         set(value) = prefs.edit { putLong(MANUAL_PROFILE_UNTIL, value) }
+
+    override var profilePermissionDeclined: Set<String>
+        get() = prefs.getStringSet(PROFILE_PERMISSION_DECLINED, emptySet())?.toSet() ?: emptySet()
+        set(value) = prefs.edit { putStringSet(PROFILE_PERMISSION_DECLINED, value) }
 }
 
 /** Lets a profile write its settings into [Prefs]. */

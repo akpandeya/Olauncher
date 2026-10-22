@@ -629,6 +629,20 @@
     <string name="profile_save_to" tools:ignore="MissingTranslation">Save to %1$s</string>
     <string name="profile_reset_to" tools:ignore="MissingTranslation">Reset to %1$s</string>
     <string name="profile_switched" tools:ignore="MissingTranslation">Switched to %1$s</string>
+    <string name="profile_permissions_title" tools:ignore="MissingTranslation">Allow features</string>
+    <string name="profile_permissions_message" tools:ignore="MissingTranslation">%1$s needs:\n%2$s\n\nAllow now?</string>
+    <string name="profile_permissions_allow_missing" tools:ignore="MissingTranslation">Allow missing features</string>
+    <string name="profile_feature_weather" tools:ignore="MissingTranslation">weather (location)</string>
+    <string name="profile_feature_contacts" tools:ignore="MissingTranslation">contacts search (contacts)</string>
+    <string name="profile_feature_next_event" tools:ignore="MissingTranslation">next event (calendar)</string>
+    <string name="profile_feature_music_line" tools:ignore="MissingTranslation">music line (notification access)</string>
+    <string name="profile_feature_music_pulse" tools:ignore="MissingTranslation">music glow (notification access)</string>
+    <string name="profile_feature_quiet" tools:ignore="MissingTranslation">quiet notifications (notification access)</string>
+    <string name="profile_row_with_hint" tools:ignore="MissingTranslation">%1$s · %2$s</string>
+    <plurals name="profile_features_need_permission" tools:ignore="MissingTranslation">
+        <item quantity="one">%d feature needs permission</item>
+        <item quantity="other">%d features need permission</item>
+    </plurals>
     <string name="profile_saved" tools:ignore="MissingTranslation">Saved to %1$s</string>
     <string name="profile_switch_row" tools:ignore="MissingTranslation">Switch to %1$s</string>
     <string name="profile_not_found" tools:ignore="MissingTranslation">No profile \'%1$s\'</string>
