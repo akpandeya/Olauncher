@@ -35,6 +35,9 @@ import app.olauncher.helper.showKeyboard
 import app.olauncher.helper.AppMatcher
 import app.olauncher.helper.ArchivedAppsHelper
 import app.olauncher.helper.ContactSource
+import app.olauncher.helper.DrawerAdapterLogic
+import app.olauncher.helper.DrawerFilterPayload
+import app.olauncher.helper.DrawerFilterState
 import app.olauncher.helper.DrawerSearch
 import app.olauncher.helper.DrawerSearchInput
 import app.olauncher.helper.LetterStripTarget
@@ -105,13 +108,6 @@ class AppDrawerAdapter(
     private var isBangSearch = false
     var allowAutoLaunch = true
     private var appFilteredScores: List<Int> = emptyList()
-    private data class FilterPayload(
-        val items: List<AppModel>,
-        val scores: List<Int>,
-        val searchQuery: String,
-        val isBangSearch: Boolean,
-        val autoLaunch: Boolean,
-    )
     private val appFilter = createAppFilter()
     private val myUserHandle = android.os.Process.myUserHandle()
     private var adapterContext: Context? = context
@@ -276,31 +272,27 @@ class AppDrawerAdapter(
                     )
                 )
                 return FilterResults().apply {
-                    values = FilterPayload(result.items, result.scores, result.searchQuery, result.isBangSearch, result.autoLaunch)
+                    values = DrawerFilterPayload.from(result)
                 }
             }
 
             override fun publishResults(constraint: CharSequence?, results: FilterResults?) {
-                searchQuery = constraint?.toString().orEmpty()
-                val payload = results?.values as? FilterPayload
-                val items: List<AppModel>
-                if (payload != null) {
-                    items = payload.items
-                    appFilteredScores = payload.scores
-                    searchQuery = payload.searchQuery
-                    isBangSearch = payload.isBangSearch
-                    autoLaunch = payload.autoLaunch
-                } else {
-                    items = emptyList()
-                    appFilteredScores = emptyList()
-                }
+                val state = DrawerAdapterLogic.publish(
+                    constraint,
+                    results?.values as? DrawerFilterPayload,
+                    DrawerFilterState(emptyList(), appFilteredScores, searchQuery, isBangSearch, autoLaunch),
+                )
+                val items = state.items
+                appFilteredScores = state.scores
+                searchQuery = state.searchQuery
+                isBangSearch = state.isBangSearch
+                autoLaunch = state.autoLaunch
                 (recyclerView?.layoutManager as? LinearLayoutManager)?.let { lm ->
                     lm.stackFromEnd = bottomSearch
                 }
                 submitList(items) {
-                    if (items.isNotEmpty()) {
-                        val targetPosition = if (bottomSearch) items.size - 1 else 0
-                        recyclerView?.scrollToPosition(targetPosition)
+                    DrawerAdapterLogic.scrollTarget(bottomSearch, items.size)?.let {
+                        recyclerView?.scrollToPosition(it)
                     }
                     autoLaunch()
                 }
@@ -310,8 +302,8 @@ class AppDrawerAdapter(
 
     private fun autoLaunch() {
         try {
-            val strongMatches = appFilteredScores.count { it >= AppMatcher.SCORE_SUBSTRING }
-            val first = if (bottomSearch) currentList.lastOrNull() else currentList.firstOrNull()
+            val strongMatches = DrawerAdapterLogic.strongMatches(appFilteredScores)
+            val first = DrawerAdapterLogic.autoLaunchCandidate(currentList, bottomSearch)
             if (ArchivedAppsHelper.canAutoLaunch(
                     query = searchQuery,
                     hasResultRow = hasResultRow,
@@ -347,9 +339,8 @@ class AppDrawerAdapter(
 
     /** Removes an app from the full and displayed lists without mutating either in place. */
     fun removeApp(app: AppModel) {
-        val matches = { it: AppModel -> it.appPackage == app.appPackage && it.user == app.user }
-        appsList = appsList.filterNot(matches)
-        submitList(currentList.filterNot(matches))
+        appsList = DrawerAdapterLogic.removeApp(appsList, app)
+        submitList(DrawerAdapterLogic.removeApp(currentList, app))
     }
 
     fun launchFirstInList() {
