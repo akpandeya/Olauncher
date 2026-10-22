@@ -108,6 +108,7 @@ internal fun AppDrawerFragment.initAdapter() {
                         is AppModel.Result.Action.SwitchProfile -> {
                             prefs.switchProfile(action.profileId)
                             requireContext().showToast(getString(R.string.profile_switched, action.name))
+                            (activity as? app.olauncher.MainActivity)?.offerProfilePermissions(action.profileId)
                             viewModel.refreshHome(true)
                             findNavController().popBackStack(R.id.mainFragment, false)
                         }
