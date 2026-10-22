@@ -519,7 +519,6 @@ class AppDrawerAdapter(
 
             appTitle.hapticLongClick {
                 if (appModel.appPackage.isNotEmpty()) {
-                    root.hideKeyboard()
                     val actions = AppActionList.build(
                         isArchived = appModel.isArchived,
                         isHidden = isHidden,
