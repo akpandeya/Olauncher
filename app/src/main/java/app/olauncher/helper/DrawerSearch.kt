@@ -111,8 +111,11 @@ object DrawerSearch {
             is DrawerCommand.Help -> command.commands.forEach {
                 rows.add(AppModel.Result(input.commandHelpRowText(it.word), AppModel.Result.Action.FillQuery(it.prefix)))
             }
+            is DrawerCommand.Timer -> TimerCommand.parse(command.args)?.let {
+                rows.add(AppModel.Result(TimerCommand.previewText(it), AppModel.Result.Action.StartTimer(it.seconds, it.label)))
+            }
             // Handled by their own features.
-            is DrawerCommand.Timer, is DrawerCommand.Alarm, is DrawerCommand.Event, is DrawerCommand.Note, null -> Unit
+            is DrawerCommand.Alarm, is DrawerCommand.Event, is DrawerCommand.Note, null -> Unit
         }
         // Runs on the Filter worker thread; a newer query supersedes this one.
         safeAdd(rows) {
