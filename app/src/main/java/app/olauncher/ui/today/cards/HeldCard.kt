@@ -104,9 +104,6 @@ object HeldCard : TodayCard {
     var zoneSupplier: () -> ZoneId = { ZoneId.systemDefault() }
     var appOpener: ((Fragment, String, String) -> Unit)? = null
 
-    internal var binding: CardHeldBinding? = null
-    internal var attachedFragment: Fragment? = null
-
     fun getStore(context: Context): HeldStore {
         return storeProvider?.invoke(context) ?: HeldStore(context)
     }
@@ -124,16 +121,13 @@ object HeldCard : TodayCard {
 
     override fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View {
         val viewBinding = CardHeldBinding.inflate(inflater, parent, false)
-        binding = viewBinding
-        attachedFragment = fragment
+        val cardView = HeldCardView(viewBinding, fragment)
+        viewBinding.root.tag = cardView
 
         viewBinding.root.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
             override fun onViewAttachedToWindow(v: View) {}
             override fun onViewDetachedFromWindow(v: View) {
-                if (binding === viewBinding) {
-                    binding = null
-                    attachedFragment = null
-                }
+                cardView.release()
             }
         })
 
@@ -141,67 +135,15 @@ object HeldCard : TodayCard {
             Haptics.tick(it)
             val context = viewBinding.root.context ?: return@setOnClickListener
             getStore(context).clearAll()
-            render()
+            cardView.render()
         }
 
-        render()
+        cardView.render()
         return viewBinding.root
     }
 
-    override fun onResume() {
-        render()
-    }
-
     override fun onResume(view: View) {
-        if (binding == null) {
-            try {
-                binding = CardHeldBinding.bind(view)
-            } catch (_: Exception) {
-            }
-        }
-        render()
-    }
-
-    fun render() {
-        val b = binding ?: return
-        val context = b.root.context ?: return
-        val store = getStore(context)
-        val now = nowSupplier()
-        store.pruneOlderThan(now - HeldStore.FORTY_EIGHT_HOURS_MS)
-        val items = store.all()
-        val summaries = HeldCardLogic.groupAndSort(items, now)
-
-        if (summaries.isEmpty()) {
-            b.tvEmpty.isVisible = true
-            b.itemsContainer.removeAllViews()
-            b.tvClearAll.isVisible = false
-            return
-        }
-
-        b.tvEmpty.isVisible = false
-        b.tvClearAll.isVisible = true
-        b.itemsContainer.removeAllViews()
-
-        val inflater = LayoutInflater.from(context)
-        val zone = zoneSupplier()
-        val fragment = attachedFragment
-
-        for (summary in summaries) {
-            val itemBinding = ItemHeldBinding.inflate(inflater, b.itemsContainer, false)
-            itemBinding.tvHeldLine.text = HeldCardLogic.formatAppLine(summary, zone)
-            if (fragment != null && summary.pkg.isNotBlank()) {
-                itemBinding.root.setOnClickListener {
-                    Haptics.tick(it)
-                    store.clear(summary.pkg)
-                    render()
-                    openApp(fragment, summary.pkg, summary.label)
-                }
-            } else {
-                itemBinding.root.isClickable = false
-                itemBinding.root.isFocusable = false
-            }
-            b.itemsContainer.addView(itemBinding.root)
-        }
+        (view.tag as? HeldCardView)?.render()
     }
 
     fun openApp(fragment: Fragment, pkg: String, label: String) {
@@ -229,6 +171,60 @@ object HeldCard : TodayCard {
                 )
             }
             viewModel?.selectedApp(appModel, Constants.FLAG_LAUNCH_APP)
+        }
+    }
+}
+
+/** Per-view state of the Held card; lives and dies with the card's root view. */
+internal class HeldCardView(
+    private val binding: CardHeldBinding,
+    fragment: Fragment,
+) {
+    private var fragment: Fragment? = fragment
+
+    fun release() {
+        fragment = null
+    }
+
+    fun render() {
+        val b = binding
+        val context = b.root.context ?: return
+        val store = HeldCard.getStore(context)
+        val now = HeldCard.nowSupplier()
+        store.pruneOlderThan(now - HeldStore.FORTY_EIGHT_HOURS_MS)
+        val items = store.all()
+        val summaries = HeldCardLogic.groupAndSort(items, now)
+
+        if (summaries.isEmpty()) {
+            b.tvEmpty.isVisible = true
+            b.itemsContainer.removeAllViews()
+            b.tvClearAll.isVisible = false
+            return
+        }
+
+        b.tvEmpty.isVisible = false
+        b.tvClearAll.isVisible = true
+        b.itemsContainer.removeAllViews()
+
+        val inflater = LayoutInflater.from(context)
+        val zone = HeldCard.zoneSupplier()
+        val fragment = fragment
+
+        for (summary in summaries) {
+            val itemBinding = ItemHeldBinding.inflate(inflater, b.itemsContainer, false)
+            itemBinding.tvHeldLine.text = HeldCardLogic.formatAppLine(summary, zone)
+            if (fragment != null && summary.pkg.isNotBlank()) {
+                itemBinding.root.setOnClickListener {
+                    Haptics.tick(it)
+                    store.clear(summary.pkg)
+                    render()
+                    HeldCard.openApp(fragment, summary.pkg, summary.label)
+                }
+            } else {
+                itemBinding.root.isClickable = false
+                itemBinding.root.isFocusable = false
+            }
+            b.itemsContainer.addView(itemBinding.root)
         }
     }
 }
