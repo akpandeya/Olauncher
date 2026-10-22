@@ -28,6 +28,9 @@ import app.olauncher.helper.showPopupMenu
 import app.olauncher.listener.OnSwipeTouchListener
 import app.olauncher.listener.ViewSwipeTouchListener
 import kotlinx.coroutines.launch
+import android.util.Log
+
+private const val TAG = "HomeFragmentGestures"
 
 internal fun HomeFragment.showGestureHint() {
     val enabled = buildSet {
@@ -171,7 +174,7 @@ internal fun HomeFragment.openSwipeRightApp() {
         try {
             findNavController().navigate(R.id.action_mainFragment_to_todayFragment)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.w(TAG, "openSwipeRightApp failed", e)
         }
         return
     }
@@ -290,7 +293,7 @@ internal fun HomeFragment.openSettings() {
         findNavController().navigate(R.id.action_mainFragment_to_settingsFragment)
         viewModel.firstOpen(false)
     } catch (e: Exception) {
-        e.printStackTrace()
+        Log.w(TAG, "openSettings failed", e)
     }
 }
 

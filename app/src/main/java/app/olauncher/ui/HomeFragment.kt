@@ -71,6 +71,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.util.Locale
+import android.util.Log
+
+private const val TAG = "HomeFragment"
 
 class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListener {
 
@@ -226,7 +229,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
                     val appLocation = view.tag.toString().toInt()
                     homeAppClicked(appLocation, view)
                 } catch (e: Exception) {
-                    e.printStackTrace()
+                    Log.w(TAG, "onClick failed", e)
                 }
             }
         }
@@ -524,7 +527,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         try {
             findNavController().navigate(R.id.action_mainFragment_to_todayFragment)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.w(TAG, "openToday failed", e)
         }
     }
 
@@ -561,7 +564,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             try {
                 requireContext().unregisterReceiver(it)
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.w(TAG, "unregisterTimeTickReceiver failed", e)
             }
             timeTickReceiver = null
         }
@@ -588,7 +591,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             try {
                 requireContext().unregisterReceiver(it)
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.w(TAG, "unregisterBatteryReceiver failed", e)
             }
             batteryReceiver = null
         }
@@ -800,7 +803,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
                     Constants.Key.RENAME to rename
                 )
             )
-            e.printStackTrace()
+            Log.w(TAG, "showAppList failed", e)
         }
     }
 
@@ -841,7 +844,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             )
             startActivity(intent)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.w(TAG, "openScreenTimeDigitalWellbeing failed", e)
             try {
                 intent.setClassName(
                     Constants.DIGITAL_WELLBEING_SAMSUNG_PACKAGE_NAME,
@@ -849,7 +852,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
                 )
                 startActivity(intent)
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.w(TAG, "openScreenTimeDigitalWellbeing failed", e)
             }
         }
     }

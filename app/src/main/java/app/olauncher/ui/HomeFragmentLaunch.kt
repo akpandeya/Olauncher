@@ -9,6 +9,9 @@ import app.olauncher.data.Constants
 import app.olauncher.helper.Haptics
 import app.olauncher.helper.getUserHandleFromString
 import app.olauncher.helper.isPackageInstalled
+import android.util.Log
+
+private const val TAG = "HomeFragmentLaunch"
 
 internal fun HomeFragment.setHomeAppText(
     textView: TextView,
@@ -41,7 +44,7 @@ internal fun HomeFragment.setHomeAppText(
             textView.text = ""
             return false
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.w(TAG, "setHomeAppText failed", e)
             textView.text = ""
             return false
         }

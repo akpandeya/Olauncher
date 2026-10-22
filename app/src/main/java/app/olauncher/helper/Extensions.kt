@@ -24,6 +24,9 @@ import app.olauncher.R
 import app.olauncher.data.Constants
 import java.util.Calendar
 import java.util.Locale
+import android.util.Log
+
+private const val TAG = "Extensions"
 
 fun Window.showStatusBar() {
     insetsController?.show(WindowInsets.Type.statusBars())
@@ -75,7 +78,7 @@ fun Context.resetDefaultLauncher() {
             PackageManager.DONT_KILL_APP
         )
     } catch (e: Exception) {
-        e.printStackTrace()
+        Log.w(TAG, "resetDefaultLauncher failed", e)
     }
 }
 
@@ -108,7 +111,7 @@ private fun Context.hasEinkRefreshRate(): Boolean {
         // refresh rate displays can drop to 30Hz or lower without being e-ink
         windowManager.defaultDisplay.supportedModes.maxOf { it.refreshRate } <= Constants.MIN_ANIM_REFRESH_RATE
     } catch (e: Exception) {
-        e.printStackTrace()
+        Log.w(TAG, "hasEinkRefreshRate failed", e)
         false
     }
 }
@@ -142,7 +145,7 @@ fun Context.isSystemAnimationsDisabled(): Boolean {
                 || Settings.Global.getFloat(contentResolver, Settings.Global.TRANSITION_ANIMATION_SCALE, 1f) == 0f
                 || Settings.Global.getFloat(contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f
     } catch (e: Exception) {
-        e.printStackTrace()
+        Log.w(TAG, "isSystemAnimationsDisabled failed", e)
         false
     }
 }

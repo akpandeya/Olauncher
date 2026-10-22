@@ -20,6 +20,9 @@ import java.io.FileOutputStream
 import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
+import android.util.Log
+
+private const val TAG = "PhotoWallpaper"
 
 enum class RotationInterval(
     val id: Int,
@@ -162,7 +165,7 @@ object PhotoWallpaper {
                 dir.deleteRecursively()
             }
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.w(TAG, "deleteAll failed", e)
         }
     }
 
@@ -206,7 +209,7 @@ object PhotoWallpaper {
             bitmap.recycle()
             true
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.w(TAG, "applyCurrent failed", e)
             false
         }
     }
@@ -267,7 +270,7 @@ object PhotoWallpaper {
                     cropped.recycle()
                 }
             } catch (e: Exception) {
-                e.printStackTrace()
+                Log.w(TAG, "appendPickedPhotos failed", e)
             }
         }
         saved
@@ -277,7 +280,7 @@ object PhotoWallpaper {
         return try {
             PhotoSet.applyRemoval(getWallpaperDir(context), plan)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.w(TAG, "removePhotos failed", e)
             false
         }
     }
