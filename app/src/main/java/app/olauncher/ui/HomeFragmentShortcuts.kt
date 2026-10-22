@@ -59,7 +59,7 @@ internal fun HomeFragment.setupShortcutViews() {
             }
             setOnLongClickListener {
                 Haptics.longPress(this)
-                showShortcutMenu(slot)
+                showShortcutPopup(this, slot)
                 true
             }
         }
@@ -118,27 +118,6 @@ internal fun HomeFragment.shortcutClicked(slot: Int) {
         ShortcutAction.SETTINGS -> findNavController().navigate(R.id.action_mainFragment_to_settingsFragment)
         null -> showLongPressToast()
     }
-}
-
-internal fun HomeFragment.showShortcutMenu(slot: Int) {
-    val context = context ?: return
-    val options = arrayOf(
-        getString(R.string.shortcut_choose_app),
-        getString(R.string.shortcut_choose_builtin),
-        getString(R.string.shortcut_reset),
-    )
-    AlertDialog.Builder(context)
-        .setItems(options) { _, which ->
-            when (which) {
-                0 -> showAppList(Constants.FLAG_SET_SHORTCUT_1 + slot - 1)
-                1 -> showBuiltinShortcutMenu(slot)
-                else -> {
-                    prefs.resetShortcut(slot)
-                    populateShortcuts()
-                }
-            }
-        }
-        .show()
 }
 
 internal fun HomeFragment.showBuiltinShortcutMenu(slot: Int) {

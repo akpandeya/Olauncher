@@ -125,7 +125,6 @@
     <string name="shortcut_messages">Messages</string>
     <string name="shortcut_phone">Phone</string>
     <string name="shortcut_more">Settings</string>
-    <string name="shortcut_choose_app">Choose app</string>
     <string name="shortcut_choose_builtin">Choose built-in…</string>
     <string name="shortcut_reset">Reset to default</string>
     <string name="please_set_olauncher_as_default_first">Please set Thumbline as default first</string>
