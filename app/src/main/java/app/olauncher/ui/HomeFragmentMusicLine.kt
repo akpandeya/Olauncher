@@ -77,7 +77,9 @@ internal fun HomeFragment.refreshContextLine() {
         if (_binding == null) return@launch
         val item = ContextLine.pick(media, event, now, labels)
         contextItem = item
-        binding.contextLine.text = item?.text
+        // Skip unchanged text: the line is a live region and would be re-announced every second.
+        val nextText = item?.text
+        if (binding.contextLine.text.toString() != nextText?.toString().orEmpty()) binding.contextLine.text = nextText
         binding.contextLine.contentDescription = (item as? ContextItem.Media)?.let {
             getString(if (it.playing) R.string.context_line_pause_title else R.string.context_line_play_title, it.title)
         }
