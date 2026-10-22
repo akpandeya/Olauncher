@@ -123,6 +123,24 @@ internal fun AppDrawerFragment.initAdapter() {
                             findNavController().popBackStack(R.id.mainFragment, false)
                         }
 
+                        is AppModel.Result.Action.AddEvent -> {
+                            try {
+                                startActivity(
+                                    Intent(Intent.ACTION_INSERT, CalendarContract.Events.CONTENT_URI).apply {
+                                        putExtra(CalendarContract.Events.TITLE, action.title)
+                                        putExtra(CalendarContract.Events.EVENT_LOCATION, action.place)
+                                        putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, action.beginMillis)
+                                        putExtra(CalendarContract.EXTRA_EVENT_END_TIME, action.endMillis)
+                                        putExtra(CalendarContract.EXTRA_EVENT_ALL_DAY, action.allDay)
+                                    }
+                                )
+                            } catch (e: Exception) {
+                                Log.w(TAG, "add event failed", e)
+                                requireContext().showToast(getString(R.string.event_no_calendar_app))
+                            }
+                            findNavController().popBackStack(R.id.mainFragment, false)
+                        }
+
                         is AppModel.Result.Action.OpenWiktionary -> {
                             if (action.openOnTap) {
                                 openWiktionary(action.text)
