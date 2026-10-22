@@ -46,3 +46,15 @@ class PrefsProfileTarget(private val prefs: Prefs) : ProfileSettingsTarget {
 
     override fun setTodayCardEnabled(key: String, enabled: Boolean) = prefs.setTodayCardEnabled(key, enabled)
 }
+
+/** The user's current home apps (active set, slots 1 to 8) as the start for built-in profiles. */
+fun Prefs.currentHomeApps(): List<HomeApp> = (1..8).map { slot ->
+    HomeApp(
+        name = getAppName(slot),
+        packageName = getAppPackage(slot),
+        activityClassName = getAppActivityClassName(slot).ifBlank { null },
+        user = getAppUser(slot),
+        isShortcut = getIsShortcut(slot),
+        shortcutId = getShortcutId(slot),
+    )
+}

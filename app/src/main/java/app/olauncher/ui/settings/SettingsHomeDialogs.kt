@@ -153,6 +153,7 @@ internal fun SettingsFragment.showDateTimeMenu(anchor: View) {
             R.id.dateTimeOn -> toggleDateTime(Constants.DateTime.ON)
             R.id.dateTimeOff -> toggleDateTime(Constants.DateTime.OFF)
             R.id.dateOnly -> toggleDateTime(Constants.DateTime.DATE_ONLY)
+            R.id.clockOnly -> toggleDateTime(Constants.DateTime.CLOCK_ONLY)
         }
     }
 }

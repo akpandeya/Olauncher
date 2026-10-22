@@ -57,7 +57,8 @@ data class ProfileSettings(
     val showDate: Boolean,
     val showWeather: Boolean,
     val nextEvent: Boolean,
-    val contextLine: Boolean,
+    /** The music line (stored in the context-line pref, which shows now-playing media). */
+    val musicLine: Boolean,
     val musicPulse: Boolean,
     /** Music glow strength in percent; 0 is off. */
     val glowStrength: Int,
@@ -93,15 +94,15 @@ data class ProfileSettings(
     /** Writes every setting of this profile. Nothing outside [ProfileSettingsTarget] is touched. */
     fun apply(target: ProfileSettingsTarget) {
         target.homeAppsNum = homeAppsCount
-        // The existing setting has no clock-only value; it shows the clock with the date.
         target.dateTimeVisibility = when {
-            showClock -> Constants.DateTime.ON
+            showClock && showDate -> Constants.DateTime.ON
+            showClock -> Constants.DateTime.CLOCK_ONLY
             showDate -> Constants.DateTime.DATE_ONLY
             else -> Constants.DateTime.OFF
         }
         target.weatherEnabled = showWeather
         target.homeNextEvent = nextEvent
-        target.homeContextLine = contextLine
+        target.homeContextLine = musicLine
         target.homeMusicPulse = musicPulse
         target.homeGlowStrength = glowStrength
         target.homeWeatherEffects = weatherEffects
@@ -130,7 +131,7 @@ data class ProfileSettings(
         put(F_SHOW_DATE, showDate)
         put(F_SHOW_WEATHER, showWeather)
         put(F_NEXT_EVENT, nextEvent)
-        put(F_CONTEXT_LINE, contextLine)
+        put(F_MUSIC_LINE, musicLine)
         put(F_MUSIC_PULSE, musicPulse)
         put(F_GLOW_STRENGTH, glowStrength)
         put(F_WEATHER_EFFECTS, weatherEffects)
@@ -164,7 +165,7 @@ data class ProfileSettings(
         private const val F_SHOW_DATE = "showDate"
         private const val F_SHOW_WEATHER = "showWeather"
         private const val F_NEXT_EVENT = "nextEvent"
-        private const val F_CONTEXT_LINE = "contextLine"
+        private const val F_MUSIC_LINE = "musicLine"
         private const val F_MUSIC_PULSE = "musicPulse"
         private const val F_GLOW_STRENGTH = "glowStrength"
         private const val F_WEATHER_EFFECTS = "weatherEffects"
@@ -187,7 +188,7 @@ data class ProfileSettings(
         private const val F_DRAWER_CONTACTS = "drawerContacts"
 
         private val REQUIRED = setOf(
-            F_HOME_APPS_COUNT, F_SHOW_CLOCK, F_SHOW_DATE, F_SHOW_WEATHER, F_NEXT_EVENT, F_CONTEXT_LINE,
+            F_HOME_APPS_COUNT, F_SHOW_CLOCK, F_SHOW_DATE, F_SHOW_WEATHER, F_NEXT_EVENT, F_MUSIC_LINE,
             F_MUSIC_PULSE, F_GLOW_STRENGTH, F_WEATHER_EFFECTS, F_SHORTCUT_ICONS, F_INTENTION_LINE, F_PAUSE,
             F_QUIET, F_WIND_DOWN, F_WIND_DOWN_GREY, F_NUDGE_WATER, F_NUDGE_WALK, F_TODAY_CARDS,
             F_DRAWER_RECENTS, F_DRAWER_LETTER_STRIP, F_DRAWER_CONTACTS,
@@ -212,7 +213,7 @@ data class ProfileSettings(
                     showDate = json.strictBool(F_SHOW_DATE),
                     showWeather = json.strictBool(F_SHOW_WEATHER),
                     nextEvent = json.strictBool(F_NEXT_EVENT),
-                    contextLine = json.strictBool(F_CONTEXT_LINE),
+                    musicLine = json.strictBool(F_MUSIC_LINE),
                     musicPulse = json.strictBool(F_MUSIC_PULSE),
                     glowStrength = json.strictInt(F_GLOW_STRENGTH),
                     weatherEffects = json.strictBool(F_WEATHER_EFFECTS),
@@ -262,7 +263,7 @@ object BuiltInProfiles {
     val bareSettings = ProfileSettings(
         homeAppsCount = 4,
         showClock = true, showDate = false, showWeather = false,
-        nextEvent = false, contextLine = false,
+        nextEvent = false, musicLine = false,
         musicPulse = false, glowStrength = 0, weatherEffects = false,
         shortcutIcons = false, shortcutCount = null,
         intentionLine = false,
@@ -277,7 +278,7 @@ object BuiltInProfiles {
     val focusSettings = ProfileSettings(
         homeAppsCount = 5,
         showClock = true, showDate = true, showWeather = false,
-        nextEvent = true, contextLine = false,
+        nextEvent = true, musicLine = true,
         musicPulse = false, glowStrength = 0, weatherEffects = false,
         shortcutIcons = false, shortcutCount = null,
         intentionLine = true,
@@ -285,14 +286,14 @@ object BuiltInProfiles {
         quietNotifications = true,
         windDown = true, windDownGrey = true,
         nudgeWaterIntervalMin = 90, nudgeWalkIntervalMin = 120,
-        todayCards = setOf(NextUpCard.KEY, HeldCard.KEY, WeekCard.KEY), todayOrderSmart = null,
+        todayCards = emptySet(), todayOrderSmart = null,
         drawerRecents = true, drawerLetterStrip = false, drawerContacts = false,
     )
 
     val richSettings = ProfileSettings(
         homeAppsCount = 7,
         showClock = true, showDate = true, showWeather = true,
-        nextEvent = true, contextLine = true,
+        nextEvent = true, musicLine = true,
         musicPulse = true, glowStrength = MusicPulse.GLOW_STRENGTH_DEFAULT, weatherEffects = true,
         shortcutIcons = true, shortcutCount = 4,
         intentionLine = true,

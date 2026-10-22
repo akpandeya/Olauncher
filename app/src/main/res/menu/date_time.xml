@@ -9,4 +9,7 @@
     <item
         android:id="@+id/dateOnly"
         android:title="@string/date_only" />
+    <item
+        android:id="@+id/clockOnly"
+        android:title="@string/clock_only" />
 </menu>

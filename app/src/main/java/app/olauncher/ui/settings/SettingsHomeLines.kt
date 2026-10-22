@@ -187,6 +187,7 @@ internal fun SettingsFragment.populateDateTime() {
     binding.dateTime.text = getString(
         when (prefs.dateTimeVisibility) {
             Constants.DateTime.DATE_ONLY -> R.string.date
+            Constants.DateTime.CLOCK_ONLY -> R.string.clock_only
             Constants.DateTime.ON -> R.string.on
             else -> R.string.off
         }

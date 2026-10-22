@@ -58,7 +58,7 @@ class ProfileSettingsTest {
         val t = FakeTarget()
         BuiltInProfiles.bareSettings.apply(t)
         assertEquals(4, t.homeAppsNum)
-        assertEquals(Constants.DateTime.ON, t.dateTimeVisibility)
+        assertEquals(Constants.DateTime.CLOCK_ONLY, t.dateTimeVisibility)
         assertFalse(t.weatherEnabled)
         assertFalse(t.homeNextEvent)
         assertFalse(t.homeContextLine)
@@ -88,6 +88,14 @@ class ProfileSettingsTest {
     }
 
     @Test
+    fun `clock only shows the clock and hides the date`() {
+        assertTrue(Constants.DateTime.isTimeVisible(Constants.DateTime.CLOCK_ONLY))
+        assertFalse(Constants.DateTime.isDateVisible(Constants.DateTime.CLOCK_ONLY))
+        assertTrue(Constants.DateTime.isDateVisible(Constants.DateTime.DATE_ONLY))
+        assertFalse(Constants.DateTime.isTimeVisible(Constants.DateTime.DATE_ONLY))
+    }
+
+    @Test
     fun `focus applies its table values`() {
         val t = FakeTarget()
         BuiltInProfiles.focusSettings.apply(t)
@@ -95,7 +103,7 @@ class ProfileSettingsTest {
         assertEquals(Constants.DateTime.ON, t.dateTimeVisibility)
         assertFalse(t.weatherEnabled)
         assertTrue(t.homeNextEvent)
-        assertFalse(t.homeContextLine)
+        assertTrue(t.homeContextLine)
         assertFalse(t.homeMusicPulse)
         assertFalse(t.homeWeatherEffects)
         assertFalse(t.homeShortcuts)
@@ -112,7 +120,8 @@ class ProfileSettingsTest {
         assertTrue(t.drawerRecents)
         assertFalse(t.drawerLetterStrip)
         assertFalse(t.searchContacts)
-        assertEquals(setOf("next_up", "held", "week"), t.cards.filterValues { it }.keys)
+        assertTrue(t.cards.values.none { it })
+        assertFalse(t.todayOrderSmart)
     }
 
     @Test
