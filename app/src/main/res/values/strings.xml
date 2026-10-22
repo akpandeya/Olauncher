@@ -513,6 +513,22 @@
     <string name="morning_starts">Morning starts</string>
     <string name="day_starts">Day starts</string>
     <string name="evening_starts">Evening starts</string>
+    <string name="profile_schedule" tools:ignore="MissingTranslation">Profile schedule</string>
+    <string name="profile_schedule_from_sets" tools:ignore="MissingTranslation">App sets times</string>
+    <string name="profile_schedule_rule_count" tools:ignore="MissingTranslation">%d rules</string>
+    <string name="profile_schedule_add" tools:ignore="MissingTranslation">Add rule</string>
+    <string name="profile_schedule_reset" tools:ignore="MissingTranslation">Use app sets times</string>
+    <string name="profile_schedule_use_rules" tools:ignore="MissingTranslation">Change times in Profile schedule</string>
+    <string name="profile_rule_profile" tools:ignore="MissingTranslation">Profile</string>
+    <string name="profile_rule_starts" tools:ignore="MissingTranslation">Starts</string>
+    <string name="profile_rule_ends" tools:ignore="MissingTranslation">Ends</string>
+    <string name="profile_rule_days" tools:ignore="MissingTranslation">Days</string>
+    <string name="profile_rule_delete" tools:ignore="MissingTranslation">Delete rule</string>
+    <string name="profile_rule_every_day" tools:ignore="MissingTranslation">every day</string>
+    <string name="profile_rule_no_days" tools:ignore="MissingTranslation">no days</string>
+    <string name="profile_name_morning" tools:ignore="MissingTranslation">Morning</string>
+    <string name="profile_name_day" tools:ignore="MissingTranslation">Day</string>
+    <string name="profile_name_evening" tools:ignore="MissingTranslation">Evening</string>
     <string name="home_set_slot_empty">empty</string>
     <string name="home_set_no_slots">Set apps on home screen to at least 1 first</string>
     <string name="a11y_action_open_apps">Open apps</string>

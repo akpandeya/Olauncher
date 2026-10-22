@@ -158,7 +158,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         if (prefs.showStatusBar) showStatusBar()
         else hideStatusBar()
         if (HomeTick.needsTick(
-                prefs.homeSets,
+                prefs.profileScheduleActive,
                 GermanTime.isWordsClockOn(prefs.germanEnabled, prefs.germanClock),
                 prefs.homeContextLine,
                 prefs.homeMusicPulse,
@@ -549,7 +549,12 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
     internal fun refreshHomeSetIfChanged() {
         if (_binding == null) return
-        if (prefs.activeHomeSet() != renderedHomeSet) populateHomeScreen(false)
+        val applied = prefs.applyScheduledProfile()
+        if (applied) {
+            populateHomeScreen(true)
+            populateShortcuts()
+            populateWeather()
+        } else if (prefs.activeHomeSet() != renderedHomeSet) populateHomeScreen(false)
     }
 
     internal fun registerTimeTickReceiver() {
@@ -669,6 +674,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
         populateScreenTime()
 
+        prefs.applyScheduledProfile()
         val set = prefs.activeHomeSet()
         renderedHomeSet = set
         val homeAppsNum = prefs.homeAppsNum

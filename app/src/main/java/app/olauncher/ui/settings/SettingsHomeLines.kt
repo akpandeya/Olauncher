@@ -240,6 +240,10 @@ internal fun SettingsFragment.toggleHomeSets() {
 }
 
 internal fun SettingsFragment.showHomeSetStartPicker(set: HomeSet, @StringRes title: Int) {
+    if (prefs.hasSavedProfileSchedule) {
+        showToast(R.string.profile_schedule_use_rules)
+        return
+    }
     val current = prefs.homeSetStart(set)
     showTimePicker(title, current / 60, current % 60) { hour, minute ->
         prefs.setHomeSetStart(set, HomeSets.minutesOfDay(hour, minute))

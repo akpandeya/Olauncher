@@ -7,14 +7,30 @@ import androidx.core.content.edit
 interface ProfilePrefs {
     /** Saved profiles as JSON (see [Profile.listFromJson]). Empty until profiles are used. */
     var profilesJson: String
+
+    /** Saved profile schedule as JSON (see [ProfileSchedule.fromJson]). Empty until the user edits the schedule. */
+    var profileScheduleJson: String
+
+    /** Id of the profile whose settings were last applied or passed over. Empty until a schedule runs. */
+    var appliedProfileId: String
 }
 
 internal class ProfilePrefsStore(private val prefs: SharedPreferences) : ProfilePrefs {
     private val PROFILES_JSON = "PROFILES_JSON"
+    private val PROFILE_SCHEDULE_JSON = "PROFILE_SCHEDULE_JSON"
+    private val APPLIED_PROFILE_ID = "APPLIED_PROFILE_ID"
 
     override var profilesJson: String
         get() = prefs.getString(PROFILES_JSON, "").orEmpty()
         set(value) = prefs.edit { putString(PROFILES_JSON, value).apply() }
+
+    override var profileScheduleJson: String
+        get() = prefs.getString(PROFILE_SCHEDULE_JSON, "").orEmpty()
+        set(value) = prefs.edit { putString(PROFILE_SCHEDULE_JSON, value) }
+
+    override var appliedProfileId: String
+        get() = prefs.getString(APPLIED_PROFILE_ID, "").orEmpty()
+        set(value) = prefs.edit { putString(APPLIED_PROFILE_ID, value) }
 }
 
 /** Lets a profile write its settings into [Prefs]. */
