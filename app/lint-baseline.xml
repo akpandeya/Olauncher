@@ -8298,243 +8298,27 @@
             column="1"/>
     </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.drawable.bg_shade_circular` appears to be unused"
-        errorLine1="&lt;shape xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
-        errorLine2="^">
-        <location
-            file="src/main/res/drawable/bg_shade_circular.xml"
-            line="2"
-            column="1"/>
-    </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.color.colorPrimary` appears to be unused"
-        errorLine1="    &lt;color name=&quot;colorPrimary&quot;>@android:color/white&lt;/color>"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/colors.xml"
-            line="3"
-            column="12"/>
-    </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.color.colorPrimaryDark` appears to be unused"
-        errorLine1="    &lt;color name=&quot;colorPrimaryDark&quot;>@android:color/darker_gray&lt;/color>"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/colors.xml"
-            line="4"
-            column="12"/>
-    </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.color.colorAccent` appears to be unused"
-        errorLine1="    &lt;color name=&quot;colorAccent&quot;>#FFEB3B&lt;/color>"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/colors.xml"
-            line="5"
-            column="12"/>
-    </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.color.whiteTrans90` appears to be unused"
-        errorLine1="    &lt;color name=&quot;whiteTrans90&quot;>#E6FFFFFF&lt;/color>"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/colors.xml"
-            line="9"
-            column="12"/>
-    </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.color.blackTrans90` appears to be unused"
-        errorLine1="    &lt;color name=&quot;blackTrans90&quot;>#E6000000&lt;/color>"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/colors.xml"
-            line="21"
-            column="12"/>
-    </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.dimen.alphabet_recycler_margin_bottom` appears to be unused"
-        errorLine1="    &lt;dimen name=&quot;alphabet_recycler_margin_bottom&quot;>16dp&lt;/dimen>"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/dimens.xml"
-            line="13"
-            column="12"/>
-    </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.dimen.alphabet_recycler_margin_end` appears to be unused"
-        errorLine1="    &lt;dimen name=&quot;alphabet_recycler_margin_end&quot;>10dp&lt;/dimen>"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/dimens.xml"
-            line="14"
-            column="12"/>
-    </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.dimen.alphabet_recycler_margin_start` appears to be unused"
-        errorLine1="    &lt;dimen name=&quot;alphabet_recycler_margin_start&quot;>320dp&lt;/dimen>"
-        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/dimens.xml"
-            line="15"
-            column="12"/>
-    </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.drawable.ic_delete` appears to be unused"
-        errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
-        errorLine2="^">
-        <location
-            file="src/main/res/drawable/ic_delete.xml"
-            line="1"
-            column="1"/>
-    </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.drawable.ic_hide` appears to be unused"
-        errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
-        errorLine2="^">
-        <location
-            file="src/main/res/drawable/ic_hide.xml"
-            line="1"
-            column="1"/>
-    </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.drawable.ic_rename` appears to be unused"
-        errorLine1="&lt;vector xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;"
-        errorLine2="^">
-        <location
-            file="src/main/res/drawable/ic_rename.xml"
-            line="1"
-            column="1"/>
-    </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.drawable.logo` appears to be unused">
-        <location
-            file="src/main/res/drawable/logo.webp"/>
-    </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.anim.slide_in_left` appears to be unused"
-        errorLine1="&lt;set xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
-        errorLine2="^">
-        <location
-            file="src/main/res/anim/slide_in_left.xml"
-            line="2"
-            column="1"/>
-    </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.anim.slide_in_top` appears to be unused"
-        errorLine1="&lt;set xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
-        errorLine2="^">
-        <location
-            file="src/main/res/anim/slide_in_top.xml"
-            line="2"
-            column="1"/>
-    </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.anim.slide_out_left` appears to be unused"
-        errorLine1="&lt;set xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
-        errorLine2="^">
-        <location
-            file="src/main/res/anim/slide_out_left.xml"
-            line="2"
-            column="1"/>
-    </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.anim.slide_out_top` appears to be unused"
-        errorLine1="&lt;set xmlns:android=&quot;http://schemas.android.com/apk/res/android&quot;>"
-        errorLine2="^">
-        <location
-            file="src/main/res/anim/slide_out_top.xml"
-            line="2"
-            column="1"/>
-    </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.github` appears to be unused"
-        errorLine1="    &lt;string name=&quot;github&quot; translatable=&quot;false&quot;>Github&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="3"
-            column="13"/>
-    </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.day_battery` appears to be unused"
-        errorLine1="    &lt;string name=&quot;day_battery&quot; formatted=&quot;false&quot; translatable=&quot;false&quot;>%s, %d%%&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="7"
-            column="13"/>
-    </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.tag_0` appears to be unused"
-        errorLine1="    &lt;string name=&quot;tag_0&quot; translatable=&quot;false&quot;>0&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="8"
-            column="13"/>
-    </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.set_as_default_launcher_first` appears to be unused"
-        errorLine1="    &lt;string name=&quot;set_as_default_launcher_first&quot;>Set Thumbline default first&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="24"
-            column="13"/>
-    </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.app_text_color` appears to be unused"
-        errorLine1="    &lt;string name=&quot;app_text_color&quot;>Text color&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="25"
-            column="13"/>
-    </issue>
 
     <issue
         id="UnusedResources"
@@ -8547,49 +8331,9 @@
             column="13"/>
     </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.admin_permission_message` appears to be unused"
-        errorLine1="    &lt;string name=&quot;admin_permission_message&quot;>Thumbline promises to use the accessibility permission responsibly. Thumbline does not collect or share any data.&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="28"
-            column="13"/>
-    </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.about` appears to be unused"
-        errorLine1="    &lt;string name=&quot;about&quot;>About&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="29"
-            column="13"/>
-    </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.black` appears to be unused"
-        errorLine1="    &lt;string name=&quot;black&quot;>Black&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="59"
-            column="13"/>
-    </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.white` appears to be unused"
-        errorLine1="    &lt;string name=&quot;white&quot;>White&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="60"
-            column="13"/>
-    </issue>
 
     <issue
         id="UnusedResources"
@@ -8602,720 +8346,70 @@
             column="13"/>
     </issue>
 
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.share` appears to be unused"
-        errorLine1="    &lt;string name=&quot;share&quot;>Share&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="63"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.share_now` appears to be unused"
-        errorLine1="    &lt;string name=&quot;share_now&quot;>Share now&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="64"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.rate` appears to be unused"
-        errorLine1="    &lt;string name=&quot;rate&quot;>Rate&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="65"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.rate_now` appears to be unused"
-        errorLine1="    &lt;string name=&quot;rate_now&quot;>Rate now&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="66"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.follow` appears to be unused"
-        errorLine1="    &lt;string name=&quot;follow&quot;>Follow&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="67"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.email` appears to be unused"
-        errorLine1="    &lt;string name=&quot;email&quot;>Email&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="68"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.donate` appears to be unused"
-        errorLine1="    &lt;string name=&quot;donate&quot;>Donate&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="69"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.daily_wallpaper_update` appears to be unused"
-        errorLine1="    &lt;string name=&quot;daily_wallpaper_update&quot;>Daily new wallpaper&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="76"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string._0` appears to be unused"
-        errorLine1="    &lt;string name=&quot;_0&quot;>0&lt;/string>"
-        errorLine2="            ~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="84"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string._1` appears to be unused"
-        errorLine1="    &lt;string name=&quot;_1&quot;>1&lt;/string>"
-        errorLine2="            ~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="85"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string._2` appears to be unused"
-        errorLine1="    &lt;string name=&quot;_2&quot;>2&lt;/string>"
-        errorLine2="            ~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="86"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string._3` appears to be unused"
-        errorLine1="    &lt;string name=&quot;_3&quot;>3&lt;/string>"
-        errorLine2="            ~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="87"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.welcome_to_olauncher_settings` appears to be unused"
-        errorLine1="    &lt;string name=&quot;welcome_to_olauncher_settings&quot;>مرحبًا بك في الإعدادات!\n\nتذكر، إذا كان لديك أي سؤال، فإن صفحة \&quot;حول\&quot; لدينا تحتوي على الإجابة.&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-ar/strings.xml"
-            line="87"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string._4` appears to be unused"
-        errorLine1="    &lt;string name=&quot;_4&quot;>4&lt;/string>"
-        errorLine2="            ~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="88"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string._5` appears to be unused"
-        errorLine1="    &lt;string name=&quot;_5&quot;>5&lt;/string>"
-        errorLine2="            ~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="89"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.share_message` appears to be unused"
-        errorLine1="    &lt;string name=&quot;share_message&quot;>نحتاج إلى مساعدتك! نؤمن بأن الجميع يجب أن يعرفوا Thumbline وفوائده، لكننا لا نستطيع فعل ذلك بمفردنا.\n\nهل يمكنك مشاركة Thumbline مع أصدقائك وعائلتك ومتابعيك؟ شكرًا لدعمك! ❤&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-ar/strings.xml"
-            line="89"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string._6` appears to be unused"
-        errorLine1="    &lt;string name=&quot;_6&quot;>6&lt;/string>"
-        errorLine2="            ~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="90"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string._7` appears to be unused"
-        errorLine1="    &lt;string name=&quot;_7&quot;>7&lt;/string>"
-        errorLine2="            ~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="91"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.app_drawer_tips` appears to be unused"
-        errorLine1="    &lt;string name=&quot;app_drawer_tips&quot;>Tip: Start typing an app name to auto-launch it&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="93"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.cool` appears to be unused"
-        errorLine1="    &lt;string name=&quot;cool&quot;>Cool!&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="95"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.pro_message` appears to be unused"
-        errorLine1="    &lt;string name=&quot;pro_message&quot;>يحتوي Thumbline أيضًا على إصدار احترافي يسمى Pro Launcher. يحتوي على ميزات إضافية مثل الطقس، والأدوات، والخطوط، والمجلدات، وخلفيات AMOLED، وما إلى ذلك."
-        errorLine2="            ~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-ar/strings.xml"
-            line="95"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.wallpaper_message` appears to be unused"
-        errorLine1="    &lt;string name=&quot;wallpaper_message&quot;>يقدم Thumbline خلفيات جميلة جديدة يوميًا. امنح شاشتك الرئيسية مظهرًا جديدًا كل يوم، مجانًا!"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-ar/strings.xml"
-            line="97"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.support_olauncher_for_free` appears to be unused"
-        errorLine1="    &lt;string name=&quot;support_olauncher_for_free&quot;>ادعم Thumbline مجانًا باستخدام رابط الشراكة التابع لشركة Amazon.&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-ar/strings.xml"
-            line="100"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.support_olauncher_message` appears to be unused"
-        errorLine1="    &lt;string name=&quot;support_olauncher_message&quot;>في كل مرة تشتري فيها شيئًا باستخدام رابطنا، نحصل على عمولة صغيرة. يرجى حفظ الرابط واستخدامه كلما تسوقت عبر الإنترنت.\nشكرًا لك!&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-ar/strings.xml"
-            line="101"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.public_roadmap` appears to be unused"
-        errorLine1="    &lt;string name=&quot;public_roadmap&quot;>خارطة طريق Thumbline العامة&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-ar/strings.xml"
-            line="106"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.status_bar` appears to be unused"
-        errorLine1="    &lt;string name=&quot;status_bar&quot;>Status bar on top&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="106"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.about_olauncher` appears to be unused"
-        errorLine1="    &lt;string name=&quot;about_olauncher&quot;>حول والأسئلة الشائعة&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-ar/strings.xml"
-            line="120"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.digital_wellbeing_message` appears to be unused"
-        errorLine1="    &lt;string name=&quot;digital_wellbeing_message&quot;>If you want to set time limits for certain apps, Digital Wellbeing feature of Android can help you do it.           Please search for Digital Wellbeing in your phone settings and enable it.&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="122"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.review_message` appears to be unused"
-        errorLine1="    &lt;string name=&quot;review_message&quot;>Thumbline مجاني وسيظل كذلك دائمًا. لا يحتوي على إعلانات، ولا يجمع أي بيانات، ويقلل من وقت استخدامك للشاشة، مما يؤدي إلى حياة أكثر صحة.\n\nنأمل أن يعجبك. أخبرنا برأيك.&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-ar/strings.xml"
-            line="124"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.open` appears to be unused"
-        errorLine1="    &lt;string name=&quot;open&quot;>Open link&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="126"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.copy` appears to be unused"
-        errorLine1="    &lt;string name=&quot;copy&quot;>Copy&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="127"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.more_features` appears to be unused"
-        errorLine1="    &lt;string name=&quot;more_features&quot;>مزايا إضافية…&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values-ar/strings.xml"
-            line="129"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.roadmap` appears to be unused"
-        errorLine1="    &lt;string name=&quot;roadmap&quot;>Roadmap&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="130"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.shortcuts_on` appears to be unused"
-        errorLine1="    &lt;string name=&quot;shortcuts_on&quot;>Shortcuts: On&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="135"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.shortcuts_off` appears to be unused"
-        errorLine1="    &lt;string name=&quot;shortcuts_off&quot;>Shortcuts: Off&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="136"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.icons_count` appears to be unused"
-        errorLine1="    &lt;string name=&quot;icons_count&quot;>Icons: %1$d&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="148"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.icons_on_left` appears to be unused"
-        errorLine1="    &lt;string name=&quot;icons_on_left&quot;>Icons on left&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="149"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.icons_on_right` appears to be unused"
-        errorLine1="    &lt;string name=&quot;icons_on_right&quot;>Icons on right&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="150"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.affiliate` appears to be unused"
-        errorLine1="    &lt;string name=&quot;affiliate&quot;>Affiliate&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="166"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.tip_start_typing_for_rename` appears to be unused"
-        errorLine1="    &lt;string name=&quot;tip_start_typing_for_rename&quot;>Tip: Start typing for app RENAME option&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="167"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.accept` appears to be unused"
-        errorLine1="    &lt;string name=&quot;accept&quot;>Accept&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="171"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.double_tap_lock` appears to be unused"
-        errorLine1="    &lt;string name=&quot;double_tap_lock&quot;>Double tap to lock&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="173"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.info` appears to be unused"
-        errorLine1="    &lt;string name=&quot;info&quot;>Info&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="177"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.disabled` appears to be unused"
-        errorLine1="    &lt;string name=&quot;disabled&quot;>Disabled&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="182"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.please_turn_on_double_tap_to_unlock` appears to be unused"
-        errorLine1="    &lt;string name=&quot;please_turn_on_double_tap_to_unlock&quot;>Please turn on double tap to lock&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="183"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.launcher_failed_to_lock_device` appears to be unused"
-        errorLine1="    &lt;string name=&quot;launcher_failed_to_lock_device&quot;>Thumbline failed to lock device.\nPlease check your app settings.&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="184"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.unable_to_launch_app` appears to be unused"
-        errorLine1="    &lt;string name=&quot;unable_to_launch_app&quot;>Unable to launch app&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="192"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.search_for_Launcher_or_home_app` appears to be unused"
-        errorLine1="    &lt;string name=&quot;search_for_Launcher_or_home_app&quot;>Search for Launcher or Home app&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="193"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.your_wallpaper_will_update_shortly` appears to be unused"
-        errorLine1="    &lt;string name=&quot;your_wallpaper_will_update_shortly&quot;>Your wallpaper will update shortly&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="198"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.olauncher_is_not_default_launcher` appears to be unused"
-        errorLine1="    &lt;string name=&quot;olauncher_is_not_default_launcher&quot;>Thumbline is not default. Wallpaper update will fail.&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="199"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.adapter_show` appears to be unused"
-        errorLine1="    &lt;string name=&quot;adapter_show&quot;>Show&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="203"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.adapter_hide` appears to be unused"
-        errorLine1="    &lt;string name=&quot;adapter_hide&quot;>Hide&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="204"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.are_you_using_your_phone_or_is_your_phone_using_you` appears to be unused"
-        errorLine1="    &lt;string name=&quot;are_you_using_your_phone_or_is_your_phone_using_you&quot;>Are you using your phone, or is your phone using you?&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="205"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.learn_more` appears to be unused"
-        errorLine1="    &lt;string name=&quot;learn_more&quot;>Learn more&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="212"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.did_you_know` appears to be unused"
-        errorLine1="    &lt;string name=&quot;did_you_know&quot;>Did you know?&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="213"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.leave_a_review` appears to be unused"
-        errorLine1="    &lt;string name=&quot;leave_a_review&quot;>Leave a review&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="214"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.home` appears to be unused"
-        errorLine1="    &lt;string name=&quot;home&quot;>Home&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="264"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.lock` appears to be unused"
-        errorLine1="    &lt;string name=&quot;lock&quot;>Lock&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="265"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.both` appears to be unused"
-        errorLine1="    &lt;string name=&quot;both&quot;>Both&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="266"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.pause_daily_allowance` appears to be unused"
-        errorLine1="    &lt;string name=&quot;pause_daily_allowance&quot;>Daily allowance&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="273"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.nothing_here_yet` appears to be unused"
-        errorLine1="    &lt;string name=&quot;nothing_here_yet&quot;>Nothing here yet&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="339"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.wellbeing_water` appears to be unused"
-        errorLine1="    &lt;string name=&quot;wellbeing_water&quot;>Water %d&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="379"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.wellbeing_walk` appears to be unused"
-        errorLine1="    &lt;string name=&quot;wellbeing_walk&quot;>Walk %d&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="380"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.wellbeing_separator` appears to be unused"
-        errorLine1="    &lt;string name=&quot;wellbeing_separator&quot; translatable=&quot;false&quot;>&quot; · &quot;&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="392"
-            column="13"/>
-    </issue>
-
-    <issue
-        id="UnusedResources"
-        message="The resource `R.string.save_word` appears to be unused"
-        errorLine1="    &lt;string name=&quot;save_word&quot;>Save word&lt;/string>"
-        errorLine2="            ~~~~~~~~~~~~~~~~">
-        <location
-            file="src/main/res/values/strings.xml"
-            line="411"
-            column="13"/>
-    </issue>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     <issue
         id="UselessParent"
