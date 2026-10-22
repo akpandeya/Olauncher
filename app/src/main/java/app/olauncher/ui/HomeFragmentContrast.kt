@@ -48,7 +48,7 @@ internal fun HomeFragment.applyTextContrast() {
     sizeHomeWash()
     val views = listOf(
         binding.clock, binding.clockWords, binding.date, binding.weatherSeparator,
-        binding.weather, binding.contextLine, binding.nextEventLine, binding.intentionLine, binding.tvScreenTime,
+        binding.weather, binding.contextLine, binding.nextEventLine, binding.noteLine, binding.intentionLine, binding.tvScreenTime,
         binding.homeApp1, binding.homeApp2, binding.homeApp3, binding.homeApp4,
         binding.homeApp5, binding.homeApp6, binding.homeApp7, binding.homeApp8,
     )

@@ -101,6 +101,7 @@ internal fun SettingsFragment.populateAllRows() {
     populateInfoLine()
     populateContextLine()
     populateHomeNextEvent()
+    populateHomeNotes()
     populateSearchEngine()
     populateSwipeApps()
     populateTodayCards()

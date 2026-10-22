@@ -124,6 +124,7 @@ private fun SettingsFragment.handleHomeAndShortcutsClick(view: View): Boolean {
         R.id.eveningStart, R.id.eveningStartTitle, R.id.eveningStartLayout -> showHomeSetStartPicker(HomeSet.EVENING, R.string.evening_starts)
         R.id.contextLineValue, R.id.contextLineTitle, R.id.contextLineLayout -> tickOnChange(view) { toggleContextLine() }
         R.id.homeNextEventValue, R.id.homeNextEventTitle, R.id.homeNextEventLayout -> tickOnChange(view) { toggleHomeNextEvent() }
+        R.id.homeNotesValue, R.id.homeNotesTitle, R.id.homeNotesLayout -> tickOnChange(view) { toggleHomeNotes() }
         else -> return false
     }
     return true

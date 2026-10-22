@@ -23,6 +23,8 @@ class DrawerSearchInput(
     val cantReadRowText: (token: String) -> String = { "Can't read '$it'" },
     /** Error row text when `:e` has no title. */
     val eventNoTitleRowText: () -> String = { "Can't add an event without a title" },
+    /** Preview row text for `:n`, e.g. "Save note: buy milk". */
+    val noteRowText: (text: String) -> String = { "Save note: $it" },
     val saveWordsRowText: (count: Int, shown: String) -> String,
     val contactSource: () -> ContactSource?,
     val calendarRows: (String) -> List<AppModel.Result>,
@@ -146,7 +148,10 @@ object DrawerSearch {
                 )
             }
             // Handled by their own features.
-            is DrawerCommand.Note, null -> Unit
+            is DrawerCommand.Note -> Notes.clean(command.args).let {
+                if (it.isNotEmpty()) rows.add(AppModel.Result(input.noteRowText(it), AppModel.Result.Action.SaveNote(it)))
+            }
+            null -> Unit
         }
         // Runs on the Filter worker thread; a newer query supersedes this one.
         safeAdd(rows) {

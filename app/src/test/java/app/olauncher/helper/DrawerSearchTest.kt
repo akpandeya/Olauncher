@@ -211,6 +211,13 @@ class DrawerSearchTest {
     }
 
     @Test
+    fun `note command shows a save row with cleaned text and none when empty`() {
+        val rows = commandRows(":n  call   Mama back")
+        assertEquals("call Mama back", (rows.single().action as AppModel.Result.Action.SaveNote).text)
+        assertTrue(commandRows(":n").isEmpty())
+    }
+
+    @Test
     fun `unreadable timer and alarm input show a cant-read error row with no action`() {
         val t = commandRows(":t 25x tea")
         assertEquals(listOf("Can't read '25x'"), t.map { it.text })

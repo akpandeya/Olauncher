@@ -262,7 +262,8 @@ class AppDrawerAdapter(
                         recentCaption = ctx?.getString(R.string.recent) ?: "Recent",
                         callRowText = { ctx?.getString(R.string.call_number, it) ?: "Call $it" },
                         saveWordRowText = { ctx?.getString(R.string.save_word_row, it) ?: "Save word: $it" },
-                        commandHelpRowText = { word -> commandHelpText(ctx, word) },
+                        noteRowText = { ctx?.getString(R.string.note_row, it) ?: "Save note: $it" },
+                        commandHelpRowText ={ word -> commandHelpText(ctx, word) },
                         cantReadRowText = { ctx?.getString(R.string.command_cant_read, it) ?: "Can't read '$it'" },
                         eventNoTitleRowText = { ctx?.getString(R.string.command_event_no_title) ?: "Can't add an event without a title" },
                         saveWordsRowText = { count, shown ->

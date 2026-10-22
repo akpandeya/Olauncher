@@ -33,6 +33,7 @@ import app.olauncher.R
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
 import app.olauncher.helper.Haptics
+import app.olauncher.helper.OlDialog
 import app.olauncher.helper.hapticLongClick
 import app.olauncher.helper.HomeSet
 import app.olauncher.helper.HomeSets
@@ -99,6 +100,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     internal val musicTick = Runnable { refreshContextLine() }
     internal var contextItem: ContextItem? = null
     internal var nextEventId: Long? = null
+    internal var notesDialog: OlDialog? = null
     internal var contextJob: Job? = null
     internal var wallpaperColorsListener: WallpaperManager.OnColorsChangedListener? = null
     internal val originalShadows = HashMap<TextView, FloatArray>()
@@ -165,6 +167,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         registerBatteryReceiver()
         startContextLine()
         populateNextEventLine()
+        populateNoteLine()
         // Fixes a missed wind-down start/end (grey wallpaper, whole-phone grey) and reschedules.
         if (prefs.windDown || prefs.windDownGreyApplied || prefs.systemGreySaved != null) {
             WindDownWorker.syncAsync(requireContext())
@@ -222,6 +225,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             R.id.weather -> openWeatherApp()
             R.id.contextLine -> openContextItem()
             R.id.nextEventLine -> openNextEvent()
+            R.id.noteLine -> markTopNoteDone()
             R.id.setDefaultLauncher -> viewModel.resetLauncherLiveData.call()
             R.id.tvScreenTime -> openScreenTimeDigitalWellbeing()
 
@@ -357,6 +361,11 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             contextItem is ContextItem.Media
         }
         binding.nextEventLine.setOnClickListener(this)
+        binding.noteLine.setOnClickListener(this)
+        binding.noteLine.setOnLongClickListener {
+            showNotesDialog()
+            true
+        }
         binding.clock.hapticLongClick { onLongClick(binding.clock) }
         binding.clockWords.hapticLongClick { onLongClick(binding.clockWords) }
         binding.date.setOnLongClickListener(this)
@@ -866,6 +875,8 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
 
 
     override fun onDestroyView() {
+        notesDialog?.dismiss()
+        notesDialog = null
         glowAnimator?.cancel()
         glowAnimator = null
         // The next view starts without a glow background, so forget what was drawn.

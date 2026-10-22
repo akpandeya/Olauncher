@@ -133,6 +133,8 @@ object SettingsCatalog {
         primaryId = R.id.contextLineValue, layoutId = R.id.contextLineLayout, titleId = R.id.contextLineTitle, valueId = R.id.contextLineValue),
     row(key = "homeNextEventValue", sectionKey = SettingsSections.KEY_HOME, titleRes = R.string.home_next_event, type = SettingsRowType.TOGGLE,
         primaryId = R.id.homeNextEventValue, layoutId = R.id.homeNextEventLayout, titleId = R.id.homeNextEventTitle, valueId = R.id.homeNextEventValue),
+    row(key = "homeNotesValue", sectionKey = SettingsSections.KEY_HOME, titleRes = R.string.home_notes, type = SettingsRowType.TOGGLE,
+        primaryId = R.id.homeNotesValue, layoutId = R.id.homeNotesLayout, titleId = R.id.homeNotesTitle, valueId = R.id.homeNotesValue),
     row(key = "alignment", sectionKey = SettingsSections.KEY_HOME, titleRes = R.string.home_layout_alignment, type = SettingsRowType.CHOICE,
         primaryId = R.id.alignment, valueId = R.id.alignment),
     row(key = "swapSides", sectionKey = SettingsSections.KEY_HOME, titleRes = R.string.swap_sides, type = SettingsRowType.ACTION,
