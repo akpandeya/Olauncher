@@ -4,6 +4,9 @@ import app.olauncher.helper.DrawerCommand
 import app.olauncher.helper.Note
 import app.olauncher.helper.Notes
 import app.olauncher.helper.NotesStore
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZonedDateTime
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -11,6 +14,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class NotesTest {
+    private val DAY = LocalDate.of(2025, 10, 22)
+    private val noon = ZonedDateTime.of(2025, 10, 22, 12, 0, 0, 0, ZoneId.of("Europe/Berlin"))
 
     @Test
     fun `parser gives Note with trimmed args`() {
@@ -43,18 +48,18 @@ class NotesTest {
     fun `mark done hides the note and undo brings it back`() {
         var list = Notes.add(Notes.add(emptyList(), "first", 1L), "second", 2L)
         list = Notes.markDone(list, 1L)
-        assertEquals("second", Notes.top(list)?.text)
+        assertEquals("second", Notes.top(list, DAY)?.text)
         list = Notes.markDone(list, 1L, done = false)
-        assertEquals("first", Notes.top(list)?.text)
+        assertEquals("first", Notes.top(list, DAY)?.text)
     }
 
     @Test
     fun `open notes are oldest first and top is null when none are open`() {
         val list = listOf(Note(1, "late", 300L), Note(2, "early", 100L), Note(3, "done", 50L, done = true), Note(4, "tie", 100L))
         assertEquals(listOf("early", "tie", "late"), Notes.open(list).map { it.text })
-        assertEquals("early", Notes.top(list)?.text)
-        assertNull(Notes.top(list.map { it.copy(done = true) }))
-        assertNull(Notes.top(emptyList()))
+        assertEquals("early", Notes.top(list, DAY)?.text)
+        assertNull(Notes.top(list.map { it.copy(done = true) }, DAY))
+        assertNull(Notes.top(emptyList(), DAY))
     }
 
     @Test
@@ -97,14 +102,65 @@ class NotesTest {
     fun `store saves to the backing string and reads it back`() {
         var raw = ""
         val store = NotesStore({ raw }, { raw = it })
-        assertNull(store.top())
+        assertNull(store.top(DAY))
         assertTrue(store.add("call Mama back", 10L))
         assertFalse(store.add("  ", 11L))
         store.add("second", 20L)
-        assertEquals("call Mama back", store.top()?.text)
-        store.markDone(store.top()!!.id)
-        assertEquals("second", store.top()?.text)
-        store.delete(store.top()!!.id)
-        assertNull(store.top())
+        assertEquals("call Mama back", store.top(DAY)?.text)
+        store.markDone(store.top(DAY)!!.id)
+        assertEquals("second", store.top(DAY)?.text)
+        store.delete(store.top(DAY)!!.id)
+        assertNull(store.top(DAY))
+    }
+
+    @Test
+    fun `dated note is hidden the day before and shown on its day`() {
+        val list = Notes.add(emptyList(), "pay rent", 1L, LocalDate.of(2025, 11, 1))
+        assertNull(Notes.top(list, LocalDate.of(2025, 10, 31)))
+        assertEquals("pay rent", Notes.top(list, LocalDate.of(2025, 11, 1))?.text)
+        assertEquals("pay rent", Notes.top(list, LocalDate.of(2025, 11, 2))?.text)
+        assertEquals(1, Notes.open(list).size)
+    }
+
+    @Test
+    fun `hidden dated note does not block an older undated one or a newer one`() {
+        var list = Notes.add(emptyList(), "later", 1L, LocalDate.of(2025, 12, 1))
+        list = Notes.add(list, "undated", 2L)
+        assertEquals("undated", Notes.top(list, DAY)?.text)
+        assertEquals("later", Notes.top(list, LocalDate.of(2025, 12, 1))?.text)
+    }
+
+    @Test
+    fun `dated note round trips and old json without showFrom stays undated`() {
+        val list = Notes.add(emptyList(), "x", 1L, LocalDate.of(2025, 11, 1))
+        assertEquals(list, Notes.decode(Notes.encode(list)))
+        val old = Notes.decode("[{\"id\":1,\"text\":\"old\",\"created\":5,\"done\":false}]")
+        assertEquals(listOf(Note(1, "old", 5L)), old)
+        assertNull(old.single().showFrom)
+        assertFalse(Notes.encode(listOf(Note(1, "old", 5L))).contains("showFrom"))
+        assertEquals("old", Notes.top(old, DAY)?.text)
+    }
+
+    @Test
+    fun `parse reads a trailing date token`() {
+        assertEquals(Notes.Parsed.Ok("pay rent", LocalDate.of(2025, 11, 1)), Notes.parse("pay rent 1.11", noon))
+        assertEquals(Notes.Parsed.Ok("return book", LocalDate.of(2025, 10, 24)), Notes.parse("return book fri", noon))
+        assertEquals(Notes.Parsed.Ok("call", LocalDate.of(2025, 10, 23)), Notes.parse("call tomorrow", noon))
+        assertEquals(Notes.Parsed.Ok("a", LocalDate.of(2026, 1, 5)), Notes.parse("a 5.1", noon))
+    }
+
+    @Test
+    fun `parse leaves undated text alone`() {
+        assertEquals(Notes.Parsed.Ok("buy milk", null), Notes.parse("  buy   milk ", noon))
+        assertEquals(Notes.Parsed.Ok("pay 5", null), Notes.parse("pay 5", noon))
+        assertEquals(Notes.Parsed.Ok("fri", null), Notes.parse("fri", noon))
+        assertEquals(Notes.Parsed.Ok("fri meeting", null), Notes.parse("fri meeting", noon))
+        assertEquals(Notes.Parsed.Ok("", null), Notes.parse("  ", noon))
+    }
+
+    @Test
+    fun `parse reports an unreadable date and a store saves nothing for it`() {
+        assertEquals(Notes.Parsed.Error("32.13"), Notes.parse("pay rent 32.13", noon))
+        assertEquals(Notes.Parsed.Error("31.2"), Notes.parse("x 31.2", noon))
     }
 }

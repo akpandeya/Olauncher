@@ -42,6 +42,7 @@ object EventCommand {
 
     private val WHITESPACE = Regex("""\s+""")
     private val LOOKS_NUMERIC = Regex("""^\d[\d:.\-]*$""")
+    private val DATE_SHAPE = Regex("""^\d{1,2}\.\d{1,2}(?:\.\d{4})?$""")
     private val TIME = Regex("""^(\d{1,2})(?:[:.](\d{2}))?$""")
     private val DATE = Regex("""^(\d{1,2})\.(\d{1,2})(?:\.(\d{4}))?$""")
     private val LENGTH = Regex("""^(?:(\d{1,3})h(\d{1,2})?m?|(\d{1,4})m)$""", RegexOption.IGNORE_CASE)
@@ -120,7 +121,7 @@ object EventCommand {
         val date: LocalDate = when {
             dayOffset != null -> today.plusDays(dayOffset)
             explicitDate != null ->
-                if (!explicitHasYear && explicitDate.isBefore(today)) explicitDate.plusYears(1) else explicitDate
+                rollForward(explicitDate, explicitHasYear, today)
             weekday != null -> {
                 val todayFits = start == null || LocalDateTime.of(today, start).isAfter(now.toLocalDateTime())
                 if (today.dayOfWeek == weekday && todayFits) today else today.with(TemporalAdjusters.next(weekday))
@@ -151,6 +152,27 @@ object EventCommand {
                 false, date, start, endLocal.toLocalTime(),
             )
         )
+    }
+
+    private fun rollForward(date: LocalDate, hasYear: Boolean, today: LocalDate): LocalDate =
+        if (!hasYear && date.isBefore(today)) date.plusYears(1) else date
+
+    /** True for a word or number shaped like a date token: `today`, `fri`, `24.10`, `24.10.2026` (even if invalid). */
+    fun looksLikeDate(token: String): Boolean {
+        val lower = token.lowercase()
+        return lower in TODAY || lower in TOMORROW || lower in DAY_AFTER || lower in WEEKDAYS || DATE_SHAPE.matches(token)
+    }
+
+    /** The day a lone date token names, counted from [today]; null when it is not a real date. */
+    fun parseDate(token: String, today: LocalDate): LocalDate? {
+        val lower = token.lowercase()
+        return when {
+            lower in TODAY -> today
+            lower in TOMORROW -> today.plusDays(1)
+            lower in DAY_AFTER -> today.plusDays(2)
+            lower in WEEKDAYS -> WEEKDAYS.getValue(lower).let { if (today.dayOfWeek == it) today else today.with(TemporalAdjusters.next(it)) }
+            else -> DATE.matchEntire(token)?.let { toDate(it, today) }?.let { rollForward(it.first, it.second, today) }
+        }
     }
 
     private fun parseTime(s: String): LocalTime? {

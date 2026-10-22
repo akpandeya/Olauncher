@@ -148,8 +148,13 @@ object DrawerSearch {
                 )
             }
             // Handled by their own features.
-            is DrawerCommand.Note -> Notes.clean(command.args).let {
-                if (it.isNotEmpty()) rows.add(AppModel.Result(input.noteRowText(it), AppModel.Result.Action.SaveNote(it)))
+            is DrawerCommand.Note -> when (val parsed = Notes.parse(command.args, input.nowZoned())) {
+                is Notes.Parsed.Error -> rows.add(errorRow(input.cantReadRowText(parsed.token)))
+                is Notes.Parsed.Ok -> if (parsed.text.isNotEmpty()) {
+                    val label = parsed.showFrom?.let { Notes.dateLabel(it) }
+                    val rowText = input.noteRowText(parsed.text) + label?.let { " · $it" }.orEmpty()
+                    rows.add(AppModel.Result(rowText, AppModel.Result.Action.SaveNote(parsed.text, parsed.showFrom)))
+                }
             }
             null -> Unit
         }
