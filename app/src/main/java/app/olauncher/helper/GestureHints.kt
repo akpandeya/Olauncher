@@ -1,6 +1,7 @@
 package app.olauncher.helper
 
-enum class Gesture { SWIPE_RIGHT, SWIPE_LEFT, DOUBLE_TAP, LONG_PRESS }
+/** New gestures go at the end: the stored hint index is a position in this order. */
+enum class Gesture { SWIPE_RIGHT, SWIPE_LEFT, DOUBLE_TAP, LONG_PRESS, SWIPE_UP, SWIPE_DOWN, TAP_MUSIC, TAP_EVENT }
 
 data class Hint(val gesture: Gesture, val position: Int)
 
