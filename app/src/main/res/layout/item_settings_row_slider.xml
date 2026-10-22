@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/settingsRowRoot"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="12dp"
+    android:orientation="vertical">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/settingsRowTitle"
+            style="@style/TextLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:paddingVertical="8dp"
+            android:textColor="?attr/primaryColor"
+            android:textSize="@dimen/text_small" />
+
+        <TextView
+            android:id="@+id/settingsRowValue"
+            style="@style/TextSettingsValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end|bottom"
+            android:layout_marginEnd="4dp"
+            android:padding="8dp" />
+    </FrameLayout>
+
+    <SeekBar
+        android:id="@+id/settingsRowSeekBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingVertical="8dp"
+        android:progressBackgroundTint="?attr/primaryColorTrans50"
+        android:progressTint="?attr/primaryColor"
+        android:thumbTint="?attr/primaryColor" />
+</LinearLayout>

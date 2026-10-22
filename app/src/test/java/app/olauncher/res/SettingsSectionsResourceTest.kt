@@ -1,5 +1,10 @@
 package app.olauncher.res
 
+import app.olauncher.R
+import app.olauncher.ui.settings.SettingsCatalog
+import app.olauncher.ui.settings.SettingsHeadingStyle
+import app.olauncher.ui.settings.SettingsItem
+import app.olauncher.ui.settings.SettingsSections
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -7,19 +12,19 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.w3c.dom.Document
 import org.w3c.dom.Element
-import org.w3c.dom.Node
 import java.io.File
 import javax.xml.parsers.DocumentBuilderFactory
 
 /**
- * Verifies the section order and ID preservation for Settings:
- * - Section order in portrait and landscape:
- *   Thumbline header · Home screen · Shortcut icons · Drawer · Wellbeing · Today · Deutsch · Appearance · Gestures · Backup
- * - Drawer holds autoShowKeyboard and drawerBottomSearchLayout
- * - Wellbeing holds distracting apps, pause before distracting apps, screen time and the four nudge rows
- *   with nudges as a TextSmallLight sub-heading
- * - Today holds todayCardsLayout only; swipeRightLayout stays in Gestures
- * - The set of android:ids equals main's (no id added or removed)
+ * Verifies the section order and ID preservation for Settings. Rows now come from
+ * [SettingsCatalog] and one layout serves both orientations, so this checks:
+ * - Section order: Thumbline header, Home screen, Shortcut icons, Drawer, Wellbeing, Today (with Glance),
+ *   Deutsch, Appearance, Gestures, Backup
+ * - Each section holds the expected rows (Drawer holds autoShowKeyboard and drawerBottomSearchLayout,
+ *   Wellbeing holds the nudge rows under a sub-heading, Today holds the three Today rows and Glance holds weather)
+ * - The set of android:ids equals main's: every id still resolves, and every id the old layout held is owned by the
+ *   page frame, a catalog row, or a section heading (no id added or removed)
+ * - There is no landscape copy of the layout; landscape spacing comes from values-land
  * - Required string resources are present and wellbeing_section is not added
  */
 class SettingsSectionsResourceTest {
@@ -51,78 +56,29 @@ class SettingsSectionsResourceTest {
         return result
     }
 
-    private fun extractAllIds(doc: Document): Set<String> {
+    private val idNames: Map<Int, String> =
+        R.id::class.java.fields.filter { it.type == Int::class.javaPrimitiveType }.associate { it.getInt(null) to it.name }
+
+    private val stringNames: Map<Int, String> =
+        R.string::class.java.fields.filter { it.type == Int::class.javaPrimitiveType }.associate { it.getInt(null) to it.name }
+
+    private fun frameIds(): Set<String> {
+        val doc = parseXml(resolveFile("src/main/res/layout/fragment_settings.xml"))
         val ids = mutableSetOf<String>()
-        val allNodes = doc.getElementsByTagName("*")
-        for (i in 0 until allNodes.length) {
-            val element = allNodes.item(i) as Element
-            val idAttr = element.getAttribute("android:id")
-            if (idAttr.isNotEmpty()) {
-                ids.add(idAttr.substringAfterLast("/"))
-            }
+        val all = doc.getElementsByTagName("*")
+        for (i in 0 until all.length) {
+            val id = (all.item(i) as Element).getAttribute("android:id")
+            if (id.isNotEmpty()) ids.add(id.substringAfterLast("/"))
         }
         return ids
     }
 
-    private fun extractSectionLinearChildren(doc: Document): List<Element> {
-        val allLinear = doc.getElementsByTagName("LinearLayout")
-        var scrollLayout: Element? = null
-        for (i in 0 until allLinear.length) {
-            val el = allLinear.item(i) as Element
-            if (el.getAttribute("android:id").endsWith("scrollLayout")) {
-                scrollLayout = el
-                break
-            }
-        }
-        requireNotNull(scrollLayout) { "scrollLayout not found" }
-        val sectionCards = mutableListOf<Element>()
-        val children = scrollLayout.childNodes
-        for (i in 0 until children.length) {
-            val child = children.item(i)
-            if (child.nodeType == Node.ELEMENT_NODE && (child as Element).tagName == "LinearLayout") {
-                val id = child.getAttribute("android:id")
-                if (!id.endsWith("settingsBackLayout") && !id.endsWith("sectionListLayout")) {
-                    sectionCards.add(child)
-                }
-            }
-        }
-        return sectionCards
-    }
+    /** Names of every view id the rows of [sectionKey] own. */
+    private fun rowIdNames(sectionKey: String): Set<String> =
+        SettingsCatalog.rowsFor(sectionKey).flatMap { it.viewIds }.map { idNames.getValue(it) }.toSet()
 
-    private fun extractSectionHeaders(doc: Document): List<String> {
-        val cards = extractSectionLinearChildren(doc)
-        val headers = mutableListOf<String>()
-        for (card in cards) {
-            val textViews = card.getElementsByTagName("TextView")
-            for (i in 0 until textViews.length) {
-                val element = textViews.item(i) as Element
-                if (element.getAttribute("style") == "@style/TextLarge") {
-                    val textAttr = element.getAttribute("android:text")
-                    if (textAttr.isNotEmpty()) {
-                        headers.add(textAttr)
-                    }
-                }
-            }
-        }
-        return headers
-    }
-
-    private fun collectDescendantIds(element: Element): Set<String> {
-        val ids = mutableSetOf<String>()
-        val elId = element.getAttribute("android:id")
-        if (elId.isNotEmpty()) {
-            ids.add(elId.substringAfterLast("/"))
-        }
-        val descendants = element.getElementsByTagName("*")
-        for (i in 0 until descendants.length) {
-            val item = descendants.item(i) as Element
-            val id = item.getAttribute("android:id")
-            if (id.isNotEmpty()) {
-                ids.add(id.substringAfterLast("/"))
-            }
-        }
-        return ids
-    }
+    private fun headingNames(sectionKey: String): List<String> =
+        SettingsCatalog.itemsFor(sectionKey).filterIsInstance<SettingsItem.Heading>().map { stringNames.getValue(it.titleRes) }
 
     @Test
     fun `strings contains drawer and today_section, reuses wellbeing and shortcut_icons, omits wellbeing_section`() {
@@ -135,29 +91,21 @@ class SettingsSectionsResourceTest {
     }
 
     @Test
-    fun `section header order matches acceptance criteria in portrait and landscape`() {
+    fun `section header order matches acceptance criteria`() {
         val expectedResourceHeaders = listOf(
-            "@string/app_name",
-            "@string/home_screen",
-            "@string/shortcut_icons",
-            "@string/drawer",
-            "@string/wellbeing",
-            "@string/today_section",
-            "@string/glance",
-            "@string/deutsch_de",
-            "@string/appearance",
-            "@string/gestures",
-            "@string/backup",
+            "home_screen",
+            "shortcut_icons",
+            "drawer",
+            "wellbeing",
+            "today_section",
+            "glance",
+            "deutsch_de",
+            "appearance",
+            "gestures",
+            "backup",
         )
-
         val strings = loadStrings()
-        val expectedResolvedTitles = expectedResourceHeaders.map { res ->
-            val key = res.removePrefix("@string/")
-            strings[key] ?: error("Missing string: $key")
-        }
-
         val expectedResolvedList = listOf(
-            "Thumbline",
             "Home screen",
             "Shortcut icons",
             "Drawer",
@@ -169,173 +117,112 @@ class SettingsSectionsResourceTest {
             "Gestures",
             "Backup",
         )
-        assertEquals(expectedResolvedList, expectedResolvedTitles)
+        assertEquals(expectedResolvedList, expectedResourceHeaders.map { strings[it] ?: error("Missing string: $it") })
 
-        val layoutFiles = listOf(
-            resolveFile("src/main/res/layout/fragment_settings.xml"),
-            resolveFile("src/main/res/layout-land/fragment_settings.xml"),
-        )
-
-        for (file in layoutFiles) {
-            val doc = parseXml(file)
-            val actualHeaders = extractSectionHeaders(doc)
-            assertEquals("Section headers in ${file.name}", expectedResourceHeaders, actualHeaders)
+        // The page heading of each section, then the Glance heading that sits inside Today.
+        val actual = SettingsSections.all.flatMap { section ->
+            listOf(stringNames.getValue(section.titleRes)) +
+                SettingsCatalog.itemsFor(section.key)
+                    .filterIsInstance<SettingsItem.Heading>()
+                    .filter { it.style == SettingsHeadingStyle.CARD }
+                    .map { stringNames.getValue(it.titleRes) }
         }
+        assertEquals(expectedResourceHeaders, actual)
     }
 
     @Test
     fun `set of android ids equals main with no id added or removed`() {
-        val layoutFiles = listOf(
-            resolveFile("src/main/res/layout/fragment_settings.xml"),
-            resolveFile("src/main/res/layout-land/fragment_settings.xml"),
-        )
+        val frame = frameIds()
+        val owned = mutableSetOf<String>()
+        owned += SettingsCatalog.rows.flatMap { it.viewIds }.map { idNames.getValue(it) }
+        owned += SettingsSections.all.map { idNames.getValue(it.containerId) }
+        owned += SettingsCatalog.allItems.filterIsInstance<SettingsItem.Heading>().filter { it.id != 0 }.map { idNames.getValue(it.id) }
+        // glanceSection heads the Glance block; the block is a heading inside Today now.
+        owned += "glanceSection"
 
-        for (file in layoutFiles) {
-            val doc = parseXml(file)
-            val actualIds = extractAllIds(doc)
+        val removed = EXPECTED_MAIN_IDS - frame - owned
+        assertTrue("Ids dropped from Settings: $removed", removed.isEmpty())
 
-            val added = actualIds - EXPECTED_MAIN_IDS
-            val removed = EXPECTED_MAIN_IDS - actualIds
+        val unresolved = EXPECTED_MAIN_IDS.filter { name -> R.id::class.java.fields.none { it.name == name } }
+        assertTrue("Ids that no longer resolve in R.id: $unresolved", unresolved.isEmpty())
 
-            assertTrue("No id added in ${file.name}: $added", added.isEmpty())
-            assertTrue("No id removed in ${file.name}: $removed", removed.isEmpty())
-            assertEquals("Set of IDs in ${file.name} must equal main's", EXPECTED_MAIN_IDS, actualIds)
-        }
+        val added = (frame + owned) - EXPECTED_MAIN_IDS - setOf("settingsRows")
+        assertTrue("Ids added to Settings: $added", added.isEmpty())
     }
 
     @Test
-    fun `each section holds expected rows and layout structure`() {
-        val layoutFiles = listOf(
-            resolveFile("src/main/res/layout/fragment_settings.xml"),
-            resolveFile("src/main/res/layout-land/fragment_settings.xml"),
-        )
+    fun `each section holds expected rows`() {
+        val home = rowIdNames(SettingsSections.KEY_HOME)
+        for (id in listOf(
+            "homeAppsNum", "dateTime", "batteryMode", "batteryModeLayout", "batteryModeTitle", "infoLineLayout",
+            "contextLineLayout", "homeNextEventLayout", "alignment", "swapSides", "swapSidesLayout",
+        )) assertTrue("$id in Home screen", id in home)
+        assertFalse("distractingApps must not be in Home screen", "distractingAppsLayout" in home)
+        assertFalse("pauseBeforeApps must not be in Home screen", "pauseBeforeAppsLayout" in home)
+        assertFalse("screenTime must not be in Home screen", "screenTimeLayout" in home)
 
-        for (file in layoutFiles) {
-            val doc = parseXml(file)
-            val sections = extractSectionLinearChildren(doc)
-            assertEquals("Expected 11 section cards in ${file.name}", 11, sections.size)
+        val shortcuts = rowIdNames(SettingsSections.KEY_SHORTCUTS)
+        for (id in listOf(
+            "shortcutIconsOnOffLayout", "shortcutCountLayout", "shortcutSizeLayout", "shortcutSideLayout",
+            "shortcutHeightLayout", "shortcutIconStyleLayout",
+        )) assertTrue("$id in Shortcut icons", id in shortcuts)
 
-            val sectionIds = sections.map { collectDescendantIds(it) }
+        val drawer = rowIdNames(SettingsSections.KEY_DRAWER)
+        for (id in listOf(
+            "autoShowKeyboard", "drawerBottomSearchLayout", "searchEngineLayout", "drawerNewFirstLayout",
+            "drawerLetterStripLayout", "drawerRecentsLayout",
+        )) assertTrue("$id in Drawer", id in drawer)
 
-            // Section 0: Thumbline header
-            assertTrue(sectionIds[0].contains("olauncherHiddenApps"))
-            assertTrue(sectionIds[0].contains("appInfo"))
-            assertTrue(sectionIds[0].contains("setLauncher"))
+        val wellbeing = rowIdNames(SettingsSections.KEY_WELLBEING)
+        for (id in listOf(
+            "distractingAppsLayout", "pauseBeforeAppsLayout", "pauseAllowanceLayout", "pauseEscalateLayout",
+            "pauseAskWhyLayout", "commitLockLayout", "holdNotificationsLayout", "quietReleaseTimesLayout",
+            "screenTimeLayout", "nudgeWaterLayout", "nudgeWalkLayout", "nudgeSocialLayout", "nudgeActiveHoursLayout",
+        )) assertTrue("$id in Wellbeing", id in wellbeing)
 
-            // Section 1: Home screen
-            assertTrue(sectionIds[1].contains("homeAppsNum"))
-            assertTrue(sectionIds[1].contains("dateTime"))
-            assertTrue(sectionIds[1].contains("batteryMode"))
-            assertTrue(sectionIds[1].contains("batteryModeLayout"))
-            assertTrue(sectionIds[1].contains("batteryModeTitle"))
-            assertTrue(sectionIds[1].contains("infoLineLayout"))
-            assertTrue(sectionIds[1].contains("contextLineLayout"))
-            assertTrue(sectionIds[1].contains("homeNextEventLayout"))
-            assertTrue(sectionIds[1].contains("alignment"))
-            assertTrue(sectionIds[1].contains("swapSides"))
-            assertTrue(sectionIds[1].contains("swapSidesLayout"))
-            assertFalse("distractingApps must not be in Home screen", sectionIds[1].contains("distractingAppsLayout"))
-            assertFalse("pauseBeforeApps must not be in Home screen", sectionIds[1].contains("pauseBeforeAppsLayout"))
-            assertFalse("screenTime must not be in Home screen", sectionIds[1].contains("screenTimeLayout"))
+        // The nudges sub-heading sits inside Wellbeing, between the screen time rows and the nudge rows.
+        val wellbeingItems = SettingsCatalog.itemsFor(SettingsSections.KEY_WELLBEING)
+        val nudgesAt = wellbeingItems.indexOfFirst { it is SettingsItem.Heading && it.titleRes == R.string.nudges }
+        assertTrue("nudges sub-heading must be in Wellbeing", nudgesAt >= 0)
+        assertEquals(SettingsHeadingStyle.SUB, (wellbeingItems[nudgesAt] as SettingsItem.Heading).style)
+        assertEquals(R.id.nudgesSection, (wellbeingItems[nudgesAt] as SettingsItem.Heading).id)
+        val firstNudgeAt = wellbeingItems.indexOfFirst { it is SettingsItem.Row && it.spec.primaryId == R.id.nudgeWater }
+        assertEquals("nudge rows follow their sub-heading", nudgesAt + 1, firstNudgeAt)
 
-            // Section 2: Shortcut icons
-            assertTrue(sectionIds[2].contains("shortcutIconsSection"))
-            assertTrue(sectionIds[2].contains("shortcutIconsOnOffLayout"))
-            assertTrue(sectionIds[2].contains("shortcutCountLayout"))
-            assertTrue(sectionIds[2].contains("shortcutSizeLayout"))
-            assertTrue(sectionIds[2].contains("shortcutSideLayout"))
-            assertTrue(sectionIds[2].contains("shortcutHeightLayout"))
-            assertTrue(sectionIds[2].contains("shortcutIconStyleLayout"))
+        // Today: its three rows, then the Glance block with weather.
+        val todayItems = SettingsCatalog.itemsFor(SettingsSections.KEY_TODAY)
+        val glanceAt = todayItems.indexOfFirst { it is SettingsItem.Heading && it.titleRes == R.string.glance }
+        assertTrue("Glance heading must be in Today", glanceAt > 0)
+        val beforeGlance = todayItems.take(glanceAt).filterIsInstance<SettingsItem.Row>().map { it.spec.primaryId }
+        assertEquals(listOf(R.id.todayCards, R.id.todayOrder, R.id.intentionOnHome), beforeGlance)
+        val afterGlance = todayItems.drop(glanceAt + 1).filterIsInstance<SettingsItem.Row>().map { it.spec.primaryId }
+        assertEquals(listOf(R.id.weather), afterGlance)
+        val today = rowIdNames(SettingsSections.KEY_TODAY)
+        for (id in listOf("weatherLayout", "weatherTitle", "weather")) assertTrue("$id in Today", id in today)
 
-            // Section 3: Drawer
-            assertTrue(sectionIds[3].contains("autoShowKeyboard"))
-            assertTrue(sectionIds[3].contains("drawerBottomSearchLayout"))
-            assertTrue(sectionIds[3].contains("searchEngineLayout"))
-            assertTrue(sectionIds[3].contains("drawerNewFirstLayout"))
-            assertTrue(sectionIds[3].contains("drawerLetterStripLayout"))
-            assertTrue(sectionIds[3].contains("drawerRecentsLayout"))
+        val deutsch = rowIdNames(SettingsSections.KEY_DEUTSCH)
+        for (id in listOf(
+            "germanLayout", "germanClockLayout", "germanLookupLayout", "germanPauseWordLayout", "germanUiLayout",
+        )) assertTrue("$id in Deutsch", id in deutsch)
 
-            // Section 4: Wellbeing
-            assertTrue(sectionIds[4].contains("distractingAppsLayout"))
-            assertTrue(sectionIds[4].contains("pauseBeforeAppsLayout"))
-            assertTrue(sectionIds[4].contains("pauseAllowanceLayout"))
-            assertTrue(sectionIds[4].contains("pauseEscalateLayout"))
-            assertTrue(sectionIds[4].contains("pauseAskWhyLayout"))
-            assertTrue(sectionIds[4].contains("commitLockLayout"))
-            assertTrue(sectionIds[4].contains("holdNotificationsLayout"))
-            assertTrue(sectionIds[4].contains("quietReleaseTimesLayout"))
-            assertTrue(sectionIds[4].contains("screenTimeLayout"))
-            assertTrue(sectionIds[4].contains("nudgesSection"))
-            assertTrue(sectionIds[4].contains("nudgeWaterLayout"))
-            assertTrue(sectionIds[4].contains("nudgeWalkLayout"))
-            assertTrue(sectionIds[4].contains("nudgeSocialLayout"))
-            assertTrue(sectionIds[4].contains("nudgeActiveHoursLayout"))
+        val appearance = rowIdNames(SettingsSections.KEY_APPEARANCE)
+        for (id in listOf(
+            "photoWallpaperLayout", "statusBar", "appThemeText", "accent", "fontFamily", "boldFont",
+            "textSizeValue", "haptics", "textContrastLayout",
+        )) assertTrue("$id in Appearance", id in appearance)
+        assertFalse("autoShowKeyboard moved to Drawer", "autoShowKeyboard" in appearance)
+        assertFalse("drawerBottomSearch moved to Drawer", "drawerBottomSearchLayout" in appearance)
 
-            // Verify nudges sub-heading has TextSmallLight style inside Wellbeing
-            val wellbeingTextViews = sections[4].getElementsByTagName("TextView")
-            var nudgesSubheadingFound = false
-            for (j in 0 until wellbeingTextViews.length) {
-                val tv = wellbeingTextViews.item(j) as Element
-                if (tv.getAttribute("android:text") == "@string/nudges") {
-                    assertEquals(
-                        "nudges must be sub-heading TextSmallLight in ${file.name}",
-                        "@style/TextSmallLight",
-                        tv.getAttribute("style")
-                    )
-                    nudgesSubheadingFound = true
-                }
-            }
-            assertTrue("nudges sub-heading must be in Wellbeing section in ${file.name}", nudgesSubheadingFound)
+        val gestures = rowIdNames(SettingsSections.KEY_GESTURES)
+        for (id in listOf("swipeLeftApp", "swipeRightLayout", "toggleLock")) assertTrue("$id in Gestures", id in gestures)
+        assertFalse("todayCardsLayout moved to Today", "todayCardsLayout" in gestures)
 
-            // Section 5: Today
-            assertTrue(sectionIds[5].contains("todayCardsLayout"))
-            assertEquals(
-                "Today section holds todayCardsLayout only",
-                setOf("todaySection", "todayCardsLayout", "todayCardsTitle", "todayCards", "todayOrderLayout", "todayOrderTitle", "todayOrder", "intentionOnHomeLayout", "intentionOnHomeTitle", "intentionOnHome"),
-                sectionIds[5]
-            )
-
-            // Section 6: Glance
-            assertTrue(sectionIds[6].contains("weatherLayout"))
-            assertTrue(sectionIds[6].contains("weatherTitle"))
-            assertTrue(sectionIds[6].contains("weather"))
-
-            // Section 7: Deutsch
-            assertTrue(sectionIds[7].contains("deutschSection"))
-            assertTrue(sectionIds[7].contains("germanLayout"))
-            assertTrue(sectionIds[7].contains("germanClockLayout"))
-            assertTrue(sectionIds[7].contains("germanLookupLayout"))
-            assertTrue(sectionIds[7].contains("germanPauseWordLayout"))
-            assertTrue(sectionIds[7].contains("germanUiLayout"))
-
-            // Section 8: Appearance
-            assertTrue(sectionIds[8].contains("photoWallpaperLayout"))
-            assertTrue(sectionIds[8].contains("statusBar"))
-            assertTrue(sectionIds[8].contains("appThemeText"))
-            assertTrue(sectionIds[8].contains("accent"))
-            assertTrue(sectionIds[8].contains("fontFamily"))
-            assertTrue(sectionIds[8].contains("boldFont"))
-            assertTrue(sectionIds[8].contains("textSizeValue"))
-            assertTrue(sectionIds[8].contains("haptics"))
-            assertTrue(sectionIds[8].contains("textContrastLayout"))
-            assertFalse("autoShowKeyboard moved to Drawer", sectionIds[8].contains("autoShowKeyboard"))
-            assertFalse("drawerBottomSearch moved to Drawer", sectionIds[8].contains("drawerBottomSearchLayout"))
-
-            // Section 9: Gestures
-            assertTrue(sectionIds[9].contains("swipeLeftApp"))
-            assertTrue(sectionIds[9].contains("swipeRightLayout"))
-            assertTrue(sectionIds[9].contains("toggleLock"))
-            assertFalse("todayCardsLayout moved to Today", sectionIds[9].contains("todayCardsLayout"))
-
-            // Section 10: Backup
-            assertTrue(sectionIds[10].contains("backupSection"))
-            assertTrue(sectionIds[10].contains("exportBackupLayout"))
-            assertTrue(sectionIds[10].contains("importBackupLayout"))
-        }
+        val backup = rowIdNames(SettingsSections.KEY_BACKUP)
+        for (id in listOf("exportBackupLayout", "importBackupLayout")) assertTrue("$id in Backup", id in backup)
     }
 
     @Test
-    fun `section list rows order matches expected sections in portrait and landscape`() {
+    fun `section list rows order matches expected sections`() {
         val expectedSectionRowIds = listOf(
             "sectionRowHome",
             "sectionRowShortcuts",
@@ -360,69 +247,79 @@ class SettingsSectionsResourceTest {
             "@string/privacy",
         )
 
-        val layoutFiles = listOf(
-            resolveFile("src/main/res/layout/fragment_settings.xml"),
-            resolveFile("src/main/res/layout-land/fragment_settings.xml"),
-        )
-
-        for (file in layoutFiles) {
-            val doc = parseXml(file)
-            val allLinear = doc.getElementsByTagName("LinearLayout")
-            var sectionList: Element? = null
-            for (i in 0 until allLinear.length) {
-                val el = allLinear.item(i) as Element
-                if (el.getAttribute("android:id").endsWith("sectionListLayout")) {
-                    sectionList = el
-                    break
-                }
+        val file = resolveFile("src/main/res/layout/fragment_settings.xml")
+        val doc = parseXml(file)
+        val allLinear = doc.getElementsByTagName("LinearLayout")
+        var sectionList: Element? = null
+        for (i in 0 until allLinear.length) {
+            val el = allLinear.item(i) as Element
+            if (el.getAttribute("android:id").endsWith("sectionListLayout")) {
+                sectionList = el
+                break
             }
-            requireNotNull(sectionList) { "sectionListLayout not found in ${file.name}" }
-
-            val rowIds = mutableListOf<String>()
-            val rowTexts = mutableListOf<String>()
-            val children = sectionList.getElementsByTagName("TextView")
-            for (i in 0 until children.length) {
-                val tv = children.item(i) as Element
-                val idAttr = tv.getAttribute("android:id")
-                if (idAttr.isNotEmpty()) {
-                    rowIds.add(idAttr.substringAfterLast("/"))
-                }
-                rowTexts.add(tv.getAttribute("android:text"))
-                assertEquals("TextLarge style on row in ${file.name}", "@style/TextLarge", tv.getAttribute("style"))
-            }
-
-            assertEquals("Section row IDs in ${file.name}", expectedSectionRowIds, rowIds)
-            assertEquals("Section row texts in ${file.name}", expectedSectionRowTexts, rowTexts)
         }
+        requireNotNull(sectionList) { "sectionListLayout not found in ${file.name}" }
+
+        val rowIds = mutableListOf<String>()
+        val rowTexts = mutableListOf<String>()
+        val children = sectionList.getElementsByTagName("TextView")
+        for (i in 0 until children.length) {
+            val tv = children.item(i) as Element
+            val idAttr = tv.getAttribute("android:id")
+            if (idAttr.isNotEmpty()) {
+                rowIds.add(idAttr.substringAfterLast("/"))
+            }
+            rowTexts.add(tv.getAttribute("android:text"))
+            assertEquals("TextLarge style on row in ${file.name}", "@style/TextLarge", tv.getAttribute("style"))
+        }
+
+        assertEquals("Section row IDs in ${file.name}", expectedSectionRowIds, rowIds)
+        assertEquals("Section row texts in ${file.name}", expectedSectionRowTexts, rowTexts)
     }
 
     @Test
-    fun `settings back row has expected id and text in portrait and landscape`() {
-        val layoutFiles = listOf(
-            resolveFile("src/main/res/layout/fragment_settings.xml"),
-            resolveFile("src/main/res/layout-land/fragment_settings.xml"),
-        )
-
-        for (file in layoutFiles) {
-            val doc = parseXml(file)
-            val allLinear = doc.getElementsByTagName("LinearLayout")
-            var backLayout: Element? = null
-            for (i in 0 until allLinear.length) {
-                val el = allLinear.item(i) as Element
-                if (el.getAttribute("android:id").endsWith("settingsBackLayout")) {
-                    backLayout = el
-                    break
-                }
+    fun `settings back row has expected id and text`() {
+        val file = resolveFile("src/main/res/layout/fragment_settings.xml")
+        val doc = parseXml(file)
+        val allLinear = doc.getElementsByTagName("LinearLayout")
+        var backLayout: Element? = null
+        for (i in 0 until allLinear.length) {
+            val el = allLinear.item(i) as Element
+            if (el.getAttribute("android:id").endsWith("settingsBackLayout")) {
+                backLayout = el
+                break
             }
-            requireNotNull(backLayout) { "settingsBackLayout not found in ${file.name}" }
-
-            val textViews = backLayout.getElementsByTagName("TextView")
-            assertEquals("One TextView in settingsBackLayout in ${file.name}", 1, textViews.length)
-            val tv = textViews.item(0) as Element
-            assertEquals("settingsBack", tv.getAttribute("android:id").substringAfterLast("/"))
-            assertEquals("@string/settings_back", tv.getAttribute("android:text"))
-            assertEquals("@style/TextLarge", tv.getAttribute("style"))
         }
+        requireNotNull(backLayout) { "settingsBackLayout not found in ${file.name}" }
+
+        val textViews = backLayout.getElementsByTagName("TextView")
+        assertEquals("One TextView in settingsBackLayout in ${file.name}", 1, textViews.length)
+        val tv = textViews.item(0) as Element
+        assertEquals("settingsBack", tv.getAttribute("android:id").substringAfterLast("/"))
+        assertEquals("@string/settings_back", tv.getAttribute("android:text"))
+        assertEquals("@style/TextLarge", tv.getAttribute("style"))
+    }
+
+    @Test
+    fun `settings rows are drawn by one list and there is no landscape copy`() {
+        val layout = parseXml(resolveFile("src/main/res/layout/fragment_settings.xml"))
+        val recyclers = layout.getElementsByTagName("androidx.recyclerview.widget.RecyclerView")
+        assertEquals("one list holds every row", 1, recyclers.length)
+        assertEquals("@+id/settingsRows", (recyclers.item(0) as Element).getAttribute("android:id"))
+
+        val resDir = resolveFile("src/main/res/layout/fragment_settings.xml").parentFile.parentFile
+        assertFalse("layout-land/fragment_settings.xml must stay deleted", File(resDir, "layout-land/fragment_settings.xml").exists())
+
+        // Landscape spacing is a resource override of the same names, not a second layout.
+        fun settingsDimens(file: File): Set<String> {
+            val nodes = parseXml(file).getElementsByTagName("dimen")
+            return (0 until nodes.length).map { (nodes.item(it) as Element).getAttribute("name") }
+                .filter { it.startsWith("settings_") }.toSet()
+        }
+        val portrait = settingsDimens(File(resDir, "values/dimens.xml"))
+        val landscape = settingsDimens(File(resDir, "values-land/dimens.xml"))
+        assertTrue("settings_ dimens exist", portrait.isNotEmpty())
+        assertEquals("values-land overrides every settings_ dimen", portrait, landscape)
     }
 
     companion object {

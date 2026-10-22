@@ -36,4 +36,10 @@
     <dimen name="radiusPill">999dp</dimen>
     <!-- Border width for outlined surfaces -->
     <dimen name="strokeHairline">1dp</dimen>
+
+    <!-- Settings page frame. values-land overrides these, so one layout serves both orientations. -->
+    <dimen name="settings_scroll_margin_vertical">8dp</dimen>
+    <dimen name="settings_fading_edge">48dp</dimen>
+    <dimen name="settings_content_padding_vertical">64dp</dimen>
+    <dimen name="settings_scroll_padding_horizontal">0dp</dimen>
 </resources>

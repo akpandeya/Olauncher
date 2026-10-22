@@ -1,12 +1,16 @@
 package app.olauncher.res
 
+import app.olauncher.R
+import app.olauncher.ui.settings.SettingsCatalog
+import app.olauncher.ui.settings.SettingsRowShape
+import app.olauncher.ui.settings.SettingsRowType
+import app.olauncher.ui.settings.SettingsSections
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.w3c.dom.Document
 import org.w3c.dom.Element
-import org.w3c.dom.Node
 import java.io.File
 import javax.xml.parsers.DocumentBuilderFactory
 
@@ -62,71 +66,31 @@ class SearchEngineSettingsTest {
     }
 
     @Test
-    fun `searchEngineLayout sits directly after drawerBottomSearchLayout in portrait and landscape`() {
-        val layoutFiles = listOf(
-            resolveFile("src/main/res/layout/fragment_settings.xml"),
-            resolveFile("src/main/res/layout-land/fragment_settings.xml"),
+    fun `searchEngine row sits directly after drawerBottomSearch in the Drawer list`() {
+        val drawerRows = SettingsCatalog.rowsFor(SettingsSections.KEY_DRAWER)
+        val bottomSearchAt = drawerRows.indexOfFirst { it.primaryId == R.id.drawerBottomSearch }
+        val searchEngineAt = drawerRows.indexOfFirst { it.primaryId == R.id.searchEngine }
+
+        assertTrue("drawerBottomSearch row must exist", bottomSearchAt >= 0)
+        assertTrue("searchEngine row must exist", searchEngineAt >= 0)
+        assertEquals(
+            "searchEngine must be the next row after drawerBottomSearch",
+            bottomSearchAt + 1,
+            searchEngineAt,
         )
-
-        for (file in layoutFiles) {
-            val doc = parseXml(file)
-            val allFrameLayouts = doc.getElementsByTagName("FrameLayout")
-            var drawerBottomSearchIdx = -1
-            var searchEngineIdx = -1
-
-            var frameLayoutCounter = 0
-            for (i in 0 until allFrameLayouts.length) {
-                val element = allFrameLayouts.item(i) as Element
-                val idAttr = element.getAttribute("android:id")
-                if (idAttr == "@+id/drawerBottomSearchLayout") {
-                    drawerBottomSearchIdx = frameLayoutCounter
-                } else if (idAttr == "@+id/searchEngineLayout") {
-                    searchEngineIdx = frameLayoutCounter
-                }
-                frameLayoutCounter++
-            }
-
-            assertTrue("drawerBottomSearchLayout must exist in ${file.name}", drawerBottomSearchIdx >= 0)
-            assertTrue("searchEngineLayout must exist in ${file.name}", searchEngineIdx >= 0)
-            assertEquals(
-                "searchEngineLayout must be the next FrameLayout after drawerBottomSearchLayout in ${file.name}",
-                drawerBottomSearchIdx + 1,
-                searchEngineIdx,
-            )
-        }
     }
 
     @Test
-    fun `searchEngineLayout contains title and value textviews with expected styles and ids`() {
-        val layoutFiles = listOf(
-            resolveFile("src/main/res/layout/fragment_settings.xml"),
-            resolveFile("src/main/res/layout-land/fragment_settings.xml"),
-        )
-
-        for (file in layoutFiles) {
-            val doc = parseXml(file)
-            val allElements = doc.getElementsByTagName("FrameLayout")
-            var searchEngineFrameLayout: Element? = null
-            for (i in 0 until allElements.length) {
-                val el = allElements.item(i) as Element
-                if (el.getAttribute("android:id") == "@+id/searchEngineLayout") {
-                    searchEngineFrameLayout = el
-                    break
-                }
-            }
-            assertNotNull("searchEngineLayout must exist in ${file.name}", searchEngineFrameLayout)
-
-            val textViews = searchEngineFrameLayout!!.getElementsByTagName("TextView")
-            assertEquals("searchEngineLayout must have exactly 2 TextViews in ${file.name}", 2, textViews.length)
-
-            val titleView = textViews.item(0) as Element
-            assertEquals("@+id/searchEngineTitle", titleView.getAttribute("android:id"))
-            assertEquals("@style/TextLabel", titleView.getAttribute("style"))
-            assertEquals("@string/search_engine", titleView.getAttribute("android:text"))
-
-            val valueView = textViews.item(1) as Element
-            assertEquals("@+id/searchEngine", valueView.getAttribute("android:id"))
-            assertEquals("@style/TextSettingsValue", valueView.getAttribute("style"))
-        }
+    fun `searchEngine row has the expected title, value and layout ids`() {
+        val row = SettingsCatalog.rowByViewId(R.id.searchEngine)
+        assertNotNull("searchEngine row must exist", row)
+        row!!
+        assertEquals(R.string.search_engine, row.titleRes)
+        assertEquals(R.id.searchEngineLayout, row.layoutId)
+        assertEquals(R.id.searchEngineTitle, row.titleId)
+        assertEquals(R.id.searchEngine, row.valueId)
+        assertEquals(SettingsRowType.CHOICE, row.type)
+        assertEquals(SettingsRowShape.VALUE, row.shape)
+        assertEquals(SettingsSections.KEY_DRAWER, row.sectionKey)
     }
 }

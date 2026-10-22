@@ -447,15 +447,6 @@ internal fun SettingsFragment.populateWeatherEffects() {
     binding.weatherEffects.text = getString(if (prefs.homeWeatherEffects) R.string.on else R.string.off)
 }
 
-internal fun SettingsFragment.toggleHaptics() {
-    prefs.haptics = !prefs.haptics
-    populateHaptics()
-}
-
-internal fun SettingsFragment.populateHaptics() {
-    binding.haptics.text = getString(if (prefs.haptics) R.string.on else R.string.off)
-}
-
 /** Strength and duration sliders. Save on every change and buzz once on release so the user can feel the new setting. */
 internal fun SettingsFragment.setupHapticSliders() {
     binding.hapticStrengthSeekBar.max = HapticTuning.STRENGTH_MAX
