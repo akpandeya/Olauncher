@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Bottom message with an Undo action (hide, remove from home, archive) -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_popup_card"
+    android:elevation="8dp"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="@dimen/popup_card_padding_horizontal">
+
+    <TextView
+        android:id="@+id/tvUndoMessage"
+        style="@style/PopupCardRow"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp" />
+
+    <TextView
+        android:id="@+id/tvUndoAction"
+        style="@style/PopupCardRow"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:minHeight="48dp"
+        android:paddingStart="@dimen/popup_card_padding_horizontal"
+        android:paddingEnd="@dimen/popup_card_padding_horizontal"
+        android:text="@string/undo"
+        android:textColor="?attr/accentColor"
+        android:textStyle="bold" />
+</LinearLayout>

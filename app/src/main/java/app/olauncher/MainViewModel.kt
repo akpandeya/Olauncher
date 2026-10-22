@@ -173,7 +173,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     private fun saveShortcutApp(appModel: AppModel, slot: Int) {
         if (appModel !is AppModel.App || appModel.isArchived) {
-            appContext.showToast("Please pick an app")
+            appContext.showToast(appContext.getString(R.string.please_pick_an_app))
             return
         }
         prefs.setShortcutApp(slot, appModel.appLabel, appModel.appPackage, appModel.activityClassName, appModel.user.toString())
