@@ -256,8 +256,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             R.id.homeApp1, R.id.homeApp2, R.id.homeApp3, R.id.homeApp4,
             R.id.homeApp5, R.id.homeApp6, R.id.homeApp7, R.id.homeApp8 -> {
                 val slot = homeAppViews().indexOfFirst { it.id == view.id } + 1
-                val set = prefs.activeHomeSet()
-                showAppList(HomeSets.flagFor(set, slot), prefs.getAppName(slot, set).isNotEmpty(), true)
+                showHomeAppPopup(view, slot)
             }
             R.id.clock, R.id.clockWords -> {
                 showAppList(Constants.FLAG_SET_CLOCK_APP)

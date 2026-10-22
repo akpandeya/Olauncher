@@ -15,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView.Recycler
 import app.olauncher.R
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
+import app.olauncher.helper.AppActionHandlers
 import app.olauncher.helper.HomeAppHelper
 import app.olauncher.wellbeing.UsageSnapshotWorker
 import app.olauncher.helper.DrawerScrollHelper
@@ -131,16 +132,8 @@ internal fun AppDrawerFragment.initAdapter() {
                         user = appModel.user,
                     )
 
-                is AppModel.App -> {
-                    if (appModel.user != Process.myUserHandle()) {
-                        openAppInfo(requireContext(), appModel.user, appModel.appPackage)
-                    } else if (requireContext().isSystemApp(appModel.appPackage, appModel.user)) {
-                        requireContext().showToast(getString(R.string.system_app_cannot_delete))
-                        openAppInfo(requireContext(), appModel.user, appModel.appPackage)
-                    } else {
-                        requireContext().uninstall(appModel.appPackage)
-                    }
-                }
+                is AppModel.App ->
+                    AppActionHandlers.uninstallApp(requireContext(), appModel.appPackage, appModel.user)
             }
             viewModel.getAppList()
         },
@@ -227,13 +220,7 @@ internal fun AppDrawerFragment.initAdapter() {
             }
         },
         appDistractingListener = { appModel ->
-            val pkg = appModel.appPackage
-            if (pkg.isNotBlank()) {
-                val current = prefs.distractingApps.toMutableSet()
-                if (current.contains(pkg)) current.remove(pkg) else current.add(pkg)
-                prefs.distractingApps = current
-                UsageSnapshotWorker.syncWithDistractingApps(requireContext().applicationContext, current)
-            }
+            AppActionHandlers.toggleDistracting(requireContext(), prefs, appModel.appPackage)
         },
         distractingAppsProvider = { prefs.distractingApps },
     )

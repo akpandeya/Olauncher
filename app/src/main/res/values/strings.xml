@@ -49,6 +49,7 @@
     <string name="text_contrast_follow_theme">Follow theme</string>
     <string name="auto">Auto</string>
     <string name="always">Always</string>
+    <string name="change_app" tools:ignore="MissingTranslation">Change app</string>
     <string name="change_default_launcher">Change default launcher</string>
     <string name="privacy">Privacy</string>
     <string name="hint_swipe_right_today">Swipe right for Today</string>
