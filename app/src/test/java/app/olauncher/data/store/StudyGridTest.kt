@@ -67,15 +67,6 @@ class StudyGridTest {
     }
 
     @Test
-    fun `window count is inclusive of today and truncates at the window edge`() {
-        val today = LocalDate.of(2026, 10, 21)
-        val inside = listOf(today, today.minusDays(83), today.minusDays(84), today.minusDays(200))
-        val events = inside.mapIndexed { index, date -> event(millis(date), id = index.toLong() + 1) }
-        // 84-day trailing window: today and -83 in, -84 and -200 out.
-        assertEquals(2, StudyGrid.studiedInWindow(events, today, zone))
-    }
-
-    @Test
     fun `empty events yield only empty cells`() {
         val today = LocalDate.of(2026, 10, 21)
         val cells = StudyGrid.build(emptyList(), today, zone)

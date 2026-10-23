@@ -73,6 +73,16 @@ class ReviewComebacksTest {
     }
 
     @Test
+    fun `logged-days count skips the not-yet-studied today the session count includes`() {
+        // Last study day 3 days back, today unstudied: the panel counts only what
+        // happened; the post-session summary counts today's hypothetical return.
+        val events = listOf(event(millis(LocalDate.of(2026, 1, 1))))
+        val today = LocalDate.of(2026, 1, 4)
+        assertEquals(0, ReviewComebacks.count(events, zone))
+        assertEquals(1, ReviewComebacks.count(events, today, zone))
+    }
+
+    @Test
     fun `events on the same local day count once for presence`() {
         // Morning and evening of one day: still a single study day.
         val zone = ZoneId.of("Europe/Berlin")

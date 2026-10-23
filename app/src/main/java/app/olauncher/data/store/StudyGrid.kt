@@ -40,10 +40,4 @@ object StudyGrid {
         }
         return cells
     }
-
-    /** Distinct study days within the [days] days ending today, inclusive. */
-    fun studiedInWindow(events: List<ReviewEvent>, today: LocalDate, zone: ZoneId, days: Int = WEEKS * 7): Int {
-        val earliest = today.minusDays((days - 1).toLong())
-        return ReviewComebacks.studyDays(events, zone).count { it >= earliest && it <= today }
-    }
 }
