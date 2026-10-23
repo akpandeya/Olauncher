@@ -44,14 +44,22 @@
                 style="@style/TextSettingsValue"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:padding="8dp" />
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/today_chip"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="6dp" />
 
             <TextView
                 android:id="@+id/settingsRowActionSecond"
                 style="@style/TextSettingsValue"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:padding="8dp" />
+                android:layout_marginStart="4dp"
+                android:layout_marginTop="4dp"
+                android:background="@drawable/today_chip"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="6dp" />
         </LinearLayout>
     </LinearLayout>
 

@@ -401,6 +401,9 @@ internal fun SettingsFragment.populateWindDown() {
     } else {
         getString(R.string.off)
     }
+    val visibility = if (prefs.windDown) View.VISIBLE else View.GONE
+    binding.windDownGreyLayout.visibility = visibility
+    binding.systemGreyLayout.visibility = visibility
 }
 
 internal fun SettingsFragment.populateWindDownGrey() {
