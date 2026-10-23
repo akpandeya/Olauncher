@@ -20,6 +20,7 @@ internal class SettingsViews(private val frame: FragmentSettingsBinding) {
 
     val root: View get() = frame.root
     val scrollView get() = frame.scrollView
+    val statusBarFade get() = frame.statusBarFade
     val settingsRows: RecyclerView get() = frame.settingsRows
     val settingsSearch get() = frame.settingsSearch
     val settingsSearchContainer get() = frame.settingsSearchContainer

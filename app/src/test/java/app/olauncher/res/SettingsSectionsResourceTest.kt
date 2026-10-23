@@ -146,7 +146,7 @@ class SettingsSectionsResourceTest {
         val unresolved = EXPECTED_MAIN_IDS.filter { name -> R.id::class.java.fields.none { it.name == name } }
         assertTrue("Ids that no longer resolve in R.id: $unresolved", unresolved.isEmpty())
 
-        val added = (frame + owned) - EXPECTED_MAIN_IDS - setOf("settingsRows")
+        val added = (frame + owned) - EXPECTED_MAIN_IDS - setOf("settingsRows", "statusBarFade")
         assertTrue("Ids added to Settings: $added", added.isEmpty())
     }
 
