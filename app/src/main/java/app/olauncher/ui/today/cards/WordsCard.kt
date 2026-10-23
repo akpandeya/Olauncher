@@ -1,6 +1,7 @@
 package app.olauncher.ui.today.cards
 
 import android.content.Context
+import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -152,6 +153,8 @@ internal class WordsCardView(
 
             helper.bind(dueWord)
             // The card always shows the saved meaning, one line, under the word.
+            b.wordReveal.tvMeaning.maxLines = 1
+            b.wordReveal.tvMeaning.ellipsize = TextUtils.TruncateAt.END
             b.wordReveal.tvMeaning.isVisible = WordsCardLogic.showCardMeaning(dueWord.meaning)
             b.btnReview.isVisible = WordsCardLogic.showReview(stats.due)
             b.btnReview.text = context.getString(R.string.words_review, stats.due)
