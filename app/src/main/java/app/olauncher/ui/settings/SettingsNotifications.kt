@@ -172,6 +172,7 @@ internal fun SettingsFragment.toggleHealthConnect() {
 internal fun SettingsFragment.populateHoldNotifications() {
     val isOn = prefs.quietEnabled && isNotificationAccessGranted()
     binding.holdNotificationsOnOff.text = getString(if (isOn) R.string.on else R.string.off)
+    binding.quietReleaseTimesLayout.visibility = if (isOn) View.VISIBLE else View.GONE
 }
 
 internal fun SettingsFragment.toggleHoldNotifications() {

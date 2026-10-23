@@ -161,7 +161,7 @@ class SettingsCatalogTest {
             withNudge,
         )
         val withoutNudge = SettingsCatalog.itemsForSearch(setOf(R.id.distractingApps)).map { describe(it) }
-        assertEquals(listOf("heading:${R.string.wellbeing}", "row:distractingApps"), withoutNudge)
+        assertEquals(listOf("heading:${R.string.wellbeing}", "heading:${R.string.wellbeing_friction}", "row:distractingApps"), withoutNudge)
     }
 
     @Test
@@ -311,13 +311,13 @@ class SettingsCatalogTest {
             "pauseAllowance",
             "pauseEscalateOnOff",
             "pauseAskWhyOnOff",
+            "commitLockOnOff",
             "windDown",
             "windDownGreyOnOff",
             "systemGreyOnOff",
-            "commitLockOnOff",
             "holdNotificationsOnOff",
-            "healthConnectOnOff",
             "quietReleaseTimes",
+            "healthConnectOnOff",
             "screenTimeOnOff",
             "screenTimeStyle",
             "screenTimeTarget",

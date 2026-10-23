@@ -1,6 +1,5 @@
 package app.olauncher.ui.settings
 
-import android.graphics.Paint
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater
@@ -80,8 +79,6 @@ class SettingsRowsAdapter(
         val holder = createHolder(parent, viewType)
         val offLabel = parent.context.getString(R.string.off)
         holder.value?.let { dimWhenOff(it, offLabel) }
-        // Action links are plain text, underlined.
-        holder.actions.forEach { it.paintFlags = it.paintFlags or Paint.UNDERLINE_TEXT_FLAG }
         return holder
     }
 
