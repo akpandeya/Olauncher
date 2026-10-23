@@ -28,10 +28,10 @@ interface AppearancePrefs {
     /** ARGB of the accent picked from the wallpaper; used when [accent] is [Accent.WALLPAPER]. */
     var accentCustomColor: Int
 
-    /** Home clock takes its colour from the wallpaper (see ClockColour). */
+    /** Unused since the clock colour setting was removed. Key kept because prefs keys cannot be removed. */
     var clockFromWallpaper: Boolean
 
-    /** ARGB picked for the clock when the wallpaper last changed; 0 means keep the theme colour. */
+    /** Unused since the clock colour setting was removed. Key kept because prefs keys cannot be removed. */
     var clockWallpaperColor: Int
 
     var haptics: Boolean
