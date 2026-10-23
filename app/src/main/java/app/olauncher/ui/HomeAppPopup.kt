@@ -26,7 +26,7 @@ internal fun HomeFragment.showHomeAppPopup(anchor: View, slot: Int) {
     val userString = prefs.getAppUser(slot, set)
     val hiddenKey = "$appPackage|$userString"
     val changeApp = AppAction(AppAction.Id.CHANGE_APP, R.string.change_app)
-    val removeFromHome = AppAction(AppAction.Id.REMOVE_FROM_HOME, R.string.remove_from_home, isDestructive = true)
+    val removeFromHome = AppAction(AppAction.Id.REMOVE_FROM_HOME, R.string.remove_from_home)
     val actions = if (prefs.getIsShortcut(slot, set)) {
         listOf(changeApp, removeFromHome)
     } else {

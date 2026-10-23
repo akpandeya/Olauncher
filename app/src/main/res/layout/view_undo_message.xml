@@ -31,6 +31,6 @@
         android:paddingStart="@dimen/popup_card_padding_horizontal"
         android:paddingEnd="@dimen/popup_card_padding_horizontal"
         android:text="@string/undo"
-        android:textColor="?attr/accentColor"
+        android:textColor="?attr/primaryColor"
         android:textStyle="bold" />
 </LinearLayout>
