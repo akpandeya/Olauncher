@@ -1,6 +1,7 @@
 package app.olauncher.ui.today.cards
 
 import android.content.Context
+import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -42,6 +43,10 @@ object WordsCardLogic {
     fun formatAllDone(context: Context, total: Int): String {
         return context.getString(R.string.words_all_done, formatWordsCount(context, total))
     }
+
+    fun showReview(due: Int): Boolean = due > 0
+
+    fun reviewLabel(template: String, due: Int): String = String.format(template, due)
 
     fun formatMeaning(context: Context, meaning: String, meaningSource: String): String {
         if (meaning.isBlank()) {
@@ -105,9 +110,13 @@ internal class WordsCardView(
     private var wordReveal: WordReveal? = null
 
     init {
+        // The card shows the meaning on one line, ellipsized.
+        binding.wordReveal.tvMeaning.maxLines = 1
+        binding.wordReveal.tvMeaning.ellipsize = TextUtils.TruncateAt.END
         // The summary lines lead to the Words page, where every word and meaning can be edited.
         binding.tvFooter.setOnClickListener { Haptics.tick(it); onOpenWords() }
         binding.tvEmpty.setOnClickListener { Haptics.tick(it); onOpenWords() }
+        binding.btnReview.setOnClickListener { Haptics.tick(it); onOpenWords() }
     }
 
     fun render() {
@@ -142,13 +151,17 @@ internal class WordsCardView(
                 onWordDeleted = { word ->
                     WordsCard.getStore(context).delete(word.id)
                     render()
-                }
+                },
+                alwaysShowMeaning = true,
             ).also { wordReveal = it }
 
             helper.bind(dueWord)
+            b.btnReview.isVisible = WordsCardLogic.showReview(stats.due)
+            b.btnReview.text = WordsCardLogic.reviewLabel(context.getString(R.string.words_review), stats.due)
         } else {
             b.wordReveal.root.isVisible = false
             b.tvFooter.isVisible = false
+            b.btnReview.isVisible = false
             b.tvEmpty.isVisible = true
             b.tvEmpty.isClickable = stats.total > 0
             b.tvEmpty.text = if (stats.total == 0) {
