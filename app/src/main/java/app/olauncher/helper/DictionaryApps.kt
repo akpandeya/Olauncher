@@ -31,10 +31,10 @@ object DictionaryApps {
             .map { App(it.activityInfo.packageName, it.activityInfo.applicationInfo.loadLabel(context.packageManager).toString()) }
             .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.label })
 
+    /** PROCESS_TEXT handlers only: every messaging app registers for text/plain SEND. */
     fun textApps(context: Context): List<App> = apps(
         context,
-        handlers(context, textIntent(Intent.ACTION_PROCESS_TEXT)) +
-            handlers(context, textIntent(Intent.ACTION_SEND)),
+        handlers(context, textIntent(Intent.ACTION_PROCESS_TEXT)),
     )
 
     fun launchableApps(context: Context): List<App> = apps(

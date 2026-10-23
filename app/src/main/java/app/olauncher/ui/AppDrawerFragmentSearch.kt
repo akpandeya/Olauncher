@@ -122,12 +122,21 @@ internal fun AppDrawerFragment.scheduleLookup(query: String, delayMs: Long) {
         if (delayMs > 0) delay(delayMs)
         lookupState = text to null
         val result = withContext(Dispatchers.IO) {
-            if (savedWord(ctx, text) != null) return@withContext null
+            val saved = savedWord(ctx, text)
             val cache = WiktionaryCache(ctx)
-            GermanLookup.lookup(
-                text, lookupAllowed(), OfflineGermanStore(ctx)::lookup,
-                cache::get, { WiktionaryApi.lookup(it) }, cache::put
-            )
+            when {
+                // A stored meaning is already on screen; nothing to fetch.
+                saved != null && saved.meaning.isNotBlank() -> null
+                // Saved words never touch the network; only the offline dictionary may fill a blank meaning.
+                saved != null -> GermanLookup.lookup(
+                    text, false, OfflineGermanStore(ctx)::lookup,
+                    cache::get, { WiktionaryApi.lookup(it) }, cache::put
+                )
+                else -> GermanLookup.lookup(
+                    text, lookupAllowed(), OfflineGermanStore(ctx)::lookup,
+                    cache::get, { WiktionaryApi.lookup(it) }, cache::put
+                )
+            }
         } ?: return@launch
         if (!isAdded || _binding == null) return@launch
         lookupState = text to result
@@ -231,9 +240,14 @@ internal fun AppDrawerFragment.lookUpRows(text: String): List<AppModel.Result> {
 }
 
 internal fun AppDrawerFragment.lookUpMainRows(ctx: Context, text: String): List<AppModel.Result> {
+    val state = lookupState?.takeIf { it.first.equals(text, ignoreCase = true) }?.second
     val saved = savedWord(ctx, text)
     if (saved != null) {
-        val meaning = saved.meaning.ifBlank { ctx.getString(R.string.word_row_no_meaning_yet) }
+        // Saved words always offer the dictionary row; a blank stored meaning is filled
+        // from the offline dictionary when it has the word (never from the network).
+        val meaning = WordLookupRows.savedMeaning(
+            saved.meaning, state, ctx.getString(R.string.word_row_no_meaning_yet)
+        )
         return listOf(
             WordLookupRows.saved(saved.text, meaning) { word, definition ->
                 ctx.getString(R.string.word_row_meaning, word, definition)
@@ -242,11 +256,18 @@ internal fun AppDrawerFragment.lookUpMainRows(ctx: Context, text: String): List<
         )
     }
     if (!lookupAllowed()) {
-        return listOf(dictionaryRow(ctx, text))
+        // Online lookup is off, but an offline hit is still worth showing.
+        val offline = WordLookupRows.offlineOnlyMeaning(state)
+            ?: return listOf(dictionaryRow(ctx, text))
+        return listOf(
+            WordLookupRows.found(text, offline) { word, definition ->
+                ctx.getString(R.string.word_row_wiktionary_meaning, word, definition)
+            },
+            dictionaryRow(ctx, text),
+        )
     }
-    val state = lookupState?.takeIf { it.first.equals(text, ignoreCase = true) }
     val silent = AppModel.Result.Action.OpenDictionary(text, openOnTap = false)
-    val row = when (val result = state?.second) {
+    val row = when (val result = state) {
         null -> AppModel.Result(ctx.getString(R.string.word_row_looking_up), silent)
         is WiktionaryApi.LookupResult.Found -> WordLookupRows.found(text, result.meaning) { word, definition ->
             ctx.getString(R.string.word_row_wiktionary_meaning, word, definition)

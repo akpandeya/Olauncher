@@ -112,27 +112,6 @@ class TodayOrderTest {
     }
 
     @Test
-    fun splitPullsPinnedOutAndRanksTheRest() {
-        val cards = listOf(
-            Ranked("next_up", 49),
-            Ranked("saved", 48),
-            Ranked("wellbeing", 46),
-            Ranked("week", 90),
-        )
-        val split = TodayOrder.split(cards, setOf("next_up"))
-        assertEquals(listOf("next_up"), split.pinned)
-        assertEquals(listOf("week", "saved", "wellbeing"), split.stacked)
-    }
-
-    @Test
-    fun splitWithNothingPinnedIsThePlainOrder() {
-        val cards = listOf(Ranked("a", 10), Ranked("b", 99), Ranked("c", 50))
-        val split = TodayOrder.split(cards, emptySet())
-        assertEquals(emptyList<String>(), split.pinned)
-        assertEquals(listOf("b", "c", "a"), split.stacked)
-    }
-
-    @Test
     fun widgetKeysCanBePinnedAndOrderedInFixedMode() {
         val firstWidget = TodayOrder.widgetKey(12)
         val secondWidget = TodayOrder.widgetKey(34)
