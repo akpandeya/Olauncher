@@ -24,10 +24,19 @@ class WavyProgressView @JvmOverloads constructor(
     private val density = resources.displayMetrics.density
     private val strokeWidthPx = MusicPulse.WAVE_STROKE_DP * density
     private val outlineWidthPx = strokeWidthPx + 2 * MusicPulse.WAVE_OUTLINE_DP * density
+    private val trackStrokeWidthPx = MusicPulse.WAVE_TRACK_STROKE_DP * density
+    private val trackOutlineWidthPx = trackStrokeWidthPx + 2 * MusicPulse.WAVE_OUTLINE_DP * density
     private val amplitudePx = MusicPulse.WAVE_AMPLITUDE_DP * density
     private val wavelengthPx = MusicPulse.WAVE_LENGTH_DP * density
-    /** Divider spans the wave's full height, so it reads as the boundary between the two parts. */
-    private val dividerHeightPx = MusicPulse.waveDrawHeightDp() * density
+    private val dividerWidthPx = MusicPulse.WAVE_DIVIDER_WIDTH_DP * density
+    private val dividerOutlineWidthPx = dividerWidthPx + 2 * MusicPulse.WAVE_OUTLINE_DP * density
+    /** Half the handle's length between its round ends. With the caps, the handle is WAVE_DIVIDER_HEIGHT_DP tall. */
+    private val dividerLineHalfPx = (MusicPulse.WAVE_DIVIDER_HEIGHT_DP - MusicPulse.WAVE_DIVIDER_WIDTH_DP) / 2f * density
+    /** Distance from the divider's centre to where the wave and the track stop or start: half the handle, outlines and the clear gap. */
+    private val dividerClearancePx = (
+        MusicPulse.WAVE_DIVIDER_WIDTH_DP / 2f + MusicPulse.WAVE_OUTLINE_DP +
+            MusicPulse.WAVE_DIVIDER_GAP_DP + MusicPulse.WAVE_OUTLINE_DP
+        ) * density
     /** Distance between path points; small enough for a smooth curve. */
     private val stepPx = 1.5f * density
 
@@ -39,12 +48,14 @@ class WavyProgressView @JvmOverloads constructor(
     }
     private val trackPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = strokeWidthPx
+        strokeWidth = trackStrokeWidthPx
         strokeCap = Paint.Cap.ROUND
     }
     /** Wider dark strokes drawn under the wave and the track as a contrast edge. */
     private val waveOutlinePaint = Paint(wavePaint).apply { strokeWidth = outlineWidthPx }
-    private val trackOutlinePaint = Paint(trackPaint).apply { strokeWidth = outlineWidthPx }
+    private val trackOutlinePaint = Paint(trackPaint).apply { strokeWidth = trackOutlineWidthPx }
+    private val dividerPaint = Paint(wavePaint).apply { strokeWidth = dividerWidthPx }
+    private val dividerOutlinePaint = Paint(wavePaint).apply { strokeWidth = dividerOutlineWidthPx }
     private val wavePath = Path()
 
     private var progress = 0f
@@ -79,7 +90,9 @@ class WavyProgressView @JvmOverloads constructor(
         wavePaint.color = argb
         waveOutlinePaint.color = MusicPulse.waveOutlineColor(wavePaint.color)
         trackPaint.color = MusicPulse.waveTrackColor(argb)
-        trackOutlinePaint.color = MusicPulse.waveOutlineColor(trackPaint.color)
+        trackOutlinePaint.color = MusicPulse.waveOutlineColor(argb)
+        dividerPaint.color = argb
+        dividerOutlinePaint.color = MusicPulse.waveOutlineColor(argb)
         invalidate()
     }
 
@@ -102,17 +115,20 @@ class WavyProgressView @JvmOverloads constructor(
         if (end <= start) return
         val centreY = height / 2f
         val playedEnd = start + (end - start) * progress
+        val divider = MusicPulse.waveDividerVisible(progress)
+        // With a divider, the wave and the track stop short of it so their outlines do not run into it.
+        val clearance = if (divider) dividerClearancePx else 0f
+        val trackStart = playedEnd + clearance
         // Only the unplayed part gets the straight track.
-        if (playedEnd < end) {
-            canvas.drawLine(playedEnd, centreY, end, centreY, trackOutlinePaint)
-            canvas.drawLine(playedEnd, centreY, end, centreY, trackPaint)
+        if (trackStart < end) {
+            canvas.drawLine(trackStart, centreY, end, centreY, trackOutlinePaint)
+            canvas.drawLine(trackStart, centreY, end, centreY, trackPaint)
         }
-        if (playedEnd > start) drawWave(canvas, start, playedEnd, centreY)
+        if (playedEnd - clearance > start) drawWave(canvas, start, playedEnd - clearance, centreY)
         // Drawn last so the divider sits on top of the wave and the track.
-        if (MusicPulse.waveDividerVisible(progress)) {
-            val dividerHalf = dividerHeightPx / 2f
-            canvas.drawLine(playedEnd, centreY - dividerHalf, playedEnd, centreY + dividerHalf, waveOutlinePaint)
-            canvas.drawLine(playedEnd, centreY - dividerHalf, playedEnd, centreY + dividerHalf, wavePaint)
+        if (divider) {
+            canvas.drawLine(playedEnd, centreY - dividerLineHalfPx, playedEnd, centreY + dividerLineHalfPx, dividerOutlinePaint)
+            canvas.drawLine(playedEnd, centreY - dividerLineHalfPx, playedEnd, centreY + dividerLineHalfPx, dividerPaint)
         }
     }
 

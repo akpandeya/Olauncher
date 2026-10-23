@@ -363,8 +363,8 @@ class MusicPulseTest {
 
     @Test
     fun waveTrackColorKeepsConstantAlpha() {
-        assertEquals(0x99336699.toInt(), MusicPulse.waveTrackColor(0xFF336699.toInt()))
-        assertEquals(0x4C112233, MusicPulse.waveTrackColor(0x80112233.toInt()))
+        assertEquals(0x70336699, MusicPulse.waveTrackColor(0xFF336699.toInt()))
+        assertEquals(0x38112233, MusicPulse.waveTrackColor(0x80112233.toInt()))
         assertEquals(0x00112233, MusicPulse.waveTrackColor(0x00112233))
     }
 
@@ -378,9 +378,9 @@ class MusicPulseTest {
     }
 
     @Test
-    fun waveTrackIsClearlyVisible() {
+    fun waveTrackIsFaintButVisible() {
         val alpha = MusicPulse.WAVE_TRACK_ALPHA / 255f
-        assertTrue(alpha in 0.5f..0.65f)
+        assertTrue(alpha in 0.4f..0.5f)
     }
 
     @Test
@@ -388,18 +388,19 @@ class MusicPulseTest {
         assertEquals(0x59000000, MusicPulse.waveOutlineColor(0xFF336699.toInt()))
         assertEquals(0x2C000000, MusicPulse.waveOutlineColor(0x80FFFFFF.toInt()))
         assertEquals(0, MusicPulse.waveOutlineColor(0x00336699))
-        // The outline under the track is fainter than the one under the wave.
-        val track = MusicPulse.waveTrackColor(0xFFFFFFFF.toInt())
-        assertEquals(0x35000000, MusicPulse.waveOutlineColor(track))
+        // The track outline comes from the full line colour, so it keeps its edge on light wallpapers.
+        assertEquals(0x59000000, MusicPulse.waveOutlineColor(0xFFFFFFFF.toInt()))
         assertTrue(MusicPulse.WAVE_OUTLINE_ALPHA < 0x80)
     }
 
     @Test
     fun waveIsThickAndFitsTheViewHeight() {
         assertTrue(MusicPulse.WAVE_STROKE_DP in 3f..4f)
-        assertTrue(MusicPulse.WAVE_AMPLITUDE_DP > 3f)
-        assertEquals(13.5f, MusicPulse.waveDrawHeightDp(), 0.001f)
+        assertTrue(MusicPulse.WAVE_AMPLITUDE_DP >= 3f)
+        assertEquals(11f, MusicPulse.waveDrawHeightDp(), 0.001f)
         assertTrue(MusicPulse.waveDrawHeightDp() <= MusicPulse.WAVE_VIEW_HEIGHT_DP)
+        assertTrue(MusicPulse.dividerDrawHeightDp() <= MusicPulse.WAVE_VIEW_HEIGHT_DP)
+        assertTrue(MusicPulse.WAVE_TRACK_STROKE_DP < MusicPulse.WAVE_STROKE_DP)
     }
 
     @Test
