@@ -48,6 +48,14 @@ android {
             applicationIdSuffix ".debug"
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+        dev {
+            // Local device testing: fast, debuggable, unobfuscated. CI keeps exercising R8 via `debug`.
+            debuggable true
+            minifyEnabled false
+            applicationIdSuffix ".debug"
+            matchingFallbacks = ['debug']
+            signingConfig signingConfigs.debug
+        }
     }
     buildFeatures {
         viewBinding = true
