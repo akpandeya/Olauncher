@@ -136,7 +136,7 @@ fun View.showAppActionPopup(
             outline.setRoundRect(0, 0, view.width, view.height, resources.getDimension(R.dimen.radiusMedium))
         }
     }
-    // Absolute LEFT: [left] is already resolved for right-to-left by PopupPlacement.menuLeft.
+    // Absolute LEFT: [left] is already resolved for right-to-left by PopupPlacement.menuLeftBySide.
     @SuppressLint("RtlHardcoded")
     val gravity = Gravity.TOP or Gravity.LEFT
     popup.showAtLocation(this, gravity, left, top)
