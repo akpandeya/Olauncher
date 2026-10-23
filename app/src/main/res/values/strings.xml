@@ -629,6 +629,10 @@
     <string name="word_row_no_meaning_found">No meaning found</string>
     <string name="word_row_unreachable">Couldn\'t reach Wiktionary</string>
     <string name="word_row_open_wiktionary">Open “%1$s” on Wiktionary</string>
+    <string name="dictionary_website_verbformen" tools:ignore="MissingTranslation">verbformen.de</string>
+    <string name="dictionary_website_dwds" tools:ignore="MissingTranslation">DWDS</string>
+    <string name="dictionary_website_duden" tools:ignore="MissingTranslation">Duden</string>
+    <string name="dictionary_website_wiktionary" tools:ignore="MissingTranslation">Wiktionary</string>
     <string name="word_saved_de" translatable="false">Gespeichert: %1$s</string>
     <string name="words_saved_de" translatable="false">%1$d Wörter gespeichert</string>
     <string name="words_already_saved_suffix_de" translatable="false">, %1$d schon da</string>

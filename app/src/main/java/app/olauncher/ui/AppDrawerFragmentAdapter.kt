@@ -286,8 +286,12 @@ internal fun AppDrawerFragment.initAdapter() {
         lookUpRowsProvider = { text -> lookUpRows(text) },
         profileChoicesProvider = { context?.let { prefs.profileChoices(it) }.orEmpty() },
         dictionaryLongClickListener = { result ->
-            val action = result.action as? AppModel.Result.Action.OpenDictionary
-            if (action != null) openDictionary(action.text)
+            val text = when (val action = result.action) {
+                is AppModel.Result.Action.OpenDictionary -> action.text
+                is AppModel.Result.Action.SaveWords -> action.items.singleOrNull()
+                else -> null
+            }
+            if (text != null) showDictionaryWebsites(text)
         },
         recentAppsProvider = { RecentApps.decode(prefs.recentApps) },
         hiddenAppsProvider = { prefs.hiddenApps },

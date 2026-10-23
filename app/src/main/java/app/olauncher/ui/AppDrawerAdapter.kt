@@ -414,7 +414,11 @@ class AppDrawerAdapter(
             val onLong: View.OnLongClickListener? = when {
                 result.action is AppModel.Result.Action.Contact && longClickListener != null ->
                     View.OnLongClickListener { longClickListener(result); true }
-                result.action is AppModel.Result.Action.OpenDictionary && dictionaryLongClickListener != null ->
+                dictionaryLongClickListener != null && (
+                    (result.action is AppModel.Result.Action.OpenDictionary && result.action.openOnTap) ||
+                        (result.action is AppModel.Result.Action.SaveWords &&
+                            result.action.items.size == 1 && result.action.meaning.isNotBlank())
+                    ) ->
                     View.OnLongClickListener { dictionaryLongClickListener(result); true }
                 else -> null
             }
