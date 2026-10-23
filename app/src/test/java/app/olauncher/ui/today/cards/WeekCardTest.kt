@@ -16,15 +16,6 @@ import javax.xml.parsers.DocumentBuilderFactory
 class WeekCardTest {
 
     @Test
-    fun `week card is registered in TodayCards all`() {
-        val card = TodayCards.all.firstOrNull { it.key == WeekCard.KEY }
-        assertNotNull(card)
-        assertEquals("week", card?.key)
-        assertEquals(R.string.last_7_days, card?.titleRes)
-        assertEquals(true, card?.defaultEnabled)
-    }
-
-    @Test
     fun `isAvailable returns false when fewer than 2 snapshots in last 7 days`() {
         val today = 100L
 

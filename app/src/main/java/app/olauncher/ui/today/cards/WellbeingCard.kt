@@ -10,11 +10,14 @@ import androidx.lifecycle.lifecycleScope
 import app.olauncher.R
 import app.olauncher.helper.Haptics
 import app.olauncher.data.Prefs
+import app.olauncher.databinding.CardWeekBinding
 import app.olauncher.databinding.CardWellbeingBinding
 import app.olauncher.helper.appUsagePermissionGranted
 import app.olauncher.ui.pause.PauseFormatting
 import app.olauncher.ui.today.TodayCard
 import app.olauncher.ui.today.TodayOrder
+import app.olauncher.ui.today.WellbeingRange
+import app.olauncher.ui.today.WellbeingRanges
 import app.olauncher.wellbeing.HealthLabels
 import app.olauncher.wellbeing.HealthRepository
 import app.olauncher.wellbeing.WalkCount
@@ -95,10 +98,13 @@ object WellbeingCard : TodayCard {
             walkIntervalMin = prefs.nudgeWalkIntervalMin,
             socialThresholdMin = prefs.nudgeSocialThresholdMin,
             distractingApps = prefs.distractingApps,
-        )
+        ) || WeekCard.isAvailable(context)
     }
 
-    override fun hasContent(context: Context): Boolean {
+    override fun hasContent(context: Context): Boolean = todayHasContent(context) || WeekCard.isAvailable(context)
+
+    /** True when the Today side has a chip or the distracting-apps line to show. */
+    internal fun todayHasContent(context: Context): Boolean {
         val prefs = Prefs(context)
         return WellbeingCardLogic.hasContent(
             waterIntervalMin = prefs.nudgeWaterIntervalMin,
@@ -108,8 +114,9 @@ object WellbeingCard : TodayCard {
         )
     }
 
+    /** Ranks like the old Wellbeing card or the old week card, whichever was higher. */
     override fun priority(context: Context, now: ZonedDateTime): Int =
-        TodayOrder.wellbeingPriority(now.hour, super.priority(context, now))
+        TodayOrder.mergedPriority(now.hour, now.dayOfWeek, super.priority(context, now))
 
     override fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View {
         val binding = CardWellbeingBinding.inflate(inflater, parent, false)
@@ -131,6 +138,15 @@ object WellbeingCard : TodayCard {
         binding.tvWalk.setOnClickListener {
             Haptics.tick(it)
             cardView.onNudgeClicked(Nudges.WALK)
+        }
+
+        binding.tvRangeToday.setOnClickListener {
+            Haptics.tick(it)
+            cardView.onRangeClicked(WellbeingRange.TODAY)
+        }
+        binding.tvRangeWeek.setOnClickListener {
+            Haptics.tick(it)
+            cardView.onRangeClicked(WellbeingRange.WEEK)
         }
 
         cardView.render()
@@ -177,7 +193,33 @@ internal class WellbeingCardView(
         renderLine1()
     }
 
+    /** The week side lives in this card; it keeps its own per-view state. */
+    private val weekView: WeekCardView = WeekCardView(
+        CardWeekBinding.inflate(LayoutInflater.from(binding.root.context), binding.weekContent, true),
+    )
+
+    fun onRangeClicked(range: WellbeingRange) {
+        Prefs(binding.root.context).wellbeingShowWeek = range == WellbeingRange.WEEK
+        renderRange()
+    }
+
+    /** Shows the Today or 7 days side, and the switch only when both have content. */
+    private fun renderRange() {
+        val b = binding
+        val context = b.root.context ?: return
+        val todayHas = WellbeingCard.todayHasContent(context)
+        val weekHas = WeekCard.isAvailable(context)
+        val range = WellbeingRanges.resolve(Prefs(context).wellbeingShowWeek, todayHas, weekHas)
+        b.llRangeSwitch.isVisible = WellbeingRanges.showSwitch(todayHas, weekHas)
+        b.tvRangeToday.isSelected = range == WellbeingRange.TODAY
+        b.tvRangeWeek.isSelected = range == WellbeingRange.WEEK
+        b.todayContent.isVisible = range == WellbeingRange.TODAY
+        b.weekContent.isVisible = range == WellbeingRange.WEEK
+        if (range == WellbeingRange.WEEK) weekView.render()
+    }
+
     fun render() {
+        renderRange()
         renderLine1()
         renderLine2()
         renderPauseWins()

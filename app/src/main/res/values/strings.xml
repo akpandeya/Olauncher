@@ -473,6 +473,8 @@
     <string name="next_up_less">Show less</string>
     <string name="home_next_event">Next event on home</string>
     <string name="last_7_days">Last 7 days</string>
+    <string name="wellbeing_range_today">Today</string>
+    <string name="wellbeing_range_week">7 days</string>
     <string name="week_review_duration_hours_minutes">%1$d h %2$d min</string>
     <string name="week_review_duration_hours">%1$d h</string>
     <string name="week_review_duration_minutes">%1$d min</string>

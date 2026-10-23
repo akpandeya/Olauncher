@@ -15,6 +15,7 @@ import app.olauncher.helper.RecentApp
 import app.olauncher.helper.RecentApps
 import app.olauncher.ui.today.TodayCard
 import app.olauncher.ui.today.TodayCards
+import app.olauncher.ui.today.TodayOrder
 import app.olauncher.wellbeing.DaySnapshot
 import app.olauncher.wellbeing.Nudges
 import app.olauncher.wellbeing.PauseDay
@@ -92,6 +93,7 @@ class Prefs(context: Context) :
         const val SWIPE_RIGHT_ACTION = "SWIPE_RIGHT_ACTION"
         const val TODAY_CARD_PREFIX = "TODAY_CARD_"
         const val TODAY_ORDER_SMART = "TODAY_ORDER_SMART"
+        const val WELLBEING_SHOW_WEEK = "WELLBEING_SHOW_WEEK"
         const val NUDGE_WINDOW_START_MIN = "NUDGE_WINDOW_START_MIN"
         const val NUDGE_WINDOW_END_MIN = "NUDGE_WINDOW_END_MIN"
         const val NUDGE_WATER_INTERVAL_MIN = "NUDGE_WATER_INTERVAL_MIN"
@@ -592,15 +594,29 @@ class Prefs(context: Context) :
     }
 
     fun isTodayCardEnabled(key: String): Boolean {
-        val default = TodayCards.all.firstOrNull { it.key == key }?.defaultEnabled ?: true
-        return prefs.getBoolean("$TODAY_CARD_PREFIX$key", default)
+        val canonical = TodayOrder.canonicalKey(key)
+        val default = TodayCards.all.firstOrNull { it.key == canonical }?.defaultEnabled ?: true
+        fun saved(k: String): Boolean? =
+            if (prefs.contains("$TODAY_CARD_PREFIX$k")) prefs.getBoolean("$TODAY_CARD_PREFIX$k", default) else null
+        if (canonical != TodayOrder.canonicalKey(TodayOrder.LEGACY_WEEK_KEY)) return saved(canonical) ?: default
+        // The old week card merged into Wellbeing: its saved choice still counts.
+        return TodayOrder.mergedEnabled(saved(canonical), saved(TodayOrder.LEGACY_WEEK_KEY), default)
     }
 
     fun isTodayCardEnabled(card: TodayCard): Boolean = isTodayCardEnabled(card.key)
 
     fun setTodayCardEnabled(key: String, enabled: Boolean) = prefs.edit {
-        putBoolean("$TODAY_CARD_PREFIX$key", enabled).apply()
+        val canonical = TodayOrder.canonicalKey(key)
+        putBoolean("$TODAY_CARD_PREFIX$canonical", enabled)
+        // A saved choice on the old week card would keep the merged card on.
+        if (canonical == TodayOrder.canonicalKey(TodayOrder.LEGACY_WEEK_KEY)) remove("$TODAY_CARD_PREFIX${TodayOrder.LEGACY_WEEK_KEY}")
+        apply()
     }
+
+    /** True when the merged Wellbeing card last showed the 7-day side. */
+    var wellbeingShowWeek: Boolean
+        get() = prefs.getBoolean(WELLBEING_SHOW_WEEK, false)
+        set(value) = prefs.edit { putBoolean(WELLBEING_SHOW_WEEK, value).apply() }
 
     /** Automatic walks found today; reads 0 when the stored count is from another day. */
     var autoWalksToday: Int
