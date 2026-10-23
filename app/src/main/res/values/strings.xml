@@ -412,7 +412,8 @@
     <string name="german_spell_suggest_subtitle">Sends the typed word to Wiktionary to suggest spellings</string>
     <string name="did_you_mean_row">Did you mean %1$s?</string>
     <string name="did_you_mean_for_row">Did you mean %1$s? (for %2$s)</string>
-    <string name="wiktionary_license_note"><a href="https://en.wiktionary.org/wiki/Wiktionary:Main_Page">Wiktionary</a> · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a></string>
+    <string name="wiktionary_license_note"><a href="https://en.wiktionary.org/wiki/Wiktionary:Main_Page">Wiktionary</a> · <a href="https://kaikki.org/wiktextract/">kaikki.org/wiktextract</a> · <a href="https://creativecommons.org/licenses/by-sa/4.0/">CC BY-SA 4.0</a></string>
+    <string name="offline_dictionary_plural" tools:ignore="MissingTranslation">plural</string>
     <string name="german_pause_word">Word on the pause screen</string>
     <string name="german_ui">Nudges and pause in German</string>
     <string name="nudge_water_notification_de" translatable="false">Zeit für ein Glas Wasser · heute %d</string>

@@ -16,6 +16,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.Filter
 import android.widget.Filterable
+import android.widget.TextView
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
@@ -28,6 +29,7 @@ import app.olauncher.data.Constants
 import app.olauncher.databinding.AdapterAppDrawerBinding
 import app.olauncher.databinding.AdapterPrivateSpaceHeaderBinding
 import app.olauncher.databinding.AdapterRecentHeaderBinding
+import app.olauncher.databinding.AdapterWordLookupResultBinding
 import app.olauncher.helper.getColorFromAttr
 import app.olauncher.helper.hapticLongClick
 import app.olauncher.helper.hideKeyboard
@@ -80,8 +82,12 @@ class AppDrawerAdapter(
     companion object {
         const val VIEW_TYPE_APP = 0
         const val VIEW_TYPE_PRIVATE_HEADER = 1
-        const val VIEW_TYPE_RESULT = 2
+        const val VIEW_TYPE_RESULT = R.layout.adapter_app_drawer
         const val VIEW_TYPE_RECENT_HEADER = 3
+        const val VIEW_TYPE_WORD_LOOKUP = R.layout.adapter_word_lookup_result
+
+        fun resultViewType(result: AppModel.Result): Int =
+            if (result.multiline) VIEW_TYPE_WORD_LOOKUP else VIEW_TYPE_RESULT
 
         val DIFF_CALLBACK = object : DiffUtil.ItemCallback<AppModel>() {
             override fun areItemsTheSame(oldItem: AppModel, newItem: AppModel): Boolean = when {
@@ -136,9 +142,9 @@ class AppDrawerAdapter(
 
     override fun getItemViewType(position: Int): Int {
         if (position !in 0 until itemCount) return VIEW_TYPE_APP
-        return when (getItem(position)) {
+        return when (val item = getItem(position)) {
             is AppModel.PrivateSpaceHeader -> VIEW_TYPE_PRIVATE_HEADER
-            is AppModel.Result -> VIEW_TYPE_RESULT
+            is AppModel.Result -> resultViewType(item)
             is AppModel.RecentHeader -> VIEW_TYPE_RECENT_HEADER
             else -> VIEW_TYPE_APP
         }
@@ -157,13 +163,17 @@ class AppDrawerAdapter(
                 )
             )
 
-            VIEW_TYPE_RESULT -> ResultViewHolder(
-                AdapterAppDrawerBinding.inflate(
-                    LayoutInflater.from(parent.context),
-                    parent,
-                    false
-                )
-            )
+            VIEW_TYPE_RESULT, VIEW_TYPE_WORD_LOOKUP -> {
+                val root = LayoutInflater.from(parent.context).inflate(viewType, parent, false)
+                val binding = AdapterWordLookupResultBinding.bind(root)
+                if (viewType == VIEW_TYPE_RESULT) {
+                    AdapterAppDrawerBinding.bind(root).apply {
+                        renameLayout.visibility = View.GONE
+                        otherProfileIndicator.visibility = View.GONE
+                    }
+                }
+                ResultViewHolder(root, binding.appTitle)
+            }
 
             VIEW_TYPE_RECENT_HEADER -> RecentHeaderViewHolder(
                 AdapterRecentHeaderBinding.inflate(
@@ -395,17 +405,15 @@ class AppDrawerAdapter(
         }
     }
 
-    class ResultViewHolder(private val binding: AdapterAppDrawerBinding) :
-        RecyclerView.ViewHolder(binding.root) {
+    class ResultViewHolder(private val root: View, private val appTitle: TextView) :
+        RecyclerView.ViewHolder(root) {
         fun bind(
             appLabelGravity: Int,
             result: AppModel.Result,
             clickListener: (AppModel) -> Unit,
             longClickListener: ((AppModel.Result) -> Unit)? = null,
             dictionaryLongClickListener: ((AppModel.Result) -> Unit)? = null,
-        ) = with(binding) {
-            renameLayout.visibility = View.GONE
-            otherProfileIndicator.visibility = View.GONE
+        ) {
             appTitle.visibility = View.VISIBLE
             appTitle.text = result.text
             appTitle.alpha = if (result.action is AppModel.Result.Action.Error) 0.5f else 1f
