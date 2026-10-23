@@ -7,6 +7,7 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -129,5 +130,50 @@ class TodayOrderTest {
         val split = TodayOrder.split(cards, emptySet())
         assertEquals(emptyList<String>(), split.pinned)
         assertEquals(listOf("b", "c", "a"), split.stacked)
+    }
+
+    @Test
+    fun oldWeekKeyMapsToTheMergedWellbeingCard() {
+        assertEquals("wellbeing", TodayOrder.canonicalKey("week"))
+        assertEquals("wellbeing", TodayOrder.canonicalKey("wellbeing"))
+        assertEquals("saved", TodayOrder.canonicalKey("saved"))
+    }
+
+    @Test
+    fun mergedEnabledIsOffOnlyWhenBothOldCardsWereOff() {
+        assertTrue(TodayOrder.mergedEnabled(null, null, true, true))
+        assertTrue(TodayOrder.mergedEnabled(null, false, true, true))
+        assertTrue(TodayOrder.mergedEnabled(false, null, true, true))
+        assertTrue(TodayOrder.mergedEnabled(false, true, true, true))
+        assertFalse(TodayOrder.mergedEnabled(false, false, true, true))
+        assertFalse(TodayOrder.mergedEnabled(null, null, false, false))
+    }
+
+    @Test
+    fun mergedPriorityBoostsSundayMondayOnlyOnTheWeekSide() {
+        assertEquals(90, TodayOrder.mergedPriority(9, DayOfWeek.MONDAY, true, 46))
+        assertEquals(46, TodayOrder.mergedPriority(9, DayOfWeek.MONDAY, false, 46))
+        assertEquals(70, TodayOrder.mergedPriority(20, DayOfWeek.MONDAY, false, 46))
+        assertEquals(46, TodayOrder.mergedPriority(20, DayOfWeek.WEDNESDAY, true, 46))
+    }
+
+    @Test
+    fun rangeFollowsSavedChoiceWhenItHasContent() {
+        assertEquals(WellbeingRange.WEEK, WellbeingRanges.resolve(true, true, true))
+        assertEquals(WellbeingRange.TODAY, WellbeingRanges.resolve(false, true, true))
+    }
+
+    @Test
+    fun rangeFallsBackToTheSideWithContent() {
+        assertEquals(WellbeingRange.TODAY, WellbeingRanges.resolve(true, true, false))
+        assertEquals(WellbeingRange.WEEK, WellbeingRanges.resolve(false, false, true))
+        assertNull(WellbeingRanges.resolve(false, false, false))
+    }
+
+    @Test
+    fun switchShowsOnlyWhenBothSidesHaveContent() {
+        assertTrue(WellbeingRanges.showSwitch(true, true))
+        assertFalse(WellbeingRanges.showSwitch(true, false))
+        assertFalse(WellbeingRanges.showSwitch(false, true))
     }
 }
