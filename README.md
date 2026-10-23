@@ -15,13 +15,21 @@ The Settings screen has these sections:
 - Drawer: the app drawer.
 - Wellbeing: nudges and wellbeing notices.
 - Today: a page with your next event, weather and more.
-- Deutsch: German word help, including offline `:w` dictionary lookup with noun
-  gender/plural, main verb forms and inflected-word base lemmas.
+- Deutsch: German word help. Choose a Dictionary app for “Open in…” in drawer lookups,
+  shared-word lookups and the saved Words list (long-press a word). Text is handed to
+  the chosen app via Process Text, then Share as a fallback. “Other app (copy word)”
+  also lets you choose apps without either handler: the word is copied and the app
+  opens so you can paste it. Wiktionary remains the default; automatic meanings
+  still use the separate “Look up meanings online” setting. Offline `:w` lookup
+  includes noun gender/plural, main verb forms and inflected-word base lemmas.
 - Appearance and Gestures: look and swipe actions.
 - Backup: export and import your settings.
 - Privacy: shows the permissions below and whether each is granted.
 
 Thumbline does not use analytics or ads.
+
+Long-press a drawer word lookup result (`:w Hund`) to open the word in your browser
+on verbformen.de, DWDS, Duden or Wiktionary.
 
 ## Permissions
 

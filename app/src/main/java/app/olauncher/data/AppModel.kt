@@ -69,8 +69,8 @@ sealed class AppModel : Comparable<AppModel> {
             data class SwitchProfile(val profileId: String, val name: String) : Action
             /** Tap saves an open note (`:n`). */
             data class SaveNote(val text: String, val showFrom: java.time.LocalDate? = null) : Action
-            /** [openOnTap] false: tap does nothing, long-press still opens the page. */
-            data class OpenWiktionary(val text: String, val openOnTap: Boolean = true) : Action
+            /** [openOnTap] false: tap does nothing, long-press still opens the dictionary. */
+            data class OpenDictionary(val text: String, val openOnTap: Boolean = true) : Action
         }
 
         override val appLabel: String get() = text

@@ -35,6 +35,8 @@ import app.olauncher.helper.EnterPolicy
 import app.olauncher.helper.openSearch
 import app.olauncher.helper.openUrl
 import app.olauncher.helper.DrawerCommand
+import app.olauncher.helper.DictionaryWebsite
+import app.olauncher.helper.createChoiceDialog
 import app.olauncher.data.store.WiktionaryApi
 import app.olauncher.data.store.WiktionaryCache
 import app.olauncher.data.store.WiktionarySuggestCache
@@ -42,10 +44,10 @@ import app.olauncher.data.store.GermanLookup
 import app.olauncher.data.store.OfflineGermanStore
 import app.olauncher.helper.WordSuggest
 import app.olauncher.helper.WordLookupRows
+import app.olauncher.helper.DictionaryApps
 import app.olauncher.data.store.WordLookup
 import app.olauncher.data.store.WordsStore
 import kotlinx.coroutines.delay
-import java.net.URLEncoder
 import app.olauncher.helper.showToast
 
 private const val TAG = "AppDrawerFragment"
@@ -235,19 +237,15 @@ internal fun AppDrawerFragment.lookUpMainRows(ctx: Context, text: String): List<
         return listOf(
             WordLookupRows.saved(saved.text, meaning) { word, definition ->
                 ctx.getString(R.string.word_row_meaning, word, definition)
-            }
+            },
+            dictionaryRow(ctx, saved.text),
         )
+    }
+    if (!lookupAllowed()) {
+        return listOf(dictionaryRow(ctx, text))
     }
     val state = lookupState?.takeIf { it.first.equals(text, ignoreCase = true) }
-    if (!lookupAllowed() && state?.second != null && state.second !is WiktionaryApi.LookupResult.Found) {
-        return listOf(
-            AppModel.Result(
-                text = ctx.getString(R.string.word_row_open_wiktionary, text),
-                action = AppModel.Result.Action.OpenWiktionary(text)
-            )
-        )
-    }
-    val silent = AppModel.Result.Action.OpenWiktionary(text, openOnTap = false)
+    val silent = AppModel.Result.Action.OpenDictionary(text, openOnTap = false)
     val row = when (val result = state?.second) {
         null -> AppModel.Result(ctx.getString(R.string.word_row_looking_up), silent)
         is WiktionaryApi.LookupResult.Found -> WordLookupRows.found(text, result.meaning) { word, definition ->
@@ -258,16 +256,45 @@ internal fun AppDrawerFragment.lookUpMainRows(ctx: Context, text: String): List<
         WiktionaryApi.LookupResult.Failed ->
             AppModel.Result(ctx.getString(R.string.word_row_unreachable), silent)
     }
-    return listOf(row)
+    return listOf(row, dictionaryRow(ctx, text))
 }
 
 internal fun AppDrawerFragment.openWiktionary(text: String) {
+    openDictionaryWebsite(DictionaryWebsite.WIKTIONARY, text)
+}
+
+internal fun AppDrawerFragment.showDictionaryWebsites(text: String) {
+    val ctx = context ?: return
+    val choices = listOf(
+        DictionaryWebsite.VERBFORMEN to R.string.dictionary_website_verbformen,
+        DictionaryWebsite.DWDS to R.string.dictionary_website_dwds,
+        DictionaryWebsite.DUDEN to R.string.dictionary_website_duden,
+        DictionaryWebsite.WIKTIONARY to R.string.dictionary_website_wiktionary,
+    )
+    ctx.createChoiceDialog(
+        titleText = text,
+        items = choices.map { ctx.getString(it.second) },
+    ) { index ->
+        openDictionaryWebsite(choices[index].first, text)
+    }.show()
+}
+
+private fun AppDrawerFragment.openDictionaryWebsite(website: DictionaryWebsite, text: String) {
     try {
-        val encoded = URLEncoder.encode(text.trim(), "UTF-8").replace("+", "%20")
-        requireContext().openUrl("https://en.wiktionary.org/wiki/$encoded")
+        requireContext().openUrl(website.buildUrl(text))
     } catch (e: Exception) {
-        Log.w(TAG, "openWiktionary failed", e)
+        Log.w(TAG, "openDictionaryWebsite failed", e)
     }
+}
+
+private fun AppDrawerFragment.dictionaryRow(ctx: Context, text: String) = AppModel.Result(
+    text = if (prefs.germanDictionaryApp.isBlank()) ctx.getString(R.string.word_row_open_wiktionary, text)
+        else DictionaryApps.actionLabel(ctx, prefs.germanDictionaryApp),
+    action = AppModel.Result.Action.OpenDictionary(text),
+)
+
+internal fun AppDrawerFragment.openDictionary(text: String) {
+    DictionaryApps.open(requireContext(), text)
 }
 
 internal fun AppDrawerFragment.saveWords(action: AppModel.Result.Action.SaveWords) {

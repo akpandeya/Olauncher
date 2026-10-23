@@ -76,7 +76,7 @@ class AppDrawerAdapter(
     var spellRowsProvider: ((List<String>) -> List<AppModel.Result>)? = null,
     var lookUpRowsProvider: ((String) -> List<AppModel.Result>)? = null,
     var profileChoicesProvider: (() -> List<app.olauncher.data.ProfileChoice>)? = null,
-    var wiktionaryLongClickListener: ((AppModel.Result) -> Unit)? = null,
+    var dictionaryLongClickListener: ((AppModel.Result) -> Unit)? = null,
 ) : ListAdapter<AppModel, RecyclerView.ViewHolder>(DIFF_CALLBACK), Filterable {
 
     companion object {
@@ -213,7 +213,7 @@ class AppDrawerAdapter(
                             appModel,
                             appClickListener,
                             contactLongClickListener,
-                            wiktionaryLongClickListener,
+                            dictionaryLongClickListener,
                         )
                     }
                 }
@@ -412,7 +412,7 @@ class AppDrawerAdapter(
             result: AppModel.Result,
             clickListener: (AppModel) -> Unit,
             longClickListener: ((AppModel.Result) -> Unit)? = null,
-            wiktionaryLongClickListener: ((AppModel.Result) -> Unit)? = null,
+            dictionaryLongClickListener: ((AppModel.Result) -> Unit)? = null,
         ) {
             appTitle.visibility = View.VISIBLE
             appTitle.text = result.text
@@ -422,8 +422,12 @@ class AppDrawerAdapter(
             val onLong: View.OnLongClickListener? = when {
                 result.action is AppModel.Result.Action.Contact && longClickListener != null ->
                     View.OnLongClickListener { longClickListener(result); true }
-                result.action is AppModel.Result.Action.OpenWiktionary && wiktionaryLongClickListener != null ->
-                    View.OnLongClickListener { wiktionaryLongClickListener(result); true }
+                dictionaryLongClickListener != null && (
+                    (result.action is AppModel.Result.Action.OpenDictionary && result.action.openOnTap) ||
+                        (result.action is AppModel.Result.Action.SaveWords &&
+                            result.action.items.size == 1 && result.action.meaning.isNotBlank())
+                    ) ->
+                    View.OnLongClickListener { dictionaryLongClickListener(result); true }
                 else -> null
             }
             appTitle.setOnLongClickListener(onLong)

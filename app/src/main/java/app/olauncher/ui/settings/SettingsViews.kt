@@ -88,6 +88,8 @@ internal class SettingsViews(private val frame: FragmentSettingsBinding) {
     val eveningStart: TextView get() = textView(R.id.eveningStart)
     val fontFamily: TextView get() = textView(R.id.fontFamily)
     val germanClock: TextView get() = textView(R.id.germanClock)
+    val dictionaryApp: TextView get() = textView(R.id.dictionaryApp)
+    val dictionaryAppLayout: ViewGroup get() = viewGroup(R.id.dictionaryAppLayout)
     val germanClockLayout: ViewGroup get() = viewGroup(R.id.germanClockLayout)
     val germanLookupLayout: ViewGroup get() = viewGroup(R.id.germanLookupLayout)
     val germanLookupOnOff: TextView get() = textView(R.id.germanLookupOnOff)

@@ -11,7 +11,7 @@ object WordLookupRows {
 
     fun saved(text: String, meaning: String, render: (String, String) -> String) = AppModel.Result(
         text = render(text, meaning),
-        action = AppModel.Result.Action.OpenWiktionary(text, openOnTap = false),
+        action = AppModel.Result.Action.OpenDictionary(text, openOnTap = false),
         multiline = true
     )
 }

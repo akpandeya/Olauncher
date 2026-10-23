@@ -29,7 +29,7 @@ class WordLookupRowsTest {
         val savedMeaning = "die Studentin (noun) · plural: Studentinnen — female university student"
         val saved = WordLookupRows.saved("Studentin", savedMeaning) { word, definition -> "$word: $definition" }
         assertEquals("Studentin: $savedMeaning", saved.text)
-        assertEquals(AppModel.Result.Action.OpenWiktionary("Studentin", openOnTap = false), saved.action)
+        assertEquals(AppModel.Result.Action.OpenDictionary("Studentin", openOnTap = false), saved.action)
         assertEquals(R.layout.adapter_word_lookup_result, AppDrawerAdapter.resultViewType(saved))
 
         val unrelated = AppModel.Result("Copy result", AppModel.Result.Action.Copy("copied value"))
