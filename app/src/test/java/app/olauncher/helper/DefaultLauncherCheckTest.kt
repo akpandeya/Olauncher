@@ -37,4 +37,11 @@ class DefaultLauncherCheckTest {
         assertFalse(DefaultLauncherCheck.useBottomAlignment(true, false))
         assertFalse(DefaultLauncherCheck.useBottomAlignment(false, true))
     }
+
+    @Test
+    fun `change default row shows unless Thumbline is known to be the default`() {
+        assertFalse(DefaultLauncherCheck.showChangeDefault(true))
+        assertTrue(DefaultLauncherCheck.showChangeDefault(false))
+        assertTrue(DefaultLauncherCheck.showChangeDefault(null))
+    }
 }

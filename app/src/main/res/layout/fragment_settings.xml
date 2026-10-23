@@ -32,7 +32,7 @@
                 android:background="@drawable/readable_card"
                 android:orientation="vertical"
                 android:paddingHorizontal="12dp"
-                android:paddingVertical="16dp"
+                android:paddingVertical="8dp"
                 android:visibility="gone"
                 tools:visibility="visible">
 
@@ -113,6 +113,15 @@
                     android:paddingVertical="8dp"
                     android:text="@string/home_screen"
                     android:textColor="?attr/primaryColor" />
+                <TextView
+                    style="@style/TextSmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginBottom="4dp"
+                    android:alpha="0.7"
+                    android:text="@string/hint_home"
+                    android:textColor="?attr/primaryColor" />
 
                 <TextView
                     android:id="@+id/sectionRowShortcuts"
@@ -122,6 +131,15 @@
                     android:layout_marginStart="8dp"
                     android:paddingVertical="8dp"
                     android:text="@string/shortcut_icons"
+                    android:textColor="?attr/primaryColor" />
+                <TextView
+                    style="@style/TextSmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginBottom="4dp"
+                    android:alpha="0.7"
+                    android:text="@string/hint_shortcuts"
                     android:textColor="?attr/primaryColor" />
 
                 <TextView
@@ -133,6 +151,15 @@
                     android:paddingVertical="8dp"
                     android:text="@string/drawer"
                     android:textColor="?attr/primaryColor" />
+                <TextView
+                    style="@style/TextSmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginBottom="4dp"
+                    android:alpha="0.7"
+                    android:text="@string/hint_drawer"
+                    android:textColor="?attr/primaryColor" />
 
                 <TextView
                     android:id="@+id/sectionRowWellbeing"
@@ -142,6 +169,15 @@
                     android:layout_marginStart="8dp"
                     android:paddingVertical="8dp"
                     android:text="@string/wellbeing"
+                    android:textColor="?attr/primaryColor" />
+                <TextView
+                    style="@style/TextSmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginBottom="4dp"
+                    android:alpha="0.7"
+                    android:text="@string/hint_wellbeing"
                     android:textColor="?attr/primaryColor" />
 
                 <TextView
@@ -153,6 +189,15 @@
                     android:paddingVertical="8dp"
                     android:text="@string/today_section"
                     android:textColor="?attr/primaryColor" />
+                <TextView
+                    style="@style/TextSmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginBottom="4dp"
+                    android:alpha="0.7"
+                    android:text="@string/hint_today"
+                    android:textColor="?attr/primaryColor" />
 
                 <TextView
                     android:id="@+id/sectionRowDeutsch"
@@ -161,7 +206,16 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:paddingVertical="8dp"
-                    android:text="@string/deutsch_de"
+                    android:text="@string/german_section"
+                    android:textColor="?attr/primaryColor" />
+                <TextView
+                    style="@style/TextSmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginBottom="4dp"
+                    android:alpha="0.7"
+                    android:text="@string/hint_german"
                     android:textColor="?attr/primaryColor" />
 
                 <TextView
@@ -173,6 +227,15 @@
                     android:paddingVertical="8dp"
                     android:text="@string/appearance"
                     android:textColor="?attr/primaryColor" />
+                <TextView
+                    style="@style/TextSmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginBottom="4dp"
+                    android:alpha="0.7"
+                    android:text="@string/hint_appearance"
+                    android:textColor="?attr/primaryColor" />
 
                 <TextView
                     android:id="@+id/sectionRowGestures"
@@ -182,6 +245,15 @@
                     android:layout_marginStart="8dp"
                     android:paddingVertical="8dp"
                     android:text="@string/gestures"
+                    android:textColor="?attr/primaryColor" />
+                <TextView
+                    style="@style/TextSmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginBottom="4dp"
+                    android:alpha="0.7"
+                    android:text="@string/hint_gestures"
                     android:textColor="?attr/primaryColor" />
 
                 <TextView
@@ -193,6 +265,15 @@
                     android:paddingVertical="8dp"
                     android:text="@string/backup"
                     android:textColor="?attr/primaryColor" />
+                <TextView
+                    style="@style/TextSmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginBottom="4dp"
+                    android:alpha="0.7"
+                    android:text="@string/hint_backup"
+                    android:textColor="?attr/primaryColor" />
 
                 <TextView
                     android:tag="sectionRowPrivacy"
@@ -202,6 +283,15 @@
                     android:layout_marginStart="8dp"
                     android:paddingVertical="8dp"
                     android:text="@string/privacy"
+                    android:textColor="?attr/primaryColor" />
+                <TextView
+                    style="@style/TextSmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_marginBottom="4dp"
+                    android:alpha="0.7"
+                    android:text="@string/hint_privacy"
                     android:textColor="?attr/primaryColor" />
 
             </LinearLayout>
@@ -225,18 +315,19 @@
                 style="@style/TextSmall"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
+                android:layout_marginTop="12dp"
                 android:gravity="center"
-                android:padding="12dp" />
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="4dp" />
 
             <TextView
                 android:id="@+id/licenseNote"
                 style="@style/TextSmall"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:autoLink="web"
                 android:gravity="center"
                 android:linksClickable="true"
+                android:textColorLink="?attr/primaryColor"
                 android:paddingHorizontal="12dp"
                 android:paddingBottom="12dp"
                 android:text="@string/wiktionary_license_note"
@@ -265,12 +356,14 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:background="@null"
+            android:drawablePadding="12dp"
+            android:drawableStart="@drawable/ic_shortcut_search"
             android:hint="@string/search_settings"
             android:imeOptions="actionDone"
             android:inputType="text|textNoSuggestions"
             android:maxLines="1"
             android:textColor="?attr/primaryColor"
-            android:textColorHint="?attr/primaryColorTrans80" />
+            android:textColorHint="?attr/primaryColor" />
     </LinearLayout>
 
     <View
