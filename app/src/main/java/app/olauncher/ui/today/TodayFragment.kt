@@ -8,6 +8,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import androidx.core.view.isVisible
+import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import app.olauncher.helper.StatusBarFade
@@ -85,6 +86,8 @@ class TodayFragment : BaseFragment() {
 
     private fun initIntention() {
         refreshIntention()
+        updateIntentionFieldLook()
+        binding.etIntention.doAfterTextChanged { updateIntentionFieldLook() }
         binding.etIntention.setOnEditorActionListener { v, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 saveIntention(v.text?.toString())
@@ -94,6 +97,14 @@ class TodayFragment : BaseFragment() {
                 true
             } else false
         }
+    }
+
+    /** Empty field gets a faint underline and a pencil hint; a filled one stays clean. */
+    private fun updateIntentionFieldLook() {
+        val field = _binding?.etIntention ?: return
+        val empty = Intention.showsFieldHint(field.text)
+        field.setBackgroundResource(if (empty) R.drawable.bg_intention_field else 0)
+        field.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, if (empty) R.drawable.ic_pencil else 0, 0)
     }
 
     /** Shows today's intention; after the 04:00 rollover yesterday's text is cleared from the field. */

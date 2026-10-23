@@ -49,4 +49,12 @@ class IntentionTest {
         assertEquals(60, Intention.clean("a".repeat(100)).length)
         assertEquals("", Intention.clean(null))
     }
+
+    @Test
+    fun fieldHintShownOnlyWhenEmpty() {
+        assertEquals(true, Intention.showsFieldHint(null))
+        assertEquals(true, Intention.showsFieldHint(""))
+        assertEquals(true, Intention.showsFieldHint("   "))
+        assertEquals(false, Intention.showsFieldHint("Ship it"))
+    }
 }
