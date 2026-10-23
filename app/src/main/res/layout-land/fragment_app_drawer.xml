@@ -47,7 +47,7 @@
                 app:closeIcon="@null"
                 app:iconifiedByDefault="false"
                 app:queryBackground="@null"
-                app:queryHint="___"
+                app:queryHint="@string/drawer_search_hint"
                 app:searchIcon="@null"
                 app:theme="@style/AppSearchText" />
 

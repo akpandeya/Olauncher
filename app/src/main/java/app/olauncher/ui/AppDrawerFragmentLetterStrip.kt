@@ -1,6 +1,7 @@
 package app.olauncher.ui
 
 import android.annotation.SuppressLint
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -16,6 +17,7 @@ import app.olauncher.helper.LetterStripVisibility
 import app.olauncher.helper.Haptics
 import app.olauncher.helper.LetterIndex
 import app.olauncher.helper.LetterPos
+import app.olauncher.helper.LetterStripSizing
 
 private const val TAG = "AppDrawerFragment"
 
@@ -78,8 +80,10 @@ internal fun AppDrawerFragment.populateLetterStrip(ordered: List<AppModel>) {
     letterPosList = LetterIndex.build(realIndices.map { ordered[it].appLabel })
         .map { LetterPos(it.letter, realIndices[it.index]) }
 
+    stripLetters = LetterIndex.stripLetters(letterPosList)
+    val presentLetters = letterPosList.map { it.letter }.toSet()
     binding.letterStrip.removeAllViews()
-    for (pos in letterPosList) {
+    for (letter in stripLetters) {
         val tv = TextView(requireContext()).apply {
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -90,16 +94,40 @@ internal fun AppDrawerFragment.populateLetterStrip(ordered: List<AppModel>) {
             includeFontPadding = false
             setPadding(0, 0, 0, 0)
             TextViewCompat.setTextAppearance(this, R.style.TextSmall)
-            text = pos.letter.toString()
+            text = letter.toString()
+            alpha = if (letter in presentLetters) 1f else 0.3f
             isClickable = false
             isFocusable = false
         }
         binding.letterStrip.addView(tv)
     }
+    fitLetterStripText()
 
     setupLetterStripTouchListener()
     updateLetterStripVisibility()
     updateListInsetForStrip()
+}
+
+/** Shrink the letters when the strip is short (landscape) so none clip. */
+private fun AppDrawerFragment.fitLetterStripText() {
+    val strip = binding.letterStrip
+    val apply = {
+        val first = strip.getChildAt(0) as? TextView
+        if (first != null && strip.height > 0) {
+            val maxPx = resources.getDimension(R.dimen.text_small)
+            val px = LetterStripSizing.textSizePx(strip.height, strip.childCount, maxPx)
+            for (i in 0 until strip.childCount) {
+                (strip.getChildAt(i) as TextView).setTextSize(TypedValue.COMPLEX_UNIT_PX, px)
+            }
+        }
+    }
+    if (strip.height > 0) apply() else strip.post { _binding?.let { apply() } }
+    if (strip.getTag(R.id.letterStrip) == null) {
+        strip.setTag(R.id.letterStrip, true)
+        strip.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
+            if (bottom - top != oldBottom - oldTop) apply()
+        }
+    }
 }
 
 @SuppressLint("ClickableViewAccessibility")
@@ -110,9 +138,10 @@ internal fun AppDrawerFragment.setupLetterStripTouchListener() {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
                 view.parent?.requestDisallowInterceptTouchEvent(true)
-                val letterIndex = LetterIndex.letterAt(event.y, view.height, letterPosList.size)
-                if (letterIndex in letterPosList.indices) {
-                    val pos = letterPosList[letterIndex]
+                val stripIndex = LetterIndex.letterAt(event.y, view.height, stripLetters.size)
+                val letter = LetterIndex.nearestPresent(stripLetters, letterPosList.map { it.letter }.toSet(), stripIndex)
+                val pos = letterPosList.firstOrNull { it.letter == letter }
+                if (pos != null) {
                     if (pos.letter != lastSelectedLetter) {
                         lastSelectedLetter = pos.letter
                         Haptics.tick(binding.root)

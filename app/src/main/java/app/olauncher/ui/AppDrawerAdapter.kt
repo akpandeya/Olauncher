@@ -16,6 +16,7 @@ import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.Filter
 import android.widget.Filterable
+import androidx.core.graphics.ColorUtils
 import androidx.core.view.isVisible
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -499,7 +500,9 @@ class AppDrawerAdapter(
                 }
                 if (starIndex >= 0) {
                     spannable.setSpan(
-                        ForegroundColorSpan(accentColor),
+                        ForegroundColorSpan(
+                            ColorUtils.setAlphaComponent(accentColor, ArchivedAppsHelper.NEW_APP_MARKER_ALPHA)
+                        ),
                         starIndex,
                         starIndex + 1,
                         Spannable.SPAN_EXCLUSIVE_EXCLUSIVE

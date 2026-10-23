@@ -10,7 +10,7 @@
         style="@style/TextSmall"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:alpha="0.7"
+        android:alpha="0.85"
         android:maxLines="1"
         android:paddingHorizontal="@dimen/drawer_row_padding_horizontal"
         android:paddingTop="12dp"
