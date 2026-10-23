@@ -1,5 +1,6 @@
 package app.olauncher.ui
 
+import app.olauncher.helper.StatusBarFade
 import app.olauncher.helper.OlDialog
 import android.content.Intent
 import android.os.Bundle
@@ -238,6 +239,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         populateFooter()
         initClickListeners()
         initSearch()
+        StatusBarFade.attach(binding.statusBarFade)
         setupSearchInsets()
         initObservers()
 
