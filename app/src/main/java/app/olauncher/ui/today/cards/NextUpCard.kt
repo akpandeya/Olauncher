@@ -12,7 +12,7 @@ import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import app.olauncher.R
-import app.olauncher.helper.Haptics
+import app.olauncher.data.Prefs
 import app.olauncher.databinding.CardNextUpBinding
 import app.olauncher.databinding.ItemNextUpBinding
 import app.olauncher.glance.CalendarEvent
@@ -21,10 +21,10 @@ import app.olauncher.glance.NextUpFormatting
 import app.olauncher.glance.NextUpLabels
 import app.olauncher.glance.NextUpPlanner
 import app.olauncher.glance.NextUpProfileSplit
-import app.olauncher.data.Prefs
-import app.olauncher.helper.profileNameOf
+import app.olauncher.helper.Haptics
 import app.olauncher.helper.OpenTargets
 import app.olauncher.helper.getColorFromAttr
+import app.olauncher.helper.profileNameOf
 import app.olauncher.ui.today.TodayCard
 import app.olauncher.ui.today.TodayOrder
 import kotlinx.coroutines.CoroutineScope
@@ -63,7 +63,9 @@ object NextUpCard : TodayCard {
 
     override fun hasContent(context: Context): Boolean {
         val now = nowSupplier().toEpochMilli()
-        return getCalendarRepository(context).events(now, now + 48 * 3_600_000L).any { it.endMillis > now }
+        // The profile event shows as a chip, not a row, so the chip alone is not content.
+        return withoutProfileEvent(context, getCalendarRepository(context).events(now, now + 48 * 3_600_000L), now)
+            .rest.any { it.endMillis > now }
     }
 
     override fun priority(context: Context, now: ZonedDateTime): Int {
@@ -81,7 +83,15 @@ object NextUpCard : TodayCard {
             startOfDay.toInstant().toEpochMilli(),
             startOfDay.plusDays(1).toInstant().toEpochMilli(),
         )
-        return TodayOrder.nextUpPinned(events, now.toInstant(), now.zone)
+        val shown = withoutProfileEvent(context, events, now.toInstant().toEpochMilli()).rest
+        return TodayOrder.nextUpPinned(shown, now.toInstant(), now.zone)
+    }
+
+    /** The events the card lists: the profile event is taken out, as the card shows it as a chip. */
+    internal fun withoutProfileEvent(context: Context, events: List<CalendarEvent>, nowMillis: Long): NextUpProfileSplit {
+        val prefs = Prefs(context)
+        if (!prefs.hasProfileEventRules) return NextUpProfileSplit(null, events)
+        return NextUpFormatting.splitProfileEvent(events, prefs.profileSchedule().eventRules, nowMillis)
     }
 
     override fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View {
@@ -121,11 +131,7 @@ internal class NextUpCardView(
             val now = NextUpCard.nowSupplier()
             val allEvents = repo.next(now, hours = 48, limit = NextUpPlanner.FETCH_LIMIT)
             val prefs = Prefs(context)
-            val split = if (prefs.hasProfileEventRules) {
-                NextUpFormatting.splitProfileEvent(allEvents, prefs.profileSchedule().eventRules, now.toEpochMilli())
-            } else {
-                NextUpProfileSplit(null, allEvents)
-            }
+            val split = NextUpCard.withoutProfileEvent(context, allEvents, now.toEpochMilli())
             val events = split.rest
 
             val currentBinding = binding
@@ -158,7 +164,7 @@ internal class NextUpCardView(
                 val plan = NextUpPlanner.plan(events, now, zone, expanded)
                 for ((index, event) in plan.rows.withIndex()) {
                     val itemBinding = ItemNextUpBinding.inflate(inflater, currentBinding.eventsContainer, false)
-                    val row = NextUpFormatting.row(event, now, zone, is24Hour, labels)
+                    val row = NextUpFormatting.row(event, now, zone, is24Hour, labels, allDayLabel = true)
                     itemBinding.tvEventTime.text = row.lead
                     itemBinding.tvEventTime.isVisible = row.lead.isNotEmpty()
                     itemBinding.tvEventLine.text = row.title

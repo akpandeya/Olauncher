@@ -1,5 +1,6 @@
 package app.olauncher.glance
 
+import app.olauncher.data.ProfileEventRule
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -14,7 +15,7 @@ data class NextUpLabels(
     /** Template with %1$s = start time, %2$s = title. */
     val tomorrowEventTemplate: String,
     /** Time-column text for an all-day event that is on today. */
-    val allDay: String = "All day",
+    val allDay: String,
 ) {
     fun now(title: String, endTime: String): String = String.format(nowTemplate, title, endTime)
     fun tomorrowEvent(startTime: String, title: String): String = String.format(tomorrowEventTemplate, startTime, title)
@@ -34,7 +35,7 @@ object NextUpFormatting {
      */
     fun splitProfileEvent(
         events: List<CalendarEvent>,
-        rules: List<app.olauncher.data.ProfileEventRule>,
+        rules: List<ProfileEventRule>,
         nowMillis: Long,
     ): NextUpProfileSplit {
         val rule = rules.lastOrNull { it.matchesAny(events, nowMillis) } ?: return NextUpProfileSplit(null, events)
@@ -112,6 +113,7 @@ object NextUpFormatting {
 
     /**
      * Same text as [line], split into a lead (time or day, may be empty) and a title.
+     * With [allDayLabel], an all-day event that is on today gets [NextUpLabels.allDay] as its lead.
      * In-progress events and templates that do not end with the title stay whole in [NextUpRow.title].
      */
     fun row(
@@ -120,13 +122,14 @@ object NextUpFormatting {
         zone: ZoneId,
         is24Hour: Boolean = true,
         labels: NextUpLabels,
+        allDayLabel: Boolean = false,
     ): NextUpRow {
         val full = line(event, now, zone, is24Hour, labels)
         val inProgress = !event.allDay && !now.isBefore(event.start) && now.isBefore(event.end)
         if (inProgress) return NextUpRow("", full)
         val lead = if (event.allDay) full.removeSuffix(" · ${event.title}") else full.removeSuffix(event.title).trim()
         if (lead == full || lead.isEmpty()) return NextUpRow("", full)
-        if (event.allDay && lead == labels.today) return NextUpRow(labels.allDay, event.title)
+        if (allDayLabel && event.allDay && lead == labels.today) return NextUpRow(labels.allDay, event.title)
         return NextUpRow(lead, event.title)
     }
 

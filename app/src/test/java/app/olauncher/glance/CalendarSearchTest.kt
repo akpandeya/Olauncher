@@ -23,7 +23,7 @@ class CalendarSearchTest {
     private fun ev(id: Long, title: String, startOffset: Long, len: Long = hour) =
         CalendarEvent(id, title, now + startOffset, now + startOffset + len)
 
-    private val labels = NextUpLabels("Today", "Tomorrow", "Now · %1\$s (until %2\$s)", "Tomorrow %1\$s %2\$s")
+    private val labels = NextUpLabels("Today", "Tomorrow", "Now · %1\$s (until %2\$s)", "Tomorrow %1\$s %2\$s", "All day")
 
     @Test
     fun matchingTitleIsFound() {
@@ -66,5 +66,13 @@ class CalendarSearchTest {
         val row = CalendarSearch.toResult(e, now, zone, true, labels)
         assertEquals("📅 Dentist · Thu 14:00", row.text)
         assertEquals(AppModel.Result.Action.Event(42), row.action)
+    }
+
+    @Test
+    fun resultRowKeepsTodayForAllDayEvent() {
+        val date = java.time.Instant.ofEpochMilli(now).atZone(zone).toLocalDate()
+        val start = date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+        val e = CalendarEvent(43, "Holiday", start, start + day, allDay = true)
+        assertEquals("📅 Holiday · Today", CalendarSearch.toResult(e, now, zone, true, labels).text)
     }
 }
