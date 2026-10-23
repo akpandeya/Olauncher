@@ -142,7 +142,8 @@ fun View.showAppActionPopup(
     @SuppressLint("RtlHardcoded")
     val gravity = Gravity.TOP or Gravity.LEFT
     popup.showAtLocation(this, gravity, left, top)
-    card.root.animateFromTap(
+    // The popup window frame holds the card background and shadow, so animate it rather than the contents.
+    card.root.rootView.animateFromTap(
         PopupOrigin.pivotX(loc[0] + width / 2, left, menuWidth),
         PopupOrigin.pivotY(loc[1] + height / 2, top, menuHeight),
     )
@@ -151,7 +152,7 @@ fun View.showAppActionPopup(
 
 /** Fades and scales the card in from the tap point; skipped (full size at once) when animations are off. */
 private fun View.animateFromTap(pivotXPx: Float, pivotYPx: Float) {
-    val durationMs = MotionPolicy.durationMs(MotionPolicy.DEFAULT_DURATION_MS, ValueAnimator.areAnimatorsEnabled())
+    val durationMs = MotionPolicy.durationMs(MotionPolicy.DEFAULT_DURATION_MS, ValueAnimator.areAnimatorsEnabled() && !context.isEinkDisplay())
     if (durationMs <= 0L) return
     pivotX = pivotXPx
     pivotY = pivotYPx
