@@ -14,7 +14,7 @@ import app.olauncher.helper.dpToPx
  */
 internal fun HomeFragment.initInfoLineTouchTargets() {
     val parent = binding.nextEventLine.parent as? ViewGroup ?: return
-    val lines = listOf(binding.nextEventLine, binding.noteLine, binding.contextLine)
+    val lines = listOf(binding.nextEventLine, binding.noteLine, binding.noteMore, binding.contextLine)
     // Installed once: swapping the parent's delegate mid-gesture would drop the tap's ACTION_UP.
     val group = InfoLineTouchDelegates(parent)
     parent.touchDelegate = group
@@ -25,7 +25,11 @@ internal fun HomeFragment.initInfoLineTouchTargets() {
             if (line.visibility != View.VISIBLE || line.height <= 0) continue
             val extra = TouchTarget.extraPaddingPx(line.height, minPx)
             if (extra == 0) continue
-            val bounds = Rect(line.left, line.top - extra, line.right, line.bottom + extra)
+            // The note line and its suffix sit inside a row; bounds are in the parent's coordinates.
+            val holder = (line.parent as? View)?.takeIf { it !== parent }
+            val dx = holder?.left ?: 0
+            val dy = holder?.top ?: 0
+            val bounds = Rect(dx + line.left, dy + line.top - extra, dx + line.right, dy + line.bottom + extra)
             group.add(TouchDelegate(bounds, line))
         }
     }

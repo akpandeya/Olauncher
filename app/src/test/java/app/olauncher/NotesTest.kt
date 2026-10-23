@@ -164,3 +164,41 @@ class NotesTest {
         assertEquals(Notes.Parsed.Error("31.2"), Notes.parse("x 31.2", noon))
     }
 }
+
+class NotesCardListTest {
+    private val today = LocalDate.of(2025, 10, 22)
+    private fun day(d: Int) = LocalDate.of(2025, 10, d).toEpochDay()
+
+    private val notes = listOf(
+        Note(1, "later 24", 10L, showFrom = day(24)),
+        Note(2, "older", 20L),
+        Note(3, "later 23", 30L, showFrom = day(23)),
+        Note(4, "newer", 40L),
+        Note(5, "done", 5L, done = true),
+        Note(6, "today dated", 50L, showFrom = day(22)),
+    )
+
+    @Test
+    fun `card lists showing notes oldest first then later ones by date`() {
+        assertEquals(listOf(2L, 4L, 6L, 3L, 1L), Notes.cardList(notes, today).map { it.id })
+    }
+
+    @Test
+    fun `card list leaves out done notes and is empty without notes`() {
+        assertFalse(Notes.cardList(notes, today).any { it.done })
+        assertTrue(Notes.cardList(emptyList(), today).isEmpty())
+    }
+
+    @Test
+    fun `more count is visible notes minus the one shown`() {
+        assertEquals(2, Notes.moreCount(notes, today))
+        assertEquals(0, Notes.moreCount(listOf(Note(1, "a", 1L)), today))
+        assertEquals(0, Notes.moreCount(emptyList(), today))
+    }
+
+    @Test
+    fun `more text shows the count or nothing`() {
+        assertEquals("+2 more", Notes.moreText(2, "+%d more"))
+        assertNull(Notes.moreText(0, "+%d more"))
+    }
+}

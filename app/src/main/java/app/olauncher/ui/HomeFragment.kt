@@ -228,6 +228,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             R.id.contextLine -> openContextItem()
             R.id.nextEventLine -> openNextEvent()
             R.id.noteLine -> markTopNoteDone()
+            R.id.noteMore -> openToday()
             R.id.setDefaultLauncher -> viewModel.resetLauncherLiveData.call()
             R.id.tvScreenTime -> openScreenTimeDigitalWellbeing()
 
@@ -364,6 +365,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         }
         binding.nextEventLine.setOnClickListener(this)
         binding.noteLine.setOnClickListener(this)
+        binding.noteMore.setOnClickListener(this)
         binding.noteLine.setOnLongClickListener {
             showNotesDialog()
             true

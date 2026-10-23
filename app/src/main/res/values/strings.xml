@@ -603,6 +603,9 @@
     <string name="note_marked_done" tools:ignore="MissingTranslation">Note done</string>
     <string name="notes_title" tools:ignore="MissingTranslation">Open notes</string>
     <string name="note_delete" tools:ignore="MissingTranslation">Delete</string>
+    <string name="notes_card_title" tools:ignore="MissingTranslation">Notes</string>
+    <string name="notes_add_hint" tools:ignore="MissingTranslation">Add note</string>
+    <string name="note_home_more" tools:ignore="MissingTranslation">+%d more</string>
     <string name="home_notes" tools:ignore="MissingTranslation">Notes on home</string>
     <string name="event_no_calendar_app" tools:ignore="MissingTranslation">No calendar app to add the event</string>
     <string name="command_help_timer" tools:ignore="MissingTranslation">Timer: :t 10 tea</string>

@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import java.time.ZonedDateTime
 import app.olauncher.ui.today.cards.HeldCard
 import app.olauncher.ui.today.cards.NextUpCard
+import app.olauncher.ui.today.cards.NotesCard
 import app.olauncher.ui.today.cards.SavedCard
 import app.olauncher.ui.today.cards.WeatherCard
 import app.olauncher.ui.today.cards.WellbeingCard
@@ -48,6 +49,6 @@ interface TodayCard {
 }
 
 object TodayCards {
-    val all: List<TodayCard> = listOf(WeatherCard, NextUpCard, SavedCard, HeldCard, WellbeingCard, WordsCard)
+    val all: List<TodayCard> = listOf(WeatherCard, NextUpCard, SavedCard, HeldCard, WellbeingCard, WordsCard, NotesCard)
 }
 
