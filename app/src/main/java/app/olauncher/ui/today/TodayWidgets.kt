@@ -9,10 +9,12 @@ import android.content.ActivityNotFoundException
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.graphics.Rect
 import android.os.Bundle
 import android.os.SystemClock
 import android.os.UserHandle
 import android.util.SizeF
+import android.util.TypedValue
 import android.view.Gravity
 import android.view.Menu
 import android.view.LayoutInflater
@@ -25,6 +27,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import app.olauncher.R
 import app.olauncher.data.Prefs
@@ -281,7 +284,10 @@ internal class TodayWidgets(
             return resizeWrapper(hostView, range, density, ::setHeight)
         }
 
-        /** Container with a bottom drag handle; committing stores the height and leaves resize mode. */
+        /** Card in resize mode: an accent frame around the whole card, a full-width drag strip
+         *  at the bottom edge and a live height readout — the stock launcher's resize-frame
+         *  pattern (border visible, border strip is the touch target). Committing stores the
+         *  height and leaves resize mode. */
         private fun resizeWrapper(
             hostView: AppWidgetHostView,
             range: TodayWidgetResize.Range,
@@ -289,14 +295,35 @@ internal class TodayWidgets(
             setHeight: (Int) -> Unit,
         ): View = FrameLayout(hostContext).apply {
             addView(hostView)
+            setBackgroundResource(R.drawable.widget_resize_frame)
+
+            // The widget-host context carries no app theme: theme attrs (?attr/...) crash here,
+            // so the readout is styled with explicit dimensions and colours only.
+            val readout = TextView(hostContext).apply {
+                setTextSize(TypedValue.COMPLEX_UNIT_PX, resources.getDimension(R.dimen.text_body))
+                setTextColor(ContextCompat.getColor(hostContext, R.color.white))
+                setBackgroundResource(R.drawable.widget_resize_readout)
+                setPadding(
+                    (14 * density).roundToInt(), (6 * density).roundToInt(),
+                    (14 * density).roundToInt(), (6 * density).roundToInt(),
+                )
+                text = context.getString(R.string.today_widget_resize_hint)
+                layoutParams = FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL,
+                ).apply { bottomMargin = (44 * density).roundToInt() }
+            }
+            addView(readout)
+
             val handle = View(hostContext).apply {
                 setBackgroundResource(R.drawable.widget_resize_handle)
                 contentDescription = context.getString(R.string.today_widget_resize)
                 layoutParams = FrameLayout.LayoutParams(
-                    (48 * density).roundToInt(),
-                    (28 * density).roundToInt(),
-                    Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL,
-                ).apply { bottomMargin = (8 * density).roundToInt() }
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    (32 * density).roundToInt(),
+                    Gravity.BOTTOM,
+                )
                 var startY = 0f
                 var startDp = 0
                 var liveDp = 0
@@ -306,6 +333,7 @@ internal class TodayWidgets(
                             startY = event.rawY
                             startDp = currentHeightDp(hostView, density)
                             liveDp = TodayWidgetResize.snap(startDp, range)
+                            readout.text = context.getString(R.string.today_widget_resize_dp, liveDp)
                             handleView.parent.requestDisallowInterceptTouchEvent(true)
                             true
                         }
@@ -313,12 +341,16 @@ internal class TodayWidgets(
                             val draggedDp = (startDp + (event.rawY - startY) / density).roundToInt()
                             liveDp = TodayWidgetResize.snap(draggedDp, range)
                             setHeight(liveDp)
+                            readout.text = context.getString(R.string.today_widget_resize_dp, liveDp)
                             true
                         }
                         MotionEvent.ACTION_UP -> {
                             handleView.parent.requestDisallowInterceptTouchEvent(false)
                             prefs.todayWidgetHeights = prefs.todayWidgetHeights + (appWidgetId to liveDp)
                             resizingId = null
+                            handleView.announceForAccessibility(
+                                context.getString(R.string.today_widget_resize_dp, liveDp)
+                            )
                             val widthPx = hostView.width.takeIf { it > 0 } ?: hostView.layoutParams.width
                             hostView.updateAppWidgetSize(
                                 Bundle(),
@@ -339,6 +371,13 @@ internal class TodayWidgets(
                 }
             }
             addView(handle)
+
+            // Bring the drag strip on screen when resize mode starts: the strip sits at the
+            // card's bottom edge, which may be below the fold.
+            post {
+                val stripHeight = handle.layoutParams.height
+                requestRectangleOnScreen(Rect(0, height - stripHeight, width, height))
+            }
         }
 
         /** The card's height in dp, without the host view's own padding. */
