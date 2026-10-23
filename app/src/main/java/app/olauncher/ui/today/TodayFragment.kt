@@ -49,10 +49,6 @@ class TodayFragment : BaseFragment() {
     private var pastIntentionsOpen = false
     private var panelsShown = false
 
-    private val widgetPickerLauncher =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            todayWidgets.onPickerResult(it)
-        }
     private val widgetBindLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             todayWidgets.onBindResult(it)
@@ -64,7 +60,6 @@ class TodayFragment : BaseFragment() {
             fragment = this,
             restoring = savedInstanceState != null,
             refresh = { if (_binding != null) populateCards() },
-            picker = widgetPickerLauncher,
             bind = widgetBindLauncher,
             markAwaitingResult = { viewModel.isAwaitingActivityResult = true },
             clearAwaitingResult = { viewModel.isAwaitingActivityResult = false },

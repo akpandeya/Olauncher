@@ -6,14 +6,12 @@ import android.appwidget.AppWidgetHostView
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProviderInfo
 import android.content.ActivityNotFoundException
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.GradientDrawable
 import android.graphics.Rect
 import android.os.Bundle
 import android.os.SystemClock
-import android.os.UserHandle
 import android.util.SizeF
 import android.util.TypedValue
 import android.view.Gravity
@@ -44,7 +42,6 @@ internal class TodayWidgets(
     private val fragment: Fragment,
     restoring: Boolean,
     private val refresh: () -> Unit,
-    private val picker: ActivityResultLauncher<Intent>,
     private val bind: ActivityResultLauncher<Intent>,
     private val markAwaitingResult: () -> Unit,
     private val clearAwaitingResult: () -> Unit,
@@ -69,31 +66,6 @@ internal class TodayWidgets(
         if (result.resultCode == Activity.RESULT_OK) configureOrComplete() else discardPending()
     }
 
-    fun onPickerResult(result: ActivityResult) {
-        val id = prefs.todayPendingWidgetId
-        clearAwaitingResult()
-        if (result.resultCode != Activity.RESULT_OK || id <= 0) {
-            discardPending()
-        } else if (manager.getAppWidgetInfo(id) != null) {
-            configureOrComplete()
-        } else {
-            val provider = result.data?.getParcelableExtra(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER, ComponentName::class.java)
-            val profile = result.data?.getParcelableExtra(Intent.EXTRA_USER, UserHandle::class.java)
-            if (provider == null) fail() else safely {
-                val allowed = if (profile != null) manager.bindAppWidgetIdIfAllowed(id, profile, provider, null)
-                    else manager.bindAppWidgetIdIfAllowed(id, provider)
-                if (allowed) configureOrComplete() else {
-                    markAwaitingResult()
-                    bind.launch(Intent(AppWidgetManager.ACTION_APPWIDGET_BIND).apply {
-                        putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
-                        putExtra(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER, provider)
-                        if (profile != null) putExtra(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER_PROFILE, profile)
-                    })
-                }
-            }
-        }
-    }
-
     init {
         // A fresh launch cannot still have an outstanding picker. A restored activity can.
         if (!restoring) discardPending()
@@ -107,14 +79,31 @@ internal class TodayWidgets(
     fun start() = host.startListening()
     fun stop() = host.stopListening()
 
+    /**
+     * "Add widget": the in-app picker lists the installed providers. The id is
+     * allocated only when one is picked, so cancelling leaves nothing to clean
+     * up; a provider the system refuses to pre-bind falls back to the system
+     * bind-confirmation dialog.
+     */
     fun add() {
         if (prefs.todayPendingWidgetId > 0) return
-        context.showMessageDialog(R.string.today_add_widget, R.string.today_widget_explanation, R.string.today_add_widget) {
+        WidgetPickerDialog.show(context) { entry ->
             safely {
                 val id = host.allocateAppWidgetId()
                 prefs.todayPendingWidgetId = id
-                markAwaitingResult()
-                picker.launch(Intent(AppWidgetManager.ACTION_APPWIDGET_PICK).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id))
+                val provider = entry.info.provider
+                val allowed = if (entry.profile != null) manager.bindAppWidgetIdIfAllowed(id, entry.profile, provider, null)
+                    else manager.bindAppWidgetIdIfAllowed(id, provider)
+                if (allowed) {
+                    configureOrComplete()
+                } else {
+                    markAwaitingResult()
+                    bind.launch(Intent(AppWidgetManager.ACTION_APPWIDGET_BIND).apply {
+                        putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, id)
+                        putExtra(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER, provider)
+                        if (entry.profile != null) putExtra(AppWidgetManager.EXTRA_APPWIDGET_PROVIDER_PROFILE, entry.profile)
+                    })
+                }
             }
         }
     }
