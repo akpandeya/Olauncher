@@ -677,6 +677,7 @@
     <string name="word_row_no_meaning_found">No meaning found</string>
     <string name="word_row_unreachable">Couldn\'t reach Wiktionary</string>
     <string name="word_row_open_wiktionary">Open “%1$s” on Wiktionary</string>
+    <string name="word_row_conjugation" tools:ignore="MissingTranslation">Conjugation drill: %1$s</string>
     <string name="dictionary_website_verbformen" tools:ignore="MissingTranslation">verbformen.de</string>
     <string name="dictionary_website_dwds" tools:ignore="MissingTranslation">DWDS</string>
     <string name="dictionary_website_duden" tools:ignore="MissingTranslation">Duden</string>
