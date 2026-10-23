@@ -8,34 +8,27 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.inputmethod.InputMethodManager
-import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
+import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.fragment.findNavController
-import androidx.work.WorkManager
 import app.olauncher.R
 import app.olauncher.data.Prefs
 import app.olauncher.data.store.ReviewComebacks
 import app.olauncher.data.store.ReviewEventsStore
 import app.olauncher.data.store.StudyGrid
 import app.olauncher.data.store.Word
-import app.olauncher.data.store.WordEdit
-import app.olauncher.data.store.WordLookup
 import app.olauncher.data.store.WordSearch
 import app.olauncher.data.store.WordsListLogic
-import app.olauncher.databinding.DialogEditWordBinding
 import app.olauncher.databinding.FragmentWordsBinding
 import app.olauncher.databinding.ItemWordBinding
 import app.olauncher.helper.DrawerScrollHelper
 import app.olauncher.helper.DictionaryApps
 import app.olauncher.helper.Haptics
-import app.olauncher.helper.createDialog
 import app.olauncher.helper.dpToPx
 import app.olauncher.helper.getColorFromAttr
 import app.olauncher.helper.hapticLongClick
-import app.olauncher.helper.showMessageDialog
 import app.olauncher.helper.showPopupMenu
-import app.olauncher.helper.showToast
 import app.olauncher.ui.BaseFragment
 import app.olauncher.ui.today.cards.WordsCard
 import app.olauncher.ui.today.cards.WordsCardLogic
@@ -117,6 +110,14 @@ class WordsFragment : BaseFragment() {
                 findNavController().navigate(R.id.action_wordsFragment_to_reviewFragment)
             }
         }
+        b.btnLists.isVisible = words.isNotEmpty()
+        b.btnLists.setOnClickListener {
+            Haptics.tick(it)
+            // Ignore a second tap delivered before the first navigation lands.
+            if (findNavController().currentDestination?.id == R.id.wordsFragment) {
+                findNavController().navigate(R.id.action_wordsFragment_to_wordListsFragment)
+            }
+        }
         renderStats(b, context, today)
         b.tvMatchCount.isVisible = searching
         b.tvMatchCount.text = context.getString(R.string.words_search_count, shown.size, words.size)
@@ -136,9 +137,11 @@ class WordsFragment : BaseFragment() {
             val status = WordsListLogic.status(word, today)
             item.tvWord.text = word.text
             item.tvMeaning.text = WordsCardLogic.formatMeaning(context, word.meaning, word.meaningSource)
-            item.tvStatus.text = formatStatus(context, status)
+            item.tvStatus.text = WordDialogs.formatStatus(context, status)
             if (status == WordsListLogic.Status.Due) item.tvStatus.setTextColor(accent)
-            item.root.setOnClickListener { showEditDialog(context, word) }
+            item.root.setOnClickListener {
+                WordDialogs.showEditDialog(context, word, ::liveViewLifecycleOwner) { render() }
+            }
             item.root.hapticLongClick {
                 showWordPopup(item.tvWord, word)
             }
@@ -182,118 +185,27 @@ class WordsFragment : BaseFragment() {
         }
     }
 
-    private fun formatStatus(context: Context, status: WordsListLogic.Status): String = when (status) {
-        WordsListLogic.Status.Due -> context.getString(R.string.words_status_due)
-        is WordsListLogic.Status.DueIn -> context.getString(R.string.words_status_due_in, status.days)
-        WordsListLogic.Status.Learned -> context.getString(R.string.words_status_learned)
-    }
-
     private fun showWordPopup(anchor: View, word: Word) {
         val context = anchor.context
         anchor.showPopupMenu(
             configure = { menu ->
                 menu.add(Menu.NONE, 1, Menu.NONE, R.string.words_edit)
                 menu.add(Menu.NONE, 2, Menu.NONE, DictionaryApps.actionLabel(context, Prefs(context).germanDictionaryApp))
+                menu.add(Menu.NONE, 4, Menu.NONE, R.string.word_lists_popup_lists)
                 menu.add(Menu.NONE, 3, Menu.NONE, R.string.words_delete)
             }
         ) { item ->
             when (item.itemId) {
-                1 -> showEditDialog(context, word)
+                1 -> WordDialogs.showEditDialog(context, word, ::liveViewLifecycleOwner) { render() }
                 2 -> DictionaryApps.open(context, word.text)
-                3 -> context.showMessageDialog(
-                    title = R.string.words_delete,
-                    message = context.getString(R.string.words_delete_confirm, word.text),
-                    action = R.string.words_delete,
-                ) {
-                    WordsCard.getStore(context).delete(word.id)
-                    render()
-                }
+                4 -> WordDialogs.showListsDialog(context, word) { render() }
+                3 -> WordDialogs.showDeleteDialog(context, word) { render() }
             }
         }
     }
 
-    private fun showEditDialog(context: Context, listedWord: Word) {
-        val store = WordsCard.getStore(context)
-        // A lookup may have filled the meaning since the list was drawn, so edit the saved copy.
-        val word = store.get(listedWord.id) ?: return render()
-        val prefs = Prefs(context)
-        val lookupAllowed = WordLookup.isLookupAllowed(prefs.germanEnabled, prefs.germanLookup)
-        var dialogBinding: DialogEditWordBinding? = null
-
-        val dialog = context.createDialog(
-            title = R.string.words_edit,
-            action = R.string.save,
-            neutral = if (lookupAllowed) R.string.words_look_up_again else 0,
-            onNeutral = {
-                lookUpAgain(context, WordEdit.resetMeaning(word))
-            },
-            onAction = {
-                dialogBinding?.let { db ->
-                    val newText = db.etWord.text?.toString().orEmpty()
-                    if (WordEdit.clashesWithOtherWord(newText, word.id, store.all())) {
-                        context.showToast(context.getString(R.string.words_already_saved, newText.trim()))
-                        return@let
-                    }
-                    val outcome = WordEdit.apply(
-                        word,
-                        newText = newText,
-                        newMeaning = db.etMeaning.text?.toString().orEmpty(),
-                        lookupAllowed = lookupAllowed
-                    )
-                    if (outcome.needsLookup && lookupAllowed) {
-                        lookUpAgain(context, outcome.word)
-                    } else {
-                        store.update(outcome.word)
-                        render()
-                    }
-                }
-            }
-        ) { container ->
-            DialogEditWordBinding.inflate(LayoutInflater.from(container.context), container, false).also { db ->
-                dialogBinding = db
-                db.etWord.setText(word.text)
-                db.etMeaning.setText(word.meaning)
-                val sourceRes = when {
-                    word.meaning.isBlank() -> 0
-                    word.meaningSource.equals("wiktionary", ignoreCase = true) -> R.string.words_source_wiktionary
-                    else -> R.string.words_source_user
-                }
-                db.tvSource.isVisible = sourceRes != 0
-                if (sourceRes != 0) db.tvSource.setText(sourceRes)
-                db.etMeaning.focusAtEnd(context)
-            }.root
-        }
-        dialog.showRespectingStatusBar()
-    }
-
-    private fun lookUpAgain(context: Context, word: Word) {
-        WordsCard.getStore(context).update(word)
-        WordLookup.enqueue(context, word.id)
-        context.showToast(R.string.words_looking_up)
-        render()
-        refreshWhenLookupFinishes(context, word.id)
-    }
-
-    private fun refreshWhenLookupFinishes(context: Context, wordId: Long) {
-        val owner = _binding?.let { viewLifecycleOwner } ?: return
-        val work = WorkManager.getInstance(context)
-            .getWorkInfosForUniqueWorkLiveData(WordLookup.uniqueWorkName(wordId))
-        work.observe(owner) { infos ->
-            if (infos.isNotEmpty() && infos.all { it.state.isFinished }) {
-                work.removeObservers(owner)
-                render()
-            }
-        }
-    }
-
-    private fun AppCompatEditText.focusAtEnd(context: Context) {
-        setSelection(text?.length ?: 0)
-        post {
-            requestFocus()
-            val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
-            imm?.showSoftInput(this, InputMethodManager.SHOW_IMPLICIT)
-        }
-    }
+    /** Null once the view is gone, so the lookup-finished observer stops with the screen. */
+    private fun liveViewLifecycleOwner(): LifecycleOwner? = _binding?.let { viewLifecycleOwner }
 
     private companion object {
         const val KEYBOARD_GAP_DP = 12

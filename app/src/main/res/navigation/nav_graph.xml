@@ -145,6 +145,44 @@
             app:exitAnim="@animator/fade_exit"
             app:popEnterAnim="@animator/fade_enter"
             app:popExitAnim="@animator/fade_exit" />
+        <action
+            android:id="@+id/action_wordsFragment_to_wordListsFragment"
+            app:destination="@id/wordListsFragment"
+            app:enterAnim="@animator/fade_enter"
+            app:exitAnim="@animator/fade_exit"
+            app:popEnterAnim="@animator/fade_enter"
+            app:popExitAnim="@animator/fade_exit" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/wordListsFragment"
+        android:name="app.olauncher.ui.words.WordListsFragment"
+        android:label="WordListsFragment"
+        tools:layout="@layout/fragment_word_lists">
+        <action
+            android:id="@+id/action_wordListsFragment_to_wordListFragment"
+            app:destination="@id/wordListFragment"
+            app:enterAnim="@animator/fade_enter"
+            app:exitAnim="@animator/fade_exit"
+            app:popEnterAnim="@animator/fade_enter"
+            app:popExitAnim="@animator/fade_exit" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/wordListFragment"
+        android:name="app.olauncher.ui.words.WordListFragment"
+        android:label="WordListFragment"
+        tools:layout="@layout/fragment_word_list">
+        <argument
+            android:name="listId"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
+        <argument
+            android:name="sourceBucket"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
     </fragment>
 
     <fragment

@@ -479,6 +479,21 @@
     <string name="words_search_clear">Clear search</string>
     <string name="words_search_no_match">No word matches “%s”</string>
     <string name="words_search_count">%1$d of %2$d</string>
+    <string name="word_lists_title" tools:ignore="MissingTranslation">Lists</string>
+    <string name="word_lists_new_list" tools:ignore="MissingTranslation">New list</string>
+    <string name="word_lists_name_hint" tools:ignore="MissingTranslation">List name</string>
+    <string name="word_lists_duplicate" tools:ignore="MissingTranslation">“%s” is already a list</string>
+    <string name="word_lists_delete_confirm" tools:ignore="MissingTranslation">Delete the list “%s”? The words stay saved.</string>
+    <string name="word_lists_row_subtitle" tools:ignore="MissingTranslation">%1$s · %2$d due</string>
+    <string name="word_lists_source_wiktionary" tools:ignore="MissingTranslation">Wiktionary</string>
+    <string name="word_lists_source_manual" tools:ignore="MissingTranslation">Manual</string>
+    <string name="word_lists_empty_state" tools:ignore="MissingTranslation">Save words first, then group them into lists</string>
+    <string name="word_lists_popup_lists" tools:ignore="MissingTranslation">Lists…</string>
+    <string name="word_lists_none_yet" tools:ignore="MissingTranslation">No lists yet</string>
+    <string name="word_list_title_fallback" tools:ignore="MissingTranslation">List</string>
+    <string name="word_list_remove_from_list" tools:ignore="MissingTranslation">Remove from list</string>
+    <string name="word_list_add_words" tools:ignore="MissingTranslation">Add words</string>
+    <string name="word_list_empty_state" tools:ignore="MissingTranslation">No words in this list yet</string>
     <string name="save">Save</string>
     <string name="glance">Glance</string>
     <string name="weather">Weather</string>
