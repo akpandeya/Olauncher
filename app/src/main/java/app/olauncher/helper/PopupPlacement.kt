@@ -55,4 +55,23 @@ object PopupPlacement {
         val maxLeft = screenWidth - margin - menuWidth
         return if (maxLeft < margin) maxOf(0, (screenWidth - menuWidth) / 2) else left.coerceIn(margin, maxLeft)
     }
+
+    /** Share of the screen width the menu takes. */
+    const val MENU_WIDTH_FRACTION = 0.68f
+
+    /** Menu width: [MENU_WIDTH_FRACTION] of [screenWidth], never wider than the screen minus both [margin]s. */
+    fun menuWidth(screenWidth: Int, margin: Int): Int =
+        minOf((screenWidth * MENU_WIDTH_FRACTION).toInt(), maxOf(0, screenWidth - 2 * margin))
+
+    /**
+     * Left edge of a menu that sits on the same side of the screen as the anchor: start edges line up
+     * when the anchor's centre is in the left half, end edges when it is in the right half.
+     * Uses window coordinates, so right-to-left layouts mirror on their own. Kept [margin] inside the screen.
+     */
+    fun menuLeftBySide(anchorLeft: Int, anchorRight: Int, menuWidth: Int, screenWidth: Int, margin: Int): Int {
+        val onLeftHalf = anchorLeft + anchorRight < screenWidth
+        val left = if (onLeftHalf) anchorLeft else anchorRight - menuWidth
+        val maxLeft = screenWidth - margin - menuWidth
+        return if (maxLeft < margin) maxOf(0, (screenWidth - menuWidth) / 2) else left.coerceIn(margin, maxLeft)
+    }
 }

@@ -155,7 +155,8 @@
     <!-- App long-press popup card (showAppActionPopup) -->
     <style name="PopupCardHeading" parent="TextSmallLight">
         <item name="android:fontFamily">?attr/mainFontFamily</item>
-        <item name="android:textSize">@dimen/text_caption</item>
+        <item name="android:textSize">@dimen/text_body</item>
+        <item name="android:textStyle">bold</item>
         <item name="android:textColor">?attr/inkMuted</item>
         <item name="android:shadowRadius">0</item>
     </style>
@@ -166,7 +167,6 @@
     </style>
 
     <style name="PopupCardAnimation" parent="android:Animation">
-        <item name="android:windowEnterAnimation">@anim/popup_card_enter</item>
         <item name="android:windowExitAnimation">@anim/popup_card_exit</item>
     </style>
 

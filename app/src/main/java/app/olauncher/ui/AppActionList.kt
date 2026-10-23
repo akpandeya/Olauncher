@@ -21,6 +21,21 @@ object AppActionList {
         AppAction(AppAction.Id.RESET_SHORTCUT, R.string.shortcut_reset),
     )
 
+    /**
+     * Actions for a home app: Change app, Rename | Remove from home, Hide, Mark distracting | App info, Uninstall.
+     * A home shortcut (not an app) only gets Change app and Remove from home.
+     */
+    fun buildHome(isShortcut: Boolean, isHidden: Boolean, isDistracting: Boolean): List<AppAction> {
+        val changeApp = AppAction(AppAction.Id.CHANGE_APP, R.string.change_app)
+        val removeFromHome = AppAction(AppAction.Id.REMOVE_FROM_HOME, R.string.remove_from_home)
+        if (isShortcut) return listOf(changeApp, removeFromHome)
+        val shared = build(isArchived = false, isHidden = isHidden, isDistracting = isDistracting)
+            .filter { it.id != AppAction.Id.ADD_TO_HOME } // already on home
+        val (first, rest) = shared.partition { it.id == AppAction.Id.RENAME }
+        val (tail, middle) = rest.partition { it.id == AppAction.Id.APP_INFO || it.id == AppAction.Id.UNINSTALL }
+        return listOf(changeApp) + first + removeFromHome + middle + tail
+    }
+
     fun build(
         isArchived: Boolean,
         isHidden: Boolean,
@@ -45,4 +60,16 @@ object AppActionList {
             addAll(tail)
         }
     }
+
+    /** Group number of an action; a divider is drawn where the number changes. */
+    private fun group(id: AppAction.Id): Int = when (id) {
+        AppAction.Id.CHANGE_APP, AppAction.Id.ADD_TO_HOME, AppAction.Id.RENAME,
+        AppAction.Id.CHOOSE_BUILTIN, AppAction.Id.RESET_SHORTCUT -> 0
+        AppAction.Id.HIDE, AppAction.Id.DISTRACTING, AppAction.Id.REMOVE_FROM_HOME -> 1
+        AppAction.Id.APP_INFO, AppAction.Id.UNINSTALL -> 2
+    }
+
+    /** Indexes in [actions] that start a new group, so a divider goes right before them. */
+    fun groupStarts(actions: List<AppAction>): Set<Int> =
+        actions.indices.filter { it > 0 && group(actions[it].id) != group(actions[it - 1].id) }.toSet()
 }
