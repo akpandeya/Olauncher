@@ -468,7 +468,7 @@
     <string name="week_review_top_app_item">%1$s %2$s</string>
     <string name="week_review_list_separator">", "</string>
     <string name="week_review_over_allowance">Over allowance on %1$d of %2$d days</string>
-    <string name="week_review_pause">Pause: %1$d × not now · %2$d × opened</string>
+    <string name="week_review_pause">Opened anyway %2$d · Not now %1$d</string>
     <string name="week_review_pause_mostly">%1$s (mostly: %2$s)</string>
     <string name="week_review_nudges_water_walk">Water %1$d · Walk %2$d</string>
     <string name="week_review_nudges_water">Water %1$d</string>
