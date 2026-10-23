@@ -30,6 +30,42 @@
             android:paddingTop="56dp"
             android:paddingBottom="8dp">
 
+            <!-- Study stats: 12-week dot grid and comeback counter, like a profile header -->
+            <LinearLayout
+                android:id="@+id/statsPanel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/today_panel"
+                android:orientation="vertical"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="12dp"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <TextView
+                    android:id="@+id/tvStatsTitle"
+                    style="@style/TextSmallLight"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:letterSpacing="0.04"
+                    android:text="@string/words_stats_title" />
+
+                <app.olauncher.ui.words.StudyDotGridView
+                    android:id="@+id/studyDotGrid"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+
+                <TextView
+                    android:id="@+id/tvComebacks"
+                    style="@style/TextSmall"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="8dp"
+                    tools:text="7 comebacks · 21 days studied" />
+
+            </LinearLayout>
+
             <!-- One panel holding the rows, like the Today panels -->
             <LinearLayout
                 android:id="@+id/wordsContainer"
