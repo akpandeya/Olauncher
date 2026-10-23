@@ -387,6 +387,47 @@ class NextUpFormattingTest {
         val d = LocalDate.of(2026, 10, 18)
         val start = d.atStartOfDay(ZoneOffset.UTC).toInstant()
         val event = CalendarEvent(5L, "Holiday", start, start.plusSeconds(24 * 3600), allDay = true)
-        assertEquals(NextUpRow("Today", "Holiday"), rowAt(event))
+        assertEquals(NextUpRow("All day", "Holiday"), rowAt(event))
+    }
+
+    @Test
+    fun `row shows All day for a multi-day all-day event spanning today`() {
+        val d = LocalDate.of(2026, 10, 17)
+        val start = d.atStartOfDay(ZoneOffset.UTC).toInstant()
+        val event = CalendarEvent(6L, "Hackathon", start, start.plusSeconds(3 * 24 * 3600), allDay = true)
+        assertEquals(NextUpRow("All day", "Hackathon"), rowAt(event))
+    }
+
+    @Test
+    fun `row keeps Tomorrow for a tomorrow all-day event`() {
+        val d = LocalDate.of(2026, 10, 19)
+        val start = d.atStartOfDay(ZoneOffset.UTC).toInstant()
+        val event = CalendarEvent(7L, "Holiday", start, start.plusSeconds(24 * 3600), allDay = true)
+        assertEquals(NextUpRow("Tomorrow", "Holiday"), rowAt(event))
+    }
+
+    @Test
+    fun `profile event is split out and its profile id returned`() {
+        val d = LocalDate.of(2026, 10, 18)
+        val start = d.atStartOfDay(ZoneOffset.UTC).toInstant()
+        val home = CalendarEvent(8L, "Home", start, start.plusSeconds(24 * 3600), allDay = true)
+        val dentist = CalendarEvent(9L, "Dentist", berlin(d, LocalTime.of(14, 0)), berlin(d, LocalTime.of(15, 0)))
+        val rules = listOf(
+            app.olauncher.data.ProfileEventRule("work", keyword = "Office", includeAllDay = true),
+            app.olauncher.data.ProfileEventRule("home-profile", keyword = "Home", includeAllDay = true),
+        )
+        val split = NextUpFormatting.splitProfileEvent(listOf(home, dentist), rules, start.toEpochMilli() + 1000)
+        assertEquals("home-profile", split.profileId)
+        assertEquals(listOf(dentist), split.rest)
+    }
+
+    @Test
+    fun `no matching rule leaves events untouched`() {
+        val d = LocalDate.of(2026, 10, 18)
+        val dentist = CalendarEvent(9L, "Dentist", berlin(d, LocalTime.of(14, 0)), berlin(d, LocalTime.of(15, 0)))
+        val rules = listOf(app.olauncher.data.ProfileEventRule("work", keyword = "Office"))
+        val split = NextUpFormatting.splitProfileEvent(listOf(dentist), rules, dentist.startMillis + 1)
+        assertEquals(null, split.profileId)
+        assertEquals(listOf(dentist), split.rest)
     }
 }

@@ -470,6 +470,8 @@
     <string name="next_up_now">Now · %1$s (until %2$s)</string>
     <string name="next_up_tomorrow_event">Tomorrow %1$s %2$s</string>
     <string name="next_up_more">+%1$d more</string>
+    <string name="next_up_all_day">All day</string>
+    <string name="next_up_profile">Profile: %1$s</string>
     <string name="next_up_less">Show less</string>
     <string name="home_next_event">Next event on home</string>
     <string name="last_7_days">Last 7 days</string>

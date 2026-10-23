@@ -20,6 +20,9 @@ import app.olauncher.glance.CalendarRepository
 import app.olauncher.glance.NextUpFormatting
 import app.olauncher.glance.NextUpLabels
 import app.olauncher.glance.NextUpPlanner
+import app.olauncher.glance.NextUpProfileSplit
+import app.olauncher.data.Prefs
+import app.olauncher.helper.profileNameOf
 import app.olauncher.helper.OpenTargets
 import app.olauncher.helper.getColorFromAttr
 import app.olauncher.ui.today.TodayCard
@@ -116,9 +119,24 @@ internal class NextUpCardView(
         job = scope.launch {
             val repo = NextUpCard.getCalendarRepository(context)
             val now = NextUpCard.nowSupplier()
-            val events = repo.next(now, hours = 48, limit = NextUpPlanner.FETCH_LIMIT)
+            val allEvents = repo.next(now, hours = 48, limit = NextUpPlanner.FETCH_LIMIT)
+            val prefs = Prefs(context)
+            val split = if (prefs.hasProfileEventRules) {
+                NextUpFormatting.splitProfileEvent(allEvents, prefs.profileSchedule().eventRules, now.toEpochMilli())
+            } else {
+                NextUpProfileSplit(null, allEvents)
+            }
+            val events = split.rest
 
             val currentBinding = binding
+            val profileId = split.profileId
+            currentBinding.tvProfile.isVisible = profileId != null
+            if (profileId != null) {
+                currentBinding.tvProfile.text = context.getString(
+                    R.string.next_up_profile,
+                    prefs.profileNameOf(context, profileId) ?: profileId,
+                )
+            }
             if (events.isEmpty()) {
                 currentBinding.tvEmpty.isVisible = true
                 currentBinding.eventsContainer.removeAllViews()
@@ -134,6 +152,7 @@ internal class NextUpCardView(
                     tomorrow = context.getString(R.string.next_up_tomorrow),
                     nowTemplate = context.getString(R.string.next_up_now),
                     tomorrowEventTemplate = context.getString(R.string.next_up_tomorrow_event),
+                    allDay = context.getString(R.string.next_up_all_day),
                 )
 
                 val plan = NextUpPlanner.plan(events, now, zone, expanded)
