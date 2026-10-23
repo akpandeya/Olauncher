@@ -39,6 +39,10 @@ NOUN_DERIVATION_GLOSS = re.compile(
     re.IGNORECASE,
 )
 NON_FORM_TAGS = frozenset({"table-tags", "inflection-template", "class", "auxiliary", "diminutive"})
+# Conjugation drills must not teach obsolete variants ("gieng") or paradigm metadata rows.
+# Periphrastic tenses ("habe gemacht") are compositional, not stored: drills teach
+# single-word paradigm cells only. Auxiliary choice (haben/sein) lives only in these rows.
+NON_CONJUGATION_TAGS = RARE_TAGS | NON_FORM_TAGS | {"alternative", "multiword-construction"}
 BUDGET_BYTES = 15_000_000
 
 
@@ -78,6 +82,8 @@ class Entry:
     participle: str
     targets: tuple
     rare: bool
+    # Verb conjugation drill cells: (form, sorted tags) pairs, empty for other POS.
+    forms: tuple
 
 
 def parse_record(record):
@@ -152,6 +158,9 @@ def parse_record(record):
         choose(lambda tags: {"past", "participle"} <= tags) if pos == "verb" else "",
         tuple(sorted(targets)),
         bool(lexical) and all(tags & RARE_TAGS for _, tags in lexical),
+        # Headword summaries repeat table rows: keep the first occurrence of each pair.
+        tuple(dict.fromkeys((value, tuple(sorted(tags))) for value, tags in validated_forms
+                            if pos == "verb" and not tags & NON_CONJUGATION_TAGS)),
     )
 
 
@@ -185,12 +194,17 @@ def write_database(entries, path, drop_rare=False):
     with sqlite3.connect(path) as db:
         db.executescript("""
             PRAGMA page_size=4096;
-            PRAGMA user_version=1;
+            PRAGMA user_version=2;
             CREATE TABLE entries (
                 id INTEGER PRIMARY KEY, lemma TEXT NOT NULL, pos TEXT NOT NULL,
                 gender TEXT NOT NULL, plural TEXT NOT NULL, gloss TEXT NOT NULL,
                 present TEXT NOT NULL, past TEXT NOT NULL, participle TEXT NOT NULL
             );
+            CREATE TABLE forms (
+                entry_id INTEGER NOT NULL REFERENCES entries(id),
+                form TEXT NOT NULL, tags TEXT NOT NULL,
+                PRIMARY KEY (entry_id, form, tags)
+            ) WITHOUT ROWID;
             CREATE TABLE lookup (
                 form TEXT NOT NULL, entry_id INTEGER NOT NULL REFERENCES entries(id),
                 PRIMARY KEY (form, entry_id)
@@ -210,6 +224,9 @@ def write_database(entries, path, drop_rare=False):
             db.execute("INSERT INTO entries VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                        (kept, entry.lemma, entry.pos, entry.gender, entry.plural, entry.gloss,
                         entry.present, entry.past, entry.participle))
+            if entry.forms:
+                db.executemany("INSERT INTO forms VALUES (?, ?, ?)",
+                               [(kept, value, " ".join(tags)) for value, tags in entry.forms])
             targets[(entry.lemma, entry.pos)].append(kept)
             db.execute("INSERT INTO lookup VALUES (?, ?)", (entry.lemma, kept))
         for entry in pending:
@@ -223,7 +240,9 @@ def write_database(entries, path, drop_rare=False):
             raise InvalidRecord("generated SQLite database failed integrity check")
         if db.execute("PRAGMA foreign_key_check").fetchall():
             raise InvalidRecord("generated SQLite database has dangling form mappings")
-        return {"entries": kept, "forms": db.execute("SELECT count(*) FROM lookup").fetchone()[0]}
+        return {"entries": kept,
+                "forms": db.execute("SELECT count(*) FROM lookup").fetchone()[0],
+                "conjugation_forms": db.execute("SELECT count(*) FROM forms").fetchone()[0]}
 
 
 def compress(source, destination):
@@ -255,7 +274,7 @@ def build(source, output, expected_sha256, expected_bytes, budget=BUDGET_BYTES):
         else:
             raise InvalidRecord("dictionary exceeds compressed budget even after dropping rare entries")
         stats.update({
-            "schema_version": 1, "source_url": SOURCE_URL,
+            "schema_version": 2, "source_url": SOURCE_URL,
             "source_sha256": expected_sha256, "source_bytes": expected_bytes,
             "database_sha256": hashlib.sha256(database.read_bytes()).hexdigest(),
             "database_bytes": database.stat().st_size,

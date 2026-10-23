@@ -27,13 +27,13 @@ class OfflineGermanStore(context: Context) {
         database?.let { return it }
         synchronized(this) {
             database?.let { return it }
-            val metadata = appContext.assets.open("german-v1.sqlite.json").bufferedReader().use {
+            val metadata = appContext.assets.open("german-v2.sqlite.json").bufferedReader().use {
                 JSONObject(it.readText())
             }
             val file = OfflineDictionaryInstaller.install(
                 File(appContext.noBackupFilesDir, "german-dictionary"),
                 metadata.getString("database_sha256")
-            ) { appContext.assets.open("german-v1.sqlite.gzip") }
+            ) { appContext.assets.open("german-v2.sqlite.gzip") }
             // An install that fails to open is corrupt: remove it so the next attempt reinstalls.
             val opened = try {
                 SQLiteDatabase.openDatabase(file.path, null, SQLiteDatabase.OPEN_READONLY)
@@ -42,7 +42,7 @@ class OfflineGermanStore(context: Context) {
                 throw e
             }
             try {
-                check(opened.version == 1)
+                check(opened.version == 2)
             } catch (e: Exception) {
                 opened.close()
                 deleteInstalled()

@@ -19,7 +19,7 @@ curl --fail --location \
   https://kaikki.org/dictionary/German/kaikki.org-dictionary-German.jsonl \
   -o .dictionary-work/german.jsonl
 python3 tools/german_dictionary.py .dictionary-work/german.jsonl \
-  app/src/main/assets/german-v1.sqlite.gzip \
+  app/src/main/assets/german-v2.sqlite.gzip \
   --source-sha256 b3328b24dfa186192ea6956f1ecd4a91b7b8c49781f99b6afcf1e2e1d10c59da \
   --source-bytes 1095258648
 python3 -m unittest discover -s tools/tests -v
@@ -68,12 +68,36 @@ stale data.
 - SQLite integrity and foreign-key checks run before publication. Counts are
   reported for inspection, not used to prove source completeness.
 
-The asset has 109,630 lexical entries and 362,523 indexed form/entry pairs,
-occupies 6,434,596 compressed bytes (16,289,792 unpacked), and needs no rare-word
-filtering. Full-source and fixture tests cover `gehen`, `ging → gehen`,
-`Mädchen → das`, `Haus → Häuser`, `Lehrer`, `Studentin → die / Studentinnen`,
-`mich → ich`, `die → der` (article/pronoun), parser failures, complete-line
-truncation, deterministic output and the compressed budget.
+## Conjugation forms (schema v2)
+
+`PRAGMA user_version=2` adds a `forms` table beside `entries` and `lookup`:
+
+```
+forms (entry_id REFERENCES entries(id), form, tags)
+PRIMARY KEY (entry_id, form, tags), WITHOUT ROWID
+```
+
+It stores verb conjugation drill cells: the forms-table rows of each verb entry,
+deduplicated on (form, sorted tags), tags sorted and space-joined. Only verbs
+have rows; other parts of speech keep their summary fields on `entries`. Rows
+tagged archaic/obsolete/rare/dated/historical/nonstandard, `alternative`,
+paradigm metadata (`table-tags`, `inflection-template`, `class`, `auxiliary`,
+`diminutive`) or `multiword-construction` are excluded: periphrastic tenses
+("habe gemacht") are compositional, so drills teach single-word paradigm cells.
+(Separable verbs keep their split surface forms, e.g. `setze über` for
+`übersetzen`: those are real paradigm cells and carry no exclusion tag.)
+Auxiliary choice (haben/sein) lives only in the excluded multiword rows; if a
+drill ever needs it, add an `entries.auxiliary` column rather than keeping the
+phrases.
+
+The asset has 109,630 lexical entries, 362,523 indexed form/entry pairs and
+391,739 conjugation form cells, occupies 10,765,824 compressed bytes
+(44,634,112 unpacked), and needs no rare-word filtering. Full-source and
+fixture tests cover `gehen`, `ging → gehen`, `Mädchen → das`, `Haus → Häuser`,
+`Lehrer`, `Studentin → die / Studentinnen`, `mich → ich`, `die → der`
+(article/pronoun), the `machen`/`gehen`/`sein` present paradigms, parser
+failures, complete-line truncation, deterministic output and the compressed
+budget.
 
 Lookup meanings use a dedicated body-sized, multiline drawer layout with no
 line/height cap; app names and unrelated result rows keep the existing layout.
@@ -82,7 +106,9 @@ selected layout resource to verify wrapping and the absence of clipping limits.
 
 ## APK size comparison
 
-With JDK 17, Android API 36 and `GITHUB_RUN_NUMBER=617` (versionCode 730):
+Measured for the schema-v1 asset (6,434,596 gzip bytes); the v2 asset is
+10,765,824 gzip bytes, so expect roughly 4.3 MB more. With JDK 17, Android
+API 36 and `GITHUB_RUN_NUMBER=617` (versionCode 730):
 
 | Artifact | Bytes |
 | --- | ---: |
@@ -96,9 +122,10 @@ is slightly smaller than its standalone size.
 
 ## Device checks
 
-`OfflineGermanAssetTest` checks the packaged gzip with Android's SQLite, without
-changing settings or saved words; its uniquely named test database is removed
-in `finally`. The initial implementation was checked manually with `:w ging`;
+`OfflineGermanAssetTest` checks the packaged gzip with Android's SQLite —
+headword lookups, the v2 `forms` table, the six `machen` present cells and
+`sein` → `bin` — without changing settings or saved words; its uniquely named
+test database is removed in `finally`. The initial implementation was checked manually with `:w ging`;
 subsequent parser/presentation review fixes use host-only tests, with no further
 phone access.
 

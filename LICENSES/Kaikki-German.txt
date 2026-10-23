@@ -6,7 +6,7 @@ https://kaikki.org/dictionary/German/
 https://kaikki.org/wiktextract/
 
 Retrieved: 2026-10-23
-Snapshot size and SHA-256: app/src/main/assets/german-v1.sqlite.json
+Snapshot size and SHA-256: app/src/main/assets/german-v2.sqlite.json
 
 Modifications by Thumbline: remove unsupported records and unused fields, shorten
 English glosses, extract gender, plural and main verb forms, map inflections to

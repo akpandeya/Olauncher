@@ -15,6 +15,31 @@ import german_dictionary as dictionary
 
 FIXTURE = ROOT / "tools/tests/fixtures/german.jsonl"
 
+GEHEN_PRESENT = {
+    ("gehe", "first-person indicative present singular"),
+    ("gehst", "indicative present second-person singular"),
+    ("geht", "indicative present singular third-person"),
+    ("gehen", "first-person indicative plural present"),
+    ("geht", "indicative plural present second-person"),
+    ("gehen", "indicative plural present third-person"),
+}
+MACHEN_PRESENT = {
+    ("mache", "first-person indicative present singular"),
+    ("machst", "indicative present second-person singular"),
+    ("macht", "indicative present singular third-person"),
+    ("machen", "first-person indicative plural present"),
+    ("macht", "indicative plural present second-person"),
+    ("machen", "indicative plural present third-person"),
+}
+SEIN_PRESENT = {
+    ("bin", "first-person indicative present singular"),
+    ("bist", "indicative present second-person singular"),
+    ("ist", "indicative present singular third-person"),
+    ("sind", "first-person indicative plural present"),
+    ("seid", "indicative plural present second-person"),
+    ("sind", "indicative plural present third-person"),
+}
+
 
 class GermanDictionaryTest(unittest.TestCase):
     def setUp(self):
@@ -50,6 +75,17 @@ class GermanDictionaryTest(unittest.TestCase):
             "SELECT e.* FROM lookup l JOIN entries e ON l.entry_id=e.id "
             "WHERE l.form=? ORDER BY e.id", (form,)
         ).fetchall()
+
+    def forms_rows(self, db, lemma):
+        return [tuple(row) for row in db.execute(
+            "SELECT f.form, f.tags FROM forms f JOIN entries e ON e.id=f.entry_id "
+            "WHERE e.lemma=? AND e.pos='verb' ORDER BY f.form, f.tags", (lemma,))]
+
+    def present_cells(self, db, lemma):
+        return {tuple(row) for row in db.execute(
+            "SELECT f.form, f.tags FROM forms f JOIN entries e ON e.id=f.entry_id "
+            "WHERE e.lemma=? AND e.pos='verb' AND f.tags LIKE '%indicative%present%'",
+            (lemma,))}
 
     def test_trims_fields_and_resolves_form_of_even_before_lemma(self):
         self.build()
@@ -190,8 +226,56 @@ class GermanDictionaryTest(unittest.TestCase):
             self.build(budget=1)
         self.assertEqual(previous, self.output.read_bytes())
 
+    def test_verb_conjugation_forms_cover_the_full_present_paradigm(self):
+        self.build()
+        db = self.database()
+        self.assertEqual(MACHEN_PRESENT, self.present_cells(db, "machen"))
+        self.assertEqual([
+            ("mach", "imperative second-person singular"),
+            ("macht", "imperative plural second-person"),
+        ], [row for row in self.forms_rows(db, "machen") if "imperative" in row[1]])
+
+    def test_non_verb_entries_have_no_conjugation_forms(self):
+        self.build()
+        db = self.database()
+        for lemma in ("Haus", "Mädchen", "Lehrer"):
+            with self.subTest(lemma=lemma):
+                self.assertEqual(0, db.execute(
+                    "SELECT count(*) FROM forms f JOIN entries e ON e.id=f.entry_id "
+                    "WHERE e.lemma=?", (lemma,)).fetchone()[0])
+
+    def test_conjugation_forms_exclude_alternative_auxiliary_metadata_periphrastic_rows(self):
+        self.build()
+        db = self.database()
+        self.assertEqual([], db.execute(
+            "SELECT form, tags FROM forms "
+            "WHERE form IN ('gieng', 'machet', 'de-conj', 'sein', 'haben', "
+            "'habe gemacht')").fetchall())
+        self.assertEqual(0, db.execute(
+            "SELECT count(*) FROM forms WHERE tags LIKE '%alternative%' OR "
+            "tags LIKE '%auxiliary%' OR tags LIKE '%inflection-template%' OR "
+            "tags LIKE '%multiword-construction%'").fetchone()[0])
+
+    def test_homonymous_forms_with_distinct_tags_are_all_stored(self):
+        self.build()
+        db = self.database()
+        self.assertEqual([
+            ("macht", "imperative plural second-person"),
+            ("macht", "indicative plural present second-person"),
+            ("macht", "indicative present singular third-person"),
+            ("macht", "present singular third-person"),
+        ], [row for row in self.forms_rows(db, "machen") if row[0] == "macht"])
+
+    def test_stats_report_schema_version_2_and_conjugation_form_count(self):
+        stats = self.build()
+        db = self.database()
+        self.assertEqual(2, stats["schema_version"])
+        self.assertEqual(db.execute("SELECT count(*) FROM forms").fetchone()[0],
+                         stats["conjugation_forms"])
+        self.assertEqual(15, stats["conjugation_forms"])
+
     def test_shipped_asset_metadata_integrity_and_real_lookups(self):
-        asset = ROOT / "app/src/main/assets/german-v1.sqlite.gzip"
+        asset = ROOT / "app/src/main/assets/german-v2.sqlite.gzip"
         metadata = json.loads(asset.with_suffix(".json").read_text())
         compressed = asset.read_bytes()
         raw = gzip.decompress(compressed)
@@ -202,8 +286,15 @@ class GermanDictionaryTest(unittest.TestCase):
         self.assertEqual(metadata["database_sha256"], hashlib.sha256(raw).hexdigest())
         db = self.database(asset)
         self.assertEqual("ok", db.execute("PRAGMA integrity_check").fetchone()[0])
-        self.assertEqual(1, db.execute("PRAGMA user_version").fetchone()[0])
+        self.assertEqual(2, db.execute("PRAGMA user_version").fetchone()[0])
         self.assertEqual([], db.execute("PRAGMA foreign_key_check").fetchall())
+        self.assertEqual(2, metadata["schema_version"])
+        self.assertEqual(metadata["conjugation_forms"],
+                         db.execute("SELECT count(*) FROM forms").fetchone()[0])
+        for lemma, expected in (("gehen", GEHEN_PRESENT), ("machen", MACHEN_PRESENT),
+                                ("sein", SEIN_PRESENT)):
+            with self.subTest(lemma=lemma):
+                self.assertEqual(expected, self.present_cells(db, lemma))
         self.assertEqual("gehen", self.lookup(db, "gehen")[0]["lemma"])
         self.assertEqual("gehen", self.lookup(db, "ging")[0]["lemma"])
         gehen = self.lookup(db, "gehen")[0]
