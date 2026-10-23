@@ -50,9 +50,8 @@ class WordsCardTest {
     }
 
     @Test
-    fun `card meaning shows only for a non-blank meaning`() {
-        assertTrue(WordsCardLogic.showCardMeaning("to finish"))
-        assertFalse(WordsCardLogic.showCardMeaning("  "))
+    fun `review label shows the due count`() {
+        assertEquals("Review 6", WordsCardLogic.reviewLabel("Review %d", 6))
     }
 
     @Test
