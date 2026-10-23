@@ -51,6 +51,7 @@
     <color name="scrimHomeFullEdge">#73000000</color>
     <color name="scrimHomeTopFade">#26000000</color>
     <color name="scrimClear">#00000000</color>
+    <color name="scrimHandle">#66000000</color>
     <color name="accentSystem">@android:color/system_accent1_600</color>
     <color name="accentSage">@color/accentSageLight</color>
     <color name="accentSand">@color/accentSandLight</color>
