@@ -47,6 +47,7 @@ class TodayFragment : BaseFragment() {
     private lateinit var todayWidgets: TodayWidgets
     private var panelsJob: Job? = null
     private var pastIntentionsOpen = false
+    private var panelsShown = false
 
     private val widgetPickerLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -263,6 +264,9 @@ class TodayFragment : BaseFragment() {
 
     private fun showPanels(plan: PanelPlan) {
         val binding = _binding ?: return
+        // Keep the reader's place across refreshes (pin/move/resize all rebuild); only the
+        // first fill decides where the page opens.
+        val scrollY = binding.todayScrollView.scrollY
         // Swap the panels in one go, so a refresh does not flash an empty page.
         binding.pinnedCardsContainer.removeAllViews()
         for (card in plan.pinned) {
@@ -276,6 +280,13 @@ class TodayFragment : BaseFragment() {
             binding.cardsContainer.addView(inflatePanel(binding.cardsContainer, card, plan.stacked.map { it.key }))
         }
 
+        if (panelsShown) {
+            binding.todayScrollView.post {
+                _binding?.todayScrollView?.scrollY = scrollY
+            }
+            return
+        }
+        panelsShown = true
         // With a pinned card the page opens at the top, where it is. Otherwise, when the cards
         // overflow, open at the bottom, where the top-priority card is.
         if (plan.pinned.isEmpty()) {
