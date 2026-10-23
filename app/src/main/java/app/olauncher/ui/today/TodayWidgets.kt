@@ -341,6 +341,10 @@ internal class TodayWidgets(
                 ).apply { bottomMargin = (44 * density).roundToInt() }
             }
             addView(readout)
+            // A short card enters resize mode with the chip already hidden; the hint
+            // stays intact on tall cards by not routing this through syncReadout.
+            readout.visibility =
+                if (currentHeightDp(hostView, density) >= READOUT_MIN_DP) View.VISIBLE else View.GONE
 
             var shownDp = -1
             fun syncReadout(dp: Int) {
@@ -378,6 +382,7 @@ internal class TodayWidgets(
                 var startDp = 0
                 var liveDp = 0
                 var moved = false
+                val touchSlop = ViewConfiguration.get(hostContext).scaledTouchSlop
                 setOnTouchListener { handleView, event ->
                     when (event.actionMasked) {
                         MotionEvent.ACTION_DOWN -> {
@@ -390,6 +395,9 @@ internal class TodayWidgets(
                             true
                         }
                         MotionEvent.ACTION_MOVE -> {
+                            // Jitter within the touch slop is not a drag yet; committing a
+                            // snap nudge from it would be the bare-tap bug again.
+                            if (!moved && abs(event.rawY - startY) <= touchSlop) return@setOnTouchListener true
                             moved = true
                             val draggedDp = (startDp + (event.rawY - startY) / density).roundToInt()
                             liveDp = TodayWidgetResize.snap(draggedDp, range)
