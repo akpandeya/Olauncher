@@ -79,7 +79,6 @@ internal class SettingsViews(private val frame: FragmentSettingsBinding) {
     val autoShowKeyboard: TextView get() = textView(R.id.autoShowKeyboard)
     val batteryMode: TextView get() = textView(R.id.batteryMode)
     val boldFont: TextView get() = textView(R.id.boldFont)
-    val clockWallpaper: TextView get() = textView(R.id.clockWallpaper)
     val commitLockOnOff: TextView get() = textView(R.id.commitLockOnOff)
     val contextLineValue: TextView get() = textView(R.id.contextLineValue)
     val currencyRates: TextView get() = textView(R.id.currencyRates)

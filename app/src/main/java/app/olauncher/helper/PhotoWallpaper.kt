@@ -204,8 +204,6 @@ object PhotoWallpaper {
             val flags = targetFlags(prefs.photoWallpaperTarget)
             val manager = WallpaperManager.getInstance(context)
             val toApply = if (grey) desaturate(bitmap) else bitmap
-            // Saved first: setBitmap triggers Home's colour listener, which reads this colour.
-            context.updateClockColour(prefs, toApply)
             manager.setBitmap(toApply, null, true, flags)
             if (toApply !== bitmap) toApply.recycle()
             bitmap.recycle()

@@ -71,9 +71,7 @@ internal fun HomeFragment.applyTextContrast() {
         if (view !in originalTextColors) {
             originalTextColors[view] = if (wallpaperAccent != 0 && view in accentViews) wallpaperAccent else view.currentTextColor
         }
-        val clockColour = prefs.clockWallpaperColor
-        val fromWallpaper = prefs.clockFromWallpaper && clockColour != 0 && (view === binding.clock || view === binding.clockWords)
-        val base = if (fromWallpaper) clockColour else treatment.color ?: originalTextColors.getValue(view)
+        val base = treatment.color ?: originalTextColors.getValue(view)
         val alpha = (Color.alpha(base) * textOpacity).toInt()
         view.setTextColor(Color.argb(alpha, Color.red(base), Color.green(base), Color.blue(base)))
     }
