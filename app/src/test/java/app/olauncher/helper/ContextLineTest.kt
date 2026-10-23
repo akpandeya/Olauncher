@@ -18,19 +18,19 @@ class ContextLineTest {
     @Test
     fun `playing media wins over an event`() {
         val item = ContextLine.pick(playing, event(5, 35), now)
-        assertEquals(ContextItem.Media("▶ Song — Artist", "com.music", "Song", true), item)
+        assertEquals(ContextItem.Media("❚❚ Song — Artist", "com.music", "Song", true), item)
     }
 
     @Test
     fun `media without artist shows only title`() {
         val item = ContextLine.pick(playing.copy(artist = null), null, now)
-        assertEquals("▶ Song", item?.text)
+        assertEquals("❚❚ Song", item?.text)
     }
 
     @Test
     fun `paused media shows pause marker and wins over an event`() {
         val item = ContextLine.pick(playing.copy(playing = false), event(8, 40), now)
-        assertEquals(ContextItem.Media("❚❚ Song — Artist", "com.music", "Song", false), item)
+        assertEquals(ContextItem.Media("▶ Song — Artist", "com.music", "Song", false), item)
     }
 
     @Test

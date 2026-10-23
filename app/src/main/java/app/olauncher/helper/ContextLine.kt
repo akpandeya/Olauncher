@@ -54,7 +54,7 @@ object ContextLine {
     ): ContextItem? {
         if (media != null && media.title.isNotBlank()) {
             val artist = media.artist?.trim().orEmpty()
-            val icon = if (media.playing) "▶" else "❚❚"
+            val icon = if (media.playing) "❚❚" else "▶"
             val title = media.title.trim()
             val text = if (artist.isEmpty()) "$icon $title" else "$icon $title — $artist"
             return ContextItem.Media(text, media.packageName, title, media.playing)
