@@ -22,6 +22,9 @@ The Settings screen has these sections:
 
 Thumbline does not use analytics or ads.
 
+Long-press a drawer word lookup result (`:w Hund`) to open the word in your browser
+on verbformen.de, DWDS, Duden or Wiktionary.
+
 ## Permissions
 
 Most permissions are optional and are asked for only when you switch the feature on. If you say no, the app keeps working.
