@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isVisible
+import androidx.navigation.fragment.findNavController
 import app.olauncher.R
 import app.olauncher.data.store.ReviewComebacks
 import app.olauncher.data.store.ReviewEvent
@@ -77,6 +78,14 @@ class ReviewFragment : BaseFragment() {
             },
             alwaysShowContext = true,
         ).also { it.showAlmostButton(true) }
+
+        binding.btnDone.setOnClickListener {
+            Haptics.tick(it)
+            // Ignore a second tap delivered before the first pop lands.
+            if (findNavController().currentDestination?.id == R.id.reviewFragment) {
+                findNavController().navigateUp()
+            }
+        }
     }
 
     override fun onResume() {
@@ -124,12 +133,17 @@ class ReviewFragment : BaseFragment() {
         val context = context ?: return
         val store = WordsCard.getStore(context)
         val remaining = queue.size - answered
+        val finished = remaining == 0
 
+        b.tvTitle.isVisible = !finished
+        b.tvRemaining.isVisible = !finished
         b.tvRemaining.text = if (remaining > 0) {
             context.getString(R.string.words_review_remaining, remaining)
         } else {
             ""
         }
+        // The session's only on-screen exit: back from the summary page.
+        b.btnDone.isVisible = finished
         b.reviewCard.isVisible = remaining > 0
         b.summaryContainer.isVisible = remaining == 0 && sessionEvents.isNotEmpty()
         b.tvEmpty.isVisible = remaining == 0 && sessionEvents.isEmpty()
