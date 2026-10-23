@@ -13,22 +13,26 @@ import android.os.Bundle
 import android.os.SystemClock
 import android.os.UserHandle
 import android.util.SizeF
+import android.view.Gravity
 import android.view.Menu
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
+import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import app.olauncher.R
 import app.olauncher.data.Prefs
 import app.olauncher.helper.showMessageDialog
 import app.olauncher.helper.showPopupMenu
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 /** Owns only Today's widget IDs; built-in cards and their preferences remain independent. */
 internal class TodayWidgets(
@@ -89,7 +93,10 @@ internal class TodayWidgets(
         // A fresh launch cannot still have an outstanding picker. A restored activity can.
         if (!restoring) discardPending()
         val owned = prefs.todayWidgetIds.toSet() + prefs.todayPendingWidgetId
-        host.appWidgetIds.filter { it !in owned }.forEach(host::deleteAppWidgetId)
+        val orphans = host.appWidgetIds.filter { it !in owned }
+        orphans.forEach(host::deleteAppWidgetId)
+        // The host pools freed ids for reuse, so stale heights must not outlive their widgets.
+        if (orphans.isNotEmpty()) prefs.todayWidgetHeights = prefs.todayWidgetHeights - orphans.toSet()
     }
 
     fun start() = host.startListening()
@@ -176,6 +183,11 @@ internal class TodayWidgets(
                         menu.add(Menu.NONE, ACTION_MOVE_DOWN, Menu.NONE, R.string.today_card_down)
                     }
                 }
+                val id = TodayOrder.widgetId(key)
+                val info = id?.let { manager.getAppWidgetInfo(it) }
+                if (info != null && info.resizeMode and AppWidgetProviderInfo.RESIZE_VERTICAL != 0) {
+                    menu.add(Menu.NONE, ACTION_RESIZE, Menu.NONE, R.string.today_widget_resize)
+                }
             },
         ) { item ->
             when (item.itemId) {
@@ -191,6 +203,10 @@ internal class TodayWidgets(
                     moves.down?.let { prefs.todayPanelOrder = it }
                     refresh()
                 }
+                ACTION_RESIZE -> {
+                    TodayOrder.widgetId(key)?.let { resizingId = it }
+                    refresh()
+                }
             }
         }
     }
@@ -201,12 +217,17 @@ internal class TodayWidgets(
             val key = TodayOrder.widgetKey(id)
             prefs.todayPanelOrder = prefs.todayPanelOrder - key
             prefs.todayPinnedKeys = prefs.todayPinnedKeys - key
+            prefs.todayWidgetHeights = prefs.todayWidgetHeights - id
+            if (resizingId == id) resizingId = null
             host.deleteAppWidgetId(id)
             refresh()
         }
     }
 
     fun cards(): List<TodayCard> = prefs.todayWidgetIds.mapIndexed { index, id -> WidgetCard(id, index) }
+
+    /** Widget id currently showing its resize handle, or null when no card is being resized. */
+    private var resizingId: Int? = null
 
     private inner class WidgetCard(val appWidgetId: Int, val index: Int) : TodayCard {
         override val key = TodayOrder.widgetKey(appWidgetId)
@@ -224,18 +245,99 @@ internal class TodayWidgets(
                 setText(R.string.today_widget_unavailable)
                 setOnLongClickListener { remove(appWidgetId); true }
             }
-            return host.createView(hostContext, appWidgetId, info).apply {
-                val density = resources.displayMetrics.density
-                val height = info.minHeight.coerceAtLeast((48 * density).toInt()) + paddingTop + paddingBottom
-                layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, height)
-                setOnLongClickListener { remove(appWidgetId); true }
-                addOnLayoutChangeListener { _, left, _, right, _, oldLeft, _, oldRight, _ ->
-                    if (right - left != oldRight - oldLeft) {
-                        updateAppWidgetSize(Bundle(), listOf(SizeF((right - left) / density, height / density)))
+            val density = context.resources.displayMetrics.density
+            val range = TodayWidgetResize.range(
+                defaultDp = info.minHeight,
+                minResizeDp = info.minResizeHeight,
+                maxResizeDp = info.maxResizeHeight,
+            )
+            val heightDp = (prefs.todayWidgetHeights[appWidgetId] ?: range.defaultDp).coerceIn(range.minDp, range.maxDp)
+            val hostView = host.createView(hostContext, appWidgetId, info)
+
+            fun setHeight(dp: Int) {
+                val px = (dp * density).roundToInt() + hostView.paddingTop + hostView.paddingBottom
+                // Mutate the existing params: replacing them with a base LayoutParams while
+                // attached would crash FrameLayout's measure with a ClassCastException.
+                hostView.updateLayoutParams<ViewGroup.LayoutParams> { height = px }
+            }
+
+            setHeight(heightDp)
+            hostView.setOnLongClickListener { remove(appWidgetId); true }
+            hostView.addOnLayoutChangeListener { _, left, _, right, _, oldLeft, _, oldRight, _ ->
+                if (right - left != oldRight - oldLeft) {
+                    hostView.updateAppWidgetSize(
+                        Bundle(),
+                        listOf(SizeF((right - left) / density, hostView.layoutParams.height / density)),
+                    )
+                }
+            }
+            if (resizingId != appWidgetId) return hostView
+            return resizeWrapper(hostView, range, density, ::setHeight)
+        }
+
+        /** Container with a bottom drag handle; committing stores the height and leaves resize mode. */
+        private fun resizeWrapper(
+            hostView: AppWidgetHostView,
+            range: TodayWidgetResize.Range,
+            density: Float,
+            setHeight: (Int) -> Unit,
+        ): View = FrameLayout(hostContext).apply {
+            addView(hostView)
+            val handle = View(hostContext).apply {
+                setBackgroundResource(R.drawable.widget_resize_handle)
+                contentDescription = context.getString(R.string.today_widget_resize)
+                layoutParams = FrameLayout.LayoutParams(
+                    (48 * density).roundToInt(),
+                    (28 * density).roundToInt(),
+                    Gravity.BOTTOM or Gravity.CENTER_HORIZONTAL,
+                ).apply { bottomMargin = (8 * density).roundToInt() }
+                var startY = 0f
+                var startDp = 0
+                var liveDp = 0
+                setOnTouchListener { handleView, event ->
+                    when (event.actionMasked) {
+                        MotionEvent.ACTION_DOWN -> {
+                            startY = event.rawY
+                            startDp = currentHeightDp(hostView, density)
+                            liveDp = TodayWidgetResize.snap(startDp, range)
+                            handleView.parent.requestDisallowInterceptTouchEvent(true)
+                            true
+                        }
+                        MotionEvent.ACTION_MOVE -> {
+                            val draggedDp = (startDp + (event.rawY - startY) / density).roundToInt()
+                            liveDp = TodayWidgetResize.snap(draggedDp, range)
+                            setHeight(liveDp)
+                            true
+                        }
+                        MotionEvent.ACTION_UP -> {
+                            handleView.parent.requestDisallowInterceptTouchEvent(false)
+                            prefs.todayWidgetHeights = prefs.todayWidgetHeights + (appWidgetId to liveDp)
+                            resizingId = null
+                            val widthPx = hostView.width.takeIf { it > 0 } ?: hostView.layoutParams.width
+                            hostView.updateAppWidgetSize(
+                                Bundle(),
+                                listOf(SizeF(widthPx / density, hostView.layoutParams.height / density)),
+                            )
+                            refresh()
+                            true
+                        }
+                        MotionEvent.ACTION_CANCEL -> {
+                            handleView.parent.requestDisallowInterceptTouchEvent(false)
+                            setHeight(startDp)
+                            resizingId = null
+                            refresh()
+                            true
+                        }
+                        else -> false
                     }
                 }
             }
+            addView(handle)
         }
+
+        /** The card's height in dp, without the host view's own padding. */
+        private fun currentHeightDp(hostView: AppWidgetHostView, density: Float): Int =
+            ((hostView.layoutParams.height - hostView.paddingTop - hostView.paddingBottom) / density).roundToInt()
     }
 
     companion object {
@@ -246,6 +348,7 @@ internal class TodayWidgets(
         private const val ACTION_TOGGLE_PIN = 1
         private const val ACTION_MOVE_UP = 2
         private const val ACTION_MOVE_DOWN = 3
+        private const val ACTION_RESIZE = 4
     }
 }
 

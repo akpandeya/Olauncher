@@ -16,6 +16,7 @@ import app.olauncher.helper.RecentApps
 import app.olauncher.ui.today.TodayCard
 import app.olauncher.ui.today.TodayCards
 import app.olauncher.ui.today.TodayOrder
+import app.olauncher.ui.today.TodayWidgetResize
 import app.olauncher.wellbeing.DaySnapshot
 import app.olauncher.wellbeing.Nudges
 import app.olauncher.wellbeing.PauseDay
@@ -94,6 +95,7 @@ class Prefs(context: Context) :
         const val TODAY_CARD_PREFIX = "TODAY_CARD_"
         const val TODAY_ORDER_SMART = "TODAY_ORDER_SMART"
         const val TODAY_WIDGET_IDS = "TODAY_WIDGET_IDS"
+        const val TODAY_WIDGET_HEIGHTS = "TODAY_WIDGET_HEIGHTS"
         const val TODAY_PENDING_WIDGET_ID = "TODAY_PENDING_WIDGET_ID"
         const val TODAY_PANEL_ORDER = "TODAY_PANEL_ORDER"
         const val TODAY_PINNED_KEYS = "TODAY_PINNED_KEYS"
@@ -620,6 +622,11 @@ class Prefs(context: Context) :
     var todayPendingWidgetId: Int
         get() = prefs.getInt(TODAY_PENDING_WIDGET_ID, -1)
         set(value) = prefs.edit(commit = true) { putInt(TODAY_PENDING_WIDGET_ID, value) }
+
+    /** Per-widget card height in dp, survived across reboots; see [TodayWidgetResize]. */
+    var todayWidgetHeights: Map<Int, Int>
+        get() = TodayWidgetResize.decode(prefs.getString(TODAY_WIDGET_HEIGHTS, "").orEmpty())
+        set(value) = prefs.edit(commit = true) { putString(TODAY_WIDGET_HEIGHTS, TodayWidgetResize.encode(value)) }
 
     var todayPanelOrder: List<String>
         get() = prefs.getString(TODAY_PANEL_ORDER, "").orEmpty().split(",").filter { it.isNotEmpty() }

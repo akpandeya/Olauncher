@@ -6,6 +6,7 @@
     <string name="today_widget_failed">Could not add this widget. You can try another one.</string>
     <string name="today_widget_remove">Remove widget</string>
     <string name="today_widget_remove_message">Remove this widget from Today?</string>
+    <string name="today_widget_resize">Resize widget</string>
     <string name="today_card_options">Card options: %1$s</string>
     <string name="today_card_pin">Pin to top</string>
     <string name="today_card_unpin">Unpin</string>
