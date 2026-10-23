@@ -40,6 +40,7 @@
     <dimen name="radiusPill">999dp</dimen>
     <!-- Border width for outlined surfaces -->
     <dimen name="strokeHairline">1dp</dimen>
+    <dimen name="strokeThin">2dp</dimen>
 
     <!-- App long-press popup card -->
     <dimen name="popup_card_min_width">200dp</dimen>
