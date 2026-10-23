@@ -143,18 +143,4 @@ class WordReveal(
             onWordDeleted?.invoke(word)
         }
     }
-
-    companion object {
-        fun inflate(
-            inflater: LayoutInflater,
-            parent: ViewGroup?,
-            attachToParent: Boolean = false,
-            onAnswer: ((Word, Boolean) -> Unit)? = null,
-            onWordUpdated: ((Word) -> Unit)? = null,
-            onWordDeleted: ((Word) -> Unit)? = null,
-        ): WordReveal {
-            val binding = ViewWordRevealBinding.inflate(inflater, parent, attachToParent)
-            return WordReveal(binding, onAnswer, onWordUpdated, onWordDeleted)
-        }
-    }
 }

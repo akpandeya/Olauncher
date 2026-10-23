@@ -107,7 +107,10 @@ class WordsFragment : BaseFragment() {
         b.btnReview.text = WordsCardLogic.reviewLabel(context.getString(R.string.words_review), stats.due)
         b.btnReview.setOnClickListener {
             Haptics.tick(it)
-            findNavController().navigate(R.id.action_wordsFragment_to_reviewFragment)
+            // Ignore a second tap delivered before the first navigation lands.
+            if (findNavController().currentDestination?.id == R.id.wordsFragment) {
+                findNavController().navigate(R.id.action_wordsFragment_to_reviewFragment)
+            }
         }
         b.tvMatchCount.isVisible = searching
         b.tvMatchCount.text = context.getString(R.string.words_search_count, shown.size, words.size)
