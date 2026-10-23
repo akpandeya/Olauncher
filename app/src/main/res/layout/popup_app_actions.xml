@@ -10,9 +10,8 @@
 
     <LinearLayout
         android:id="@+id/popupItems"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minWidth="@dimen/popup_card_min_width"
         android:orientation="vertical"
         android:paddingTop="@dimen/popup_card_padding_vertical"
         android:paddingBottom="@dimen/popup_card_padding_vertical">
