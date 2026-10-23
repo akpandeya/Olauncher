@@ -15,6 +15,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.core.os.bundleOf
+import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import androidx.work.ExistingWorkPolicy
@@ -26,6 +27,7 @@ import app.olauncher.data.Prefs
 import app.olauncher.databinding.FragmentSettingsBinding
 import app.olauncher.helper.RotationInterval
 import app.olauncher.helper.isAccessServiceEnabled
+import app.olauncher.helper.DefaultLauncherCheck
 import app.olauncher.helper.isOlauncherDefault
 import app.olauncher.helper.showToast
 import app.olauncher.quiet.ReleaseWorker
@@ -344,10 +346,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     internal fun initObservers() {
         prefs.firstSettingsOpen = false
         viewModel.isOlauncherDefault.observe(viewLifecycleOwner) {
-            if (it) {
-                binding.setLauncher.text = getString(R.string.change_default_launcher)
-                prefs.toShowHintCounter += 1
-            }
+            binding.setLauncher.text = getString(if (it) R.string.change_default_launcher else R.string.set_as_default_launcher)
+            binding.setLauncher.isVisible = DefaultLauncherCheck.showChangeDefault(it)
+            if (it) prefs.toShowHintCounter += 1
         }
         viewModel.homeAppAlignment.observe(viewLifecycleOwner) {
             populateAlignment()
@@ -400,6 +401,8 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     internal fun populateFooter() {
         binding.footer.paintFlags = binding.footer.paintFlags or android.graphics.Paint.UNDERLINE_TEXT_FLAG
         binding.footer.text = getString(R.string.settings_footer, BuildConfig.VERSION_NAME, "Olauncher")
+        binding.licenseNote.text = getText(R.string.wiktionary_license_note)
+        binding.licenseNote.movementMethod = android.text.method.LinkMovementMethod.getInstance()
     }
 
     override fun onDestroyView() {

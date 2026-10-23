@@ -99,7 +99,7 @@ class SettingsSectionsResourceTest {
             "wellbeing",
             "today_section",
             "glance",
-            "deutsch_de",
+            "german_section",
             "appearance",
             "gestures",
             "backup",
@@ -112,7 +112,7 @@ class SettingsSectionsResourceTest {
             "Wellbeing",
             "Today",
             "Glance",
-            "Deutsch",
+            "German",
             "Appearance",
             "Gestures",
             "Backup",
@@ -240,7 +240,7 @@ class SettingsSectionsResourceTest {
             "@string/drawer",
             "@string/wellbeing",
             "@string/today_section",
-            "@string/deutsch_de",
+            "@string/german_section",
             "@string/appearance",
             "@string/gestures",
             "@string/backup",
@@ -265,6 +265,7 @@ class SettingsSectionsResourceTest {
         val children = sectionList.getElementsByTagName("TextView")
         for (i in 0 until children.length) {
             val tv = children.item(i) as Element
+            if (tv.getAttribute("style") == "@style/SettingsSectionHint") continue // hint line under a row
             val idAttr = tv.getAttribute("android:id")
             if (idAttr.isNotEmpty()) {
                 rowIds.add(idAttr.substringAfterLast("/"))

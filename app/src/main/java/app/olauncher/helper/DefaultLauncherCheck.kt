@@ -30,4 +30,7 @@ object DefaultLauncherCheck {
      */
     fun useBottomAlignment(bottomPref: Boolean, isDefault: Boolean?): Boolean =
         bottomPref && isDefault != false
+
+    /** The "Change default launcher" row shows only while Thumbline is not the default. */
+    fun showChangeDefault(isDefault: Boolean?): Boolean = isDefault != true
 }

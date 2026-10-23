@@ -30,7 +30,7 @@ object SettingsSections : List<SettingsSection> {
     val DRAWER = SettingsSection(KEY_DRAWER, R.string.drawer, R.id.drawerSection)
     val WELLBEING = SettingsSection(KEY_WELLBEING, R.string.wellbeing, R.id.wellbeingSection)
     val TODAY = SettingsSection(KEY_TODAY, R.string.today_section, R.id.todaySection)
-    val DEUTSCH = SettingsSection(KEY_DEUTSCH, R.string.deutsch_de, R.id.deutschSection)
+    val DEUTSCH = SettingsSection(KEY_DEUTSCH, R.string.german_section, R.id.deutschSection)
     val APPEARANCE = SettingsSection(KEY_APPEARANCE, R.string.appearance, R.id.appearanceSection)
     val GESTURES = SettingsSection(KEY_GESTURES, R.string.gestures, R.id.gesturesSection)
     val BACKUP = SettingsSection(KEY_BACKUP, R.string.backup, R.id.backupSection)
