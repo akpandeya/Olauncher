@@ -148,7 +148,7 @@ class WordsStoreTest {
                 {"id": 4, "text": "d", "box": ${Leitner.learnedBox}, "dueDay": 4, "addedAt": 4, "learnedAt": 99}
             ]
         """.trimIndent()
-        val words = WordsCodec.decode(raw)
+        val words = WordsCodec.decode(raw).words
         assertEquals(4, words.size)
         assertEquals(1, words[0].box)
         assertEquals(Leitner.learnedBox, words[1].box)

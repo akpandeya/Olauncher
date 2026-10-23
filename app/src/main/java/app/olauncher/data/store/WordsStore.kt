@@ -17,7 +17,18 @@ data class Word(
     val box: Int = 1,
     val dueDay: Long,
     val addedAt: Long,
-    val learnedAt: Long? = null
+    val learnedAt: Long? = null,
+    val listIds: List<String> = emptyList()
+)
+
+data class WordList(
+    val id: String,
+    val name: String
+)
+
+data class WordsData(
+    val words: List<Word>,
+    val lists: List<WordList>
 )
 
 data class AddAllResult(
@@ -33,8 +44,15 @@ data class WordStats(
 
 object WordsCodec {
 
-    fun encode(words: List<Word>): String {
-        return encodeToJson(words).toString(2)
+    /** Envelope format written today. v1 files were a bare JSON array of words. */
+    const val CURRENT_VERSION = 2
+
+    fun encode(words: List<Word>, lists: List<WordList> = emptyList()): String {
+        val envelope = JSONObject()
+        envelope.put("version", CURRENT_VERSION)
+        envelope.put("lists", listsToJson(lists))
+        envelope.put("words", encodeToJson(words))
+        return envelope.toString(2)
     }
 
     fun encodeToJson(words: List<Word>): JSONArray {
@@ -54,18 +72,70 @@ object WordsCodec {
             } else {
                 obj.put("learnedAt", JSONObject.NULL)
             }
+            val listIds = JSONArray()
+            for (listId in word.listIds) {
+                listIds.put(listId)
+            }
+            obj.put("listIds", listIds)
             array.put(obj)
         }
         return array
     }
 
-    fun decode(raw: String?): List<Word> {
-        if (raw.isNullOrBlank()) return emptyList()
-        return try {
-            decode(JSONArray(raw))
-        } catch (e: Exception) {
-            emptyList()
+    private fun listsToJson(lists: List<WordList>): JSONArray {
+        val array = JSONArray()
+        for (list in lists) {
+            val obj = JSONObject()
+            obj.put("id", list.id)
+            obj.put("name", list.name)
+            array.put(obj)
         }
+        return array
+    }
+
+    /**
+     * Sniffs the top-level shape: a bare array is a legacy v1 words-only file, an object is
+     * a versioned envelope. The version is informational only — missing or newer versions
+     * still decode, since unknown fields are ignored either way.
+     */
+    fun decode(raw: String?): WordsData {
+        if (raw.isNullOrBlank()) return WordsData(emptyList(), emptyList())
+        val trimmed = raw.trim()
+        return try {
+            when (trimmed.first()) {
+                '[' -> WordsData(decode(JSONArray(trimmed)), emptyList())
+                '{' -> decodeEnvelope(JSONObject(trimmed))
+                else -> WordsData(emptyList(), emptyList())
+            }
+        } catch (e: Exception) {
+            WordsData(emptyList(), emptyList())
+        }
+    }
+
+    private fun decodeEnvelope(envelope: JSONObject): WordsData {
+        val wordsArray = envelope.optJSONArray("words")
+        val words = if (wordsArray != null) decode(wordsArray) else emptyList()
+        val listsArray = envelope.optJSONArray("lists")
+        val lists = if (listsArray != null) decodeLists(listsArray) else emptyList()
+        return WordsData(words, lists)
+    }
+
+    private fun decodeLists(array: JSONArray): List<WordList> {
+        val lists = mutableListOf<WordList>()
+        for (i in 0 until array.length()) {
+            try {
+                val obj = array.getJSONObject(i)
+                // Require real strings: getString would coerce numbers on Android.
+                val id = obj.opt("id") as? String ?: continue
+                val name = obj.opt("name") as? String ?: continue
+                if (id.isBlank()) continue
+                if (lists.any { it.id == id }) continue // duplicate ids: first wins
+                lists.add(WordList(id, name))
+            } catch (e: Exception) {
+                // Ignore individual corrupt entry
+            }
+        }
+        return lists
     }
 
     fun decode(array: JSONArray): List<Word> {
@@ -99,7 +169,8 @@ object WordsCodec {
                         box = clampedBox,
                         dueDay = dueDay,
                         addedAt = addedAt,
-                        learnedAt = learnedAt
+                        learnedAt = learnedAt,
+                        listIds = decodeListIds(obj)
                     )
                 )
             } catch (e: Exception) {
@@ -107,6 +178,19 @@ object WordsCodec {
             }
         }
         return items
+    }
+
+    /** Tolerant per-word listIds read: non-string and blank entries are dropped. */
+    private fun decodeListIds(word: JSONObject): List<String> {
+        val array = word.optJSONArray("listIds") ?: return emptyList()
+        val ids = mutableListOf<String>()
+        for (i in 0 until array.length()) {
+            val entry = array.opt(i)
+            if (entry is String && entry.isNotBlank()) {
+                ids.add(entry)
+            }
+        }
+        return ids
     }
 }
 
@@ -124,14 +208,15 @@ class WordsStore(
     fun add(text: String, context: String = ""): Word {
         val cleanText = text.trim()
         val cleanContext = context.trim()
-        val all = loadAll().toMutableList()
+        val data = loadData()
+        val all = data.words.toMutableList()
         val existingIndex = all.indexOfFirst { it.text.equals(cleanText, ignoreCase = true) }
         val word = if (existingIndex != -1) {
             val existing = all[existingIndex]
             if (cleanContext.isNotBlank() && cleanContext != existing.context) {
                 val updated = existing.copy(context = cleanContext)
                 all[existingIndex] = updated
-                saveAll(all)
+                saveData(data.copy(words = all))
                 updated
             } else {
                 existing
@@ -149,7 +234,7 @@ class WordsStore(
                 addedAt = now
             )
             all.add(0, newWord)
-            saveAll(all)
+            saveData(data.copy(words = all))
             newWord
         }
         return word
@@ -159,7 +244,8 @@ class WordsStore(
     @Synchronized
     fun addAll(texts: List<String>, context: String = ""): AddAllResult {
         val cleanContext = context.trim()
-        val all = loadAll().toMutableList()
+        val data = loadData()
+        val all = data.words.toMutableList()
         val added = mutableListOf<Word>()
         val alreadySaved = mutableListOf<Word>()
         val now = clockSupplier()
@@ -185,48 +271,50 @@ class WordsStore(
             all.add(0, newWord)
             added.add(newWord)
         }
-        if (added.isNotEmpty()) saveAll(all)
+        if (added.isNotEmpty()) saveData(data.copy(words = all))
         return AddAllResult(added, alreadySaved)
     }
 
     @Synchronized
     fun update(word: Word) {
-        val all = loadAll().toMutableList()
+        val data = loadData()
+        val all = data.words.toMutableList()
         val index = all.indexOfFirst { it.id == word.id }
         if (index != -1) {
             all[index] = word
-            saveAll(all)
+            saveData(data.copy(words = all))
         }
     }
 
     @Synchronized
     fun delete(id: Long) {
-        val all = loadAll().toMutableList()
+        val data = loadData()
+        val all = data.words.toMutableList()
         val index = all.indexOfFirst { it.id == id }
         if (index != -1) {
             all.removeAt(index)
-            saveAll(all)
+            saveData(data.copy(words = all))
         }
     }
 
     @Synchronized
     fun get(id: Long): Word? {
-        return loadAll().firstOrNull { it.id == id }
+        return loadData().words.firstOrNull { it.id == id }
     }
 
     @Synchronized
     fun all(): List<Word> {
-        return loadAll()
+        return loadData().words
     }
 
     @Synchronized
     fun due(today: Long, limit: Int = Int.MAX_VALUE): List<Word> {
-        return Leitner.due(loadAll(), today, limit)
+        return Leitner.due(loadData().words, today, limit)
     }
 
     @Synchronized
     fun stats(today: Long): WordStats {
-        val words = loadAll()
+        val words = loadData().words
         val dueCount = words.count { it.learnedAt == null && it.dueDay <= today }
         val learnedCount = words.count { it.learnedAt != null }
         return WordStats(
@@ -236,21 +324,101 @@ class WordsStore(
         )
     }
 
-    private fun loadAll(): List<Word> {
-        if (!file.exists()) return emptyList()
+    @Synchronized
+    fun lists(): List<WordList> {
+        return loadData().lists.sortedBy { it.name.lowercase() }
+    }
+
+    /** Null when the name is blank or already taken (case-insensitive). */
+    @Synchronized
+    fun addList(name: String): WordList? {
+        val data = loadData()
+        val normalized = WordListsLogic.normalizeName(name)
+        if (WordListsLogic.validateName(normalized, data.lists) != null) return null
+        val list = WordList(
+            id = WordListsLogic.uniqueListId(normalized, data.lists.mapTo(HashSet()) { it.id }),
+            name = normalized
+        )
+        saveData(data.copy(lists = data.lists + list))
+        return list
+    }
+
+    /** False on unknown id or a name clash; the id never changes. */
+    @Synchronized
+    fun renameList(id: String, newName: String): Boolean {
+        val data = loadData()
+        if (data.lists.none { it.id == id }) return false
+        val normalized = WordListsLogic.normalizeName(newName)
+        if (WordListsLogic.validateName(normalized, data.lists, exceptId = id) != null) return false
+        val updated = data.lists.map { if (it.id == id) it.copy(name = normalized) else it }
+        saveData(data.copy(lists = updated))
+        return true
+    }
+
+    /** Removes the list and scrubs its id from member words in the same save. */
+    @Synchronized
+    fun deleteList(id: String) {
+        val data = loadData()
+        if (data.lists.none { it.id == id }) return
+        saveData(
+            WordsData(
+                words = WordListsLogic.pruneListId(data.words, id),
+                lists = data.lists.filterNot { it.id == id }
+            )
+        )
+    }
+
+    /** Replaces a word's memberships; unknown list ids are dropped. No-op when the word is missing. */
+    @Synchronized
+    fun setLists(wordId: Long, listIds: List<String>) {
+        val data = loadData()
+        if (data.words.none { it.id == wordId }) return
+        val known = data.lists.mapTo(HashSet()) { it.id }
+        val clean = listIds.filter { it in known }.distinct()
+        val updated = data.words.map { if (it.id == wordId) it.copy(listIds = clean) else it }
+        saveData(data.copy(words = updated))
+    }
+
+    /** Idempotent bulk membership change; no-op when the list id is unknown. */
+    @Synchronized
+    fun assignAll(wordIds: Collection<Long>, listId: String) {
+        mutateMembership(wordIds, listId, assign = true)
+    }
+
+    /** Idempotent bulk membership change; no-op when the list id is unknown. */
+    @Synchronized
+    fun unassignAll(wordIds: Collection<Long>, listId: String) {
+        mutateMembership(wordIds, listId, assign = false)
+    }
+
+    private fun mutateMembership(wordIds: Collection<Long>, listId: String, assign: Boolean) {
+        val data = loadData()
+        if (data.lists.none { it.id == listId }) return
+        val updated = WordListsLogic.withAssignment(data.words, wordIds.toSet(), listId, assign)
+        saveData(data.copy(words = updated))
+    }
+
+    /** Words carrying [listId], including a dangling id no list defines anymore. */
+    @Synchronized
+    fun wordsInList(listId: String): List<Word> {
+        return loadData().words.filter { listId in it.listIds }
+    }
+
+    private fun loadData(): WordsData {
+        if (!file.exists()) return WordsData(emptyList(), emptyList())
         return try {
             WordsCodec.decode(file.readText())
         } catch (e: Exception) {
-            emptyList()
+            WordsData(emptyList(), emptyList())
         }
     }
 
-    private fun saveAll(items: List<Word>) {
+    private fun saveData(data: WordsData) {
         if (!filesDir.exists()) {
             filesDir.mkdirs()
         }
         val tempFile = File(filesDir, "words.json.tmp")
-        val json = WordsCodec.encode(items)
+        val json = WordsCodec.encode(data.words, data.lists)
         tempFile.writeText(json)
         if (!tempFile.renameTo(file)) {
             try {
