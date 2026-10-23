@@ -83,10 +83,10 @@ class OfflineDictionaryInstallerTest {
     @Test
     fun `shipped compressed asset installs with its published database hash`() {
         val asset = listOf(
-            File("src/main/assets/german-v1.sqlite.gzip"),
-            File("app/src/main/assets/german-v1.sqlite.gzip")
+            File("src/main/assets/german-v2.sqlite.gzip"),
+            File("app/src/main/assets/german-v2.sqlite.gzip")
         ).first { it.isFile }
-        val metadata = JSONObject(File(asset.parentFile, "german-v1.sqlite.json").readText())
+        val metadata = JSONObject(File(asset.parentFile, "german-v2.sqlite.json").readText())
         val installed = OfflineDictionaryInstaller.install(directory, metadata.getString("database_sha256")) {
             asset.inputStream()
         }
