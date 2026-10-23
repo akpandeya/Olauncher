@@ -264,16 +264,12 @@ class TodayFragment : BaseFragment() {
         val scrollY = binding.todayScrollView.scrollY
         // Swap the panels in one go, so a refresh does not flash an empty page.
         binding.pinnedCardsContainer.removeAllViews()
-        for (card in plan.pinned) {
-            binding.pinnedCardsContainer.addView(inflatePanel(binding.pinnedCardsContainer, card, plan.pinned.map { it.key }))
-        }
+        populatePanels(plan.pinned, binding.pinnedCardsContainer, plan.pinned.map { it.key })
         binding.pinnedCardsContainer.isVisible = plan.pinned.isNotEmpty()
 
         binding.cardsContainer.removeAllViews()
         // Stack from the bottom up: the first (highest priority) card is the lowest panel.
-        for (card in plan.stacked.asReversed()) {
-            binding.cardsContainer.addView(inflatePanel(binding.cardsContainer, card, plan.stacked.map { it.key }))
-        }
+        populatePanels(plan.stacked.asReversed(), binding.cardsContainer, plan.stacked.map { it.key })
 
         if (panelsShown) {
             binding.todayScrollView.post {
@@ -291,10 +287,50 @@ class TodayFragment : BaseFragment() {
         }
     }
 
+    /**
+     * Builds the panel rows: built-in cards stay full-width rows in order; runs of widget
+     * cards are packed into a grid, where they share rows by their column spans.
+     */
+    private fun populatePanels(cards: List<TodayCard>, container: ViewGroup, groupKeys: List<String>) {
+        var index = 0
+        while (index < cards.size) {
+            if (cards[index].gridSpan == null) {
+                container.addView(inflatePanel(container, cards[index], groupKeys))
+                index++
+            } else {
+                var end = index
+                while (end < cards.size && cards[end].gridSpan != null) end++
+                container.addView(
+                    widgetGrid(cards.subList(index, end), groupKeys),
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                )
+                index = end
+            }
+        }
+    }
+
+    private fun widgetGrid(cards: List<TodayCard>, groupKeys: List<String>): WidgetGridView {
+        val grid = WidgetGridView(requireContext())
+        for (card in cards) {
+            val panel = inflatePanel(grid, card, groupKeys)
+            val span = (card.gridSpan ?: TodayWidgetResize.COLUMNS).coerceIn(1, TodayWidgetResize.COLUMNS)
+            panel.layoutParams = WidgetGridView.LayoutParams(
+                panel.layoutParams as ViewGroup.MarginLayoutParams,
+                span,
+            )
+            grid.addView(panel)
+        }
+        return grid
+    }
+
     private fun inflatePanel(parent: ViewGroup, card: TodayCard, groupKeys: List<String>): View {
         val panel = ItemTodayPanelBinding.inflate(layoutInflater, parent, false)
         val title = card.title(requireContext())
         panel.tvPanelTitle.text = if (card.emoji.isEmpty()) title else "${card.emoji}  $title"
+        // Grid panels get narrow: titles take one line and make room by ellipsizing.
+        panel.tvPanelTitle.maxLines = 1
+        panel.tvPanelTitle.ellipsize = android.text.TextUtils.TruncateAt.END
         androidx.core.view.ViewCompat.setAccessibilityHeading(panel.tvPanelTitle, true)
         val widgetId = TodayOrder.widgetId(card.key)
         if (widgetId != null) {

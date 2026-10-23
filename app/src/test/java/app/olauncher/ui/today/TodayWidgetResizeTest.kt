@@ -1,7 +1,6 @@
 package app.olauncher.ui.today
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -64,26 +63,77 @@ class TodayWidgetResizeTest {
     // encode/decode round trip
 
     @Test
-    fun `encode then decode preserves heights`() {
-        val heights = mapOf(12 to 96, 7 to 128)
-        assertEquals(heights, TodayWidgetResize.decode(TodayWidgetResize.encode(heights)))
+    fun `encode then decode preserves sizes`() {
+        val sizes = mapOf(12 to TodayWidgetResize.Size(2, 96), 7 to TodayWidgetResize.Size(null, 128))
+        assertEquals(sizes, TodayWidgetResize.decode(TodayWidgetResize.encode(sizes)))
     }
 
     @Test
     fun `encode is stable for an empty map`() {
         assertEquals("", TodayWidgetResize.encode(emptyMap()))
-        assertEquals(emptyMap<Int, Int>(), TodayWidgetResize.decode(""))
+        assertEquals(emptyMap<Int, TodayWidgetResize.Size>(), TodayWidgetResize.decode(""))
     }
 
     @Test
     fun `decode skips malformed, negative and zero entries`() {
-        val decoded = TodayWidgetResize.decode("12:96,bad,,-3:40,5:0,14:64,junk:20,:30,13:x")
-        assertEquals(mapOf(12 to 96, 14 to 64), decoded)
-        assertFalse(decoded.containsKey(-3))
+        val decoded = TodayWidgetResize.decode("12:96,bad,,-3:40,5:0,14:2:64,junk:20,:30,13:x")
+        assertEquals(mapOf(12 to TodayWidgetResize.Size(null, 96), 14 to TodayWidgetResize.Size(2, 64)), decoded)
+    }
+
+    @Test
+    fun `legacy height-only entries decode as full width`() {
+        assertEquals(
+            mapOf(5 to TodayWidgetResize.Size(null, 96)),
+            TodayWidgetResize.decode("5:96"),
+        )
+    }
+
+    @Test
+    fun `width spans outside the grid degrade to full width`() {
+        assertEquals(
+            mapOf(5 to TodayWidgetResize.Size(null, 96), 6 to TodayWidgetResize.Size(null, 64)),
+            TodayWidgetResize.decode("5:0:96,6:9:64"),
+        )
     }
 
     @Test
     fun `encode is deterministic regardless of map order`() {
-        assertEquals(TodayWidgetResize.encode(mapOf(2 to 64, 1 to 48)), TodayWidgetResize.encode(mapOf(1 to 48, 2 to 64)))
+        assertEquals(
+            TodayWidgetResize.encode(mapOf(2 to TodayWidgetResize.Size(1, 64), 1 to TodayWidgetResize.Size(null, 48))),
+            TodayWidgetResize.encode(mapOf(1 to TodayWidgetResize.Size(null, 48), 2 to TodayWidgetResize.Size(1, 64))),
+        )
+    }
+
+    // span range and span snapping
+
+    @Test
+    fun `unset width limits give the full column range`() {
+        assertEquals(TodayWidgetResize.SpanRange(1, 4), TodayWidgetResize.spanRange(0, 0, 95f))
+    }
+
+    @Test
+    fun `provider width limits translate into columns`() {
+        // 100dp cell: minResizeWidth 150 -> at least 2 columns; maxResizeWidth 250 -> at most 2
+        assertEquals(TodayWidgetResize.SpanRange(2, 2), TodayWidgetResize.spanRange(150, 250, 100f))
+        assertEquals(TodayWidgetResize.SpanRange(1, 2), TodayWidgetResize.spanRange(0, 250, 100f))
+        assertEquals(TodayWidgetResize.SpanRange(2, 4), TodayWidgetResize.spanRange(150, 0, 100f))
+    }
+
+    @Test
+    fun `provider limits beyond the grid are capped at the column count`() {
+        assertEquals(TodayWidgetResize.SpanRange(1, 4), TodayWidgetResize.spanRange(0, 4000, 100f))
+    }
+
+    @Test
+    fun `a minimum wider than the grid collapses to the last column`() {
+        assertEquals(TodayWidgetResize.SpanRange(4, 4), TodayWidgetResize.spanRange(1000, 0, 100f))
+    }
+
+    @Test
+    fun `spanFor rounds to the nearest column and clamps into the range`() {
+        val range = TodayWidgetResize.SpanRange(1, 3)
+        assertEquals(2, TodayWidgetResize.spanFor(190f, 100f, range))
+        assertEquals(3, TodayWidgetResize.spanFor(900f, 100f, range))
+        assertEquals(1, TodayWidgetResize.spanFor(10f, 100f, range))
     }
 }

@@ -43,6 +43,13 @@ interface TodayCard {
 
     /** False when the card would render nothing at all; its panel is then left out. */
     fun hasContent(context: Context): Boolean = true
+
+    /**
+     * Column span on the Today grid for cards that live on it (widgets), or null
+     * for built-in cards, which stay full-width rows.
+     */
+    val gridSpan: Int? get() = null
+
     fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View
     fun onResume() {}
 
