@@ -68,7 +68,7 @@ class SettingsSectionsTest {
         assertEquals(R.string.today_section, SettingsSections.TODAY.titleRes)
         assertEquals(R.id.todaySection, SettingsSections.TODAY.containerId)
 
-        assertEquals(R.string.deutsch_de, SettingsSections.DEUTSCH.titleRes)
+        assertEquals(R.string.german_section, SettingsSections.DEUTSCH.titleRes)
         assertEquals(R.id.deutschSection, SettingsSections.DEUTSCH.containerId)
 
         assertEquals(R.string.appearance, SettingsSections.APPEARANCE.titleRes)

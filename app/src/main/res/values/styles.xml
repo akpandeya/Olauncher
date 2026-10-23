@@ -114,6 +114,14 @@
         <item name="android:textSize">@dimen/text_small</item>
     </style>
 
+    <!-- Hint under a settings section row. Not focusable and hidden from TalkBack; the row above carries the label. -->
+    <style name="SettingsSectionHint" parent="TextSmall">
+        <item name="android:alpha">0.7</item>
+        <item name="android:textColor">?attr/primaryColor</item>
+        <item name="android:focusable">false</item>
+        <item name="android:importantForAccessibility">no</item>
+    </style>
+
     <style name="TextSmallBold" parent="TextSmall">
         <item name="android:textStyle">bold</item>
     </style>
