@@ -1,5 +1,6 @@
 package app.olauncher.glance
 
+import app.olauncher.data.ProfileEventRule
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -13,6 +14,8 @@ data class NextUpLabels(
     val nowTemplate: String,
     /** Template with %1$s = start time, %2$s = title. */
     val tomorrowEventTemplate: String,
+    /** Time-column text for an all-day event that is on today. */
+    val allDay: String,
 ) {
     fun now(title: String, endTime: String): String = String.format(nowTemplate, title, endTime)
     fun tomorrowEvent(startTime: String, title: String): String = String.format(tomorrowEventTemplate, startTime, title)
@@ -21,7 +24,25 @@ data class NextUpLabels(
 /** An event line split for a two-column row: [lead] is the time or day, [title] the rest. */
 data class NextUpRow(val lead: String, val title: String)
 
+/** The calendar event that set the current profile, and the events left to list. */
+data class NextUpProfileSplit(val profileId: String?, val rest: List<CalendarEvent>)
+
 object NextUpFormatting {
+
+    /**
+     * Takes the event that sets the current profile (the last matching event rule wins, as in
+     * [ProfileSchedule.resolveEvent]) out of [events], so it is not listed as a normal event.
+     */
+    fun splitProfileEvent(
+        events: List<CalendarEvent>,
+        rules: List<ProfileEventRule>,
+        nowMillis: Long,
+    ): NextUpProfileSplit {
+        val rule = rules.lastOrNull { it.matchesAny(events, nowMillis) } ?: return NextUpProfileSplit(null, events)
+        val profileEvent = events.first { rule.matches(it, nowMillis) }
+        return NextUpProfileSplit(rule.profileId, events.filter { it !== profileEvent })
+    }
+
 
     private val dayFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("EEE", Locale.US)
 
@@ -92,6 +113,7 @@ object NextUpFormatting {
 
     /**
      * Same text as [line], split into a lead (time or day, may be empty) and a title.
+     * With [allDayLabel], an all-day event that is on today gets [NextUpLabels.allDay] as its lead.
      * In-progress events and templates that do not end with the title stay whole in [NextUpRow.title].
      */
     fun row(
@@ -100,12 +122,14 @@ object NextUpFormatting {
         zone: ZoneId,
         is24Hour: Boolean = true,
         labels: NextUpLabels,
+        allDayLabel: Boolean = false,
     ): NextUpRow {
         val full = line(event, now, zone, is24Hour, labels)
         val inProgress = !event.allDay && !now.isBefore(event.start) && now.isBefore(event.end)
         if (inProgress) return NextUpRow("", full)
         val lead = if (event.allDay) full.removeSuffix(" · ${event.title}") else full.removeSuffix(event.title).trim()
         if (lead == full || lead.isEmpty()) return NextUpRow("", full)
+        if (allDayLabel && event.allDay && lead == labels.today) return NextUpRow(labels.allDay, event.title)
         return NextUpRow(lead, event.title)
     }
 

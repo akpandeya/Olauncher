@@ -1,5 +1,7 @@
 package app.olauncher.glance
 
+import app.olauncher.data.ProfileEventRule
+import app.olauncher.ui.today.TodayOrder
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -16,6 +18,7 @@ private val TEST_LABELS = NextUpLabels(
     tomorrow = "Tomorrow",
     nowTemplate = "Now · %1\$s (until %2\$s)",
     tomorrowEventTemplate = "Tomorrow %1\$s %2\$s",
+    allDay = "All day",
 )
 
 class NextUpFormattingTest {
@@ -352,7 +355,7 @@ class NextUpFormattingTest {
         nowTime: LocalTime = LocalTime.of(12, 0),
     ): NextUpRow {
         val now = ZonedDateTime.of(nowDate, nowTime, zoneBerlin).toInstant()
-        return NextUpFormatting.row(event, now, zoneBerlin, is24Hour = true, labels = TEST_LABELS)
+        return NextUpFormatting.row(event, now, zoneBerlin, is24Hour = true, labels = TEST_LABELS, allDayLabel = true)
     }
 
     private fun berlin(date: LocalDate, time: LocalTime) =
@@ -387,6 +390,60 @@ class NextUpFormattingTest {
         val d = LocalDate.of(2026, 10, 18)
         val start = d.atStartOfDay(ZoneOffset.UTC).toInstant()
         val event = CalendarEvent(5L, "Holiday", start, start.plusSeconds(24 * 3600), allDay = true)
-        assertEquals(NextUpRow("Today", "Holiday"), rowAt(event))
+        assertEquals(NextUpRow("All day", "Holiday"), rowAt(event))
+    }
+
+    @Test
+    fun `row shows All day for a multi-day all-day event spanning today`() {
+        val d = LocalDate.of(2026, 10, 17)
+        val start = d.atStartOfDay(ZoneOffset.UTC).toInstant()
+        val event = CalendarEvent(6L, "Hackathon", start, start.plusSeconds(3 * 24 * 3600), allDay = true)
+        assertEquals(NextUpRow("All day", "Hackathon"), rowAt(event))
+    }
+
+    @Test
+    fun `row keeps Tomorrow for a tomorrow all-day event`() {
+        val d = LocalDate.of(2026, 10, 19)
+        val start = d.atStartOfDay(ZoneOffset.UTC).toInstant()
+        val event = CalendarEvent(7L, "Holiday", start, start.plusSeconds(24 * 3600), allDay = true)
+        assertEquals(NextUpRow("Tomorrow", "Holiday"), rowAt(event))
+    }
+
+    @Test
+    fun `profile event is split out and its profile id returned`() {
+        val d = LocalDate.of(2026, 10, 18)
+        val start = d.atStartOfDay(ZoneOffset.UTC).toInstant()
+        val home = CalendarEvent(8L, "Home", start, start.plusSeconds(24 * 3600), allDay = true)
+        val dentist = CalendarEvent(9L, "Dentist", berlin(d, LocalTime.of(14, 0)), berlin(d, LocalTime.of(15, 0)))
+        val rules = listOf(
+            ProfileEventRule("work", keyword = "Office", includeAllDay = true),
+            ProfileEventRule("home-profile", keyword = "Home", includeAllDay = true),
+        )
+        val split = NextUpFormatting.splitProfileEvent(listOf(home, dentist), rules, start.toEpochMilli() + 1000)
+        assertEquals("home-profile", split.profileId)
+        assertEquals(listOf(dentist), split.rest)
+    }
+
+    @Test
+    fun `no matching rule leaves events untouched`() {
+        val d = LocalDate.of(2026, 10, 18)
+        val dentist = CalendarEvent(9L, "Dentist", berlin(d, LocalTime.of(14, 0)), berlin(d, LocalTime.of(15, 0)))
+        val rules = listOf(ProfileEventRule("work", keyword = "Office"))
+        val split = NextUpFormatting.splitProfileEvent(listOf(dentist), rules, dentist.startMillis + 1)
+        assertEquals(null, split.profileId)
+        assertEquals(listOf(dentist), split.rest)
+    }
+
+    @Test
+    fun `timed profile event alone does not pin the card`() {
+        val d = LocalDate.of(2026, 10, 18)
+        val office = CalendarEvent(10L, "Office", berlin(d, LocalTime.of(11, 0)), berlin(d, LocalTime.of(13, 0)))
+        val now = berlin(d, LocalTime.of(12, 0))
+        val rules = listOf(ProfileEventRule("work", keyword = "Office"))
+        assertTrue(TodayOrder.nextUpPinned(listOf(office), now, zoneBerlin))
+        val split = NextUpFormatting.splitProfileEvent(listOf(office), rules, now.toEpochMilli())
+        assertEquals("work", split.profileId)
+        assertTrue(split.rest.isEmpty())
+        assertFalse(TodayOrder.nextUpPinned(split.rest, now, zoneBerlin))
     }
 }
