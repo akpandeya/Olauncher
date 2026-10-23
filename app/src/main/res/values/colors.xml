@@ -59,4 +59,7 @@
     <!--Destructive action text (hide, delete, reset)-->
     <color name="danger">@color/accentRoseLight</color>
 
+    <!--Readable text on photo wallpaper: see ReadableScrim.kt-->
+    <color name="readableCard">#B8FFFFFF</color>
+    <color name="drawerScrimBottom">#99FFFFFF</color>
 </resources>
