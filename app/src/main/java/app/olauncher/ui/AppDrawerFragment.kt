@@ -11,6 +11,7 @@ import android.widget.TextView
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import app.olauncher.helper.StatusBarFade
 import app.olauncher.MainViewModel
 import app.olauncher.R
 import app.olauncher.data.AppModel
@@ -145,6 +146,7 @@ class AppDrawerFragment : BaseFragment() {
             insets
         }
         binding.root.requestApplyInsets()
+        StatusBarFade.attach(binding.statusBarFade)
     }
 
     private fun initViews() {

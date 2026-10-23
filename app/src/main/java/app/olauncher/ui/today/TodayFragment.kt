@@ -10,6 +10,7 @@ import android.view.inputmethod.InputMethodManager
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
+import app.olauncher.helper.StatusBarFade
 import app.olauncher.R
 import app.olauncher.data.Prefs
 import app.olauncher.data.store.IntentionHistory
@@ -50,6 +51,7 @@ class TodayFragment : BaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         prefs = Prefs(requireContext())
+        StatusBarFade.attach(binding.statusBarFade)
         initSwipeTouchListener()
         initIntention()
         binding.tvPastIntentions.setOnClickListener {
