@@ -19,7 +19,7 @@ class WordsCodecTest {
         )
         val encoded = WordsCodec.encode(words)
         val decoded = WordsCodec.decode(encoded)
-        assertEquals(words, decoded)
+        assertEquals(words, decoded.words)
     }
 
     @Test
@@ -39,7 +39,7 @@ class WordsCodecTest {
         )
         val encoded = WordsCodec.encode(words)
         val decoded = WordsCodec.decode(encoded)
-        assertEquals(words, decoded)
+        assertEquals(words, decoded.words)
     }
 
     @Test
@@ -51,7 +51,7 @@ class WordsCodecTest {
         )
         val encoded = WordsCodec.encode(words)
         val decoded = WordsCodec.decode(encoded)
-        assertEquals(words, decoded)
+        assertEquals(words, decoded.words)
     }
 
     @Test
@@ -59,25 +59,29 @@ class WordsCodecTest {
         val words = emptyList<Word>()
         val encoded = WordsCodec.encode(words)
         val decoded = WordsCodec.decode(encoded)
-        assertTrue(decoded.isEmpty())
+        assertTrue(decoded.words.isEmpty())
+        assertTrue(decoded.lists.isEmpty())
     }
 
     @Test
     fun `decoding empty string returns empty list`() {
         val decoded = WordsCodec.decode("")
-        assertTrue(decoded.isEmpty())
+        assertTrue(decoded.words.isEmpty())
+        assertTrue(decoded.lists.isEmpty())
     }
 
     @Test
     fun `decoding blank string returns empty list`() {
         val decoded = WordsCodec.decode("   \n\t  ")
-        assertTrue(decoded.isEmpty())
+        assertTrue(decoded.words.isEmpty())
+        assertTrue(decoded.lists.isEmpty())
     }
 
     @Test
     fun `decoding null string returns empty list`() {
         val decoded = WordsCodec.decode(null)
-        assertTrue(decoded.isEmpty())
+        assertTrue(decoded.words.isEmpty())
+        assertTrue(decoded.lists.isEmpty())
     }
 
     @Test
@@ -92,14 +96,15 @@ class WordsCodecTest {
         )
         for (sample in corruptSamples) {
             val decoded = WordsCodec.decode(sample)
-            assertTrue("Expected empty list for '$sample'", decoded.isEmpty())
+            assertTrue("Expected empty list for '$sample'", decoded.words.isEmpty())
         }
     }
 
     @Test
-    fun `decoding json object instead of array returns empty list without crashing`() {
+    fun `decoding json object without envelope keys returns empty words without crashing`() {
         val decoded = WordsCodec.decode("""{"id": 1, "text": "Haus"}""")
-        assertTrue(decoded.isEmpty())
+        assertTrue(decoded.words.isEmpty())
+        assertTrue(decoded.lists.isEmpty())
     }
 
     @Test
@@ -112,9 +117,9 @@ class WordsCodecTest {
             ]
         """.trimIndent()
         val decoded = WordsCodec.decode(json)
-        assertEquals(2, decoded.size)
-        assertEquals("Haus", decoded[0].text)
-        assertEquals("Buch", decoded[1].text)
+        assertEquals(2, decoded.words.size)
+        assertEquals("Haus", decoded.words[0].text)
+        assertEquals("Buch", decoded.words[1].text)
     }
 
     @Test
@@ -130,8 +135,8 @@ class WordsCodecTest {
             ]
         """.trimIndent()
         val decoded = WordsCodec.decode(json)
-        assertEquals(1, decoded.size)
-        val word = decoded[0]
+        assertEquals(1, decoded.words.size)
+        val word = decoded.words[0]
         assertEquals(1L, word.id)
         assertEquals("Katze", word.text)
         assertEquals("", word.context)
@@ -151,5 +156,134 @@ class WordsCodecTest {
         val jsonArray = WordsCodec.encodeToJson(words)
         val decoded = WordsCodec.decode(jsonArray)
         assertEquals(words, decoded)
+    }
+
+    @Test
+    fun `legacy v1 bare array decodes with empty lists and empty listIds`() {
+        val v1 = """
+            [
+                {"id": 1, "text": "Haus", "dueDay": 100, "addedAt": 1000},
+                {"id": 2, "text": "Baum", "context": "Ein alter Baum", "meaning": "tree",
+                 "meaningSource": "wiktionary", "box": 3, "dueDay": 104, "addedAt": 2000, "learnedAt": 110}
+            ]
+        """.trimIndent()
+        val decoded = WordsCodec.decode(v1)
+        assertTrue(decoded.lists.isEmpty())
+        assertEquals(2, decoded.words.size)
+        assertEquals("Haus", decoded.words[0].text)
+        assertEquals("", decoded.words[0].context)
+        assertTrue(decoded.words[0].listIds.isEmpty())
+        assertEquals("Baum", decoded.words[1].text)
+        assertEquals(110L, decoded.words[1].learnedAt)
+        assertTrue(decoded.words[1].listIds.isEmpty())
+    }
+
+    @Test
+    fun `round trip words with listIds and lists through the envelope`() {
+        val lists = listOf(
+            WordList("kitchen", "Kitchen"),
+            WordList("travel-2", "Travel!")
+        )
+        val words = listOf(
+            Word(1L, "Gabel", "", "fork", "wiktionary", 1, 100L, 1000L, null, listOf("kitchen")),
+            Word(2L, "Zug", "", "train", "user", 2, 102L, 2000L, 105L, listOf("kitchen", "travel-2")),
+            Word(3L, "Haus", "", "", "", 1, 100L, 3000L, null)
+        )
+        val encoded = WordsCodec.encode(words, lists)
+        val decoded = WordsCodec.decode(encoded)
+        assertEquals(words, decoded.words)
+        assertEquals(lists, decoded.lists)
+    }
+
+    @Test
+    fun `envelope with future or missing version still decodes`() {
+        val future = """{"version": 99, "lists": [{"id": "a", "name": "A"}],
+            "words": [{"id": 1, "text": "Haus", "dueDay": 100, "addedAt": 1000}]}"""
+        val decodedFuture = WordsCodec.decode(future)
+        assertEquals(1, decodedFuture.words.size)
+        assertEquals(listOf(WordList("a", "A")), decodedFuture.lists)
+
+        val noVersion = """{"lists": [{"id": "b", "name": "B"}],
+            "words": [{"id": 2, "text": "Baum", "dueDay": 100, "addedAt": 1000}]}"""
+        val decodedNoVersion = WordsCodec.decode(noVersion)
+        assertEquals(1, decodedNoVersion.words.size)
+        assertEquals("Baum", decodedNoVersion.words[0].text)
+        assertEquals(listOf(WordList("b", "B")), decodedNoVersion.lists)
+    }
+
+    @Test
+    fun `envelope with corrupt word and list entries skips them`() {
+        val json = """
+            {
+                "version": 2,
+                "lists": [
+                    {"id": "kitchen", "name": "Kitchen"},
+                    "not an object",
+                    {"id": 42, "name": "number id"},
+                    {"name": "missing id"},
+                    {"id": "   ", "name": "blank id"},
+                    {"id": "travel", "name": "Travel"}
+                ],
+                "words": [
+                    {"id": 1, "text": "Haus", "dueDay": 100, "addedAt": 1000},
+                    {"missing_required_keys": true},
+                    {"id": 2, "text": "Baum", "dueDay": 100, "addedAt": 1000}
+                ]
+            }
+        """.trimIndent()
+        val decoded = WordsCodec.decode(json)
+        assertEquals(listOf(WordList("kitchen", "Kitchen"), WordList("travel", "Travel")), decoded.lists)
+        assertEquals(2, decoded.words.size)
+        assertEquals("Haus", decoded.words[0].text)
+        assertEquals("Baum", decoded.words[1].text)
+    }
+
+    @Test
+    fun `duplicate list ids keep the first entry`() {
+        val json = """
+            {
+                "version": 2,
+                "lists": [
+                    {"id": "kitchen", "name": "Kitchen"},
+                    {"id": "kitchen", "name": "Duplicate Kitchen"}
+                ],
+                "words": []
+            }
+        """.trimIndent()
+        val decoded = WordsCodec.decode(json)
+        assertEquals(listOf(WordList("kitchen", "Kitchen")), decoded.lists)
+    }
+
+    @Test
+    fun `non-string and blank listIds entries are dropped`() {
+        val json = """
+            {
+                "version": 2,
+                "lists": [],
+                "words": [
+                    {"id": 1, "text": "Haus", "dueDay": 100, "addedAt": 1000,
+                     "listIds": ["kitchen", 42, null, true, "  ", "travel"]},
+                    {"id": 2, "text": "Baum", "dueDay": 100, "addedAt": 1000, "listIds": "not-an-array"},
+                    {"id": 3, "text": "Zug", "dueDay": 100, "addedAt": 1000, "listIds": null}
+                ]
+            }
+        """.trimIndent()
+        val decoded = WordsCodec.decode(json)
+        assertEquals(listOf("kitchen", "travel"), decoded.words[0].listIds)
+        assertTrue(decoded.words[1].listIds.isEmpty())
+        assertTrue(decoded.words[2].listIds.isEmpty())
+    }
+
+    @Test
+    fun `envelope missing words or lists keys decodes that side as empty`() {
+        val noWords = """{"version": 2, "lists": [{"id": "a", "name": "A"}]}"""
+        val decodedNoWords = WordsCodec.decode(noWords)
+        assertTrue(decodedNoWords.words.isEmpty())
+        assertEquals(listOf(WordList("a", "A")), decodedNoWords.lists)
+
+        val noLists = """{"version": 2, "words": [{"id": 1, "text": "Haus", "dueDay": 100, "addedAt": 1000}]}"""
+        val decodedNoLists = WordsCodec.decode(noLists)
+        assertEquals(1, decodedNoLists.words.size)
+        assertTrue(decodedNoLists.lists.isEmpty())
     }
 }
