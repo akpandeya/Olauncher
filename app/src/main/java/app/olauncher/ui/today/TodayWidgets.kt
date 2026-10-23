@@ -72,8 +72,8 @@ internal class TodayWidgets(
         val owned = prefs.todayWidgetIds.toSet() + prefs.todayPendingWidgetId
         val orphans = host.appWidgetIds.filter { it !in owned }
         orphans.forEach(host::deleteAppWidgetId)
-        // The host pools freed ids for reuse, so stale heights must not outlive their widgets.
-        if (orphans.isNotEmpty()) prefs.todayWidgetHeights = prefs.todayWidgetHeights - orphans.toSet()
+        // The host pools freed ids for reuse, so stale sizes must not outlive their widgets.
+        if (orphans.isNotEmpty()) prefs.todayWidgetSizes = prefs.todayWidgetSizes - orphans.toSet()
     }
 
     fun start() = host.startListening()
@@ -179,7 +179,10 @@ internal class TodayWidgets(
                 }
                 val id = TodayOrder.widgetId(key)
                 val info = id?.let { manager.getAppWidgetInfo(it) }
-                if (info != null && info.resizeMode and AppWidgetProviderInfo.RESIZE_VERTICAL != 0) {
+                val resizable = info != null && info.resizeMode and (
+                    AppWidgetProviderInfo.RESIZE_VERTICAL or AppWidgetProviderInfo.RESIZE_HORIZONTAL
+                    ) != 0
+                if (info != null && resizable) {
                     menu.add(Menu.NONE, ACTION_RESIZE, Menu.NONE, R.string.today_widget_resize)
                 }
             },
@@ -211,7 +214,7 @@ internal class TodayWidgets(
             val key = TodayOrder.widgetKey(id)
             prefs.todayPanelOrder = prefs.todayPanelOrder - key
             prefs.todayPinnedKeys = prefs.todayPinnedKeys - key
-            prefs.todayWidgetHeights = prefs.todayWidgetHeights - id
+            prefs.todayWidgetSizes = prefs.todayWidgetSizes - id
             if (resizingId == id) resizingId = null
             host.deleteAppWidgetId(id)
             refresh()
@@ -226,6 +229,7 @@ internal class TodayWidgets(
     private inner class WidgetCard(val appWidgetId: Int, val index: Int) : TodayCard {
         override val key = TodayOrder.widgetKey(appWidgetId)
         override val titleRes = R.string.today_widget
+        override val gridSpan: Int? get() = prefs.todayWidgetSizes[appWidgetId]?.widthSpan ?: TodayWidgetResize.COLUMNS
         override fun title(context: Context): CharSequence =
             manager.getAppWidgetInfo(appWidgetId)?.loadLabel(context.packageManager)
                 ?: context.getString(R.string.today_widget)
@@ -245,7 +249,8 @@ internal class TodayWidgets(
                 minResizeDp = info.minResizeHeight,
                 maxResizeDp = info.maxResizeHeight,
             )
-            val heightDp = (prefs.todayWidgetHeights[appWidgetId] ?: range.defaultDp).coerceIn(range.minDp, range.maxDp)
+            val heightDp = (prefs.todayWidgetSizes[appWidgetId]?.heightDp ?: range.defaultDp)
+                .coerceIn(range.minDp, range.maxDp)
             val hostView = host.createView(hostContext, appWidgetId, info)
 
             fun setHeight(dp: Int) {
@@ -273,18 +278,34 @@ internal class TodayWidgets(
                 }
             }
             if (resizingId != appWidgetId) return hostView
-            return resizeWrapper(hostView, range, density, context.getColorFromAttr(R.attr.accentColor), ::setHeight)
+            return resizeWrapper(
+                hostView,
+                range,
+                density,
+                context.getColorFromAttr(R.attr.accentColor),
+                resizeHeight = info.resizeMode and AppWidgetProviderInfo.RESIZE_VERTICAL != 0,
+                resizeWidth = info.resizeMode and AppWidgetProviderInfo.RESIZE_HORIZONTAL != 0,
+                minResizeWidthDp = info.minResizeWidth,
+                maxResizeWidthDp = info.maxResizeWidth,
+                setHeight = ::setHeight,
+            )
         }
 
-        /** Card in resize mode: an accent frame around the whole card, a full-width drag strip
-         *  at the bottom edge and a live height readout — the stock launcher's resize-frame
-         *  pattern (border visible, border strip is the touch target). Committing stores the
-         *  height and leaves resize mode. */
+        /**
+         * Card in resize mode: the stock launcher's resize-frame pattern — an accent frame
+         * around the card, drag strips on the edges the provider allows (bottom for height,
+         * end edge for width) and a live readout. A drag commits the snapped size and leaves
+         * resize mode; a bare tap cancels.
+         */
         private fun resizeWrapper(
             hostView: AppWidgetHostView,
             range: TodayWidgetResize.Range,
             density: Float,
             accentColor: Int,
+            resizeHeight: Boolean,
+            resizeWidth: Boolean,
+            minResizeWidthDp: Int,
+            maxResizeWidthDp: Int,
             setHeight: (Int) -> Unit,
         ): View = FrameLayout(hostContext).apply {
             addView(hostView)
@@ -306,6 +327,27 @@ internal class TodayWidgets(
                 setColor(scrim)
                 setStroke(resources.getDimensionPixelSize(R.dimen.strokeThin), accentColor)
                 cornerRadius = resources.getDimension(R.dimen.radiusMedium)
+            }
+
+            // The widget's panel is the card sitting in the grid: its span is what a side
+            // drag changes, and its grid parent supplies the cell width the span snaps to.
+            fun panelInGrid(): Pair<View, WidgetGridView>? {
+                var view: View = this
+                while (view.layoutParams !is WidgetGridView.LayoutParams) {
+                    view = view.parent as? View ?: return null
+                }
+                val grid = view.parent as? WidgetGridView ?: return null
+                return view to grid
+            }
+
+            fun commitSize(widthSpan: Int?, heightDp: Int) {
+                prefs.todayWidgetSizes =
+                    prefs.todayWidgetSizes + (appWidgetId to TodayWidgetResize.Size(widthSpan, heightDp))
+            }
+
+            fun exitResize() {
+                resizingId = null
+                refresh()
             }
 
             // Live readout: hint before the first grab, snapped height while dragging. Hidden
@@ -348,99 +390,206 @@ internal class TodayWidgets(
                 }
             }
 
-            val handle = FrameLayout(hostContext).apply {
-                contentDescription = context.getString(R.string.today_widget_resize)
-                layoutParams = FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    (32 * density).roundToInt(),
-                    Gravity.BOTTOM,
-                )
-                addView(View(hostContext).apply {
+            if (resizeHeight) {
+                val handle = FrameLayout(hostContext).apply {
+                    contentDescription = context.getString(R.string.today_widget_resize)
                     layoutParams = FrameLayout.LayoutParams(
-                        (120 * density).roundToInt(), (28 * density).roundToInt(), Gravity.CENTER,
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        (32 * density).roundToInt(),
+                        Gravity.BOTTOM,
                     )
-                    background = pill(handleScrim, 0, 0)
-                })
-                addView(View(hostContext).apply {
-                    layoutParams = FrameLayout.LayoutParams(
-                        (72 * density).roundToInt(), (8 * density).roundToInt(), Gravity.CENTER,
-                    )
-                    background = pill(accentColor, 0, 0)
-                })
-                var startY = 0f
-                var startDp = 0
-                var liveDp = 0
-                var moved = false
-                val touchSlop = ViewConfiguration.get(hostContext).scaledTouchSlop
-                setOnTouchListener { handleView, event ->
-                    when (event.actionMasked) {
-                        MotionEvent.ACTION_DOWN -> {
-                            startY = event.rawY
-                            startDp = currentHeightDp(hostView, density)
-                            liveDp = TodayWidgetResize.snap(startDp, range)
-                            moved = false
-                            syncReadout(liveDp)
-                            handleView.parent.requestDisallowInterceptTouchEvent(true)
-                            true
-                        }
-                        MotionEvent.ACTION_MOVE -> {
-                            // Jitter within the touch slop is not a drag yet; committing a
-                            // snap nudge from it would be the bare-tap bug again.
-                            if (!moved && abs(event.rawY - startY) <= touchSlop) return@setOnTouchListener true
-                            moved = true
-                            val draggedDp = (startDp + (event.rawY - startY) / density).roundToInt()
-                            liveDp = TodayWidgetResize.snap(draggedDp, range)
-                            setHeight(liveDp)
-                            syncReadout(liveDp)
-                            true
-                        }
-                        MotionEvent.ACTION_UP -> {
-                            handleView.parent.requestDisallowInterceptTouchEvent(false)
-                            if (moved) {
-                                prefs.todayWidgetHeights = prefs.todayWidgetHeights + (appWidgetId to liveDp)
-                                handleView.announceForAccessibility(
-                                    context.getString(R.string.today_widget_resize_dp, liveDp)
-                                )
-                                val widthPx = hostView.width.takeIf { it > 0 } ?: hostView.layoutParams.width
-                                hostView.updateAppWidgetSize(
-                                    Bundle(),
-                                    listOf(SizeF(widthPx / density, hostView.layoutParams.height / density)),
-                                )
-                            } else {
-                                // Bare tap: no drag happened, so don't silently snap the height.
-                                setHeight(startDp)
+                    addView(View(hostContext).apply {
+                        layoutParams = FrameLayout.LayoutParams(
+                            (120 * density).roundToInt(), (28 * density).roundToInt(), Gravity.CENTER,
+                        )
+                        background = pill(handleScrim, 0, 0)
+                    })
+                    addView(View(hostContext).apply {
+                        layoutParams = FrameLayout.LayoutParams(
+                            (72 * density).roundToInt(), (8 * density).roundToInt(), Gravity.CENTER,
+                        )
+                        background = pill(accentColor, 0, 0)
+                    })
+                    var startY = 0f
+                    var startDp = 0
+                    var liveDp = 0
+                    var moved = false
+                    val touchSlop = ViewConfiguration.get(hostContext).scaledTouchSlop
+                    setOnTouchListener { handleView, event ->
+                        when (event.actionMasked) {
+                            MotionEvent.ACTION_DOWN -> {
+                                startY = event.rawY
+                                startDp = currentHeightDp(hostView, density)
+                                liveDp = TodayWidgetResize.snap(startDp, range)
+                                moved = false
+                                syncReadout(liveDp)
+                                handleView.parent.requestDisallowInterceptTouchEvent(true)
+                                true
                             }
-                            resizingId = null
-                            refresh()
-                            true
+                            MotionEvent.ACTION_MOVE -> {
+                                // Jitter within the touch slop is not a drag yet; committing a
+                                // snap nudge from it would be the bare-tap bug again.
+                                if (!moved && abs(event.rawY - startY) <= touchSlop) return@setOnTouchListener true
+                                moved = true
+                                val draggedDp = (startDp + (event.rawY - startY) / density).roundToInt()
+                                liveDp = TodayWidgetResize.snap(draggedDp, range)
+                                setHeight(liveDp)
+                                syncReadout(liveDp)
+                                true
+                            }
+                            MotionEvent.ACTION_UP -> {
+                                handleView.parent.requestDisallowInterceptTouchEvent(false)
+                                if (moved) {
+                                    commitSize(prefs.todayWidgetSizes[appWidgetId]?.widthSpan, liveDp)
+                                    handleView.announceForAccessibility(
+                                        context.getString(R.string.today_widget_resize_dp, liveDp)
+                                    )
+                                    val widthPx = hostView.width.takeIf { it > 0 } ?: hostView.layoutParams.width
+                                    hostView.updateAppWidgetSize(
+                                        Bundle(),
+                                        listOf(SizeF(widthPx / density, hostView.layoutParams.height / density)),
+                                    )
+                                } else {
+                                    // Bare tap: no drag happened, so don't silently snap the height.
+                                    setHeight(startDp)
+                                }
+                                exitResize()
+                                true
+                            }
+                            MotionEvent.ACTION_CANCEL -> {
+                                handleView.parent.requestDisallowInterceptTouchEvent(false)
+                                setHeight(startDp)
+                                exitResize()
+                                true
+                            }
+                            else -> false
                         }
-                        MotionEvent.ACTION_CANCEL -> {
-                            handleView.parent.requestDisallowInterceptTouchEvent(false)
-                            setHeight(startDp)
-                            resizingId = null
-                            refresh()
-                            true
-                        }
-                        else -> false
                     }
                 }
+                addView(handle)
+
+                // Forward chip touches to the strip: the readout floats over the widget, and a
+                // drag starting on it must not fall through to the widget's own views.
+                readout.setOnTouchListener { _, event -> handle.dispatchTouchEvent(event) }
+
+                // Bring the drag strip on screen when resize mode starts: the strip sits at the
+                // card's bottom edge, which may be below the fold. One-shot after layout — a
+                // persistent hook would re-scroll on every height change during the drag.
+                viewTreeObserver.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
+                    override fun onPreDraw(): Boolean {
+                        viewTreeObserver.removeOnPreDrawListener(this)
+                        requestRectangleOnScreen(Rect(0, height - handle.layoutParams.height, width, height))
+                        return true
+                    }
+                })
             }
-            addView(handle)
 
-            // Forward chip touches to the strip: the readout floats over the widget, and a
-            // drag starting on it must not fall through to the widget's own views.
-            readout.setOnTouchListener { _, event -> handle.dispatchTouchEvent(event) }
+            if (resizeWidth) {
+                // Side drag strip on the end edge: width spans grid columns, clamped to the
+                // provider's declared width range. Mirrored to the start edge in RTL.
+                val side = FrameLayout(hostContext).apply {
+                    contentDescription = context.getString(R.string.today_widget_resize)
+                    layoutParams = FrameLayout.LayoutParams(
+                        (32 * density).roundToInt(),
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        Gravity.END,
+                    )
+                    addView(View(hostContext).apply {
+                        layoutParams = FrameLayout.LayoutParams(
+                            (28 * density).roundToInt(), (120 * density).roundToInt(), Gravity.CENTER,
+                        )
+                        background = pill(handleScrim, 0, 0)
+                    })
+                    addView(View(hostContext).apply {
+                        layoutParams = FrameLayout.LayoutParams(
+                            (8 * density).roundToInt(), (72 * density).roundToInt(), Gravity.CENTER,
+                        )
+                        background = pill(accentColor, 0, 0)
+                    })
+                    var startX = 0f
+                    var startSpan = 0
+                    var liveSpan = 0
+                    var moved = false
+                    var cellPx = 0f
+                    var dragSign = 1f
+                    var spanRange = TodayWidgetResize.SpanRange(1, TodayWidgetResize.COLUMNS)
+                    var panel: View? = null
+                    val touchSlop = ViewConfiguration.get(hostContext).scaledTouchSlop
 
-            // Bring the drag strip on screen when resize mode starts: the strip sits at the
-            // card's bottom edge, which may be below the fold. One-shot after layout — a
-            // persistent hook would re-scroll on every height change during the drag.
-            viewTreeObserver.addOnPreDrawListener(object : ViewTreeObserver.OnPreDrawListener {
-                override fun onPreDraw(): Boolean {
-                    viewTreeObserver.removeOnPreDrawListener(this)
-                    requestRectangleOnScreen(Rect(0, height - handle.layoutParams.height, width, height))
-                    return true
+                    fun widthDp(span: Int): Int = (span * cellPx / density).roundToInt()
+
+                    setOnTouchListener { handleView, event ->
+                        when (event.actionMasked) {
+                            MotionEvent.ACTION_DOWN -> {
+                                val found = panelInGrid()
+                                val grid = found?.second
+                                cellPx = if (grid != null && grid.width > 0) {
+                                    grid.width.toFloat() / TodayWidgetResize.COLUMNS
+                                } else {
+                                    0f
+                                }
+                                if (cellPx <= 0f) return@setOnTouchListener true
+                                panel = found!!.first
+                                startSpan = (panel!!.layoutParams as WidgetGridView.LayoutParams)
+                                    .span.coerceIn(1, TodayWidgetResize.COLUMNS)
+                                spanRange = TodayWidgetResize.spanRange(
+                                    minResizeWidthDp, maxResizeWidthDp, cellPx / density,
+                                )
+                                startX = event.rawX
+                                liveSpan = startSpan
+                                moved = false
+                                // The end edge follows the finger outward; mirrored in RTL.
+                                dragSign = if (layoutDirection == View.LAYOUT_DIRECTION_RTL) -1f else 1f
+                                syncReadout(widthDp(liveSpan))
+                                handleView.parent.requestDisallowInterceptTouchEvent(true)
+                                true
+                            }
+                            MotionEvent.ACTION_MOVE -> {
+                                if (!moved && abs(event.rawX - startX) <= touchSlop) return@setOnTouchListener true
+                                moved = true
+                                val draggedWidthDp =
+                                    (startSpan * cellPx + dragSign * (event.rawX - startX)) / density
+                                val span = TodayWidgetResize.spanFor(draggedWidthDp, cellPx / density, spanRange)
+                                if (span != liveSpan) {
+                                    liveSpan = span
+                                    (panel?.layoutParams as? WidgetGridView.LayoutParams)?.span = span
+                                    panel?.requestLayout()
+                                }
+                                syncReadout(widthDp(liveSpan))
+                                true
+                            }
+                            MotionEvent.ACTION_UP -> {
+                                handleView.parent.requestDisallowInterceptTouchEvent(false)
+                                if (moved) {
+                                    commitSize(liveSpan, currentHeightDp(hostView, density))
+                                    handleView.announceForAccessibility(
+                                        context.getString(R.string.today_widget_resize_dp, widthDp(liveSpan))
+                                    )
+                                    // The rebuilt layout reports the new width through the host
+                                    // view's own layout-change listener.
+                                    exitResize()
+                                } else {
+                                    (panel?.layoutParams as? WidgetGridView.LayoutParams)?.span = startSpan
+                                    panel?.requestLayout()
+                                }
+                                true
+                            }
+                            MotionEvent.ACTION_CANCEL -> {
+                                handleView.parent.requestDisallowInterceptTouchEvent(false)
+                                (panel?.layoutParams as? WidgetGridView.LayoutParams)?.span = startSpan
+                                panel?.requestLayout()
+                                exitResize()
+                                true
+                            }
+                            else -> false
+                        }
+                    }
                 }
-            })
+                addView(side)
+                // The chip sits at the bottom, so it forwards to the bottom strip when there
+                // is one; on width-only widgets it forwards to the side strip instead.
+                if (!resizeHeight) readout.setOnTouchListener { _, event -> side.dispatchTouchEvent(event) }
+            }
         }
 
         /** The card's height in dp, without the host view's own padding. */

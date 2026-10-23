@@ -623,8 +623,8 @@ class Prefs(context: Context) :
         get() = prefs.getInt(TODAY_PENDING_WIDGET_ID, -1)
         set(value) = prefs.edit(commit = true) { putInt(TODAY_PENDING_WIDGET_ID, value) }
 
-    /** Per-widget card height in dp, survived across reboots; see [TodayWidgetResize]. */
-    var todayWidgetHeights: Map<Int, Int>
+    /** Per-widget card size (height dp, width column span) survived across reboots; see [TodayWidgetResize]. */
+    internal var todayWidgetSizes: Map<Int, TodayWidgetResize.Size>
         get() = TodayWidgetResize.decode(prefs.getString(TODAY_WIDGET_HEIGHTS, "").orEmpty())
         set(value) = prefs.edit(commit = true) { putString(TODAY_WIDGET_HEIGHTS, TodayWidgetResize.encode(value)) }
 
