@@ -38,6 +38,8 @@ import app.olauncher.helper.DrawerCommand
 import app.olauncher.data.store.WiktionaryApi
 import app.olauncher.data.store.WiktionaryCache
 import app.olauncher.data.store.WiktionarySuggestCache
+import app.olauncher.data.store.GermanLookup
+import app.olauncher.data.store.OfflineGermanStore
 import app.olauncher.helper.WordSuggest
 import app.olauncher.data.store.WordLookup
 import app.olauncher.data.store.WordsStore
@@ -107,10 +109,9 @@ internal fun AppDrawerFragment.lookupAllowed(): Boolean =
 internal fun AppDrawerFragment.savedWord(ctx: Context, text: String) =
     WordsStore(ctx).all().firstOrNull { it.text.equals(text.trim(), ignoreCase = true) }
 
-/** Starts the Wiktionary lookup for a `:w` query after [delayMs]; no-op for anything else. */
+/** Looks offline first; only a miss may use the opt-in Wiktionary network/cache fallback. */
 internal fun AppDrawerFragment.scheduleLookup(query: String, delayMs: Long) {
     val text = (parseCommand(query) as? DrawerCommand.LookUp)?.text ?: return
-    if (!lookupAllowed()) return
     if (text.equals(lookupState?.first, ignoreCase = true)) return
     val ctx = context?.applicationContext ?: return
     lookupJob?.cancel()
@@ -120,10 +121,14 @@ internal fun AppDrawerFragment.scheduleLookup(query: String, delayMs: Long) {
         val result = withContext(Dispatchers.IO) {
             if (savedWord(ctx, text) != null) return@withContext null
             val cache = WiktionaryCache(ctx)
-            cache.get(text) ?: WiktionaryApi.lookup(text).also { cache.put(text, it) }
+            GermanLookup.lookup(
+                text, lookupAllowed(), OfflineGermanStore(ctx)::lookup,
+                cache::get, { WiktionaryApi.lookup(it) }, cache::put
+            )
         } ?: return@launch
         if (!isAdded || _binding == null) return@launch
         lookupState = text to result
+        scheduleSuggest(query, 0)
         adapter.filter.filter(binding.search.query)
     }
 }
@@ -148,6 +153,15 @@ internal fun AppDrawerFragment.suggestOnlineAllowed(): Boolean = prefs.germanEna
 
 /** Cancels any pending online suggestion and, when allowed, starts one for the unmatched `:sw` items. */
 internal fun AppDrawerFragment.scheduleSuggest(query: String, delayMs: Long) {
+    // A :w hit needs no spelling request; wait for its offline-first lookup to finish.
+    if (parseCommand(query) is DrawerCommand.LookUp) {
+        val result = lookupState?.second
+        if (result == null || result is WiktionaryApi.LookupResult.Found) {
+            suggestJob?.cancel()
+            suggestState = null
+            return
+        }
+    }
     val items = suggestItems(query)
     if (items == suggestState?.first) return
     suggestJob?.cancel()
@@ -224,7 +238,8 @@ internal fun AppDrawerFragment.lookUpMainRows(ctx: Context, text: String): List<
             )
         )
     }
-    if (!lookupAllowed()) {
+    val state = lookupState?.takeIf { it.first.equals(text, ignoreCase = true) }
+    if (!lookupAllowed() && state?.second != null && state.second !is WiktionaryApi.LookupResult.Found) {
         return listOf(
             AppModel.Result(
                 text = ctx.getString(R.string.word_row_open_wiktionary, text),
@@ -232,7 +247,6 @@ internal fun AppDrawerFragment.lookUpMainRows(ctx: Context, text: String): List<
             )
         )
     }
-    val state = lookupState?.takeIf { it.first.equals(text, ignoreCase = true) }
     val silent = AppModel.Result.Action.OpenWiktionary(text, openOnTap = false)
     val row = when (val result = state?.second) {
         null -> AppModel.Result(ctx.getString(R.string.word_row_looking_up), silent)

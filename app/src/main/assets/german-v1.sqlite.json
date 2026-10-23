@@ -1,0 +1,17 @@
+{
+  "source_records": 371793,
+  "unsupported_records": 833,
+  "entries": 102250,
+  "forms": 523362,
+  "schema_version": 1,
+  "source_url": "https://kaikki.org/dictionary/German/kaikki.org-dictionary-German.jsonl",
+  "source_sha256": "b3328b24dfa186192ea6956f1ecd4a91b7b8c49781f99b6afcf1e2e1d10c59da",
+  "source_bytes": 1095258648,
+  "database_sha256": "bdbc68c723126cff78a8f5e722fa0ba5cb9156f4706761ac95125eb35bd44c7e",
+  "database_bytes": 19595264,
+  "compressed_sha256": "e60a540c5b1624e035d8a5886e16f61cdbc232f8039bdbc285ef4bbd7f442834",
+  "compressed_bytes": 7553783,
+  "dropped_rare": false,
+  "license": "CC BY-SA 4.0",
+  "attribution": "English Wiktionary contributors; kaikki.org/wiktextract"
+}

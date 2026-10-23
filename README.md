@@ -15,7 +15,8 @@ The Settings screen has these sections:
 - Drawer: the app drawer.
 - Wellbeing: nudges and wellbeing notices.
 - Today: a page with your next event, weather and more.
-- Deutsch: German word help.
+- Deutsch: German word help, including offline `:w` dictionary lookup with noun
+  gender/plural, main verb forms and inflected-word base lemmas.
 - Appearance and Gestures: look and swipe actions.
 - Backup: export and import your settings.
 - Privacy: shows the permissions below and whether each is granted.
@@ -51,11 +52,18 @@ Your settings and data stay on your phone. Thumbline has no server and no analyt
 | Feature | What is sent | To whom | How to turn it off |
 | --- | --- | --- | --- |
 | Weather | Your rounded location | Open-Meteo | Turn off in Settings |
-| Word meanings | The word you look up | Wiktionary | Turn off in Settings |
+| Word meanings | The word you look up (`:w` checks offline first) | Wiktionary | Turn off online meanings in Settings |
 | Currency rates | A request for exchange rates | Frankfurter | Turn off in Settings |
 | Now playing | A request for album artwork | The artwork address given by your music app | Turn off in Settings |
 
 Health Connect data is read live and is not stored by Thumbline.
+
+The offline German `:w` dictionary works without the online-meanings switch.
+Saved meanings still take priority; missing dictionary words use the existing
+Wiktionary cache/network only when online lookup is enabled.
+Dictionary source: English Wiktionary via [kaikki.org/wiktextract](https://kaikki.org/wiktextract/),
+[CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
+See [generation, validation and size details](tools/README.md).
 
 ## Update and backup
 

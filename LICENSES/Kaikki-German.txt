@@ -1,0 +1,21 @@
+Offline German dictionary
+
+Source: German extract of English Wiktionary, by Wiktionary contributors.
+https://en.wiktionary.org/wiki/Wiktionary:Main_Page
+https://kaikki.org/dictionary/German/
+https://kaikki.org/wiktextract/
+
+Retrieved: 2026-10-23
+Snapshot size and SHA-256: app/src/main/assets/german-v1.sqlite.json
+
+Modifications by Thumbline: remove unsupported records and unused fields, shorten
+English glosses, extract gender, plural and main verb forms, map inflections to
+lemmas, and create a compressed SQLite index. Generator and regeneration
+instructions: tools/german_dictionary.py and tools/README.md.
+
+The modified dictionary is licensed under Creative Commons
+Attribution-ShareAlike 4.0 International (CC BY-SA 4.0).
+Licence: https://creativecommons.org/licenses/by-sa/4.0/
+Legal code: https://creativecommons.org/licenses/by-sa/4.0/legalcode
+
+This data licence does not replace the GPLv3 licence on Thumbline/Olauncher code.
