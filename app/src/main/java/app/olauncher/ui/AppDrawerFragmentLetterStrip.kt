@@ -78,8 +78,10 @@ internal fun AppDrawerFragment.populateLetterStrip(ordered: List<AppModel>) {
     letterPosList = LetterIndex.build(realIndices.map { ordered[it].appLabel })
         .map { LetterPos(it.letter, realIndices[it.index]) }
 
+    stripLetters = LetterIndex.stripLetters(letterPosList)
+    val presentLetters = letterPosList.map { it.letter }.toSet()
     binding.letterStrip.removeAllViews()
-    for (pos in letterPosList) {
+    for (letter in stripLetters) {
         val tv = TextView(requireContext()).apply {
             layoutParams = LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -90,7 +92,8 @@ internal fun AppDrawerFragment.populateLetterStrip(ordered: List<AppModel>) {
             includeFontPadding = false
             setPadding(0, 0, 0, 0)
             TextViewCompat.setTextAppearance(this, R.style.TextSmall)
-            text = pos.letter.toString()
+            text = letter.toString()
+            alpha = if (letter in presentLetters) 1f else 0.3f
             isClickable = false
             isFocusable = false
         }
@@ -110,9 +113,10 @@ internal fun AppDrawerFragment.setupLetterStripTouchListener() {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
                 view.parent?.requestDisallowInterceptTouchEvent(true)
-                val letterIndex = LetterIndex.letterAt(event.y, view.height, letterPosList.size)
-                if (letterIndex in letterPosList.indices) {
-                    val pos = letterPosList[letterIndex]
+                val stripIndex = LetterIndex.letterAt(event.y, view.height, stripLetters.size)
+                val letter = LetterIndex.nearestPresent(stripLetters, letterPosList.map { it.letter }.toSet(), stripIndex)
+                val pos = letterPosList.firstOrNull { it.letter == letter }
+                if (pos != null) {
                     if (pos.letter != lastSelectedLetter) {
                         lastSelectedLetter = pos.letter
                         Haptics.tick(binding.root)

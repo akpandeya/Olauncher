@@ -28,6 +28,7 @@ import app.olauncher.data.store.WiktionaryApi
 import kotlinx.coroutines.Job
 import app.olauncher.helper.showKeyboard
 import app.olauncher.helper.showToast
+import app.olauncher.helper.showMessageDialog
 
 private const val TAG = "AppDrawerFragment"
 
@@ -60,6 +61,7 @@ class AppDrawerFragment : BaseFragment() {
     internal var currentPrivateSpaceLocked: Boolean = true
     internal var currentPrivateSpaceAvailable: Boolean = false
     internal var letterPosList: List<LetterPos> = emptyList()
+    internal var stripLetters: List<Char> = emptyList()
     internal var keyboardVisible = false
     internal var lastSelectedLetter: Char? = null
 
@@ -197,6 +199,13 @@ class AppDrawerFragment : BaseFragment() {
         }
     }
 
+    private fun maybeShowNewAppTip(ordered: List<AppModel>) {
+        if (prefs.newAppTipSeen || flag != Constants.FLAG_LAUNCH_APP) return
+        if (ordered.none { it.isNew && !it.isArchived }) return
+        prefs.newAppTipSeen = true
+        requireContext().showMessageDialog(R.string.new_app_tip_title, R.string.new_app_tip_message, R.string.done) {}
+    }
+
     internal fun updateCombinedAppList() {
         val apps = currentAppList ?: return
         val combined = apps.toMutableList()
@@ -213,6 +222,7 @@ class AppDrawerFragment : BaseFragment() {
         adapter.setAppList(ordered.toMutableList())
         adapter.filter.filter(binding.search.query)
         populateLetterStrip(ordered)
+        maybeShowNewAppTip(ordered)
     }
 
     private fun initClickListeners() {
@@ -259,6 +269,7 @@ class AppDrawerFragment : BaseFragment() {
         searchTextView = null
         lastSelectedLetter = null
         letterPosList = emptyList()
+        stripLetters = emptyList()
         _binding = null
     }
 
