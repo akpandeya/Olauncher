@@ -39,10 +39,21 @@ NOUN_DERIVATION_GLOSS = re.compile(
     re.IGNORECASE,
 )
 NON_FORM_TAGS = frozenset({"table-tags", "inflection-template", "class", "auxiliary", "diminutive"})
-# Conjugation drills must not teach obsolete variants ("gieng") or paradigm metadata rows.
-# Periphrastic tenses ("habe gemacht") are compositional, not stored: drills teach
-# single-word paradigm cells only. Auxiliary choice (haben/sein) lives only in these rows.
-NON_CONJUGATION_TAGS = RARE_TAGS | NON_FORM_TAGS | {"alternative", "multiword-construction"}
+# Conjugation drills must not teach obsolete variants ("gieng"), register or dialect
+# variants ("fechtest" beside standard "fichtst"), or paradigm metadata rows: the
+# standard form sits untagged in the same cell. Subordinate-clause rows ("übersetze")
+# duplicate the joined surface of separable verbs whose split cell ("setze über") is
+# the drilled main-clause form. Periphrastic tenses ("habe gemacht") are compositional,
+# not stored. Auxiliary choice (haben/sein) lives only in these rows.
+# "literary" stays out of this set on purpose: the corpus marks fechten's standard
+# strong forms "fichtst"/"ficht" literary, and excluding them would empty those cells.
+NON_CONJUGATION_TAGS = RARE_TAGS | NON_FORM_TAGS | {
+    "alternative", "multiword-construction", "subordinate-clause",
+    # Register or region variants of an untagged standard form in the same cell.
+    "proscribed", "colloquial", "dialectal", "regional", "informal",
+    "bureaucratese", "uncommon", "Austria", "Southern-Germany",
+    "Swiss-German", "Switzerland", "Upper-German",
+}
 BUDGET_BYTES = 15_000_000
 
 

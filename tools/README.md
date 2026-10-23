@@ -84,20 +84,27 @@ tagged archaic/obsolete/rare/dated/historical/nonstandard, `alternative`,
 paradigm metadata (`table-tags`, `inflection-template`, `class`, `auxiliary`,
 `diminutive`) or `multiword-construction` are excluded: periphrastic tenses
 ("habe gemacht") are compositional, so drills teach single-word paradigm cells.
-(Separable verbs keep their split surface forms, e.g. `setze über` for
-`übersetzen`: those are real paradigm cells and carry no exclusion tag.)
-Auxiliary choice (haben/sein) lives only in the excluded multiword rows; if a
-drill ever needs it, add an `entries.auxiliary` column rather than keeping the
-phrases.
+Also excluded are register or region variants whose standard form sits untagged
+in the same cell (`proscribed`, `colloquial`, `dialectal`, `regional`,
+`informal`, `bureaucratese`, `uncommon`, `Austria`, `Southern-Germany`,
+`Swiss-German`, `Switzerland`, `Upper-German` — so fechten's cell keeps
+`fichtst`, never colloquial `fechtest`; `literary` is kept because the corpus
+marks exactly those standard strong forms with it) and `subordinate-clause`
+rows, which duplicate a separable verb's joined surface. Separable verbs keep
+their split surface forms (e.g. `setze über` for `übersetzen`): those are the
+drilled main-clause cells, and the app resolves a joined/split conflict toward
+the split. Auxiliary choice (haben/sein) lives only in the excluded multiword
+rows; if a drill ever needs it, add an `entries.auxiliary` column rather than
+keeping the phrases.
 
 The asset has 109,630 lexical entries, 362,523 indexed form/entry pairs and
-391,739 conjugation form cells, occupies 10,765,824 compressed bytes
-(44,634,112 unpacked), and needs no rare-word filtering. Full-source and
+298,518 conjugation form cells, occupies 9,633,112 compressed bytes
+(35,627,008 unpacked), and needs no rare-word filtering. Full-source and
 fixture tests cover `gehen`, `ging → gehen`, `Mädchen → das`, `Haus → Häuser`,
 `Lehrer`, `Studentin → die / Studentinnen`, `mich → ich`, `die → der`
-(article/pronoun), the `machen`/`gehen`/`sein` present paradigms, parser
-failures, complete-line truncation, deterministic output and the compressed
-budget.
+(article/pronoun), the `machen`/`gehen`/`sein` present paradigms, the
+`fechten`/`übersetzen` register and separable cells, parser failures,
+complete-line truncation, deterministic output and the compressed budget.
 
 Lookup meanings use a dedicated body-sized, multiline drawer layout with no
 line/height cap; app names and unrelated result rows keep the existing layout.
@@ -107,7 +114,7 @@ selected layout resource to verify wrapping and the absence of clipping limits.
 ## APK size comparison
 
 Measured for the schema-v1 asset (6,434,596 gzip bytes); the v2 asset is
-10,765,824 gzip bytes, so expect roughly 4.3 MB more. With JDK 17, Android
+9,633,112 gzip bytes, so expect roughly 3.2 MB more. With JDK 17, Android
 API 36 and `GITHUB_RUN_NUMBER=617` (versionCode 730):
 
 | Artifact | Bytes |
