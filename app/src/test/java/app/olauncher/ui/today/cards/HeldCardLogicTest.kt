@@ -173,37 +173,41 @@ class HeldCardLogicTest {
         assertEquals("Title text on one line", HeldCardLogic.formatContent("Title\n", "text\ron one line"))
     }
 
-    // --- formatAppLine tests ---
+    // --- header / latest line tests ---
+
+    private fun summary(count: Int, title: String, text: String) = HeldAppSummary(
+        pkg = "com.google.android.youtube",
+        label = "YouTube",
+        count = count,
+        latestPostTime = epochMillis(2026, 10, 23, 3, 19, zoneUtc),
+        latestTitle = title,
+        latestText = text,
+    )
 
     @Test
-    fun `formatAppLine matches acceptance criteria example`() {
-        val postTime = epochMillis(2026, 10, 19, 14, 2, zoneUtc)
-        val summary = HeldAppSummary(
-            pkg = "com.instagram.android",
-            label = "Instagram",
-            count = 4,
-            latestPostTime = postTime,
-            latestTitle = "Anna",
-            latestText = "liked your photo",
+    fun `formatHeaderLine reads as app, count and latest time`() {
+        assertEquals(
+            "YouTube — 2 held · latest 03:19",
+            HeldCardLogic.formatHeaderLine(summary(2, "Rohan Cariappa", "x"), zoneUtc)
         )
-
-        val line = HeldCardLogic.formatAppLine(summary, zoneUtc)
-        assertEquals("Instagram · 4 · 14:02 Anna liked your photo", line)
     }
 
     @Test
-    fun `formatAppLine formats without title or text`() {
-        val postTime = epochMillis(2026, 10, 19, 14, 2, zoneUtc)
-        val summary = HeldAppSummary(
-            pkg = "com.instagram.android",
-            label = "Instagram",
-            count = 1,
-            latestPostTime = postTime,
-            latestTitle = "",
-            latestText = "",
+    fun `formatHeaderLine uses the supplied template`() {
+        assertEquals(
+            "YouTube|7|03:19",
+            HeldCardLogic.formatHeaderLine(summary(7, "t", ""), zoneUtc, "%1\$s|%2\$d|%3\$s")
         )
+    }
 
-        val line = HeldCardLogic.formatAppLine(summary, zoneUtc)
-        assertEquals("Instagram · 1 · 14:02", line)
+    @Test
+    fun `formatLatestLine is the title only`() {
+        assertEquals("Rohan\nCariappa".replace('\n', ' '), HeldCardLogic.formatLatestLine(summary(2, "Rohan\nCariappa", "body")))
+    }
+
+    @Test
+    fun `formatLatestLine falls back to text then empty`() {
+        assertEquals("body", HeldCardLogic.formatLatestLine(summary(1, "", "body")))
+        assertEquals("", HeldCardLogic.formatLatestLine(summary(1, " ", "")))
     }
 }

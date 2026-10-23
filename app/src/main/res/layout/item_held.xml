@@ -1,17 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/tvHeldLine"
-    android:gravity="center_vertical"
-    android:minHeight="48dp"
-    style="@style/TextMedium"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="?android:attr/selectableItemBackground"
     android:clickable="true"
     android:focusable="true"
-    android:ellipsize="end"
-    android:maxLines="1"
-    android:singleLine="true"
-    android:paddingVertical="6dp"
-    tools:text="Instagram · 4 · 14:02 Anna liked your photo" />
+    android:gravity="center_vertical"
+    android:minHeight="48dp"
+    android:orientation="vertical"
+    android:paddingVertical="6dp">
+
+    <TextView
+        android:id="@+id/tvHeldLine"
+        style="@style/TextMedium"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        tools:text="YouTube — 2 held · latest 03:19" />
+
+    <TextView
+        android:id="@+id/tvHeldLatest"
+        style="@style/TextSmall"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        tools:text="Rohan Cariappa Lakdi ki Kathi, Kathi" />
+</LinearLayout>

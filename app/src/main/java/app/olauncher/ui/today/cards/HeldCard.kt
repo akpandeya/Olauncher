@@ -79,14 +79,21 @@ object HeldCardLogic {
         }
     }
 
-    fun formatAppLine(
+    const val DEFAULT_HEADER_TEMPLATE = "%1\$s — %2\$d held · latest %3\$s"
+
+    /** First line, e.g. "YouTube — 2 held · latest 03:19". */
+    fun formatHeaderLine(
         summary: HeldAppSummary,
         zone: ZoneId = ZoneId.systemDefault(),
-    ): String {
-        val time = formatTime(summary.latestPostTime, zone)
-        val content = formatContent(summary.latestTitle, summary.latestText)
-        val timeAndContent = if (content.isNotEmpty()) "$time $content" else time
-        return "${summary.label} · ${summary.count} · $timeAndContent"
+        template: String = DEFAULT_HEADER_TEMPLATE,
+    ): String = String.format(
+        Locale.ROOT, template, summary.label, summary.count, formatTime(summary.latestPostTime, zone)
+    )
+
+    /** Second line: the latest title, falling back to its text; empty if neither. */
+    fun formatLatestLine(summary: HeldAppSummary): String {
+        val title = formatContent(summary.latestTitle, "")
+        return title.ifEmpty { formatContent("", summary.latestText) }
     }
 }
 
@@ -212,7 +219,12 @@ internal class HeldCardView(
 
         for (summary in summaries) {
             val itemBinding = ItemHeldBinding.inflate(inflater, b.itemsContainer, false)
-            itemBinding.tvHeldLine.text = HeldCardLogic.formatAppLine(summary, zone)
+            itemBinding.tvHeldLine.text = HeldCardLogic.formatHeaderLine(
+                summary, zone, context.getString(R.string.held_header_format)
+            )
+            val latest = HeldCardLogic.formatLatestLine(summary)
+            itemBinding.tvHeldLatest.text = latest
+            itemBinding.tvHeldLatest.isVisible = latest.isNotEmpty()
             if (fragment != null && summary.pkg.isNotBlank()) {
                 itemBinding.root.setOnClickListener {
                     Haptics.tick(it)
