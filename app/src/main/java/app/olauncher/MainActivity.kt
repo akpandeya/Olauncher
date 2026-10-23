@@ -82,6 +82,7 @@ import app.olauncher.helper.setPlainWallpaper
 import app.olauncher.helper.showLauncherSelector
 import app.olauncher.helper.showMessageDialog
 import app.olauncher.helper.showToast
+import app.olauncher.ui.today.TodayWidgets
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -267,7 +268,8 @@ class MainActivity : AppCompatActivity() {
         prefs.checkRollovers()
         isResumed = true
         viewModel.isPrivateSpaceToggling = false
-        viewModel.isAwaitingActivityResult = false
+        // A picker result can launch bind/configuration before this intermediate resume.
+        viewModel.isAwaitingActivityResult = hasPendingTodayWidget
         reloadAppList(AppListReloadTrigger.RESUME)
         advanceWelcomeIfDefault()
         NudgeScheduler.syncSocial(this)
@@ -593,9 +595,11 @@ class MainActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         setIntent(intent)
-        // Home was pressed: leave any open picker behind and go home
-        viewModel.isAwaitingActivityResult = false
-        backToHomeScreen()
+        // Keep the result owner alive until widget setup has completed or been cancelled.
+        if (!hasPendingTodayWidget) {
+            viewModel.isAwaitingActivityResult = false
+            backToHomeScreen()
+        }
         handleIntent(intent)
     }
 
@@ -916,6 +920,9 @@ class MainActivity : AppCompatActivity() {
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
     }
 
+    private val hasPendingTodayWidget: Boolean
+        get() = navController.currentDestination?.id == R.id.todayFragment && prefs.todayPendingWidgetId > 0
+
     private fun backToHomeScreen() {
         if (viewModel.isPrivateSpaceToggling || viewModel.isAwaitingActivityResult) return
         messageDialog?.dismiss()
@@ -923,6 +930,7 @@ class MainActivity : AppCompatActivity() {
                 isOnHome = navController.currentDestination?.id == R.id.mainFragment,
                 privateSpaceToggling = viewModel.isPrivateSpaceToggling,
                 awaitingActivityResult = viewModel.isAwaitingActivityResult,
+                pendingWidgetId = if (hasPendingTodayWidget) prefs.todayPendingWidgetId else -1,
             )
         )
             navController.popBackStack(R.id.mainFragment, false)
@@ -980,6 +988,13 @@ class MainActivity : AppCompatActivity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         when (requestCode) {
+            TodayWidgets.REQUEST_CONFIGURE -> {
+                supportFragmentManager.setFragmentResult(
+                    TodayWidgets.CONFIGURE_RESULT,
+                    bundleOf(TodayWidgets.RESULT_CODE to resultCode),
+                )
+            }
+
             Constants.REQUEST_CODE_ENABLE_ADMIN -> {
                 if (resultCode == Activity.RESULT_OK)
                     prefs.lockModeOn = true

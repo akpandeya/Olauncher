@@ -93,6 +93,10 @@ class Prefs(context: Context) :
         const val SWIPE_RIGHT_ACTION = "SWIPE_RIGHT_ACTION"
         const val TODAY_CARD_PREFIX = "TODAY_CARD_"
         const val TODAY_ORDER_SMART = "TODAY_ORDER_SMART"
+        const val TODAY_WIDGET_IDS = "TODAY_WIDGET_IDS"
+        const val TODAY_PENDING_WIDGET_ID = "TODAY_PENDING_WIDGET_ID"
+        const val TODAY_PANEL_ORDER = "TODAY_PANEL_ORDER"
+        const val TODAY_PINNED_KEYS = "TODAY_PINNED_KEYS"
         const val WELLBEING_SHOW_WEEK = "WELLBEING_SHOW_WEEK"
         const val NUDGE_WINDOW_START_MIN = "NUDGE_WINDOW_START_MIN"
         const val NUDGE_WINDOW_END_MIN = "NUDGE_WINDOW_END_MIN"
@@ -607,6 +611,23 @@ class Prefs(context: Context) :
     }
 
     fun isTodayCardEnabled(card: TodayCard): Boolean = isTodayCardEnabled(card.key)
+
+    var todayWidgetIds: List<Int>
+        get() = prefs.getString(TODAY_WIDGET_IDS, "").orEmpty().split(",")
+            .mapNotNull { it.toIntOrNull()?.takeIf { id -> id > 0 } }.distinct()
+        set(value) = prefs.edit(commit = true) { putString(TODAY_WIDGET_IDS, value.joinToString(",")) }
+
+    var todayPendingWidgetId: Int
+        get() = prefs.getInt(TODAY_PENDING_WIDGET_ID, -1)
+        set(value) = prefs.edit(commit = true) { putInt(TODAY_PENDING_WIDGET_ID, value) }
+
+    var todayPanelOrder: List<String>
+        get() = prefs.getString(TODAY_PANEL_ORDER, "").orEmpty().split(",").filter { it.isNotEmpty() }
+        set(value) = prefs.edit { putString(TODAY_PANEL_ORDER, value.distinct().joinToString(",")) }
+
+    var todayPinnedKeys: Set<String>
+        get() = prefs.getStringSet(TODAY_PINNED_KEYS, emptySet()).orEmpty().toSet()
+        set(value) = prefs.edit { putStringSet(TODAY_PINNED_KEYS, value.toSet()) }
 
     fun setTodayCardEnabled(key: String, enabled: Boolean) = prefs.edit {
         val canonical = TodayOrder.canonicalKey(key)
