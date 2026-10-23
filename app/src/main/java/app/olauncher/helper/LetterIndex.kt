@@ -36,6 +36,21 @@ object LetterIndex {
         }.sortedWith(comparator)
     }
 
+    /** Letters shown in the strip: every A-Z, plus '#' only when some app needs it. */
+    fun stripLetters(present: List<LetterPos>): List<Char> =
+        (if (present.any { it.letter == '#' }) listOf('#') else emptyList()) + ('A'..'Z')
+
+    /** The letter a drag at [index] should jump to: the nearest strip letter that has apps (earlier one on a tie). */
+    fun nearestPresent(strip: List<Char>, present: Set<Char>, index: Int): Char? {
+        if (strip.isEmpty() || present.isEmpty()) return null
+        val start = index.coerceIn(0, strip.size - 1)
+        for (d in 0 until strip.size) {
+            strip.getOrNull(start - d)?.takeIf { it in present }?.let { return it }
+            strip.getOrNull(start + d)?.takeIf { it in present }?.let { return it }
+        }
+        return null
+    }
+
     fun letterAt(y: Float, height: Float, count: Int): Int {
         if (count <= 0) return -1
         if (height <= 0f) return 0

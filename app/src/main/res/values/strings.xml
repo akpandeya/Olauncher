@@ -79,6 +79,9 @@
     <string name="search_contacts">Search contacts</string>
     <string name="search_contacts_permission_message">Thumbline reads your contacts on this phone to find people in search</string>
     <string name="recent">Recent</string>
+    <string name="drawer_search_hint">Search</string>
+    <string name="new_app_tip_title">New app</string>
+    <string name="new_app_tip_message">The ✦ marks an app installed since your last visit.</string>
     <string name="hide">Hide</string>
     <string name="rename">Rename</string>
     <string name="show_date_time">Show date time</string>

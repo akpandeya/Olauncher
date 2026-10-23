@@ -200,4 +200,27 @@ class LetterIndexTest {
     fun `listInsetPx is zero when the list margin already clears the strip`() {
         assertEquals(0, LetterIndex.listInsetPx(stripWidthPx = 144, rowPaddingPx = 72, listMarginPx = 168))
     }
+
+    @Test
+    fun `stripLetters lists all of A to Z and adds hash only when present`() {
+        assertEquals(('A'..'Z').toList(), LetterIndex.stripLetters(listOf(LetterPos('B', 0))))
+        assertEquals(listOf('#') + ('A'..'Z'), LetterIndex.stripLetters(listOf(LetterPos('#', 0), LetterPos('B', 1))))
+    }
+
+    @Test
+    fun `nearestPresent skips letters with no apps`() {
+        val strip = ('A'..'Z').toList()
+        val present = setOf('B', 'M')
+        assertEquals('B', LetterIndex.nearestPresent(strip, present, 1))
+        assertEquals('B', LetterIndex.nearestPresent(strip, present, 2))
+        assertEquals('M', LetterIndex.nearestPresent(strip, present, 10))
+        assertEquals('M', LetterIndex.nearestPresent(strip, present, 25))
+    }
+
+    @Test
+    fun `nearestPresent prefers the earlier letter on a tie and handles no apps`() {
+        val strip = ('A'..'Z').toList()
+        assertEquals('A', LetterIndex.nearestPresent(strip, setOf('A', 'C'), 1))
+        assertEquals(null, LetterIndex.nearestPresent(strip, emptySet(), 3))
+    }
 }

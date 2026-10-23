@@ -499,7 +499,9 @@ class AppDrawerAdapter(
                 }
                 if (starIndex >= 0) {
                     spannable.setSpan(
-                        ForegroundColorSpan(accentColor),
+                        ForegroundColorSpan(
+                            androidx.core.graphics.ColorUtils.setAlphaComponent(accentColor, ArchivedAppsHelper.NEW_APP_MARKER_ALPHA)
+                        ),
                         starIndex,
                         starIndex + 1,
                         Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
