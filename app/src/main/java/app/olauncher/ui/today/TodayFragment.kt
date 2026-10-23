@@ -7,6 +7,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -53,6 +55,14 @@ class TodayFragment : BaseFragment() {
         prefs = Prefs(requireContext())
         StatusBarFade.attach(binding.statusBarFade)
         initSwipeTouchListener()
+        // Lift the page above the keyboard so the Add note field stays visible.
+        binding.todayScrollView.clipToPadding = false
+        ViewCompat.setOnApplyWindowInsetsListener(binding.todayScrollView) { v, insets ->
+            val ime = insets.getInsets(WindowInsetsCompat.Type.ime())
+            val bottom = ImeInset.bottomPadding(insets.isVisible(WindowInsetsCompat.Type.ime()), ime.bottom)
+            v.setPadding(v.paddingLeft, v.paddingTop, v.paddingRight, bottom)
+            insets
+        }
         initIntention()
         binding.tvPastIntentions.setOnClickListener {
             pastIntentionsOpen = !pastIntentionsOpen

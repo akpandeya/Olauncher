@@ -27,27 +27,13 @@ internal fun HomeFragment.populateNoteLine() {
     val today = LocalDate.now()
     val note = Notes.top(all, today)
     val more = Notes.moreText(Notes.moreCount(all, today), getString(R.string.note_home_more))
-    val text = note?.let { getString(R.string.note_home_line, it.text) + more?.let { m -> "  $m" }.orEmpty() }
-    noteMoreStart = if (text != null && more != null) text.length - more.length else -1
+    val text = note?.let { getString(R.string.note_home_line, it.text) }
     // Skip unchanged text: the line is a live region and would be re-announced every second.
     if (binding.noteLine.text.toString() != text.orEmpty()) binding.noteLine.text = text
     binding.noteLine.isVisible = text != null
-}
-
-/** Tap on the note line: on the "+N more" suffix open Today, else mark the shown note done. */
-internal fun HomeFragment.onNoteLineTap() {
-    val line = binding.noteLine
-    val layout = line.layout
-    val start = noteMoreStart
-    if (start >= 0 && layout != null) {
-        val x = (noteLineTouchX - line.totalPaddingLeft + line.scrollX).coerceAtLeast(0f)
-        val row = layout.getLineForVertical((noteLineTouchY - line.totalPaddingTop + line.scrollY).toInt().coerceAtLeast(0))
-        if (layout.getOffsetForHorizontal(row, x) >= start) {
-            openToday()
-            return
-        }
-    }
-    markTopNoteDone()
+    binding.noteMore.text = more
+    binding.noteMore.isVisible = text != null && more != null
+    binding.noteRow.isVisible = text != null
 }
 
 /** Tap on the note line: mark the shown note done, with Undo, and show the next one. */
