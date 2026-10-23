@@ -88,7 +88,6 @@ internal fun SettingsFragment.populateAllRows() {
     populateFontFamily()
     populateTextSize()
     populateBoldFont()
-    populateClockFromWallpaper()
     setupHapticSliders()
     populateTextContrast()
     populateHomeDarkness()

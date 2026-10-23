@@ -848,7 +848,6 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             PhotoWallpaper.applyCurrent(requireContext(), prefs)
         } else {
             setPlainWallpaperByTheme(requireContext(), changedAppTheme)
-            prefs.clockWallpaperColor = 0
         }
         requireActivity().recreate()
     }
