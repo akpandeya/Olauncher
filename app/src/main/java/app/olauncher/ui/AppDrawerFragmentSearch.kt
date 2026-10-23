@@ -35,6 +35,8 @@ import app.olauncher.helper.EnterPolicy
 import app.olauncher.helper.openSearch
 import app.olauncher.helper.openUrl
 import app.olauncher.helper.DrawerCommand
+import app.olauncher.helper.DictionaryWebsite
+import app.olauncher.helper.createChoiceDialog
 import app.olauncher.data.store.WiktionaryApi
 import app.olauncher.data.store.WiktionaryCache
 import app.olauncher.data.store.WiktionarySuggestCache
@@ -242,6 +244,34 @@ internal fun AppDrawerFragment.lookUpMainRows(ctx: Context, text: String): List<
             AppModel.Result(ctx.getString(R.string.word_row_unreachable), silent)
     }
     return listOf(row, dictionaryRow(ctx, text))
+}
+
+internal fun AppDrawerFragment.openWiktionary(text: String) {
+    openDictionaryWebsite(DictionaryWebsite.WIKTIONARY, text)
+}
+
+internal fun AppDrawerFragment.showDictionaryWebsites(text: String) {
+    val ctx = context ?: return
+    val choices = listOf(
+        DictionaryWebsite.VERBFORMEN to R.string.dictionary_website_verbformen,
+        DictionaryWebsite.DWDS to R.string.dictionary_website_dwds,
+        DictionaryWebsite.DUDEN to R.string.dictionary_website_duden,
+        DictionaryWebsite.WIKTIONARY to R.string.dictionary_website_wiktionary,
+    )
+    ctx.createChoiceDialog(
+        titleText = text,
+        items = choices.map { ctx.getString(it.second) },
+    ) { index ->
+        openDictionaryWebsite(choices[index].first, text)
+    }.show()
+}
+
+private fun AppDrawerFragment.openDictionaryWebsite(website: DictionaryWebsite, text: String) {
+    try {
+        requireContext().openUrl(website.buildUrl(text))
+    } catch (e: Exception) {
+        Log.w(TAG, "openDictionaryWebsite failed", e)
+    }
 }
 
 private fun AppDrawerFragment.dictionaryRow(ctx: Context, text: String) = AppModel.Result(
