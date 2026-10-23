@@ -10,7 +10,6 @@ import app.olauncher.R
 import app.olauncher.data.Prefs
 import app.olauncher.data.store.WiktionaryApi
 import app.olauncher.data.store.WiktionaryCache
-import app.olauncher.data.store.WordEdit
 import app.olauncher.data.store.WordLookup
 import app.olauncher.data.store.WordLookupShare
 import app.olauncher.data.store.WordsStore
@@ -52,7 +51,8 @@ class WordLookupActivity : AppCompatActivity() {
         listOf(binding.lookupWord, binding.lookupMeaning, binding.lookupOpen, binding.lookupSave)
             .forEach { it.typeface = typeface }
         binding.lookupWord.text = word
-        binding.lookupOpen.setOnClickListener { openUrl(WordEdit.wiktionaryUrl(word)) }
+        binding.lookupOpen.text = DictionaryApps.actionLabel(this, prefs.germanDictionaryApp)
+        binding.lookupOpen.setOnClickListener { DictionaryApps.open(this, word) }
 
         val saved = WordsStore(this).all().firstOrNull { it.text.equals(word, ignoreCase = true) }
         var foundMeaning: String? = null

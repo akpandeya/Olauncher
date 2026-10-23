@@ -64,6 +64,9 @@
     <item name="exportBackupLayout" type="id" />
     <item name="fontFamily" type="id" />
     <item name="germanClock" type="id" />
+    <item name="dictionaryApp" type="id" />
+    <item name="dictionaryAppLayout" type="id" />
+    <item name="dictionaryAppTitle" type="id" />
     <item name="germanClockLayout" type="id" />
     <item name="germanClockTitle" type="id" />
     <item name="germanLayout" type="id" />

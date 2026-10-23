@@ -23,11 +23,11 @@ import app.olauncher.databinding.DialogEditWordBinding
 import app.olauncher.databinding.FragmentWordsBinding
 import app.olauncher.databinding.ItemWordBinding
 import app.olauncher.helper.DrawerScrollHelper
+import app.olauncher.helper.DictionaryApps
 import app.olauncher.helper.createDialog
 import app.olauncher.helper.dpToPx
 import app.olauncher.helper.getColorFromAttr
 import app.olauncher.helper.hapticLongClick
-import app.olauncher.helper.openUrl
 import app.olauncher.helper.showMessageDialog
 import app.olauncher.helper.showPopupMenu
 import app.olauncher.helper.showToast
@@ -150,17 +150,13 @@ class WordsFragment : BaseFragment() {
         anchor.showPopupMenu(
             configure = { menu ->
                 menu.add(Menu.NONE, 1, Menu.NONE, R.string.words_edit)
-                menu.add(Menu.NONE, 2, Menu.NONE, R.string.words_open_wiktionary)
+                menu.add(Menu.NONE, 2, Menu.NONE, DictionaryApps.actionLabel(context, Prefs(context).germanDictionaryApp))
                 menu.add(Menu.NONE, 3, Menu.NONE, R.string.words_delete)
             }
         ) { item ->
             when (item.itemId) {
                 1 -> showEditDialog(context, word)
-                2 -> try {
-                    context.openUrl(WordEdit.wiktionaryUrl(word.text))
-                } catch (e: Exception) {
-                    context.showToast(R.string.saved_unable_to_open)
-                }
+                2 -> DictionaryApps.open(context, word.text)
                 3 -> context.showMessageDialog(
                     title = R.string.words_delete,
                     message = context.getString(R.string.words_delete_confirm, word.text),
