@@ -27,6 +27,9 @@ object Conjugation {
     private const val TAG_SINGULAR = "singular"
     private const val TAG_PLURAL = "plural"
 
+    /** A multiword form whose extra tokens are only these pronouns is the reflexive base, not a split. */
+    private val REFLEXIVE_PRONOUNS = setOf("mich", "dich", "sich", "uns", "euch")
+
     /** Orders the drill: 1sg → 2sg → 3sg → 1pl → 2pl → 3pl (number first, then person). */
     private val CELL_ORDER = compareBy<PresentForm>({ it.plural }, { it.person })
 
@@ -54,14 +57,20 @@ object Conjugation {
     }
 
     /**
-     * A cell can hold both a single-word form and a multiword one (a reflexive
-     * "freue mich" beside "freue", or a separable "setze … um" split): the drill
-     * prompts one word, so the single-word form wins. Ties break lexicographically
-     * so the choice never depends on row order.
+     * A cell can hold competing surface forms: a separable split ("setze über")
+     * beside the joined subordinate-clause shape, or a reflexive "freue mich"
+     * beside "freue". The drill teaches the main-clause form, so separable
+     * splits win over single-word forms; a multiword form that only adds
+     * reflexive pronouns stays deprioritized behind its single-word base.
+     * Ties break lexicographically so the choice never depends on row order.
      */
     private fun resolveCell(forms: List<String>): String {
+        val splits = forms.filter { form ->
+            val tokens = form.split(' ')
+            tokens.size > 1 && tokens.drop(1).any { it !in REFLEXIVE_PRONOUNS }
+        }
         val singleWord = forms.filterNot { form -> form.any { it.isWhitespace() } }
-        return (singleWord.ifEmpty { forms }).min()
+        return (splits.ifEmpty { singleWord }.ifEmpty { forms }).min()
     }
 
     fun pronoun(person: Int, plural: Boolean): String = when (person to plural) {

@@ -103,6 +103,29 @@ class ConjugationTest {
     }
 
     @Test
+    fun `cell conflict prefers the separable split over the joined form`() {
+        val paradigm = Conjugation.parsePresent(
+            "übersetzen",
+            listOf(
+                "übersetze" to "first-person indicative present singular",
+                "setze über" to "first-person indicative present singular",
+                "übersetzt" to "indicative present second-person singular",
+                "setzt über" to "indicative present second-person singular",
+                "übersetzt" to "indicative present singular third-person",
+                "setzt über" to "indicative present singular third-person",
+            ),
+        )!!
+        assertEquals(
+            listOf(
+                PresentForm(1, false, "setze über"),
+                PresentForm(2, false, "setzt über"),
+                PresentForm(3, false, "setzt über"),
+            ),
+            paradigm.present,
+        )
+    }
+
+    @Test
     fun `cell conflict between same-shape forms breaks the tie deterministically`() {
         val singleWord = Conjugation.parsePresent(
             "x",

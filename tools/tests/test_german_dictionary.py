@@ -244,17 +244,22 @@ class GermanDictionaryTest(unittest.TestCase):
                     "SELECT count(*) FROM forms f JOIN entries e ON e.id=f.entry_id "
                     "WHERE e.lemma=?", (lemma,)).fetchone()[0])
 
-    def test_conjugation_forms_exclude_alternative_auxiliary_metadata_periphrastic_rows(self):
+    def test_conjugation_forms_exclude_variants_metadata_and_periphrastic_rows(self):
         self.build()
         db = self.database()
         self.assertEqual([], db.execute(
             "SELECT form, tags FROM forms "
-            "WHERE form IN ('gieng', 'machet', 'de-conj', 'sein', 'haben', "
+            "WHERE form IN ('gieng', 'machet', 'machest', 'de-conj', 'sein', 'haben', "
             "'habe gemacht')").fetchall())
-        self.assertEqual(0, db.execute(
-            "SELECT count(*) FROM forms WHERE tags LIKE '%alternative%' OR "
-            "tags LIKE '%auxiliary%' OR tags LIKE '%inflection-template%' OR "
-            "tags LIKE '%multiword-construction%'").fetchone()[0])
+        for tag in ("alternative", "auxiliary", "inflection-template",
+                    "multiword-construction", "subordinate-clause", "proscribed",
+                    "colloquial", "dialectal", "regional", "informal",
+                    "bureaucratese", "uncommon", "Austria", "Southern-Germany",
+                    "Swiss-German", "Switzerland", "Upper-German"):
+            with self.subTest(tag=tag):
+                self.assertEqual(0, db.execute(
+                    "SELECT count(*) FROM forms WHERE tags LIKE ?",
+                    ("%" + tag + "%",)).fetchone()[0])
 
     def test_homonymous_forms_with_distinct_tags_are_all_stored(self):
         self.build()
@@ -295,6 +300,21 @@ class GermanDictionaryTest(unittest.TestCase):
                                 ("sein", SEIN_PRESENT)):
             with self.subTest(lemma=lemma):
                 self.assertEqual(expected, self.present_cells(db, lemma))
+        # Register variants lose to the untagged standard form in the same cell:
+        # fechten's 2sg is the colloquial row's standard literary-tagged rival.
+        self.assertEqual(
+            {("fichtst", "indicative literary present second-person singular")},
+            {row for row in self.present_cells(db, "fechten")
+             if "second-person" in row[1] and "singular" in row[1]})
+        # Separable verbs keep the drilled split; joined subordinate-clause duplicates
+        # are excluded. übersetzen merges the inseparable and separable homographs.
+        self.assertEqual(
+            {("übersetze", "first-person indicative present singular"),
+             ("setze über", "first-person indicative present singular")},
+            {row for row in self.present_cells(db, "übersetzen")
+             if "first-person" in row[1] and "singular" in row[1]})
+        self.assertEqual(0, db.execute(
+            "SELECT count(*) FROM forms WHERE tags LIKE '%subordinate-clause%'").fetchone()[0])
         self.assertEqual("gehen", self.lookup(db, "gehen")[0]["lemma"])
         self.assertEqual("gehen", self.lookup(db, "ging")[0]["lemma"])
         gehen = self.lookup(db, "gehen")[0]
