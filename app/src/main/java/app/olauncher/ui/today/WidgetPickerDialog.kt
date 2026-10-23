@@ -37,11 +37,13 @@ internal object WidgetPickerDialog {
     /** One pickable widget: its provider, the profile it was found on and its label. */
     data class Entry(val info: AppWidgetProviderInfo, val profile: UserHandle?, val label: CharSequence)
 
-    fun show(context: Context, onPick: (Entry) -> Unit) {
+    fun show(context: Context, isAlive: () -> Boolean, onPick: (Entry) -> Unit) {
         val main = Handler(Looper.getMainLooper())
         Thread {
             val entries = providers(context)
             main.post {
+                // The enumeration takes a beat; the page may be gone by the time it lands.
+                if (!isAlive()) return@post
                 if (entries.isEmpty()) showEmpty(context) else showEntries(context, entries, onPick)
             }
         }.apply { isDaemon = true }.start()
@@ -106,8 +108,13 @@ internal object WidgetPickerDialog {
                     // The dialog closes before the pick runs: the bind or configure
                     // step that follows must not reveal this dialog still open behind it.
                     // holder, because the rows are built before the dialog is assigned.
+                    // dismiss() fades the blur out asynchronously, leaving rows tappable
+                    // during the animation — the latch keeps a double tap from picking twice.
+                    var picked = false
                     entries.forEach { entry ->
                         addView(row(inflater, context, entry) {
+                            if (picked) return@row
+                            picked = true
                             holder[0]?.dismiss()
                             onPick(entry)
                         })
