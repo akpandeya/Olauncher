@@ -396,6 +396,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     internal var pendingShortcutOffsetStep: Int = -1
 
     internal fun populateFooter() {
+        binding.footer.paintFlags = binding.footer.paintFlags or android.graphics.Paint.UNDERLINE_TEXT_FLAG
         binding.footer.text = getString(R.string.settings_footer, BuildConfig.VERSION_NAME, "Olauncher")
     }
 
