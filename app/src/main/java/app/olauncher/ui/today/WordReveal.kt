@@ -21,9 +21,12 @@ import app.olauncher.ui.today.cards.WordsCardLogic
 class WordReveal(
     val binding: ViewWordRevealBinding,
     var onAnswer: ((word: Word, knewIt: Boolean) -> Unit)? = null,
+    var onAlmost: ((word: Word) -> Unit)? = null,
     var onWordUpdated: ((word: Word) -> Unit)? = null,
     var onWordDeleted: ((word: Word) -> Unit)? = null,
     private val alwaysShowMeaning: Boolean = false,
+    /** Show the saved context before the reveal, as the review session's flashcard front does. */
+    private val alwaysShowContext: Boolean = false,
 ) {
     var currentWord: Word? = null
         private set
@@ -55,6 +58,12 @@ class WordReveal(
                 onAnswer?.invoke(word, false)
             }
         }
+
+        binding.btnAlmost.setOnClickListener {
+            currentWord?.let { word ->
+                onAlmost?.invoke(word)
+            }
+        }
     }
 
     fun bind(word: Word, startRevealed: Boolean? = null) {
@@ -70,8 +79,13 @@ class WordReveal(
         isRevealed = revealed
         val word = currentWord
         binding.tvMeaning.isVisible = revealed || (alwaysShowMeaning && word != null && word.meaning.isNotBlank())
-        binding.tvContext.isVisible = revealed && (word != null && word.context.isNotBlank())
+        binding.tvContext.isVisible = (revealed || alwaysShowContext) && word != null && word.context.isNotBlank()
         binding.buttonsContainer.isVisible = revealed
+    }
+
+    /** The session grades with three buttons; the Today card keeps its two. */
+    fun showAlmostButton(show: Boolean) {
+        binding.btnAlmost.isVisible = show
     }
 
     fun showWordPopup(anchor: View, word: Word) {

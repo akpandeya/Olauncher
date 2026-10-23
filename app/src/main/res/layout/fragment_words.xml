@@ -104,6 +104,21 @@
             android:paddingBottom="12dp"
             tools:text="12 words · 3 due · 4 learned" />
 
+        <TextView
+            android:id="@+id/btnReview"
+            style="@style/TextSmallBold"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center_vertical"
+            android:minHeight="48dp"
+            android:paddingHorizontal="4dp"
+            android:visibility="gone"
+            tools:text="Review 3"
+            tools:visibility="visible" />
+
         <LinearLayout
             android:id="@+id/searchBar"
             android:layout_width="match_parent"

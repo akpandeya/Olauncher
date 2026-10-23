@@ -120,6 +120,13 @@
             app:popEnterAnim="@animator/fade_enter"
             app:popExitAnim="@animator/fade_exit" />
         <action
+            android:id="@+id/action_todayFragment_to_reviewFragment"
+            app:destination="@id/reviewFragment"
+            app:enterAnim="@animator/fade_enter"
+            app:exitAnim="@animator/fade_exit"
+            app:popEnterAnim="@animator/fade_enter"
+            app:popExitAnim="@animator/fade_exit" />
+        <action
             android:id="@+id/action_todayFragment_to_appListFragment"
             app:destination="@id/appListFragment"
             app:enterAnim="@animator/drawer_enter"
@@ -130,7 +137,21 @@
         android:id="@+id/wordsFragment"
         android:name="app.olauncher.ui.words.WordsFragment"
         android:label="WordsFragment"
-        tools:layout="@layout/fragment_words" />
+        tools:layout="@layout/fragment_words">
+        <action
+            android:id="@+id/action_wordsFragment_to_reviewFragment"
+            app:destination="@id/reviewFragment"
+            app:enterAnim="@animator/fade_enter"
+            app:exitAnim="@animator/fade_exit"
+            app:popEnterAnim="@animator/fade_enter"
+            app:popExitAnim="@animator/fade_exit" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/reviewFragment"
+        android:name="app.olauncher.ui.words.ReviewFragment"
+        android:label="ReviewFragment"
+        tools:layout="@layout/fragment_review" />
 
     <fragment
         android:id="@+id/privacyFragment"

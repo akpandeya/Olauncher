@@ -9,7 +9,7 @@ class LeitnerTest {
 
     @Test
     fun `intervals match specification`() {
-        assertEquals(listOf(1, 2, 4, 8, 16), Leitner.INTERVALS)
+        assertEquals(listOf(1, 2, 4, 8, 16, 32, 64), Leitner.INTERVALS)
     }
 
     @Test
@@ -22,44 +22,58 @@ class LeitnerTest {
     fun `each box step advances box and sets correct dueDay`() {
         val today = 19500L
 
-        // Box 1 -> Box 2 (interval = 2)
-        val word1 = Word(id = 1L, text = "Wort", box = 1, dueDay = today, addedAt = 1000L)
-        val stepped1 = Leitner.knowIt(word1, today)
-        assertEquals(2, stepped1.box)
-        assertEquals(today + 2, stepped1.dueDay)
-        assertNull(stepped1.learnedAt)
-
-        // Box 2 -> Box 3 (interval = 4)
-        val word2 = stepped1
-        val stepped2 = Leitner.knowIt(word2, today)
-        assertEquals(3, stepped2.box)
-        assertEquals(today + 4, stepped2.dueDay)
-        assertNull(stepped2.learnedAt)
-
-        // Box 3 -> Box 4 (interval = 8)
-        val word3 = stepped2
-        val stepped3 = Leitner.knowIt(word3, today)
-        assertEquals(4, stepped3.box)
-        assertEquals(today + 8, stepped3.dueDay)
-        assertNull(stepped3.learnedAt)
-
-        // Box 4 -> Box 5 (interval = 16)
-        val word4 = stepped3
-        val stepped4 = Leitner.knowIt(word4, today)
-        assertEquals(5, stepped4.box)
-        assertEquals(today + 16, stepped4.dueDay)
-        assertNull(stepped4.learnedAt)
+        var word = Word(id = 1L, text = "Wort", box = 1, dueDay = today, addedAt = 1000L)
+        for (box in 1 until Leitner.learnedBox) {
+            word = Leitner.knowIt(word, today)
+            assertEquals(box + 1, word.box)
+            assertEquals(today + Leitner.INTERVALS[box], word.dueDay)
+            assertNull(word.learnedAt)
+        }
     }
 
     @Test
-    fun `box 5 knowIt marks word as learned instead of advancing box`() {
+    fun `a word at the last box is marked learned by knowIt instead of advancing`() {
         val today = 19500L
-        val word5 = Word(id = 5L, text = "Meister", box = 5, dueDay = today, addedAt = 1000L)
+        val word = Word(id = 5L, text = "Meister", box = Leitner.learnedBox, dueDay = today, addedAt = 1000L)
 
-        val learned = Leitner.knowIt(word5, today)
-        assertEquals(5, learned.box)
+        val learned = Leitner.knowIt(word, today)
+        assertEquals(Leitner.learnedBox, learned.box)
         assertEquals(today, learned.learnedAt)
         assertEquals(today, learned.dueDay)
+    }
+
+    @Test
+    fun `almost keeps the box and halves the interval`() {
+        val today = 19500L
+        // Box 1: interval 1, halved to 0, floored at 1 day.
+        val word1 = Word(id = 1L, text = "a", box = 1, dueDay = today, addedAt = 1000L)
+        val almost1 = Leitner.almost(word1, today)
+        assertEquals(1, almost1.box)
+        assertEquals(today + 1, almost1.dueDay)
+        assertNull(almost1.learnedAt)
+
+        // Box 4: interval 8, halved to 4.
+        val word4 = Word(id = 2L, text = "b", box = 4, dueDay = today, addedAt = 1000L)
+        val almost4 = Leitner.almost(word4, today)
+        assertEquals(4, almost4.box)
+        assertEquals(today + 4, almost4.dueDay)
+
+        // Box 6: interval 32, halved to 16.
+        val word6 = Word(id = 3L, text = "c", box = 6, dueDay = today, addedAt = 1000L)
+        val almost6 = Leitner.almost(word6, today)
+        assertEquals(6, almost6.box)
+        assertEquals(today + 16, almost6.dueDay)
+    }
+
+    @Test
+    fun `almost on an odd interval rounds down but never below one day`() {
+        val today = 19500L
+        // Box 2: interval 2, halved to 1.
+        val almost2 = Leitner.almost(Word(id = 1L, text = "a", box = 2, dueDay = today, addedAt = 0L), today)
+        assertEquals(today + 1, almost2.dueDay)
+        // Box 7: interval 64, halved to 32.
+        val almost7 = Leitner.almost(Word(id = 2L, text = "b", box = 7, dueDay = today, addedAt = 0L), today)
+        assertEquals(today + 32, almost7.dueDay)
     }
 
     @Test
@@ -76,7 +90,10 @@ class LeitnerTest {
     @Test
     fun `again resets learned word to box 1 tomorrow and clears learnedAt`() {
         val today = 19500L
-        val learnedWord = Word(id = 11L, text = "Wiederholt", box = 5, dueDay = today, addedAt = 1000L, learnedAt = today - 5)
+        val learnedWord = Word(
+            id = 11L, text = "Wiederholt", box = Leitner.learnedBox, dueDay = today,
+            addedAt = 1000L, learnedAt = today - 5
+        )
 
         val reset = Leitner.again(learnedWord, today)
         assertEquals(1, reset.box)
@@ -119,7 +136,7 @@ class LeitnerTest {
         val learnedWord = Word(
             id = 1L,
             text = "Gelernt",
-            box = 5,
+            box = Leitner.learnedBox,
             dueDay = today - 10,
             addedAt = 100L,
             learnedAt = today - 5
