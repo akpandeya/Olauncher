@@ -114,9 +114,12 @@ object WellbeingCard : TodayCard {
         )
     }
 
-    /** Ranks like the old Wellbeing card or the old week card, whichever was higher. */
-    override fun priority(context: Context, now: ZonedDateTime): Int =
-        TodayOrder.mergedPriority(now.hour, now.dayOfWeek, super.priority(context, now))
+    /** Ranks like the old week card while the 7 days side shows, else like the old Wellbeing card. */
+    override fun priority(context: Context, now: ZonedDateTime): Int {
+        val weekSideShown = WeekCard.isAvailable(context) &&
+            WellbeingRanges.resolve(Prefs(context).wellbeingShowWeek, todayHasContent(context), true) == WellbeingRange.WEEK
+        return TodayOrder.mergedPriority(now.hour, now.dayOfWeek, weekSideShown, super.priority(context, now))
+    }
 
     override fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View {
         val binding = CardWellbeingBinding.inflate(inflater, parent, false)
@@ -171,6 +174,11 @@ internal class WellbeingCardView(
     /** Walks found automatically in Health Connect today; null when unavailable. */
     private var autoWalks: Int? = null
 
+    /** The week side lives in this card; it keeps its own per-view state. */
+    private val weekView: WeekCardView = WeekCardView(
+        CardWeekBinding.inflate(LayoutInflater.from(binding.root.context), binding.weekContent, true),
+    )
+
     fun release() {
         released = true
         usageJob?.cancel()
@@ -192,11 +200,6 @@ internal class WellbeingCardView(
         Nudges.cancel(context, type)
         renderLine1()
     }
-
-    /** The week side lives in this card; it keeps its own per-view state. */
-    private val weekView: WeekCardView = WeekCardView(
-        CardWeekBinding.inflate(LayoutInflater.from(binding.root.context), binding.weekContent, true),
-    )
 
     fun onRangeClicked(range: WellbeingRange) {
         Prefs(binding.root.context).wellbeingShowWeek = range == WellbeingRange.WEEK

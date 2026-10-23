@@ -600,7 +600,7 @@ class Prefs(context: Context) :
             if (prefs.contains("$TODAY_CARD_PREFIX$k")) prefs.getBoolean("$TODAY_CARD_PREFIX$k", default) else null
         if (canonical != TodayOrder.canonicalKey(TodayOrder.LEGACY_WEEK_KEY)) return saved(canonical) ?: default
         // The old week card merged into Wellbeing: its saved choice still counts.
-        return TodayOrder.mergedEnabled(saved(canonical), saved(TodayOrder.LEGACY_WEEK_KEY), default)
+        return TodayOrder.mergedEnabled(saved(canonical), saved(TodayOrder.LEGACY_WEEK_KEY), default, true)
     }
 
     fun isTodayCardEnabled(card: TodayCard): Boolean = isTodayCardEnabled(card.key)
@@ -608,8 +608,10 @@ class Prefs(context: Context) :
     fun setTodayCardEnabled(key: String, enabled: Boolean) = prefs.edit {
         val canonical = TodayOrder.canonicalKey(key)
         putBoolean("$TODAY_CARD_PREFIX$canonical", enabled)
-        // A saved choice on the old week card would keep the merged card on.
-        if (canonical == TodayOrder.canonicalKey(TodayOrder.LEGACY_WEEK_KEY)) remove("$TODAY_CARD_PREFIX${TodayOrder.LEGACY_WEEK_KEY}")
+        // The merged card keeps the old week key in step, so both keys always agree.
+        if (canonical == TodayOrder.canonicalKey(TodayOrder.LEGACY_WEEK_KEY)) {
+            putBoolean("$TODAY_CARD_PREFIX${TodayOrder.LEGACY_WEEK_KEY}", enabled)
+        }
         apply()
     }
 

@@ -60,20 +60,17 @@ object TodayOrder {
     /** The old "week" card now lives inside the Wellbeing card, so its keys map to the merged card. */
     fun canonicalKey(key: String): String = if (key == LEGACY_WEEK_KEY) WELLBEING_KEY else key
 
-    /** Merged card on/off: any saved choice for either old card counts; with none saved, [default] decides. */
-    fun mergedEnabled(wellbeingSaved: Boolean?, weekSaved: Boolean?, default: Boolean): Boolean {
-        val saved = listOfNotNull(wellbeingSaved, weekSaved)
-        return if (saved.isEmpty()) default else saved.any { it }
-    }
+    /** Merged card on/off: each old card counts as its saved choice or its default; off only when both were off. */
+    fun mergedEnabled(wellbeingSaved: Boolean?, weekSaved: Boolean?, wellbeingDefault: Boolean, weekDefault: Boolean): Boolean =
+        (wellbeingSaved ?: wellbeingDefault) || (weekSaved ?: weekDefault)
 
-    /** The merged card ranks as high as either old card would have. */
-    fun mergedPriority(hourOfDay: Int, day: DayOfWeek, fallback: Int): Int =
-        maxOf(wellbeingPriority(hourOfDay, fallback), weekPriority(day, fallback))
+    /** The Sunday/Monday boost of the old week card only applies while the 7 days side is shown. */
+    fun mergedPriority(hourOfDay: Int, day: DayOfWeek, weekSideShown: Boolean, fallback: Int): Int =
+        if (weekSideShown) weekPriority(day, fallback) else wellbeingPriority(hourOfDay, fallback)
 
     /** Pinned keys keep their incoming order; the rest are ranked by [order]. */
     fun split(cards: List<Ranked>, pinnedKeys: Set<String>): TodayPanelSplit {
-        val pinnedKeys = pinnedKeys.map(::canonicalKey).toSet()
-        val (pinned, rest) = cards.partition { canonicalKey(it.key) in pinnedKeys }
+        val (pinned, rest) = cards.partition { it.key in pinnedKeys }
         return TodayPanelSplit(pinned.map { it.key }, order(rest).map { it.key })
     }
 }

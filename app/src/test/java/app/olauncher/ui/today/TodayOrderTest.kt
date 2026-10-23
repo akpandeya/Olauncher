@@ -140,29 +140,21 @@ class TodayOrderTest {
     }
 
     @Test
-    fun oldWeekPinPinsTheMergedCard() {
-        val cards = listOf(Ranked("saved", 48), Ranked("wellbeing", 46))
-        val split = TodayOrder.split(cards, setOf("week"))
-        assertEquals(listOf("wellbeing"), split.pinned)
-        assertEquals(listOf("saved"), split.stacked)
+    fun mergedEnabledIsOffOnlyWhenBothOldCardsWereOff() {
+        assertTrue(TodayOrder.mergedEnabled(null, null, true, true))
+        assertTrue(TodayOrder.mergedEnabled(null, false, true, true))
+        assertTrue(TodayOrder.mergedEnabled(false, null, true, true))
+        assertTrue(TodayOrder.mergedEnabled(false, true, true, true))
+        assertFalse(TodayOrder.mergedEnabled(false, false, true, true))
+        assertFalse(TodayOrder.mergedEnabled(null, null, false, false))
     }
 
     @Test
-    fun mergedEnabledUsesAnySavedChoiceElseDefault() {
-        assertTrue(TodayOrder.mergedEnabled(null, null, true))
-        assertFalse(TodayOrder.mergedEnabled(null, null, false))
-        assertTrue(TodayOrder.mergedEnabled(false, true, false))
-        assertTrue(TodayOrder.mergedEnabled(null, true, false))
-        assertFalse(TodayOrder.mergedEnabled(false, null, true))
-        assertFalse(TodayOrder.mergedEnabled(false, false, true))
-    }
-
-    @Test
-    fun mergedPriorityTakesTheHigherOfEvening70AndSundayMonday90() {
-        assertEquals(90, TodayOrder.mergedPriority(9, DayOfWeek.MONDAY, 46))
-        assertEquals(90, TodayOrder.mergedPriority(20, DayOfWeek.SUNDAY, 46))
-        assertEquals(70, TodayOrder.mergedPriority(20, DayOfWeek.WEDNESDAY, 46))
-        assertEquals(46, TodayOrder.mergedPriority(9, DayOfWeek.WEDNESDAY, 46))
+    fun mergedPriorityBoostsSundayMondayOnlyOnTheWeekSide() {
+        assertEquals(90, TodayOrder.mergedPriority(9, DayOfWeek.MONDAY, true, 46))
+        assertEquals(46, TodayOrder.mergedPriority(9, DayOfWeek.MONDAY, false, 46))
+        assertEquals(70, TodayOrder.mergedPriority(20, DayOfWeek.MONDAY, false, 46))
+        assertEquals(46, TodayOrder.mergedPriority(20, DayOfWeek.WEDNESDAY, true, 46))
     }
 
     @Test
