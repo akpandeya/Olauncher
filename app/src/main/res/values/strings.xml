@@ -424,6 +424,7 @@
     <string name="words_count_single">1 word</string>
     <string name="words_count_plural">%d words</string>
     <string name="words_wiktionary_suffix">" · Wiktionary"</string>
+    <string name="words_review">Review %d</string>
     <string name="words_know_it">Know it</string>
     <string name="words_again">Again</string>
     <string name="words_edit_meaning">Edit meaning</string>

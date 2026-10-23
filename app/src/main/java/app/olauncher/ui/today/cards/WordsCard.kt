@@ -43,6 +43,10 @@ object WordsCardLogic {
         return context.getString(R.string.words_all_done, formatWordsCount(context, total))
     }
 
+    fun showReview(due: Int): Boolean = due > 0
+
+    fun showCardMeaning(meaning: String): Boolean = meaning.isNotBlank()
+
     fun formatMeaning(context: Context, meaning: String, meaningSource: String): String {
         if (meaning.isBlank()) {
             return context.getString(R.string.word_row_no_meaning_yet)
@@ -108,6 +112,7 @@ internal class WordsCardView(
         // The summary lines lead to the Words page, where every word and meaning can be edited.
         binding.tvFooter.setOnClickListener { Haptics.tick(it); onOpenWords() }
         binding.tvEmpty.setOnClickListener { Haptics.tick(it); onOpenWords() }
+        binding.btnReview.setOnClickListener { Haptics.tick(it); onOpenWords() }
     }
 
     fun render() {
@@ -146,9 +151,14 @@ internal class WordsCardView(
             ).also { wordReveal = it }
 
             helper.bind(dueWord)
+            // The card always shows the saved meaning, one line, under the word.
+            b.wordReveal.tvMeaning.isVisible = WordsCardLogic.showCardMeaning(dueWord.meaning)
+            b.btnReview.isVisible = WordsCardLogic.showReview(stats.due)
+            b.btnReview.text = context.getString(R.string.words_review, stats.due)
         } else {
             b.wordReveal.root.isVisible = false
             b.tvFooter.isVisible = false
+            b.btnReview.isVisible = false
             b.tvEmpty.isVisible = true
             b.tvEmpty.isClickable = stats.total > 0
             b.tvEmpty.text = if (stats.total == 0) {
