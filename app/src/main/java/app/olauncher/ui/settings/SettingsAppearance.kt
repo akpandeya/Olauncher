@@ -85,6 +85,8 @@ import app.olauncher.BuildConfig
 import app.olauncher.MainViewModel
 import app.olauncher.R
 import app.olauncher.data.Accent
+import app.olauncher.helper.AccentSuggestions
+import app.olauncher.helper.createChoiceDialog
 import android.util.Log
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
@@ -253,6 +255,7 @@ internal fun SettingsFragment.populateAccent() {
         Accent.SAND -> getString(R.string.accent_sand)
         Accent.SKY -> getString(R.string.accent_sky)
         Accent.ROSE -> getString(R.string.accent_rose)
+        Accent.WALLPAPER -> getString(R.string.accent_wallpaper)
     }
 }
 
@@ -261,6 +264,41 @@ internal fun SettingsFragment.selectAccent(accent: Accent) {
     prefs.accent = accent.id
     populateAccent()
     requireActivity().recreate()
+}
+
+private const val ACCENT_FROM_WALLPAPER_ITEM = 100
+
+/** Suggestions come from the wallpaper as it is now, so they follow a wallpaper change. */
+internal fun SettingsFragment.showWallpaperAccentDialog() {
+    val context = requireContext()
+    val wallpaperColors = try {
+        android.app.WallpaperManager.getInstance(context).getWallpaperColors(android.app.WallpaperManager.FLAG_SYSTEM)
+    } catch (e: Exception) {
+        null
+    }
+    val themeIsDark = (resources.configuration.uiMode and android.content.res.Configuration.UI_MODE_NIGHT_MASK) ==
+        android.content.res.Configuration.UI_MODE_NIGHT_YES
+    val suggestions = AccentSuggestions.suggest(
+        listOfNotNull(wallpaperColors?.primaryColor, wallpaperColors?.secondaryColor, wallpaperColors?.tertiaryColor)
+            .map { it.toArgb() }
+            .flatMap { listOf(it, AccentSuggestions.fromHsl(AccentSuggestions.hsl(it).let { h -> (h[0] + 30f) % 360f }, AccentSuggestions.hsl(it)[1], AccentSuggestions.hsl(it)[2])) },
+        themeIsDark,
+    )
+    if (suggestions.isEmpty()) {
+        Toast.makeText(context, R.string.accent_wallpaper_none, Toast.LENGTH_SHORT).show()
+        return
+    }
+    val labels = suggestions.map { colour ->
+        android.text.SpannableString("\u25CF  #%06X".format(colour and 0xFFFFFF)).apply {
+            setSpan(android.text.style.ForegroundColorSpan(colour), 0, 1, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+    }
+    context.createChoiceDialog(title = R.string.accent_from_wallpaper, message = R.string.accent_from_wallpaper_hint, items = labels) { which ->
+        prefs.accentCustomColor = suggestions[which]
+        prefs.accent = Accent.WALLPAPER.id
+        populateAccent()
+        requireActivity().recreate()
+    }.showRespectingStatusBar()
 }
 
 internal fun SettingsFragment.showAccentMenu(anchor: View) {
@@ -278,9 +316,10 @@ internal fun SettingsFragment.showAccentMenu(anchor: View) {
             options.forEach { (accent, label) ->
                 menu.add(Menu.NONE, accent.id, accent.id, label)
             }
+            menu.add(Menu.NONE, ACCENT_FROM_WALLPAPER_ITEM, ACCENT_FROM_WALLPAPER_ITEM, getString(R.string.accent_from_wallpaper))
         }
     ) { item ->
-        selectAccent(Accent.fromId(item.itemId))
+        if (item.itemId == ACCENT_FROM_WALLPAPER_ITEM) showWallpaperAccentDialog() else selectAccent(Accent.fromId(item.itemId))
     }
 }
 

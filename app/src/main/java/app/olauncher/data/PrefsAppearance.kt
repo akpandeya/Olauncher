@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.edit
 import app.olauncher.helper.HapticTuning
 import app.olauncher.data.Prefs.Companion.ACCENT
+import app.olauncher.data.Prefs.Companion.ACCENT_CUSTOM_COLOR
 import app.olauncher.data.Prefs.Companion.FONT_FAMILY
 import app.olauncher.data.Prefs.Companion.HAPTICS
 import app.olauncher.data.Prefs.Companion.HAPTIC_DURATION_MS
@@ -21,6 +22,9 @@ interface AppearancePrefs {
     var boldFont: Boolean
 
     var accent: Int
+
+    /** ARGB of the accent picked from the wallpaper; used when [accent] is [Accent.WALLPAPER]. */
+    var accentCustomColor: Int
 
     var haptics: Boolean
 
@@ -56,6 +60,10 @@ internal class AppearancePrefsStore(private val prefs: SharedPreferences) : Appe
     override var boldFont: Boolean
         get() = prefs.getBoolean(BOLD_FONT, false)
         set(value) = prefs.edit { putBoolean(BOLD_FONT, value).apply() }
+
+    override var accentCustomColor: Int
+        get() = prefs.getInt(ACCENT_CUSTOM_COLOR, 0)
+        set(value) = prefs.edit { putInt(ACCENT_CUSTOM_COLOR, value).apply() }
 
     override var accent: Int
         get() = prefs.getInt(ACCENT, Accent.OFF.id)

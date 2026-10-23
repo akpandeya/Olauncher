@@ -37,6 +37,7 @@ import androidx.core.graphics.createBitmap
 import androidx.core.net.toUri
 import app.olauncher.BuildConfig
 import app.olauncher.R
+import app.olauncher.data.Accent
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
@@ -535,6 +536,10 @@ fun Context.getColorFromAttr(
     typedValue: TypedValue = TypedValue(),
     resolveRefs: Boolean = true,
 ): Int {
+    if (attrColor == R.attr.accentColor) {
+        val prefs = Prefs(this)
+        if (prefs.accent == Accent.WALLPAPER.id && prefs.accentCustomColor != 0) return prefs.accentCustomColor
+    }
     theme.resolveAttribute(attrColor, typedValue, resolveRefs)
     return typedValue.data
 }
