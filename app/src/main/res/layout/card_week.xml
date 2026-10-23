@@ -52,7 +52,7 @@
         android:layout_height="wrap_content"
         android:paddingVertical="2dp"
         android:visibility="gone"
-        tools:text="Pause: 31 × not now · 15 × opened (mostly: Just bored)"
+        tools:text="Opened anyway 15 · Not now 31 (mostly: Just bored)"
         tools:visibility="visible" />
 
     <TextView

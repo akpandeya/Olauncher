@@ -1,6 +1,9 @@
 package app.olauncher.ui.today.cards
 
 import android.content.Context
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.LeadingMarginSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -73,6 +76,16 @@ object WeekCard : TodayCard {
     }
 }
 
+/** Wrapped lines of a review line start indented, so a long line reads as one item. */
+internal fun hangingIndent(view: View, text: CharSequence): CharSequence {
+    val indent = (HANGING_INDENT_DP * view.resources.displayMetrics.density).toInt()
+    return SpannableString(text).apply {
+        setSpan(LeadingMarginSpan.Standard(0, indent), 0, length, Spanned.SPAN_INCLUSIVE_EXCLUSIVE)
+    }
+}
+
+private const val HANGING_INDENT_DP = 16
+
 /** Per-view state of the Week card; lives and dies with the card's root view. */
 internal class WeekCardView(private val binding: CardWeekBinding) {
 
@@ -84,22 +97,22 @@ internal class WeekCardView(private val binding: CardWeekBinding) {
         val b = binding
         val context = b.root.context
         b.tvDistractingApps.isVisible = review.distractingAppsLine != null
-        b.tvDistractingApps.text = review.distractingAppsLine?.let { WeekCardText.formatWithEmoji(context, it) }
+        b.tvDistractingApps.text = review.distractingAppsLine?.let { hangingIndent(b.root, WeekCardText.formatLine(context, it)) }
 
         b.tvWeekComparison.isVisible = review.weekComparisonLine != null
-        b.tvWeekComparison.text = review.weekComparisonLine?.let { WeekCardText.formatWithEmoji(context, it) }
+        b.tvWeekComparison.text = review.weekComparisonLine?.let { hangingIndent(b.root, WeekCardText.formatLine(context, it)) }
 
         b.tvTopApps.isVisible = review.topAppsLine != null
-        b.tvTopApps.text = review.topAppsLine?.let { WeekCardText.formatWithEmoji(context, it) }
+        b.tvTopApps.text = review.topAppsLine?.let { hangingIndent(b.root, WeekCardText.formatLine(context, it)) }
 
         b.tvOverAllowance.isVisible = review.overAllowanceLine != null
-        b.tvOverAllowance.text = review.overAllowanceLine?.let { WeekCardText.formatWithEmoji(context, it) }
+        b.tvOverAllowance.text = review.overAllowanceLine?.let { hangingIndent(b.root, WeekCardText.formatLine(context, it)) }
 
         b.tvPause.isVisible = review.pauseLine != null
-        b.tvPause.text = review.pauseLine?.let { WeekCardText.formatWithEmoji(context, it) }
+        b.tvPause.text = review.pauseLine?.let { hangingIndent(b.root, WeekCardText.formatLine(context, it)) }
 
         b.tvNudges.isVisible = review.nudgesLine != null
-        b.tvNudges.text = review.nudgesLine?.let { WeekCardText.formatWithEmoji(context, it) }
+        b.tvNudges.text = review.nudgesLine?.let { hangingIndent(b.root, WeekCardText.formatLine(context, it)) }
     }
 
     fun render() {
