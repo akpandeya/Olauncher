@@ -11,6 +11,7 @@ import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
+import androidx.navigation.fragment.findNavController
 import androidx.work.WorkManager
 import app.olauncher.R
 import app.olauncher.data.Prefs
@@ -24,6 +25,7 @@ import app.olauncher.databinding.FragmentWordsBinding
 import app.olauncher.databinding.ItemWordBinding
 import app.olauncher.helper.DrawerScrollHelper
 import app.olauncher.helper.DictionaryApps
+import app.olauncher.helper.Haptics
 import app.olauncher.helper.createDialog
 import app.olauncher.helper.dpToPx
 import app.olauncher.helper.getColorFromAttr
@@ -101,6 +103,12 @@ class WordsFragment : BaseFragment() {
         b.tvStats.text = WordsCardLogic.formatFooter(context, stats.total, stats.due, stats.learned)
         b.tvStats.isVisible = words.isNotEmpty()
         b.searchBar.isVisible = words.isNotEmpty()
+        b.btnReview.isVisible = WordsCardLogic.showReview(stats.due)
+        b.btnReview.text = WordsCardLogic.reviewLabel(context.getString(R.string.words_review), stats.due)
+        b.btnReview.setOnClickListener {
+            Haptics.tick(it)
+            findNavController().navigate(R.id.action_wordsFragment_to_reviewFragment)
+        }
         b.tvMatchCount.isVisible = searching
         b.tvMatchCount.text = context.getString(R.string.words_search_count, shown.size, words.size)
         b.tvEmpty.isVisible = shown.isEmpty()

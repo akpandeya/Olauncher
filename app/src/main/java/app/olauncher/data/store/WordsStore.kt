@@ -79,6 +79,9 @@ object WordsCodec {
                 val meaning = if (obj.has("meaning") && !obj.isNull("meaning")) obj.getString("meaning") else ""
                 val meaningSource = if (obj.has("meaningSource") && !obj.isNull("meaningSource")) obj.getString("meaningSource") else ""
                 val box = if (obj.has("box") && !obj.isNull("box")) obj.getInt("box") else 1
+                // A box outside the interval table (corrupt file, or written by a future
+                // version with more boxes) would crash interval lookups; clamp instead.
+                val clampedBox = box.coerceIn(1, Leitner.INTERVALS.size)
                 val dueDay = obj.getLong("dueDay")
                 val addedAt = obj.getLong("addedAt")
                 val learnedAt = if (obj.has("learnedAt") && !obj.isNull("learnedAt")) {
@@ -93,7 +96,7 @@ object WordsCodec {
                         context = context,
                         meaning = meaning,
                         meaningSource = meaningSource,
-                        box = box,
+                        box = clampedBox,
                         dueDay = dueDay,
                         addedAt = addedAt,
                         learnedAt = learnedAt

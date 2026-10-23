@@ -118,7 +118,7 @@ class WordsStoreTest {
         store.update(w2.copy(dueDay = today + 4))
         // word 3: learned
         val w3 = store.add("drei")
-        store.update(w3.copy(box = 5, learnedAt = today - 1))
+        store.update(w3.copy(box = Leitner.learnedBox, learnedAt = today - 1))
 
         val stats = store.stats(today)
         assertEquals(3, stats.total)
@@ -136,6 +136,25 @@ class WordsStoreTest {
         assertEquals(1, words.size)
         assertEquals("Fenster", words[0].text)
         assertEquals("Das Fenster öffnen", words[0].context)
+    }
+
+    @Test
+    fun `decode clamps boxes outside the interval table instead of crashing later`() {
+        val raw = """
+            [
+                {"id": 1, "text": "a", "box": 0, "dueDay": 1, "addedAt": 1},
+                {"id": 2, "text": "b", "box": 9, "dueDay": 2, "addedAt": 2},
+                {"id": 3, "text": "c", "box": -4, "dueDay": 3, "addedAt": 3},
+                {"id": 4, "text": "d", "box": ${Leitner.learnedBox}, "dueDay": 4, "addedAt": 4, "learnedAt": 99}
+            ]
+        """.trimIndent()
+        val words = WordsCodec.decode(raw)
+        assertEquals(4, words.size)
+        assertEquals(1, words[0].box)
+        assertEquals(Leitner.learnedBox, words[1].box)
+        assertEquals(1, words[2].box)
+        assertEquals(Leitner.learnedBox, words[3].box)
+        assertEquals(99L, words[3].learnedAt)
     }
 
     @Test

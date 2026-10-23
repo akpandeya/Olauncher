@@ -450,6 +450,11 @@
     <string name="words_review">Review %d</string>
     <string name="words_know_it">Know it</string>
     <string name="words_again">Again</string>
+    <string name="words_almost" tools:ignore="MissingTranslation">Almost</string>
+    <string name="words_review_title" tools:ignore="MissingTranslation">Review</string>
+    <string name="words_review_remaining" tools:ignore="MissingTranslation">%1$d remaining</string>
+    <string name="words_review_summary" tools:ignore="MissingTranslation">Done · %1$d knew · %2$d almost · %3$d again</string>
+    <string name="words_review_comeback" tools:ignore="MissingTranslation">Welcome back — comeback #%1$d</string>
     <string name="words_edit_meaning">Edit meaning</string>
     <string name="words_delete">Delete</string>
     <string name="words_delete_confirm">Delete “%s”?</string>

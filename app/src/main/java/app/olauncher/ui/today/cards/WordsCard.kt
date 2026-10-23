@@ -85,12 +85,21 @@ object WordsCard : TodayCard {
     }
 
     override fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View {
-        val cardView = WordsCardView(CardWordsBinding.inflate(inflater, parent, false)) {
-            val navController = fragment.findNavController()
-            if (navController.currentDestination?.id == R.id.todayFragment) {
-                navController.navigate(R.id.action_todayFragment_to_wordsFragment)
-            }
-        }
+        val cardView = WordsCardView(
+            CardWordsBinding.inflate(inflater, parent, false),
+            onOpenWords = {
+                val navController = fragment.findNavController()
+                if (navController.currentDestination?.id == R.id.todayFragment) {
+                    navController.navigate(R.id.action_todayFragment_to_wordsFragment)
+                }
+            },
+            onReview = {
+                val navController = fragment.findNavController()
+                if (navController.currentDestination?.id == R.id.todayFragment) {
+                    navController.navigate(R.id.action_todayFragment_to_reviewFragment)
+                }
+            },
+        )
         cardView.binding.root.tag = cardView
         cardView.render()
         return cardView.binding.root
@@ -105,6 +114,7 @@ object WordsCard : TodayCard {
 internal class WordsCardView(
     val binding: CardWordsBinding,
     private val onOpenWords: () -> Unit = {},
+    private val onReview: () -> Unit = {},
 ) {
 
     private var wordReveal: WordReveal? = null
@@ -116,7 +126,7 @@ internal class WordsCardView(
         // The summary lines lead to the Words page, where every word and meaning can be edited.
         binding.tvFooter.setOnClickListener { Haptics.tick(it); onOpenWords() }
         binding.tvEmpty.setOnClickListener { Haptics.tick(it); onOpenWords() }
-        binding.btnReview.setOnClickListener { Haptics.tick(it); onOpenWords() }
+        binding.btnReview.setOnClickListener { Haptics.tick(it); onReview() }
     }
 
     fun render() {
