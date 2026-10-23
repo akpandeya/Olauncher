@@ -86,6 +86,7 @@ internal fun AppDrawerFragment.initSearch() {
                 if (lookUpText == null || !lookUpText.equals(lookupState?.first, ignoreCase = true)) {
                     lookupJob?.cancel()
                     lookupState = null
+                    paradigmState = null
                 }
                 scheduleLookup(newText, LOOKUP_DEBOUNCE_MS)
                 scheduleSuggest(newText, LOOKUP_DEBOUNCE_MS)
@@ -121,24 +122,36 @@ internal fun AppDrawerFragment.scheduleLookup(query: String, delayMs: Long) {
     lookupJob = viewLifecycleOwner.lifecycleScope.launch {
         if (delayMs > 0) delay(delayMs)
         lookupState = text to null
-        val result = withContext(Dispatchers.IO) {
+        paradigmState = null
+        val (result, paradigm) = withContext(Dispatchers.IO) {
+            val store = OfflineGermanStore(ctx)
+            // Cheap indexed query next to the meaning fetch; it must also run for
+            // saved words, whose meaning fetch below returns without looking up.
+            val paradigm = store.paradigm(text)
             val saved = savedWord(ctx, text)
             val cache = WiktionaryCache(ctx)
-            when {
+            val result = when {
                 // A stored meaning is already on screen; nothing to fetch.
                 saved != null && saved.meaning.isNotBlank() -> null
                 // Saved words never touch the network; only the offline dictionary may fill a blank meaning.
                 saved != null -> GermanLookup.lookup(
-                    text, false, OfflineGermanStore(ctx)::lookup,
+                    text, false, store::lookup,
                     cache::get, { WiktionaryApi.lookup(it) }, cache::put
                 )
                 else -> GermanLookup.lookup(
-                    text, lookupAllowed(), OfflineGermanStore(ctx)::lookup,
+                    text, lookupAllowed(), store::lookup,
                     cache::get, { WiktionaryApi.lookup(it) }, cache::put
                 )
             }
-        } ?: return@launch
+            result to paradigm
+        }
+        paradigmState = paradigm?.let { text to it }
         if (!isAdded || _binding == null) return@launch
+        if (result == null) {
+            // The stored meaning needed no fetch, but the drill row may still be new.
+            if (paradigm != null) adapter.filter.filter(binding.search.query)
+            return@launch
+        }
         lookupState = text to result
         scheduleSuggest(query, 0)
         adapter.filter.filter(binding.search.query)
@@ -235,8 +248,20 @@ internal fun AppDrawerFragment.lookUpSuggestionRows(ctx: Context, text: String):
 internal fun AppDrawerFragment.lookUpRows(text: String): List<AppModel.Result> {
     val ctx = context ?: return emptyList()
     val main = lookUpMainRows(ctx, text)
-    if (savedWord(ctx, text) != null) return main
-    return main + lookUpSuggestionRows(ctx, text)
+    // The drill row sits before the dictionary row, which lookUpMainRows always trails with.
+    val rows = conjugationRow(ctx, text)?.let { main.dropLast(1) + it + main.last() } ?: main
+    if (savedWord(ctx, text) != null) return rows
+    return rows + lookUpSuggestionRows(ctx, text)
+}
+
+/** Drill row for the current lookup; null when the offline store has no verb paradigm for it. */
+private fun AppDrawerFragment.conjugationRow(ctx: Context, text: String): AppModel.Result? {
+    val lemma = paradigmState?.takeIf { it.first.equals(text, ignoreCase = true) }?.second?.lemma
+        ?: return null
+    return AppModel.Result(
+        text = ctx.getString(R.string.word_row_conjugation, lemma),
+        action = AppModel.Result.Action.ConjugateWord(lemma),
+    )
 }
 
 internal fun AppDrawerFragment.lookUpMainRows(ctx: Context, text: String): List<AppModel.Result> {

@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Process
 import android.view.View
 import android.view.animation.AnimationUtils
+import androidx.core.os.bundleOf
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -163,6 +164,18 @@ internal fun AppDrawerFragment.initAdapter() {
                             if (action.openOnTap) {
                                 openDictionary(action.text)
                                 findNavController().popBackStack(R.id.mainFragment, false)
+                            }
+                        }
+
+                        is AppModel.Result.Action.ConjugateWord -> {
+                            Haptics.tick(binding.root)
+                            val navController = findNavController()
+                            // Ignore a second tap delivered before the first navigation lands.
+                            if (navController.currentDestination?.id == R.id.appListFragment) {
+                                navController.navigate(
+                                    R.id.action_appListFragment_to_conjugationFragment,
+                                    bundleOf("word" to action.text),
+                                )
                             }
                         }
 

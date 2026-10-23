@@ -72,6 +72,8 @@ sealed class AppModel : Comparable<AppModel> {
             /** [openOnTap] false: display-only row — tap and long-press do nothing; the
              *  dictionary row beneath it opens the dictionary. */
             data class OpenDictionary(val text: String, val openOnTap: Boolean = true) : Action
+            /** Tap opens the conjugation drill for [text]. */
+            data class ConjugateWord(val text: String) : Action
         }
 
         override val appLabel: String get() = text
