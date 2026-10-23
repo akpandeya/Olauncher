@@ -107,12 +107,6 @@ object TodayOrder {
     /** The Sunday/Monday boost of the old week card only applies while the 7 days side is shown. */
     fun mergedPriority(hourOfDay: Int, day: DayOfWeek, weekSideShown: Boolean, fallback: Int): Int =
         if (weekSideShown) weekPriority(day, fallback) else wellbeingPriority(hourOfDay, fallback)
-
-    /** Pinned keys keep their incoming order; the rest are ranked by [order]. */
-    fun split(cards: List<Ranked>, pinnedKeys: Set<String>): TodayPanelSplit {
-        val (pinned, rest) = cards.partition { it.key in pinnedKeys }
-        return TodayPanelSplit(pinned.map { it.key }, order(rest).map { it.key })
-    }
 }
 
 /** Which side of the merged Wellbeing card shows. */

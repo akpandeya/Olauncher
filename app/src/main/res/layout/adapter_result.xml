@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Single-line result rows (commands, contacts-free matches, word rows without a meaning). -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="48dp"
+    android:animateLayoutChanges="true">
+
+    <TextView
+        android:id="@+id/appTitle"
+        style="@style/TextLarge"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="48dp"
+        android:gravity="center_vertical"
+        android:maxLines="1"
+        android:paddingHorizontal="@dimen/drawer_row_padding_horizontal"
+        android:paddingVertical="@dimen/app_padding_vertical" />
+
+</FrameLayout>

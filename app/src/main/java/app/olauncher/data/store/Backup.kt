@@ -19,7 +19,12 @@ object Backup {
         "AUTO_BACKUP_LAST_OK",
         "AUTO_BACKUP_LAST_FAILED",
         "AUTO_BACKUP_ENABLED",
-        "AUTO_BACKUP_TREE_URI"
+        "AUTO_BACKUP_TREE_URI",
+        // Widget instance IDs and their sizes only exist on the backing home screen; restoring
+        // them elsewhere binds dead IDs ("This widget is unavailable").
+        "TODAY_WIDGET_IDS",
+        "TODAY_PENDING_WIDGET_ID",
+        "TODAY_WIDGET_HEIGHTS"
     )
     const val OWN_OPENS_PREFIX = "OWN_OPENS_"
 

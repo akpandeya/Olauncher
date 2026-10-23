@@ -29,6 +29,7 @@ import app.olauncher.data.Constants
 import app.olauncher.databinding.AdapterAppDrawerBinding
 import app.olauncher.databinding.AdapterPrivateSpaceHeaderBinding
 import app.olauncher.databinding.AdapterRecentHeaderBinding
+import app.olauncher.databinding.AdapterResultBinding
 import app.olauncher.databinding.AdapterWordLookupResultBinding
 import app.olauncher.helper.getColorFromAttr
 import app.olauncher.helper.hapticLongClick
@@ -82,7 +83,7 @@ class AppDrawerAdapter(
     companion object {
         const val VIEW_TYPE_APP = 0
         const val VIEW_TYPE_PRIVATE_HEADER = 1
-        const val VIEW_TYPE_RESULT = R.layout.adapter_app_drawer
+        const val VIEW_TYPE_RESULT = R.layout.adapter_result
         const val VIEW_TYPE_RECENT_HEADER = 3
         const val VIEW_TYPE_WORD_LOOKUP = R.layout.adapter_word_lookup_result
 
@@ -165,14 +166,11 @@ class AppDrawerAdapter(
 
             VIEW_TYPE_RESULT, VIEW_TYPE_WORD_LOOKUP -> {
                 val root = LayoutInflater.from(parent.context).inflate(viewType, parent, false)
-                val binding = AdapterWordLookupResultBinding.bind(root)
-                if (viewType == VIEW_TYPE_RESULT) {
-                    AdapterAppDrawerBinding.bind(root).apply {
-                        renameLayout.visibility = View.GONE
-                        otherProfileIndicator.visibility = View.GONE
-                    }
+                val appTitle = when (viewType) {
+                    VIEW_TYPE_RESULT -> AdapterResultBinding.bind(root).appTitle
+                    else -> AdapterWordLookupResultBinding.bind(root).appTitle
                 }
-                ResultViewHolder(root, binding.appTitle)
+                ResultViewHolder(root, appTitle)
             }
 
             VIEW_TYPE_RECENT_HEADER -> RecentHeaderViewHolder(
