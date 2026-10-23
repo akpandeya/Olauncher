@@ -146,6 +146,7 @@
     <string name="delete">Uninstall</string>
     <string name="text_size">Text size</string>
     <string name="bold_font">Bold font</string>
+    <string name="clock_from_wallpaper">Clock colour from wallpaper</string>
     <string name="enabled">Enabled</string>
     <string name="long_press_to_select_app">Long press to select app</string>
     <string name="unable_to_open_app">Unable to open app</string>

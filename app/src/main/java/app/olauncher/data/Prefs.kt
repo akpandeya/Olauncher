@@ -166,6 +166,8 @@ class Prefs(context: Context) :
         const val FONT_FAMILY = "FONT_FAMILY"
         const val ACCENT = "ACCENT"
         const val ACCENT_CUSTOM_COLOR = "ACCENT_CUSTOM_COLOR"
+        const val CLOCK_FROM_WALLPAPER = "CLOCK_FROM_WALLPAPER"
+        const val CLOCK_WALLPAPER_COLOR = "CLOCK_WALLPAPER_COLOR"
         const val HAPTICS = "HAPTICS"
         const val HAPTIC_STRENGTH = "HAPTIC_STRENGTH"
         const val HAPTIC_DURATION_MS = "HAPTIC_DURATION_MS"

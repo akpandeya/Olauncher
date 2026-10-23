@@ -26,8 +26,8 @@ class SettingsCatalogTest {
     fun `every setting of the old layout is present in its section`() {
         val actual = SettingsSections.all.associate { it.key to SettingsCatalog.rowsFor(it.key).map { row -> row.key } }
         assertEquals(INVENTORY, actual)
-        assertEquals(87, SettingsCatalog.rows.size)
-        assertEquals(86, SettingsCatalog.rows.count { it.searchable })
+        assertEquals(88, SettingsCatalog.rows.size)
+        assertEquals(87, SettingsCatalog.rows.count { it.searchable })
     }
 
     @Test
@@ -348,6 +348,7 @@ class SettingsCatalogTest {
             "accent",
             "fontFamily",
             "boldFont",
+            "clockWallpaper",
             "textSizeValue",
             "haptics",
             "hapticStrength",
