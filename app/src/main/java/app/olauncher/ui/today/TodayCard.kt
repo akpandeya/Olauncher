@@ -27,6 +27,8 @@ interface TodayCard {
     /** Emoji put in front of the title in the card's panel header. */
     val emoji: String get() = ""
 
+    fun title(context: Context): CharSequence = context.getString(titleRes)
+
     /** True for cards drawn in the page header instead of a panel (the weather). */
     val inHero: Boolean get() = false
 
@@ -51,4 +53,3 @@ interface TodayCard {
 object TodayCards {
     val all: List<TodayCard> = listOf(WeatherCard, NextUpCard, SavedCard, HeldCard, WellbeingCard, WordsCard, NotesCard)
 }
-

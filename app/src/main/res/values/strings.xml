@@ -1,4 +1,16 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="today_add_widget">Add widget</string>
+    <string name="today_widget">Widget</string>
+    <string name="today_widget_explanation">Choose a widget and allow Thumbline to display it on Today.</string>
+    <string name="today_widget_unavailable">This widget is unavailable. Long-press to remove it.</string>
+    <string name="today_widget_failed">Could not add this widget. You can try another one.</string>
+    <string name="today_widget_remove">Remove widget</string>
+    <string name="today_widget_remove_message">Remove this widget from Today?</string>
+    <string name="today_card_options">Card options: %1$s</string>
+    <string name="today_card_pin">Pin to top</string>
+    <string name="today_card_unpin">Unpin</string>
+    <string name="today_card_up">Move up (fixed order)</string>
+    <string name="today_card_down">Move down (fixed order)</string>
     <string name="app_name" translatable="false">Thumbline</string>
     <string name="lock_layout_description" translatable="false">lock layout description to be used a unique id to lock screen</string>
     <!-- Home button for recents feature disabled -->

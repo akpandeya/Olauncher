@@ -15,8 +15,48 @@ data class Ranked(val key: String, val priority: Int)
  */
 data class TodayPanelSplit(val pinned: List<String>, val stacked: List<String>)
 
+data class TodayPanelMoves(val up: List<String>?, val down: List<String>?)
+
 /** Context-free ranking rules for the Today cards. */
 object TodayOrder {
+    private const val WIDGET_PREFIX = "widget:"
+
+    fun widgetKey(id: Int): String {
+        require(id > 0)
+        return "$WIDGET_PREFIX$id"
+    }
+
+    fun widgetId(key: String): Int? =
+        key.removePrefix(WIDGET_PREFIX).toIntOrNull()
+            ?.takeIf { key.startsWith(WIDGET_PREFIX) && it > 0 && widgetKey(it) == key }
+
+    /** Saved keys may include hidden or uninstalled cards; new cards retain their default order. */
+    fun arrange(cards: List<Ranked>, savedOrder: List<String>, pinnedKeys: Set<String>, smart: Boolean): TodayPanelSplit {
+        val positions = savedOrder.withIndex().associate { it.value to it.index }
+        val arranged = cards.sortedBy { positions[it.key] ?: Int.MAX_VALUE }
+        val (pinned, rest) = arranged.partition { it.key in pinnedKeys }
+        return TodayPanelSplit(pinned.map { it.key }, (if (smart) order(rest) else rest).map { it.key })
+    }
+
+    /** Move within the displayed group without disturbing hidden cards' saved positions. */
+    fun move(keys: List<String>, key: String, offset: Int, groupKeys: List<String> = keys): List<String> {
+        val group = keys.filter { it in groupKeys }
+        val index = group.indexOf(key)
+        val target = index + offset
+        if (index < 0 || target !in group.indices) return keys
+        val moved = group.toMutableList().apply { add(target, removeAt(index)) }.iterator()
+        return keys.map { if (it in groupKeys) moved.next() else it }
+    }
+
+    /** Pinned panels render forward; the unpinned stack renders in reverse. Null hides a boundary action. */
+    fun panelMoves(keys: List<String>, key: String, pinned: Boolean, groupKeys: List<String>): TodayPanelMoves {
+        val upOffset = if (pinned) -1 else 1
+        return TodayPanelMoves(
+            up = move(keys, key, upOffset, groupKeys).takeUnless { it == keys },
+            down = move(keys, key, -upOffset, groupKeys).takeUnless { it == keys },
+        )
+    }
+
     const val NEXT_UP_PRIORITY = 100
     const val HELD_PRIORITY = 95
     const val WEEK_PRIORITY = 90
