@@ -54,4 +54,29 @@ class AppActionListTest {
         assertEquals(listOf(Id.CHANGE_APP, Id.CHOOSE_BUILTIN, Id.RESET_SHORTCUT), ids(list))
         assertTrue(list.none { it.isDestructive })
     }
+
+    @Test
+    fun dividersSplitActionsIntoThreeGroups() {
+        val list = AppActionList.build(isArchived = false, isHidden = false, isDistracting = false)
+        // Add/Rename | Hide/Distracting | Info/Uninstall
+        assertEquals(setOf(2, 4), AppActionList.groupStarts(list))
+        assertEquals(emptySet<Int>(), AppActionList.groupStarts(AppActionList.buildShortcut()))
+    }
+
+    @Test
+    fun homeMenuOrderAndDividers() {
+        val list = AppActionList.buildHome(isShortcut = false, isHidden = false, isDistracting = false)
+        assertEquals(
+            listOf(Id.CHANGE_APP, Id.RENAME, Id.REMOVE_FROM_HOME, Id.HIDE, Id.DISTRACTING, Id.APP_INFO, Id.UNINSTALL),
+            ids(list),
+        )
+        assertEquals(setOf(2, 5), AppActionList.groupStarts(list))
+    }
+
+    @Test
+    fun homeShortcutMenuIsChangeAndRemove() {
+        val list = AppActionList.buildHome(isShortcut = true, isHidden = false, isDistracting = false)
+        assertEquals(listOf(Id.CHANGE_APP, Id.REMOVE_FROM_HOME), ids(list))
+        assertEquals(setOf(1), AppActionList.groupStarts(list))
+    }
 }

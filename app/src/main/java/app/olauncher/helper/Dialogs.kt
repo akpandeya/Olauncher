@@ -1,5 +1,6 @@
 package app.olauncher.helper
 
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Outline
@@ -13,6 +14,7 @@ import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.ViewOutlineProvider
 import android.view.WindowManager
+import android.view.animation.DecelerateInterpolator
 import android.graphics.Typeface
 import android.widget.CompoundButton
 import android.widget.LinearLayout
@@ -35,6 +37,7 @@ import app.olauncher.databinding.DialogBaseBinding
 import app.olauncher.databinding.ItemPopupActionBinding
 import app.olauncher.databinding.PopupAppActionsBinding
 import app.olauncher.ui.AppAction
+import app.olauncher.ui.AppActionList
 
 /**
  * Shows a popup menu hanging off the end edge of this view.
@@ -60,7 +63,8 @@ fun View.showPopupMenu(
 /**
  * Shows the long-press actions of an app as a Thumbline card: the app name on
  * top (a heading, not clickable), a hairline, then every action; destructive
- * actions in the danger colour. The card hangs off the end edge of this view and
+ * actions in the danger colour. Actions are split into groups by thin dividers (see
+ * [AppActionList.groupStarts]). The card is 68% of the screen wide, sits on the same side as this view and
  * flips above it near the bottom of the screen or the keyboard (see [PopupPlacement]).
  */
 fun View.showAppActionPopup(
@@ -73,7 +77,11 @@ fun View.showAppActionPopup(
     card.tvPopupTitle.text = appName
     val popup = PopupWindow(card.root, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true)
     val dangerColor = context.getColorFromAttr(R.attr.dangerColor)
-    actions.forEach { action ->
+    val dividerBefore = AppActionList.groupStarts(actions)
+    actions.forEachIndexed { index, action ->
+        if (index in dividerBefore) {
+            inflater.inflate(R.layout.item_popup_divider, card.popupItems, true)
+        }
         val row = ItemPopupActionBinding.inflate(inflater, card.popupItems, false).root
         row.setText(action.labelRes)
         if (action.isDestructive) row.setTextColor(dangerColor)
@@ -93,20 +101,19 @@ fun View.showAppActionPopup(
     // Read the keyboard height now: the caller may have just asked it to hide.
     val imeBottom = root.rootWindowInsets?.getInsets(WindowInsets.Type.ime())?.bottom ?: 0
     val visibleBottom = PopupPlacement.visibleBottom(root.height, imeBottom)
+    val menuWidth = PopupPlacement.menuWidth(root.width, margin)
     card.root.measure(
-        View.MeasureSpec.makeMeasureSpec(maxOf(0, root.width - 2 * margin), View.MeasureSpec.AT_MOST),
+        View.MeasureSpec.makeMeasureSpec(menuWidth, View.MeasureSpec.EXACTLY),
         View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
     )
-    val menuWidth = card.root.measuredWidth
     val menuHeight = PopupPlacement.fitHeight(card.root.measuredHeight, visibleTop = 0, visibleBottom)
     val top = PopupPlacement.menuTop(loc[1], loc[1] + height, visibleTop = 0, visibleBottom, menuHeight)
-    val left = PopupPlacement.menuLeft(
+    val left = PopupPlacement.menuLeftBySide(
         anchorLeft = loc[0],
         anchorRight = loc[0] + width,
         menuWidth = menuWidth,
         screenWidth = root.width,
         margin = margin,
-        isRtl = layoutDirection == View.LAYOUT_DIRECTION_RTL,
     )
 
     val animation = TypedValue()
@@ -131,11 +138,31 @@ fun View.showAppActionPopup(
             outline.setRoundRect(0, 0, view.width, view.height, resources.getDimension(R.dimen.radiusMedium))
         }
     }
-    // Absolute LEFT: [left] is already resolved for right-to-left by PopupPlacement.menuLeft.
+    // Absolute LEFT: [left] is already resolved for right-to-left by PopupPlacement.menuLeftBySide.
     @SuppressLint("RtlHardcoded")
     val gravity = Gravity.TOP or Gravity.LEFT
     popup.showAtLocation(this, gravity, left, top)
+    // The popup window frame holds the card background and shadow, so animate it rather than the contents.
+    card.root.rootView.animateFromTap(
+        PopupOrigin.pivotX(loc[0] + width / 2, left, menuWidth),
+        PopupOrigin.pivotY(loc[1] + height / 2, top, menuHeight),
+    )
     return popup
+}
+
+/** Fades and scales the card in from the tap point; skipped (full size at once) when animations are off. */
+private fun View.animateFromTap(pivotXPx: Float, pivotYPx: Float) {
+    val durationMs = MotionPolicy.durationMs(MotionPolicy.DEFAULT_DURATION_MS, ValueAnimator.areAnimatorsEnabled() && !context.isEinkDisplay())
+    if (durationMs <= 0L) return
+    pivotX = pivotXPx
+    pivotY = pivotYPx
+    scaleX = PopupOrigin.START_SCALE
+    scaleY = PopupOrigin.START_SCALE
+    alpha = 0f
+    animate().scaleX(1f).scaleY(1f).alpha(1f)
+        .setDuration(durationMs)
+        .setInterpolator(DecelerateInterpolator())
+        .start()
 }
 
 /**
