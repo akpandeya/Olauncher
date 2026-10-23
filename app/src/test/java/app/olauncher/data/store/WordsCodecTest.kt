@@ -17,7 +17,7 @@ class WordsCodecTest {
                 addedAt = 1700000000000L
             )
         )
-        val encoded = WordsCodec.encode(words)
+        val encoded = WordsCodec.encode(words, emptyList())
         val decoded = WordsCodec.decode(encoded)
         assertEquals(words, decoded.words)
     }
@@ -37,7 +37,7 @@ class WordsCodecTest {
                 learnedAt = 19510L
             )
         )
-        val encoded = WordsCodec.encode(words)
+        val encoded = WordsCodec.encode(words, emptyList())
         val decoded = WordsCodec.decode(encoded)
         assertEquals(words, decoded.words)
     }
@@ -49,7 +49,7 @@ class WordsCodecTest {
             Word(2L, "zwei", "", "two", "wiktionary", 2, 102L, 2000L, 105L),
             Word(3L, "drei", "Alle guten Dinge sind drei", "", "", 5, 116L, 3000L, null)
         )
-        val encoded = WordsCodec.encode(words)
+        val encoded = WordsCodec.encode(words, emptyList())
         val decoded = WordsCodec.decode(encoded)
         assertEquals(words, decoded.words)
     }
@@ -57,7 +57,7 @@ class WordsCodecTest {
     @Test
     fun `round trip empty list`() {
         val words = emptyList<Word>()
-        val encoded = WordsCodec.encode(words)
+        val encoded = WordsCodec.encode(words, emptyList())
         val decoded = WordsCodec.decode(encoded)
         assertTrue(decoded.words.isEmpty())
         assertTrue(decoded.lists.isEmpty())

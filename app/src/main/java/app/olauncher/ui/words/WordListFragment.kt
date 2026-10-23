@@ -59,8 +59,10 @@ class WordListFragment : BaseFragment() {
         val store = WordsCard.getStore(context)
         val today = WordsCard.epochDaySupplier()
 
-        val bucket = sourceBucket
+        // The UI sets exactly one nav argument; if both arrive, the list wins so the
+        // content and the Add-words footer below can never disagree.
         val list = listId?.let { id -> store.lists().firstOrNull { it.id == id } }
+        val bucket = sourceBucket.takeIf { listId == null }
         val words: List<Word>
         val title: String
         if (bucket != null) {

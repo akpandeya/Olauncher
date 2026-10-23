@@ -40,6 +40,33 @@ class WordListsLogicTest {
     }
 
     @Test
+    fun `uniqueListId caps long slugs and suffixes after truncation`() {
+        val longName = "a".repeat(400)
+        val id = WordListsLogic.uniqueListId(longName, emptySet())
+        assertEquals(WordListsLogic.MAX_SLUG_LENGTH, id.length)
+
+        // Truncated bases still suffix to unique, bounded ids.
+        val second = WordListsLogic.uniqueListId(longName, setOf(id))
+        val third = WordListsLogic.uniqueListId(longName, setOf(id, second))
+        assertEquals("$id-2", second)
+        assertEquals("$id-3", third)
+
+        // Truncation never leaves a dangling dash.
+        assertEquals("a".repeat(47), WordListsLogic.uniqueListId("${"a".repeat(47)} b", emptySet()))
+    }
+
+    @Test
+    fun `validateName matches duplicates ignoring case and punctuation`() {
+        val lists = listOf(WordList("kitchen", "Kitchen"), WordList("kütchen", "kütchen"))
+
+        assertEquals(NameError.DUPLICATE, WordListsLogic.validateName("kitchen!", lists))
+        assertEquals(NameError.DUPLICATE, WordListsLogic.validateName("Kü-tchen!", lists))
+        assertNull(WordListsLogic.validateName("Küchen", lists)) // genuinely different
+        // exceptId still excludes the list being renamed.
+        assertNull(WordListsLogic.validateName("Kü-tchen!", lists, exceptId = "kütchen"))
+    }
+
+    @Test
     fun `validateName rejects blank and duplicate but not itself`() {
         val lists = listOf(WordList("kitchen", "Kitchen"), WordList("travel", "Travel"))
 
