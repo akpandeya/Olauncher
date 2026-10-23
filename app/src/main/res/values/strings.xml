@@ -309,6 +309,7 @@
     <string name="today_order_fixed">Fixed</string>
     <string name="choose_app">Choose app…</string>
     <string name="held">Held</string>
+    <string name="held_header_format">%1$s — %2$d held · latest %3$s</string>
     <string name="nothing_held">Nothing held</string>
     <string name="clear_all">Clear all</string>
     <string name="save_for_later">Save for later</string>
