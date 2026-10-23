@@ -311,18 +311,21 @@ fun Context.createChoiceDialog(
  * Tick-many list in the app's dialog with an [action] button; the close icon cancels.
  * [checked] is updated as the user ticks. [onToggle] runs on a user tick and may return
  * false to reject it, which un-does the tick. [OlDialog.setItemChecked] ticks a row from outside.
+ * [neutral] adds a secondary text action, e.g. "New list" when the list to pick from is empty.
  */
 fun Context.createMultiChoiceDialog(
     @StringRes title: Int,
     items: List<CharSequence>,
     checked: BooleanArray,
     @StringRes action: Int,
+    @StringRes neutral: Int = 0,
+    onNeutral: () -> Unit = {},
     onToggle: (index: Int, isChecked: Boolean) -> Boolean = { _, _ -> true },
     onAction: () -> Unit,
 ): OlDialog {
     val boxes = mutableListOf<CompoundButton>()
     var silent = false
-    val dialog = createDialog(title, action, onAction = onAction) { parent ->
+    val dialog = createDialog(title, action, neutral = neutral, onNeutral = onNeutral, onAction = onAction) { parent ->
         val context = parent.context
         context.scrollingRows(
             items.mapIndexed { index, label ->

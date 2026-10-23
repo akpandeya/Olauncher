@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp"
+    android:orientation="vertical">
+
+    <androidx.appcompat.widget.AppCompatEditText
+        android:id="@+id/etListName"
+        style="@style/TextMedium"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@null"
+        android:cursorVisible="true"
+        android:hint="@string/word_lists_name_hint"
+        android:inputType="text|textCapWords"
+        android:maxLines="1"
+        android:paddingVertical="8dp"
+        android:shadowColor="@android:color/transparent"
+        android:textColor="?attr/primaryColor"
+        android:textColorHint="?attr/primaryColorTrans80" />
+
+</LinearLayout>
