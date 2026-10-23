@@ -1,5 +1,8 @@
 package app.olauncher.ui.settings
 
+import android.graphics.Paint
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,6 +11,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import app.olauncher.R
 import app.olauncher.databinding.ItemSettingsHeadingBinding
 import app.olauncher.databinding.ItemSettingsRowSliderBinding
 import app.olauncher.databinding.ItemSettingsRowStatusBinding
@@ -73,6 +77,26 @@ class SettingsRowsAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SettingsRowHolder {
+        val holder = createHolder(parent, viewType)
+        val offLabel = parent.context.getString(R.string.off)
+        holder.value?.let { dimWhenOff(it, offLabel) }
+        // Action links are plain text, underlined.
+        holder.actions.forEach { it.paintFlags = it.paintFlags or Paint.UNDERLINE_TEXT_FLAG }
+        return holder
+    }
+
+    /** Draws "Off" dimmer than any other value, whoever sets the text. */
+    private fun dimWhenOff(view: TextView, offLabel: String) {
+        view.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) = Unit
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) = Unit
+            override fun afterTextChanged(s: Editable?) {
+                view.alpha = SettingsValueTone.alphaFor(s, offLabel)
+            }
+        })
+    }
+
+    private fun createHolder(parent: ViewGroup, viewType: Int): SettingsRowHolder {
         val inflater = LayoutInflater.from(parent.context)
         return when (viewType) {
             VIEW_HEADING -> ItemSettingsHeadingBinding.inflate(inflater, parent, false).let {

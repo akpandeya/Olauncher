@@ -16,7 +16,7 @@
         <TextView
             android:id="@+id/tvWater"
             style="@style/TextMedium"
-            android:textColor="@drawable/text_colors_accent"
+            android:textColor="@drawable/text_colors_default"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="@drawable/today_chip"
@@ -31,7 +31,7 @@
         <TextView
             android:id="@+id/tvWalk"
             style="@style/TextMedium"
-            android:textColor="@drawable/text_colors_accent"
+            android:textColor="@drawable/text_colors_default"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"

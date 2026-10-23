@@ -118,9 +118,9 @@
         <item name="android:textStyle">bold</item>
     </style>
 
-    <!-- Value text on the right of a settings row; follows the accent -->
+    <!-- Value text on the right of a settings row; plain primary colour; accent is for clock, date and highlights -->
     <style name="TextSettingsValue" parent="TextSmallBold">
-        <item name="android:textColor">@drawable/text_colors_accent</item>
+        <item name="android:textColor">@drawable/text_colors_default</item>
     </style>
 
     <style name="TextSmallLight" parent="TextSmall">

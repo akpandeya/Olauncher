@@ -18,7 +18,7 @@ object AppActionList {
     fun buildShortcut(): List<AppAction> = listOf(
         AppAction(AppAction.Id.CHANGE_APP, R.string.change_app),
         AppAction(AppAction.Id.CHOOSE_BUILTIN, R.string.shortcut_choose_builtin),
-        AppAction(AppAction.Id.RESET_SHORTCUT, R.string.shortcut_reset, isDestructive = true),
+        AppAction(AppAction.Id.RESET_SHORTCUT, R.string.shortcut_reset),
     )
 
     fun build(
@@ -35,7 +35,7 @@ object AppActionList {
         return buildList {
             add(AppAction(AppAction.Id.ADD_TO_HOME, R.string.add_to_home))
             if (flag != Constants.FLAG_HIDDEN_APPS) add(AppAction(AppAction.Id.RENAME, R.string.rename))
-            add(AppAction(AppAction.Id.HIDE, if (isHidden) R.string.unhide else R.string.hide, isDestructive = true))
+            add(AppAction(AppAction.Id.HIDE, if (isHidden) R.string.unhide else R.string.hide))
             add(
                 AppAction(
                     AppAction.Id.DISTRACTING,
