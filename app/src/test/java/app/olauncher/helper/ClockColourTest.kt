@@ -52,4 +52,14 @@ class ClockColourTest {
         assertTrue(!ClockColour.readableOnAll(0xFFFFFFFF.toInt(), listOf(0xFF000000.toInt(), 0xFFEEEEEE.toInt())))
         assertTrue(ClockColour.readableOnAll(0xFFFFFFFF.toInt(), listOf(0xFF000000.toInt(), 0xFF202020.toInt())))
     }
+
+    @Test fun fixedAppThemeBeatsSystemSetting() {
+        assertTrue(ClockColour.themeIsDark(2, systemIsDark = false))
+        assertTrue(!ClockColour.themeIsDark(1, systemIsDark = true))
+    }
+
+    @Test fun followSystemUsesSystemSetting() {
+        assertTrue(ClockColour.themeIsDark(-1, systemIsDark = true))
+        assertTrue(!ClockColour.themeIsDark(-1, systemIsDark = false))
+    }
 }

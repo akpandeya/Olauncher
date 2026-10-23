@@ -22,8 +22,10 @@ fun Context.updateClockColour(prefs: Prefs, photo: Bitmap? = null) {
         Log.w("ClockColour", "Failed to read wallpaper colours", e)
         null
     }
-    val themeIsDark = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+    // The app theme decides, not the context: workers only see the phone's system setting.
+    val systemIsDark = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
         Configuration.UI_MODE_NIGHT_YES
+    val themeIsDark = ClockColour.themeIsDark(prefs.appTheme, systemIsDark)
     val wallpaperColors = listOfNotNull(colors?.primaryColor, colors?.secondaryColor, colors?.tertiaryColor)
         .map { it.toArgb() }
     prefs.clockWallpaperColor = ClockColour.pick(wallpaperColors, themeIsDark) ?: 0

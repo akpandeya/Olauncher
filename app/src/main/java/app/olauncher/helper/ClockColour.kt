@@ -13,6 +13,16 @@ import kotlin.math.min
 object ClockColour {
     private const val STEP = 0.01f
 
+    private const val MODE_NIGHT_NO = 1
+    private const val MODE_NIGHT_YES = 2
+
+    /** Whether the app draws light text: the app theme if it is fixed, else the system setting. */
+    fun themeIsDark(appTheme: Int, systemIsDark: Boolean): Boolean = when (appTheme) {
+        MODE_NIGHT_YES -> true
+        MODE_NIGHT_NO -> false
+        else -> systemIsDark
+    }
+
     /**
      * @param wallpaperColors the wallpaper's main colours as ARGB ints, most important first.
      * @param themeIsDark the theme draws light text, so the pick is lightened; otherwise darkened.

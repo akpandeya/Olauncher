@@ -235,6 +235,7 @@ internal fun SettingsFragment.setAppTheme(theme: Int) {
         PhotoWallpaper.applyCurrent(requireContext(), prefs)
     } else {
         setPlainWallpaperByTheme(requireContext(), theme)
+        prefs.clockWallpaperColor = 0
     }
     requireActivity().recreate()
 }
