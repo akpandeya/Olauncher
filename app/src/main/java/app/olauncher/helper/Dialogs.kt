@@ -35,6 +35,7 @@ import app.olauncher.databinding.DialogBaseBinding
 import app.olauncher.databinding.ItemPopupActionBinding
 import app.olauncher.databinding.PopupAppActionsBinding
 import app.olauncher.ui.AppAction
+import app.olauncher.ui.AppActionList
 
 /**
  * Shows a popup menu hanging off the end edge of this view.
@@ -60,7 +61,8 @@ fun View.showPopupMenu(
 /**
  * Shows the long-press actions of an app as a Thumbline card: the app name on
  * top (a heading, not clickable), a hairline, then every action; destructive
- * actions in the danger colour. The card hangs off the end edge of this view and
+ * actions in the danger colour. Actions are split into groups by thin dividers (see
+ * [AppActionList.groupStarts]). The card is 68% of the screen wide, sits on the same side as this view and
  * flips above it near the bottom of the screen or the keyboard (see [PopupPlacement]).
  */
 fun View.showAppActionPopup(
@@ -73,7 +75,11 @@ fun View.showAppActionPopup(
     card.tvPopupTitle.text = appName
     val popup = PopupWindow(card.root, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true)
     val dangerColor = context.getColorFromAttr(R.attr.dangerColor)
-    actions.forEach { action ->
+    val dividerBefore = AppActionList.groupStarts(actions)
+    actions.forEachIndexed { index, action ->
+        if (index in dividerBefore) {
+            inflater.inflate(R.layout.item_popup_divider, card.popupItems, true)
+        }
         val row = ItemPopupActionBinding.inflate(inflater, card.popupItems, false).root
         row.setText(action.labelRes)
         if (action.isDestructive) row.setTextColor(dangerColor)
@@ -93,20 +99,19 @@ fun View.showAppActionPopup(
     // Read the keyboard height now: the caller may have just asked it to hide.
     val imeBottom = root.rootWindowInsets?.getInsets(WindowInsets.Type.ime())?.bottom ?: 0
     val visibleBottom = PopupPlacement.visibleBottom(root.height, imeBottom)
+    val menuWidth = PopupPlacement.menuWidth(root.width, margin)
     card.root.measure(
-        View.MeasureSpec.makeMeasureSpec(maxOf(0, root.width - 2 * margin), View.MeasureSpec.AT_MOST),
+        View.MeasureSpec.makeMeasureSpec(menuWidth, View.MeasureSpec.EXACTLY),
         View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
     )
-    val menuWidth = card.root.measuredWidth
     val menuHeight = PopupPlacement.fitHeight(card.root.measuredHeight, visibleTop = 0, visibleBottom)
     val top = PopupPlacement.menuTop(loc[1], loc[1] + height, visibleTop = 0, visibleBottom, menuHeight)
-    val left = PopupPlacement.menuLeft(
+    val left = PopupPlacement.menuLeftBySide(
         anchorLeft = loc[0],
         anchorRight = loc[0] + width,
         menuWidth = menuWidth,
         screenWidth = root.width,
         margin = margin,
-        isRtl = layoutDirection == View.LAYOUT_DIRECTION_RTL,
     )
 
     val animation = TypedValue()

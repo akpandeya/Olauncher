@@ -45,4 +45,16 @@ object AppActionList {
             addAll(tail)
         }
     }
+
+    /** Group number of an action; a divider is drawn where the number changes. */
+    private fun group(id: AppAction.Id): Int = when (id) {
+        AppAction.Id.CHANGE_APP, AppAction.Id.ADD_TO_HOME, AppAction.Id.RENAME,
+        AppAction.Id.CHOOSE_BUILTIN, AppAction.Id.RESET_SHORTCUT -> 0
+        AppAction.Id.HIDE, AppAction.Id.DISTRACTING, AppAction.Id.REMOVE_FROM_HOME -> 1
+        AppAction.Id.APP_INFO, AppAction.Id.UNINSTALL -> 2
+    }
+
+    /** Indexes in [actions] that start a new group, so a divider goes right before them. */
+    fun groupStarts(actions: List<AppAction>): Set<Int> =
+        actions.indices.filter { it > 0 && group(actions[it].id) != group(actions[it - 1].id) }.toSet()
 }

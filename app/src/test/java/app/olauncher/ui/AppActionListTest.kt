@@ -54,4 +54,12 @@ class AppActionListTest {
         assertEquals(listOf(Id.CHANGE_APP, Id.CHOOSE_BUILTIN, Id.RESET_SHORTCUT), ids(list))
         assertTrue(list.none { it.isDestructive })
     }
+
+    @Test
+    fun dividersSplitActionsIntoThreeGroups() {
+        val list = AppActionList.build(isArchived = false, isHidden = false, isDistracting = false)
+        // Add/Rename | Hide/Distracting | Info/Uninstall
+        assertEquals(setOf(2, 4), AppActionList.groupStarts(list))
+        assertEquals(emptySet<Int>(), AppActionList.groupStarts(AppActionList.buildShortcut()))
+    }
 }

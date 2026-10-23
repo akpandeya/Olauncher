@@ -119,4 +119,32 @@ class PopupPlacementTest {
     fun menuLeftCentresCardWiderThanTheMarginsAllow() {
         assertEquals(10, PopupPlacement.menuLeft(anchorLeft = 0, anchorRight = 300, menuWidth = 1060, screenWidth = 1080, margin = 24, isRtl = false))
     }
+
+    @Test
+    fun menuWidthIsSixtyEightPercentOfTheScreen() {
+        assertEquals(734, PopupPlacement.menuWidth(screenWidth = 1080, margin = 24))
+    }
+
+    @Test
+    fun menuWidthNeverExceedsScreenMinusMargins() {
+        assertEquals(60, PopupPlacement.menuWidth(screenWidth = 100, margin = 20))
+        assertEquals(0, PopupPlacement.menuWidth(screenWidth = 40, margin = 30))
+    }
+
+    @Test
+    fun menuLeftBySideAlignsStartWithAnchorOnTheLeftHalf() {
+        assertEquals(60, PopupPlacement.menuLeftBySide(anchorLeft = 60, anchorRight = 400, menuWidth = 734, screenWidth = 1080, margin = 24))
+    }
+
+    @Test
+    fun menuLeftBySideAlignsEndWithAnchorOnTheRightHalf() {
+        // Right-to-left home apps sit on the right: end edges line up at 1020.
+        assertEquals(286, PopupPlacement.menuLeftBySide(anchorLeft = 700, anchorRight = 1020, menuWidth = 734, screenWidth = 1080, margin = 24))
+    }
+
+    @Test
+    fun menuLeftBySideStaysInsideMargins() {
+        assertEquals(24, PopupPlacement.menuLeftBySide(anchorLeft = 0, anchorRight = 200, menuWidth = 734, screenWidth = 1080, margin = 24))
+        assertEquals(322, PopupPlacement.menuLeftBySide(anchorLeft = 900, anchorRight = 1080, menuWidth = 734, screenWidth = 1080, margin = 24))
+    }
 }
