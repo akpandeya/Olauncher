@@ -20,6 +20,17 @@ class WeekCardNoLineEmojiTest {
     }
 
     @Test
+    fun `wellbeing card has no per-line emoji`() {
+        val strings = listOf("app/src/main/res/values/strings.xml", "src/main/res/values/strings.xml")
+            .map(::File).first { it.exists() }.readText()
+        val lines = strings.lines().filter { it.contains("wellbeing_") }
+        assertTrue(lines.isNotEmpty())
+        for (line in lines) for (e in listOf("💧", "🚶", "🌿")) assertFalse(line, line.contains(e))
+        val card = source("WellbeingCard.kt")
+        for (e in listOf("💧", "🚶", "🌿")) assertFalse(card.contains(e))
+    }
+
+    @Test
     fun `week card keeps one heading icon and indents wrapped lines`() {
         val card = source("WeekCard.kt")
         assertTrue(card.contains("override val emoji: String = \"📊\""))
