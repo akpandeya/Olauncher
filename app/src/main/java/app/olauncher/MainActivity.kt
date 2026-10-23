@@ -182,6 +182,7 @@ class MainActivity : AppCompatActivity() {
         val accentOverlay = Accent.resolve(Accent.fromId(prefs.accent), 0) {
             when (it) {
                 Accent.SYSTEM -> R.style.AccentSystemOverlay
+                Accent.WALLPAPER -> 0
                 Accent.SAGE -> R.style.AccentSageOverlay
                 Accent.SAND -> R.style.AccentSandOverlay
                 Accent.SKY -> R.style.AccentSkyOverlay

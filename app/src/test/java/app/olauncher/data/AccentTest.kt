@@ -43,11 +43,12 @@ class AccentTest {
         assertEquals(Accent.SAND, Accent.fromId(3))
         assertEquals(Accent.SKY, Accent.fromId(4))
         assertEquals(Accent.ROSE, Accent.fromId(5))
+        assertEquals(Accent.WALLPAPER, Accent.fromId(6))
     }
 
     @Test
     fun `fromId returns OFF for unknown or invalid ids`() {
-        val invalidIds = listOf(-1, -100, 6, 7, 42, 99, 999, Int.MIN_VALUE, Int.MAX_VALUE)
+        val invalidIds = listOf(-1, -100, 7, 8, 42, 99, 999, Int.MIN_VALUE, Int.MAX_VALUE)
         for (id in invalidIds) {
             assertEquals("Id $id must fall back to OFF", Accent.OFF, Accent.fromId(id))
         }
