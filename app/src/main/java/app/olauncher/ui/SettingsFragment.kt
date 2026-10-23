@@ -346,7 +346,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     internal fun initObservers() {
         prefs.firstSettingsOpen = false
         viewModel.isOlauncherDefault.observe(viewLifecycleOwner) {
-            binding.setLauncher.text = getString(R.string.change_default_launcher)
+            binding.setLauncher.text = getString(if (it) R.string.change_default_launcher else R.string.set_as_default_launcher)
             binding.setLauncher.isVisible = DefaultLauncherCheck.showChangeDefault(it)
             if (it) prefs.toShowHintCounter += 1
         }

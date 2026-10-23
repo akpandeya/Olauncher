@@ -114,14 +114,12 @@
                     android:text="@string/home_screen"
                     android:textColor="?attr/primaryColor" />
                 <TextView
-                    style="@style/TextSmall"
+                    style="@style/SettingsSectionHint"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_marginBottom="4dp"
-                    android:alpha="0.7"
-                    android:text="@string/hint_home"
-                    android:textColor="?attr/primaryColor" />
+                    android:text="@string/hint_home" />
 
                 <TextView
                     android:id="@+id/sectionRowShortcuts"
@@ -133,14 +131,12 @@
                     android:text="@string/shortcut_icons"
                     android:textColor="?attr/primaryColor" />
                 <TextView
-                    style="@style/TextSmall"
+                    style="@style/SettingsSectionHint"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_marginBottom="4dp"
-                    android:alpha="0.7"
-                    android:text="@string/hint_shortcuts"
-                    android:textColor="?attr/primaryColor" />
+                    android:text="@string/hint_shortcuts" />
 
                 <TextView
                     android:id="@+id/sectionRowDrawer"
@@ -152,14 +148,12 @@
                     android:text="@string/drawer"
                     android:textColor="?attr/primaryColor" />
                 <TextView
-                    style="@style/TextSmall"
+                    style="@style/SettingsSectionHint"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_marginBottom="4dp"
-                    android:alpha="0.7"
-                    android:text="@string/hint_drawer"
-                    android:textColor="?attr/primaryColor" />
+                    android:text="@string/hint_drawer" />
 
                 <TextView
                     android:id="@+id/sectionRowWellbeing"
@@ -171,14 +165,12 @@
                     android:text="@string/wellbeing"
                     android:textColor="?attr/primaryColor" />
                 <TextView
-                    style="@style/TextSmall"
+                    style="@style/SettingsSectionHint"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_marginBottom="4dp"
-                    android:alpha="0.7"
-                    android:text="@string/hint_wellbeing"
-                    android:textColor="?attr/primaryColor" />
+                    android:text="@string/hint_wellbeing" />
 
                 <TextView
                     android:id="@+id/sectionRowToday"
@@ -190,14 +182,12 @@
                     android:text="@string/today_section"
                     android:textColor="?attr/primaryColor" />
                 <TextView
-                    style="@style/TextSmall"
+                    style="@style/SettingsSectionHint"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_marginBottom="4dp"
-                    android:alpha="0.7"
-                    android:text="@string/hint_today"
-                    android:textColor="?attr/primaryColor" />
+                    android:text="@string/hint_today" />
 
                 <TextView
                     android:id="@+id/sectionRowDeutsch"
@@ -209,14 +199,12 @@
                     android:text="@string/german_section"
                     android:textColor="?attr/primaryColor" />
                 <TextView
-                    style="@style/TextSmall"
+                    style="@style/SettingsSectionHint"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_marginBottom="4dp"
-                    android:alpha="0.7"
-                    android:text="@string/hint_german"
-                    android:textColor="?attr/primaryColor" />
+                    android:text="@string/hint_german" />
 
                 <TextView
                     android:id="@+id/sectionRowAppearance"
@@ -228,14 +216,12 @@
                     android:text="@string/appearance"
                     android:textColor="?attr/primaryColor" />
                 <TextView
-                    style="@style/TextSmall"
+                    style="@style/SettingsSectionHint"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_marginBottom="4dp"
-                    android:alpha="0.7"
-                    android:text="@string/hint_appearance"
-                    android:textColor="?attr/primaryColor" />
+                    android:text="@string/hint_appearance" />
 
                 <TextView
                     android:id="@+id/sectionRowGestures"
@@ -247,14 +233,12 @@
                     android:text="@string/gestures"
                     android:textColor="?attr/primaryColor" />
                 <TextView
-                    style="@style/TextSmall"
+                    style="@style/SettingsSectionHint"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_marginBottom="4dp"
-                    android:alpha="0.7"
-                    android:text="@string/hint_gestures"
-                    android:textColor="?attr/primaryColor" />
+                    android:text="@string/hint_gestures" />
 
                 <TextView
                     android:id="@+id/sectionRowBackup"
@@ -266,14 +250,12 @@
                     android:text="@string/backup"
                     android:textColor="?attr/primaryColor" />
                 <TextView
-                    style="@style/TextSmall"
+                    style="@style/SettingsSectionHint"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_marginBottom="4dp"
-                    android:alpha="0.7"
-                    android:text="@string/hint_backup"
-                    android:textColor="?attr/primaryColor" />
+                    android:text="@string/hint_backup" />
 
                 <TextView
                     android:tag="sectionRowPrivacy"
@@ -285,14 +267,12 @@
                     android:text="@string/privacy"
                     android:textColor="?attr/primaryColor" />
                 <TextView
-                    style="@style/TextSmall"
+                    style="@style/SettingsSectionHint"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:layout_marginBottom="4dp"
-                    android:alpha="0.7"
-                    android:text="@string/hint_privacy"
-                    android:textColor="?attr/primaryColor" />
+                    android:text="@string/hint_privacy" />
 
             </LinearLayout>
 

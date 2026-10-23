@@ -265,7 +265,7 @@ class SettingsSectionsResourceTest {
         val children = sectionList.getElementsByTagName("TextView")
         for (i in 0 until children.length) {
             val tv = children.item(i) as Element
-            if (tv.getAttribute("style") == "@style/TextSmall") continue // hint line under a row
+            if (tv.getAttribute("style") == "@style/SettingsSectionHint") continue // hint line under a row
             val idAttr = tv.getAttribute("android:id")
             if (idAttr.isNotEmpty()) {
                 rowIds.add(idAttr.substringAfterLast("/"))
