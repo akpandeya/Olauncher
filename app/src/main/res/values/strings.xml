@@ -494,6 +494,12 @@
     <string name="word_list_remove_from_list" tools:ignore="MissingTranslation">Remove from list</string>
     <string name="word_list_add_words" tools:ignore="MissingTranslation">Add words</string>
     <string name="word_list_empty_state" tools:ignore="MissingTranslation">No words in this list yet</string>
+    <string name="words_conjugate" tools:ignore="MissingTranslation">Conjugate</string>
+    <string name="conjugation_not_in_dictionary" tools:ignore="MissingTranslation">“%1$s” isn\'t a verb in the offline dictionary</string>
+    <string name="conjugation_progress" tools:ignore="MissingTranslation">%1$d / %2$d</string>
+    <string name="conjugation_next" tools:ignore="MissingTranslation">Next</string>
+    <string name="conjugation_complete" tools:ignore="MissingTranslation">%1$d forms checked</string>
+    <string name="conjugation_restart" tools:ignore="MissingTranslation">Restart</string>
     <string name="save">Save</string>
     <string name="glance">Glance</string>
     <string name="weather">Weather</string>
