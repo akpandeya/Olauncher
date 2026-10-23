@@ -10,6 +10,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -70,12 +71,8 @@ class TodayCardTest {
     }
 
     @Test
-    fun `today cards list contains week card`() {
-        val week = TodayCards.all.firstOrNull { it.key == app.olauncher.ui.today.cards.WeekCard.KEY }
-        assertNotNull(week)
-        assertEquals("week", week?.key)
-        assertEquals(R.string.last_7_days, week?.titleRes)
-        assertEquals(true, week?.defaultEnabled)
+    fun `week card is merged into wellbeing and no longer listed`() {
+        assertNull(TodayCards.all.firstOrNull { it.key == app.olauncher.ui.today.cards.WeekCard.KEY })
     }
 
     @Test

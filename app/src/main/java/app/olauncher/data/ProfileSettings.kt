@@ -6,7 +6,7 @@ import app.olauncher.ui.today.cards.HeldCard
 import app.olauncher.ui.today.cards.NextUpCard
 import app.olauncher.ui.today.cards.SavedCard
 import app.olauncher.ui.today.cards.WeatherCard
-import app.olauncher.ui.today.cards.WeekCard
+import app.olauncher.ui.today.TodayOrder
 import app.olauncher.ui.today.cards.WellbeingCard
 import app.olauncher.ui.today.cards.WordsCard
 import org.json.JSONArray
@@ -88,7 +88,7 @@ data class ProfileSettings(
     init {
         require(homeAppsCount in 0..HomeSets.MAX_SLOTS) { "homeAppsCount out of range: $homeAppsCount" }
         require(glowStrength in 0..100) { "glowStrength out of range: $glowStrength" }
-        require(todayCards.all { it in KNOWN_CARDS }) { "unknown today card" }
+        require(todayCards.all { it in KNOWN_CARDS || it == TodayOrder.LEGACY_WEEK_KEY }) { "unknown today card" }
     }
 
     /** Writes every setting of this profile. Nothing outside [ProfileSettingsTarget] is touched. */
@@ -118,7 +118,11 @@ data class ProfileSettings(
         target.windDownGrey = windDownGrey
         target.nudgeWaterIntervalMin = nudgeWaterIntervalMin
         target.nudgeWalkIntervalMin = nudgeWalkIntervalMin
-        KNOWN_CARDS.forEach { target.setTodayCardEnabled(it, it in todayCards) }
+        KNOWN_CARDS.forEach { key ->
+            // An old profile may still list the week card, which now lives in Wellbeing.
+            val on = key in todayCards || (key == WellbeingCard.KEY && TodayOrder.LEGACY_WEEK_KEY in todayCards)
+            target.setTodayCardEnabled(key, on)
+        }
         todayOrderSmart?.let { target.todayOrderSmart = it }
         target.drawerRecents = drawerRecents
         target.drawerLetterStrip = drawerLetterStrip
@@ -157,7 +161,7 @@ data class ProfileSettings(
     companion object {
         val KNOWN_CARDS: List<String> = listOf(
             WeatherCard.KEY, NextUpCard.KEY, SavedCard.KEY, HeldCard.KEY,
-            WellbeingCard.KEY, WordsCard.KEY, WeekCard.KEY,
+            WellbeingCard.KEY, WordsCard.KEY,
         )
 
         private const val F_HOME_APPS_COUNT = "homeAppsCount"
