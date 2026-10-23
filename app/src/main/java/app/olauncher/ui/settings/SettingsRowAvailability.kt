@@ -25,9 +25,26 @@ object SettingsRowAvailability {
         R.id.germanUiOnOff,
     )
 
-    fun isAvailable(@IdRes viewId: Int, shortcutsOn: Boolean, germanOn: Boolean): Boolean = when (viewId) {
+    private val windDownDependentRows = setOf(
+        R.id.windDownGreyOnOff,
+        R.id.systemGreyOnOff,
+    )
+
+    private val holdDependentRows = setOf(
+        R.id.quietReleaseTimes,
+    )
+
+    fun isAvailable(
+        @IdRes viewId: Int,
+        shortcutsOn: Boolean,
+        germanOn: Boolean,
+        windDownOn: Boolean = true,
+        holdOn: Boolean = true,
+    ): Boolean = when (viewId) {
         in shortcutDependentRows -> shortcutsOn
         in germanDependentRows -> germanOn
+        in windDownDependentRows -> windDownOn
+        in holdDependentRows -> holdOn
         else -> true
     }
 }

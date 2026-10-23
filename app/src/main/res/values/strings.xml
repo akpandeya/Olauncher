@@ -219,7 +219,12 @@
     <string name="cancel">Cancel</string>
     <string name="settings_footer">Thumbline %1$s · based on %2$s · GPLv3\nFonts: Inter, IBM Plex Sans · SIL OFL</string>
     <string name="pause_before_distracting_apps">Pause before distracting apps</string>
-    <string name="pause_daily_allowance_needs_access">Daily allowance (needs usage access)</string>
+    <string name="pause_daily_allowance">Daily allowance</string>
+    <string name="pause_daily_allowance_desc">Needs usage access</string>
+    <string name="wellbeing_friction">Friction</string>
+    <string name="wellbeing_wind_down">Wind-down</string>
+    <string name="wellbeing_notifications">Notifications</string>
+    <string name="wellbeing_tracking">Tracking</string>
     <string name="pause_longer_with_each_open">Longer pause with each open</string>
     <string name="pause_ask_why">Ask why before opening</string>
     <string name="pause_ask_why_desc">Asks before Open. The wait and Not now do most of the work.</string>

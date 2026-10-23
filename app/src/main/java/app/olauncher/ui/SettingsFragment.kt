@@ -289,6 +289,8 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         viewId = viewId,
         shortcutsOn = prefs.homeShortcuts,
         germanOn = prefs.germanEnabled,
+        windDownOn = prefs.windDown,
+        holdOn = prefs.quietEnabled && isNotificationAccessGranted(),
     )
 
     /** Searchable rows that are not switched off by a parent setting, labelled as the user sees them. */

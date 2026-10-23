@@ -36,4 +36,25 @@ class SettingsRowAvailabilityTest {
             assertTrue(SettingsRowAvailability.isAvailable(id, shortcutsOn = false, germanOn = false))
         }
     }
+
+    @Test
+    fun `wind-down sub-rows follow the wind-down switch only`() {
+        for (id in listOf(R.id.windDownGreyOnOff, R.id.systemGreyOnOff)) {
+            assertFalse(SettingsRowAvailability.isAvailable(id, shortcutsOn = true, germanOn = true, windDownOn = false, holdOn = true))
+            assertTrue(SettingsRowAvailability.isAvailable(id, shortcutsOn = false, germanOn = false, windDownOn = true, holdOn = false))
+        }
+    }
+
+    @Test
+    fun `release times follow the hold switch only`() {
+        assertFalse(SettingsRowAvailability.isAvailable(R.id.quietReleaseTimes, shortcutsOn = true, germanOn = true, windDownOn = true, holdOn = false))
+        assertTrue(SettingsRowAvailability.isAvailable(R.id.quietReleaseTimes, shortcutsOn = false, germanOn = false, windDownOn = false, holdOn = true))
+    }
+
+    @Test
+    fun `wellbeing parent switches stay available when everything is off`() {
+        for (id in listOf(R.id.windDown, R.id.holdNotificationsOnOff, R.id.distractingApps, R.id.screenTimeOnOff)) {
+            assertTrue(SettingsRowAvailability.isAvailable(id, shortcutsOn = false, germanOn = false, windDownOn = false, holdOn = false))
+        }
+    }
 }
