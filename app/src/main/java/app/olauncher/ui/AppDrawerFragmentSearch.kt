@@ -397,6 +397,7 @@ internal fun AppDrawerFragment.calendarRows(query: String): List<AppModel.Result
         tomorrow = ctx.getString(R.string.next_up_tomorrow),
         nowTemplate = ctx.getString(R.string.next_up_now),
         tomorrowEventTemplate = ctx.getString(R.string.next_up_tomorrow_event),
+        allDay = ctx.getString(R.string.next_up_all_day),
     )
     val to = now + CalendarSearch.WINDOW_DAYS * 24 * 3600 * 1000L
     return CalendarRepository(ctx).search(query, now, to)
