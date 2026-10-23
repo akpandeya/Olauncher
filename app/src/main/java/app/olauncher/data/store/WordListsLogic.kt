@@ -5,19 +5,29 @@ object WordListsLogic {
 
     enum class NameError { BLANK, DUPLICATE }
 
+    /** Longest slug used as a list id base; uniqueness suffixes like "-2" may exceed it. */
+    const val MAX_SLUG_LENGTH = 48
+
     /** Trims and collapses internal whitespace runs so near-identical names compare equal. */
     fun normalizeName(raw: String): String {
         return raw.trim().replace(Regex("\\s+"), " ")
     }
 
     /**
-     * Null when [name] can be used. A duplicate is a case-insensitive name match against
-     * another list; [exceptId] excludes the list being renamed from that check.
+     * Null when [name] can be used. A duplicate matches another list on a key that folds
+     * case and strips everything but letters/digits ("kitchen!" == "Kitchen"); [exceptId]
+     * excludes the list being renamed from that check.
      */
     fun validateName(name: String, lists: List<WordList>, exceptId: String? = null): NameError? {
         if (name.isBlank()) return NameError.BLANK
-        val clash = lists.any { it.id != exceptId && it.name.equals(name, ignoreCase = true) }
+        val key = duplicateKey(name)
+        val clash = lists.any { it.id != exceptId && duplicateKey(it.name) == key }
         return if (clash) NameError.DUPLICATE else null
+    }
+
+    /** Comparison key using the same letter set as [slugify]: casefolded, letters/digits only. */
+    private fun duplicateKey(name: String): String {
+        return name.lowercase().filter { it.isLetterOrDigit() }
     }
 
     /**
@@ -40,9 +50,12 @@ object WordListsLogic {
         return slug.toString().ifEmpty { "list" }
     }
 
-    /** Slug for [name], suffixed with -2, -3, … until it is free within [existingIds]. */
+    /**
+     * Slug for [name], capped at [MAX_SLUG_LENGTH] so very long names keep short ids,
+     * suffixed with -2, -3, … until it is free within [existingIds].
+     */
     fun uniqueListId(name: String, existingIds: Set<String>): String {
-        val base = slugify(name)
+        val base = slugify(name).take(MAX_SLUG_LENGTH).trimEnd('-')
         if (base !in existingIds) return base
         var suffix = 2
         while ("$base-$suffix" in existingIds) suffix++

@@ -51,14 +51,13 @@ class WordsStoreListsTest {
     }
 
     @Test
-    fun `addList generates unique ids on slug clash`() {
+    fun `addList rejects duplicates that differ only in punctuation`() {
         val first = store.addList("Kitchen")
-        val second = store.addList("kitchen!")
         assertNotNull(first)
-        assertNotNull(second)
-        assertEquals("kitchen", first!!.id)
-        assertEquals("kitchen-2", second!!.id)
-        assertEquals("kitchen!", second.name)
+
+        assertNull(store.addList("kitchen!"))
+        assertNull(store.addList("  KITCHEN!!  "))
+        assertEquals(listOf("kitchen"), store.lists().map { it.id })
     }
 
     @Test

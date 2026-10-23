@@ -47,7 +47,7 @@ object WordsCodec {
     /** Envelope format written today. v1 files were a bare JSON array of words. */
     const val CURRENT_VERSION = 2
 
-    fun encode(words: List<Word>, lists: List<WordList> = emptyList()): String {
+    fun encode(words: List<Word>, lists: List<WordList>): String {
         val envelope = JSONObject()
         envelope.put("version", CURRENT_VERSION)
         envelope.put("lists", listsToJson(lists))
@@ -329,7 +329,7 @@ class WordsStore(
         return loadData().lists.sortedBy { it.name.lowercase() }
     }
 
-    /** Null when the name is blank or already taken (case-insensitive). */
+    /** Null when the name is blank or already taken (compared ignoring case and punctuation). */
     @Synchronized
     fun addList(name: String): WordList? {
         val data = loadData()
