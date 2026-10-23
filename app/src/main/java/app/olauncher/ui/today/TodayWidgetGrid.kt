@@ -41,14 +41,23 @@ internal class WidgetGridView(context: Context) : ViewGroup(context) {
         val available = MeasureSpec.getSize(widthMeasureSpec) - paddingLeft - paddingRight
         val cell = available.toFloat() / TodayWidgetResize.COLUMNS
         val spots = ArrayList<Spot>(childCount)
-        var cursor = 0f
+        // Packing counts columns, not pixels: a pixel cursor accumulates per-child
+        // rounding and can overflow by a pixel or two, wrapping full rows spuriously.
+        // Column boundaries are exact, so spans filling the row always sum to its width.
+        var col = 0
         var rowTop = paddingTop
         var rowHeight = 0
         for (index in 0 until childCount) {
             val child = getChildAt(index)
             val lp = child.layoutParams as LayoutParams
             val span = lp.span.coerceIn(1, TodayWidgetResize.COLUMNS)
-            val width = (span * cell).roundToInt()
+            if (col > 0 && col + span > TodayWidgetResize.COLUMNS) {
+                rowTop += rowHeight
+                col = 0
+                rowHeight = 0
+            }
+            val left = (col * cell).roundToInt()
+            val width = ((col + span) * cell).roundToInt() - left
             child.measure(
                 MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
                 getChildMeasureSpec(
@@ -58,13 +67,8 @@ internal class WidgetGridView(context: Context) : ViewGroup(context) {
                 ),
             )
             val height = child.measuredHeight + lp.topMargin + lp.bottomMargin
-            if (cursor > 0 && cursor.roundToInt() + width > available) {
-                rowTop += rowHeight
-                cursor = 0f
-                rowHeight = 0
-            }
-            spots.add(Spot(cursor.roundToInt() + paddingLeft, rowTop + lp.topMargin, width, child.measuredHeight))
-            cursor += width
+            spots.add(Spot(left + paddingLeft, rowTop + lp.topMargin, width, child.measuredHeight))
+            col += span
             rowHeight = max(rowHeight, height)
         }
         placements = spots
@@ -80,7 +84,7 @@ internal class WidgetGridView(context: Context) : ViewGroup(context) {
         for (index in 0 until childCount) {
             val spot = placements.getOrNull(index) ?: continue
             val child = getChildAt(index)
-            val childLeft = if (rtl) width - paddingRight - spot.left - spot.width else spot.left
+            val childLeft = if (rtl) width - paddingRight - (spot.left - paddingLeft) - spot.width else spot.left
             child.layout(childLeft, spot.top, childLeft + spot.width, spot.top + spot.height)
         }
     }

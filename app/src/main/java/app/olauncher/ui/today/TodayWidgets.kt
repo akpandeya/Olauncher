@@ -87,7 +87,7 @@ internal class TodayWidgets(
      */
     fun add() {
         if (prefs.todayPendingWidgetId > 0) return
-        WidgetPickerDialog.show(context) { entry ->
+        WidgetPickerDialog.show(context, { fragment.isAdded && !fragment.requireActivity().isFinishing }) { entry ->
             safely {
                 val id = host.allocateAppWidgetId()
                 prefs.todayPendingWidgetId = id
@@ -378,11 +378,14 @@ internal class TodayWidgets(
                 if (currentHeightDp(hostView, density) >= READOUT_MIN_DP) View.VISIBLE else View.GONE
 
             var shownDp = -1
-            fun syncReadout(dp: Int) {
-                if (dp >= READOUT_MIN_DP) {
-                    if (shownDp != dp) {
-                        shownDp = dp
-                        readout.text = context.getString(R.string.today_widget_resize_dp, dp)
+
+            /** [displayDp] is the dragged dimension's value; [basisDp] decides visibility, so a
+             *  width drag on a short card does not hide the chip via the height threshold. */
+            fun syncReadout(displayDp: Int, basisDp: Int) {
+                if (basisDp >= READOUT_MIN_DP) {
+                    if (shownDp != displayDp) {
+                        shownDp = displayDp
+                        readout.text = context.getString(R.string.today_widget_resize_dp, displayDp)
                     }
                     readout.visibility = View.VISIBLE
                 } else {
@@ -422,7 +425,7 @@ internal class TodayWidgets(
                                 startDp = currentHeightDp(hostView, density)
                                 liveDp = TodayWidgetResize.snap(startDp, range)
                                 moved = false
-                                syncReadout(liveDp)
+                                syncReadout(liveDp, liveDp)
                                 handleView.parent.requestDisallowInterceptTouchEvent(true)
                                 true
                             }
@@ -434,7 +437,7 @@ internal class TodayWidgets(
                                 val draggedDp = (startDp + (event.rawY - startY) / density).roundToInt()
                                 liveDp = TodayWidgetResize.snap(draggedDp, range)
                                 setHeight(liveDp)
-                                syncReadout(liveDp)
+                                syncReadout(liveDp, liveDp)
                                 true
                             }
                             MotionEvent.ACTION_UP -> {
@@ -524,7 +527,8 @@ internal class TodayWidgets(
                                 val found = panelInGrid()
                                 val grid = found?.second
                                 cellPx = if (grid != null && grid.width > 0) {
-                                    grid.width.toFloat() / TodayWidgetResize.COLUMNS
+                                    (grid.width - grid.paddingLeft - grid.paddingRight)
+                                        .toFloat() / TodayWidgetResize.COLUMNS
                                 } else {
                                     0f
                                 }
@@ -540,7 +544,7 @@ internal class TodayWidgets(
                                 moved = false
                                 // The end edge follows the finger outward; mirrored in RTL.
                                 dragSign = if (layoutDirection == View.LAYOUT_DIRECTION_RTL) -1f else 1f
-                                syncReadout(widthDp(liveSpan))
+                                syncReadout(widthDp(liveSpan), currentHeightDp(hostView, density))
                                 handleView.parent.requestDisallowInterceptTouchEvent(true)
                                 true
                             }
@@ -555,7 +559,7 @@ internal class TodayWidgets(
                                     (panel?.layoutParams as? WidgetGridView.LayoutParams)?.span = span
                                     panel?.requestLayout()
                                 }
-                                syncReadout(widthDp(liveSpan))
+                                syncReadout(widthDp(liveSpan), currentHeightDp(hostView, density))
                                 true
                             }
                             MotionEvent.ACTION_UP -> {
@@ -569,8 +573,11 @@ internal class TodayWidgets(
                                     // view's own layout-change listener.
                                     exitResize()
                                 } else {
+                                    // Bare tap: restore the span and leave resize mode, like the
+                                    // bottom strip — otherwise width-only widgets could never cancel.
                                     (panel?.layoutParams as? WidgetGridView.LayoutParams)?.span = startSpan
                                     panel?.requestLayout()
+                                    exitResize()
                                 }
                                 true
                             }
