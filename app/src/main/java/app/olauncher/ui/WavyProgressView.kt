@@ -109,8 +109,8 @@ class WavyProgressView @JvmOverloads constructor(
         }
         if (MusicPulse.waveDividerVisible(progress)) {
             val dividerHalf = dividerHeightPx / 2f
-            canvas.drawLine(playedEnd, centreY - dividerHalf, playedEnd, centreY + dividerHalf, trackOutlinePaint)
-            canvas.drawLine(playedEnd, centreY - dividerHalf, playedEnd, centreY + dividerHalf, trackPaint)
+            canvas.drawLine(playedEnd, centreY - dividerHalf, playedEnd, centreY + dividerHalf, waveOutlinePaint)
+            canvas.drawLine(playedEnd, centreY - dividerHalf, playedEnd, centreY + dividerHalf, wavePaint)
         }
         if (playedEnd <= start) return
         val phase = MusicPulse.wavePhase(elapsedMs)

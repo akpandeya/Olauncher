@@ -53,8 +53,8 @@ class MediaPickerTest {
     @Test
     fun `text for playing and paused`() {
         val playing = MediaInfo("Song", "Artist", "p", true)
-        assertEquals("▶ Song — Artist", ContextLine.pick(playing, null, java.time.Instant.EPOCH)?.text)
-        assertEquals("❚❚ Song — Artist", ContextLine.pick(playing.copy(playing = false), null, java.time.Instant.EPOCH)?.text)
+        assertEquals("❚❚ Song — Artist", ContextLine.pick(playing, null, java.time.Instant.EPOCH)?.text)
+        assertEquals("▶ Song — Artist", ContextLine.pick(playing.copy(playing = false), null, java.time.Instant.EPOCH)?.text)
     }
 
     @Test
