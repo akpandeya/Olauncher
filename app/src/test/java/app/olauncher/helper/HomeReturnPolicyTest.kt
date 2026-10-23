@@ -25,4 +25,20 @@ class HomeReturnPolicyTest {
     fun `keeps the screen while a picker is open for a result`() {
         assertFalse(HomeReturnPolicy.shouldPopToHome(isOnHome = false, privateSpaceToggling = false, awaitingActivityResult = true))
     }
+
+    @Test
+    fun `widget setup survives intermediate resume and allows home after completion or cancel`() {
+        assertFalse(HomeReturnPolicy.shouldPopToHome(
+            isOnHome = false,
+            privateSpaceToggling = false,
+            awaitingActivityResult = false,
+            pendingWidgetId = 54,
+        ))
+        assertTrue(HomeReturnPolicy.shouldPopToHome(
+            isOnHome = false,
+            privateSpaceToggling = false,
+            awaitingActivityResult = false,
+            pendingWidgetId = -1,
+        ))
+    }
 }

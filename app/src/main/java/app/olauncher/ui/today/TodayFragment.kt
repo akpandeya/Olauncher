@@ -11,9 +11,13 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import app.olauncher.helper.StatusBarFade
+import app.olauncher.MainViewModel
 import app.olauncher.R
 import app.olauncher.data.Prefs
 import app.olauncher.data.store.IntentionHistory
@@ -39,8 +43,39 @@ class TodayFragment : BaseFragment() {
     private var _binding: FragmentTodayBinding? = null
     private val binding get() = _binding!!
     private lateinit var prefs: Prefs
+    private lateinit var viewModel: MainViewModel
+    private lateinit var todayWidgets: TodayWidgets
     private var panelsJob: Job? = null
     private var pastIntentionsOpen = false
+
+    private val widgetPickerLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            todayWidgets.onPickerResult(it)
+        }
+    private val widgetBindLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            todayWidgets.onBindResult(it)
+        }
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        viewModel = ViewModelProvider(requireActivity())[MainViewModel::class.java]
+        todayWidgets = TodayWidgets(
+            fragment = this,
+            restoring = savedInstanceState != null,
+            refresh = { if (_binding != null) populateCards() },
+            picker = widgetPickerLauncher,
+            bind = widgetBindLauncher,
+            markAwaitingResult = { viewModel.isAwaitingActivityResult = true },
+            clearAwaitingResult = { viewModel.isAwaitingActivityResult = false },
+        )
+        requireActivity().supportFragmentManager.setFragmentResultListener(
+            TodayWidgets.CONFIGURE_RESULT, this,
+        ) { _, result ->
+            todayWidgets.onConfigureResult(
+                ActivityResult(result.getInt(TodayWidgets.RESULT_CODE), null),
+            )
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -54,6 +89,7 @@ class TodayFragment : BaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         prefs = Prefs(requireContext())
+        binding.addWidget.setOnClickListener { todayWidgets.add() }
         StatusBarFade.attach(binding.statusBarFade)
         initSwipeTouchListener()
         // Lift the page above the keyboard so the Add note field stays visible.
@@ -70,6 +106,16 @@ class TodayFragment : BaseFragment() {
             refreshPastIntentions()
         }
         populateCards()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        todayWidgets.start()
+    }
+
+    override fun onStop() {
+        todayWidgets.stop()
+        super.onStop()
     }
 
     override fun onResume() {
@@ -156,7 +202,7 @@ class TodayFragment : BaseFragment() {
         val context = context ?: return
         val enabledCards = TodayCards.all.filter {
             prefs.isTodayCardEnabled(it.key) && it.isAvailable(context)
-        }
+        } + todayWidgets.cards()
 
         binding.heroWeatherHost.removeAllViews()
         populateHeroDate()
@@ -172,22 +218,41 @@ class TodayFragment : BaseFragment() {
         // hasContent and priority may read the calendar provider (blocking), so plan off the main thread.
         val appContext = context.applicationContext
         val smart = prefs.todayOrderSmart
+        val savedOrder = prefs.todayPanelOrder
+        val pinnedKeys = prefs.todayPinnedKeys
         panelsJob?.cancel()
         panelsJob = viewLifecycleOwner.lifecycleScope.launch {
-            val plan = withContext(Dispatchers.IO) { planPanels(appContext, panelCards, smart) }
+            val plan = withContext(Dispatchers.IO) {
+                planPanels(appContext, panelCards, smart, savedOrder, pinnedKeys)
+            }
             showPanels(plan)
         }
     }
 
     /** Panels with something to show: pinned ones for the top, the rest highest priority first when the order is smart. */
-    private fun planPanels(context: Context, panelCards: List<TodayCard>, smart: Boolean): PanelPlan {
+    private fun planPanels(
+        context: Context,
+        panelCards: List<TodayCard>,
+        smart: Boolean,
+        savedOrder: List<String>,
+        manuallyPinnedKeys: Set<String>,
+    ): PanelPlan {
         // A card with nothing to show gets no panel and no header.
         val withContent = panelCards.filter { it.hasContent(context) }
-        if (!smart) return PanelPlan(pinned = emptyList(), stacked = withContent)
         val now = ZonedDateTime.now()
         val byKey = withContent.associateBy { it.key }
-        val pinnedKeys = withContent.filter { it.pinnedToTop(context, now) }.map { it.key }.toSet()
-        val split = TodayOrder.split(withContent.map { Ranked(it.key, it.priority(context, now)) }, pinnedKeys)
+        val automaticallyPinnedKeys = if (smart) {
+            withContent.filter { it.pinnedToTop(context, now) }.map { it.key }.toSet()
+        } else {
+            emptySet()
+        }
+        val pinnedKeys = manuallyPinnedKeys + automaticallyPinnedKeys
+        val split = TodayOrder.arrange(
+            cards = withContent.map { Ranked(it.key, it.priority(context, now)) },
+            savedOrder = savedOrder,
+            pinnedKeys = pinnedKeys,
+            smart = smart,
+        )
         return PanelPlan(
             pinned = split.pinned.mapNotNull { byKey[it] },
             stacked = split.stacked.mapNotNull { byKey[it] },
@@ -201,14 +266,14 @@ class TodayFragment : BaseFragment() {
         // Swap the panels in one go, so a refresh does not flash an empty page.
         binding.pinnedCardsContainer.removeAllViews()
         for (card in plan.pinned) {
-            binding.pinnedCardsContainer.addView(inflatePanel(binding.pinnedCardsContainer, card))
+            binding.pinnedCardsContainer.addView(inflatePanel(binding.pinnedCardsContainer, card, plan.pinned.map { it.key }))
         }
         binding.pinnedCardsContainer.isVisible = plan.pinned.isNotEmpty()
 
         binding.cardsContainer.removeAllViews()
         // Stack from the bottom up: the first (highest priority) card is the lowest panel.
         for (card in plan.stacked.asReversed()) {
-            binding.cardsContainer.addView(inflatePanel(binding.cardsContainer, card))
+            binding.cardsContainer.addView(inflatePanel(binding.cardsContainer, card, plan.stacked.map { it.key }))
         }
 
         // With a pinned card the page opens at the top, where it is. Otherwise, when the cards
@@ -220,11 +285,30 @@ class TodayFragment : BaseFragment() {
         }
     }
 
-    private fun inflatePanel(parent: ViewGroup, card: TodayCard): View {
+    private fun inflatePanel(parent: ViewGroup, card: TodayCard, groupKeys: List<String>): View {
         val panel = ItemTodayPanelBinding.inflate(layoutInflater, parent, false)
-        val title = getString(card.titleRes)
+        val title = card.title(requireContext())
         panel.tvPanelTitle.text = if (card.emoji.isEmpty()) title else "${card.emoji}  $title"
         androidx.core.view.ViewCompat.setAccessibilityHeading(panel.tvPanelTitle, true)
+        val widgetId = TodayOrder.widgetId(card.key)
+        if (widgetId != null) {
+            panel.tvPanelTitle.isClickable = true
+            panel.tvPanelTitle.contentDescription = getString(R.string.today_card_options, title)
+            panel.tvPanelTitle.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                0,
+                0,
+                android.R.drawable.ic_menu_more,
+                0,
+            )
+            panel.tvPanelTitle.compoundDrawablePadding = (8 * resources.displayMetrics.density).toInt()
+            panel.tvPanelTitle.setOnClickListener {
+                todayWidgets.showCardOptions(it, card.key, groupKeys)
+            }
+            panel.tvPanelTitle.setOnLongClickListener {
+                todayWidgets.remove(widgetId)
+                true
+            }
+        }
 
         val cardView = card.createView(layoutInflater, panel.panelContent, this)
         if (cardView.parent == null) panel.panelContent.addView(cardView)

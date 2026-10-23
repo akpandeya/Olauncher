@@ -133,6 +133,105 @@ class TodayOrderTest {
     }
 
     @Test
+    fun widgetKeysCanBePinnedAndOrderedInFixedMode() {
+        val firstWidget = TodayOrder.widgetKey(12)
+        val secondWidget = TodayOrder.widgetKey(34)
+        val split = TodayOrder.arrange(
+            cards = listOf(
+                Ranked("saved", 50),
+                Ranked(firstWidget, 40),
+                Ranked(secondWidget, 30),
+            ),
+            savedOrder = listOf(secondWidget, "saved", firstWidget),
+            pinnedKeys = setOf(firstWidget),
+            smart = false,
+        )
+
+        assertEquals(listOf(firstWidget), split.pinned)
+        assertEquals(listOf(secondWidget, "saved"), split.stacked)
+    }
+
+    @Test
+    fun smartWidgetOrderUsesPriorityAfterSavedOrderAndKeepsPinnedKeysAtTop() {
+        val pinnedWidget = TodayOrder.widgetKey(12)
+        val lowerWidget = TodayOrder.widgetKey(34)
+        val higherWidget = TodayOrder.widgetKey(56)
+        val split = TodayOrder.arrange(
+            cards = listOf(
+                Ranked(lowerWidget, 20),
+                Ranked(pinnedWidget, 10),
+                Ranked(higherWidget, 80),
+            ),
+            savedOrder = listOf(higherWidget, pinnedWidget, lowerWidget),
+            pinnedKeys = setOf(pinnedWidget),
+            smart = true,
+        )
+
+        assertEquals(listOf(pinnedWidget), split.pinned)
+        assertEquals(listOf(higherWidget, lowerWidget), split.stacked)
+    }
+
+    @Test
+    fun widgetKeysRoundTripAndRejectInvalidIds() {
+        assertEquals(34, TodayOrder.widgetId(TodayOrder.widgetKey(34)))
+        assertNull(TodayOrder.widgetId("widget:0"))
+        assertNull(TodayOrder.widgetId("widget:-1"))
+        assertNull(TodayOrder.widgetId("widget:34x"))
+        assertNull(TodayOrder.widgetId("other:34"))
+    }
+
+    @Test
+    fun movesWidgetKeysWithinSavedOrder() {
+        val widget = TodayOrder.widgetKey(12)
+        val order = listOf("saved", widget, "notes")
+
+        assertEquals(listOf("saved", "notes", widget), TodayOrder.move(order, widget, 1))
+        assertEquals(listOf(widget, "saved", "notes"), TodayOrder.move(order, widget, -1))
+        assertEquals(order, TodayOrder.move(order, widget, 4))
+    }
+
+    @Test
+    fun widgetMovesSkipHiddenAndOtherPinnedGroupKeysWithoutLosingTheirPositions() {
+        val widget = TodayOrder.widgetKey(12)
+        val order = listOf("notes", "hidden", widget, "pinned", "saved")
+        val group = listOf("notes", widget, "saved")
+
+        assertEquals(
+            listOf("notes", "hidden", "saved", "pinned", widget),
+            TodayOrder.move(order, widget, 1, group),
+        )
+        assertEquals(order, TodayOrder.move(order, "pinned", 1, group))
+    }
+
+    @Test
+    fun pinnedMovesFollowForwardDisplayOrderAndHideBoundaryActions() {
+        val first = TodayOrder.widgetKey(12)
+        val last = TodayOrder.widgetKey(34)
+        val order = listOf(first, "hidden", last, "unpinned")
+        val group = listOf(first, last)
+        val swapped = listOf(last, "hidden", first, "unpinned")
+
+        assertNull(TodayOrder.panelMoves(order, first, true, group).up)
+        assertEquals(swapped, TodayOrder.panelMoves(order, first, true, group).down)
+        assertEquals(swapped, TodayOrder.panelMoves(order, last, true, group).up)
+        assertNull(TodayOrder.panelMoves(order, last, true, group).down)
+    }
+
+    @Test
+    fun unpinnedMovesFollowReversedDisplayOrderAndHideBoundaryActions() {
+        val bottom = TodayOrder.widgetKey(12)
+        val top = TodayOrder.widgetKey(34)
+        val order = listOf(bottom, "hidden", top, "pinned")
+        val group = listOf(bottom, top)
+        val swapped = listOf(top, "hidden", bottom, "pinned")
+
+        assertEquals(swapped, TodayOrder.panelMoves(order, bottom, false, group).up)
+        assertNull(TodayOrder.panelMoves(order, bottom, false, group).down)
+        assertNull(TodayOrder.panelMoves(order, top, false, group).up)
+        assertEquals(swapped, TodayOrder.panelMoves(order, top, false, group).down)
+    }
+
+    @Test
     fun oldWeekKeyMapsToTheMergedWellbeingCard() {
         assertEquals("wellbeing", TodayOrder.canonicalKey("week"))
         assertEquals("wellbeing", TodayOrder.canonicalKey("wellbeing"))

@@ -14,7 +14,11 @@ The Settings screen has these sections:
 - Shortcut icons: quick icon shortcuts.
 - Drawer: the app drawer.
 - Wellbeing: nudges and wellbeing notices.
-- Today: a page with your next event, weather and more.
+- Today: a page with your next event, weather and more. “Add widget” at the bottom
+  lets you choose another app’s widget, approve access and configure it. Tap a
+  widget card’s title to pin it or move it up/down within its pinned or unpinned
+  group in Fixed order; long-press its content
+  to remove it. Widgets and their positions are kept across restarts.
 - Deutsch: German word help. Choose a Dictionary app for “Open in…” in drawer lookups,
   shared-word lookups and the saved Words list (long-press a word). Text is handed to
   the chosen app via Process Text, then Share as a fallback. “Other app (copy word)”

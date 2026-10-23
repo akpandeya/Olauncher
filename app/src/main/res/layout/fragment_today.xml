@@ -115,6 +115,15 @@
                 android:gravity="bottom"
                 android:orientation="vertical" />
 
+            <TextView
+                android:id="@+id/addWidget"
+                style="@style/TextSmall"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="48dp"
+                android:gravity="center_vertical"
+                android:text="@string/today_add_widget" />
+
         </LinearLayout>
 
     </ScrollView>
