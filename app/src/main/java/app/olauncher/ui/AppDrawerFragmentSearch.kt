@@ -41,6 +41,7 @@ import app.olauncher.data.store.WiktionaryApi
 import app.olauncher.data.store.WiktionaryCache
 import app.olauncher.data.store.WiktionarySuggestCache
 import app.olauncher.helper.WordSuggest
+import app.olauncher.helper.DictionaryApps
 import app.olauncher.data.store.WordLookup
 import app.olauncher.data.store.WordsStore
 import kotlinx.coroutines.delay
@@ -221,20 +222,16 @@ internal fun AppDrawerFragment.lookUpMainRows(ctx: Context, text: String): List<
         return listOf(
             AppModel.Result(
                 text = ctx.getString(R.string.word_row_meaning, saved.text, meaning),
-                action = AppModel.Result.Action.OpenWiktionary(saved.text, openOnTap = false)
-            )
+                action = AppModel.Result.Action.OpenDictionary(saved.text, openOnTap = false)
+            ),
+            dictionaryRow(ctx, saved.text),
         )
     }
     if (!lookupAllowed()) {
-        return listOf(
-            AppModel.Result(
-                text = ctx.getString(R.string.word_row_open_wiktionary, text),
-                action = AppModel.Result.Action.OpenWiktionary(text)
-            )
-        )
+        return listOf(dictionaryRow(ctx, text))
     }
     val state = lookupState?.takeIf { it.first.equals(text, ignoreCase = true) }
-    val silent = AppModel.Result.Action.OpenWiktionary(text, openOnTap = false)
+    val silent = AppModel.Result.Action.OpenDictionary(text, openOnTap = false)
     val row = when (val result = state?.second) {
         null -> AppModel.Result(ctx.getString(R.string.word_row_looking_up), silent)
         is WiktionaryApi.LookupResult.Found -> AppModel.Result(
@@ -246,7 +243,7 @@ internal fun AppDrawerFragment.lookUpMainRows(ctx: Context, text: String): List<
         WiktionaryApi.LookupResult.Failed ->
             AppModel.Result(ctx.getString(R.string.word_row_unreachable), silent)
     }
-    return listOf(row)
+    return listOf(row, dictionaryRow(ctx, text))
 }
 
 internal fun AppDrawerFragment.openWiktionary(text: String) {
@@ -275,6 +272,16 @@ private fun AppDrawerFragment.openDictionaryWebsite(website: DictionaryWebsite, 
     } catch (e: Exception) {
         Log.w(TAG, "openDictionaryWebsite failed", e)
     }
+}
+
+private fun AppDrawerFragment.dictionaryRow(ctx: Context, text: String) = AppModel.Result(
+    text = if (prefs.germanDictionaryApp.isBlank()) ctx.getString(R.string.word_row_open_wiktionary, text)
+        else DictionaryApps.actionLabel(ctx, prefs.germanDictionaryApp),
+    action = AppModel.Result.Action.OpenDictionary(text),
+)
+
+internal fun AppDrawerFragment.openDictionary(text: String) {
+    DictionaryApps.open(requireContext(), text)
 }
 
 internal fun AppDrawerFragment.saveWords(action: AppModel.Result.Action.SaveWords) {

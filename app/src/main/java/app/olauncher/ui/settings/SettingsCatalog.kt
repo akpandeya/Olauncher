@@ -243,6 +243,8 @@ object SettingsCatalog {
         primaryId = R.id.germanOnOff, layoutId = R.id.germanLayout, titleId = R.id.germanTitle, valueId = R.id.germanOnOff),
     row(key = "germanClock", sectionKey = SettingsSections.KEY_DEUTSCH, titleRes = R.string.clock, type = SettingsRowType.CHOICE,
         primaryId = R.id.germanClock, layoutId = R.id.germanClockLayout, titleId = R.id.germanClockTitle, valueId = R.id.germanClock),
+    row(key = "dictionaryApp", sectionKey = SettingsSections.KEY_DEUTSCH, titleRes = R.string.dictionary_app, type = SettingsRowType.CHOICE,
+        primaryId = R.id.dictionaryApp, layoutId = R.id.dictionaryAppLayout, titleId = R.id.dictionaryAppTitle, valueId = R.id.dictionaryApp),
     row(key = "germanLookupOnOff", sectionKey = SettingsSections.KEY_DEUTSCH, titleRes = R.string.german_lookup, type = SettingsRowType.TOGGLE, shape = SettingsRowShape.SUBTITLE,
         primaryId = R.id.germanLookupOnOff, layoutId = R.id.germanLookupLayout, titleId = R.id.germanLookupTitle, valueId = R.id.germanLookupOnOff, subtitleRes = R.string.german_lookup_subtitle, subtitleId = R.id.germanLookupSubtitle),
     row(key = "germanSpellSuggestOnOff", sectionKey = SettingsSections.KEY_DEUTSCH, titleRes = R.string.german_spell_suggest, type = SettingsRowType.TOGGLE, shape = SettingsRowShape.SUBTITLE,

@@ -159,9 +159,9 @@ internal fun AppDrawerFragment.initAdapter() {
 
                         is AppModel.Result.Action.Error -> Unit
 
-                        is AppModel.Result.Action.OpenWiktionary -> {
+                        is AppModel.Result.Action.OpenDictionary -> {
                             if (action.openOnTap) {
-                                openWiktionary(action.text)
+                                openDictionary(action.text)
                                 findNavController().popBackStack(R.id.mainFragment, false)
                             }
                         }
@@ -287,7 +287,7 @@ internal fun AppDrawerFragment.initAdapter() {
         profileChoicesProvider = { context?.let { prefs.profileChoices(it) }.orEmpty() },
         dictionaryLongClickListener = { result ->
             val text = when (val action = result.action) {
-                is AppModel.Result.Action.OpenWiktionary -> action.text
+                is AppModel.Result.Action.OpenDictionary -> action.text
                 is AppModel.Result.Action.SaveWords -> action.items.singleOrNull()
                 else -> null
             }

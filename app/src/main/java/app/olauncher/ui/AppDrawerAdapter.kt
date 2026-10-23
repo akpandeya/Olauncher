@@ -415,7 +415,7 @@ class AppDrawerAdapter(
                 result.action is AppModel.Result.Action.Contact && longClickListener != null ->
                     View.OnLongClickListener { longClickListener(result); true }
                 dictionaryLongClickListener != null && (
-                    result.action is AppModel.Result.Action.OpenWiktionary ||
+                    (result.action is AppModel.Result.Action.OpenDictionary && result.action.openOnTap) ||
                         (result.action is AppModel.Result.Action.SaveWords &&
                             result.action.items.size == 1 && result.action.meaning.isNotBlank())
                     ) ->

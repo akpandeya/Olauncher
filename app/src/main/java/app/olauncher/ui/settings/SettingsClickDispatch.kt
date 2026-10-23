@@ -182,6 +182,7 @@ private fun SettingsFragment.handleGermanBackupFooterClick(view: View): Boolean 
     when (view.id) {
         R.id.germanOnOff, R.id.germanTitle, R.id.germanLayout -> tickOnChange(view) { toggleGerman() }
         R.id.germanClock, R.id.germanClockTitle, R.id.germanClockLayout -> showGermanClockMenu(binding.germanClock)
+        R.id.dictionaryApp, R.id.dictionaryAppTitle, R.id.dictionaryAppLayout -> showDictionaryAppMenu(binding.dictionaryApp)
         R.id.germanLookupOnOff, R.id.germanLookupTitle, R.id.germanLookupSubtitle, R.id.germanLookupLayout -> tickOnChange(view) { toggleGermanLookup() }
         R.id.germanSpellSuggestOnOff, R.id.germanSpellSuggestTitle, R.id.germanSpellSuggestSubtitle, R.id.germanSpellSuggestLayout -> tickOnChange(view) { toggleGermanSpellSuggest() }
         R.id.germanScreenPickOnOff, R.id.germanScreenPickTitle, R.id.germanScreenPickSubtitle, R.id.germanScreenPickLayout -> tickOnChange(view) { toggleGermanScreenPick() }
