@@ -25,7 +25,7 @@
             android:paddingHorizontal="14dp"
             android:paddingVertical="6dp"
             android:visibility="gone"
-            tools:text="💧 3"
+            tools:text="3"
             tools:visibility="visible" />
 
         <TextView
@@ -76,7 +76,7 @@
         android:layout_marginTop="6dp"
         android:paddingVertical="4dp"
         android:visibility="gone"
-        tools:text="🌿 Not now × 4 today"
+        tools:text="Not now × 4 today"
         tools:visibility="visible" />
 
 </LinearLayout>

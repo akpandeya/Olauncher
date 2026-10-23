@@ -59,7 +59,7 @@ object WellbeingCardLogic {
         listOfNotNull(waterPart, walkPart).joinToString(" · ")
 
     /** Praise line for "Not now" choices; null when there are none. Never counts opens. */
-    fun formatPauseWins(notNow: Int, template: String = "🌿 Not now × $notNow today"): String? =
+    fun formatPauseWins(notNow: Int, template: String = "Not now × $notNow today"): String? =
         if (notNow > 0) template else null
 
     fun formatDuration(millis: Long): String = PauseFormatting.formatDuration(millis)

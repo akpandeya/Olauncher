@@ -23,6 +23,11 @@ class StatusBarFadeTest {
     }
 
     @Test
+    fun landscapeDrawerHasBottomScrim() {
+        assertTrue(File("src/main/res/layout-land/fragment_app_drawer.xml").readText().contains("@drawable/drawer_bottom_scrim"))
+    }
+
+    @Test
     fun fadeIsOnDrawerTodayAndSettingsOnly() {
         for (name in listOf("fragment_app_drawer", "fragment_today", "fragment_settings")) {
             assertTrue(name, File("src/main/res/layout/$name.xml").readText().contains("@drawable/status_bar_fade"))

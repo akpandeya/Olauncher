@@ -148,7 +148,7 @@ class WellbeingCardTest {
 
     @Test
     fun `formatPauseWins for one and many`() {
-        assertEquals("🌿 Not now × 1 today", WellbeingCardLogic.formatPauseWins(1))
-        assertEquals("🌿 Not now × 4 today", WellbeingCardLogic.formatPauseWins(4))
+        assertEquals("Not now × 1 today", WellbeingCardLogic.formatPauseWins(1))
+        assertEquals("Not now × 4 today", WellbeingCardLogic.formatPauseWins(4))
     }
 }
