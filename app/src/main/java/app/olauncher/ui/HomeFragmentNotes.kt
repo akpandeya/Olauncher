@@ -23,11 +23,17 @@ private fun HomeFragment.notesStore() = NotesStore({ prefs.notesJson }, { prefs.
 /** Shows the oldest open note as one line, or hides the line when there is none or the setting is off. */
 internal fun HomeFragment.populateNoteLine() {
     if (_binding == null) return
-    val note = if (prefs.homeNotes) notesStore().top(LocalDate.now()) else null
+    val all = if (prefs.homeNotes) notesStore().all() else emptyList()
+    val today = LocalDate.now()
+    val note = Notes.top(all, today)
+    val more = Notes.moreText(Notes.moreCount(all, today), getString(R.string.note_home_more))
     val text = note?.let { getString(R.string.note_home_line, it.text) }
     // Skip unchanged text: the line is a live region and would be re-announced every second.
     if (binding.noteLine.text.toString() != text.orEmpty()) binding.noteLine.text = text
     binding.noteLine.isVisible = text != null
+    binding.noteMore.text = more
+    binding.noteMore.isVisible = text != null && more != null
+    binding.noteRow.isVisible = text != null
 }
 
 /** Tap on the note line: mark the shown note done, with Undo, and show the next one. */
