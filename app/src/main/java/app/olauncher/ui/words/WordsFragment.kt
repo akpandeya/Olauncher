@@ -15,6 +15,9 @@ import androidx.navigation.fragment.findNavController
 import androidx.work.WorkManager
 import app.olauncher.R
 import app.olauncher.data.Prefs
+import app.olauncher.data.store.ReviewComebacks
+import app.olauncher.data.store.ReviewEventsStore
+import app.olauncher.data.store.StudyGrid
 import app.olauncher.data.store.Word
 import app.olauncher.data.store.WordEdit
 import app.olauncher.data.store.WordLookup
@@ -36,6 +39,8 @@ import app.olauncher.helper.showToast
 import app.olauncher.ui.BaseFragment
 import app.olauncher.ui.today.cards.WordsCard
 import app.olauncher.ui.today.cards.WordsCardLogic
+import java.time.LocalDate
+import java.time.ZoneId
 
 /** Every saved word, where meanings fetched from Wiktionary can be checked and corrected. */
 class WordsFragment : BaseFragment() {
@@ -112,6 +117,7 @@ class WordsFragment : BaseFragment() {
                 findNavController().navigate(R.id.action_wordsFragment_to_reviewFragment)
             }
         }
+        renderStats(b, context, today)
         b.tvMatchCount.isVisible = searching
         b.tvMatchCount.text = context.getString(R.string.words_search_count, shown.size, words.size)
         b.tvEmpty.isVisible = shown.isEmpty()
@@ -140,6 +146,28 @@ class WordsFragment : BaseFragment() {
         }
 
         scrollToDueWords()
+    }
+
+    /** The 12-week dot grid and the comeback counter, from the review event log. */
+    private fun renderStats(b: FragmentWordsBinding, context: Context, today: Long) {
+        val events = ReviewEventsStore(context).all()
+        if (events.isEmpty()) {
+            b.statsPanel.isVisible = false
+            return
+        }
+        b.statsPanel.isVisible = true
+        val zone = ZoneId.systemDefault()
+        val todayDate = LocalDate.ofEpochDay(today)
+        b.studyDotGrid.submit(
+            StudyGrid.build(events, todayDate, zone),
+            studiedCount = StudyGrid.studiedInWindow(events, todayDate, zone),
+            windowDays = StudyGrid.WEEKS * 7,
+        )
+        b.tvComebacks.text = context.getString(
+            R.string.words_stats_comebacks,
+            ReviewComebacks.count(events, todayDate, zone),
+            StudyGrid.studiedInWindow(events, todayDate, zone),
+        )
     }
 
     /** Due words are at the bottom. scrollTo, not fullScroll, so the search field keeps focus. */

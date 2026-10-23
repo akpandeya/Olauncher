@@ -456,6 +456,10 @@
     <string name="words_review_summary" tools:ignore="MissingTranslation">Done · %1$d knew · %2$d almost · %3$d again</string>
     <string name="words_review_comeback" tools:ignore="MissingTranslation">Welcome back — comeback #%1$d</string>
     <string name="words_review_done" tools:ignore="MissingTranslation">Done</string>
+    <string name="words_stats_title" tools:ignore="MissingTranslation">📚  Study</string>
+    <string name="words_stats_grid" tools:ignore="MissingTranslation">Days studied in the last 12 weeks</string>
+    <string name="words_stats_grid_summary" tools:ignore="MissingTranslation">Studied on %1$d of the last %2$d days</string>
+    <string name="words_stats_comebacks" tools:ignore="MissingTranslation">%1$d comebacks · %2$d days studied</string>
     <string name="words_edit_meaning">Edit meaning</string>
     <string name="words_delete">Delete</string>
     <string name="words_delete_confirm">Delete “%s”?</string>
