@@ -1,6 +1,7 @@
 package app.olauncher.ui.words
 
 import android.os.Bundle
+import android.os.SystemClock
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -36,6 +37,7 @@ class ReviewFragment : BaseFragment() {
     private var answered = 0
     private var sessionEvents: List<ReviewEvent> = emptyList()
     private var eventsBeforeSession: List<ReviewEvent> = emptyList()
+    private var lastGradeAt = 0L
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -55,6 +57,23 @@ class ReviewFragment : BaseFragment() {
             },
             onAlmost = { word ->
                 grade(word, ReviewEvent.Result.ALMOST)
+            },
+            onWordUpdated = { updated ->
+                WordsCard.getStore(requireContext()).update(updated)
+                // Keep the session's snapshot in step so the next word binds fresh.
+                queue = queue.map { if (it.id == updated.id) updated else it }
+                wordReveal?.bind(updated, startRevealed = false)
+            },
+            onWordDeleted = { word ->
+                WordsCard.getStore(requireContext()).delete(word.id)
+                val index = queue.indexOfFirst { it.id == word.id }
+                if (index >= 0) {
+                    queue = queue.filterNot { it.id == word.id }
+                    // A word removed from before the cursor shifts the queue; without
+                    // this, the word at the cursor would be skipped unreviewed.
+                    if (index < answered) answered--
+                }
+                render()
             },
             alwaysShowContext = true,
         ).also { it.showAlmostButton(true) }
@@ -78,6 +97,11 @@ class ReviewFragment : BaseFragment() {
 
     private fun grade(word: Word, result: String) {
         val context = context ?: return
+        // A tap lands on the *next* word once render() advances; dropping taps
+        // within the debounce keeps rapid tapping from grading unseen words.
+        val now = SystemClock.uptimeMillis()
+        if (now - lastGradeAt < GRADE_DEBOUNCE_MS) return
+        lastGradeAt = now
         Haptics.tick(binding.root)
         val store = WordsCard.getStore(context)
         val today = WordsCard.epochDaySupplier()
@@ -143,5 +167,9 @@ class ReviewFragment : BaseFragment() {
         super.onDestroyView()
         wordReveal = null
         _binding = null
+    }
+
+    private companion object {
+        const val GRADE_DEBOUNCE_MS = 300L
     }
 }
