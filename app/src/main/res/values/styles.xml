@@ -159,7 +159,6 @@
     </style>
 
     <style name="PopupCardAnimation" parent="android:Animation">
-        <item name="android:windowEnterAnimation">@anim/popup_card_enter</item>
         <item name="android:windowExitAnimation">@anim/popup_card_exit</item>
     </style>
 

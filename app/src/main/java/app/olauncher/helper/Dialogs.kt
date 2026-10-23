@@ -1,5 +1,6 @@
 package app.olauncher.helper
 
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Outline
@@ -13,6 +14,7 @@ import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.ViewOutlineProvider
 import android.view.WindowManager
+import android.view.animation.DecelerateInterpolator
 import android.graphics.Typeface
 import android.widget.CompoundButton
 import android.widget.LinearLayout
@@ -140,7 +142,26 @@ fun View.showAppActionPopup(
     @SuppressLint("RtlHardcoded")
     val gravity = Gravity.TOP or Gravity.LEFT
     popup.showAtLocation(this, gravity, left, top)
+    card.root.animateFromTap(
+        PopupOrigin.pivotX(loc[0] + width / 2, left, menuWidth),
+        PopupOrigin.pivotY(loc[1] + height / 2, top, menuHeight),
+    )
     return popup
+}
+
+/** Fades and scales the card in from the tap point; skipped (full size at once) when animations are off. */
+private fun View.animateFromTap(pivotXPx: Float, pivotYPx: Float) {
+    val durationMs = MotionPolicy.durationMs(MotionPolicy.DEFAULT_DURATION_MS, ValueAnimator.areAnimatorsEnabled())
+    if (durationMs <= 0L) return
+    pivotX = pivotXPx
+    pivotY = pivotYPx
+    scaleX = PopupOrigin.START_SCALE
+    scaleY = PopupOrigin.START_SCALE
+    alpha = 0f
+    animate().scaleX(1f).scaleY(1f).alpha(1f)
+        .setDuration(durationMs)
+        .setInterpolator(DecelerateInterpolator())
+        .start()
 }
 
 /**
