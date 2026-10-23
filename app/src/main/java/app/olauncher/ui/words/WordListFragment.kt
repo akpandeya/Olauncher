@@ -5,8 +5,10 @@ import android.view.LayoutInflater
 import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.lifecycle.LifecycleOwner
+import androidx.navigation.fragment.findNavController
 import app.olauncher.R
 import app.olauncher.data.store.Word
 import app.olauncher.data.store.WordList
@@ -120,12 +122,14 @@ class WordListFragment : BaseFragment() {
         anchor.showPopupMenu(
             configure = { menu ->
                 menu.add(Menu.NONE, 1, Menu.NONE, R.string.words_edit)
+                menu.add(Menu.NONE, 5, Menu.NONE, R.string.words_conjugate)
                 if (list != null) menu.add(Menu.NONE, 2, Menu.NONE, R.string.word_list_remove_from_list)
                 menu.add(Menu.NONE, 3, Menu.NONE, R.string.words_delete)
             }
         ) { item ->
             when (item.itemId) {
                 1 -> WordDialogs.showEditDialog(context, word, ::liveViewLifecycleOwner) { render() }
+                5 -> openConjugation(word)
                 2 -> list?.let { openList ->
                     val store = WordsCard.getStore(context)
                     // Re-read so the row's snapshot cannot resurrect memberships changed elsewhere.
@@ -136,6 +140,22 @@ class WordListFragment : BaseFragment() {
                 }
                 3 -> WordDialogs.showDeleteDialog(context, word) { render() }
             }
+        }
+    }
+
+    /** The drill handles non-verbs itself with a graceful one-liner, so this stays unconditional. */
+    private fun openConjugation(word: Word) {
+        val context = context ?: return
+        Haptics.tick(binding.root)
+        // Re-read so a word edited since this row rendered drills the current text.
+        val current = WordsCard.getStore(context).get(word.id) ?: word
+        val navController = findNavController()
+        // Ignore a second tap delivered before the first navigation lands.
+        if (navController.currentDestination?.id == R.id.wordListFragment) {
+            navController.navigate(
+                R.id.action_wordListFragment_to_conjugationFragment,
+                bundleOf("word" to current.text),
+            )
         }
     }
 

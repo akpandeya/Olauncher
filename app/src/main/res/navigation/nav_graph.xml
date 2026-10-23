@@ -152,6 +152,13 @@
             app:exitAnim="@animator/fade_exit"
             app:popEnterAnim="@animator/fade_enter"
             app:popExitAnim="@animator/fade_exit" />
+        <action
+            android:id="@+id/action_wordsFragment_to_conjugationFragment"
+            app:destination="@id/conjugationFragment"
+            app:enterAnim="@animator/fade_enter"
+            app:exitAnim="@animator/fade_exit"
+            app:popEnterAnim="@animator/fade_enter"
+            app:popExitAnim="@animator/fade_exit" />
     </fragment>
 
     <fragment
@@ -183,6 +190,13 @@
             app:argType="string"
             app:nullable="true"
             android:defaultValue="@null" />
+        <action
+            android:id="@+id/action_wordListFragment_to_conjugationFragment"
+            app:destination="@id/conjugationFragment"
+            app:enterAnim="@animator/fade_enter"
+            app:exitAnim="@animator/fade_exit"
+            app:popEnterAnim="@animator/fade_enter"
+            app:popExitAnim="@animator/fade_exit" />
     </fragment>
 
     <fragment
@@ -190,6 +204,16 @@
         android:name="app.olauncher.ui.words.ReviewFragment"
         android:label="ReviewFragment"
         tools:layout="@layout/fragment_review" />
+
+    <fragment
+        android:id="@+id/conjugationFragment"
+        android:name="app.olauncher.ui.words.ConjugationFragment"
+        android:label="ConjugationFragment"
+        tools:layout="@layout/fragment_conjugation">
+        <argument
+            android:name="word"
+            app:argType="string" />
+    </fragment>
 
     <fragment
         android:id="@+id/privacyFragment"

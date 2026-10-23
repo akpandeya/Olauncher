@@ -6,6 +6,7 @@ import android.util.Log
 import app.olauncher.R
 import org.json.JSONObject
 import java.io.File
+import java.text.Normalizer
 
 private const val TAG = "OfflineGermanStore"
 
@@ -92,6 +93,50 @@ class OfflineGermanStore(context: Context) {
                     }
                 }
             }.lookup(text, pluralLabel)
+        } catch (e: Exception) {
+            Log.w(TAG, "Offline dictionary unreadable; deleting it so the next lookup reinstalls", e)
+            discard(db)
+            null
+        }
+    }
+
+    /**
+     * The present-tense paradigm of the first verb entry [text] resolves to,
+     * or null when no candidate maps to a verb (or that verb has no present
+     * cells), which drives the drill's graceful state. Call on Dispatchers.IO.
+     */
+    fun paradigm(text: String): VerbParadigm? {
+        val db = try {
+            open()
+        } catch (e: Exception) {
+            Log.w(TAG, "Offline dictionary unavailable; using existing fallback", e)
+            return null
+        }
+        return try {
+            val normalized = Normalizer.normalize(text.trim(), Normalizer.Form.NFC)
+            for (candidate in WiktionaryParser.candidates(normalized)) {
+                val entry = db.rawQuery(
+                    """SELECT e.id, e.lemma
+                       FROM lookup l JOIN entries e ON e.id = l.entry_id
+                       WHERE l.form = ? AND e.pos = 'verb'
+                       ORDER BY CASE WHEN e.lemma = ? THEN 0 ELSE 1 END, e.id LIMIT 1""",
+                    arrayOf(candidate, candidate)
+                ).use { cursor ->
+                    if (cursor.moveToNext()) cursor.getLong(0) to cursor.getString(1) else null
+                } ?: continue
+                val rows = db.rawQuery(
+                    "SELECT form, tags FROM forms WHERE entry_id = ?",
+                    arrayOf(entry.first.toString())
+                ).use { cursor ->
+                    buildList {
+                        while (cursor.moveToNext()) {
+                            add(cursor.getString(0) to cursor.getString(1))
+                        }
+                    }
+                }
+                return Conjugation.parsePresent(entry.second, rows)
+            }
+            null
         } catch (e: Exception) {
             Log.w(TAG, "Offline dictionary unreadable; deleting it so the next lookup reinstalls", e)
             discard(db)

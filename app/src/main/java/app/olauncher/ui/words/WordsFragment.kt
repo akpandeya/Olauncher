@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.inputmethod.InputMethodManager
+import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.LifecycleOwner
@@ -190,6 +191,7 @@ class WordsFragment : BaseFragment() {
         anchor.showPopupMenu(
             configure = { menu ->
                 menu.add(Menu.NONE, 1, Menu.NONE, R.string.words_edit)
+                menu.add(Menu.NONE, 5, Menu.NONE, R.string.words_conjugate)
                 menu.add(Menu.NONE, 2, Menu.NONE, DictionaryApps.actionLabel(context, Prefs(context).germanDictionaryApp))
                 menu.add(Menu.NONE, 4, Menu.NONE, R.string.word_lists_popup_lists)
                 menu.add(Menu.NONE, 3, Menu.NONE, R.string.words_delete)
@@ -197,10 +199,27 @@ class WordsFragment : BaseFragment() {
         ) { item ->
             when (item.itemId) {
                 1 -> WordDialogs.showEditDialog(context, word, ::liveViewLifecycleOwner) { render() }
+                5 -> openConjugation(word)
                 2 -> DictionaryApps.open(context, word.text)
                 4 -> WordDialogs.showListsDialog(context, word) { render() }
                 3 -> WordDialogs.showDeleteDialog(context, word) { render() }
             }
+        }
+    }
+
+    /** The drill handles non-verbs itself with a graceful one-liner, so this stays unconditional. */
+    private fun openConjugation(word: Word) {
+        val context = context ?: return
+        Haptics.tick(binding.root)
+        // Re-read so a word edited since this row rendered drills the current text.
+        val current = WordsCard.getStore(context).get(word.id) ?: word
+        val navController = findNavController()
+        // Ignore a second tap delivered before the first navigation lands.
+        if (navController.currentDestination?.id == R.id.wordsFragment) {
+            navController.navigate(
+                R.id.action_wordsFragment_to_conjugationFragment,
+                bundleOf("word" to current.text),
+            )
         }
     }
 
