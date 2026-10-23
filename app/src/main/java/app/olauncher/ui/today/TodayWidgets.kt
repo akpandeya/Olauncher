@@ -25,7 +25,6 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
-import androidx.core.view.updateLayoutParams
 import androidx.fragment.app.Fragment
 import app.olauncher.R
 import app.olauncher.data.Prefs
@@ -256,9 +255,16 @@ internal class TodayWidgets(
 
             fun setHeight(dp: Int) {
                 val px = (dp * density).roundToInt() + hostView.paddingTop + hostView.paddingBottom
+                val lp = hostView.layoutParams
                 // Mutate the existing params: replacing them with a base LayoutParams while
                 // attached would crash FrameLayout's measure with a ClassCastException.
-                hostView.updateLayoutParams<ViewGroup.LayoutParams> { height = px }
+                if (lp == null) {
+                    // Not attached yet (createView); a fresh params object is safe pre-addView.
+                    hostView.layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, px)
+                } else {
+                    lp.height = px
+                    hostView.layoutParams = lp
+                }
             }
 
             setHeight(heightDp)
