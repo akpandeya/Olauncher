@@ -140,6 +140,7 @@ private fun SettingsFragment.handleAppearanceClick(view: View): Boolean {
         R.id.fontFamily -> showFontDialog()
         R.id.textSizeValue -> showTextSizeDialog()
         R.id.boldFont -> tickOnChange(view) { toggleBoldFont() }
+        R.id.clockWallpaper, R.id.clockWallpaperTitle, R.id.clockWallpaperLayout -> tickOnChange(view) { toggleClockFromWallpaper() }
         R.id.textContrast, R.id.textContrastTitle, R.id.textContrastLayout -> tickOnChange(view) { toggleTextContrast() }
         R.id.homeDarkness, R.id.homeWashTitle, R.id.homeWashLayout -> cycleHomeDarkness()
         R.id.textBrightness, R.id.textBrightnessTitle, R.id.textBrightnessLayout -> cycleTextBrightness()

@@ -268,6 +268,8 @@ object SettingsCatalog {
         primaryId = R.id.fontFamily, valueId = R.id.fontFamily),
     row(key = "boldFont", sectionKey = SettingsSections.KEY_APPEARANCE, titleRes = R.string.bold_font, type = SettingsRowType.TOGGLE,
         primaryId = R.id.boldFont, valueId = R.id.boldFont),
+    row(key = "clockWallpaper", sectionKey = SettingsSections.KEY_APPEARANCE, titleRes = R.string.clock_from_wallpaper, type = SettingsRowType.TOGGLE,
+        primaryId = R.id.clockWallpaper, layoutId = R.id.clockWallpaperLayout, titleId = R.id.clockWallpaperTitle, valueId = R.id.clockWallpaper),
     row(key = "textSizeValue", sectionKey = SettingsSections.KEY_APPEARANCE, titleRes = R.string.text_size, type = SettingsRowType.CHOICE,
         primaryId = R.id.textSizeValue, valueId = R.id.textSizeValue),
     row(key = "haptics", sectionKey = SettingsSections.KEY_APPEARANCE, titleRes = R.string.haptics, type = SettingsRowType.TOGGLE,

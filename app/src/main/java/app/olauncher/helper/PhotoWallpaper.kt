@@ -205,6 +205,7 @@ object PhotoWallpaper {
             val manager = WallpaperManager.getInstance(context)
             val toApply = if (grey) desaturate(bitmap) else bitmap
             manager.setBitmap(toApply, null, true, flags)
+            context.updateClockColour(prefs, toApply)
             if (toApply !== bitmap) toApply.recycle()
             bitmap.recycle()
             true

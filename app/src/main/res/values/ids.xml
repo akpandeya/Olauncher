@@ -22,6 +22,9 @@
     <item name="batteryModeLayout" type="id" />
     <item name="batteryModeTitle" type="id" />
     <item name="boldFont" type="id" />
+    <item name="clockWallpaper" type="id" />
+    <item name="clockWallpaperLayout" type="id" />
+    <item name="clockWallpaperTitle" type="id" />
     <item name="commitLockLayout" type="id" />
     <item name="commitLockOnOff" type="id" />
     <item name="commitLockSubtitle" type="id" />
