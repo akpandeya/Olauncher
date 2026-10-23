@@ -6,7 +6,9 @@ enum class Accent(val id: Int) {
     SAGE(2),
     SAND(3),
     SKY(4),
-    ROSE(5);
+    ROSE(5),
+    /** A colour taken from the wallpaper; the colour itself is in `Prefs.accentCustomColor`. */
+    WALLPAPER(6);
 
     companion object {
         fun fromId(id: Int): Accent = entries.firstOrNull { it.id == id } ?: OFF

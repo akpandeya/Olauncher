@@ -7,6 +7,7 @@ import android.content.res.Configuration
 import android.graphics.Color
 import androidx.core.view.isVisible
 import app.olauncher.R
+import app.olauncher.data.Accent
 import app.olauncher.data.Prefs
 import app.olauncher.helper.HomeWash
 import app.olauncher.helper.TextBrightness
@@ -46,6 +47,8 @@ internal fun HomeFragment.applyTextContrast() {
     )
     val textOpacity = if (themeIsDark) TextBrightness.opacity(prefs.homeTextBrightness) else 1f
     sizeHomeWash()
+    val wallpaperAccent = if (prefs.accent == Accent.WALLPAPER.id) prefs.accentCustomColor else 0
+    val accentViews = setOf(binding.clock, binding.clockWords, binding.date)
     val views = listOf(
         binding.clock, binding.clockWords, binding.date, binding.weatherSeparator,
         binding.weather, binding.contextLine, binding.nextEventLine, binding.noteLine, binding.intentionLine, binding.tvScreenTime,
@@ -65,7 +68,9 @@ internal fun HomeFragment.applyTextContrast() {
         } else {
             view.setShadowLayer(original[0], original[1], original[2], originalShadowColors.getValue(view))
         }
-        if (view !in originalTextColors) originalTextColors[view] = view.currentTextColor
+        if (view !in originalTextColors) {
+            originalTextColors[view] = if (wallpaperAccent != 0 && view in accentViews) wallpaperAccent else view.currentTextColor
+        }
         val base = treatment.color ?: originalTextColors.getValue(view)
         val alpha = (Color.alpha(base) * textOpacity).toInt()
         view.setTextColor(Color.argb(alpha, Color.red(base), Color.green(base), Color.blue(base)))

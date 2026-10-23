@@ -162,6 +162,7 @@ class Prefs(context: Context) :
         const val DEFAULT_QUIET_RELEASE_TIMES = "750,1110"
         const val FONT_FAMILY = "FONT_FAMILY"
         const val ACCENT = "ACCENT"
+        const val ACCENT_CUSTOM_COLOR = "ACCENT_CUSTOM_COLOR"
         const val HAPTICS = "HAPTICS"
         const val HAPTIC_STRENGTH = "HAPTIC_STRENGTH"
         const val HAPTIC_DURATION_MS = "HAPTIC_DURATION_MS"
