@@ -167,23 +167,35 @@ object MusicPulse {
         if (count <= 0) 0 else (index + 1).mod(count)
 
     /** Time for the progress wave to move on by one wavelength. Slow, so it reads as calm motion. */
-    const val WAVE_PERIOD_MS = 3_000L
+    const val WAVE_PERIOD_MS = 4_000L
 
     /** Frames per second of the wave motion. Low to save battery; the wave moves slowly anyway. */
     const val WAVE_MAX_FPS = 20
     const val WAVE_FRAME_INTERVAL_MS = 1000L / WAVE_MAX_FPS
 
-    /** Alpha (0 to 255) of the straight track line, before the line colour's own alpha. About 60%, so the full length reads. */
-    const val WAVE_TRACK_ALPHA = 0x99
+    /** Alpha (0 to 255) of the straight track line, before the line colour's own alpha. About 44%, so it stays quieter than the played wave. */
+    const val WAVE_TRACK_ALPHA = 0x70
 
-    /** Stroke width of the wave and the track, in dp. Ends are rounded. */
-    const val WAVE_STROKE_DP = 3.5f
+    /** Stroke width of the wave, in dp. Ends are rounded. */
+    const val WAVE_STROKE_DP = 3f
+
+    /** Stroke width of the straight track, in dp. Thinner than the wave, so the played part reads first. */
+    const val WAVE_TRACK_STROKE_DP = 2f
 
     /** Height of the wave from the centre line to a crest, in dp. */
-    const val WAVE_AMPLITUDE_DP = 4f
+    const val WAVE_AMPLITUDE_DP = 3f
 
     /** Length of one wave cycle, in dp. */
-    const val WAVE_LENGTH_DP = 24f
+    const val WAVE_LENGTH_DP = 32f
+
+    /** Width of the divider handle at the played/unplayed boundary, in dp. */
+    const val WAVE_DIVIDER_WIDTH_DP = 4f
+
+    /** Total height of the divider handle, in dp. Taller than the wave, so it reads as a handle. */
+    const val WAVE_DIVIDER_HEIGHT_DP = 14f
+
+    /** Clear space between the divider and each side of the wave and the track, in dp, outlines not included. */
+    const val WAVE_DIVIDER_GAP_DP = 3f
 
     /** Width of the dark outline on each side of the stroke, in dp. Keeps the colour visible on light wallpapers. */
     const val WAVE_OUTLINE_DP = 1f
@@ -196,6 +208,9 @@ object MusicPulse {
 
     /** Full height the wave needs: both crests, the stroke and the outline on both sides. */
     fun waveDrawHeightDp(): Float = 2 * WAVE_AMPLITUDE_DP + WAVE_STROKE_DP + 2 * WAVE_OUTLINE_DP
+
+    /** Full height the divider handle needs, with its outline. */
+    fun dividerDrawHeightDp(): Float = WAVE_DIVIDER_HEIGHT_DP + 2 * WAVE_OUTLINE_DP
 
     /** Wave phase, 0 (inclusive) to 1 (exclusive), after [elapsedMs] of motion. 0 when [periodMs] is not positive. */
     fun wavePhase(elapsedMs: Long, periodMs: Long = WAVE_PERIOD_MS): Float {
