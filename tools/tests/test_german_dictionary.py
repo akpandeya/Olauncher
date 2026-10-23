@@ -45,10 +45,16 @@ class GermanDictionaryTest(unittest.TestCase):
             (form, form)
         ).fetchall()
 
+    def all_targets(self, db, form):
+        return db.execute(
+            "SELECT e.* FROM lookup l JOIN entries e ON l.entry_id=e.id "
+            "WHERE l.form=? ORDER BY e.id", (form,)
+        ).fetchall()
+
     def test_trims_fields_and_resolves_form_of_even_before_lemma(self):
         self.build()
         db = self.database()
-        for form in ("gehen", "ging", "gingen", "gieng"):
+        for form in ("gehen", "ging", "gingen"):
             row = self.lookup(db, form)[0]
             self.assertEqual("gehen", row["lemma"])
             self.assertEqual(("geht", "ging", "gegangen"),
@@ -57,8 +63,51 @@ class GermanDictionaryTest(unittest.TestCase):
         self.assertEqual("das", self.lookup(db, "Mädchen")[0]["gender"])
         self.assertEqual("Häuser", self.lookup(db, "Haus")[0]["plural"])
         self.assertEqual("Haus", self.lookup(db, "Häuser")[0]["lemma"])
-        for non_form in ("sein", "de-conj", "Häuschen"):
+        for non_form in ("sein", "de-conj", "Häuschen", "gieng"):
             self.assertEqual([], self.lookup(db, non_form))
+
+    def test_derived_nouns_keep_their_own_gender_plural_and_inflections(self):
+        self.build()
+        db = self.database()
+        for form, lemma, gender, plural in (
+            ("Lehrer", "Lehrer", "der", "Lehrer"),
+            ("Lehrers", "Lehrer", "der", "Lehrer"),
+            ("Studentin", "Studentin", "die", "Studentinnen"),
+            ("Studentinnen", "Studentin", "die", "Studentinnen"),
+        ):
+            with self.subTest(form=form):
+                rows = self.all_targets(db, form)
+                self.assertEqual([(lemma, gender, plural)],
+                                 [(r["lemma"], r["gender"], r["plural"]) for r in rows])
+                self.assertTrue(rows[0]["gloss"])
+
+    def test_shared_paradigms_and_article_fragments_never_become_mappings(self):
+        self.build()
+        db = self.database()
+        for surface, lemma, pos in (
+            ("mich", "ich", "pron"), ("die", "der", "article"),
+            ("ich", "ich", "pron"), ("du", "du", "pron"), ("er", "er", "pron"),
+        ):
+            with self.subTest(surface=surface):
+                self.assertEqual([(lemma, pos)], [(r["lemma"], r["pos"])
+                                                 for r in self.all_targets(db, surface)])
+        # Tables alone are not independent evidence, even when the cell is valid for its owner.
+        for unattested in ("das", "Studenten"):
+            self.assertEqual([], self.all_targets(db, unattested))
+
+    def test_inflection_targets_require_a_retained_lemma_with_the_same_pos(self):
+        extra = (
+            b'{"word":"wrong-pos","pos":"noun","lang_code":"de","senses":'
+            b'[{"glosses":["plural of gehen"],"tags":["form-of","plural"],"form_of":[{"word":"gehen"}]}]}\n'
+            b'{"word":"missing-target","pos":"noun","lang_code":"de","senses":'
+            b'[{"glosses":["plural of absent"],"tags":["form-of","plural"],"form_of":[{"word":"absent"}]}]}\n'
+        )
+        raw = self.original + extra
+        self.source.write_bytes(raw)
+        dictionary.build(self.source, self.output, hashlib.sha256(raw).hexdigest(), len(raw))
+        db = self.database()
+        self.assertEqual([], self.all_targets(db, "wrong-pos"))
+        self.assertEqual([], self.all_targets(db, "missing-target"))
 
     def test_rejects_missing_or_malformed_required_and_nested_fields(self):
         valid = json.loads(self.original.splitlines()[1])
@@ -162,6 +211,23 @@ class GermanDictionaryTest(unittest.TestCase):
                          (gehen["present"], gehen["past"], gehen["participle"]))
         self.assertEqual("das", self.lookup(db, "Mädchen")[0]["gender"])
         self.assertEqual("Häuser", self.lookup(db, "Haus")[0]["plural"])
+        for surface, lemma, gender, plural in (
+            ("Lehrer", "Lehrer", "der", "Lehrer"),
+            ("Lehrers", "Lehrer", "der", "Lehrer"),
+            ("Studentin", "Studentin", "die", "Studentinnen"),
+            ("Studentinnen", "Studentin", "die", "Studentinnen"),
+        ):
+            with self.subTest(surface=surface):
+                self.assertEqual([(lemma, gender, plural)],
+                                 [(r["lemma"], r["gender"], r["plural"])
+                                  for r in self.all_targets(db, surface)])
+        self.assertEqual([("ich", "pron")],
+                         [(r["lemma"], r["pos"]) for r in self.all_targets(db, "mich")])
+        die = self.all_targets(db, "die")
+        self.assertTrue(die)
+        self.assertTrue(all(r["lemma"] == "der" and r["pos"] in {"article", "pron"} for r in die))
+        self.assertEqual(("der", "article"), (self.lookup(db, "die")[0]["lemma"],
+                                             self.lookup(db, "die")[0]["pos"]))
 
 
 if __name__ == "__main__":

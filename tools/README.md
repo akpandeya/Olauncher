@@ -49,11 +49,18 @@ stale data.
   truncation at a complete record boundary independently of any row count.
 - Keep lemma, POS, gender, one plural, an English gloss (at most 160 characters),
   third-person singular present, simple past, and past participle.
-- Index single-token inflections (at most 80 characters) and explicit form-of
-  records to their same-POS lemma. Do not confuse auxiliary verbs, diminutives,
-  conjugation/declension template metadata, or class markers with inflections.
-  Multiword lemmas themselves remain searchable. Unresolved form-of targets are
-  not emitted as definitions.
+- A `form_of` relation is not necessarily inflection: agent nouns (`Lehrer`),
+  gendered counterparts (`Studentin`), gerunds and diminutives remain lexical
+  entries with their own gender/plural. Grammatical inflection features are
+  interpreted by POS; derivational noun tags/glosses take precedence.
+- Index retained lemma identities and only the surface words of explicit
+  inflection records whose target lemma exists with the same POS. Never turn a
+  record's entire forms table into aliases: shared tables contain other pronouns,
+  derived words and article fragments. For example `mich` maps only to `ich`,
+  and `die` maps to the article/pronoun `der`, not the proper name `CIA`.
+  Forms tables are used for the morphology summary, not as independent mapping
+  evidence. Unattested table-only forms fall back online instead of guessing;
+  unresolved or wrong-POS inflection targets are not emitted as definitions.
 - The compressed budget is strictly **less than 15,000,000 bytes**. If necessary,
   retry deterministically without entries whose lexical senses are all tagged
   archaic, obsolete, rare, dated, historical or nonstandard. Otherwise fail and
@@ -61,11 +68,17 @@ stale data.
 - SQLite integrity and foreign-key checks run before publication. Counts are
   reported for inspection, not used to prove source completeness.
 
-The initial asset has 102,250 lexical entries and 523,362 indexed form/entry pairs,
-occupies 7,553,783 compressed bytes (19,595,264 unpacked), and needs no rare-word
+The asset has 109,630 lexical entries and 362,523 indexed form/entry pairs,
+occupies 6,434,596 compressed bytes (16,289,792 unpacked), and needs no rare-word
 filtering. Full-source and fixture tests cover `gehen`, `ging → gehen`,
-`Mädchen → das`, `Haus → Häuser`, parser failures, complete-line truncation,
-deterministic output and the compressed budget.
+`Mädchen → das`, `Haus → Häuser`, `Lehrer`, `Studentin → die / Studentinnen`,
+`mich → ich`, `die → der` (article/pronoun), parser failures, complete-line
+truncation, deterministic output and the compressed budget.
+
+Lookup meanings use a dedicated body-sized, multiline drawer layout with no
+line/height cap; app names and unrelated result rows keep the existing layout.
+`WordLookupRowsTest` checks full-text/action wiring and follows the adapter's
+selected layout resource to verify wrapping and the absence of clipping limits.
 
 ## APK size comparison
 
@@ -74,9 +87,9 @@ With JDK 17, Android API 36 and `GITHUB_RUN_NUMBER=617` (versionCode 730):
 | Artifact | Bytes |
 | --- | ---: |
 | Unchanged `origin/main` at `747b7ee1` (supplied baseline) | 15,869,086 |
-| Feature `thumbline-debug.apk` | 23,417,290 |
-| APK increase | 7,548,204 |
-| Bundled gzip dictionary | 7,553,783 |
+| Feature `thumbline-debug.apk` | 22,299,027 |
+| APK increase | 6,429,941 |
+| Bundled gzip dictionary | 6,434,596 |
 
 The APK ZIP layer also compresses the gzip asset, so its contribution to the APK
 is slightly smaller than its standalone size.
@@ -85,7 +98,9 @@ is slightly smaller than its standalone size.
 
 `OfflineGermanAssetTest` checks the packaged gzip with Android's SQLite, without
 changing settings or saved words; its uniquely named test database is removed
-in `finally`. The production drawer was also checked manually with `:w ging`.
+in `finally`. The initial implementation was checked manually with `:w ging`;
+subsequent parser/presentation review fixes use host-only tests, with no further
+phone access.
 
 On a personal phone, **do not use `connectedDebugAndroidTest`**: this repository's
 AGP/UTP runner uninstalls both the target and test apps after tests, including

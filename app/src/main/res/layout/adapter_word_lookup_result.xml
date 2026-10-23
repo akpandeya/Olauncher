@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:minHeight="48dp">
+
+    <TextView
+        android:id="@+id/appTitle"
+        style="@style/TextMedium"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="48dp"
+        android:gravity="center_vertical"
+        android:singleLine="false"
+        android:scrollHorizontally="false"
+        android:paddingHorizontal="@dimen/drawer_row_padding_horizontal"
+        android:paddingVertical="@dimen/app_padding_vertical" />
+
+</FrameLayout>

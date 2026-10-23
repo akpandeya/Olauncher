@@ -61,6 +61,7 @@ Health Connect data is read live and is not stored by Thumbline.
 The offline German `:w` dictionary works without the online-meanings switch.
 Saved meanings still take priority; missing dictionary words use the existing
 Wiktionary cache/network only when online lookup is enabled.
+Full meanings and morphology wrap across multiple lines in the drawer.
 Dictionary source: English Wiktionary via [kaikki.org/wiktextract](https://kaikki.org/wiktextract/),
 [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/).
 See [generation, validation and size details](tools/README.md).

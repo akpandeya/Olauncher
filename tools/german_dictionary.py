@@ -19,12 +19,25 @@ SUPPORTED_POS = frozenset({
     "pron", "proverb", "verb",
 })
 RARE_TAGS = frozenset({"archaic", "obsolete", "rare", "dated", "historical", "nonstandard"})
-INFLECTION_TAGS = frozenset({
-    "accusative", "alternative", "comparative", "dative", "feminine", "genitive",
-    "imperative", "indicative", "infinitive", "masculine", "neuter", "nominative",
-    "participle", "past", "plural", "present", "preterite", "singular",
-    "subjunctive", "superlative",
-})
+CASE_NUMBER = frozenset({"accusative", "dative", "genitive", "nominative", "plural", "singular"})
+GENDER = frozenset({"masculine", "feminine", "neuter"})
+INFLECTION_FEATURES = {
+    "noun": CASE_NUMBER, "name": CASE_NUMBER,
+    "pron": CASE_NUMBER | {"reflexive"},
+    "article": CASE_NUMBER | GENDER, "det": CASE_NUMBER | GENDER, "num": CASE_NUMBER | GENDER,
+    "adj": CASE_NUMBER | GENDER | {"comparative", "superlative"},
+    "adv": frozenset({"comparative", "superlative"}),
+    "verb": frozenset({
+        "imperative", "indicative", "infinitive", "participle", "past", "plural",
+        "present", "preterite", "singular", "subjunctive", "subjunctive-i", "subjunctive-ii",
+    }),
+}
+NOUN_DERIVATION_TAGS = frozenset({"agent", "diminutive", "gerund", "noun-from-verb", "noun-from-adj"})
+NOUN_DERIVATION_GLOSS = re.compile(
+    r"\b(?:female equivalent|male equivalent|feminine equivalent|masculine equivalent|"
+    r"agent noun|verbal noun|abstract noun|gerund|diminutive|augmentative) of\b",
+    re.IGNORECASE,
+)
 NON_FORM_TAGS = frozenset({"table-tags", "inflection-template", "class", "auxiliary", "diminutive"})
 BUDGET_BYTES = 15_000_000
 
@@ -63,7 +76,6 @@ class Entry:
     present: str
     past: str
     participle: str
-    aliases: tuple
     targets: tuple
     rare: bool
 
@@ -85,11 +97,20 @@ def parse_record(record):
         if not glosses and "no-gloss" not in tags:
             raise InvalidRecord("sense: missing glosses (without no-gloss tag)")
         form_of = objects(sense.get("form_of", []), "sense.form_of")
-        for target in form_of:
-            targets.add(text(target.get("word"), "form_of.word"))
+        sense_targets = {text(target.get("word"), "form_of.word") for target in form_of}
         if "form-of" in tags and not form_of:
             raise InvalidRecord("form-of sense: missing target")
-        if not form_of and "form-of" not in tags and glosses:
+        derived_noun = pos == "noun" and (
+            bool(tags & NOUN_DERIVATION_TAGS)
+            or any(NOUN_DERIVATION_GLOSS.search(gloss) for gloss in glosses)
+        )
+        inflection = bool(form_of) and not derived_noun and (
+            bool(tags & INFLECTION_FEATURES.get(pos, frozenset()))
+            or any("inflection of " in gloss.lower() for gloss in glosses)
+        )
+        if inflection:
+            targets.update(sense_targets)
+        elif glosses:
             lexical.append((glosses[0], tags))
     validated_forms = []
     unsupported_form = False
@@ -113,12 +134,6 @@ def parse_record(record):
     gender = "/".join(article for tag, article in (
         ("masculine", "der"), ("feminine", "die"), ("neuter", "das")
     ) if tag in gender_tags) if pos in {"noun", "name"} else ""
-    aliases = {lemma}
-    for value, tags in validated_forms:
-        if (tags & INFLECTION_TAGS and not tags & NON_FORM_TAGS
-                and len(value) <= 80 and not any(c.isspace() for c in value)
-                and value not in {"—", "-", "?"}):
-            aliases.add(value)
     gloss = lexical[0][0] if lexical else ""
     if len(gloss) > 160:
         gloss = gloss[:157].rsplit(" ", 1)[0] + "…"
@@ -135,7 +150,7 @@ def parse_record(record):
                ("third-person" in tags or not tags & {"first-person", "second-person"}))
         if pos == "verb" else "",
         choose(lambda tags: {"past", "participle"} <= tags) if pos == "verb" else "",
-        tuple(sorted(aliases)), tuple(sorted(targets)),
+        tuple(sorted(targets)),
         bool(lexical) and all(tags & RARE_TAGS for _, tags in lexical),
     )
 
@@ -187,21 +202,22 @@ def write_database(entries, path, drop_rare=False):
         for entry in entries:
             if drop_rare and entry.rare:
                 continue
-            if not entry.gloss:
+            if entry.targets:
                 pending.append(entry)
+            if not entry.gloss:
                 continue
             kept += 1
             db.execute("INSERT INTO entries VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                        (kept, entry.lemma, entry.pos, entry.gender, entry.plural, entry.gloss,
                         entry.present, entry.past, entry.participle))
             targets[(entry.lemma, entry.pos)].append(kept)
-            db.executemany("INSERT OR IGNORE INTO lookup VALUES (?, ?)",
-                           ((form, kept) for form in entry.aliases))
+            db.execute("INSERT INTO lookup VALUES (?, ?)", (entry.lemma, kept))
         for entry in pending:
             for target in entry.targets:
                 for entry_id in targets.get((target, entry.pos), []):
-                    db.executemany("INSERT OR IGNORE INTO lookup VALUES (?, ?)",
-                                   ((form, entry_id) for form in entry.aliases))
+                    # Only the inflection record's own surface is evidence. Its forms table
+                    # may contain other pronouns, articles, or derived words from a shared paradigm.
+                    db.execute("INSERT OR IGNORE INTO lookup VALUES (?, ?)", (entry.lemma, entry_id))
         db.commit()
         if db.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
             raise InvalidRecord("generated SQLite database failed integrity check")

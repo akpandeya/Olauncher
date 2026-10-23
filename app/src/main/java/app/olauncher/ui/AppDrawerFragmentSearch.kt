@@ -41,6 +41,7 @@ import app.olauncher.data.store.WiktionarySuggestCache
 import app.olauncher.data.store.GermanLookup
 import app.olauncher.data.store.OfflineGermanStore
 import app.olauncher.helper.WordSuggest
+import app.olauncher.helper.WordLookupRows
 import app.olauncher.data.store.WordLookup
 import app.olauncher.data.store.WordsStore
 import kotlinx.coroutines.delay
@@ -232,10 +233,9 @@ internal fun AppDrawerFragment.lookUpMainRows(ctx: Context, text: String): List<
     if (saved != null) {
         val meaning = saved.meaning.ifBlank { ctx.getString(R.string.word_row_no_meaning_yet) }
         return listOf(
-            AppModel.Result(
-                text = ctx.getString(R.string.word_row_meaning, saved.text, meaning),
-                action = AppModel.Result.Action.OpenWiktionary(saved.text, openOnTap = false)
-            )
+            WordLookupRows.saved(saved.text, meaning) { word, definition ->
+                ctx.getString(R.string.word_row_meaning, word, definition)
+            }
         )
     }
     val state = lookupState?.takeIf { it.first.equals(text, ignoreCase = true) }
@@ -250,10 +250,9 @@ internal fun AppDrawerFragment.lookUpMainRows(ctx: Context, text: String): List<
     val silent = AppModel.Result.Action.OpenWiktionary(text, openOnTap = false)
     val row = when (val result = state?.second) {
         null -> AppModel.Result(ctx.getString(R.string.word_row_looking_up), silent)
-        is WiktionaryApi.LookupResult.Found -> AppModel.Result(
-            ctx.getString(R.string.word_row_wiktionary_meaning, text, result.meaning),
-            AppModel.Result.Action.SaveWords(listOf(text), result.meaning)
-        )
+        is WiktionaryApi.LookupResult.Found -> WordLookupRows.found(text, result.meaning) { word, definition ->
+            ctx.getString(R.string.word_row_wiktionary_meaning, word, definition)
+        }
         WiktionaryApi.LookupResult.NotFound ->
             AppModel.Result(ctx.getString(R.string.word_row_no_meaning_found), silent)
         WiktionaryApi.LookupResult.Failed ->
