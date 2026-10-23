@@ -23,6 +23,7 @@ class WordReveal(
     var onAnswer: ((word: Word, knewIt: Boolean) -> Unit)? = null,
     var onWordUpdated: ((word: Word) -> Unit)? = null,
     var onWordDeleted: ((word: Word) -> Unit)? = null,
+    private val alwaysShowMeaning: Boolean = false,
 ) {
     var currentWord: Word? = null
         private set
@@ -68,7 +69,7 @@ class WordReveal(
     fun setRevealed(revealed: Boolean) {
         isRevealed = revealed
         val word = currentWord
-        binding.tvMeaning.isVisible = revealed
+        binding.tvMeaning.isVisible = revealed || (alwaysShowMeaning && word != null && word.meaning.isNotBlank())
         binding.tvContext.isVisible = revealed && (word != null && word.context.isNotBlank())
         binding.buttonsContainer.isVisible = revealed
     }

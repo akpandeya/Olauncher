@@ -44,6 +44,17 @@ class WordsCardTest {
     }
 
     @Test
+    fun `review button shows only when words are due`() {
+        assertTrue(WordsCardLogic.showReview(6))
+        assertFalse(WordsCardLogic.showReview(0))
+    }
+
+    @Test
+    fun `review label shows the due count`() {
+        assertEquals("Review 6", WordsCardLogic.reviewLabel("Review %d", 6))
+    }
+
+    @Test
     fun `isAvailable follows germanEnabled flag`() {
         assertTrue(WordsCardLogic.isAvailable(germanEnabled = true))
         assertFalse(WordsCardLogic.isAvailable(germanEnabled = false))
