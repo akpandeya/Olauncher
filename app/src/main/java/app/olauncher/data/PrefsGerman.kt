@@ -6,6 +6,7 @@ import app.olauncher.data.Prefs.Companion.GERMAN_CLOCK
 import app.olauncher.data.Prefs.Companion.GERMAN_CLOCK_SYSTEM
 import app.olauncher.data.Prefs.Companion.GERMAN_ENABLED
 import app.olauncher.data.Prefs.Companion.GERMAN_LOOKUP
+import app.olauncher.data.Prefs.Companion.GERMAN_DICTIONARY_APP
 import app.olauncher.data.Prefs.Companion.GERMAN_PAUSE_LAST_WORD_ID
 import app.olauncher.data.Prefs.Companion.GERMAN_PAUSE_WORD
 import app.olauncher.data.Prefs.Companion.GERMAN_SCREEN_PICK
@@ -19,6 +20,8 @@ interface GermanPrefs {
     var germanClock: Int
 
     var germanLookup: Boolean
+
+    var germanDictionaryApp: String
 
     var germanScreenPick: Boolean
 
@@ -45,6 +48,10 @@ internal class GermanPrefsStore(private val prefs: SharedPreferences) : GermanPr
     override var germanLookup: Boolean
         get() = prefs.getBoolean(GERMAN_LOOKUP, true)
         set(value) = prefs.edit { putBoolean(GERMAN_LOOKUP, value).apply() }
+
+    override var germanDictionaryApp: String
+        get() = prefs.getString(GERMAN_DICTIONARY_APP, "") ?: ""
+        set(value) = prefs.edit { putString(GERMAN_DICTIONARY_APP, value).apply() }
 
     override var germanScreenPick: Boolean
         get() = prefs.getBoolean(GERMAN_SCREEN_PICK, false)

@@ -22,8 +22,8 @@ import javax.xml.parsers.DocumentBuilderFactory
  *   Deutsch, Appearance, Gestures, Backup
  * - Each section holds the expected rows (Drawer holds autoShowKeyboard and drawerBottomSearchLayout,
  *   Wellbeing holds the nudge rows under a sub-heading, Today holds the three Today rows and Glance holds weather)
- * - The set of android:ids equals main's: every id still resolves, and every id the old layout held is owned by the
- *   page frame, a catalog row, or a section heading (no id added or removed)
+ * - Every old android:id still resolves and is owned by the page frame, a catalog row, or a
+ *   section heading; only known new ids may be added
  * - There is no landscape copy of the layout; landscape spacing comes from values-land
  * - Required string resources are present and wellbeing_section is not added
  */
@@ -131,7 +131,7 @@ class SettingsSectionsResourceTest {
     }
 
     @Test
-    fun `set of android ids equals main with no id added or removed`() {
+    fun `set of android ids preserves main with only known additions`() {
         val frame = frameIds()
         val owned = mutableSetOf<String>()
         owned += SettingsCatalog.rows.flatMap { it.viewIds }.map { idNames.getValue(it) }
@@ -146,7 +146,8 @@ class SettingsSectionsResourceTest {
         val unresolved = EXPECTED_MAIN_IDS.filter { name -> R.id::class.java.fields.none { it.name == name } }
         assertTrue("Ids that no longer resolve in R.id: $unresolved", unresolved.isEmpty())
 
-        val added = (frame + owned) - EXPECTED_MAIN_IDS - setOf("settingsRows", "statusBarFade")
+        val added = (frame + owned) - EXPECTED_MAIN_IDS -
+            setOf("settingsRows", "statusBarFade", "dictionaryApp", "dictionaryAppLayout", "dictionaryAppTitle")
         assertTrue("Ids added to Settings: $added", added.isEmpty())
     }
 
@@ -202,7 +203,7 @@ class SettingsSectionsResourceTest {
 
         val deutsch = rowIdNames(SettingsSections.KEY_DEUTSCH)
         for (id in listOf(
-            "germanLayout", "germanClockLayout", "germanLookupLayout", "germanPauseWordLayout", "germanUiLayout",
+            "germanLayout", "germanClockLayout", "dictionaryAppLayout", "germanLookupLayout", "germanPauseWordLayout", "germanUiLayout",
         )) assertTrue("$id in Deutsch", id in deutsch)
 
         val appearance = rowIdNames(SettingsSections.KEY_APPEARANCE)

@@ -42,6 +42,7 @@ import androidx.core.widget.doAfterTextChanged
 import android.view.WindowInsets
 import android.widget.TextView
 import app.olauncher.helper.DrawerScrollHelper
+import app.olauncher.helper.DictionaryApps
 import app.olauncher.helper.MusicPulse
 import app.olauncher.helper.HandSide
 import app.olauncher.helper.HomeSet
@@ -198,12 +199,16 @@ internal fun SettingsFragment.toggleGermanUi() {
 
 internal fun SettingsFragment.populateGerman() {
     binding.germanOnOff.text = getString(if (prefs.germanEnabled) R.string.on else R.string.off)
+    binding.dictionaryAppLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
+    binding.dictionaryApp.text = if (prefs.germanDictionaryApp.isBlank()) getString(R.string.dictionary_wiktionary)
+        else DictionaryApps.label(requireContext(), prefs.germanDictionaryApp)
     binding.germanClockLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
     binding.germanClock.text = when (prefs.germanClock) {
         Prefs.GERMAN_CLOCK_DEUTSCH -> getString(R.string.deutsch_de)
         Prefs.GERMAN_CLOCK_IN_WORTEN -> getString(R.string.in_worten_de)
         else -> getString(R.string.system_default)
     }
+
     binding.germanLookupLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
     binding.germanLookupOnOff.text = getString(if (prefs.germanLookup) R.string.on else R.string.off)
     binding.germanSpellSuggestLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
@@ -214,6 +219,41 @@ internal fun SettingsFragment.populateGerman() {
     binding.germanPauseWordOnOff.text = getString(if (prefs.germanPauseWord) R.string.on else R.string.off)
     binding.germanUiLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
     binding.germanUiOnOff.text = getString(if (prefs.germanUi) R.string.on else R.string.off)
+}
+
+internal fun SettingsFragment.showDictionaryAppMenu(anchor: View) {
+    val apps = DictionaryApps.textApps(requireContext())
+    anchor.showPopupMenu(
+        configure = { menu ->
+            menu.add(Menu.NONE, 0, 0, R.string.dictionary_wiktionary)
+            apps.forEachIndexed { index, app -> menu.add(Menu.NONE, index + 1, index + 1, app.label) }
+            menu.add(Menu.NONE, apps.size + 1, apps.size + 1, R.string.dictionary_other_app)
+        }
+    ) { item ->
+        when (item.itemId) {
+            0 -> {
+                prefs.germanDictionaryApp = ""
+                populateGerman()
+            }
+            apps.size + 1 -> showDictionaryLaunchMenu(anchor)
+            else -> {
+                prefs.germanDictionaryApp = apps[item.itemId - 1].packageName
+                populateGerman()
+            }
+        }
+    }
+}
+
+private fun SettingsFragment.showDictionaryLaunchMenu(anchor: View) {
+    val apps = DictionaryApps.launchableApps(requireContext())
+    anchor.showPopupMenu(
+        configure = { menu ->
+            apps.forEachIndexed { index, app -> menu.add(Menu.NONE, index, index, app.label) }
+        }
+    ) { item ->
+        prefs.germanDictionaryApp = apps[item.itemId].packageName
+        populateGerman()
+    }
 }
 
 internal fun SettingsFragment.showGermanClockMenu(anchor: View) {
