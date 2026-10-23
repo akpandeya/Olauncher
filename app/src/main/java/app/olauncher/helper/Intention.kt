@@ -26,4 +26,7 @@ object Intention {
         if (cleaned.isEmpty()) return null
         return if (day == dayOf(today, rolloverHour)) cleaned else null
     }
+
+    /** True when the field is empty, so it should look editable (outline and pencil). Filled text stays clean. */
+    fun showsFieldHint(text: CharSequence?): Boolean = text.isNullOrBlank()
 }
