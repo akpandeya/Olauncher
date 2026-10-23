@@ -30,16 +30,26 @@ object ReviewComebacks {
     }
 
     /**
-     * Lifetime comeback count through [today], which counts as a study day
-     * (pass the events logged before the current session).
+     * Comeback count over the logged study days alone — for panels that describe
+     * what already happened, with no hypothetical today injected.
      */
-    fun count(events: List<ReviewEvent>, today: LocalDate, zone: ZoneId): Int {
-        val days = studyDays(events, zone).toMutableList()
-        if (today !in days) days.add(today)
+    fun count(events: List<ReviewEvent>, zone: ZoneId): Int {
+        val days = studyDays(events, zone)
         var comebacks = 0
         for (i in 1 until days.size) {
             if (days[i].toEpochDay() - days[i - 1].toEpochDay() >= 2) comebacks++
         }
         return comebacks
+    }
+
+    /**
+     * Lifetime comeback count through [today], which counts as a study day
+     * (pass the events logged before the current session).
+     */
+    fun count(events: List<ReviewEvent>, today: LocalDate, zone: ZoneId): Int {
+        val days = studyDays(events, zone)
+        val todayIsComeback = days.isNotEmpty() && today !in days &&
+            today.toEpochDay() - days.last().toEpochDay() >= 2
+        return count(events, zone) + if (todayIsComeback) 1 else 0
     }
 }

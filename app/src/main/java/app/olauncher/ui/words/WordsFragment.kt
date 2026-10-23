@@ -158,15 +158,19 @@ class WordsFragment : BaseFragment() {
         b.statsPanel.isVisible = true
         val zone = ZoneId.systemDefault()
         val todayDate = LocalDate.ofEpochDay(today)
+        // The count and window text derive from the grid cells so they can
+        // never disagree with the dots on screen.
+        val cells = StudyGrid.build(events, todayDate, zone)
+        val studiedCount = cells.count { it.studied }
         b.studyDotGrid.submit(
-            StudyGrid.build(events, todayDate, zone),
-            studiedCount = StudyGrid.studiedInWindow(events, todayDate, zone),
-            windowDays = StudyGrid.WEEKS * 7,
+            cells,
+            studiedCount = studiedCount,
+            windowDays = cells.size,
         )
         b.tvComebacks.text = context.getString(
             R.string.words_stats_comebacks,
-            ReviewComebacks.count(events, todayDate, zone),
-            StudyGrid.studiedInWindow(events, todayDate, zone),
+            ReviewComebacks.count(events, zone),
+            studiedCount,
         )
     }
 
