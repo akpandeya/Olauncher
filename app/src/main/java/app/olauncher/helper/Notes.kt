@@ -103,6 +103,24 @@ object Notes {
     /** The note shown on home: the oldest visible one. */
     fun top(notes: List<Note>, today: LocalDate): Note? = visible(notes, today).firstOrNull()
 
+    /** How many visible notes the home line does not show: all but the top one. */
+    fun moreCount(notes: List<Note>, today: LocalDate): Int = (visible(notes, today).size - 1).coerceAtLeast(0)
+
+    /** "+2 more" for the home line, built from [format] (has one %d); null when nothing is hidden. */
+    fun moreText(count: Int, format: String): String? = if (count > 0) String.format(Locale.ROOT, format, count) else null
+
+    /**
+     * All open notes for the Today card: those showing now first (oldest first), then dated
+     * ones for later by date (ties oldest first).
+     */
+    fun cardList(notes: List<Note>, today: LocalDate): List<Note> {
+        val open = open(notes)
+        val now = open.filter { it.showFrom == null || it.showFrom <= today.toEpochDay() }
+        val later = open.filter { it.showFrom != null && it.showFrom > today.toEpochDay() }
+            .sortedWith(compareBy({ it.showFrom }, { it.created }, { it.id }))
+        return now + later
+    }
+
     private fun prune(notes: List<Note>): List<Note> {
         val keepDone = notes.filter { it.done }.sortedByDescending { it.created }.take(MAX_DONE).map { it.id }.toSet()
         val keepOpen = open(notes).takeLast(MAX_OPEN).map { it.id }.toSet()

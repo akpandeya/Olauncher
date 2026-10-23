@@ -103,6 +103,9 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     internal var contextItem: ContextItem? = null
     internal var nextEventId: Long? = null
     internal var notesDialog: OlDialog? = null
+    internal var noteMoreStart = -1
+    internal var noteLineTouchX = 0f
+    internal var noteLineTouchY = 0f
     internal var contextJob: Job? = null
     internal var wallpaperColorsListener: WallpaperManager.OnColorsChangedListener? = null
     internal val originalShadows = HashMap<TextView, FloatArray>()
@@ -227,7 +230,7 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
             R.id.weather -> openWeatherApp()
             R.id.contextLine -> openContextItem()
             R.id.nextEventLine -> openNextEvent()
-            R.id.noteLine -> markTopNoteDone()
+            R.id.noteLine -> onNoteLineTap()
             R.id.setDefaultLauncher -> viewModel.resetLauncherLiveData.call()
             R.id.tvScreenTime -> openScreenTimeDigitalWellbeing()
 
@@ -364,6 +367,13 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         }
         binding.nextEventLine.setOnClickListener(this)
         binding.noteLine.setOnClickListener(this)
+        binding.noteLine.setOnTouchListener { _, e ->
+            if (e.actionMasked == android.view.MotionEvent.ACTION_DOWN) {
+                noteLineTouchX = e.x
+                noteLineTouchY = e.y
+            }
+            false
+        }
         binding.noteLine.setOnLongClickListener {
             showNotesDialog()
             true

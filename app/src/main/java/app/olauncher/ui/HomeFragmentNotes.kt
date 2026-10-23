@@ -23,11 +23,31 @@ private fun HomeFragment.notesStore() = NotesStore({ prefs.notesJson }, { prefs.
 /** Shows the oldest open note as one line, or hides the line when there is none or the setting is off. */
 internal fun HomeFragment.populateNoteLine() {
     if (_binding == null) return
-    val note = if (prefs.homeNotes) notesStore().top(LocalDate.now()) else null
-    val text = note?.let { getString(R.string.note_home_line, it.text) }
+    val all = if (prefs.homeNotes) notesStore().all() else emptyList()
+    val today = LocalDate.now()
+    val note = Notes.top(all, today)
+    val more = Notes.moreText(Notes.moreCount(all, today), getString(R.string.note_home_more))
+    val text = note?.let { getString(R.string.note_home_line, it.text) + more?.let { m -> "  $m" }.orEmpty() }
+    noteMoreStart = if (text != null && more != null) text.length - more.length else -1
     // Skip unchanged text: the line is a live region and would be re-announced every second.
     if (binding.noteLine.text.toString() != text.orEmpty()) binding.noteLine.text = text
     binding.noteLine.isVisible = text != null
+}
+
+/** Tap on the note line: on the "+N more" suffix open Today, else mark the shown note done. */
+internal fun HomeFragment.onNoteLineTap() {
+    val line = binding.noteLine
+    val layout = line.layout
+    val start = noteMoreStart
+    if (start >= 0 && layout != null) {
+        val x = (noteLineTouchX - line.totalPaddingLeft + line.scrollX).coerceAtLeast(0f)
+        val row = layout.getLineForVertical((noteLineTouchY - line.totalPaddingTop + line.scrollY).toInt().coerceAtLeast(0))
+        if (layout.getOffsetForHorizontal(row, x) >= start) {
+            openToday()
+            return
+        }
+    }
+    markTopNoteDone()
 }
 
 /** Tap on the note line: mark the shown note done, with Undo, and show the next one. */
