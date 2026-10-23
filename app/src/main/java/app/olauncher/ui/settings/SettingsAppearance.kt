@@ -45,6 +45,7 @@ import android.view.WindowInsets
 import android.widget.TextView
 import app.olauncher.helper.DrawerScrollHelper
 import app.olauncher.helper.MusicPulse
+import app.olauncher.helper.updateClockColour
 import app.olauncher.helper.HandSide
 import app.olauncher.helper.HomeSet
 import app.olauncher.helper.HomeSets
@@ -234,6 +235,7 @@ internal fun SettingsFragment.setAppTheme(theme: Int) {
         PhotoWallpaper.applyCurrent(requireContext(), prefs)
     } else {
         setPlainWallpaperByTheme(requireContext(), theme)
+        prefs.clockWallpaperColor = 0
     }
     requireActivity().recreate()
 }
@@ -389,6 +391,17 @@ internal fun SettingsFragment.toggleBoldFont() {
 
 internal fun SettingsFragment.populateBoldFont() {
     binding.boldFont.text = getString(if (prefs.boldFont) R.string.on else R.string.off)
+}
+
+internal fun SettingsFragment.toggleClockFromWallpaper() {
+    prefs.clockFromWallpaper = !prefs.clockFromWallpaper
+    if (prefs.clockFromWallpaper) requireContext().updateClockColour(prefs) else prefs.clockWallpaperColor = 0
+    populateClockFromWallpaper()
+    viewModel.toggleDateTime()
+}
+
+internal fun SettingsFragment.populateClockFromWallpaper() {
+    binding.clockWallpaper.text = getString(if (prefs.clockFromWallpaper) R.string.on else R.string.off)
 }
 
 internal fun SettingsFragment.toggleTextContrast() {

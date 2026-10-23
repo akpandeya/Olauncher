@@ -6,6 +6,8 @@ import androidx.core.content.edit
 import app.olauncher.helper.HapticTuning
 import app.olauncher.data.Prefs.Companion.ACCENT
 import app.olauncher.data.Prefs.Companion.ACCENT_CUSTOM_COLOR
+import app.olauncher.data.Prefs.Companion.CLOCK_FROM_WALLPAPER
+import app.olauncher.data.Prefs.Companion.CLOCK_WALLPAPER_COLOR
 import app.olauncher.data.Prefs.Companion.FONT_FAMILY
 import app.olauncher.data.Prefs.Companion.HAPTICS
 import app.olauncher.data.Prefs.Companion.HAPTIC_DURATION_MS
@@ -25,6 +27,12 @@ interface AppearancePrefs {
 
     /** ARGB of the accent picked from the wallpaper; used when [accent] is [Accent.WALLPAPER]. */
     var accentCustomColor: Int
+
+    /** Home clock takes its colour from the wallpaper (see ClockColour). */
+    var clockFromWallpaper: Boolean
+
+    /** ARGB picked for the clock when the wallpaper last changed; 0 means keep the theme colour. */
+    var clockWallpaperColor: Int
 
     var haptics: Boolean
 
@@ -64,6 +72,14 @@ internal class AppearancePrefsStore(private val prefs: SharedPreferences) : Appe
     override var accentCustomColor: Int
         get() = prefs.getInt(ACCENT_CUSTOM_COLOR, 0)
         set(value) = prefs.edit { putInt(ACCENT_CUSTOM_COLOR, value).apply() }
+
+    override var clockFromWallpaper: Boolean
+        get() = prefs.getBoolean(CLOCK_FROM_WALLPAPER, false)
+        set(value) = prefs.edit { putBoolean(CLOCK_FROM_WALLPAPER, value).apply() }
+
+    override var clockWallpaperColor: Int
+        get() = prefs.getInt(CLOCK_WALLPAPER_COLOR, 0)
+        set(value) = prefs.edit { putInt(CLOCK_WALLPAPER_COLOR, value).apply() }
 
     override var accent: Int
         get() = prefs.getInt(ACCENT, Accent.OFF.id)
