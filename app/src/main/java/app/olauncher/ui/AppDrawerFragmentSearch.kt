@@ -40,7 +40,10 @@ import app.olauncher.helper.createChoiceDialog
 import app.olauncher.data.store.WiktionaryApi
 import app.olauncher.data.store.WiktionaryCache
 import app.olauncher.data.store.WiktionarySuggestCache
+import app.olauncher.data.store.GermanLookup
+import app.olauncher.data.store.OfflineGermanStore
 import app.olauncher.helper.WordSuggest
+import app.olauncher.helper.WordLookupRows
 import app.olauncher.helper.DictionaryApps
 import app.olauncher.data.store.WordLookup
 import app.olauncher.data.store.WordsStore
@@ -109,10 +112,9 @@ internal fun AppDrawerFragment.lookupAllowed(): Boolean =
 internal fun AppDrawerFragment.savedWord(ctx: Context, text: String) =
     WordsStore(ctx).all().firstOrNull { it.text.equals(text.trim(), ignoreCase = true) }
 
-/** Starts the Wiktionary lookup for a `:w` query after [delayMs]; no-op for anything else. */
+/** Looks offline first; only a miss may use the opt-in Wiktionary network/cache fallback. */
 internal fun AppDrawerFragment.scheduleLookup(query: String, delayMs: Long) {
     val text = (parseCommand(query) as? DrawerCommand.LookUp)?.text ?: return
-    if (!lookupAllowed()) return
     if (text.equals(lookupState?.first, ignoreCase = true)) return
     val ctx = context?.applicationContext ?: return
     lookupJob?.cancel()
@@ -122,10 +124,14 @@ internal fun AppDrawerFragment.scheduleLookup(query: String, delayMs: Long) {
         val result = withContext(Dispatchers.IO) {
             if (savedWord(ctx, text) != null) return@withContext null
             val cache = WiktionaryCache(ctx)
-            cache.get(text) ?: WiktionaryApi.lookup(text).also { cache.put(text, it) }
+            GermanLookup.lookup(
+                text, lookupAllowed(), OfflineGermanStore(ctx)::lookup,
+                cache::get, { WiktionaryApi.lookup(it) }, cache::put
+            )
         } ?: return@launch
         if (!isAdded || _binding == null) return@launch
         lookupState = text to result
+        scheduleSuggest(query, 0)
         adapter.filter.filter(binding.search.query)
     }
 }
@@ -150,6 +156,15 @@ internal fun AppDrawerFragment.suggestOnlineAllowed(): Boolean = prefs.germanEna
 
 /** Cancels any pending online suggestion and, when allowed, starts one for the unmatched `:sw` items. */
 internal fun AppDrawerFragment.scheduleSuggest(query: String, delayMs: Long) {
+    // A :w hit needs no spelling request; wait for its offline-first lookup to finish.
+    if (parseCommand(query) is DrawerCommand.LookUp) {
+        val result = lookupState?.second
+        if (result == null || result is WiktionaryApi.LookupResult.Found) {
+            suggestJob?.cancel()
+            suggestState = null
+            return
+        }
+    }
     val items = suggestItems(query)
     if (items == suggestState?.first) return
     suggestJob?.cancel()
@@ -220,10 +235,9 @@ internal fun AppDrawerFragment.lookUpMainRows(ctx: Context, text: String): List<
     if (saved != null) {
         val meaning = saved.meaning.ifBlank { ctx.getString(R.string.word_row_no_meaning_yet) }
         return listOf(
-            AppModel.Result(
-                text = ctx.getString(R.string.word_row_meaning, saved.text, meaning),
-                action = AppModel.Result.Action.OpenDictionary(saved.text, openOnTap = false)
-            ),
+            WordLookupRows.saved(saved.text, meaning) { word, definition ->
+                ctx.getString(R.string.word_row_meaning, word, definition)
+            },
             dictionaryRow(ctx, saved.text),
         )
     }
@@ -234,10 +248,9 @@ internal fun AppDrawerFragment.lookUpMainRows(ctx: Context, text: String): List<
     val silent = AppModel.Result.Action.OpenDictionary(text, openOnTap = false)
     val row = when (val result = state?.second) {
         null -> AppModel.Result(ctx.getString(R.string.word_row_looking_up), silent)
-        is WiktionaryApi.LookupResult.Found -> AppModel.Result(
-            ctx.getString(R.string.word_row_wiktionary_meaning, text, result.meaning),
-            AppModel.Result.Action.SaveWords(listOf(text), result.meaning)
-        )
+        is WiktionaryApi.LookupResult.Found -> WordLookupRows.found(text, result.meaning) { word, definition ->
+            ctx.getString(R.string.word_row_wiktionary_meaning, word, definition)
+        }
         WiktionaryApi.LookupResult.NotFound ->
             AppModel.Result(ctx.getString(R.string.word_row_no_meaning_found), silent)
         WiktionaryApi.LookupResult.Failed ->

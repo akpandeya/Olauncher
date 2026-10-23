@@ -19,3 +19,7 @@ google-services.json
 
 # Agent worktrees
 /.claude/worktrees/
+
+# Offline dictionary source and local generation/test workspace (never shipped).
+/.dictionary-work/
+__pycache__/

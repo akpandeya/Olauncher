@@ -41,6 +41,7 @@ sealed class AppModel : Comparable<AppModel> {
     data class Result(
         val text: String,
         val action: Action,
+        val multiline: Boolean = false,
     ) : AppModel() {
         sealed interface Action {
             data class Copy(val value: String) : Action {
