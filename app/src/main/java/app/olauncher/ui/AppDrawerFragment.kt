@@ -11,6 +11,7 @@ import android.widget.TextView
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import app.olauncher.helper.NewAppTipPolicy
 import app.olauncher.helper.StatusBarFade
 import app.olauncher.MainViewModel
 import app.olauncher.R
@@ -28,6 +29,7 @@ import app.olauncher.data.store.WiktionaryApi
 import kotlinx.coroutines.Job
 import app.olauncher.helper.showKeyboard
 import app.olauncher.helper.showToast
+import app.olauncher.helper.showMessageDialog
 
 private const val TAG = "AppDrawerFragment"
 
@@ -60,7 +62,10 @@ class AppDrawerFragment : BaseFragment() {
     internal var currentPrivateSpaceLocked: Boolean = true
     internal var currentPrivateSpaceAvailable: Boolean = false
     internal var letterPosList: List<LetterPos> = emptyList()
+    internal var stripLetters: List<Char> = emptyList()
     internal var keyboardVisible = false
+    private var keyboardWasShown = false
+    private var lastOrdered: List<AppModel> = emptyList()
     internal var lastSelectedLetter: Char? = null
 
     internal val viewModel: MainViewModel by activityViewModels()
@@ -138,9 +143,11 @@ class AppDrawerFragment : BaseFragment() {
             val imeVisible = imeBottom > 0
             if (imeVisible != keyboardVisible) {
                 keyboardVisible = imeVisible
+                if (imeVisible) keyboardWasShown = true
                 if (_binding != null) {
                     updateLetterStripVisibility()
                     updateListInsetForStrip()
+                    if (!imeVisible) maybeShowNewAppTip(lastOrdered)
                 }
             }
             insets
@@ -197,6 +204,21 @@ class AppDrawerFragment : BaseFragment() {
         }
     }
 
+    private fun maybeShowNewAppTip(ordered: List<AppModel>) {
+        lastOrdered = ordered
+        val show = NewAppTipPolicy.shouldShow(
+            alreadySeen = prefs.newAppTipSeen,
+            isAppLaunchDrawer = flag == Constants.FLAG_LAUNCH_APP,
+            hasNewApp = ordered.any { it.isNew && !it.isArchived },
+            keyboardVisible = keyboardVisible,
+            searchFocused = binding.search.hasFocus(),
+            keyboardWasShown = keyboardWasShown,
+        )
+        if (!show) return
+        prefs.newAppTipSeen = true
+        requireContext().showMessageDialog(R.string.new_app_tip_title, R.string.new_app_tip_message, R.string.done) {}
+    }
+
     internal fun updateCombinedAppList() {
         val apps = currentAppList ?: return
         val combined = apps.toMutableList()
@@ -213,6 +235,7 @@ class AppDrawerFragment : BaseFragment() {
         adapter.setAppList(ordered.toMutableList())
         adapter.filter.filter(binding.search.query)
         populateLetterStrip(ordered)
+        maybeShowNewAppTip(ordered)
     }
 
     private fun initClickListeners() {
@@ -259,6 +282,7 @@ class AppDrawerFragment : BaseFragment() {
         searchTextView = null
         lastSelectedLetter = null
         letterPosList = emptyList()
+        stripLetters = emptyList()
         _binding = null
     }
 

@@ -7,6 +7,8 @@ object ArchivedAppsHelper {
 
     const val ARCHIVED_APP_SUFFIX = " ☁︎"
     const val NEW_APP_SUFFIX = " ✦"
+    /** The marker is quieter than the accent colour so it does not compete with the app names. */
+    const val NEW_APP_MARKER_ALPHA = 140
 
     fun formatAppTitle(appModel: AppModel): String = buildString {
         append(appModel.appLabel)
