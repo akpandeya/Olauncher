@@ -11,6 +11,7 @@ import android.widget.TextView
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
+import app.olauncher.helper.NewAppTipPolicy
 import app.olauncher.helper.StatusBarFade
 import app.olauncher.MainViewModel
 import app.olauncher.R
@@ -63,6 +64,8 @@ class AppDrawerFragment : BaseFragment() {
     internal var letterPosList: List<LetterPos> = emptyList()
     internal var stripLetters: List<Char> = emptyList()
     internal var keyboardVisible = false
+    private var keyboardWasShown = false
+    private var lastOrdered: List<AppModel> = emptyList()
     internal var lastSelectedLetter: Char? = null
 
     internal val viewModel: MainViewModel by activityViewModels()
@@ -140,9 +143,11 @@ class AppDrawerFragment : BaseFragment() {
             val imeVisible = imeBottom > 0
             if (imeVisible != keyboardVisible) {
                 keyboardVisible = imeVisible
+                if (imeVisible) keyboardWasShown = true
                 if (_binding != null) {
                     updateLetterStripVisibility()
                     updateListInsetForStrip()
+                    if (!imeVisible) maybeShowNewAppTip(lastOrdered)
                 }
             }
             insets
@@ -200,8 +205,16 @@ class AppDrawerFragment : BaseFragment() {
     }
 
     private fun maybeShowNewAppTip(ordered: List<AppModel>) {
-        if (prefs.newAppTipSeen || flag != Constants.FLAG_LAUNCH_APP) return
-        if (ordered.none { it.isNew && !it.isArchived }) return
+        lastOrdered = ordered
+        val show = NewAppTipPolicy.shouldShow(
+            alreadySeen = prefs.newAppTipSeen,
+            isAppLaunchDrawer = flag == Constants.FLAG_LAUNCH_APP,
+            hasNewApp = ordered.any { it.isNew && !it.isArchived },
+            keyboardVisible = keyboardVisible,
+            searchFocused = binding.search.hasFocus(),
+            keyboardWasShown = keyboardWasShown,
+        )
+        if (!show) return
         prefs.newAppTipSeen = true
         requireContext().showMessageDialog(R.string.new_app_tip_title, R.string.new_app_tip_message, R.string.done) {}
     }
