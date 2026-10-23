@@ -33,20 +33,8 @@ object WeekCardText {
 
     val usedPluralsResIds: List<Int> = listOf(R.plurals.week_review_opens)
 
-    /** Leading emoji for a review line. */
-    fun emoji(line: ReviewLine): String = when (line) {
-        is ReviewLine.Distracting -> "📱"
-        is ReviewLine.LessThanWeekBefore -> "📉"
-        is ReviewLine.MoreThanWeekBefore -> "📈"
-        is ReviewLine.TopApps -> "🔝"
-        is ReviewLine.OverAllowance -> "⏱"
-        is ReviewLine.Pause -> "⏸"
-        is ReviewLine.Nudges -> "💧"
-    }
-
-    /** [format] with the line's emoji in front. */
-    fun formatWithEmoji(context: Context, line: ReviewLine): String =
-        "${emoji(line)}  ${format(context, line)}"
+    /** Same as [format]; kept so the card has one text entry point. No per-line emoji: the card heading carries the only icon. */
+    fun formatLine(context: Context, line: ReviewLine): String = format(context, line)
 
     fun format(context: Context, line: ReviewLine): String = when (line) {
         is ReviewLine.Distracting -> context.getString(
