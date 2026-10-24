@@ -103,12 +103,12 @@ class OfflineGermanStore(context: Context) {
     /**
      * The present-tense paradigm the verb entries for [text] merge into, or
      * null when no candidate maps to a verb (or none has present cells), which
-     * drives the drill's graceful state. Every verb entry matching a candidate
-     * form — same-lemma separable/inseparable homographs like übersetzen, and
-     * occasionally distinct verb lemmas sharing a form — feeds one combined
-     * row set into the parser, whose cell-conflict rule then picks each drilled
-     * form; per the homograph-merging note in tools/README the separable split
-     * wins. Call on Dispatchers.IO.
+     * drives the drill's graceful state. Only verb entries with the same lemma
+     * merge (separable/inseparable homographs like übersetzen); distinct lemmas
+     * sharing a form are dropped by [ParadigmEntries.sameLemmaAsFirst]. The
+     * parser's cell-conflict rule then picks each drilled form; per the
+     * homograph-merging note in tools/README the separable split wins. Call on
+     * Dispatchers.IO.
      */
     fun paradigm(text: String): VerbParadigm? {
         val db = try {
@@ -120,7 +120,7 @@ class OfflineGermanStore(context: Context) {
         return try {
             val normalized = Normalizer.normalize(text.trim(), Normalizer.Form.NFC)
             for (candidate in WiktionaryParser.candidates(normalized)) {
-                val entries = db.rawQuery(
+                val candidates = db.rawQuery(
                     """SELECT e.id, e.lemma
                        FROM lookup l JOIN entries e ON e.id = l.entry_id
                        WHERE l.form = ? AND e.pos = 'verb'
@@ -129,14 +129,15 @@ class OfflineGermanStore(context: Context) {
                 ).use { cursor ->
                     buildList {
                         while (cursor.moveToNext()) {
-                            add(cursor.getLong(0) to cursor.getString(1))
+                            add(VerbEntryRef(cursor.getLong(0), cursor.getString(1)))
                         }
                     }
                 }
+                val entries = ParadigmEntries.sameLemmaAsFirst(candidates)
                 if (entries.isEmpty()) continue
                 val rows = db.rawQuery(
                     "SELECT form, tags FROM forms WHERE entry_id IN (${entries.joinToString(",") { "?" }})",
-                    entries.map { it.first.toString() }.toTypedArray()
+                    entries.map { it.id.toString() }.toTypedArray()
                 ).use { cursor ->
                     buildList {
                         while (cursor.moveToNext()) {
@@ -144,7 +145,7 @@ class OfflineGermanStore(context: Context) {
                         }
                     }
                 }
-                return Conjugation.parsePresent(entries.first().second, rows)
+                return Conjugation.parsePresent(entries.first().lemma, rows)
             }
             null
         } catch (e: Exception) {
