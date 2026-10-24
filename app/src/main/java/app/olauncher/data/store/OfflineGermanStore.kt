@@ -103,11 +103,12 @@ class OfflineGermanStore(context: Context) {
     /**
      * The present-tense paradigm the verb entries for [text] merge into, or
      * null when no candidate maps to a verb (or none has present cells), which
-     * drives the drill's graceful state. Same-lemma verb entries — separable
-     * and inseparable homographs like übersetzen — feed one combined row set
-     * into the parser, whose cell-conflict rule then picks each drilled form;
-     * per the homograph-merging note in tools/README the separable split wins.
-     * Call on Dispatchers.IO.
+     * drives the drill's graceful state. Every verb entry matching a candidate
+     * form — same-lemma separable/inseparable homographs like übersetzen, and
+     * occasionally distinct verb lemmas sharing a form — feeds one combined
+     * row set into the parser, whose cell-conflict rule then picks each drilled
+     * form; per the homograph-merging note in tools/README the separable split
+     * wins. Call on Dispatchers.IO.
      */
     fun paradigm(text: String): VerbParadigm? {
         val db = try {
