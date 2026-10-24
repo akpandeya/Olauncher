@@ -2,10 +2,12 @@ package app.olauncher.ui.today.cards
 
 import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.core.view.ViewCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
@@ -16,12 +18,15 @@ import app.olauncher.data.Prefs
 import app.olauncher.databinding.CardWeekBinding
 import app.olauncher.databinding.CardWellbeingBinding
 import app.olauncher.helper.appUsagePermissionGranted
+import app.olauncher.helper.getColorFromAttr
 import app.olauncher.ui.pause.PauseFormatting
 import app.olauncher.ui.today.TodayCard
 import app.olauncher.ui.today.TodayOrder
 import app.olauncher.ui.today.attachPressScale
 import app.olauncher.ui.today.WellbeingRange
 import app.olauncher.ui.today.WellbeingRanges
+import app.olauncher.wellbeing.AllowanceBand
+import app.olauncher.wellbeing.AllowanceMeter
 import app.olauncher.wellbeing.HealthLabels
 import app.olauncher.wellbeing.HealthRepository
 import app.olauncher.wellbeing.WalkCount
@@ -78,6 +83,20 @@ object WellbeingCardLogic {
         durationText: String,
         opens: Int,
     ): String = "$label $durationText · ${formatOpens(opens)}"
+
+    fun formatDistractingLine(
+        label: String = "Distracting",
+        durationText: String,
+        opensText: String,
+        topAppText: String? = null,
+    ): String = listOfNotNull(label, durationText, opensText, topAppText).joinToString(" · ")
+
+    fun meterFill(percent: Int): Float = AllowanceMeter.fill(percent)
+    fun meterFill(usedMinutes: Int, allowanceMin: Int): Float = AllowanceMeter.fill(usedMinutes, allowanceMin)
+    fun meterBand(percent: Int): AllowanceBand = AllowanceMeter.band(percent)
+    fun meterBand(usedMinutes: Int, allowanceMin: Int): AllowanceBand = AllowanceMeter.band(usedMinutes, allowanceMin)
+    fun allowanceMeter(percent: Int): AllowanceMeter = AllowanceMeter.calculate(percent)
+    fun allowanceMeter(usedMinutes: Int, allowanceMin: Int): AllowanceMeter = AllowanceMeter.calculate(usedMinutes, allowanceMin)
 }
 
 object WellbeingCard : TodayCard {
@@ -328,7 +347,7 @@ internal class WellbeingCardView(
         b.tvPauseWins.isVisible = true
     }
 
-    /** Headline: distracting time today, opens and the top app. Asks for usage access when it is missing. */
+    /** Headline: total foreground time today across all apps; distracting line and allowance meter underneath. */
     fun renderUsage() {
         val b = binding
         val context = b.root.context ?: return
@@ -339,6 +358,7 @@ internal class WellbeingCardView(
         b.tvUsageNeeded.isVisible = distractingPkgs.isNotEmpty() && !granted
         if (!granted || distractingPkgs.isEmpty()) {
             b.llDistracting.isVisible = false
+            b.pbAllowance.isVisible = false
             return
         }
 
@@ -347,13 +367,15 @@ internal class WellbeingCardView(
         usageJob?.cancel()
         usageJob = scope.launch {
             val repo = WellbeingCard.getUsageRepository(context)
+            val totalMillis = repo.totalForegroundMillisToday()
             val millis = repo.foregroundMillisToday(distractingPkgs)
             val opens = repo.openCountToday(distractingPkgs)
             val byPackage = repo.foregroundMillisByPackageToday(distractingPkgs).orEmpty()
 
             if (released) return@launch
-            if (millis == null || opens == null) {
+            if (totalMillis == null || millis == null || opens == null) {
                 b.llDistracting.isVisible = false
+                b.pbAllowance.isVisible = false
                 return@launch
             }
 
@@ -363,16 +385,37 @@ internal class WellbeingCardView(
                 context.getString(R.string.wellbeing_open_plural, opens)
             }
             val top = WellbeingBento.topAppsOf(byPackage) { appLabel(context, prefs, it) }.firstOrNull()
+            val distractingDuration = WeekCardText.formatDuration(context, (millis / 60_000L).toInt())
             val parts = listOfNotNull(
                 context.getString(R.string.wellbeing_today_distracting),
+                distractingDuration,
                 opensText,
                 top?.let {
                     context.getString(R.string.wellbeing_today_top_app, it.first, WeekCardText.formatDuration(context, it.second))
                 },
             )
-            b.tvDistractingValue.text = WeekCardText.formatDuration(context, (millis / 60_000L).toInt())
+            val totalMinutes = maxOf((totalMillis / 60_000L).toInt(), (millis / 60_000L).toInt())
+            b.tvDistractingValue.text = WeekCardText.formatDuration(context, totalMinutes)
             b.tvDistractingApps.text = parts.joinToString(" · ")
             b.llDistracting.isVisible = true
+
+            val allowanceMin = PausePolicy.effectiveAllowanceMin(prefs.pauseAllowanceMin, granted)
+            val showMeter = allowanceMin > 0 && granted
+            b.pbAllowance.isVisible = showMeter
+            if (showMeter) {
+                val distractingMinutes = (millis / 60_000L).toInt()
+                val meter = AllowanceMeter.calculate(distractingMinutes, allowanceMin)
+                b.pbAllowance.max = 1000
+                b.pbAllowance.progress = (meter.fill * 1000).toInt()
+                val color = when (meter.band) {
+                    AllowanceBand.NORMAL -> context.getColorFromAttr(R.attr.accentColor)
+                    AllowanceBand.WARNING -> ContextCompat.getColor(context, R.color.accentSand)
+                    AllowanceBand.OVER -> context.getColorFromAttr(R.attr.dangerColor)
+                }
+                b.pbAllowance.progressTintList = ColorStateList.valueOf(color)
+                b.pbAllowance.progressBackgroundTintList = ColorStateList.valueOf(context.getColorFromAttr(R.attr.todayChipColor))
+                b.pbAllowance.contentDescription = context.getString(R.string.wellbeing_allowance_meter_description, meter.percent)
+            }
         }
     }
 

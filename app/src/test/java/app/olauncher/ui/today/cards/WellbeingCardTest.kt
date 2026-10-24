@@ -141,6 +141,32 @@ class WellbeingCardTest {
         assertTrue(WellbeingCardLogic.hasContent(0, 0, setOf("a")))
     }
 
+    @Test
+    fun `formatDistractingLine formats distracting apps line with time opens and top app`() {
+        val fullLine = WellbeingCardLogic.formatDistractingLine(
+            label = "Distracting",
+            durationText = "4 h 7 min",
+            opensText = "107 opens",
+            topAppText = "top: YouTube 4 h 7 min",
+        )
+        assertEquals("Distracting · 4 h 7 min · 107 opens · top: YouTube 4 h 7 min", fullLine)
+
+        val withoutTopApp = WellbeingCardLogic.formatDistractingLine(
+            label = "Distracting",
+            durationText = "15 min",
+            opensText = "3 opens",
+            topAppText = null,
+        )
+        assertEquals("Distracting · 15 min · 3 opens", withoutTopApp)
+    }
+
+    @Test
+    fun `card_wellbeing xml contains pbAllowance meter with horizontal style`() {
+        val layout = resource("layout/card_wellbeing.xml")
+        assertTrue(layout.contains("android:id=\"@+id/pbAllowance\""))
+        assertTrue(layout.contains("?android:attr/progressBarStyleHorizontal"))
+    }
+
     private fun resource(path: String): String =
         listOf("app/src/main/res/$path", "src/main/res/$path").map(::File).first { it.exists() }.readText()
 
