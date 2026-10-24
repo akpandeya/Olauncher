@@ -25,7 +25,6 @@ import app.olauncher.databinding.DialogEditWordBinding
 import app.olauncher.databinding.DialogWordListNameBinding
 import app.olauncher.helper.OlDialog
 import app.olauncher.helper.createDialog
-import app.olauncher.helper.DialogListSizing
 import app.olauncher.helper.createMultiChoiceDialog
 import app.olauncher.helper.showMessageDialog
 import app.olauncher.helper.showToast
@@ -247,8 +246,10 @@ object WordDialogs {
             title = R.string.word_list_add_words,
             items = candidates.map { candidateLabel(context, it) },
             checked = checked,
-            action = R.string.apply,
-            actionLabel = { count -> DialogListSizing.applyLabel(context.getString(R.string.apply), count) },
+            action = R.string.word_list_add_words,
+            actionLabel = { count -> addWordsLabel(context, count) },
+            searchHint = R.string.word_list_add_search_hint,
+            matchingIndices = { query -> WordsListLogic.matchingIndices(candidates, query) },
         ) {
             val picked = candidates.mapIndexedNotNull { index, candidate -> if (checked[index]) candidate.id else null }
             if (picked.isNotEmpty()) WordsCard.getStore(context).assignAll(picked, list.id)
@@ -256,6 +257,14 @@ object WordDialogs {
         }
         dialog.showRespectingStatusBar()
     }
+
+    /** "Add words" at zero picks, "Add 1 word" / "Add N words" otherwise. */
+    private fun addWordsLabel(context: Context, picked: Int): String =
+        if (picked > 0) {
+            context.resources.getQuantityString(R.plurals.word_list_add_count, picked, picked)
+        } else {
+            context.getString(R.string.word_list_add_words)
+        }
 
     /** Word plus its meaning when one is saved, so lookalike words stay distinguishable. */
     private fun candidateLabel(context: Context, word: Word): String {

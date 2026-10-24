@@ -77,4 +77,8 @@ object WordsListLogic {
                 .thenByDescending { it.addedAt }
         )
     }
+
+    /** Positions in [words] that match [query] on text or meaning; every position for a blank query. */
+    fun matchingIndices(words: List<Word>, query: String): Set<Int> =
+        words.indices.filterTo(mutableSetOf()) { WordSearch.matches(words[it], query) }
 }

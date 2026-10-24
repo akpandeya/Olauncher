@@ -31,9 +31,11 @@ import androidx.appcompat.widget.PopupMenu
 import android.os.Handler
 import android.os.Looper
 import androidx.core.view.isVisible
+import androidx.core.widget.doAfterTextChanged
 import app.olauncher.R
 import app.olauncher.data.Prefs
 import app.olauncher.databinding.DialogBaseBinding
+import app.olauncher.databinding.DialogListSearchBinding
 import app.olauncher.databinding.ItemPopupActionBinding
 import app.olauncher.databinding.PopupAppActionsBinding
 import app.olauncher.ui.AppAction
@@ -332,6 +334,8 @@ fun Context.createMultiChoiceDialog(
     onNeutral: () -> Unit = {},
     onToggle: (index: Int, isChecked: Boolean) -> Boolean = { _, _ -> true },
     actionLabel: ((picked: Int) -> CharSequence)? = null,
+    @StringRes searchHint: Int = 0,
+    matchingIndices: ((query: String) -> Set<Int>)? = null,
     onAction: () -> Unit,
 ): OlDialog {
     val boxes = mutableListOf<CompoundButton>()
@@ -340,7 +344,7 @@ fun Context.createMultiChoiceDialog(
     val refreshAction = { actionLabel?.let { label -> dialog.setActionText(label(checked.count { it })) } }
     dialog = createDialog(title, action, neutral = neutral, onNeutral = onNeutral, onAction = onAction) { parent ->
         val context = parent.context
-        context.scrollingRows(
+        val rows = context.scrollingRows(
             items.mapIndexed { index, label ->
                 AppCompatCheckBox(context).also { box ->
                     box.styleAsDialogRow(context)
@@ -365,6 +369,19 @@ fun Context.createMultiChoiceDialog(
                 }
             }
         )
+        if (matchingIndices == null) return@createDialog rows
+        // Filtering only hides rows; ticks stay in [checked], so hidden ticked rows are still confirmed.
+        val search = DialogListSearchBinding.inflate(LayoutInflater.from(context))
+        if (searchHint != 0) search.etListSearch.setHint(searchHint)
+        search.etListSearch.doAfterTextChanged { text ->
+            val visible = matchingIndices(text?.toString().orEmpty())
+            boxes.forEachIndexed { index, box -> box.isVisible = index in visible }
+        }
+        LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            addView(search.root)
+            addView(rows)
+        }
     }
     dialog.setItemChecked = { index, isChecked ->
         checked[index] = isChecked
