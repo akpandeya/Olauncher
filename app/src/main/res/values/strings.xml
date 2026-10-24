@@ -847,6 +847,8 @@
     <string name="words_card_hint" tools:ignore="MissingTranslation">Save words from your reading</string>
     <string name="words_card_all_done" tools:ignore="MissingTranslation">All done</string>
     <string name="words_card_box_bar_description" tools:ignore="MissingTranslation">Leitner box distribution</string>
+    <string name="words_card_day_strip_description" tools:ignore="MissingTranslation">7-day review activity</string>
+    <string name="words_card_day_strip_summary" tools:ignore="MissingTranslation">%1$d of 7 days reviewed this week</string>
     <string name="notes_card_next_dated" tools:ignore="MissingTranslation">Next: %1$s · %2$s</string>
     <string name="words_card_open" tools:ignore="MissingTranslation">Open ›</string>
     <string name="notes_card_count_title">Notes · %1$d</string>

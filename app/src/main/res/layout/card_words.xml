@@ -86,6 +86,14 @@
         android:visibility="gone"
         tools:visibility="visible" />
 
+    <app.olauncher.ui.today.cards.WordsDayStripView
+        android:id="@+id/dayStrip"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
