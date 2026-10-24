@@ -834,6 +834,13 @@
     <string name="notes_card_empty">No notes yet</string>
     <string name="notes_card_add">+ Add note</string>
     <string name="notes_search_hint" tools:ignore="MissingTranslation">Search notes</string>
+    <string name="notes_screen_count_line" tools:ignore="MissingTranslation">%1$d open · %2$d pinned</string>
+    <string name="notes_screen_pinned" tools:ignore="MissingTranslation">Pinned</string>
+    <string name="notes_screen_open" tools:ignore="MissingTranslation">Open</string>
+    <string name="notes_screen_empty" tools:ignore="MissingTranslation">No notes yet</string>
+    <string name="notes_screen_progress" tools:ignore="MissingTranslation">%1$d of %2$d done</string>
+    <string name="notes_screen_due" tools:ignore="MissingTranslation">Due</string>
+    <string name="notes_screen_add_hint" tools:ignore="MissingTranslation">New note: [] Shopping: milk, eggs</string>
     <string name="notes_search_empty" tools:ignore="MissingTranslation">No matching notes</string>
     <string name="saved_card_title">Saved for later · %1$d</string>
     <string name="saved_card_open">Open</string>

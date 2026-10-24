@@ -152,7 +152,20 @@
             app:destination="@id/appListFragment"
             app:enterAnim="@animator/drawer_enter"
             app:popExitAnim="@animator/drawer_exit" />
+        <action
+            android:id="@+id/action_todayFragment_to_notesFragment"
+            app:destination="@id/notesFragment"
+            app:enterAnim="@animator/fade_enter"
+            app:exitAnim="@animator/fade_exit"
+            app:popEnterAnim="@animator/fade_enter"
+            app:popExitAnim="@animator/fade_exit" />
     </fragment>
+
+    <fragment
+        android:id="@+id/notesFragment"
+        android:name="app.olauncher.ui.notes.NotesFragment"
+        android:label="NotesFragment"
+        tools:layout="@layout/fragment_notes" />
 
     <fragment
         android:id="@+id/wordsFragment"

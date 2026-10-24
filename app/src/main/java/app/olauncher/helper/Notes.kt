@@ -227,6 +227,29 @@ object Notes {
         return now + later
     }
 
+    /** The open-notes screen: [pinned] first, then the [rest]; both already filtered by the search. */
+    data class Sections(val pinned: List<Note>, val rest: List<Note>) {
+        val isEmpty: Boolean get() = pinned.isEmpty() && rest.isEmpty()
+    }
+
+    /** All open notes for the Notes screen, narrowed by [query] with [search], split into pinned and the rest. */
+    fun sections(notes: List<Note>, query: String, today: LocalDate): Sections {
+        val matches = search(cardList(notes, today), query)
+        return Sections(matches.filter { it.pinned }, matches.filterNot { it.pinned })
+    }
+
+    /** Items ticked on a checklist note; 0 for a plain note. */
+    fun doneCount(note: Note): Int = note.items.count { it.checked }
+
+    /** Whether the Notes screen shows a "Due" chip: the note has a date. */
+    fun isDated(note: Note): Boolean = note.showFrom != null
+
+    /** "4 open · 1 pinned" from [format] (two %d: open, pinned) over the open notes. */
+    fun countLine(notes: List<Note>, format: String): String {
+        val open = open(notes)
+        return String.format(Locale.ROOT, format, open.size, open.count { it.pinned })
+    }
+
     /** The Today card shows its search field only once there are enough open notes to need it. */
     fun showSearch(openCount: Int): Boolean = openCount >= SEARCH_MIN_NOTES
 

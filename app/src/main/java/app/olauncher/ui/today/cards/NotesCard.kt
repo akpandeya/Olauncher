@@ -9,6 +9,7 @@ import android.view.inputmethod.EditorInfo
 import androidx.core.view.ViewCompat
 import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.findNavController
 import app.olauncher.R
 import app.olauncher.data.Prefs
 import app.olauncher.databinding.CardNotesBinding
@@ -46,6 +47,11 @@ object NotesCard : TodayCard {
     override fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View {
         val b = CardNotesBinding.inflate(inflater, parent, false)
         ViewCompat.setAccessibilityHeading(b.tvCardTitle, true)
+        b.tvCardTitle.setOnClickListener {
+            Haptics.tick(it)
+            val nav = fragment.findNavController()
+            if (nav.currentDestination?.id == R.id.todayFragment) nav.navigate(R.id.action_todayFragment_to_notesFragment)
+        }
         b.etSearchNotes.doOnTextChanged { _, _, _, _ -> render(b) }
         b.etSearchNotes.setOnEditorActionListener { v, actionId, _ ->
             if (actionId != EditorInfo.IME_ACTION_SEARCH) return@setOnEditorActionListener false
