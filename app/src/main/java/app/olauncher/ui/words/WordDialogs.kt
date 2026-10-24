@@ -2,9 +2,6 @@ package app.olauncher.ui.words
 
 import android.content.Context
 import android.view.LayoutInflater
-import android.util.TypedValue
-import android.view.Gravity
-import android.widget.TextView
 import java.util.Locale
 import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.widget.AppCompatEditText
@@ -27,9 +24,9 @@ import app.olauncher.databinding.DialogWordListNameBinding
 import app.olauncher.helper.OlDialog
 import app.olauncher.helper.createDialog
 import app.olauncher.helper.createMultiChoiceDialog
-import app.olauncher.helper.dpToPx
 import app.olauncher.helper.showMessageDialog
 import app.olauncher.helper.showToast
+import app.olauncher.ui.today.TodayChips
 import app.olauncher.ui.today.cards.WordsCard
 
 /**
@@ -133,14 +130,14 @@ object WordDialogs {
         db.listChips.removeAllViews()
         val store = WordsCard.getStore(context)
         for (list in store.lists()) {
-            val chip = newChip(context, list.name)
+            val chip = TodayChips.newSelectableChip(context, list.name)
             chip.isSelected = list.id in selected
             chip.setOnClickListener {
                 it.isSelected = WordListChips.toggle(selected, list.id)
             }
             db.listChips.addView(chip)
         }
-        val add = newChip(context, context.getString(R.string.words_edit_new_list_chip))
+        val add = TodayChips.newSelectableChip(context, context.getString(R.string.words_edit_new_list_chip))
         add.setOnClickListener {
             val before = store.lists().mapTo(HashSet()) { it.id }
             showListNameDialog(context, list = null) {
@@ -149,24 +146,6 @@ object WordDialogs {
             }
         }
         db.listChips.addView(add)
-    }
-
-    /**
-     * A plain TextView chip. A Material Chip throws under the app's AppCompat theme, so the
-     * look comes from the existing chip drawable instead.
-     */
-    private fun newChip(context: Context, label: String): TextView {
-        val chip = TextView(context)
-        chip.text = label
-        chip.setTextColor(TypedValue().also { context.theme.resolveAttribute(R.attr.primaryColor, it, true) }.data)
-        chip.setTextSize(TypedValue.COMPLEX_UNIT_PX, context.resources.getDimension(R.dimen.text_small))
-        chip.gravity = Gravity.CENTER
-        chip.minHeight = 48.dpToPx()
-        chip.setPadding(12.dpToPx(), 0, 12.dpToPx(), 0)
-        chip.isClickable = true
-        chip.isFocusable = true
-        chip.background = androidx.core.content.ContextCompat.getDrawable(context, R.drawable.today_chip_selectable)
-        return chip
     }
 
     /** "Box 2 · next review Mon 26 Oct · 6 reviews". */
