@@ -7,7 +7,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
-import android.widget.LinearLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
@@ -327,40 +326,12 @@ class TodayFragment : BaseFragment() {
                     )
                     index = end
                 }
-                cards.getOrNull(index + 1)?.let { next ->
-                    TodayOrder.pairsAsHalfWidth(
-                        card.halfWidth, card.gridSpan,
-                        next.halfWidth, next.gridSpan,
-                    )
-                } == true -> {
-                    container.addView(halfWidthRow(card, cards[index + 1], groupKeys))
-                    index += 2
-                }
                 else -> {
                     container.addView(inflatePanel(container, card, groupKeys))
                     index++
                 }
             }
         }
-    }
-
-    /** Two half-width cards side by side, equal height. */
-    private fun halfWidthRow(left: TodayCard, right: TodayCard, groupKeys: List<String>): View {
-        val row = LinearLayout(requireContext()).apply {
-            orientation = LinearLayout.HORIZONTAL
-            isBaselineAligned = false
-        }
-        val gap = (5 * resources.displayMetrics.density).toInt()
-        for ((card, isLeft) in listOf(left to true, right to false)) {
-            val panel = inflatePanel(row, card, groupKeys)
-            val source = panel.layoutParams as ViewGroup.MarginLayoutParams
-            panel.layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply {
-                bottomMargin = source.bottomMargin
-                if (isLeft) marginEnd = gap else marginStart = gap
-            }
-            row.addView(panel)
-        }
-        return row
     }
 
     private fun widgetGrid(cards: List<TodayCard>, groupKeys: List<String>): WidgetGridView {

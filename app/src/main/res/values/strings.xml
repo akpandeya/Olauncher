@@ -833,10 +833,15 @@
     <string name="words_card_title">Words · DE</string>
     <string name="words_card_due">due</string>
     <string name="words_card_line">%1$s · %2$d learned</string>
-    <string name="words_card_none">no words</string>
+    <string name="words_card_none">no words yet</string>
+    <string name="words_card_next" tools:ignore="MissingTranslation">Next: %1$s</string>
+    <string name="words_card_hint" tools:ignore="MissingTranslation">Save words from your reading</string>
+    <string name="words_card_all_done" tools:ignore="MissingTranslation">All done</string>
+    <string name="notes_card_next_dated" tools:ignore="MissingTranslation">Next: %1$s · %2$s</string>
     <string name="words_card_open" tools:ignore="MissingTranslation">Open ›</string>
     <string name="notes_card_count_title">Notes · %1$d</string>
     <string name="notes_card_empty">No notes yet</string>
+    <string name="notes_card_progress" tools:ignore="MissingTranslation">%1$d of %2$d done</string>
     <string name="notes_card_add">+ Add note</string>
     <string name="notes_search_hint" tools:ignore="MissingTranslation">Search notes</string>
     <string name="notes_screen_count_line" tools:ignore="MissingTranslation">%1$d open · %2$d pinned</string>
