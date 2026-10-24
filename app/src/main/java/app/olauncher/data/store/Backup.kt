@@ -33,6 +33,7 @@ object Backup {
     const val FILE_WORDS = "words.json"
     const val FILE_USAGE_DAYS = "usage_days.json"
     const val FILE_INTENTION_HISTORY = "intention_history.json"
+    const val FILE_REVIEW_EVENTS = "review_events.json"
 
     // Files in filesDir that are deliberately NOT exported:
     // - weather.json (WeatherCache) and rates.json (RatesCache): refetched from the network.
@@ -45,7 +46,8 @@ object Backup {
         FILE_WORD_PROGRESS,
         FILE_WORDS,
         FILE_USAGE_DAYS,
-        FILE_INTENTION_HISTORY
+        FILE_INTENTION_HISTORY,
+        FILE_REVIEW_EVENTS
     )
 
     fun isVolatileKey(key: String): Boolean {
