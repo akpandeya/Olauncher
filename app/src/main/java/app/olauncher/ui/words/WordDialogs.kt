@@ -3,7 +3,8 @@ package app.olauncher.ui.words
 import android.content.Context
 import android.view.LayoutInflater
 import android.util.TypedValue
-import com.google.android.material.chip.Chip
+import android.view.Gravity
+import android.widget.TextView
 import java.util.Locale
 import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.widget.AppCompatEditText
@@ -26,6 +27,7 @@ import app.olauncher.databinding.DialogWordListNameBinding
 import app.olauncher.helper.OlDialog
 import app.olauncher.helper.createDialog
 import app.olauncher.helper.createMultiChoiceDialog
+import app.olauncher.helper.dpToPx
 import app.olauncher.helper.showMessageDialog
 import app.olauncher.helper.showToast
 import app.olauncher.ui.today.cards.WordsCard
@@ -134,8 +136,7 @@ object WordDialogs {
             val chip = newChip(context, list.name)
             chip.isSelected = list.id in selected
             chip.setOnClickListener {
-                if (!selected.remove(list.id)) selected.add(list.id)
-                it.isSelected = list.id in selected
+                it.isSelected = WordListChips.toggle(selected, list.id)
             }
             db.listChips.addView(chip)
         }
@@ -150,20 +151,21 @@ object WordDialogs {
         db.listChips.addView(add)
     }
 
-    private fun newChip(context: Context, label: String): Chip {
-        val chip = Chip(context)
+    /**
+     * A plain TextView chip. A Material Chip throws under the app's AppCompat theme, so the
+     * look comes from the existing chip drawable instead.
+     */
+    private fun newChip(context: Context, label: String): TextView {
+        val chip = TextView(context)
         chip.text = label
-        chip.isCheckable = false
-        chip.chipBackgroundColor = android.content.res.ColorStateList.valueOf(android.graphics.Color.TRANSPARENT)
-        chip.setChipStrokeWidthResource(R.dimen.strokeHairline)
-        chip.chipStrokeColor = android.content.res.ColorStateList.valueOf(
-            TypedValue().also { context.theme.resolveAttribute(R.attr.primaryColorTrans80, it, true) }.data
-        )
         chip.setTextColor(TypedValue().also { context.theme.resolveAttribute(R.attr.primaryColor, it, true) }.data)
         chip.setTextSize(TypedValue.COMPLEX_UNIT_PX, context.resources.getDimension(R.dimen.text_small))
-        chip.rippleColor = null
+        chip.gravity = Gravity.CENTER
+        chip.minHeight = 48.dpToPx()
+        chip.setPadding(12.dpToPx(), 0, 12.dpToPx(), 0)
+        chip.isClickable = true
+        chip.isFocusable = true
         chip.background = androidx.core.content.ContextCompat.getDrawable(context, R.drawable.today_chip_selectable)
-        chip.setEnsureMinTouchTargetSize(true)
         return chip
     }
 
