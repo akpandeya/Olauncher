@@ -1,12 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
-    <item>
+    <!-- Outer ambient shadow -->
+    <item
+        android:top="3dp"
+        android:bottom="0dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/todayPanelShadowSoft" />
+            <corners android:radius="@dimen/radiusMedium" />
+        </shape>
+    </item>
+    <!-- Direct soft shadow -->
+    <item
+        android:top="2dp"
+        android:bottom="1dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/todayPanelShadow" />
+            <corners android:radius="@dimen/radiusMedium" />
+        </shape>
+    </item>
+    <!-- Top edge highlight -->
+    <item
+        android:top="0dp"
+        android:bottom="3dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/todayPanelHighlight" />
+            <corners android:radius="@dimen/radiusMedium" />
+        </shape>
+    </item>
+    <!-- Raised panel surface -->
+    <item
+        android:top="1dp"
+        android:bottom="3dp">
         <shape android:shape="rectangle">
             <solid android:color="@color/readableCard" />
             <corners android:radius="@dimen/radiusMedium" />
         </shape>
     </item>
-    <item>
+    <!-- Warm tint for Held card -->
+    <item
+        android:top="1dp"
+        android:bottom="3dp">
         <shape android:shape="rectangle">
             <solid android:color="@color/heldTint" />
             <corners android:radius="@dimen/radiusMedium" />

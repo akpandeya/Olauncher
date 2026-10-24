@@ -64,4 +64,14 @@
     <color name="readableCard">#B8FFFFFF</color>
     <color name="heldTint">#33D9A3A3</color>
     <color name="drawerScrimBottom">#99FFFFFF</color>
+
+    <!-- Today raised surfaces (issue #495) -->
+    <color name="todayPanelHighlight">#FFFFFF</color>
+    <color name="todayPanelShadow">#1F000000</color>
+    <color name="todayPanelShadowSoft">#0A000000</color>
+    <color name="todayTile">#F5F6F8</color>
+    <color name="todayTileHighlight">#FFFFFF</color>
+    <color name="todayTileShadow">#24000000</color>
+    <color name="todayTileShadowSoft">#0D000000</color>
+    <color name="todayTileStroke">#14000000</color>
 </resources>
