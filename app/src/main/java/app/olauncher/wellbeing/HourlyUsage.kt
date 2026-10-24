@@ -64,14 +64,17 @@ object HourlyUsage {
             val sorted = pkgEvents.sortedBy { it.timestamp }
             var sessionStart: Long? = null
 
-            for (event in sorted) {
+            for ((index, event) in sorted.withIndex()) {
                 if (event.isResume) {
                     if (sessionStart == null) {
                         sessionStart = maxOf(event.timestamp, startOfDayMillis)
                     }
                 } else if (event.isPause) {
-                    val start = sessionStart ?: startOfDayMillis
-                    if (event.timestamp > start) {
+                    // An unmatched close only means "open since midnight" when it is the
+                    // first event of the day for this package. Otherwise it is a duplicate
+                    // close (PAUSED followed by STOPPED) and must be ignored.
+                    val start = sessionStart ?: if (index == 0) startOfDayMillis else null
+                    if (start != null && event.timestamp > start) {
                         val sessionEnd = minOf(event.timestamp, now)
                         if (sessionEnd > start) {
                             sessions.add(UsageSession(pkg, start, sessionEnd))
