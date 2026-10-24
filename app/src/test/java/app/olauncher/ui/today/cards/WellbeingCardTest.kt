@@ -181,4 +181,40 @@ class WellbeingCardTest {
         assertEquals("%d", Regex("name=\"wellbeing_water_chip\"[^>]*>([^<]*)<").find(resource("values/strings.xml"))?.groupValues?.get(1))
         assertEquals("%d", Regex("name=\"wellbeing_walk_chip\"[^>]*>([^<]*)<").find(resource("values/strings.xml"))?.groupValues?.get(1))
     }
+
+    @Test
+    fun `isAvailable and hasContent return true when healthConnectEnabled is true`() {
+        assertTrue(
+            WellbeingCardLogic.isAvailable(
+                waterIntervalMin = 0,
+                walkIntervalMin = 0,
+                socialThresholdMin = 0,
+                distractingApps = emptySet(),
+                healthConnectEnabled = true,
+            )
+        )
+        assertTrue(
+            WellbeingCardLogic.hasContent(
+                waterIntervalMin = 0,
+                walkIntervalMin = 0,
+                distractingApps = emptySet(),
+                healthConnectEnabled = true,
+            )
+        )
+    }
+
+    @Test
+    fun `card_wellbeing xml contains health tiles for exercise resting hr and sleep`() {
+        val layout = resource("layout/card_wellbeing.xml")
+        assertTrue(layout.contains("android:id=\"@+id/llHealth\""))
+        assertTrue(layout.contains("android:id=\"@+id/tileExercise\""))
+        assertTrue(layout.contains("android:id=\"@+id/tvExercise\""))
+        assertTrue(layout.contains("android:id=\"@+id/tvExerciseLabel\""))
+        assertTrue(layout.contains("android:id=\"@+id/tileRestingHr\""))
+        assertTrue(layout.contains("android:id=\"@+id/tvRestingHr\""))
+        assertTrue(layout.contains("android:id=\"@+id/tvRestingHrLabel\""))
+        assertTrue(layout.contains("android:id=\"@+id/tileSleep\""))
+        assertTrue(layout.contains("android:id=\"@+id/tvSleep\""))
+        assertTrue(layout.contains("android:id=\"@+id/tvSleepLabel\""))
+    }
 }

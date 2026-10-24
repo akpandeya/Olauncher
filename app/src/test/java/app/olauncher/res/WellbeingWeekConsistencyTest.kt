@@ -117,7 +117,7 @@ class WellbeingWeekConsistencyTest {
 
     @Test
     fun `every tile in card_wellbeing xml and card_week xml uses today_tile drawable`() {
-        val wellbeingTiles = listOf("tileWater", "tileWalk", "tileNotNow")
+        val wellbeingTiles = listOf("tileWater", "tileWalk", "tileNotNow", "tileExercise", "tileRestingHr", "tileSleep")
         val wellbeingDoc = parseXml(resolveFile("src/main/res/layout/card_wellbeing.xml"))
         for (tileId in wellbeingTiles) {
             val tile = findElementById(wellbeingDoc, tileId)

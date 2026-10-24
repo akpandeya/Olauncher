@@ -51,15 +51,18 @@ class HealthRepository(
             safe { c.aggregate(AggregateRequest(setOf(StepsRecord.COUNT_TOTAL), sinceStart))[StepsRecord.COUNT_TOTAL] }
         } else null
 
-        val sleep = if (HealthPermission.getReadPermission(SleepSessionRecord::class) in granted) {
+        val sleepNight = if (HealthPermission.getReadPermission(SleepSessionRecord::class) in granted) {
             safe {
                 // Look back 36 h so a night that began before midnight is found.
                 val range = TimeRangeFilter.between(dayStart.minus(Duration.ofHours(12)), dayEnd)
                 val spans = c.readRecords(ReadRecordsRequest(SleepSessionRecord::class, range)).records
                     .map { SleepSpan(it.startTime.toEpochMilli(), it.endTime.toEpochMilli()) }
-                HealthSummaryFormatting.sleepMinutesEndingToday(spans, dayStart.toEpochMilli(), dayEnd.toEpochMilli())
+                HealthSummaryFormatting.sleepNightEndingToday(spans, dayStart.toEpochMilli(), dayEnd.toEpochMilli())
             }
         } else null
+        val sleep = sleepNight?.minutes
+        val sleepBedTimeMs = sleepNight?.startMs
+        val sleepWakeTimeMs = sleepNight?.endMs
 
         val resting = if (HealthPermission.getReadPermission(RestingHeartRateRecord::class) in granted) {
             safe {
@@ -84,7 +87,56 @@ class HealthRepository(
             }
         } else null
 
-        return HealthSummary(steps, sleep, resting, exercise, heartRate)
+        return HealthSummary(steps, sleep, resting, exercise, heartRate, sleepBedTimeMs, sleepWakeTimeMs)
+    }
+
+    /**
+     * Last 7 days summary (exercise minutes, resting HR, sleep per night).
+     * Returns null when the switch is off, Health Connect is unavailable, or permissions cannot be read.
+     * Each metric within the summary is null when its permission is missing.
+     */
+    suspend fun readLast7Days(now: Instant = Instant.now()): HealthWeekSummary? {
+        if (!isEnabled()) return null
+        val c = client ?: return null
+        val granted = try {
+            c.permissionController.getGrantedPermissions()
+        } catch (_: Exception) {
+            return null
+        }
+        val today = LocalDate.ofInstant(now, zone)
+        val days = (0L..6L).map { today.minusDays(6 - it) }
+        val windowStart = days.first().atStartOfDay(zone).toInstant()
+        val windowEnd = today.plusDays(1).atStartOfDay(zone).toInstant()
+
+        val exercise = if (HealthPermission.getReadPermission(ExerciseSessionRecord::class) in granted) {
+            safe {
+                readAllRecords<ExerciseSessionRecord>(c, TimeRangeFilter.between(windowStart, now))
+                    .map { ExerciseSpan(it.startTime.toEpochMilli(), it.endTime.toEpochMilli()) }
+            }
+        } else null
+
+        val resting = if (HealthPermission.getReadPermission(RestingHeartRateRecord::class) in granted) {
+            safe {
+                readAllRecords<RestingHeartRateRecord>(c, TimeRangeFilter.between(windowStart, now))
+                    .map { RestingSample(it.time.toEpochMilli(), it.beatsPerMinute) }
+            }
+        } else null
+
+        val sleep = if (HealthPermission.getReadPermission(SleepSessionRecord::class) in granted) {
+            safe {
+                val sleepStart = windowStart.minus(Duration.ofHours(12))
+                readAllRecords<SleepSessionRecord>(c, TimeRangeFilter.between(sleepStart, windowEnd))
+                    .map { SleepSpan(it.startTime.toEpochMilli(), it.endTime.toEpochMilli()) }
+            }
+        } else null
+
+        return HealthSummaryFormatting.bucketAndAverageWeek(
+            days = days,
+            zone = zone,
+            exerciseSessions = exercise,
+            restingRecords = resting,
+            sleepRecords = sleep,
+        )
     }
 
     /**
@@ -154,6 +206,20 @@ class HealthRepository(
 
         if (steps == null && sessions == null) return null
         return WalkDetector.detect(steps.orEmpty(), sessions.orEmpty(), dayStart.toEpochMilli(), dayEnd.toEpochMilli())
+    }
+
+    private suspend inline fun <reified T : androidx.health.connect.client.records.Record> readAllRecords(
+        client: HealthConnectClient,
+        filter: TimeRangeFilter,
+    ): List<T> {
+        val results = mutableListOf<T>()
+        var pageToken: String? = null
+        do {
+            val response = client.readRecords(ReadRecordsRequest(T::class, filter, pageToken = pageToken))
+            results.addAll(response.records)
+            pageToken = response.pageToken
+        } while (pageToken != null)
+        return results
     }
 
     private inline fun <T> safe(block: () -> T?): T? = try {
