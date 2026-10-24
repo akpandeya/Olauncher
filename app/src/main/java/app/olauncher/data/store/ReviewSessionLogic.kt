@@ -45,6 +45,14 @@ object ReviewSessionLogic {
     fun queue(words: List<Word>, today: Long, limit: Int = Int.MAX_VALUE): List<Word> =
         Leitner.due(words, today, limit)
 
+    data class SplitEvents(val before: List<ReviewEvent>, val session: List<ReviewEvent>)
+
+    /** Splits the stored log into events from before this session and the session's own. */
+    fun splitEvents(all: List<ReviewEvent>, sessionEventIds: Set<Long>): SplitEvents {
+        val (session, before) = all.partition { it.id in sessionEventIds }
+        return SplitEvents(before = before, session = session)
+    }
+
     data class Summary(val knew: Int, val almost: Int, val again: Int) {
         val total: Int get() = knew + almost + again
     }

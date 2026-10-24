@@ -90,7 +90,35 @@ class ReviewFragment : BaseFragment() {
 
         // One session per screen visit: resuming (e.g. back from another app) or
         // recreating the view keeps the queue and the summary.
+        if (savedInstanceState?.getBoolean(KEY_STARTED) == true && !sessionStarted) {
+            restoreSession(savedInstanceState)
+        }
         if (sessionStarted) render() else startSession()
+    }
+
+    // The fragment is rebuilt on rotation / font-size / language change; without
+    // this the session restarts and graded words (no longer due) show "all done".
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        if (!sessionStarted) return
+        outState.putBoolean(KEY_STARTED, true)
+        outState.putInt(KEY_ANSWERED, answered)
+        outState.putLongArray(KEY_QUEUE_IDS, queue.map { it.id }.toLongArray())
+        outState.putLongArray(KEY_EVENT_IDS, sessionEvents.map { it.id }.toLongArray())
+    }
+
+    private fun restoreSession(state: Bundle) {
+        val context = context ?: return
+        val store = WordsCard.getStore(context)
+        sessionStarted = true
+        queue = (state.getLongArray(KEY_QUEUE_IDS) ?: LongArray(0)).toList().mapNotNull { store.get(it) }
+        answered = state.getInt(KEY_ANSWERED).coerceAtMost(queue.size)
+        val split = ReviewSessionLogic.splitEvents(
+            ReviewEventsStore(context).all(),
+            (state.getLongArray(KEY_EVENT_IDS) ?: LongArray(0)).toSet(),
+        )
+        sessionEvents = split.session
+        eventsBeforeSession = split.before
     }
 
     private fun startSession() {
@@ -180,5 +208,9 @@ class ReviewFragment : BaseFragment() {
 
     private companion object {
         const val GRADE_DEBOUNCE_MS = 300L
+        const val KEY_STARTED = "review_started"
+        const val KEY_ANSWERED = "review_answered"
+        const val KEY_QUEUE_IDS = "review_queue_ids"
+        const val KEY_EVENT_IDS = "review_event_ids"
     }
 }

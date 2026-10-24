@@ -84,4 +84,17 @@ class ReviewSessionLogicTest {
         assertEquals(1, summary.again)
         assertEquals(4, summary.total)
     }
+
+    @Test
+    fun `splitEvents separates session events from earlier ones by id`() {
+        fun event(id: Long) =
+            ReviewEvent(id = id, wordId = id, reviewedAt = 0, result = "knew", boxBefore = 1, boxAfter = 2)
+        val all = listOf(event(10), event(11), event(12), event(13))
+
+        val split = ReviewSessionLogic.splitEvents(all, setOf(12L, 13L))
+
+        assertEquals(listOf(event(10), event(11)), split.before)
+        assertEquals(listOf(event(12), event(13)), split.session)
+        assertEquals(all, ReviewSessionLogic.splitEvents(all, emptySet()).before)
+    }
 }
