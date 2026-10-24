@@ -26,12 +26,6 @@ class TodayBentoOrderTest {
     }
 
     @Test
-    fun `only Words and Notes are half width`() {
-        val half = TodayCards.all.filter { it.halfWidth }.map { it.key }
-        assertEquals(listOf(WordsCard.KEY, NotesCard.KEY), half)
-    }
-
-    @Test
     fun `cards with counts or controls in their heading draw it themselves`() {
         val own = TodayCards.all.filter { it.drawsOwnHeader }.map { it.key }.toSet()
         assertEquals(setOf(NotesCard.KEY, WellbeingCard.KEY, SavedCard.KEY, HeldCard.KEY), own)

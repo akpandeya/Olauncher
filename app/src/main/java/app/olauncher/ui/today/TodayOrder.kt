@@ -21,13 +21,6 @@ data class TodayPanelMoves(val up: List<String>?, val down: List<String>?)
 object TodayOrder {
     private const val WIDGET_PREFIX = "widget:"
 
-    /**
-     * Whether a half-width card shares a row with the next card. A card with a grid span
-     * (a widget) belongs to the grid, so it is never paired as half of a row.
-     */
-    fun pairsAsHalfWidth(halfWidth: Boolean, gridSpan: Int?, nextHalfWidth: Boolean, nextGridSpan: Int?): Boolean =
-        halfWidth && gridSpan == null && nextHalfWidth && nextGridSpan == null
-
     fun widgetKey(id: Int): String {
         require(id > 0)
         return "$WIDGET_PREFIX$id"

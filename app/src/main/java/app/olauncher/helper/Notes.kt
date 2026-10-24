@@ -259,6 +259,29 @@ object Notes {
         return String.format(Locale.ROOT, format, open.size, open.count { it.pinned })
     }
 
+    /** Plain extra note lines the full-width Today card shows under the main note. */
+    const val CARD_MORE_LINES = 2
+
+    /**
+     * What the full-width Today card shows, from [list] (a [cardList] order, already narrowed by any search).
+     * [main] is the featured note showing now; [more] are up to [CARD_MORE_LINES] other notes showing now (list order,
+     * never [main]); [dated] is the soonest note whose date is still ahead (never [main]), null when there is none.
+     */
+    data class CardLines(val main: Note?, val more: List<Note>, val dated: Note?)
+
+    fun cardLines(list: List<Note>, today: LocalDate): CardLines {
+        val day = today.toEpochDay()
+        val main = featuredMatch(list, today)?.takeIf { it.showFrom == null || it.showFrom <= day }
+        val more = list.filter { (it.showFrom == null || it.showFrom <= day) && it.id != main?.id }.take(CARD_MORE_LINES)
+        val dated = list.filter { it.showFrom != null && it.showFrom > day && it.id != main?.id }
+            .minWithOrNull(compareBy({ it.showFrom }, { it.created }, { it.id }))
+        return CardLines(main, more, dated)
+    }
+
+    /** "1 of 3 done" for a checklist note from [format] (two %d: done, total); null for a plain note. */
+    fun progressText(note: Note, format: String): String? =
+        if (note.items.isEmpty()) null else String.format(Locale.ROOT, format, doneCount(note), note.items.size)
+
     /** The Today card shows its search field only once there are enough open notes to need it. */
     fun showSearch(openCount: Int): Boolean = openCount >= SEARCH_MIN_NOTES
 

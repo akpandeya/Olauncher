@@ -25,7 +25,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
-/** Half-width card: the open count, the newest note and a line to add one. */
+/** Full-width card: the open count, the main note, up to two more, the next dated note and a field to add one. */
 object NotesCard : TodayCard {
 
     const val KEY = "notes"
@@ -37,7 +37,6 @@ object NotesCard : TodayCard {
     override val titleRes: Int = R.string.notes_card_title
     override val emoji: String = "📝"
     override val drawsOwnHeader: Boolean = true
-    override val halfWidth: Boolean = true
 
     fun store(context: Context): NotesStore {
         val prefs = Prefs(context)
@@ -91,14 +90,13 @@ object NotesCard : TodayCard {
         val searching = Notes.showSearch(Notes.open(all).size)
         b.etSearchNotes.visibility = if (searching) View.VISIBLE else View.GONE
         val query = if (searching) b.etSearchNotes.text.toString() else ""
-        // The newest note that is showing now (or the newest match while searching); tap marks it
-        // done, long-press opens a menu (Pin/Unpin, Delete). A pinned note is shown first.
+        // The main note is the featured one showing now (or the best match while searching); tap marks it
+        // done, long-press opens a menu (Pin/Unpin, Delete, Tick next). A pinned note is shown first.
         val today = LocalDate.now()
-        val latest = if (query.isBlank()) {
-            Notes.featured(Notes.visible(all, today))
-        } else {
-            Notes.featuredMatch(Notes.search(Notes.cardList(all, today), query), today)
-        }
+        val list = Notes.cardList(all, today)
+        val lines = Notes.cardLines(if (query.isBlank()) list else Notes.search(list, query), today)
+        val latest = lines.main
+        renderExtras(b, lines, today)
         if (latest == null) {
             b.tvNote.setText(if (query.isBlank()) R.string.notes_card_empty else R.string.notes_search_empty)
             b.tvNote.isClickable = false
@@ -114,7 +112,8 @@ object NotesCard : TodayCard {
             latest, today, ZoneId.systemDefault(),
             Notes.EditedFormat(context.getString(R.string.note_edited_today), context.getString(R.string.note_edited_yesterday), context.getString(R.string.note_edited_on)),
         )
-        val meta = listOfNotNull(Notes.dateLabel(latest), edited).joinToString(" · ")
+        val progress = Notes.progressText(latest, context.getString(R.string.notes_card_progress))
+        val meta = listOfNotNull(progress, Notes.dateLabel(latest), edited).joinToString(" · ")
         b.tvNoteDate.text = meta
         b.tvNoteDate.visibility = if (meta.isEmpty()) View.GONE else View.VISIBLE
         b.tvNote.setOnClickListener {
@@ -141,6 +140,21 @@ object NotesCard : TodayCard {
                 render(b)
             }
             true
+        }
+    }
+
+    /** The extra open-note lines and the next dated note under the main note. */
+    private fun renderExtras(b: CardNotesBinding, lines: Notes.CardLines, today: LocalDate) {
+        val context = b.root.context
+        for ((view, note) in listOf(b.tvMore1 to lines.more.getOrNull(0), b.tvMore2 to lines.more.getOrNull(1))) {
+            view.visibility = if (note == null) View.GONE else View.VISIBLE
+            view.text = note?.let { "· " + Notes.displayText(it) }
+        }
+        val dated = lines.dated
+        b.tvNextDated.visibility = if (dated == null) View.GONE else View.VISIBLE
+        b.vNextDivider.visibility = b.tvNextDated.visibility
+        b.tvNextDated.text = dated?.let {
+            context.getString(R.string.notes_card_next_dated, Notes.dateLabel(it) ?: "", Notes.displayText(it))
         }
     }
 }

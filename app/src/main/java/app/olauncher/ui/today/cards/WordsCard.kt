@@ -10,6 +10,7 @@ import app.olauncher.R
 import app.olauncher.helper.Haptics
 import app.olauncher.helper.createChoiceDialog
 import app.olauncher.data.Prefs
+import app.olauncher.data.store.Word
 import app.olauncher.data.store.WordsStore
 import app.olauncher.data.store.WordStats
 import app.olauncher.databinding.CardWordsBinding
@@ -53,6 +54,32 @@ object WordsCardLogic {
 
     fun showReview(due: Int): Boolean = due > 0
 
+    /**
+     * What the right side and footer of the full-width card show. [nextWord] is the next due word
+     * (null when nothing is due); [nextMeaning] is null when the meaning is blank.
+     */
+    data class Lines(
+        val nextWord: String?,
+        val nextMeaning: String?,
+        val showAllDone: Boolean,
+        val showHint: Boolean,
+        val showCounts: Boolean,
+    ) {
+        val showNext: Boolean get() = nextWord != null
+    }
+
+    fun lines(total: Int, due: Int, next: Word?): Lines {
+        val noWords = total == 0
+        val nextWord = if (!noWords && due > 0) next?.text?.trim()?.takeIf { it.isNotEmpty() } else null
+        return Lines(
+            nextWord = nextWord,
+            nextMeaning = if (nextWord != null) next?.meaning?.trim()?.takeIf { it.isNotEmpty() } else null,
+            showAllDone = !noWords && due == 0,
+            showHint = noWords,
+            showCounts = !noWords,
+        )
+    }
+
     fun reviewLabel(template: String, due: Int): String = String.format(template, due)
 
     fun formatMeaning(context: Context, meaning: String, meaningSource: String): String {
@@ -68,8 +95,8 @@ object WordsCardLogic {
 }
 
 /**
- * Half-width card: the due count and the size of the word list. Tap opens the review when words
- * are due, else the Words page. Per-view state lives in [WordsCardView], stored on the root view.
+ * Full-width card: the due count, the next due word with its meaning, and the size of the word
+ * list. Tap opens the review when words are due, else the Words page. Per-view state lives in [WordsCardView], stored on the root view.
  */
 object WordsCard : TodayCard {
 
@@ -78,7 +105,6 @@ object WordsCard : TodayCard {
     override val key: String = KEY
     override val titleRes: Int = R.string.words
     override val emoji: String = "🇩🇪"
-    override val halfWidth: Boolean = true
 
     var storeProvider: ((Context) -> WordsStore)? = null
     var epochDaySupplier: () -> Long = { LocalDate.now().toEpochDay() }
@@ -155,13 +181,17 @@ internal class WordsCardView(
         val context = b.root.context ?: return
         val stats = WordsCard.getStore(context).stats(WordsCard.epochDaySupplier())
         due = stats.due
+        val lines = WordsCardLogic.lines(stats.total, stats.due, WordsCard.getStore(context).due(WordsCard.epochDaySupplier(), 1).firstOrNull())
         b.tvDue.text = stats.due.toString()
-        b.tvDueLabel.setText(R.string.words_card_due)
-        b.tvLine.text = if (stats.total == 0) {
-            context.getString(R.string.words_card_none)
-        } else {
-            WordsCardLogic.formatCardLine(context, stats.total, stats.learned)
-        }
+        b.tvDueLabel.setText(if (stats.total == 0) R.string.words_card_none else R.string.words_card_due)
+        b.tvNextWord.visibility = if (lines.showNext) View.VISIBLE else View.GONE
+        b.tvNextWord.text = lines.nextWord?.let { context.getString(R.string.words_card_next, it) }
+        b.tvNextMeaning.visibility = if (lines.nextMeaning != null) View.VISIBLE else View.GONE
+        b.tvNextMeaning.text = lines.nextMeaning
+        b.tvSide.visibility = if (lines.showAllDone || lines.showHint) View.VISIBLE else View.GONE
+        b.tvSide.setText(if (lines.showHint) R.string.words_card_hint else R.string.words_card_all_done)
+        b.tvLine.visibility = if (lines.showCounts) View.VISIBLE else View.INVISIBLE
+        b.tvLine.text = WordsCardLogic.formatCardLine(context, stats.total, stats.learned)
     }
 }
 
