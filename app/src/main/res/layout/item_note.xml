@@ -5,6 +5,8 @@
     android:layout_height="wrap_content"
     android:layout_marginBottom="8dp"
     android:background="@drawable/today_panel"
+    android:clickable="true"
+    android:focusable="true"
     android:orientation="vertical"
     android:paddingHorizontal="16dp"
     android:paddingVertical="10dp">
@@ -33,6 +35,17 @@
             android:visibility="gone"
             tools:visibility="visible" />
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvNoteBody"
+        style="@style/TextSmall"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="2"
+        android:visibility="gone"
+        tools:text="About the heating, then the lease renewal."
+        tools:visibility="visible" />
 
     <LinearLayout
         android:id="@+id/itemsPanel"
