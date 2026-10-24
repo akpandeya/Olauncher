@@ -754,7 +754,7 @@
     <string name="held_card_title">Held · %1$d</string>
     <string name="held_card_latest">%1$s · latest %2$s</string>
     <string name="today_widget_slot_title">Your widget</string>
-    <string name="today_widget_slot_hint">Widgets you add appear here</string>
+    <string name="today_widget_slot_hint">Tap + Add to place a widget here</string>
     <string name="today_widget_slot_add">+ Add</string>
     <string name="wellbeing_usage_needed">Allow usage access to see your screen time</string>
     <string name="wellbeing_today_distracting">Distracting</string>
