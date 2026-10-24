@@ -16,14 +16,14 @@ class NotesPinTest {
 
     @Test
     fun pinnedNoteComesFirstOnCard() {
-        val pinned = Notes.setPinned(threeNotes(), 3, true)
+        val pinned = Notes.setPinned(threeNotes(), 3, true, 1L)
         assertEquals(listOf(3L, 1L, 2L), ids(Notes.cardList(pinned, today)))
-        assertEquals(listOf(1L, 2L, 3L), ids(Notes.cardList(Notes.setPinned(pinned, 3, false), today)))
+        assertEquals(listOf(1L, 2L, 3L), ids(Notes.cardList(Notes.setPinned(pinned, 3, false, 1L), today)))
     }
 
     @Test
     fun pinnedNotesAreOldestFirstAmongThemselves() {
-        val pinned = Notes.setPinned(Notes.setPinned(threeNotes(), 3, true), 2, true)
+        val pinned = Notes.setPinned(Notes.setPinned(threeNotes(), 3, true, 1L), 2, true, 1L)
         assertEquals(listOf(2L, 3L, 1L), ids(Notes.cardList(pinned, today)))
     }
 
@@ -37,7 +37,7 @@ class NotesPinTest {
 
     @Test
     fun topAndMoreCountWithPin() {
-        val pinned = Notes.setPinned(threeNotes(), 3, true)
+        val pinned = Notes.setPinned(threeNotes(), 3, true, 1L)
         assertEquals(3L, Notes.top(pinned, today)?.id)
         assertEquals(2, Notes.moreCount(pinned, today))
         assertEquals(1L, Notes.top(threeNotes(), today)?.id)
@@ -46,13 +46,13 @@ class NotesPinTest {
     @Test
     fun featuredPrefersPinnedElseNewest() {
         assertEquals(3L, Notes.featured(Notes.visible(threeNotes(), today))?.id)
-        assertEquals(1L, Notes.featured(Notes.visible(Notes.setPinned(threeNotes(), 1, true), today))?.id)
+        assertEquals(1L, Notes.featured(Notes.visible(Notes.setPinned(threeNotes(), 1, true, 1L), today))?.id)
         assertNull(Notes.featured(emptyList()))
     }
 
     @Test
     fun roundTripKeepsPinned() {
-        val notes = Notes.setPinned(threeNotes(), 2, true)
+        val notes = Notes.setPinned(threeNotes(), 2, true, 1L)
         assertEquals(notes, Notes.decode(Notes.encode(notes)))
         assertTrue(Notes.decode(Notes.encode(notes)).first { it.id == 2L }.pinned)
     }
@@ -75,6 +75,6 @@ class NotesPinTest {
 
     @Test
     fun setPinnedOnMissingIdKeepsList() {
-        assertEquals(threeNotes(), Notes.setPinned(threeNotes(), 99, true))
+        assertEquals(threeNotes(), Notes.setPinned(threeNotes(), 99, true, 1L))
     }
 }

@@ -45,6 +45,16 @@
         android:paddingTop="8dp"
         tools:text="Milk, eggs, bread" />
 
+    <TextView
+        android:id="@+id/tvNoteDate"
+        style="@style/TextSmallLight"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:visibility="gone"
+        tools:text="Fri 24 Oct · edited today" />
+
     <EditText
         android:id="@+id/etAddNote"
         style="@style/TextSmallLight"

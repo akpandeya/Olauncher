@@ -21,6 +21,7 @@ import app.olauncher.helper.showPopupMenu
 import app.olauncher.helper.showToast
 import app.olauncher.ui.today.TodayCard
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.ZonedDateTime
 
 /** Half-width card: the open count, the newest note and a line to add one. */
@@ -92,11 +93,19 @@ object NotesCard : TodayCard {
             b.tvNote.setText(if (query.isBlank()) R.string.notes_card_empty else R.string.notes_search_empty)
             b.tvNote.isClickable = false
             b.tvNote.isLongClickable = false
+            b.tvNoteDate.visibility = View.GONE
             return
         }
         b.tvNote.text = Notes.displayText(latest)
         b.tvNote.setCompoundDrawablesRelativeWithIntrinsicBounds(if (latest.pinned) R.drawable.ic_pin else 0, 0, 0, 0)
         b.tvNote.compoundDrawablePadding = (8 * context.resources.displayMetrics.density).toInt()
+        val edited = Notes.editedLabel(
+            latest, today, ZoneId.systemDefault(),
+            Notes.EditedFormat(context.getString(R.string.note_edited_today), context.getString(R.string.note_edited_yesterday), context.getString(R.string.note_edited_on)),
+        )
+        val meta = listOfNotNull(Notes.dateLabel(latest), edited).joinToString(" · ")
+        b.tvNoteDate.text = meta
+        b.tvNoteDate.visibility = if (meta.isEmpty()) View.GONE else View.VISIBLE
         b.tvNote.setOnClickListener {
             Haptics.tick(it)
             store.markDone(latest.id)

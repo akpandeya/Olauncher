@@ -1,7 +1,9 @@
 package app.olauncher.helper
 
 import java.text.Normalizer
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -12,6 +14,7 @@ import org.json.JSONObject
  * One note from `:n`. [created] is epoch millis; [id] is unique within the list.
  * [showFrom] is a local epoch day: the note shows on home from that day on; null means always.
  * [pinned] notes come first on the card and the home line.
+ * [edited] is epoch millis of the last tick or pin change; null when never changed.
  * A checklist note has [items]; its [text] is then the title and may be empty.
  */
 data class Note(
@@ -22,6 +25,7 @@ data class Note(
     val showFrom: Long? = null,
     val pinned: Boolean = false,
     val items: List<ChecklistItem> = emptyList(),
+    val edited: Long? = null,
 )
 
 /** One tickable line of a checklist note. */
@@ -63,6 +67,20 @@ object Notes {
 
     fun dateLabel(date: LocalDate): String = date.format(DATE_LABEL)
 
+    /** What the card shows for [Note.edited]: [today], [yesterday] or the date; null when never edited. */
+    fun editedLabel(note: Note, today: LocalDate, zone: ZoneId, format: EditedFormat): String? {
+        val millis = note.edited ?: return null
+        val day = Instant.ofEpochMilli(millis).atZone(zone).toLocalDate()
+        return when (day) {
+            today -> format.today
+            today.minusDays(1) -> format.yesterday
+            else -> String.format(Locale.ROOT, format.on, dateLabel(day))
+        }
+    }
+
+    /** Wording for [editedLabel]; [on] has one %1$s for the date. */
+    data class EditedFormat(val today: String, val yesterday: String, val on: String)
+
     fun encode(notes: List<Note>): String {
         val array = JSONArray()
         for (n in notes) {
@@ -70,6 +88,7 @@ object Notes {
                 JSONObject().put("id", n.id).put("text", n.text).put("created", n.created).put("done", n.done).apply {
                     n.showFrom?.let { put("showFrom", it) }
                     if (n.pinned) put("pinned", true)
+                    n.edited?.let { put("edited", it) }
                     if (n.items.isNotEmpty()) {
                         put("items", JSONArray().also { arr ->
                             n.items.forEach { arr.put(JSONObject().put("text", it.text).put("checked", it.checked)) }
@@ -95,7 +114,7 @@ object Notes {
                 if ((text.isEmpty() && items.isEmpty()) || !o.has("id")) continue
                 val id = o.optLong("id", -1L)
                 if (!seen.add(id)) continue
-                result.add(Note(id, text, o.optLong("created", 0L), o.optBoolean("done", false), if (o.has("showFrom")) o.optLong("showFrom") else null, o.optBoolean("pinned", false), items))
+                result.add(Note(id, text, o.optLong("created", 0L), o.optBoolean("done", false), if (o.has("showFrom")) o.optLong("showFrom") else null, o.optBoolean("pinned", false), items, if (o.has("edited")) o.optLong("edited") else null))
             }
             result
         } catch (_: Exception) {
@@ -134,10 +153,10 @@ object Notes {
     }
 
     /** Ticks or unticks one item. A missing note or out-of-range index leaves the list as it is. */
-    fun toggleItem(notes: List<Note>, noteId: Long, index: Int): List<Note> =
+    fun toggleItem(notes: List<Note>, noteId: Long, index: Int, now: Long): List<Note> =
         notes.map { note ->
             if (note.id != noteId || index !in note.items.indices) note
-            else note.copy(items = note.items.mapIndexed { i, item -> if (i == index) item.copy(checked = !item.checked) else item })
+            else note.copy(items = note.items.mapIndexed { i, item -> if (i == index) item.copy(checked = !item.checked) else item }, edited = now)
         }
 
     /** Index of the first unticked item, or null for a plain note or a finished checklist. */
@@ -168,8 +187,8 @@ object Notes {
         notes.map { if (it.id == id) it.copy(done = done) else it }
 
     /** Pins or unpins a note. A missing id leaves the list as it is. */
-    fun setPinned(notes: List<Note>, id: Long, pinned: Boolean): List<Note> =
-        notes.map { if (it.id == id) it.copy(pinned = pinned) else it }
+    fun setPinned(notes: List<Note>, id: Long, pinned: Boolean, now: Long): List<Note> =
+        notes.map { if (it.id == id) it.copy(pinned = pinned, edited = now) else it }
 
     /** [notes] with pinned ones first; each group keeps its order. */
     fun pinnedFirst(notes: List<Note>): List<Note> = notes.filter { it.pinned } + notes.filterNot { it.pinned }
@@ -252,7 +271,7 @@ class NotesStore(private val read: () -> String?, private val write: (String) ->
     }
 
     fun markDone(id: Long, done: Boolean = true) = write(Notes.encode(Notes.markDone(all(), id, done)))
-    fun setPinned(id: Long, pinned: Boolean) = write(Notes.encode(Notes.setPinned(all(), id, pinned)))
-    fun toggleItem(noteId: Long, index: Int) = write(Notes.encode(Notes.toggleItem(all(), noteId, index)))
+    fun setPinned(id: Long, pinned: Boolean) = write(Notes.encode(Notes.setPinned(all(), id, pinned, System.currentTimeMillis())))
+    fun toggleItem(noteId: Long, index: Int) = write(Notes.encode(Notes.toggleItem(all(), noteId, index, System.currentTimeMillis())))
     fun delete(id: Long) = write(Notes.encode(Notes.delete(all(), id)))
 }

@@ -735,6 +735,9 @@
     <string name="note_pin" tools:ignore="MissingTranslation">Pin</string>
     <string name="note_unpin" tools:ignore="MissingTranslation">Unpin</string>
     <string name="note_tick_next" tools:ignore="MissingTranslation">Tick next item</string>
+    <string name="note_edited_today" tools:ignore="MissingTranslation">edited today</string>
+    <string name="note_edited_yesterday" tools:ignore="MissingTranslation">edited yesterday</string>
+    <string name="note_edited_on" tools:ignore="MissingTranslation">edited %1$s</string>
     <string name="note_delete" tools:ignore="MissingTranslation">Delete</string>
     <string name="notes_card_title" tools:ignore="MissingTranslation">Notes</string>
     <string name="notes_add_hint" tools:ignore="MissingTranslation">Add note</string>
