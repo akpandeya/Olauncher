@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.ViewCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -90,6 +91,15 @@ object HeldCardLogic {
         Locale.ROOT, template, summary.label, summary.count, formatTime(summary.latestPostTime, zone)
     )
 
+    /** First line of the Today card, e.g. "YouTube · latest 03:19"; the count is in the card title. */
+    fun formatCardLine(
+        summary: HeldAppSummary,
+        zone: ZoneId = ZoneId.systemDefault(),
+        template: String = DEFAULT_CARD_TEMPLATE,
+    ): String = String.format(Locale.ROOT, template, summary.label, formatTime(summary.latestPostTime, zone))
+
+    const val DEFAULT_CARD_TEMPLATE = "%1\$s · latest %2\$s"
+
     /** Second line: the latest title, falling back to its text; empty if neither. */
     fun formatLatestLine(summary: HeldAppSummary): String {
         val title = formatContent(summary.latestTitle, "")
@@ -104,6 +114,8 @@ object HeldCard : TodayCard {
     override val key: String = KEY
     override val titleRes: Int = R.string.held
     override val emoji: String = "🔔"
+    override val drawsOwnHeader: Boolean = true
+    override val tinted: Boolean = true
     override val defaultEnabled: Boolean = true
 
     var storeProvider: ((Context) -> HeldStore)? = null
@@ -128,6 +140,7 @@ object HeldCard : TodayCard {
 
     override fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View {
         val viewBinding = CardHeldBinding.inflate(inflater, parent, false)
+        ViewCompat.setAccessibilityHeading(viewBinding.tvCardTitle, true)
         val cardView = HeldCardView(viewBinding, fragment)
         viewBinding.root.tag = cardView
 
@@ -217,10 +230,13 @@ internal class HeldCardView(
         val zone = HeldCard.zoneSupplier()
         val fragment = fragment
 
-        for (summary in summaries) {
+        b.tvCardTitle.text = context.getString(R.string.held_card_title, summaries.sumOf { it.count })
+
+        // Just the latest held item; the rest are one tap away through the app itself.
+        for (summary in summaries.take(1)) {
             val itemBinding = ItemHeldBinding.inflate(inflater, b.itemsContainer, false)
-            itemBinding.tvHeldLine.text = HeldCardLogic.formatHeaderLine(
-                summary, zone, context.getString(R.string.held_header_format)
+            itemBinding.tvHeldLine.text = HeldCardLogic.formatCardLine(
+                summary, zone, context.getString(R.string.held_card_latest)
             )
             val latest = HeldCardLogic.formatLatestLine(summary)
             itemBinding.tvHeldLatest.text = latest

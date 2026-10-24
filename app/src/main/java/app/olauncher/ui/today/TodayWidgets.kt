@@ -165,7 +165,7 @@ internal class TodayWidgets(
         val allKeys = TodayCards.all.filterNot { it.inHero }.map { it.key } + cards().map { it.key }
         val order = (prefs.todayPanelOrder + allKeys).distinct()
         val pinned = key in prefs.todayPinnedKeys
-        val moves = TodayOrder.panelMoves(order, key, pinned, panelKeys)
+        val moves = TodayOrder.panelMoves(order, key, panelKeys)
         anchor.showPopupMenu(
             configure = { menu ->
                 menu.add(Menu.NONE, ACTION_TOGGLE_PIN, Menu.NONE, if (pinned) R.string.today_card_unpin else R.string.today_card_pin)
@@ -234,8 +234,9 @@ internal class TodayWidgets(
             manager.getAppWidgetInfo(appWidgetId)?.loadLabel(context.packageManager)
                 ?: context.getString(R.string.today_widget)
 
+        // Widgets sit between Next up and Held; ties keep the incoming order (Next up, widgets, Held).
         override fun priority(context: Context, now: java.time.ZonedDateTime): Int =
-            TodayOrder.defaultPriority(TodayCards.all.size + index)
+            TodayOrder.defaultPriority(TodayCards.all.size - 2)
 
         override fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View {
             val info = manager.getAppWidgetInfo(appWidgetId)

@@ -25,6 +25,7 @@ import app.olauncher.glance.RainOutlookLabels
 import app.olauncher.glance.WeatherCache
 import app.olauncher.glance.WeatherCodes
 import app.olauncher.glance.WeatherLocation
+import app.olauncher.glance.WeatherWorker
 import app.olauncher.helper.OpenTargets
 import app.olauncher.helper.getUserHandleFromString
 import app.olauncher.ui.today.TodayCard
@@ -37,9 +38,8 @@ import kotlin.math.roundToInt
 
 object WeatherCardLogic {
 
-    fun isAvailable(weatherEnabled: Boolean, hasCache: Boolean): Boolean {
-        return weatherEnabled && hasCache
-    }
+    /** The card shows whenever weather is on; without a forecast yet it says so instead of vanishing. */
+    fun isAvailable(weatherEnabled: Boolean): Boolean = weatherEnabled
 
     fun formatLine1(
         nowTemp: Double,
@@ -98,9 +98,7 @@ object WeatherCard : TodayCard {
     }
 
     override fun isAvailable(context: Context): Boolean {
-        val prefs = Prefs(context)
-        val hasCache = getCache(context).read() != null
-        return WeatherCardLogic.isAvailable(prefs.weatherEnabled, hasCache)
+        return WeatherCardLogic.isAvailable(Prefs(context).weatherEnabled)
     }
 
     override fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View {
@@ -165,17 +163,25 @@ internal class WeatherCardView(
     private val onOpenWeather: () -> Unit = {},
 ) {
     init {
-        binding.root.setOnClickListener { Haptics.tick(it); onOpenWeather() }
+        binding.root.setOnClickListener {
+            Haptics.tick(it)
+            // Without a forecast the tap tries again instead of opening the weather app.
+            if (binding.tvUnavailable.isVisible) WeatherWorker.runOnce(it.context) else onOpenWeather()
+        }
     }
 
     fun render() {
         val context = binding.root.context ?: return
         val prefs = Prefs(context)
         val cache = WeatherCard.getCache(context)
-        val cached = cache.read() ?: return
+        val cached = cache.read()
+        binding.llForecast.isVisible = cached != null
+        binding.tvUnavailable.isVisible = cached == null
+        if (cached == null) return
         val (forecast, fetchedAt) = cached
 
-        binding.tvTemp.text = HeroFormatting.bigTemperature(forecast)
+        binding.tvIcon.text = HeroFormatting.nowIcon(forecast)
+        binding.tvTemp.text = HeroFormatting.nowTemperature(forecast)
         binding.tvLine1.text = HeroFormatting.conditionLine(forecast)
         val now = forecast.cityNow(WeatherCard.nowSupplier())
         renderHours(forecast, now)

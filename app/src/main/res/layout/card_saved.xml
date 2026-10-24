@@ -5,13 +5,45 @@
     android:layout_height="wrap_content"
     android:orientation="vertical">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tvCardTitle"
+            style="@style/TextSmallLight"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:letterSpacing="0.04"
+            tools:text="Saved for later · 12" />
+
+        <TextView
+            android:id="@+id/tvOpenLatest"
+            style="@style/TextSmallLight"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:minHeight="48dp"
+            android:paddingHorizontal="4dp"
+            android:text="@string/saved_card_open"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+    </LinearLayout>
+
     <TextView
         android:id="@+id/tvEmpty"
         style="@style/TextSmall"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingVertical="8dp"
-        android:text="@string/saved_empty_state"
+        android:paddingBottom="8dp"
+        android:text="@string/saved_card_empty"
         android:visibility="gone"
         tools:visibility="visible" />
 

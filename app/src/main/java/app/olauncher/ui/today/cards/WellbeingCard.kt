@@ -1,9 +1,12 @@
 package app.olauncher.ui.today.cards
 
 import android.content.Context
+import android.content.Intent
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.ViewCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -22,8 +25,13 @@ import app.olauncher.wellbeing.HealthLabels
 import app.olauncher.wellbeing.HealthRepository
 import app.olauncher.wellbeing.WalkCount
 import app.olauncher.wellbeing.HealthSummaryFormatting
+import app.olauncher.wellbeing.DaySnapshot
 import app.olauncher.wellbeing.Nudges
+import app.olauncher.wellbeing.PausePolicy
+import app.olauncher.wellbeing.SocialTimeWorker
 import app.olauncher.wellbeing.UsageRepository
+import app.olauncher.wellbeing.WellbeingBento
+import app.olauncher.wellbeing.toDaySnapshot
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -44,15 +52,14 @@ object WellbeingCardLogic {
         return anyNudgeOn || distractingApps.isNotEmpty()
     }
 
-    /** True when at least one chip or the distracting-apps line will be shown. */
+    /** True when a tile or the distracting-apps headline (or its permission prompt) will be shown. */
     fun hasContent(
         waterIntervalMin: Int,
         walkIntervalMin: Int,
         distractingApps: Set<String>,
-        usagePermissionGranted: Boolean,
     ): Boolean = waterIntervalMin > 0 ||
         walkIntervalMin > 0 ||
-        (distractingApps.isNotEmpty() && usagePermissionGranted)
+        distractingApps.isNotEmpty()
 
     fun formatWater(count: Int, label: String = "Water"): String = "$label $count"
 
@@ -60,10 +67,6 @@ object WellbeingCardLogic {
 
     fun formatLine1(waterPart: String?, walkPart: String?): String =
         listOfNotNull(waterPart, walkPart).joinToString(" · ")
-
-    /** Praise line for "Not now" choices; null when there are none. Never counts opens. */
-    fun formatPauseWins(notNow: Int, template: String = "Not now × $notNow today"): String? =
-        if (notNow > 0) template else null
 
     fun formatDuration(millis: Long): String = PauseFormatting.formatDuration(millis)
 
@@ -83,6 +86,7 @@ object WellbeingCard : TodayCard {
     override val key: String = KEY
     override val titleRes: Int = R.string.wellbeing
     override val emoji: String = "🌱"
+    override val drawsOwnHeader: Boolean = true
 
     var usageRepositoryProvider: ((Context) -> UsageRepository)? = null
     var scopeProvider: (() -> CoroutineScope)? = null
@@ -103,14 +107,13 @@ object WellbeingCard : TodayCard {
 
     override fun hasContent(context: Context): Boolean = todayHasContent(context) || WeekCard.isAvailable(context)
 
-    /** True when the Today side has a chip or the distracting-apps line to show. */
+    /** True when the Today side has a tile or the distracting-apps headline to show. */
     internal fun todayHasContent(context: Context): Boolean {
         val prefs = Prefs(context)
         return WellbeingCardLogic.hasContent(
             waterIntervalMin = prefs.nudgeWaterIntervalMin,
             walkIntervalMin = prefs.nudgeWalkIntervalMin,
             distractingApps = prefs.distractingApps,
-            usagePermissionGranted = context.appUsagePermissionGranted(),
         )
     }
 
@@ -133,14 +136,19 @@ object WellbeingCard : TodayCard {
             }
         })
 
-        binding.tvWater.setOnClickListener {
+        binding.tileWater.setOnClickListener {
             Haptics.tick(it)
             cardView.onNudgeClicked(Nudges.WATER)
         }
 
-        binding.tvWalk.setOnClickListener {
+        binding.tileWalk.setOnClickListener {
             Haptics.tick(it)
             cardView.onNudgeClicked(Nudges.WALK)
+        }
+
+        binding.tvUsageNeeded.setOnClickListener {
+            Haptics.tick(it)
+            it.context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS))
         }
 
         binding.tvRangeToday.setOnClickListener {
@@ -170,14 +178,19 @@ internal class WellbeingCardView(
     private var released = false
     private var usageJob: Job? = null
     private var healthJob: Job? = null
+    private var weekJob: Job? = null
 
     /** Walks found automatically in Health Connect today; null when unavailable. */
     private var autoWalks: Int? = null
 
-    /** The week side lives in this card; it keeps its own per-view state. */
+    /** The 7 days side lives in this card; it keeps its own per-view state. */
     private val weekView: WeekCardView = WeekCardView(
         CardWeekBinding.inflate(LayoutInflater.from(binding.root.context), binding.weekContent, true),
     )
+
+    init {
+        ViewCompat.setAccessibilityHeading(binding.tvWellbeingTitle, true)
+    }
 
     fun release() {
         released = true
@@ -185,6 +198,8 @@ internal class WellbeingCardView(
         usageJob = null
         healthJob?.cancel()
         healthJob = null
+        weekJob?.cancel()
+        weekJob = null
         fragment = null
     }
 
@@ -194,11 +209,17 @@ internal class WellbeingCardView(
             ?: (try { fragment?.viewLifecycleOwner?.lifecycleScope } catch (_: IllegalStateException) { null })
     }
 
+    private fun appLabel(context: Context, prefs: Prefs, pkg: String): String {
+        val renamed = prefs.getAppRenameLabel(pkg)
+        return if (renamed.isNotBlank()) renamed else SocialTimeWorker.getAppLabel(context, pkg)
+    }
+
     fun onNudgeClicked(type: String) {
         val context = binding.root.context
         Prefs(context).incrementNudgeDone(type)
         Nudges.cancel(context, type)
-        renderLine1()
+        renderTiles()
+        if (weekShown()) renderWeek()
     }
 
     fun onRangeClicked(range: WellbeingRange) {
@@ -206,25 +227,24 @@ internal class WellbeingCardView(
         renderRange()
     }
 
-    /** Shows the Today or 7 days side, and the switch only when both have content. */
+    private fun weekShown(): Boolean = binding.weekContent.isVisible
+
+    /** Shows the Today or 7 days side. The switch is always there; an empty side shows zeros. */
     private fun renderRange() {
         val b = binding
         val context = b.root.context ?: return
-        val todayHas = WellbeingCard.todayHasContent(context)
-        val weekHas = WeekCard.isAvailable(context)
-        val range = WellbeingRanges.resolve(Prefs(context).wellbeingShowWeek, todayHas, weekHas)
-        b.llRangeSwitch.isVisible = WellbeingRanges.showSwitch(todayHas, weekHas)
+        val range = WellbeingRanges.resolve(Prefs(context).wellbeingShowWeek, todayHasContent = true, weekHasContent = true)
         b.tvRangeToday.isSelected = range == WellbeingRange.TODAY
         b.tvRangeWeek.isSelected = range == WellbeingRange.WEEK
         b.todayContent.isVisible = range == WellbeingRange.TODAY
         b.weekContent.isVisible = range == WellbeingRange.WEEK
-        if (range == WellbeingRange.WEEK) weekView.render()
+        if (range == WellbeingRange.WEEK) renderWeek()
     }
 
     fun render() {
         renderRange()
-        renderLine1()
-        renderLine2()
+        renderTiles()
+        renderUsage()
         renderPauseWins()
         renderHealthLine()
     }
@@ -247,7 +267,8 @@ internal class WellbeingCardView(
             if (walks != null) prefs.autoWalksToday = walks
             if (walks != autoWalks) {
                 autoWalks = walks
-                renderLine1()
+                renderTiles()
+                if (weekShown()) renderWeek()
             }
             val labels = HealthLabels(
                 steps = context.getString(R.string.health_line_steps),
@@ -263,7 +284,8 @@ internal class WellbeingCardView(
         }
     }
 
-    fun renderLine1() {
+    /** Water, Walk and Not now tiles for today; Water and Walk only while their reminders are on. */
+    fun renderTiles() {
         val b = binding
         val context = b.root.context ?: return
         val prefs = Prefs(context)
@@ -271,42 +293,45 @@ internal class WellbeingCardView(
         val waterOn = prefs.nudgeWaterIntervalMin > 0
         val walkOn = prefs.nudgeWalkIntervalMin > 0
 
-        val line1Visible = waterOn || walkOn
-        b.llNudges.isVisible = line1Visible
-
-        if (line1Visible) {
-            val waterCount = prefs.nudgeDone(Nudges.WATER)
-            val walkCount = WalkCount.shown(autoWalks, prefs.nudgeDone(Nudges.WALK))
-
-            b.tvWater.isVisible = waterOn
-            if (waterOn) {
-                b.tvWater.text = context.getString(R.string.wellbeing_water_chip, waterCount)
-            }
-
-            b.tvWalk.isVisible = walkOn
-            if (walkOn) {
-                b.tvWalk.text = context.getString(R.string.wellbeing_walk_chip, walkCount)
-            }
+        b.llNudges.isVisible = true
+        b.tileWater.isVisible = waterOn
+        if (waterOn) b.tvWater.text = context.getString(R.string.wellbeing_water_chip, prefs.nudgeDone(Nudges.WATER))
+        b.tileWalk.isVisible = walkOn
+        if (walkOn) {
+            b.tvWalk.text = context.getString(R.string.wellbeing_walk_chip, WalkCount.shown(autoWalks, prefs.nudgeDone(Nudges.WALK)))
         }
+        b.tvNotNow.text = prefs.pauseLog.today().notNow.toString()
     }
 
+    /** "Opened anyway 18 · mostly "Look something up"", or nothing when no one opened anyway today. */
     fun renderPauseWins() {
         val b = binding
         val context = b.root.context ?: return
-        val notNow = Prefs(context).pauseLog.today().notNow
-        val text = WellbeingCardLogic.formatPauseWins(notNow, context.getString(R.string.wellbeing_pause_wins, notNow))
-        b.tvPauseWins.isVisible = text != null
-        if (text != null) b.tvPauseWins.text = text
+        val day = Prefs(context).pauseLog.today()
+        if (day.opened <= 0) {
+            b.tvPauseWins.isVisible = false
+            return
+        }
+        val topWhy = WellbeingBento.topWhy(day.toDaySnapshot().why)
+        b.tvPauseWins.text = if (topWhy != null) {
+            context.getString(R.string.wellbeing_opened_anyway_mostly, day.opened, WeekCardText.formatWhy(context, topWhy))
+        } else {
+            context.getString(R.string.wellbeing_opened_anyway, day.opened)
+        }
+        b.tvPauseWins.isVisible = true
     }
 
-    fun renderLine2() {
+    /** Headline: distracting time today, opens and the top app. Asks for usage access when it is missing. */
+    fun renderUsage() {
         val b = binding
         val context = b.root.context ?: return
         val prefs = Prefs(context)
 
         val distractingPkgs = prefs.distractingApps
-        if (!context.appUsagePermissionGranted() || distractingPkgs.isEmpty()) {
-            b.tvDistractingApps.isVisible = false
+        val granted = context.appUsagePermissionGranted()
+        b.tvUsageNeeded.isVisible = distractingPkgs.isNotEmpty() && !granted
+        if (!granted || distractingPkgs.isEmpty()) {
+            b.llDistracting.isVisible = false
             return
         }
 
@@ -317,23 +342,74 @@ internal class WellbeingCardView(
             val repo = WellbeingCard.getUsageRepository(context)
             val millis = repo.foregroundMillisToday(distractingPkgs)
             val opens = repo.openCountToday(distractingPkgs)
+            val byPackage = repo.foregroundMillisByPackageToday(distractingPkgs).orEmpty()
 
             if (released) return@launch
             if (millis == null || opens == null) {
-                b.tvDistractingApps.isVisible = false
+                b.llDistracting.isVisible = false
                 return@launch
             }
 
-            val durationText = WellbeingCardLogic.formatDuration(millis)
             val opensText = if (opens == 1) {
                 context.getString(R.string.wellbeing_open_single)
             } else {
                 context.getString(R.string.wellbeing_open_plural, opens)
             }
-            val label = context.getString(R.string.distracting_apps)
-            b.tvDistractingApps.text =
-                context.getString(R.string.wellbeing_distracting_stats, label, durationText, opensText)
-            b.tvDistractingApps.isVisible = true
+            val top = WellbeingBento.topAppsOf(byPackage) { appLabel(context, prefs, it) }.firstOrNull()
+            val parts = listOfNotNull(
+                context.getString(R.string.wellbeing_today_distracting),
+                opensText,
+                top?.let {
+                    context.getString(R.string.wellbeing_today_top_app, it.first, WeekCardText.formatDuration(context, it.second))
+                },
+            )
+            b.tvDistractingValue.text = WeekCardText.formatDuration(context, (millis / 60_000L).toInt())
+            b.tvDistractingApps.text = parts.joinToString(" · ")
+            b.llDistracting.isVisible = true
+        }
+    }
+
+    /** Builds the 7 days side from stored days plus today's live numbers. */
+    private fun renderWeek() {
+        val context = binding.root.context ?: return
+        val scope = scope() ?: return
+        weekJob?.cancel()
+        weekJob = scope.launch {
+            val prefs = Prefs(context)
+            val granted = context.appUsagePermissionGranted()
+            val pkgs = prefs.distractingApps
+            val today = WeekCard.todaySupplier()
+            val walks = WalkCount.shown(autoWalks, prefs.nudgeDone(Nudges.WALK))
+            val pause = prefs.pauseLog.today()
+
+            var minutes: Int? = null
+            var opens: Int? = null
+            var topApps: List<Pair<String, Int>> = emptyList()
+            if (granted && pkgs.isNotEmpty()) {
+                val repo = WellbeingCard.getUsageRepository(context)
+                minutes = repo.foregroundMillisToday(pkgs)?.let { (it / 60_000L).toInt() }
+                opens = repo.openCountToday(pkgs)
+                topApps = repo.foregroundMillisByPackageToday(pkgs)
+                    ?.let { WellbeingBento.topAppsOf(it) { pkg -> appLabel(context, prefs, pkg) } }
+                    .orEmpty()
+            }
+            val live = DaySnapshot(
+                epochDay = today,
+                distractingMinutes = minutes,
+                distractingOpens = opens,
+                topApps = topApps,
+                notNow = pause.notNow,
+                opened = pause.opened,
+                why = pause.toDaySnapshot().why,
+                water = prefs.nudgeDone(Nudges.WATER),
+                walk = walks,
+            )
+            val snapshots = withContext(Dispatchers.IO) { WeekCard.getUsageSnapshotStore(context).getAll() }
+            val bento = WellbeingBento.week(
+                snapshots, today, live,
+                PausePolicy.effectiveAllowanceMin(prefs.pauseAllowanceMin, granted),
+            )
+            if (!released) weekView.render(bento)
         }
     }
 }

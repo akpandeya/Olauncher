@@ -317,8 +317,8 @@
     <string name="today_section">Today</string>
     <string name="today_cards">Today cards</string>
     <string name="intention_hint">Today I want to…</string>
-    <string name="intention_past_header">Past intentions ›</string>
-    <string name="intention_past_header_open">Past intentions ‹</string>
+    <string name="intention_past_header">Past ›</string>
+    <string name="intention_past_header_open">Past ‹</string>
     <string name="intention_on_home">Intention on home</string>
     <string name="today_card_order">Card order</string>
     <string name="today_order_smart">Smart</string>
@@ -508,7 +508,7 @@
     <string name="celsius">°C</string>
     <string name="fahrenheit">°F</string>
     <string name="weather_no_results">No places found</string>
-    <string name="weather_dry_12h">Dry for the next 12 h</string>
+    <string name="weather_dry_12h">Dry for 12 h</string>
     <string name="weather_rain_all_day">Rain all day</string>
     <string name="weather_rain_until">Rain until %1$s</string>
     <string name="weather_rain_from">Rain from %1$s</string>
@@ -737,4 +737,36 @@
     <string name="profile_switch_row" tools:ignore="MissingTranslation">Switch to %1$s</string>
     <string name="profile_not_found" tools:ignore="MissingTranslation">No profile \'%1$s\'</string>
     <string name="command_help_profile" tools:ignore="MissingTranslation">Profile: :p focus</string>
+
+    <!-- Today page, Bento layout -->
+    <string name="intention_field_hint">Tap and write one line</string>
+    <string name="weather_unavailable_hint">Weather is not available yet. Tap to try again.</string>
+    <string name="words_card_title">Words · DE</string>
+    <string name="words_card_due">due</string>
+    <string name="words_card_line">%1$s · %2$d learned</string>
+    <string name="words_card_none">no words</string>
+    <string name="notes_card_count_title">Notes · %1$d</string>
+    <string name="notes_card_empty">No notes yet</string>
+    <string name="notes_card_add">+ Add note</string>
+    <string name="saved_card_title">Saved for later · %1$d</string>
+    <string name="saved_card_open">Open</string>
+    <string name="saved_card_empty">Nothing saved yet</string>
+    <string name="held_card_title">Held · %1$d</string>
+    <string name="held_card_latest">%1$s · latest %2$s</string>
+    <string name="today_widget_slot_title">Your widget</string>
+    <string name="today_widget_slot_hint">Widgets you add appear here</string>
+    <string name="today_widget_slot_add">+ Add</string>
+    <string name="wellbeing_usage_needed">Allow usage access to see your screen time</string>
+    <string name="wellbeing_today_distracting">Distracting</string>
+    <string name="wellbeing_today_top_app">top: %1$s %2$s</string>
+    <string name="wellbeing_opened_anyway">Opened anyway %1$d</string>
+    <string name="wellbeing_opened_anyway_mostly">Opened anyway %1$d · mostly “%2$s”</string>
+    <string name="wellbeing_week_caption">Distracting · last 7 days</string>
+    <string name="wellbeing_week_no_change">Same as the week before</string>
+    <string name="wellbeing_week_allowance_line">Daily allowance %1$s</string>
+    <string name="wellbeing_week_top_apps">Top apps</string>
+    <string name="wellbeing_week_no_apps">No distracting apps used</string>
+    <string name="wellbeing_week_not_now_sub">Opened anyway %1$d</string>
+    <string name="wellbeing_week_water_walk">Water · Walk</string>
+    <string name="wellbeing_week_bars_description">Distracting time for each of the last 7 days. %1$s</string>
 </resources>

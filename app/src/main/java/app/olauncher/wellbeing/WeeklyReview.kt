@@ -58,6 +58,7 @@ data class Review(
 object WeeklyReview {
 
     const val WINDOW_DAYS = 7
+    const val DEFAULT_TOP_APPS = 2
 
     fun durationParts(minutes: Int): DurationParts {
         val nonNegative = maxOf(0, minutes)
@@ -71,10 +72,14 @@ object WeeklyReview {
         else -> WhyChoice.Other(key)
     }
 
-    fun summarise(snapshots: List<DaySnapshot>, today: LocalDate): Review =
-        summarise(snapshots, today.toEpochDay())
+    fun summarise(snapshots: List<DaySnapshot>, today: LocalDate, topAppsCount: Int = DEFAULT_TOP_APPS): Review =
+        summarise(snapshots, today.toEpochDay(), topAppsCount)
 
-    fun summarise(snapshots: List<DaySnapshot>, today: Long = LocalDate.now().toEpochDay()): Review {
+    fun summarise(
+        snapshots: List<DaySnapshot>,
+        today: Long = LocalDate.now().toEpochDay(),
+        topAppsCount: Int = DEFAULT_TOP_APPS,
+    ): Review {
         val currentDaysRange = (today - 7)..(today - 1)
         val earlierDaysRange = (today - 14)..(today - 8)
 
@@ -152,7 +157,7 @@ object WeeklyReview {
         }
         val topAppsList = appMinutesMap.entries
             .sortedWith(compareByDescending<Map.Entry<String, Int>> { it.value }.thenBy { it.key })
-            .take(2)
+            .take(topAppsCount)
             .map { it.key to it.value }
 
         val topAppsLine = if (topAppsList.isNotEmpty()) {

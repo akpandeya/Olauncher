@@ -7,6 +7,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
 
 class WellbeingCardTest {
 
@@ -129,26 +130,29 @@ class WellbeingCardTest {
 
     @Test
     fun `hasContent is false when nothing would render`() {
-        assertFalse(WellbeingCardLogic.hasContent(0, 0, emptySet(), usagePermissionGranted = true))
-        // Social threshold alone renders no line here.
-        assertFalse(WellbeingCardLogic.hasContent(0, 0, setOf("a"), usagePermissionGranted = false))
+        assertFalse(WellbeingCardLogic.hasContent(0, 0, emptySet()))
     }
 
     @Test
-    fun `hasContent is true for a chip or for usage stats`() {
-        assertTrue(WellbeingCardLogic.hasContent(60, 0, emptySet(), usagePermissionGranted = false))
-        assertTrue(WellbeingCardLogic.hasContent(0, 120, emptySet(), usagePermissionGranted = false))
-        assertTrue(WellbeingCardLogic.hasContent(0, 0, setOf("a"), usagePermissionGranted = true))
+    fun `hasContent is true for a tile or for distracting apps even without usage access`() {
+        assertTrue(WellbeingCardLogic.hasContent(60, 0, emptySet()))
+        assertTrue(WellbeingCardLogic.hasContent(0, 120, emptySet()))
+        // The card then asks for usage access instead of vanishing.
+        assertTrue(WellbeingCardLogic.hasContent(0, 0, setOf("a")))
     }
 
-    @Test
-    fun `formatPauseWins is null for zero`() {
-        assertEquals(null, WellbeingCardLogic.formatPauseWins(0))
-    }
+    private fun resource(path: String): String =
+        listOf("app/src/main/res/$path", "src/main/res/$path").map(::File).first { it.exists() }.readText()
 
     @Test
-    fun `formatPauseWins for one and many`() {
-        assertEquals("Not now × 1 today", WellbeingCardLogic.formatPauseWins(1))
-        assertEquals("Not now × 4 today", WellbeingCardLogic.formatPauseWins(4))
+    fun `water and walk tiles are labelled with the nudge strings, not a bare number`() {
+        val layout = resource("layout/card_wellbeing.xml")
+        assertTrue(layout.contains("android:id=\"@+id/tvWaterLabel\""))
+        assertTrue(layout.contains("android:text=\"@string/nudge_water\""))
+        assertTrue(layout.contains("android:id=\"@+id/tvWalkLabel\""))
+        assertTrue(layout.contains("android:text=\"@string/nudge_walk\""))
+        // The value views carry the count only.
+        assertEquals("%d", Regex("name=\"wellbeing_water_chip\"[^>]*>([^<]*)<").find(resource("values/strings.xml"))?.groupValues?.get(1))
+        assertEquals("%d", Regex("name=\"wellbeing_walk_chip\"[^>]*>([^<]*)<").find(resource("values/strings.xml"))?.groupValues?.get(1))
     }
 }
