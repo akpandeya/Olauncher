@@ -244,4 +244,127 @@
         android:layout_height="wrap_content"
         android:visibility="gone" />
 
+    <LinearLayout
+        android:id="@+id/llHealth"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:baselineAligned="false"
+        android:orientation="horizontal"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <LinearLayout
+            android:id="@+id/tileExercise"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="4dp"
+            android:layout_weight="1"
+            android:background="@drawable/today_tile"
+            android:clickable="true"
+            android:focusable="true"
+            android:minHeight="72dp"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:id="@+id/tvExercise"
+                style="@style/TodayCardStat"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/health_dash"
+                tools:text="30 min" />
+
+            <TextView
+                android:id="@+id/tvExerciseLabel"
+                style="@style/TodayCardLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/health_tile_exercise" />
+
+            <TextView
+                android:id="@+id/tvExerciseSub"
+                style="@style/TodayCardBodyLight"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/health_exercise_goal" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/tileRestingHr"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="4dp"
+            android:layout_weight="1"
+            android:background="@drawable/today_tile"
+            android:clickable="true"
+            android:focusable="true"
+            android:minHeight="72dp"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:id="@+id/tvRestingHr"
+                style="@style/TodayCardStat"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/health_dash"
+                tools:text="58" />
+
+            <TextView
+                android:id="@+id/tvRestingHrLabel"
+                style="@style/TodayCardLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/health_tile_resting_hr" />
+
+            <TextView
+                android:id="@+id/tvRestingHrSub"
+                style="@style/TodayCardBodyLight"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/health_unit_bpm" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/tileSleep"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:layout_weight="1"
+            android:background="@drawable/today_tile"
+            android:clickable="true"
+            android:focusable="true"
+            android:minHeight="72dp"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:id="@+id/tvSleep"
+                style="@style/TodayCardStat"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/health_dash"
+                tools:text="7 h 10" />
+
+            <TextView
+                android:id="@+id/tvSleepLabel"
+                style="@style/TodayCardLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/health_tile_sleep" />
+
+            <TextView
+                android:id="@+id/tvSleepSub"
+                style="@style/TodayCardBodyLight"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                tools:text="23:15 – 06:25" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
 </LinearLayout>

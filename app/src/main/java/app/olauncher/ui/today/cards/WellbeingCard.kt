@@ -29,6 +29,8 @@ import app.olauncher.wellbeing.AllowanceBand
 import app.olauncher.wellbeing.AllowanceMeter
 import app.olauncher.wellbeing.HealthLabels
 import app.olauncher.wellbeing.HealthRepository
+import app.olauncher.wellbeing.HealthSummary
+import app.olauncher.wellbeing.HealthWeekSummary
 import app.olauncher.wellbeing.WalkCount
 import app.olauncher.wellbeing.HealthSummaryFormatting
 import app.olauncher.wellbeing.DaySnapshot
@@ -43,6 +45,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.ZoneId
 import java.time.ZonedDateTime
 import kotlin.math.max
 
@@ -53,9 +56,10 @@ object WellbeingCardLogic {
         walkIntervalMin: Int,
         socialThresholdMin: Int,
         distractingApps: Set<String>,
+        healthConnectEnabled: Boolean = false,
     ): Boolean {
         val anyNudgeOn = waterIntervalMin > 0 || walkIntervalMin > 0 || socialThresholdMin > 0
-        return anyNudgeOn || distractingApps.isNotEmpty()
+        return anyNudgeOn || distractingApps.isNotEmpty() || healthConnectEnabled
     }
 
     /** True when a tile or the distracting-apps headline (or its permission prompt) will be shown. */
@@ -63,9 +67,11 @@ object WellbeingCardLogic {
         waterIntervalMin: Int,
         walkIntervalMin: Int,
         distractingApps: Set<String>,
+        healthConnectEnabled: Boolean = false,
     ): Boolean = waterIntervalMin > 0 ||
         walkIntervalMin > 0 ||
-        distractingApps.isNotEmpty()
+        distractingApps.isNotEmpty() ||
+        healthConnectEnabled
 
     fun formatWater(count: Int, label: String = "Water"): String = "$label $count"
 
@@ -109,10 +115,16 @@ object WellbeingCard : TodayCard {
     override val drawsOwnHeader: Boolean = true
 
     var usageRepositoryProvider: ((Context) -> UsageRepository)? = null
+    var healthRepositoryProvider: ((Context) -> HealthRepository)? = null
     var scopeProvider: (() -> CoroutineScope)? = null
 
     fun getUsageRepository(context: Context): UsageRepository {
         return usageRepositoryProvider?.invoke(context) ?: UsageRepository(context)
+    }
+
+    fun getHealthRepository(context: Context): HealthRepository {
+        return healthRepositoryProvider?.invoke(context)
+            ?: HealthRepository(context, { Prefs(context).healthConnectEnabled })
     }
 
     override fun isAvailable(context: Context): Boolean {
@@ -122,6 +134,7 @@ object WellbeingCard : TodayCard {
             walkIntervalMin = prefs.nudgeWalkIntervalMin,
             socialThresholdMin = prefs.nudgeSocialThresholdMin,
             distractingApps = prefs.distractingApps,
+            healthConnectEnabled = prefs.healthConnectEnabled,
         ) || WeekCard.isAvailable(context)
     }
 
@@ -134,6 +147,7 @@ object WellbeingCard : TodayCard {
             waterIntervalMin = prefs.nudgeWaterIntervalMin,
             walkIntervalMin = prefs.nudgeWalkIntervalMin,
             distractingApps = prefs.distractingApps,
+            healthConnectEnabled = prefs.healthConnectEnabled,
         )
     }
 
@@ -161,6 +175,23 @@ object WellbeingCard : TodayCard {
         binding.tileNotNow.attachPressScale()
         binding.tvRangeToday.attachPressScale()
         binding.tvRangeWeek.attachPressScale()
+        binding.tileExercise.attachPressScale()
+        binding.tileRestingHr.attachPressScale()
+        binding.tileSleep.attachPressScale()
+
+        val onHealthClick = View.OnClickListener {
+            Haptics.tick(it)
+            try {
+                it.context.startActivity(
+                    Intent("android.health.connect.action.MANAGE_HEALTH_PERMISSIONS")
+                        .putExtra(Intent.EXTRA_PACKAGE_NAME, it.context.packageName)
+                )
+            } catch (_: Exception) {
+            }
+        }
+        binding.tileExercise.setOnClickListener(onHealthClick)
+        binding.tileRestingHr.setOnClickListener(onHealthClick)
+        binding.tileSleep.setOnClickListener(onHealthClick)
 
         binding.tileWater.setOnClickListener {
             Haptics.tick(it)
@@ -208,6 +239,9 @@ internal class WellbeingCardView(
 
     /** Walks found automatically in Health Connect today; null when unavailable. */
     private var autoWalks: Int? = null
+
+    private var todayHealth: HealthSummary? = null
+    private var weekHealth: HealthWeekSummary? = null
 
     /** The 7 days side lives in this card; it keeps its own per-view state. */
     private val weekView: WeekCardView = WeekCardView(
@@ -265,6 +299,7 @@ internal class WellbeingCardView(
         b.todayContent.isVisible = range == WellbeingRange.TODAY
         b.weekContent.isVisible = range == WellbeingRange.WEEK
         if (range == WellbeingRange.WEEK) renderWeek()
+        renderHealthTiles()
     }
 
     fun render() {
@@ -273,6 +308,7 @@ internal class WellbeingCardView(
         renderUsage()
         renderPauseWins()
         renderHealthLine()
+        renderHealthTiles()
     }
 
     fun renderHealthLine() {
@@ -281,32 +317,90 @@ internal class WellbeingCardView(
         val prefs = Prefs(context)
         healthJob?.cancel()
         if (!prefs.healthConnectEnabled) {
+            b.llHealth.isVisible = false
             b.tvHealth.isVisible = false
             autoWalks = null
+            todayHealth = null
+            weekHealth = null
             return
         }
+        b.llHealth.isVisible = true
+        b.tvHealth.isVisible = false
+
         val scope = scope() ?: return
         healthJob = scope.launch {
-            val repo = HealthRepository(context, { prefs.healthConnectEnabled })
+            val repo = WellbeingCard.getHealthRepository(context)
             val summary = withContext(Dispatchers.IO) { repo.readToday() }
+            val weekSummary = withContext(Dispatchers.IO) { repo.readLast7Days() }
             val walks = withContext(Dispatchers.IO) { repo.readWalkDay()?.totalWalks }
+            if (released) return@launch
             if (walks != null) prefs.autoWalksToday = walks
             if (walks != autoWalks) {
                 autoWalks = walks
                 renderTiles()
                 if (weekShown()) renderWeek()
             }
-            val labels = HealthLabels(
-                steps = context.getString(R.string.health_line_steps),
-                slept = context.getString(R.string.health_line_slept),
-                restingHr = context.getString(R.string.health_line_resting_hr),
-                exercise = context.getString(R.string.health_line_exercise),
-                heartRate = context.getString(R.string.health_line_heart_rate),
-            )
-            val line = summary?.let { HealthSummaryFormatting.formatLine(it, labels) }
-            if (released) return@launch
-            b.tvHealth.isVisible = line != null
-            if (line != null) b.tvHealth.text = line
+            todayHealth = summary
+            weekHealth = weekSummary
+            renderHealthTiles()
+        }
+    }
+
+    fun renderHealthTiles() {
+        val b = binding
+        val context = b.root.context ?: return
+        val prefs = Prefs(context)
+        if (!prefs.healthConnectEnabled) {
+            b.llHealth.isVisible = false
+            return
+        }
+        b.llHealth.isVisible = true
+
+        val isWeek = weekShown()
+        if (isWeek) {
+            val week = weekHealth
+            val exerciseAvg = week?.exerciseMinutesAvg
+            b.tvExercise.text = if (exerciseAvg != null) "${exerciseAvg} min" else HealthSummaryFormatting.DASH
+            b.tvExerciseLabel.text = context.getString(R.string.health_tile_exercise)
+            b.tvExerciseSub.text = context.getString(R.string.health_exercise_goal)
+
+            val restingAvg = week?.restingHeartRateAvg
+            b.tvRestingHr.text = if (restingAvg != null) restingAvg.toString() else HealthSummaryFormatting.DASH
+            b.tvRestingHrLabel.text = context.getString(R.string.health_tile_resting_hr)
+            b.tvRestingHrSub.text = context.getString(R.string.health_unit_bpm)
+
+            val sleepAvg = week?.sleepMinutesAvg
+            b.tvSleep.text = if (sleepAvg != null) HealthSummaryFormatting.formatDuration(sleepAvg) else HealthSummaryFormatting.DASH
+            b.tvSleepLabel.text = context.getString(R.string.health_tile_sleep)
+            val bed = week?.sleepBedTime
+            val wake = week?.sleepWakeTime
+            val timesText = if (bed != null && wake != null) {
+                HealthSummaryFormatting.formatBedWakeTime(bed, wake)
+            } else ""
+            b.tvSleepSub.text = timesText
+            b.tvSleepSub.isVisible = timesText.isNotEmpty()
+        } else {
+            val today = todayHealth
+            val exercise = today?.exerciseMinutes
+            b.tvExercise.text = if (exercise != null) "${exercise} min" else HealthSummaryFormatting.DASH
+            b.tvExerciseLabel.text = context.getString(R.string.health_tile_exercise)
+            b.tvExerciseSub.text = context.getString(R.string.health_exercise_goal)
+
+            val resting = today?.restingHeartRate
+            b.tvRestingHr.text = if (resting != null) resting.toString() else HealthSummaryFormatting.DASH
+            b.tvRestingHrLabel.text = context.getString(R.string.health_tile_resting_hr)
+            b.tvRestingHrSub.text = context.getString(R.string.health_unit_bpm)
+
+            val sleepMins = today?.sleepMinutes
+            b.tvSleep.text = if (sleepMins != null) HealthSummaryFormatting.formatDuration(sleepMins) else HealthSummaryFormatting.DASH
+            b.tvSleepLabel.text = context.getString(R.string.health_tile_sleep)
+            val bedMs = today?.sleepBedTimeMs
+            val wakeMs = today?.sleepWakeTimeMs
+            val timesText = if (bedMs != null && wakeMs != null) {
+                HealthSummaryFormatting.formatBedWakeTime(bedMs, wakeMs, ZoneId.systemDefault())
+            } else ""
+            b.tvSleepSub.text = timesText
+            b.tvSleepSub.isVisible = timesText.isNotEmpty()
         }
     }
 
