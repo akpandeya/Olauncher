@@ -11,7 +11,9 @@ import androidx.navigation.fragment.findNavController
 import app.olauncher.R
 import app.olauncher.helper.Haptics
 import app.olauncher.data.Prefs
-import app.olauncher.data.store.Leitner
+import app.olauncher.data.store.ReviewEvent
+import app.olauncher.data.store.ReviewEventsStore
+import app.olauncher.data.store.ReviewSessionLogic
 import app.olauncher.data.store.Word
 import app.olauncher.data.store.WordsStore
 import app.olauncher.databinding.CardWordsBinding
@@ -150,8 +152,14 @@ internal class WordsCardView(
                 onAnswer = { word, knewIt ->
                     val s = WordsCard.getStore(context)
                     val currentToday = WordsCard.epochDaySupplier()
-                    val updated = if (knewIt) Leitner.knowIt(word, currentToday) else Leitner.again(word, currentToday)
-                    s.update(updated)
+                    ReviewSessionLogic.gradeAndLog(
+                        word,
+                        if (knewIt) ReviewEvent.Result.KNEW else ReviewEvent.Result.AGAIN,
+                        currentToday,
+                        System.currentTimeMillis(),
+                        s::update,
+                        ReviewEventsStore(context),
+                    )
                     render()
                 },
                 onWordUpdated = { updated ->

@@ -28,10 +28,17 @@ class ReviewComebacksTest {
     }
 
     @Test
-    fun `a two-day jump is a comeback`() {
+    fun `one study-free day is not a comeback`() {
+        // Studied the 1st, skipped the 2nd, back on the 3rd: gap of 1.
         val events = listOf(event(millis(LocalDate.of(2026, 1, 1))))
-        val today = LocalDate.of(2026, 1, 3)
-        assertTrue(ReviewComebacks.isComeback(events, today, zone))
+        assertFalse(ReviewComebacks.isComeback(events, LocalDate.of(2026, 1, 3), zone))
+    }
+
+    @Test
+    fun `two study-free days make a comeback`() {
+        // Studied the 1st, skipped the 2nd and 3rd, back on the 4th: gap of 2.
+        val events = listOf(event(millis(LocalDate.of(2026, 1, 1))))
+        assertTrue(ReviewComebacks.isComeback(events, LocalDate.of(2026, 1, 4), zone))
     }
 
     @Test
@@ -93,21 +100,48 @@ class ReviewComebacksTest {
         assertEquals(listOf(day), ReviewComebacks.studyDays(events, zone))
     }
 
+    private fun local(zone: ZoneId, date: LocalDate, hour: Int, minute: Int): Long =
+        date.atTime(hour, minute).atZone(zone).toInstant().toEpochMilli()
+
     @Test
-    fun `bucketing survives a DST boundary`() {
-        // Europe/Berlin, 2026: DST ends Oct 25 (clocks 03:00 -> 02:00). Reviews at
-        // fixed UTC instants on both sides must still land on their local dates.
+    fun `local midnight events on either side of a DST switch bucket by local day`() {
+        // Europe/Berlin, DST ends Oct 25 2026. 00:30 local on the 24th is 22:30 UTC
+        // on the 23rd (CEST, +2); 00:30 local on the 26th is 23:30 UTC on the 25th
+        // (CET, +1). UTC bucketing would yield the 23rd and 25th.
         val zone = ZoneId.of("Europe/Berlin")
-        val before = LocalDate.of(2026, 10, 24)
-        val after = LocalDate.of(2026, 10, 26)
         val events = listOf(
-            event(before.atTime(12, 0).atZone(ZoneId.of("UTC")).toInstant().toEpochMilli()),
-            event(after.atTime(12, 0).atZone(ZoneId.of("UTC")).toInstant().toEpochMilli()),
+            event(local(zone, LocalDate.of(2026, 10, 24), 0, 30)),
+            event(local(zone, LocalDate.of(2026, 10, 26), 0, 30)),
         )
-        // A 2-day jump across the DST change: still a comeback. isComeback takes the
-        // pre-session log, so the event on `after` itself is excluded there.
-        assertEquals(listOf(before, after), ReviewComebacks.studyDays(events, zone))
-        assertTrue(ReviewComebacks.isComeback(events.take(1), after, zone))
-        assertEquals(1, ReviewComebacks.count(events, after, zone))
+        assertEquals(
+            listOf(LocalDate.of(2026, 10, 24), LocalDate.of(2026, 10, 26)),
+            ReviewComebacks.studyDays(events, zone),
+        )
+        // Local gap is 1 free day (25th): not a comeback. A UTC count (23rd -> 25th)
+        // is also 1, so also check the today-based path below.
+        assertEquals(0, ReviewComebacks.count(events, zone))
+    }
+
+    @Test
+    fun `comeback decision uses local days across a DST switch`() {
+        // Last study: 00:30 local Oct 24 = Oct 23 22:30 UTC. Today (local) Oct 26.
+        // Local: 25th is the only free day -> no comeback. UTC days would be the 23rd
+        // to the 26th = 2 free days -> a wrong comeback.
+        val zone = ZoneId.of("Europe/Berlin")
+        val events = listOf(event(local(zone, LocalDate.of(2026, 10, 24), 0, 30)))
+        assertFalse(ReviewComebacks.isComeback(events, LocalDate.of(2026, 10, 26), zone))
+        assertTrue(ReviewComebacks.isComeback(events, LocalDate.of(2026, 10, 27), zone))
+    }
+
+    @Test
+    fun `23_30 and 00_30 around local midnight are two study days`() {
+        // After the switch (CET): 23:30 on Oct 25 and 00:30 on Oct 26 share a UTC day
+        // (Oct 25) but are two local days.
+        val zone = ZoneId.of("Europe/Berlin")
+        val events = listOf(
+            event(local(zone, LocalDate.of(2026, 10, 25), 23, 30)),
+            event(local(zone, LocalDate.of(2026, 10, 26), 0, 30)),
+        )
+        assertEquals(2, ReviewComebacks.studyDays(events, zone).size)
     }
 }

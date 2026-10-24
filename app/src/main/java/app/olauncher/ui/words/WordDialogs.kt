@@ -19,6 +19,7 @@ import app.olauncher.data.store.WordsStore
 import app.olauncher.databinding.DialogEditWordBinding
 import app.olauncher.databinding.DialogWordListNameBinding
 import app.olauncher.helper.createDialog
+import app.olauncher.helper.DialogListSizing
 import app.olauncher.helper.createMultiChoiceDialog
 import app.olauncher.helper.showMessageDialog
 import app.olauncher.helper.showToast
@@ -162,6 +163,7 @@ object WordDialogs {
             items = candidates.map { candidateLabel(context, it) },
             checked = checked,
             action = R.string.apply,
+            actionLabel = { count -> DialogListSizing.applyLabel(context.getString(R.string.apply), count) },
         ) {
             val picked = candidates.mapIndexedNotNull { index, candidate -> if (checked[index]) candidate.id else null }
             if (picked.isNotEmpty()) WordsCard.getStore(context).assignAll(picked, list.id)

@@ -167,6 +167,18 @@
 
         </LinearLayout>
 
+        <TextView
+            android:id="@+id/licenseNote"
+            style="@style/TextSmall"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:linksClickable="true"
+            android:paddingTop="12dp"
+            android:text="@string/wiktionary_license_note"
+            android:textColorLink="?attr/primaryColor"
+            android:textSize="@dimen/text_subtitle" />
+
     </LinearLayout>
 
 </LinearLayout>

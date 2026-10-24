@@ -25,6 +25,36 @@ class ReviewSessionLogicTest {
     }
 
     @Test
+    fun `gradeAndLog saves the word and appends one event with distinguishing values`() {
+        val dir = java.nio.file.Files.createTempDirectory("grade_log_test").toFile()
+        try {
+            val events = ReviewEventsStore(dir)
+            val word = Word(id = 42, text = "a", box = 3, dueDay = today, addedAt = 0L)
+            var saved: Word? = null
+
+            val event = ReviewSessionLogic.gradeAndLog(
+                word, ReviewEvent.Result.KNEW, today, 1_234_567L, { saved = it }, events,
+            )
+
+            assertEquals(4, saved?.box)
+            assertEquals(listOf(event), events.all())
+            assertEquals(42L, event.wordId)
+            assertEquals(ReviewEvent.Result.KNEW, event.result)
+            assertEquals(3, event.boxBefore)
+            assertEquals(4, event.boxAfter)
+            assertEquals(1_234_567L, event.reviewedAt)
+
+            ReviewSessionLogic.gradeAndLog(
+                word, ReviewEvent.Result.AGAIN, today, 2_000_000L, { saved = it }, events,
+            )
+            assertEquals(2, events.all().size)
+            assertEquals(1, events.all().last().boxAfter)
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
+
+    @Test
     fun `an unknown result leaves the word untouched`() {
         val word = Word(id = 1, text = "a", box = 3, dueDay = today, addedAt = 0L)
         assertEquals(word, ReviewSessionLogic.grade(word, "bogus", today))
@@ -53,5 +83,18 @@ class ReviewSessionLogicTest {
         assertEquals(1, summary.almost)
         assertEquals(1, summary.again)
         assertEquals(4, summary.total)
+    }
+
+    @Test
+    fun `splitEvents separates session events from earlier ones by id`() {
+        fun event(id: Long) =
+            ReviewEvent(id = id, wordId = id, reviewedAt = 0, result = "knew", boxBefore = 1, boxAfter = 2)
+        val all = listOf(event(10), event(11), event(12), event(13))
+
+        val split = ReviewSessionLogic.splitEvents(all, setOf(12L, 13L))
+
+        assertEquals(listOf(event(10), event(11)), split.before)
+        assertEquals(listOf(event(12), event(13)), split.session)
+        assertEquals(all, ReviewSessionLogic.splitEvents(all, emptySet()).before)
     }
 }
