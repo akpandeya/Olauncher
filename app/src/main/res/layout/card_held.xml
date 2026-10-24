@@ -13,16 +13,15 @@
 
         <TextView
             android:id="@+id/tvCardTitle"
-            style="@style/TextSmallLight"
+            style="@style/TodayCardLabel"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:letterSpacing="0.04"
             tools:text="Held · 1" />
 
         <TextView
             android:id="@+id/tvClearAll"
-            style="@style/TextSmallBold"
+            style="@style/TodayCardBodyBold"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="?android:attr/selectableItemBackground"
@@ -39,7 +38,7 @@
 
     <TextView
         android:id="@+id/tvEmpty"
-        style="@style/TextSmall"
+        style="@style/TodayCardBody"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingVertical="8dp"

@@ -10,11 +10,10 @@
 
     <TextView
         android:id="@+id/tvPanelTitle"
-        style="@style/TextSmallLight"
+        style="@style/TodayCardLabel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
-        android:letterSpacing="0.04"
         tools:text="Next up" />
 
     <FrameLayout

@@ -9,18 +9,17 @@
 
     <TextView
         android:id="@+id/tvCardTitle"
-        style="@style/TextSmallLight"
+        style="@style/TodayCardLabel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?android:attr/selectableItemBackground"
         android:clickable="true"
         android:focusable="true"
-        android:letterSpacing="0.04"
         tools:text="Notes · 4" />
 
     <EditText
         android:id="@+id/etSearchNotes"
-        style="@style/TextSmall"
+        style="@style/TodayCardBody"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@null"
@@ -40,7 +39,7 @@
 
         <TextView
             android:id="@+id/tvNote"
-            style="@style/TextSmallBold"
+            style="@style/TodayCardBodyBold"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -53,7 +52,7 @@
 
         <TextView
             android:id="@+id/tvNoteCount"
-            style="@style/TextSmallLight"
+            style="@style/TodayCardBodyLight"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
@@ -83,7 +82,7 @@
 
     <TextView
         android:id="@+id/tvNoteDate"
-        style="@style/TextSmallLight"
+        style="@style/TodayCardBodyLight"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ellipsize="end"
@@ -93,7 +92,7 @@
 
     <TextView
         android:id="@+id/tvMore1"
-        style="@style/TextSmall"
+        style="@style/TodayCardBody"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ellipsize="end"
@@ -104,7 +103,7 @@
 
     <TextView
         android:id="@+id/tvMore2"
-        style="@style/TextSmall"
+        style="@style/TodayCardBody"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ellipsize="end"
@@ -124,7 +123,7 @@
 
     <TextView
         android:id="@+id/tvNextDated"
-        style="@style/TextSmall"
+        style="@style/TodayCardBody"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ellipsize="end"
@@ -135,7 +134,7 @@
 
     <TextView
         android:id="@+id/btnAddNote"
-        style="@style/TextSmallBold"
+        style="@style/TodayCardBodyBold"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?android:attr/selectableItemBackground"
