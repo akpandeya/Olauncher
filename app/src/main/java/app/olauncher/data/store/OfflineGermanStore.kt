@@ -101,9 +101,13 @@ class OfflineGermanStore(context: Context) {
     }
 
     /**
-     * The present-tense paradigm of the first verb entry [text] resolves to,
-     * or null when no candidate maps to a verb (or that verb has no present
-     * cells), which drives the drill's graceful state. Call on Dispatchers.IO.
+     * The present-tense paradigm the verb entries for [text] merge into, or
+     * null when no candidate maps to a verb (or none has present cells), which
+     * drives the drill's graceful state. Same-lemma verb entries — separable
+     * and inseparable homographs like übersetzen — feed one combined row set
+     * into the parser, whose cell-conflict rule then picks each drilled form;
+     * per the homograph-merging note in tools/README the separable split wins.
+     * Call on Dispatchers.IO.
      */
     fun paradigm(text: String): VerbParadigm? {
         val db = try {
@@ -115,18 +119,23 @@ class OfflineGermanStore(context: Context) {
         return try {
             val normalized = Normalizer.normalize(text.trim(), Normalizer.Form.NFC)
             for (candidate in WiktionaryParser.candidates(normalized)) {
-                val entry = db.rawQuery(
+                val entries = db.rawQuery(
                     """SELECT e.id, e.lemma
                        FROM lookup l JOIN entries e ON e.id = l.entry_id
                        WHERE l.form = ? AND e.pos = 'verb'
-                       ORDER BY CASE WHEN e.lemma = ? THEN 0 ELSE 1 END, e.id LIMIT 1""",
+                       ORDER BY CASE WHEN e.lemma = ? THEN 0 ELSE 1 END, e.id""",
                     arrayOf(candidate, candidate)
                 ).use { cursor ->
-                    if (cursor.moveToNext()) cursor.getLong(0) to cursor.getString(1) else null
-                } ?: continue
+                    buildList {
+                        while (cursor.moveToNext()) {
+                            add(cursor.getLong(0) to cursor.getString(1))
+                        }
+                    }
+                }
+                if (entries.isEmpty()) continue
                 val rows = db.rawQuery(
-                    "SELECT form, tags FROM forms WHERE entry_id = ?",
-                    arrayOf(entry.first.toString())
+                    "SELECT form, tags FROM forms WHERE entry_id IN (${entries.joinToString(",") { "?" }})",
+                    entries.map { it.first.toString() }.toTypedArray()
                 ).use { cursor ->
                     buildList {
                         while (cursor.moveToNext()) {
@@ -134,7 +143,7 @@ class OfflineGermanStore(context: Context) {
                         }
                     }
                 }
-                return Conjugation.parsePresent(entry.second, rows)
+                return Conjugation.parsePresent(entries.first().second, rows)
             }
             null
         } catch (e: Exception) {
