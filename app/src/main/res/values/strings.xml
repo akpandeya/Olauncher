@@ -732,6 +732,9 @@
     <string name="a11y_word_capture_sheet">Save a word</string>
     <string name="timer_no_clock_app" tools:ignore="MissingTranslation">No clock app to start the timer</string>
     <string name="alarm_no_clock_app" tools:ignore="MissingTranslation">No clock app to set the alarm</string>
+    <string name="command_help_shop" tools:ignore="MissingTranslation">Shopping: :s milk, eggs</string>
+    <string name="shopping_row" tools:ignore="MissingTranslation">Add %1$d to Shopping: %2$s</string>
+    <string name="shopping_added" tools:ignore="MissingTranslation">Added %1$d to Shopping</string>
     <string name="note_row" tools:ignore="MissingTranslation">Save note: %1$s</string>
     <string name="note_saved" tools:ignore="MissingTranslation">Note saved</string>
     <string name="note_home_line" tools:ignore="MissingTranslation">→ %1$s</string>

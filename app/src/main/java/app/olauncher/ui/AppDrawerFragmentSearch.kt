@@ -172,7 +172,7 @@ internal fun AppDrawerFragment.suggestItems(query: String): List<String> =
         is DrawerCommand.SaveWords -> command.items
         is DrawerCommand.LookUp -> listOf(command.text)
         is DrawerCommand.Timer, is DrawerCommand.Alarm, is DrawerCommand.Event,
-        is DrawerCommand.Note, is DrawerCommand.Profile, is DrawerCommand.Help, null -> emptyList()
+        is DrawerCommand.Note, is DrawerCommand.ShopItems, is DrawerCommand.Profile, is DrawerCommand.Help, null -> emptyList()
     }
 
 internal fun AppDrawerFragment.suggestOnlineAllowed(): Boolean = prefs.germanEnabled && prefs.germanSpellSuggest

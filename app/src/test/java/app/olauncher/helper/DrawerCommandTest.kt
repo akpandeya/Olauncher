@@ -25,6 +25,17 @@ class DrawerCommandTest {
     )
 
     @Test
+    fun `s splits items like sw and works with german off`() {
+        for (german in listOf(false, true)) {
+            assertEquals(DrawerCommand.ShopItems(listOf("milk", "eggs", "bread")), DrawerCommand.parse(":s milk, eggs;bread\nmilk", german))
+        }
+        assertEquals(DrawerCommand.ShopItems(emptyList()), parse(":s"))
+        assertEquals(DrawerCommand.ShopItems(emptyList()), parse(":s , ;"))
+        assertEquals(DrawerCommand.SaveWords(listOf("milk", "eggs")), parse(":sw milk, eggs"))
+        assertEquals(DrawerCommand.splitItems(" a, b"), listOf("a", "b"))
+    }
+
+    @Test
     fun `sw single word`() = assertEquals(SaveWords(listOf("Fernweh")), parse(":sw Fernweh"))
 
     @Test
@@ -62,13 +73,13 @@ class DrawerCommandTest {
         assertNull(parse(":w"))
     }
 
-    private val allWords = listOf("t", "a", "e", "n", "p", "sw", "w")
+    private val allWords = listOf("t", "a", "e", "n", "p", "s", "sw", "w")
 
     @Test
     fun `colon alone lists enabled commands`() {
         assertEquals(allWords, (parse(":") as DrawerCommand.Help).commands.map { it.word })
         val off = DrawerCommand.parse(":", germanEnabled = false) as DrawerCommand.Help
-        assertEquals(listOf("t", "a", "e", "n", "p"), off.commands.map { it.word })
+        assertEquals(listOf("t", "a", "e", "n", "p", "s"), off.commands.map { it.word })
         assertEquals(off, DrawerCommand.parse("  :", germanEnabled = false))
     }
 
@@ -81,7 +92,7 @@ class DrawerCommandTest {
 
     @Test
     fun `help row prefix fills command word`() {
-        assertEquals(listOf(":t ", ":a ", ":e ", ":n ", ":p ", ":sw ", ":w "), DrawerCommand.available(true).map { it.prefix })
+        assertEquals(listOf(":t ", ":a ", ":e ", ":n ", ":p ", ":s ", ":sw ", ":w "), DrawerCommand.available(true).map { it.prefix })
     }
 
     @Test

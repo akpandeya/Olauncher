@@ -37,6 +37,7 @@ object Notes {
     const val SEARCH_MIN_NOTES = 5
     const val MAX_ITEMS = 20
     private const val CHECKLIST_PREFIX = "[]"
+    const val SHOPPING_TITLE = "Shopping"
     private const val MAX_OPEN = 100
     private const val MAX_DONE = 20
     private val WHITESPACE = Regex("""\s+""")
@@ -183,6 +184,41 @@ object Notes {
         return prune(notes + note)
     }
 
+    /** Result of [addShopping]: the new list and how many items were really added. */
+    data class ShopResult(val notes: List<Note>, val added: Int)
+
+    /**
+     * Adds [items] to the open checklist titled "Shopping" (case-insensitive), or creates it through [add].
+     * Existing items keep their order and ticks. An item still unticked on the list is skipped (any case);
+     * a ticked one is added again as a new unticked item. The list never grows past [MAX_ITEMS].
+     * Nothing to add leaves the list as it is.
+     */
+    fun addShopping(notes: List<Note>, items: List<String>, now: Long): ShopResult {
+        val wanted = items.map { it.trim() }.filter { it.isNotEmpty() }
+        if (wanted.isEmpty()) return ShopResult(notes, 0)
+        val existing = open(notes).firstOrNull {
+            it.items.isNotEmpty() && it.text.trim().equals(SHOPPING_TITLE, ignoreCase = true)
+        }
+        if (existing == null) {
+            val fresh = add(notes, "$CHECKLIST_PREFIX $SHOPPING_TITLE: ${wanted.distinctBy { it.lowercase() }.take(MAX_ITEMS).joinToString(", ")}", now)
+            val oldIds = notes.map { it.id }.toSet()
+            val created = fresh.firstOrNull { it.id !in oldIds }
+            return if (created == null) ShopResult(notes, 0) else ShopResult(fresh, created.items.size)
+        }
+        val unchecked = existing.items.filter { !it.checked }.map { it.text.lowercase() }.toMutableSet()
+        val room = (MAX_ITEMS - existing.items.size).coerceAtLeast(0)
+        val toAdd = ArrayList<ChecklistItem>()
+        for (item in wanted) {
+            if (toAdd.size >= room) break
+            if (unchecked.add(item.lowercase())) toAdd.add(ChecklistItem(item))
+        }
+        if (toAdd.isEmpty()) return ShopResult(notes, 0)
+        return ShopResult(
+            notes.map { if (it.id == existing.id) it.copy(items = it.items + toAdd, edited = now) else it },
+            toAdd.size,
+        )
+    }
+
     fun markDone(notes: List<Note>, id: Long, done: Boolean = true): List<Note> =
         notes.map { if (it.id == id) it.copy(done = done) else it }
 
@@ -323,6 +359,13 @@ class NotesStore(private val read: () -> String?, private val write: (String) ->
         if (after === before) return false
         write(Notes.encode(after))
         return true
+    }
+
+    /** How many items were added to the Shopping note (created if missing); 0 saves nothing. */
+    fun addShopping(items: List<String>, now: Long): Int {
+        val result = Notes.addShopping(all(), items, now)
+        if (result.added > 0) write(Notes.encode(result.notes))
+        return result.added
     }
 
     fun markDone(id: Long, done: Boolean = true) = write(Notes.encode(Notes.markDone(all(), id, done)))

@@ -2,6 +2,8 @@ package app.olauncher.helper
 
 sealed class DrawerCommand {
     data class SaveWords(val items: List<String>) : DrawerCommand()
+    /** `:s milk, eggs`: items for the Shopping checklist note; empty when nothing usable was typed. */
+    data class ShopItems(val items: List<String>) : DrawerCommand()
     data class LookUp(val text: String) : DrawerCommand()
     /** `:t`, `:a`, `:e`, `:n`: [args] is the raw text after the command word; each is handled by its own feature. */
     data class Timer(val args: String) : DrawerCommand()
@@ -32,6 +34,7 @@ sealed class DrawerCommand {
             CommandInfo("e"),
             CommandInfo("n"),
             CommandInfo("p"),
+            CommandInfo("s"),
             CommandInfo("sw", germanOnly = true),
             CommandInfo("w", germanOnly = true),
         )
@@ -48,6 +51,7 @@ sealed class DrawerCommand {
             val args = rest.substring(word.length)
             return when (word.lowercase()) {
                 "sw" -> if (germanEnabled) SaveWords(splitItems(args)) else null
+                "s" -> ShopItems(splitItems(args))
                 "w" -> {
                     val text = args.trim()
                     when {
@@ -65,7 +69,8 @@ sealed class DrawerCommand {
             }
         }
 
-        private fun splitItems(args: String): List<String> {
+        /** Splits typed items on commas, semicolons and line breaks; shared by `:sw` and `:s`. */
+        internal fun splitItems(args: String): List<String> {
             val seen = HashSet<String>()
             val result = ArrayList<String>()
             for (part in args.split(SPLIT_REGEX)) {

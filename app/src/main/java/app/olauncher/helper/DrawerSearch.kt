@@ -27,6 +27,8 @@ class DrawerSearchInput(
     val eventNoTitleRowText: () -> String = { "Can't add an event without a title" },
     /** Preview row text for `:n`, e.g. "Save note: buy milk". */
     val noteRowText: (text: String) -> String = { "Save note: $it" },
+    /** Preview row text for `:s`, e.g. "Add 2 to Shopping: milk, eggs". */
+    val shopRowText: (count: Int, shown: String) -> String = { count, shown -> "Add $count to Shopping: $shown" },
     /** Profiles `:p` can switch to. */
     val profileChoices: () -> List<ProfileChoice> = { emptyList() },
     /** Row text for `:p`, e.g. "Switch to Focus". */
@@ -124,6 +126,11 @@ object DrawerSearch {
             is DrawerCommand.SaveWords -> if (command.items.isNotEmpty()) {
                 safeAdd(rows) { input.spellRows(command.items) }
                 rows.add(saveWordsRow(input, command.items))
+            }
+            is DrawerCommand.ShopItems -> if (command.items.isNotEmpty()) {
+                val items = command.items.take(Notes.MAX_ITEMS)
+                val shown = items.take(3).joinToString(", ") + if (items.size > 3) ", …" else ""
+                rows.add(AppModel.Result(input.shopRowText(items.size, shown), AppModel.Result.Action.AddShopping(items)))
             }
             is DrawerCommand.LookUp -> safeAdd(rows) { input.lookUpRows(command.text) }
             is DrawerCommand.Help -> command.commands.forEach {
