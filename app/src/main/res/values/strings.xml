@@ -854,6 +854,22 @@
     <string name="notes_screen_progress" tools:ignore="MissingTranslation">%1$d of %2$d done</string>
     <string name="notes_screen_due" tools:ignore="MissingTranslation">Due</string>
     <string name="notes_screen_add_hint" tools:ignore="MissingTranslation">New note: [] Shopping: milk, eggs</string>
+    <string name="note_add_title" tools:ignore="MissingTranslation">New note</string>
+    <string name="note_add_title_hint" tools:ignore="MissingTranslation">Title</string>
+    <string name="note_add_body_hint" tools:ignore="MissingTranslation">Body</string>
+    <string name="note_add_checklist" tools:ignore="MissingTranslation">Checklist</string>
+    <string name="note_add_checklist_sub" tools:ignore="MissingTranslation">Turns each line into an item</string>
+    <string name="note_add_remind" tools:ignore="MissingTranslation">Remind me on</string>
+    <string name="note_add_remind_none" tools:ignore="MissingTranslation">No date</string>
+    <string name="note_add_pin" tools:ignore="MissingTranslation">Pin to top</string>
+    <string name="note_add_lists" tools:ignore="MissingTranslation">Lists</string>
+    <string name="note_add_hint" tools:ignore="MissingTranslation">Shortcut: type [] Shopping: milk, bread as the title and it becomes a checklist.</string>
+    <string name="note_add_needs_text" tools:ignore="MissingTranslation">Type a title first</string>
+    <string name="note_discard_title" tools:ignore="MissingTranslation">Discard note?</string>
+    <string name="note_discard_message" tools:ignore="MissingTranslation">What you typed will be lost.</string>
+    <string name="note_discard_action" tools:ignore="MissingTranslation">Discard</string>
+    <string name="note_delete_title" tools:ignore="MissingTranslation">Delete note?</string>
+    <string name="note_delete_message" tools:ignore="MissingTranslation">This note will be removed for good.</string>
     <string name="notes_search_empty" tools:ignore="MissingTranslation">No matching notes</string>
     <string name="saved_card_title">Saved for later · %1$d</string>
     <string name="saved_card_open">Open</string>
