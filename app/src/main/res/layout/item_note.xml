@@ -19,7 +19,7 @@
 
         <TextView
             android:id="@+id/tvNoteTitle"
-            style="@style/TextSmallBold"
+            style="@style/TodayCardBodyBold"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
@@ -27,7 +27,7 @@
 
         <TextView
             android:id="@+id/tvNoteCount"
-            style="@style/TextSmallLight"
+            style="@style/TodayCardBodyLight"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
@@ -60,7 +60,7 @@
 
     <TextView
         android:id="@+id/tvNoteBody"
-        style="@style/TextSmall"
+        style="@style/TodayCardBody"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ellipsize="end"
@@ -77,7 +77,7 @@
 
     <TextView
         android:id="@+id/tvNoteMeta"
-        style="@style/TextSmallLight"
+        style="@style/TodayCardBodyLight"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
@@ -85,7 +85,7 @@
 
     <TextView
         android:id="@+id/tvDue"
-        style="@style/TextSmallLight"
+        style="@style/TodayChip.Small"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
