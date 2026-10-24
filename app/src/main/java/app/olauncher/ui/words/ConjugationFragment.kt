@@ -50,6 +50,8 @@ class ConjugationFragment : BaseFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        binding.licenseNote.text = getText(R.string.wiktionary_license_note)
+        binding.licenseNote.movementMethod = android.text.method.LinkMovementMethod.getInstance()
         binding.drillCard.setOnClickListener {
             if (revealed || index >= prompts.size) return@setOnClickListener
             Haptics.tick(it)
