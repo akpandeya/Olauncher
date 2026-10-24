@@ -156,4 +156,17 @@ class ConjugationQuizTest {
         assertEquals(0, q.total)
         assertNull(q.answer("x"))
     }
+
+    @Test
+    fun onlyRightAnswerAutoAdvances() {
+        val q = quiz()
+        val right = q.answer(q.current!!.answer)
+        assertTrue(shouldAutoAdvance(right))
+
+        val q2 = quiz()
+        val wrong = q2.answer(wrongChoice(q2))
+        assertFalse(shouldAutoAdvance(wrong))
+        assertFalse(shouldAutoAdvance(null))
+        assertFalse(shouldAutoAdvance(q2.answer(q2.current!!.answer)))
+    }
 }

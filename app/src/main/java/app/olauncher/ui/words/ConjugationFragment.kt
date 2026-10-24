@@ -14,10 +14,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import app.olauncher.R
 import app.olauncher.data.store.Conjugation
+import app.olauncher.data.store.AUTO_ADVANCE_DELAY_MS
 import app.olauncher.data.store.ConjugationQuiz
 import app.olauncher.data.store.FormStatus
 import app.olauncher.data.store.OfflineGermanStore
+import app.olauncher.data.store.QuizAnswer
 import app.olauncher.data.store.VerbParadigm
+import app.olauncher.data.store.shouldAutoAdvance
 import app.olauncher.databinding.FragmentConjugationBinding
 import app.olauncher.helper.Haptics
 import app.olauncher.ui.BaseFragment
@@ -43,6 +46,15 @@ class ConjugationFragment : BaseFragment() {
     private var selectedChoice: String? = null
     private var loadStarted = false
     private var loaded = false
+    private var autoAdvanceScheduled = false
+    private val autoAdvance = Runnable {
+        autoAdvanceScheduled = false
+        val q = quiz ?: return@Runnable
+        if (_binding == null || !q.isAnswered) return@Runnable
+        q.advance()
+        selectedChoice = null
+        render()
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -94,11 +106,7 @@ class ConjugationFragment : BaseFragment() {
                 selectedChoice = null
                 render()
             }
-            else -> {
-                val pick = selectedChoice ?: return
-                q.answer(pick)
-                render()
-            }
+            else -> Unit
         }
     }
 
@@ -161,22 +169,34 @@ class ConjugationFragment : BaseFragment() {
             when {
                 answered && choice == question.answer -> tv.isActivated = true
                 answered && choice == selectedChoice -> tv.setBackgroundResource(R.drawable.quiz_choice_wrong)
-                !answered && choice == selectedChoice -> tv.isSelected = true
             }
             if (!answered) {
                 tv.setOnClickListener {
                     Haptics.tick(it)
+                    // answer() ignores a second tap, so a double tap cannot advance twice.
+                    val result = q.answer(choice) ?: return@setOnClickListener
                     selectedChoice = choice
+                    if (shouldAutoAdvance(result)) scheduleAutoAdvance()
                     render()
                 }
             }
             b.choiceGrid.addView(tv, cellParams(b.choiceGrid))
         }
 
-        b.btnPrimary.setText(if (answered) R.string.conjugation_continue else R.string.conjugation_check)
-        val canPress = answered || selectedChoice != null
-        b.btnPrimary.isEnabled = canPress
-        b.btnPrimary.alpha = if (canPress) 1f else 0.4f
+        // Picking a choice answers at once. Right: green, then on to the next
+        // question by itself. Wrong: Continue stays so the right form can be read.
+        val waitingForContinue = answered && !shouldAutoAdvance(QuizAnswer(selectedChoice == question.answer, question.answer))
+        if (answered && !waitingForContinue) scheduleAutoAdvance()
+        b.btnPrimary.setText(R.string.conjugation_continue)
+        b.btnPrimary.isVisible = waitingForContinue
+        b.btnPrimary.isEnabled = true
+        b.btnPrimary.alpha = 1f
+    }
+
+    private fun scheduleAutoAdvance() {
+        if (autoAdvanceScheduled) return
+        autoAdvanceScheduled = true
+        _binding?.root?.postDelayed(autoAdvance, AUTO_ADVANCE_DELAY_MS)
     }
 
     private fun renderSegments(q: ConjugationQuiz, currentIndex: Int) {
@@ -264,6 +284,8 @@ class ConjugationFragment : BaseFragment() {
     }
 
     override fun onDestroyView() {
+        _binding?.root?.removeCallbacks(autoAdvance)
+        autoAdvanceScheduled = false
         super.onDestroyView()
         _binding = null
     }

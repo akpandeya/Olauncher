@@ -11,6 +11,12 @@ data class QuizQuestion(val formIndex: Int, val pronoun: String, val answer: Str
 /** The outcome of one pick: whether it was [correct] and the form that was asked for. */
 data class QuizAnswer(val correct: Boolean, val answer: String)
 
+/** Only a right answer moves on by itself; a wrong one waits so the right form can be read. */
+fun shouldAutoAdvance(answer: QuizAnswer?): Boolean = answer?.correct == true
+
+/** How long a right answer stays green before the quiz moves on. */
+const val AUTO_ADVANCE_DELAY_MS = 800L
+
 /**
  * Android-free state for the conjugation quiz. Each form is asked with up to
  * four choices (the right form plus other distinct forms of the same verb).
