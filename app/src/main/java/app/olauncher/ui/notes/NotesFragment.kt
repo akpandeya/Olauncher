@@ -89,7 +89,7 @@ class NotesFragment : BaseFragment() {
         row.tvNoteTitle.text = note.text
         row.tvNoteTitle.isVisible = note.text.isNotEmpty()
         row.ivPin.isVisible = note.pinned
-        row.tvDue.isVisible = Notes.isDated(note)
+        row.tvDue.isVisible = note.showFrom?.let { it <= today.toEpochDay() } == true
         val edited = Notes.editedLabel(
             note, today, ZoneId.systemDefault(),
             Notes.EditedFormat(context.getString(R.string.note_edited_today), context.getString(R.string.note_edited_yesterday), context.getString(R.string.note_edited_on)),

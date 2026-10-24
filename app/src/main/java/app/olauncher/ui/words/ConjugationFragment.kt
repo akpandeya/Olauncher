@@ -13,6 +13,7 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import app.olauncher.R
+import app.olauncher.data.Prefs
 import app.olauncher.data.store.Conjugation
 import app.olauncher.data.store.AUTO_ADVANCE_DELAY_MS
 import app.olauncher.data.store.ConjugationQuiz
@@ -80,9 +81,14 @@ class ConjugationFragment : BaseFragment() {
         loadStarted = true
         val word = arguments?.getString("word").orEmpty()
         val appContext = view.context.applicationContext
+        val offlineAllowed = Prefs(appContext).germanOfflineDictionary
         // Fragment-scoped: the load must outlive the view it started with.
         lifecycleScope.launch {
-            val result = withContext(Dispatchers.IO) { OfflineGermanStore(appContext).paradigm(word) }
+            val result = if (offlineAllowed) {
+                withContext(Dispatchers.IO) { OfflineGermanStore(appContext).paradigm(word) }
+            } else {
+                null
+            }
             paradigm = result
             quiz = result?.let { ConjugationQuiz(Conjugation.drillPrompts(it)) }
             loaded = true

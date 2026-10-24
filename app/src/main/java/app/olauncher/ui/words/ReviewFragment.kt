@@ -74,10 +74,10 @@ class ReviewFragment : BaseFragment() {
         binding.btnAddToList.setOnClickListener {
             val word = currentWord() ?: return@setOnClickListener
             Haptics.tick(it)
-            WordDialogs.showListsDialog(it.context, word) { }
+            WordDialogs.showListsDialog(it.context, word) { refreshQueueFromStore() }
         }
         binding.btnBack.setOnClickListener { leave(it) }
-        binding.btnOpenWords.setOnClickListener { leave(it) }
+        binding.btnOpenWords.setOnClickListener { openWords(it) }
 
         binding.btnDone.setOnClickListener { leave(it) }
 
@@ -138,8 +138,11 @@ class ReviewFragment : BaseFragment() {
         Haptics.tick(binding.root)
         val store = WordsCard.getStore(context)
         val today = WordsCard.epochDaySupplier()
+        // The queue holds the copy from session start; grading must start from the
+        // stored word so list changes and background lookups made meanwhile survive.
+        val current = store.get(word.id) ?: word
         val event = ReviewSessionLogic.gradeAndLog(
-            word, result, today, System.currentTimeMillis(), store::update, ReviewEventsStore(context),
+            current, result, today, System.currentTimeMillis(), store::update, ReviewEventsStore(context),
         )
         sessionEvents = sessionEvents + event
         answered++
@@ -280,6 +283,16 @@ class ReviewFragment : BaseFragment() {
         // Ignore a second tap delivered before the first pop lands.
         if (findNavController().currentDestination?.id == R.id.reviewFragment) {
             findNavController().navigateUp()
+        }
+    }
+
+    /** "Open Words" on the summary: back to Words if it is underneath, else go there (e.g. from Today). */
+    private fun openWords(view: View) {
+        Haptics.tick(view)
+        val nav = findNavController()
+        if (nav.currentDestination?.id != R.id.reviewFragment) return
+        if (!nav.popBackStack(R.id.wordsFragment, false)) {
+            nav.navigate(R.id.action_reviewFragment_to_wordsFragment)
         }
     }
 

@@ -94,11 +94,16 @@ object NotesCard : TodayCard {
         // The newest note that is showing now (or the newest match while searching); tap marks it
         // done, long-press opens a menu (Pin/Unpin, Delete). A pinned note is shown first.
         val today = LocalDate.now()
-        val latest = Notes.featured(if (query.isBlank()) Notes.visible(all, today) else Notes.search(Notes.cardList(all, today), query))
+        val latest = if (query.isBlank()) {
+            Notes.featured(Notes.visible(all, today))
+        } else {
+            Notes.featuredMatch(Notes.search(Notes.cardList(all, today), query), today)
+        }
         if (latest == null) {
             b.tvNote.setText(if (query.isBlank()) R.string.notes_card_empty else R.string.notes_search_empty)
             b.tvNote.isClickable = false
             b.tvNote.isLongClickable = false
+            b.tvNote.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, 0, 0)
             b.tvNoteDate.visibility = View.GONE
             return
         }

@@ -44,6 +44,13 @@ class GermanSetupFragment : BaseFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         prefs = Prefs(requireContext())
+        choices = GermanSetupFlow.initialChoices(
+            previouslySetUp = prefs.germanEnabled,
+            offlineDictionary = prefs.germanOfflineDictionary,
+            lookupOnline = prefs.germanLookup,
+            screenPick = prefs.germanScreenPick,
+            germanUi = prefs.germanUi,
+        )
         savedInstanceState?.let {
             step = GermanSetupStep.entries.getOrElse(it.getInt(KEY_STEP)) { GermanSetupStep.WELCOME }
             choices = GermanSetupChoices(
@@ -187,7 +194,7 @@ class GermanSetupFragment : BaseFragment() {
     }
 
     private fun advance() {
-        step = step.next() ?: return finish()
+        step = GermanSetupFlow.next(step, choices) ?: return finish()
         render()
     }
 
@@ -205,7 +212,7 @@ class GermanSetupFragment : BaseFragment() {
 
     private fun finish() {
         val context = requireContext()
-        val result = GermanSetupFlow.result(choices, openedAccessibilitySettings)
+        val result = GermanSetupFlow.result(choices, openedAccessibilitySettings, alreadyOn = prefs.germanScreenPick)
         prefs.germanEnabled = true
         prefs.germanOfflineDictionary = result.offlineDictionary
         prefs.germanLookup = result.lookupOnline

@@ -52,4 +52,24 @@ class NotesSearchTest {
         assertFalse(Notes.showSearch(4))
         assertTrue(Notes.showSearch(5))
     }
+
+    @Test
+    fun featuredMatchPrefersTheNoteShowingNowOverAFutureDatedOne() {
+        val today = java.time.LocalDate.of(2026, 10, 24)
+        val current = Note(1, "milk now", 1)
+        val future = Note(2, "milk later", 2, showFrom = today.plusDays(5).toEpochDay())
+        val matches = Notes.search(Notes.cardList(listOf(current, future), today), "milk")
+        assertEquals(listOf(1L, 2L), ids(matches))
+        assertEquals(1L, Notes.featuredMatch(matches, today)?.id)
+    }
+
+    @Test
+    fun featuredMatchFallsBackToTheSoonestLaterNoteWhenNoneShowNow() {
+        val today = java.time.LocalDate.of(2026, 10, 24)
+        val soon = Note(1, "milk soon", 1, showFrom = today.plusDays(2).toEpochDay())
+        val far = Note(2, "milk far", 2, showFrom = today.plusDays(9).toEpochDay())
+        val matches = Notes.search(Notes.cardList(listOf(far, soon), today), "milk")
+        assertEquals(1L, Notes.featuredMatch(matches, today)?.id)
+        assertEquals(null, Notes.featuredMatch(emptyList(), today))
+    }
 }
