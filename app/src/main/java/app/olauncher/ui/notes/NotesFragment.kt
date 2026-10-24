@@ -87,7 +87,10 @@ class NotesFragment : BaseFragment() {
         val row = ItemNoteBinding.inflate(layoutInflater, parent, false)
         val isChecklist = note.items.isNotEmpty()
         row.tvNoteTitle.text = note.text
-        row.tvNoteTitle.isVisible = note.text.isNotEmpty()
+        // An untitled checklist keeps the (empty) title so the count stays right-aligned.
+        row.tvNoteTitle.visibility = if (note.text.isNotEmpty()) View.VISIBLE else if (isChecklist) View.INVISIBLE else View.GONE
+        ChecklistStyle.bindProgress(note, row.tvNoteCount, row.pbNote)
+        ChecklistStyle.addDividers(row.itemsPanel)
         row.ivPin.isVisible = note.pinned
         row.tvDue.isVisible = NoteViewRules.isDue(note, today)
         val preview = if (isChecklist) null else NoteViewRules.bodyPreview(note)
@@ -104,8 +107,7 @@ class NotesFragment : BaseFragment() {
             note, today, ZoneId.systemDefault(),
             Notes.EditedFormat(context.getString(R.string.note_edited_today), context.getString(R.string.note_edited_yesterday), context.getString(R.string.note_edited_on)),
         )
-        val progress = if (isChecklist) context.getString(R.string.notes_screen_progress, Notes.doneCount(note), note.items.size) else null
-        val meta = listOfNotNull(progress, Notes.dateLabel(note), edited).joinToString(" · ")
+        val meta = listOfNotNull(Notes.dateLabel(note), edited).joinToString(" · ")
         row.tvNoteMeta.text = meta
         row.tvNoteMeta.isVisible = meta.isNotEmpty()
         note.items.forEachIndexed { index, item ->

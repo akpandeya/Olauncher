@@ -338,6 +338,17 @@ object Notes {
     fun progressText(note: Note, format: String): String? =
         if (note.items.isEmpty()) null else String.format(Locale.ROOT, format, doneCount(note), note.items.size)
 
+    /** "1 of 3" for a checklist note from [format] (two %d: done, total); null for a plain note. */
+    fun countText(note: Note, format: String): String? =
+        if (note.items.isEmpty()) null else String.format(Locale.ROOT, format, doneCount(note), note.items.size)
+
+    /** Filled share of a checklist's progress bar, 0f..1f; 0f for a plain note or a checklist without items. */
+    fun progressFraction(note: Note): Float =
+        if (note.items.isEmpty()) 0f else doneCount(note).toFloat() / note.items.size
+
+    /** The progress bar only shows for a checklist that has items. */
+    fun showsProgressBar(note: Note): Boolean = note.items.isNotEmpty()
+
     /** The Today card shows its search field only once there are enough open notes to need it. */
     fun showSearch(openCount: Int): Boolean = openCount >= SEARCH_MIN_NOTES
 

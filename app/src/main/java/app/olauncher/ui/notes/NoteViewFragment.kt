@@ -215,6 +215,8 @@ class NoteViewFragment : BaseFragment() {
 
     private fun renderItems(b: FragmentNoteViewBinding, note: Note) {
         b.viewItemsPanel.removeAllViews()
+        ChecklistStyle.addDividers(b.viewItemsPanel)
+        ChecklistStyle.bindProgress(note, b.tvViewCount, b.pbView)
         note.items.forEachIndexed { index, item ->
             val row = ItemNoteViewItemBinding.inflate(layoutInflater, b.viewItemsPanel, false)
             row.etItem.setText(item.text)

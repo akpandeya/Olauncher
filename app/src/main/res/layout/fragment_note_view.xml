@@ -64,20 +64,49 @@
             android:paddingTop="8dp"
             android:paddingBottom="32dp">
 
-            <androidx.appcompat.widget.AppCompatEditText
-                android:id="@+id/etViewTitle"
-                style="@style/TextLarge"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@null"
-                android:hint="@string/note_add_title_hint"
-                android:imeOptions="actionDone"
-                android:importantForAutofill="no"
-                android:inputType="textCapSentences"
-                android:minHeight="48dp"
-                android:shadowColor="@android:color/transparent"
-                android:textColor="?attr/primaryColor"
-                android:textColorHint="?attr/primaryColorTrans80" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <androidx.appcompat.widget.AppCompatEditText
+                    android:id="@+id/etViewTitle"
+                    style="@style/TextLarge"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="@null"
+                    android:hint="@string/note_add_title_hint"
+                    android:imeOptions="actionDone"
+                    android:importantForAutofill="no"
+                    android:inputType="textCapSentences"
+                    android:minHeight="48dp"
+                    android:shadowColor="@android:color/transparent"
+                    android:textColor="?attr/primaryColor"
+                    android:textColorHint="?attr/primaryColorTrans80" />
+
+                <TextView
+                    android:id="@+id/tvViewCount"
+                    style="@style/TextSmallLight"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:visibility="gone"
+                    tools:text="1 of 3" />
+            </LinearLayout>
+
+            <ProgressBar
+                android:id="@+id/pbView"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="3dp"
+                android:layout_marginBottom="4dp"
+                android:maxHeight="3dp"
+                android:minHeight="3dp"
+                android:visibility="gone"
+                tools:progress="33"
+                tools:visibility="visible" />
 
             <com.google.android.material.chip.ChipGroup
                 android:id="@+id/viewListChips"
