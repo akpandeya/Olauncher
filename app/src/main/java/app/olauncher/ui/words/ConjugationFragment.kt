@@ -25,6 +25,7 @@ import app.olauncher.data.store.shouldAutoAdvance
 import app.olauncher.databinding.FragmentConjugationBinding
 import app.olauncher.helper.Haptics
 import app.olauncher.ui.BaseFragment
+import app.olauncher.ui.today.attachPressScale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -173,12 +174,14 @@ class ConjugationFragment : BaseFragment() {
         for (choice in question.choices) {
             val tv = newCell(choice, TextSize.Large)
             tv.gravity = Gravity.CENTER
-            tv.minHeight = dp(56)
-            when {
-                answered && choice == question.answer -> tv.isActivated = true
-                answered && choice == selectedChoice -> tv.setBackgroundResource(R.drawable.quiz_choice_wrong)
+            tv.minHeight = resources.getDimensionPixelSize(R.dimen.quiz_choice_min_height)
+            when (ConjugationCellLook.of(answered, choice, question.answer, selectedChoice)) {
+                ConjugationCellLook.RIGHT -> tv.isActivated = true
+                ConjugationCellLook.WRONG -> tv.setBackgroundResource(R.drawable.quiz_choice_wrong)
+                ConjugationCellLook.NEUTRAL -> Unit
             }
             if (!answered) {
+                tv.attachPressScale()
                 tv.setOnClickListener {
                     Haptics.tick(it)
                     // answer() ignores a second tap, so a double tap cannot advance twice.
@@ -220,7 +223,7 @@ class ConjugationFragment : BaseFragment() {
             }
             seg.setBackgroundColor(color)
             val lp = android.widget.LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f)
-            if (i > 0) lp.marginStart = dp(5)
+            if (i > 0) lp.marginStart = row.resources.getDimensionPixelSize(R.dimen.quiz_segment_gap)
             row.addView(seg, lp)
         }
     }
@@ -257,9 +260,10 @@ class ConjugationFragment : BaseFragment() {
 
     private fun newCell(text: String, size: TextSize): TextView = TextView(binding.root.context).apply {
         this.text = text
-        setTextAppearance(if (size == TextSize.Large) R.style.TextMedium else R.style.TextSmall)
+        setTextAppearance(if (size == TextSize.Large) R.style.TodayCardBodyBold else R.style.TodayCardBody)
         setBackgroundResource(R.drawable.quiz_choice)
-        setPadding(dp(12), dp(12), dp(12), dp(12))
+        val pad = resources.getDimensionPixelSize(R.dimen.quiz_cell_padding)
+        setPadding(pad, pad, pad, pad)
         isClickable = true
     }
 
@@ -269,7 +273,8 @@ class ConjugationFragment : BaseFragment() {
             GridLayout.spec(GridLayout.UNDEFINED, 1f),
         ).apply {
             width = 0
-            setMargins(dp(4), dp(4), dp(4), dp(4))
+            val margin = grid.resources.getDimensionPixelSize(R.dimen.quiz_cell_margin)
+            setMargins(margin, margin, margin, margin)
         }
 
     private fun meaningFor(pronoun: String): String = getString(
@@ -282,8 +287,6 @@ class ConjugationFragment : BaseFragment() {
             else -> R.string.conjugation_meaning_sie
         },
     )
-
-    private fun dp(value: Int): Int = (value * resources.displayMetrics.density).toInt()
 
     private fun attrColor(@AttrRes attr: Int): Int {
         val tv = TypedValue()

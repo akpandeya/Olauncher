@@ -1,32 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Conjugation quiz option: selected = picked, activated = the right form -->
+<!-- Conjugation quiz option: activated = the right form -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_activated="true">
         <shape android:shape="rectangle">
-            <solid android:color="?attr/todayChipColor" />
+            <solid android:color="@color/todayTile" />
             <stroke
-                android:width="2dp"
+                android:width="@dimen/strokeThin"
                 android:color="?attr/accentColor" />
             <corners android:radius="@dimen/radiusMedium" />
         </shape>
     </item>
-    <item android:state_selected="true">
-        <shape android:shape="rectangle">
-            <solid android:color="?attr/primaryColorTrans50" />
-            <stroke
-                android:width="@dimen/strokeHairline"
-                android:color="?attr/primaryColor" />
-            <corners android:radius="@dimen/radiusMedium" />
-        </shape>
-    </item>
     <item>
-        <ripple android:color="?attr/primaryColorTrans50">
-            <item>
+        <layer-list>
+            <!-- Outer ambient shadow -->
+            <item
+                android:top="2dp"
+                android:bottom="0dp">
                 <shape android:shape="rectangle">
-                    <solid android:color="?attr/todayChipColor" />
+                    <solid android:color="@color/todayTileShadowSoft" />
                     <corners android:radius="@dimen/radiusMedium" />
                 </shape>
             </item>
-        </ripple>
+            <!-- Direct soft shadow -->
+            <item
+                android:top="1dp"
+                android:bottom="0dp">
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/todayTileShadow" />
+                    <corners android:radius="@dimen/radiusMedium" />
+                </shape>
+            </item>
+            <!-- Top edge highlight -->
+            <item
+                android:top="0dp"
+                android:bottom="2dp">
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/todayTileHighlight" />
+                    <corners android:radius="@dimen/radiusMedium" />
+                </shape>
+            </item>
+            <!-- Raised tile surface -->
+            <item
+                android:top="1dp"
+                android:bottom="2dp">
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/todayTile" />
+                    <stroke
+                        android:width="@dimen/strokeHairline"
+                        android:color="@color/todayTileStroke" />
+                    <corners android:radius="@dimen/radiusMedium" />
+                </shape>
+            </item>
+        </layer-list>
     </item>
 </selector>

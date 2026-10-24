@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <solid android:color="?attr/todayChipColor" />
+    <solid android:color="@color/todayTile" />
     <stroke
-        android:width="2dp"
+        android:width="@dimen/strokeThin"
         android:color="?attr/dangerColor" />
     <corners android:radius="@dimen/radiusMedium" />
 </shape>
