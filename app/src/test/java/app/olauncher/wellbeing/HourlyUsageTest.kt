@@ -178,6 +178,51 @@ class HourlyUsageTest {
     }
 
     @Test
+    fun `paused then stopped does not create a phantom session from midnight`() {
+        val pkg = "com.example.distracting"
+        val events = listOf(
+            UsageEventRecord(pkg, timeMs(21, 0), eventType = 1),
+            UsageEventRecord(pkg, timeMs(21, 15), eventType = 2),
+            UsageEventRecord(pkg, timeMs(21, 15), eventType = 23),
+        )
+        val buckets = HourlyUsage.bucketEvents(events, distracting, date, zone, timeMs(22, 0))
+        for (h in 0..23) {
+            assertEquals("Hour $h", if (h == 21) 15 else 0, buckets[h])
+        }
+    }
+
+    @Test
+    fun `first event of day being stopped counts from midnight`() {
+        val events = listOf(
+            UsageEventRecord("com.example.distracting", timeMs(8, 0), eventType = 23),
+        )
+        val buckets = HourlyUsage.bucketEvents(events, distracting, date, zone, timeMs(9, 0))
+        for (h in 0..23) {
+            assertEquals("Hour $h", if (h in 0..7) 60 else 0, buckets[h])
+        }
+    }
+
+    @Test
+    fun `stopped after paused with earlier resume counts only one session`() {
+        val pkg = "com.example.distracting"
+        val events = listOf(
+            UsageEventRecord(pkg, timeMs(10, 0), eventType = 1),
+            UsageEventRecord(pkg, timeMs(10, 30), eventType = 2),
+            UsageEventRecord(pkg, timeMs(10, 30), eventType = 23),
+            UsageEventRecord(pkg, timeMs(14, 0), eventType = 1),
+            UsageEventRecord(pkg, timeMs(14, 10), eventType = 2),
+            UsageEventRecord(pkg, timeMs(14, 10), eventType = 23),
+        )
+        val sessions = HourlyUsage.extractSessions(events, distracting, timeMs(0, 0), timeMs(15, 0))
+        assertEquals(2, sessions.size)
+        val buckets = HourlyUsage.bucketEvents(events, distracting, date, zone, timeMs(15, 0))
+        for (h in 0..23) {
+            val expected = when (h) { 10 -> 30; 14 -> 10; else -> 0 }
+            assertEquals("Hour $h", expected, buckets[h])
+        }
+    }
+
+    @Test
     fun `empty events or empty distracting set returns 24 zero buckets`() {
         val emptyBuckets = HourlyUsage.bucketEvents(emptyList(), distracting, date, zone, timeMs(12, 0))
         assertEquals(24, emptyBuckets.size)
