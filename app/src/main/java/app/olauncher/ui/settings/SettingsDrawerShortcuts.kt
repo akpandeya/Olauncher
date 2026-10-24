@@ -94,7 +94,6 @@ import app.olauncher.data.ShortcutOffset
 import app.olauncher.data.ShortcutIconStyle
 import app.olauncher.data.ShortcutSize
 import app.olauncher.ui.today.TodayCards
-import app.olauncher.ui.today.TodayTiles
 import app.olauncher.databinding.DialogFontFamilyBinding
 import app.olauncher.databinding.DialogTextSizeBinding
 import app.olauncher.databinding.FragmentSettingsBinding
@@ -325,29 +324,6 @@ internal fun SettingsFragment.populateTodayCards() {
         val enabled = TodayCards.all.count { prefs.isTodayCardEnabled(it.key) }
         binding.todayCards.text = "$enabled/$total"
     }
-}
-
-internal fun SettingsFragment.populateTodayTiles() {
-    val cards = TodayTiles.tileCards(TodayCards.all)
-    binding.todayTiles.text = if (cards.isEmpty()) "" else "${cards.count { prefs.isTodayTileOn(it.key) }}/${cards.size}"
-}
-
-internal fun SettingsFragment.showTodayTilesDialog() {
-    val cards = TodayTiles.tileCards(TodayCards.all)
-    if (cards.isEmpty()) return
-    val checked = BooleanArray(cards.size) { i -> prefs.isTodayTileOn(cards[i].key) }
-    val tilesDialog = requireContext().createMultiChoiceDialog(
-        title = R.string.today_tiles,
-        items = cards.map { getString(it.titleRes) },
-        checked = checked,
-        action = R.string.okay,
-    ) {
-        cards.forEachIndexed { i, card -> prefs.setTodayTileOn(card.key, checked[i]) }
-        populateTodayTiles()
-    }
-    dialog?.dismiss()
-    dialog = tilesDialog
-    tilesDialog.showRespectingStatusBar()
 }
 
 internal fun SettingsFragment.showSwipeRightMenu(anchor: View) =

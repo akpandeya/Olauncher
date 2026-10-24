@@ -22,8 +22,8 @@ object TodayOrder {
     private const val WIDGET_PREFIX = "widget:"
 
     /**
-     * Whether a half-width card shares a row with the next card. A card drawn as a grid tile
-     * (it has a grid span) belongs to the grid, so it is never paired as half of a row.
+     * Whether a half-width card shares a row with the next card. A card with a grid span
+     * (a widget) belongs to the grid, so it is never paired as half of a row.
      */
     fun pairsAsHalfWidth(halfWidth: Boolean, gridSpan: Int?, nextHalfWidth: Boolean, nextGridSpan: Int?): Boolean =
         halfWidth && gridSpan == null && nextHalfWidth && nextGridSpan == null

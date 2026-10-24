@@ -317,9 +317,9 @@ class TodayFragment : BaseFragment() {
                     container.addView(slot.root)
                     index++
                 }
-                card.gridSpan(requireContext()) != null -> {
+                card.gridSpan != null -> {
                     var end = index
-                    while (end < cards.size && cards[end].gridSpan(requireContext()) != null) end++
+                    while (end < cards.size && cards[end].gridSpan != null) end++
                     container.addView(
                         widgetGrid(cards.subList(index, end), groupKeys),
                         ViewGroup.LayoutParams.MATCH_PARENT,
@@ -329,8 +329,8 @@ class TodayFragment : BaseFragment() {
                 }
                 cards.getOrNull(index + 1)?.let { next ->
                     TodayOrder.pairsAsHalfWidth(
-                        card.halfWidth, card.gridSpan(requireContext()),
-                        next.halfWidth, next.gridSpan(requireContext()),
+                        card.halfWidth, card.gridSpan,
+                        next.halfWidth, next.gridSpan,
                     )
                 } == true -> {
                     container.addView(halfWidthRow(card, cards[index + 1], groupKeys))
@@ -367,7 +367,7 @@ class TodayFragment : BaseFragment() {
         val grid = WidgetGridView(requireContext())
         for (card in cards) {
             val panel = inflatePanel(grid, card, groupKeys)
-            val span = (card.gridSpan(requireContext()) ?: TodayWidgetResize.COLUMNS).coerceIn(1, TodayWidgetResize.COLUMNS)
+            val span = (card.gridSpan ?: TodayWidgetResize.COLUMNS).coerceIn(1, TodayWidgetResize.COLUMNS)
             panel.layoutParams = WidgetGridView.LayoutParams(
                 panel.layoutParams as ViewGroup.MarginLayoutParams,
                 span,
@@ -405,20 +405,6 @@ class TodayFragment : BaseFragment() {
             panel.tvPanelTitle.setOnLongClickListener {
                 todayWidgets.remove(widgetId)
                 true
-            }
-        } else if (card.tileSpan != null && card.gridSpan(requireContext()) != null) {
-            // Tile panels get the same Pin / Move menu as widgets, so they can be put next to one.
-            panel.tvPanelTitle.isClickable = true
-            panel.tvPanelTitle.contentDescription = getString(R.string.today_card_options, title)
-            panel.tvPanelTitle.setCompoundDrawablesRelativeWithIntrinsicBounds(
-                0,
-                0,
-                android.R.drawable.ic_menu_more,
-                0,
-            )
-            panel.tvPanelTitle.compoundDrawablePadding = (8 * resources.displayMetrics.density).toInt()
-            panel.tvPanelTitle.setOnClickListener {
-                todayWidgets.showCardOptions(it, card.key, groupKeys)
             }
         }
 

@@ -107,7 +107,6 @@ internal fun SettingsFragment.populateAllRows() {
     populateSearchEngine()
     populateSwipeApps()
     populateTodayCards()
-    populateTodayTiles()
     populateTodayOrder()
     populateWeather()
     populateNudgeWater()

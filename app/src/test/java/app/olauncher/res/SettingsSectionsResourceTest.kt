@@ -195,7 +195,7 @@ class SettingsSectionsResourceTest {
         val glanceAt = todayItems.indexOfFirst { it is SettingsItem.Heading && it.titleRes == R.string.glance }
         assertTrue("Glance heading must be in Today", glanceAt > 0)
         val beforeGlance = todayItems.take(glanceAt).filterIsInstance<SettingsItem.Row>().map { it.spec.primaryId }
-        assertEquals(listOf(R.id.todayCards, R.id.todayTiles, R.id.todayOrder, R.id.intentionOnHome), beforeGlance)
+        assertEquals(listOf(R.id.todayCards, R.id.todayOrder, R.id.intentionOnHome), beforeGlance)
         val afterGlance = todayItems.drop(glanceAt + 1).filterIsInstance<SettingsItem.Row>().map { it.spec.primaryId }
         assertEquals(listOf(R.id.weather), afterGlance)
         val today = rowIdNames(SettingsSections.KEY_TODAY)
@@ -580,9 +580,6 @@ class SettingsSectionsResourceTest {
             "todayCards",
             "todayCardsLayout",
             "todayCardsTitle",
-            "todayTiles",
-            "todayTilesLayout",
-            "todayTilesTitle",
             "todayOrder",
             "todayOrderLayout",
             "todayOrderTitle",
