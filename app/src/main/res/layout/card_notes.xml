@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:clickable="true"
+    android:focusable="false"
     android:orientation="vertical">
 
     <TextView
@@ -41,6 +43,12 @@
         android:maxLines="3"
         android:paddingTop="8dp"
         tools:text="Milk, eggs, bread" />
+
+    <LinearLayout
+        android:id="@+id/itemsPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" />
 
     <TextView
         android:id="@+id/tvNoteDate"
@@ -94,19 +102,16 @@
         android:visibility="gone"
         tools:text="Next: Mon 27 Oct · Call dentist" />
 
-    <EditText
-        android:id="@+id/etAddNote"
+    <TextView
+        android:id="@+id/btnAddNote"
         style="@style/TextSmallBold"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@null"
+        android:background="?android:attr/selectableItemBackground"
+        android:focusable="true"
         android:gravity="center_vertical|end"
-        android:hint="@string/notes_card_add"
-        android:imeOptions="actionDone"
-        android:importantForAutofill="no"
-        android:inputType="textCapSentences"
-        android:maxLines="1"
         android:minHeight="48dp"
-        android:textColorHint="?attr/accent" />
+        android:text="@string/notes_card_add"
+        android:textColor="?attr/accent" />
 
 </LinearLayout>

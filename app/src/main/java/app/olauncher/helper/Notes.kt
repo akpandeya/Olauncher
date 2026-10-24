@@ -16,6 +16,7 @@ import org.json.JSONObject
  * [pinned] notes come first on the card and the home line.
  * [edited] is epoch millis of the last tick or pin change; null when never changed.
  * A checklist note has [items]; its [text] is then the title and may be empty.
+ * [body] is the optional multi-line text under a plain note's title. [lists] are ids of the lists the note belongs to.
  */
 data class Note(
     val id: Long,
@@ -26,6 +27,8 @@ data class Note(
     val pinned: Boolean = false,
     val items: List<ChecklistItem> = emptyList(),
     val edited: Long? = null,
+    val body: String = "",
+    val lists: List<String> = emptyList(),
 )
 
 /** One tickable line of a checklist note. */
@@ -90,6 +93,8 @@ object Notes {
                     n.showFrom?.let { put("showFrom", it) }
                     if (n.pinned) put("pinned", true)
                     n.edited?.let { put("edited", it) }
+                    if (n.body.isNotEmpty()) put("body", n.body)
+                    if (n.lists.isNotEmpty()) put("lists", JSONArray(n.lists))
                     if (n.items.isNotEmpty()) {
                         put("items", JSONArray().also { arr ->
                             n.items.forEach { arr.put(JSONObject().put("text", it.text).put("checked", it.checked)) }
@@ -115,12 +120,17 @@ object Notes {
                 if ((text.isEmpty() && items.isEmpty()) || !o.has("id")) continue
                 val id = o.optLong("id", -1L)
                 if (!seen.add(id)) continue
-                result.add(Note(id, text, o.optLong("created", 0L), o.optBoolean("done", false), if (o.has("showFrom")) o.optLong("showFrom") else null, o.optBoolean("pinned", false), items, if (o.has("edited")) o.optLong("edited") else null))
+                result.add(Note(id, text, o.optLong("created", 0L), o.optBoolean("done", false), if (o.has("showFrom")) o.optLong("showFrom") else null, o.optBoolean("pinned", false), items, if (o.has("edited")) o.optLong("edited") else null, o.optString("body", ""), decodeLists(o.optJSONArray("lists"))))
             }
             result
         } catch (_: Exception) {
             emptyList()
         }
+    }
+
+    private fun decodeLists(array: JSONArray?): List<String> {
+        if (array == null) return emptyList()
+        return (0 until array.length()).mapNotNull { array.optString(it, "").takeIf { id -> id.isNotEmpty() } }.distinct()
     }
 
     private fun decodeItems(array: JSONArray?): List<ChecklistItem> {
@@ -138,7 +148,7 @@ object Notes {
      * Reads `[] Shopping: milk, eggs` as a title and items (`[] milk, eggs` has no title). The title
      * ends at the first `:` that is followed by a space or the end (so `10:30` is not one), only if that comes before the first `,`. Null when there is no item.
      */
-    private fun parseChecklist(cleaned: String): Pair<String, List<ChecklistItem>>? {
+    internal fun parseChecklist(cleaned: String): Pair<String, List<ChecklistItem>>? {
         if (!cleaned.startsWith(CHECKLIST_PREFIX)) return null
         var rest = cleaned.removePrefix(CHECKLIST_PREFIX).trim()
         var title = ""
@@ -314,6 +324,16 @@ object Notes {
         return CardLines(main, more, dated)
     }
 
+    /** Checklist items the Today card shows as tick rows. */
+    const val CARD_MAX_ITEMS = 4
+
+    /** The first [max] items of [note] with their real index (the index [toggleItem] needs); empty for a plain note. */
+    fun cardItems(note: Note, max: Int = CARD_MAX_ITEMS): List<IndexedValue<ChecklistItem>> =
+        note.items.withIndex().take(max)
+
+    /** The note's heading on the card: its title, or the progress ("1/3") for an untitled checklist. */
+    fun cardTitle(note: Note): String = if (note.items.isNotEmpty() && note.text.isNotEmpty()) note.text else displayText(note)
+
     /** "1 of 3 done" for a checklist note from [format] (two %d: done, total); null for a plain note. */
     fun progressText(note: Note, format: String): String? =
         if (note.items.isEmpty()) null else String.format(Locale.ROOT, format, doneCount(note), note.items.size)
@@ -329,7 +349,7 @@ object Notes {
         val words = fold(query).split(WHITESPACE).filter { it.isNotEmpty() }
         if (words.isEmpty()) return notes
         return notes.filter { note ->
-            val haystack = fold((listOf(note.text) + note.items.map { it.text }).joinToString(" "))
+            val haystack = fold((listOf(note.text, note.body) + note.items.map { it.text }).joinToString(" "))
             words.all { it in haystack }
         }
     }
@@ -337,7 +357,7 @@ object Notes {
     private fun fold(text: String): String =
         Normalizer.normalize(text.lowercase(Locale.ROOT), Normalizer.Form.NFD).replace(MARKS, "").replace("ß", "ss")
 
-    private fun prune(notes: List<Note>): List<Note> {
+    internal fun prune(notes: List<Note>): List<Note> {
         val keepDone = notes.filter { it.done }.sortedByDescending { it.created }.take(MAX_DONE).map { it.id }.toSet()
         val openNotes = open(notes)
         // Pinned notes are never dropped by the cap.
@@ -366,6 +386,13 @@ class NotesStore(private val read: () -> String?, private val write: (String) ->
         val result = Notes.addShopping(all(), items, now)
         if (result.added > 0) write(Notes.encode(result.notes))
         return result.added
+    }
+
+    /** Saves a note from the Add note sheet; see [NoteDraftRules.add]. Only [DraftResult.Added] changes the store. */
+    fun addDraft(draft: NoteDraft, now: Long, zoned: java.time.ZonedDateTime): DraftResult {
+        val result = NoteDraftRules.add(all(), draft, now, zoned)
+        if (result is DraftResult.Added) write(Notes.encode(result.notes))
+        return result
     }
 
     fun markDone(id: Long, done: Boolean = true) = write(Notes.encode(Notes.markDone(all(), id, done)))
