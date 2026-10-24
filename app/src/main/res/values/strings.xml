@@ -580,6 +580,7 @@
     <string name="conjugation_summary_note" tools:ignore="MissingTranslation">Missed forms come back until you get them right.</string>
     <string name="conjugation_practise_again" tools:ignore="MissingTranslation">Practise %1$s again</string>
     <string name="conjugation_practise_misses" tools:ignore="MissingTranslation">Practise missed forms again</string>
+    <string name="conjugation_type_them" tools:ignore="MissingTranslation">Type them</string>
     <string name="conjugation_done" tools:ignore="MissingTranslation">Done</string>
     <string name="conjugation_cell_right" tools:ignore="MissingTranslation">%1$s  %2$s</string>
     <string name="conjugation_cell_missed" tools:ignore="MissingTranslation">%1$s  %2$s  %3$d miss</string>

@@ -203,6 +203,44 @@
 
         </ScrollView>
 
+        <LinearLayout
+            android:id="@+id/typedContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:orientation="vertical"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <EditText
+                android:id="@+id/etAnswer"
+                style="@style/TodayCardBodyBold"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/quiz_choice"
+                android:gravity="center"
+                android:imeOptions="actionDone"
+                android:importantForAutofill="no"
+                android:inputType="text|textNoSuggestions"
+                android:maxLines="1"
+                android:minHeight="@dimen/quiz_choice_min_height"
+                android:padding="@dimen/quiz_cell_padding"
+                android:shadowColor="@android:color/transparent" />
+
+            <TextView
+                android:id="@+id/tvCorrection"
+                style="@style/TodayCardBodyBold"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center"
+                android:textColor="?attr/accentColor"
+                android:visibility="gone"
+                tools:text="machen"
+                tools:visibility="visible" />
+
+        </LinearLayout>
+
         </LinearLayout>
 
         <TextView
@@ -215,6 +253,21 @@
             android:gravity="center"
             android:minHeight="48dp"
             android:text="@string/conjugation_check"
+            tools:visibility="visible" />
+
+        <TextView
+            android:id="@+id/btnType"
+            style="@style/TodayCardBody"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:minHeight="48dp"
+            android:text="@string/conjugation_type_them"
+            android:visibility="gone"
             tools:visibility="visible" />
 
         <TextView
