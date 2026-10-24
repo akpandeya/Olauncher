@@ -69,7 +69,8 @@ object WiktionaryApi {
     }
 
     sealed interface LookupResult {
-        data class Found(val meaning: String, val candidate: String) : LookupResult
+        /** [baseForm] is set when the typed word is an inflection and [meaning] is its base word's. */
+        data class Found(val meaning: String, val candidate: String, val baseForm: String? = null) : LookupResult
         data object NotFound : LookupResult
         data object Failed : LookupResult
     }
@@ -80,12 +81,28 @@ object WiktionaryApi {
     fun lookup(text: String, fetcher: (String) -> FetchOutcome = ::fetch): LookupResult {
         for (candidate in WiktionaryParser.candidates(text)) {
             when (val outcome = fetcher(candidate)) {
-                is FetchOutcome.Success -> return LookupResult.Found(outcome.definition, candidate)
+                is FetchOutcome.Success -> return followBase(outcome.definition, candidate, fetcher)
                 FetchOutcome.NotFound -> Unit
                 is FetchOutcome.IoError -> return LookupResult.Failed
             }
         }
         return LookupResult.NotFound
+    }
+
+    /** Replaces an inflection's gloss with its base word's meaning; keeps the typed form on any miss. */
+    private fun followBase(definition: String, candidate: String, fetcher: (String) -> FetchOutcome): LookupResult.Found {
+        val resolved = LemmaLink.resolve(definition) { fetchBaseMeaning(it, fetcher) }
+            ?: return LookupResult.Found(definition, candidate)
+        return LookupResult.Found(resolved.meaning, resolved.baseForm, baseForm = resolved.baseForm)
+    }
+
+    /** First candidate spelling of [base] with a meaning; network errors count as a miss. */
+    internal fun fetchBaseMeaning(base: String, fetcher: (String) -> FetchOutcome): String? {
+        for (candidate in WiktionaryParser.candidates(base)) {
+            val outcome = fetcher(candidate)
+            if (outcome is FetchOutcome.Success) return outcome.definition
+        }
+        return null
     }
 
     fun fetch(candidate: String): FetchOutcome {

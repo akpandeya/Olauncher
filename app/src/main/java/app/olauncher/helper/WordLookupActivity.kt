@@ -56,7 +56,8 @@ class WordLookupActivity : AppCompatActivity() {
 
         val saved = WordsStore(this).all().firstOrNull { it.text.equals(word, ignoreCase = true) }
         var foundMeaning: String? = null
-        binding.lookupSave.setOnClickListener { saveWord(word, foundMeaning) }
+        var foundBase: String? = null
+        binding.lookupSave.setOnClickListener { saveWord(foundBase ?: word, foundMeaning, if (foundBase != null) word else "") }
 
         if (saved != null) {
             showMeaning(saved.meaning.ifBlank { getString(R.string.word_row_no_meaning_yet) })
@@ -75,7 +76,8 @@ class WordLookupActivity : AppCompatActivity() {
             when (result) {
                 is WiktionaryApi.LookupResult.Found -> {
                     foundMeaning = result.meaning
-                    showMeaning(getString(R.string.word_row_wiktionary_meaning, word, result.meaning))
+                    foundBase = result.baseForm
+                    showMeaning(getString(R.string.word_row_wiktionary_meaning, result.baseForm ?: word, result.meaning))
                 }
                 WiktionaryApi.LookupResult.NotFound -> showMeaning(getString(R.string.word_row_no_meaning_found))
                 WiktionaryApi.LookupResult.Failed -> showMeaning(getString(R.string.word_row_unreachable))
@@ -94,9 +96,9 @@ class WordLookupActivity : AppCompatActivity() {
         binding.lookupSave.alpha = 0.5f
     }
 
-    private fun saveWord(text: String, meaning: String?) {
+    private fun saveWord(text: String, meaning: String?, context: String = "") {
         val store = WordsStore(this)
-        val word = store.add(text)
+        val word = store.add(text, context)
         if (!meaning.isNullOrBlank() && word.meaning.isBlank()) {
             store.update(word.copy(meaning = meaning, meaningSource = "wiktionary"))
         } else {

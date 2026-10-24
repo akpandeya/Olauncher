@@ -3,6 +3,7 @@ package app.olauncher.wellbeing
 import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
+import app.olauncher.data.store.LemmaLink
 import app.olauncher.data.store.WiktionaryApi
 import app.olauncher.data.store.WiktionaryApi.FetchOutcome
 import app.olauncher.data.store.WiktionaryParser
@@ -61,7 +62,25 @@ class WordLookupWorker(
             if (meaningFound != null) {
                 val current = store.get(wordId)
                 if (current != null && current.meaningSource != "user") {
-                    store.update(current.copy(meaning = meaningFound, meaningSource = "wiktionary"))
+                    // An inflection's gloss has no meaning: swap in the base word, keep the typed form as context.
+                    val resolved = LemmaLink.resolve(meaningFound) {
+                        WiktionaryApi.fetchBaseMeaning(it, fetchCandidate)
+                    }
+                    val baseTaken = resolved != null && store.all().any {
+                        it.id != current.id && it.text.equals(resolved.baseForm, ignoreCase = true)
+                    }
+                    store.update(
+                        if (resolved != null && !baseTaken) {
+                            current.copy(
+                                text = resolved.baseForm,
+                                context = current.context.ifBlank { current.text },
+                                meaning = resolved.meaning,
+                                meaningSource = "wiktionary"
+                            )
+                        } else {
+                            current.copy(meaning = resolved?.meaning ?: meaningFound, meaningSource = "wiktionary")
+                        }
+                    )
                 }
             }
 

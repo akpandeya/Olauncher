@@ -26,12 +26,17 @@ data class OfflineGermanEntry(
 class OfflineGermanDictionary(private val findEntries: (String) -> List<OfflineGermanEntry>) {
     fun lookup(text: String, pluralLabel: String): WiktionaryApi.LookupResult.Found? {
         val normalized = Normalizer.normalize(text.trim(), Normalizer.Form.NFC)
-        for (candidate in WiktionaryParser.candidates(normalized)) {
+        val candidates = WiktionaryParser.candidates(normalized)
+        for (candidate in candidates) {
             val entries = findEntries(candidate)
             if (entries.isNotEmpty()) {
+                val lemma = entries.first().lemma
+                // The form table maps inflections to their lemma entry; flag that so it is saved instead.
+                val baseForm = lemma.takeIf { l -> candidates.none { it.equals(l, ignoreCase = true) } }
                 return WiktionaryApi.LookupResult.Found(
                     entries.take(2).joinToString("; ") { it.meaning(pluralLabel) },
-                    entries.first().lemma
+                    lemma,
+                    baseForm
                 )
             }
         }

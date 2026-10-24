@@ -25,7 +25,10 @@ class OfflineGermanDictionaryTest {
     fun `verb and inflected word include base lemma and main forms`() {
         for (word in listOf("gehen", "ging")) {
             assertEquals(
-                LookupResult.Found("gehen (verb) · geht · ging · gegangen — to go, to walk", "gehen"),
+                LookupResult.Found(
+                    "gehen (verb) · geht · ging · gegangen — to go, to walk", "gehen",
+                    baseForm = "gehen".takeIf { word == "ging" }
+                ),
                 dictionary.lookup(word, "plural")
             )
         }
