@@ -20,8 +20,10 @@ import app.olauncher.MainViewModel
 import app.olauncher.R
 import app.olauncher.data.AppModel
 import app.olauncher.data.Prefs
-import app.olauncher.data.store.Leitner
 import app.olauncher.data.store.PauseWordPicker
+import app.olauncher.data.store.ReviewEvent
+import app.olauncher.data.store.ReviewEventsStore
+import app.olauncher.data.store.ReviewSessionLogic
 import app.olauncher.data.store.WordsStore
 import app.olauncher.databinding.FragmentPauseBinding
 import app.olauncher.helper.Haptics
@@ -502,12 +504,14 @@ class PauseFragment : Fragment() {
                 if (ctx != null) {
                     val s = getStore(ctx)
                     val currentToday = epochDaySupplier()
-                    val updated = if (knewIt) {
-                        Leitner.knowIt(word, currentToday)
-                    } else {
-                        Leitner.again(word, currentToday)
-                    }
-                    s.update(updated)
+                    ReviewSessionLogic.gradeAndLog(
+                        word,
+                        if (knewIt) ReviewEvent.Result.KNEW else ReviewEvent.Result.AGAIN,
+                        currentToday,
+                        System.currentTimeMillis(),
+                        s::update,
+                        ReviewEventsStore(ctx),
+                    )
                 }
                 if (_binding != null) {
                     binding.wordReveal.root.isVisible = false

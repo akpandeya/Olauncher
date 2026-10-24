@@ -25,6 +25,36 @@ class ReviewSessionLogicTest {
     }
 
     @Test
+    fun `gradeAndLog saves the word and appends one event with distinguishing values`() {
+        val dir = java.nio.file.Files.createTempDirectory("grade_log_test").toFile()
+        try {
+            val events = ReviewEventsStore(dir)
+            val word = Word(id = 42, text = "a", box = 3, dueDay = today, addedAt = 0L)
+            var saved: Word? = null
+
+            val event = ReviewSessionLogic.gradeAndLog(
+                word, ReviewEvent.Result.KNEW, today, 1_234_567L, { saved = it }, events,
+            )
+
+            assertEquals(4, saved?.box)
+            assertEquals(listOf(event), events.all())
+            assertEquals(42L, event.wordId)
+            assertEquals(ReviewEvent.Result.KNEW, event.result)
+            assertEquals(3, event.boxBefore)
+            assertEquals(4, event.boxAfter)
+            assertEquals(1_234_567L, event.reviewedAt)
+
+            ReviewSessionLogic.gradeAndLog(
+                word, ReviewEvent.Result.AGAIN, today, 2_000_000L, { saved = it }, events,
+            )
+            assertEquals(2, events.all().size)
+            assertEquals(1, events.all().last().boxAfter)
+        } finally {
+            dir.deleteRecursively()
+        }
+    }
+
+    @Test
     fun `an unknown result leaves the word untouched`() {
         val word = Word(id = 1, text = "a", box = 3, dueDay = today, addedAt = 0L)
         assertEquals(word, ReviewSessionLogic.grade(word, "bogus", today))

@@ -39,6 +39,7 @@ class ReviewFragment : BaseFragment() {
     private var sessionEvents: List<ReviewEvent> = emptyList()
     private var eventsBeforeSession: List<ReviewEvent> = emptyList()
     private var lastGradeAt = 0L
+    private var sessionStarted = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -86,15 +87,15 @@ class ReviewFragment : BaseFragment() {
                 findNavController().navigateUp()
             }
         }
-    }
 
-    override fun onResume() {
-        super.onResume()
-        startSession()
+        // One session per screen visit: resuming (e.g. back from another app) or
+        // recreating the view keeps the queue and the summary.
+        if (sessionStarted) render() else startSession()
     }
 
     private fun startSession() {
         val context = context ?: return
+        sessionStarted = true
         val store = WordsCard.getStore(context)
         val today = WordsCard.epochDaySupplier()
         queue = ReviewSessionLogic.queue(store.all(), today)
@@ -114,14 +115,8 @@ class ReviewFragment : BaseFragment() {
         Haptics.tick(binding.root)
         val store = WordsCard.getStore(context)
         val today = WordsCard.epochDaySupplier()
-        val updated = ReviewSessionLogic.grade(word, result, today)
-        store.update(updated)
-        val event = ReviewEventsStore(context).append(
-            wordId = word.id,
-            result = result,
-            boxBefore = word.box,
-            boxAfter = updated.box,
-            reviewedAt = System.currentTimeMillis(),
+        val event = ReviewSessionLogic.gradeAndLog(
+            word, result, today, System.currentTimeMillis(), store::update, ReviewEventsStore(context),
         )
         sessionEvents = sessionEvents + event
         answered++
