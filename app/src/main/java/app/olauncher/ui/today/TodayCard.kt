@@ -29,6 +29,15 @@ interface TodayCard {
 
     fun title(context: Context): CharSequence = context.getString(titleRes)
 
+    /** True when the card draws its own heading (with controls in it), so the panel adds none. */
+    val drawsOwnHeader: Boolean get() = false
+
+    /** True for cards drawn on a warm tint (Held) instead of the plain card surface. */
+    val tinted: Boolean get() = false
+
+    /** True for cards that sit two to a row, side by side, on the page. */
+    val halfWidth: Boolean get() = false
+
     /** True for cards drawn in the page header instead of a panel (the weather). */
     val inHero: Boolean get() = false
 
@@ -46,7 +55,7 @@ interface TodayCard {
 
     /**
      * Column span on the Today grid for cards that live on it (widgets), or null
-     * for built-in cards, which stay full-width rows.
+     * for built-in cards, which stay full-width rows (or half-width pairs, see [halfWidth]).
      */
     val gridSpan: Int? get() = null
 
@@ -58,5 +67,5 @@ interface TodayCard {
 }
 
 object TodayCards {
-    val all: List<TodayCard> = listOf(WeatherCard, NextUpCard, SavedCard, HeldCard, WellbeingCard, WordsCard, NotesCard)
+    val all: List<TodayCard> = listOf(WeatherCard, WordsCard, NotesCard, WellbeingCard, SavedCard, NextUpCard, HeldCard)
 }

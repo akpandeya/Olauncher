@@ -1,22 +1,21 @@
 package app.olauncher.ui.today.cards
 
 import android.content.Context
-import android.text.SpannableString
-import android.text.Spanned
-import android.text.style.LeadingMarginSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import app.olauncher.R
+import app.olauncher.data.Prefs
 import app.olauncher.databinding.CardWeekBinding
+import app.olauncher.databinding.ItemWeekAppBinding
 import app.olauncher.ui.today.TodayCard
 import app.olauncher.ui.today.TodayOrder
 import app.olauncher.wellbeing.DaySnapshot
-import app.olauncher.wellbeing.Review
 import app.olauncher.wellbeing.UsageSnapshotStore
-import app.olauncher.wellbeing.WeeklyReview
+import app.olauncher.wellbeing.WeekBento
+import app.olauncher.wellbeing.WellbeingBento
 import java.time.LocalDate
 import java.time.ZonedDateTime
 
@@ -76,49 +75,69 @@ object WeekCard : TodayCard {
     }
 }
 
-/** Wrapped lines of a review line start indented, so a long line reads as one item. */
-internal fun hangingIndent(view: View, text: CharSequence): CharSequence {
-    val indent = (HANGING_INDENT_DP * view.resources.displayMetrics.density).toInt()
-    return SpannableString(text).apply {
-        setSpan(LeadingMarginSpan.Standard(0, indent), 0, length, Spanned.SPAN_INCLUSIVE_EXCLUSIVE)
-    }
-}
-
-private const val HANGING_INDENT_DP = 16
-
-/** Per-view state of the Week card; lives and dies with the card's root view. */
+/** Per-view state of the 7 days side; lives and dies with the card's root view. */
 internal class WeekCardView(private val binding: CardWeekBinding) {
 
-    var currentReview: Review? = null
+    var current: WeekBento? = null
         private set
 
-    fun render(review: Review) {
-        currentReview = review
+    fun render(bento: WeekBento) {
+        current = bento
         val b = binding
         val context = b.root.context
-        b.tvDistractingApps.isVisible = review.distractingAppsLine != null
-        b.tvDistractingApps.text = review.distractingAppsLine?.let { hangingIndent(b.root, WeekCardText.formatLine(context, it)) }
+        b.tvWeekTotal.text = WeekCardText.formatDuration(context, bento.totalMinutes)
 
-        b.tvWeekComparison.isVisible = review.weekComparisonLine != null
-        b.tvWeekComparison.text = review.weekComparisonLine?.let { hangingIndent(b.root, WeekCardText.formatLine(context, it)) }
+        val change = bento.changePercent
+        b.tvWeekChange.text = when {
+            change == null -> context.getString(R.string.wellbeing_week_no_change)
+            change < 0 -> context.getString(R.string.week_review_less_than_week_before, -change)
+            else -> context.getString(R.string.week_review_more_than_week_before, change)
+        }
 
-        b.tvTopApps.isVisible = review.topAppsLine != null
-        b.tvTopApps.text = review.topAppsLine?.let { hangingIndent(b.root, WeekCardText.formatLine(context, it)) }
+        b.dayBars.setBars(bento.bars, bento.scaleMinutes, bento.allowanceMin)
+        val allowanceText = when {
+            bento.allowanceMin <= 0 -> null
+            bento.daysOverAllowance > 0 ->
+                context.getString(R.string.week_review_over_allowance, bento.daysOverAllowance, WellbeingBento.DAYS)
+            else -> context.getString(R.string.wellbeing_week_allowance_line, WeekCardText.formatDuration(context, bento.allowanceMin))
+        }
+        b.tvWeekAllowance.isVisible = allowanceText != null
+        b.tvWeekAllowance.text = allowanceText
+        b.dayBars.contentDescription = context.getString(
+            R.string.wellbeing_week_bars_description,
+            allowanceText.orEmpty(),
+        )
 
-        b.tvOverAllowance.isVisible = review.overAllowanceLine != null
-        b.tvOverAllowance.text = review.overAllowanceLine?.let { hangingIndent(b.root, WeekCardText.formatLine(context, it)) }
+        b.llTopApps.removeAllViews()
+        val inflater = LayoutInflater.from(context)
+        if (bento.topApps.isEmpty()) {
+            val row = ItemWeekAppBinding.inflate(inflater, b.llTopApps, false)
+            row.tvAppName.setText(R.string.wellbeing_week_no_apps)
+            row.tvAppTime.isVisible = false
+            b.llTopApps.addView(row.root)
+        }
+        for (app in bento.topApps) {
+            val row = ItemWeekAppBinding.inflate(inflater, b.llTopApps, false)
+            row.tvAppName.text = app.label
+            row.tvAppTime.text = WeekCardText.formatDuration(context, app.minutes)
+            b.llTopApps.addView(row.root)
+        }
 
-        b.tvPause.isVisible = review.pauseLine != null
-        b.tvPause.text = review.pauseLine?.let { hangingIndent(b.root, WeekCardText.formatLine(context, it)) }
-
-        b.tvNudges.isVisible = review.nudgesLine != null
-        b.tvNudges.text = review.nudgesLine?.let { hangingIndent(b.root, WeekCardText.formatLine(context, it)) }
+        b.tvWeekNotNow.text = bento.notNow.toString()
+        val topWhy = bento.topWhy
+        b.tvWeekNotNowSub.text = if (topWhy != null) {
+            context.getString(R.string.wellbeing_opened_anyway_mostly, bento.opened, WeekCardText.formatWhy(context, topWhy))
+        } else {
+            context.getString(R.string.wellbeing_week_not_now_sub, bento.opened)
+        }
+        b.tvWeekWaterWalk.text = "${bento.water} · ${bento.walk}"
     }
 
+    /** Stored days only, for a card shown on its own; the Wellbeing card adds today's live numbers. */
     fun render() {
         val context = binding.root.context ?: return
         val store = WeekCard.getUsageSnapshotStore(context)
         val today = WeekCard.todaySupplier()
-        render(WeeklyReview.summarise(store.getAll(), today))
+        render(WellbeingBento.week(store.getAll(), today, DaySnapshot(epochDay = today), Prefs(context).pauseAllowanceMin))
     }
 }

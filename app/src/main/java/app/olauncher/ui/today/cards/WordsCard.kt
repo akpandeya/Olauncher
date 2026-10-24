@@ -1,24 +1,17 @@
 package app.olauncher.ui.today.cards
 
 import android.content.Context
-import android.text.TextUtils
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import app.olauncher.R
 import app.olauncher.helper.Haptics
 import app.olauncher.data.Prefs
-import app.olauncher.data.store.ReviewEvent
-import app.olauncher.data.store.ReviewEventsStore
-import app.olauncher.data.store.ReviewSessionLogic
-import app.olauncher.data.store.Word
 import app.olauncher.data.store.WordsStore
 import app.olauncher.databinding.CardWordsBinding
 import app.olauncher.ui.today.TodayCard
-import app.olauncher.ui.today.WordReveal
 import java.time.LocalDate
 
 object WordsCardLogic {
@@ -42,9 +35,9 @@ object WordsCardLogic {
         )
     }
 
-    fun formatAllDone(context: Context, total: Int): String {
-        return context.getString(R.string.words_all_done, formatWordsCount(context, total))
-    }
+    /** "10 words · 3 learned", the line under the due count. */
+    fun formatCardLine(context: Context, total: Int, learned: Int): String =
+        context.getString(R.string.words_card_line, formatWordsCount(context, total), learned)
 
     fun showReview(due: Int): Boolean = due > 0
 
@@ -63,17 +56,17 @@ object WordsCardLogic {
 }
 
 /**
- * Stateless card entry. Per-view state (binding and [WordReveal]) lives in [WordsCardView],
- * which is stored on the card's root view, so it goes away with the view.
+ * Half-width card: the due count and the size of the word list. Tap opens the review when words
+ * are due, else the Words page. Per-view state lives in [WordsCardView], stored on the root view.
  */
 object WordsCard : TodayCard {
 
     const val KEY = "words"
-    const val DUE_LIMIT = 20
 
     override val key: String = KEY
     override val titleRes: Int = R.string.words
     override val emoji: String = "🇩🇪"
+    override val halfWidth: Boolean = true
 
     var storeProvider: ((Context) -> WordsStore)? = null
     var epochDaySupplier: () -> Long = { LocalDate.now().toEpochDay() }
@@ -81,6 +74,8 @@ object WordsCard : TodayCard {
     fun getStore(context: Context): WordsStore {
         return storeProvider?.invoke(context) ?: WordsStore(context)
     }
+
+    override fun title(context: Context): CharSequence = context.getString(R.string.words_card_title)
 
     override fun isAvailable(context: Context): Boolean {
         return WordsCardLogic.isAvailable(Prefs(context).germanEnabled)
@@ -119,74 +114,26 @@ internal class WordsCardView(
     private val onReview: () -> Unit = {},
 ) {
 
-    private var wordReveal: WordReveal? = null
+    private var due = 0
 
     init {
-        // The card shows the meaning on one line, ellipsized.
-        binding.wordReveal.tvMeaning.maxLines = 1
-        binding.wordReveal.tvMeaning.ellipsize = TextUtils.TruncateAt.END
-        // The summary lines lead to the Words page, where every word and meaning can be edited.
-        binding.tvFooter.setOnClickListener { Haptics.tick(it); onOpenWords() }
-        binding.tvEmpty.setOnClickListener { Haptics.tick(it); onOpenWords() }
-        binding.btnReview.setOnClickListener { Haptics.tick(it); onReview() }
+        binding.root.setOnClickListener {
+            Haptics.tick(it)
+            if (WordsCardLogic.showReview(due)) onReview() else onOpenWords()
+        }
     }
 
     fun render() {
         val b = binding
         val context = b.root.context ?: return
-        val store = WordsCard.getStore(context)
-        val today = WordsCard.epochDaySupplier()
-
-        val stats = store.stats(today)
-        val dueWords = store.due(today, WordsCard.DUE_LIMIT)
-
-        if (dueWords.isNotEmpty()) {
-            val dueWord = dueWords.first()
-            b.tvEmpty.isVisible = false
-            b.wordReveal.root.isVisible = true
-            b.tvFooter.isVisible = true
-            b.tvFooter.text = WordsCardLogic.formatFooter(context, stats.total, stats.due, stats.learned)
-
-            val helper = wordReveal ?: WordReveal(
-                binding = b.wordReveal,
-                onAnswer = { word, knewIt ->
-                    val s = WordsCard.getStore(context)
-                    val currentToday = WordsCard.epochDaySupplier()
-                    ReviewSessionLogic.gradeAndLog(
-                        word,
-                        if (knewIt) ReviewEvent.Result.KNEW else ReviewEvent.Result.AGAIN,
-                        currentToday,
-                        System.currentTimeMillis(),
-                        s::update,
-                        ReviewEventsStore(context),
-                    )
-                    render()
-                },
-                onWordUpdated = { updated ->
-                    WordsCard.getStore(context).update(updated)
-                    render()
-                },
-                onWordDeleted = { word ->
-                    WordsCard.getStore(context).delete(word.id)
-                    render()
-                },
-                alwaysShowMeaning = true,
-            ).also { wordReveal = it }
-
-            helper.bind(dueWord)
-            b.btnReview.isVisible = WordsCardLogic.showReview(stats.due)
-            b.btnReview.text = WordsCardLogic.reviewLabel(context.getString(R.string.words_review), stats.due)
+        val stats = WordsCard.getStore(context).stats(WordsCard.epochDaySupplier())
+        due = stats.due
+        b.tvDue.text = stats.due.toString()
+        b.tvDueLabel.setText(R.string.words_card_due)
+        b.tvLine.text = if (stats.total == 0) {
+            context.getString(R.string.words_card_none)
         } else {
-            b.wordReveal.root.isVisible = false
-            b.tvFooter.isVisible = false
-            b.btnReview.isVisible = false
-            b.tvEmpty.isVisible = true
-            b.tvEmpty.isClickable = stats.total > 0
-            b.tvEmpty.text = if (stats.total == 0) {
-                context.getString(R.string.words_empty_state)
-            } else {
-                WordsCardLogic.formatAllDone(context, stats.total)
-            }
+            WordsCardLogic.formatCardLine(context, stats.total, stats.learned)
         }
     }
 }

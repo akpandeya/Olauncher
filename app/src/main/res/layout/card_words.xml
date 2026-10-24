@@ -2,56 +2,45 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
+    android:background="?android:attr/selectableItemBackground"
+    android:clickable="true"
+    android:focusable="true"
+    android:gravity="bottom"
+    android:minHeight="72dp"
     android:orientation="vertical">
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:baselineAligned="true"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tvDue"
+            style="@style/TextLarge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/text_stat"
+            android:textStyle="bold"
+            tools:text="0" />
+
+        <TextView
+            android:id="@+id/tvDueLabel"
+            style="@style/TextSmallBold"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:textColor="@drawable/text_colors_light"
+            tools:text="due" />
+
+    </LinearLayout>
+
     <TextView
-        android:id="@+id/tvEmpty"
+        android:id="@+id/tvLine"
         style="@style/TextSmallLight"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?android:attr/selectableItemBackground"
-        android:focusable="true"
-        android:paddingVertical="8dp"
-        android:visibility="gone"
-        tools:text="@string/words_empty_state"
-        tools:visibility="visible" />
-
-    <include
-        android:id="@+id/wordReveal"
-        layout="@layout/view_word_reveal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        tools:visibility="visible" />
-
-    <TextView
-        android:id="@+id/tvFooter"
-        android:gravity="center_vertical"
-        android:minHeight="48dp"
-        style="@style/TextSmallLight"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?android:attr/selectableItemBackground"
-        android:focusable="true"
-        android:paddingVertical="8dp"
-        android:visibility="gone"
-        tools:text="12 words · 3 due · 4 learned"
-        tools:visibility="visible" />
-
-    <TextView
-        android:id="@+id/btnReview"
-        style="@style/TextSmallBold"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="?android:attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:gravity="center_vertical"
-        android:minHeight="48dp"
-        android:paddingHorizontal="4dp"
-        android:visibility="gone"
-        tools:text="Review 6"
-        tools:visibility="visible" />
+        tools:text="10 words · 3 learned" />
 
 </LinearLayout>

@@ -2,22 +2,42 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
+    android:minHeight="72dp"
     android:orientation="vertical">
 
-    <LinearLayout
-        android:id="@+id/notesContainer"
+    <TextView
+        android:id="@+id/tvCardTitle"
+        style="@style/TextSmallLight"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical" />
+        android:letterSpacing="0.04"
+        tools:text="Notes · 4" />
 
-    <EditText
-        android:id="@+id/etAddNote"
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <TextView
+        android:id="@+id/tvNote"
         style="@style/TextSmall"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="?android:attr/selectableItemBackground"
+        android:ellipsize="end"
+        android:focusable="true"
+        android:maxLines="3"
+        android:paddingTop="8dp"
+        tools:text="Milk, eggs, bread" />
+
+    <EditText
+        android:id="@+id/etAddNote"
+        style="@style/TextSmallLight"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:background="@null"
-        android:hint="@string/notes_add_hint"
+        android:hint="@string/notes_card_add"
         android:imeOptions="actionDone"
         android:importantForAutofill="no"
         android:inputType="textCapSentences"

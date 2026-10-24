@@ -31,9 +31,8 @@ class WeekCardNoLineEmojiTest {
     }
 
     @Test
-    fun `week card keeps one heading icon and indents wrapped lines`() {
+    fun `week card keeps one heading icon`() {
         val card = source("WeekCard.kt")
         assertTrue(card.contains("override val emoji: String = \"📊\""))
-        assertTrue(card.contains("LeadingMarginSpan.Standard(0, indent)"))
     }
 }

@@ -37,12 +37,11 @@ object HeroFormatting {
     fun capitalise(text: String): String =
         text.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() }
 
-    /** "🌦 12°", or "12°" when the code has no emoji. */
-    fun bigTemperature(forecast: Forecast): String {
-        val temp = forecast.nowTemp.roundToInt()
-        val emoji = WeatherCodes.emoji(forecast.nowCode, forecast.isDay)
-        return if (emoji.isEmpty()) "$temp°" else "$emoji $temp°"
-    }
+    /** The icon for the current weather, or empty when the code has none. */
+    fun nowIcon(forecast: Forecast): String = WeatherCodes.emoji(forecast.nowCode, forecast.isDay)
+
+    /** "12°". */
+    fun nowTemperature(forecast: Forecast): String = "${forecast.nowTemp.roundToInt()}°"
 
     /** "Light rain · 15° / 8°". */
     fun conditionLine(forecast: Forecast): String {
