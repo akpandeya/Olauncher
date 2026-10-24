@@ -7,23 +7,21 @@
 
     <TextView
         android:id="@+id/tvWeekTotal"
-        style="@style/TextLarge"
+        style="@style/TodayCardStat"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="@dimen/text_stat"
-        android:textStyle="bold"
         tools:text="20 h 5 min" />
 
     <TextView
         android:id="@+id/tvWeekCaption"
-        style="@style/TextSmallLight"
+        style="@style/TodayCardBodyLight"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="@string/wellbeing_week_caption" />
 
     <TextView
         android:id="@+id/tvWeekChange"
-        style="@style/TextSmall"
+        style="@style/TodayCardBody"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
@@ -37,7 +35,7 @@
 
     <TextView
         android:id="@+id/tvWeekAllowance"
-        style="@style/TextSmallLight"
+        style="@style/TodayCardBodyLight"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
@@ -47,7 +45,7 @@
 
     <TextView
         android:id="@+id/tvTopAppsTitle"
-        style="@style/TextSmallLight"
+        style="@style/TodayCardLabel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
@@ -77,22 +75,21 @@
             android:padding="12dp">
 
             <TextView
-                style="@style/TextSmallLight"
+                style="@style/TodayCardLabel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/not_now" />
 
             <TextView
                 android:id="@+id/tvWeekNotNow"
-                style="@style/TextLarge"
+                style="@style/TodayCardStat"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textStyle="bold"
                 tools:text="31" />
 
             <TextView
                 android:id="@+id/tvWeekNotNowSub"
-                style="@style/TextSmallLight"
+                style="@style/TodayCardBodyLight"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 tools:text="Opened anyway 15 · mostly “Just bored”" />
@@ -110,14 +107,14 @@
             android:padding="12dp">
 
             <TextView
-                style="@style/TextSmallLight"
+                style="@style/TodayCardLabel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="@string/wellbeing_week_water_walk" />
 
             <TextView
                 android:id="@+id/tvWeekWaterWalk"
-                style="@style/TextLarge"
+                style="@style/TodayCardStat"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textStyle="bold"

@@ -15,11 +15,10 @@
 
         <TextView
             android:id="@+id/tvWellbeingTitle"
-            style="@style/TextSmallLight"
+            style="@style/TodayCardLabel"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:letterSpacing="0.04"
             android:text="@string/wellbeing" />
 
         <LinearLayout
@@ -69,7 +68,7 @@
 
         <TextView
             android:id="@+id/tvUsageNeeded"
-            style="@style/TextSmall"
+            style="@style/TodayCardBody"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="?android:attr/selectableItemBackground"
@@ -92,16 +91,14 @@
 
             <TextView
                 android:id="@+id/tvDistractingValue"
-                style="@style/TextLarge"
+                style="@style/TodayCardStat"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="@dimen/text_stat"
-                android:textStyle="bold"
                 tools:text="4 h 7 min" />
 
             <TextView
                 android:id="@+id/tvDistractingApps"
-                style="@style/TextSmallLight"
+                style="@style/TodayCardBodyLight"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 tools:text="Distracting · 107 opens · top: YouTube 4 h 7 min" />
@@ -135,15 +132,14 @@
 
                 <TextView
                     android:id="@+id/tvWater"
-                    style="@style/TextLarge"
+                    style="@style/TodayCardStat"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textStyle="bold"
                     tools:text="29" />
 
                 <TextView
                     android:id="@+id/tvWaterLabel"
-                    style="@style/TextSmallLight"
+                    style="@style/TodayCardLabel"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/nudge_water" />
@@ -167,15 +163,14 @@
 
                 <TextView
                     android:id="@+id/tvWalk"
-                    style="@style/TextLarge"
+                    style="@style/TodayCardStat"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textStyle="bold"
                     tools:text="10" />
 
                 <TextView
                     android:id="@+id/tvWalkLabel"
-                    style="@style/TextSmallLight"
+                    style="@style/TodayCardLabel"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/nudge_walk" />
@@ -195,15 +190,14 @@
 
                 <TextView
                     android:id="@+id/tvNotNow"
-                    style="@style/TextLarge"
+                    style="@style/TodayCardStat"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textStyle="bold"
                     tools:text="5" />
 
                 <TextView
                     android:id="@+id/tvNotNowLabel"
-                    style="@style/TextSmallLight"
+                    style="@style/TodayCardLabel"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/not_now" />
@@ -214,7 +208,7 @@
 
         <TextView
             android:id="@+id/tvPauseWins"
-            style="@style/TextSmall"
+            style="@style/TodayCardBody"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
@@ -224,7 +218,7 @@
 
         <TextView
             android:id="@+id/tvHealth"
-            style="@style/TextSmallLight"
+            style="@style/TodayCardBodyLight"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"

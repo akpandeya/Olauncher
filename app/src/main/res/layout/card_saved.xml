@@ -13,16 +13,15 @@
 
         <TextView
             android:id="@+id/tvCardTitle"
-            style="@style/TextSmallLight"
+            style="@style/TodayCardLabel"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:letterSpacing="0.04"
             tools:text="Saved for later · 12" />
 
         <TextView
             android:id="@+id/tvOpenLatest"
-            style="@style/TextSmallLight"
+            style="@style/TodayCardBodyBold"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="?android:attr/selectableItemBackground"
@@ -32,6 +31,7 @@
             android:minHeight="48dp"
             android:paddingHorizontal="4dp"
             android:text="@string/saved_card_open"
+            android:textColor="?attr/accent"
             android:visibility="gone"
             tools:visibility="visible" />
 
@@ -39,7 +39,7 @@
 
     <TextView
         android:id="@+id/tvEmpty"
-        style="@style/TextSmall"
+        style="@style/TodayCardBody"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingBottom="8dp"
@@ -49,7 +49,7 @@
 
     <TextView
         android:id="@+id/tvMore"
-        style="@style/TextSmall"
+        style="@style/TodayCardBody"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?android:attr/selectableItemBackground"
@@ -68,7 +68,7 @@
 
     <TextView
         android:id="@+id/tvArchived"
-        style="@style/TextSmall"
+        style="@style/TodayCardBody"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?android:attr/selectableItemBackground"

@@ -135,6 +135,46 @@
         <item name="android:textColor">@drawable/text_colors_light</item>
     </style>
 
+    <!-- Today card type scale: label, stat number, body (issue #496) -->
+    <style name="TodayCardLabel" parent="TextDefault">
+        <item name="android:fontFamily">?attr/labelFontFamily</item>
+        <item name="android:textSize">@dimen/today_label_size</item>
+        <item name="android:textColor">@drawable/text_colors_light</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:textAllCaps">true</item>
+    </style>
+    <style name="TodayLabel" parent="TodayCardLabel" />
+    <style name="TodayCard.Label" parent="TodayCardLabel" />
+
+    <style name="TodayCardStat" parent="TextDefault">
+        <item name="android:fontFamily">?attr/displayFontFamily</item>
+        <item name="android:textSize">@dimen/today_stat_size</item>
+        <item name="android:textColor">@drawable/text_colors_default</item>
+        <item name="android:fontFeatureSettings">tnum</item>
+    </style>
+    <style name="TodayStat" parent="TodayCardStat" />
+    <style name="TodayCard.Stat" parent="TodayCardStat" />
+
+    <style name="TodayCardBody" parent="TextDefault">
+        <item name="android:fontFamily">?attr/mainFontFamily</item>
+        <item name="android:textSize">@dimen/today_body_size</item>
+        <item name="android:textColor">@drawable/text_colors_default</item>
+    </style>
+    <style name="TodayBody" parent="TodayCardBody" />
+    <style name="TodayCard.Body" parent="TodayCardBody" />
+
+    <style name="TodayCardBodyLight" parent="TodayCardBody">
+        <item name="android:textColor">@drawable/text_colors_light</item>
+    </style>
+    <style name="TodayBodyLight" parent="TodayCardBodyLight" />
+    <style name="TodayCard.Body.Light" parent="TodayCardBodyLight" />
+
+    <style name="TodayCardBodyBold" parent="TodayCardBody">
+        <item name="android:textStyle">bold</item>
+    </style>
+    <style name="TodayBodyBold" parent="TodayCardBodyBold" />
+    <style name="TodayCard.Body.Bold" parent="TodayCardBodyBold" />
+
     <!-- Popup menu anchored to a settings row -->
     <style name="OlPopupMenu" parent="Widget.AppCompat.PopupMenu">
         <item name="android:popupBackground">@drawable/rounded_primary_gradient</item>
