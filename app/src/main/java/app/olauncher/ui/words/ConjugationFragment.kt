@@ -146,6 +146,8 @@ class ConjugationFragment : BaseFragment() {
         Tense.PRESENT -> R.string.conjugation_tense_present
         Tense.PRETERITE -> R.string.conjugation_tense_preterite
         Tense.SUBJUNCTIVE_II -> R.string.conjugation_tense_subjunctive_ii
+        Tense.IMPERATIVE -> R.string.conjugation_tense_imperative
+        Tense.STAMMFORMEN -> R.string.conjugation_tense_stammformen
     }
 
     private fun setupTenseChips() {
@@ -491,6 +493,9 @@ class ConjugationFragment : BaseFragment() {
             "er/sie/es" -> R.string.conjugation_meaning_er
             "wir" -> R.string.conjugation_meaning_wir
             "ihr" -> R.string.conjugation_meaning_ihr
+            "sie/Sie", "Sie" -> R.string.conjugation_meaning_sie
+            "Präteritum" -> R.string.conjugation_meaning_preterite
+            "Partizip II" -> R.string.conjugation_meaning_participle
             else -> R.string.conjugation_meaning_sie
         },
     )
