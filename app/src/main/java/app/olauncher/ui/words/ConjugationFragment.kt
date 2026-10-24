@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.GridLayout
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.annotation.AttrRes
 import androidx.core.view.isVisible
@@ -23,6 +24,7 @@ import app.olauncher.data.store.FormStatus
 import app.olauncher.data.store.OfflineGermanStore
 import app.olauncher.data.store.QuizAnswer
 import app.olauncher.data.store.QuizQuestion
+import app.olauncher.data.store.Tense
 import app.olauncher.data.store.VerbParadigm
 import app.olauncher.data.store.shouldAutoAdvance
 import app.olauncher.databinding.FragmentConjugationBinding
@@ -48,7 +50,9 @@ class ConjugationFragment : BaseFragment() {
     private var _binding: FragmentConjugationBinding? = null
     private val binding get() = _binding!!
 
-    private var paradigm: VerbParadigm? = null
+    private var paradigms: Map<Tense, VerbParadigm> = emptyMap()
+    private var currentTense: Tense = Tense.PRESENT
+    private val paradigm: VerbParadigm? get() = paradigms[currentTense] ?: paradigms.values.firstOrNull()
     private var quiz: ConjugationQuiz? = null
     private var selectedChoice: String? = null
     private var lastRenderedFormIndex: Int? = null
@@ -111,6 +115,9 @@ class ConjugationFragment : BaseFragment() {
                 false
             }
         }
+        if (loaded) {
+            setupTenseChips()
+        }
         render()
         // A recreated view re-renders the held state above; only the first view loads.
         if (loadStarted) return
@@ -121,20 +128,86 @@ class ConjugationFragment : BaseFragment() {
         // Fragment-scoped: the load must outlive the view it started with.
         lifecycleScope.launch {
             val result = if (offlineAllowed) {
-                withContext(Dispatchers.IO) { OfflineGermanStore(appContext).paradigm(word) }
+                withContext(Dispatchers.IO) { OfflineGermanStore(appContext).paradigms(word) }
             } else {
-                null
+                emptyMap()
             }
-            paradigm = result
-            quiz = result?.let { ConjugationQuiz(Conjugation.drillPrompts(it)) }
+            paradigms = result
+            val initialTense = Tense.PRESENT.takeIf { it in result } ?: result.keys.firstOrNull() ?: Tense.PRESENT
+            currentTense = initialTense
+            quiz = result[initialTense]?.let { ConjugationQuiz(Conjugation.drillPrompts(it), tense = initialTense) }
             loaded = true
+            setupTenseChips()
             render()
         }
     }
 
+    private val Tense.labelRes: Int get() = when (this) {
+        Tense.PRESENT -> R.string.conjugation_tense_present
+        Tense.PRETERITE -> R.string.conjugation_tense_preterite
+        Tense.SUBJUNCTIVE_II -> R.string.conjugation_tense_subjunctive_ii
+    }
+
+    private fun setupTenseChips() {
+        val b = _binding ?: return
+        b.tenseRow.removeAllViews()
+        val available = Tense.values().filter { it in paradigms && paradigms[it]!!.cells.isNotEmpty() }
+        val margin = b.root.resources.getDimensionPixelSize(R.dimen.quiz_cell_margin) * 2
+        for ((index, tense) in available.withIndex()) {
+            val chip = newTenseChip(tense)
+            chip.tag = tense
+            chip.isSelected = (tense == currentTense)
+            chip.setOnClickListener {
+                Haptics.tick(it)
+                selectTense(tense)
+            }
+            val lp = LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            ).apply {
+                if (index > 0) marginStart = margin
+            }
+            b.tenseRow.addView(chip, lp)
+        }
+    }
+
+    private fun updateTenseChipsSelection() {
+        val b = _binding ?: return
+        for (i in 0 until b.tenseRow.childCount) {
+            val chip = b.tenseRow.getChildAt(i) as? TextView ?: continue
+            chip.isSelected = (chip.tag == currentTense)
+        }
+    }
+
+    private fun selectTense(tense: Tense) {
+        if (currentTense == tense && quiz != null && !quiz!!.isRoundFinished) return
+        currentTense = tense
+        val p = paradigms[tense] ?: return
+        _binding?.root?.removeCallbacks(autoAdvance)
+        autoAdvanceScheduled = false
+        selectedChoice = null
+        lastRenderedFormIndex = null
+        quiz = ConjugationQuiz(Conjugation.drillPrompts(p), tense = tense)
+        updateTenseChipsSelection()
+        render()
+    }
+
+    private fun newTenseChip(tense: Tense): TextView = TextView(binding.root.context).apply {
+        text = getString(tense.labelRes)
+        setTextAppearance(R.style.TodayChip)
+        setBackgroundResource(R.drawable.today_chip_selectable)
+        gravity = Gravity.CENTER
+        minHeight = resources.getDimensionPixelSize(R.dimen.today_touch_min_height)
+        val pad = resources.getDimensionPixelSize(R.dimen.today_chip_padding_horizontal)
+        setPadding(pad, 0, pad, 0)
+        isClickable = true
+        isFocusable = true
+        attachPressScale()
+    }
+
     private fun startTypedRound() {
         val p = paradigm ?: return
-        quiz = ConjugationQuiz(Conjugation.drillPrompts(p), isTyped = true)
+        quiz = ConjugationQuiz(Conjugation.drillPrompts(p), isTyped = true, tense = currentTense)
         selectedChoice = null
         lastRenderedFormIndex = null
         render()
@@ -173,11 +246,13 @@ class ConjugationFragment : BaseFragment() {
         val b = _binding ?: return
         val context = context ?: return
         val q = quiz
+        val availableTenses = Tense.values().filter { it in paradigms && paradigms[it]!!.cells.isNotEmpty() }
         val noParadigm = loaded && (q == null || q.total == 0)
         val finished = loaded && q != null && q.total > 0 && q.isRoundFinished
         val inQuiz = loaded && q != null && !q.isRoundFinished
 
         b.quizContainer.isVisible = inQuiz
+        b.tenseScroll.isVisible = inQuiz && availableTenses.isNotEmpty()
         b.quizCardContent.isVisible = inQuiz
         b.choiceScroll.isVisible = inQuiz && !q.isTyped
         b.typedContainer.isVisible = inQuiz && q.isTyped
@@ -214,10 +289,11 @@ class ConjugationFragment : BaseFragment() {
         b.tvLemma.text = lemma
         b.tvProgress.text = context.getString(
             R.string.conjugation_progress,
-            context.getString(R.string.conjugation_tense_present),
+            context.getString(currentTense.labelRes),
             question.formIndex + 1,
             q.total,
         )
+        updateTenseChipsSelection()
         renderSegments(q, question.formIndex)
         b.tvPrompt.text = context.getString(R.string.conjugation_prompt, lemma)
         b.tvPronoun.text = question.pronoun
