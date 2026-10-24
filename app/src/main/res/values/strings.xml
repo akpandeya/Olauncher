@@ -556,6 +556,11 @@
     <string name="word_list_title_fallback" tools:ignore="MissingTranslation">List</string>
     <string name="word_list_remove_from_list" tools:ignore="MissingTranslation">Remove from list</string>
     <string name="word_list_add_words" tools:ignore="MissingTranslation">Add words</string>
+    <string name="word_list_add_search_hint" tools:ignore="MissingTranslation">Search words</string>
+    <plurals name="word_list_add_count" tools:ignore="MissingTranslation">
+        <item quantity="one">Add %d word</item>
+        <item quantity="other">Add %d words</item>
+    </plurals>
     <string name="word_list_empty_state" tools:ignore="MissingTranslation">No words in this list yet</string>
     <string name="words_conjugate" tools:ignore="MissingTranslation">Conjugate</string>
     <string name="conjugation_not_in_dictionary" tools:ignore="MissingTranslation">“%1$s” isn\'t a verb in the offline dictionary</string>

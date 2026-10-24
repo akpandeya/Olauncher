@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp">
+
+    <androidx.appcompat.widget.AppCompatEditText
+        android:id="@+id/etListSearch"
+        style="@style/TextMedium"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@null"
+        android:cursorVisible="true"
+        android:hint="@string/search"
+        android:inputType="text"
+        android:maxLines="1"
+        android:paddingVertical="8dp"
+        android:shadowColor="@android:color/transparent"
+        android:textColor="?attr/primaryColor"
+        android:textColorHint="?attr/primaryColorTrans80" />
+
+</FrameLayout>
