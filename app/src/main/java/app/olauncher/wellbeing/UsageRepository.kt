@@ -199,6 +199,42 @@ open class UsageRepository(private val context: Context? = null) {
         matchingStats.associate { it.applicationId to it.timeUsed }
     }
 
+    /**
+     * Returns 24 hourly buckets of distracting minutes today for [pkgs] using UsageEvents.
+     * Sessions spanning hour boundaries are split between hours.
+     * Future hours are empty (0 minutes).
+     * Returns null if usage stats permission is not granted.
+     */
+    open suspend fun hourlyDistractingMinutesToday(
+        pkgs: Set<String>,
+        now: Long = System.currentTimeMillis(),
+        zone: ZoneId = ZoneId.systemDefault(),
+    ): List<Int>? = withContext(Dispatchers.IO) {
+        val ctx = context ?: return@withContext null
+        if (!ctx.appUsagePermissionGranted()) return@withContext null
+        if (pkgs.isEmpty()) return@withContext List(HourlyUsage.HOURS_IN_DAY) { 0 }
+
+        val today = LocalDate.now(zone)
+        val startTime = today.atStartOfDay(zone).toInstant().toEpochMilli()
+        val endTime = now
+
+        val usageStatsManager = ctx.getSystemService(Context.USAGE_STATS_SERVICE) as? UsageStatsManager
+            ?: return@withContext null
+
+        val events = usageStatsManager.queryEvents(startTime, endTime)
+        val event = UsageEvents.Event()
+        val eventList = mutableListOf<UsageEventRecord>()
+
+        while (events.hasNextEvent()) {
+            events.getNextEvent(event)
+            if (event.packageName in pkgs) {
+                eventList.add(UsageEventRecord(event.packageName, event.timeStamp, event.eventType))
+            }
+        }
+
+        HourlyUsage.bucketEvents(eventList, pkgs, today, zone, now)
+    }
+
     private fun startOfTodayMillis(): Long {
         return Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, 0)
@@ -220,6 +256,14 @@ open class UsageRepository(private val context: Context? = null) {
             pkgs: Set<String>,
             gapMs: Long = RESUME_GAP_MS,
         ): Int = app.olauncher.wellbeing.countOpensForPackages(events, pkgs, gapMs)
+
+        fun bucketHourlyMinutes(
+            events: List<UsageEventRecord>,
+            pkgs: Set<String>,
+            date: LocalDate,
+            zone: ZoneId = ZoneId.systemDefault(),
+            now: Long = System.currentTimeMillis(),
+        ): List<Int> = HourlyUsage.bucketEvents(events, pkgs, date, zone, now)
     }
 }
 

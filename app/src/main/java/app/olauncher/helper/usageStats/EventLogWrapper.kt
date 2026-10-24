@@ -354,6 +354,17 @@ class EventLogWrapper(private val context: Context) {
     fun aggregateSimpleUsageStats(usageStats: List<SimpleUsageStat>): Long {
         return usageStats.sumOf { it.timeUsed }
     }
+
+    /**
+     * Buckets foreground stats for [pkgs] into 24 hourly buckets using [app.olauncher.wellbeing.HourlyUsage].
+     */
+    fun bucketHourlyForegroundStats(
+        stats: List<ComponentForegroundStat>,
+        pkgs: Set<String>,
+        date: java.time.LocalDate = java.time.LocalDate.now(),
+        zone: java.time.ZoneId = java.time.ZoneId.systemDefault(),
+        now: Long = System.currentTimeMillis(),
+    ): List<Int> = app.olauncher.wellbeing.HourlyUsage.bucketForegroundStats(stats, pkgs, date, zone, now)
     /**
      * Merges overlapping or adjacent time intervals to prevent double-counting
      * when multiple components of the same package have overlapping foreground times.

@@ -103,6 +103,14 @@ object WellbeingCardLogic {
     fun meterBand(usedMinutes: Int, allowanceMin: Int): AllowanceBand = AllowanceMeter.band(usedMinutes, allowanceMin)
     fun allowanceMeter(percent: Int): AllowanceMeter = AllowanceMeter.calculate(percent)
     fun allowanceMeter(usedMinutes: Int, allowanceMin: Int): AllowanceMeter = AllowanceMeter.calculate(usedMinutes, allowanceMin)
+
+    fun bucketHourlyMinutes(
+        events: List<app.olauncher.wellbeing.UsageEventRecord>,
+        pkgs: Set<String>,
+        date: java.time.LocalDate,
+        zone: ZoneId = ZoneId.systemDefault(),
+        now: Long = System.currentTimeMillis(),
+    ): List<Int> = app.olauncher.wellbeing.HourlyUsage.bucketEvents(events, pkgs, date, zone, now)
 }
 
 object WellbeingCard : TodayCard {
@@ -453,6 +461,7 @@ internal class WellbeingCardView(
         if (!granted || distractingPkgs.isEmpty()) {
             b.llDistracting.isVisible = false
             b.pbAllowance.isVisible = false
+            b.heatRow.isVisible = false
             return
         }
 
@@ -465,11 +474,13 @@ internal class WellbeingCardView(
             val millis = repo.foregroundMillisToday(distractingPkgs)
             val opens = repo.openCountToday(distractingPkgs)
             val byPackage = repo.foregroundMillisByPackageToday(distractingPkgs).orEmpty()
+            val hourly = repo.hourlyDistractingMinutesToday(distractingPkgs)
 
             if (released) return@launch
             if (totalMillis == null || millis == null || opens == null) {
                 b.llDistracting.isVisible = false
                 b.pbAllowance.isVisible = false
+                b.heatRow.isVisible = false
                 return@launch
             }
 
@@ -492,6 +503,14 @@ internal class WellbeingCardView(
             b.tvDistractingValue.text = WeekCardText.formatDuration(context, totalMinutes)
             b.tvDistractingApps.text = parts.joinToString(" · ")
             b.llDistracting.isVisible = true
+
+            if (hourly != null) {
+                val currentHour = ZonedDateTime.now().hour
+                b.heatRow.setHours(hourly, currentHour)
+                b.heatRow.isVisible = true
+            } else {
+                b.heatRow.isVisible = false
+            }
 
             val allowanceMin = PausePolicy.effectiveAllowanceMin(prefs.pauseAllowanceMin, granted)
             val showMeter = allowanceMin > 0 && granted

@@ -217,4 +217,11 @@ class WellbeingCardTest {
         assertTrue(layout.contains("android:id=\"@+id/tvSleep\""))
         assertTrue(layout.contains("android:id=\"@+id/tvSleepLabel\""))
     }
+
+    @Test
+    fun `card_wellbeing xml contains heatRow with HeatRowView`() {
+        val layout = resource("layout/card_wellbeing.xml")
+        assertTrue(layout.contains("android:id=\"@+id/heatRow\""))
+        assertTrue(layout.contains("app.olauncher.ui.today.cards.HeatRowView"))
+    }
 }
