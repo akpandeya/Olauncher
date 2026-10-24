@@ -46,4 +46,47 @@ class MotionPolicyTest {
         assertEquals(120L, MotionPolicy.TODAY_DURATION_MS)
         assertEquals(150L, MotionPolicy.MAX_DURATION_MS)
     }
+
+    @Test
+    fun `stagger delay returns 0 when animators disabled`() {
+        assertEquals(0L, MotionPolicy.staggerDelayMs(0, animatorsEnabled = false))
+        assertEquals(0L, MotionPolicy.staggerDelayMs(1, animatorsEnabled = false))
+        assertEquals(0L, MotionPolicy.staggerDelayMs(5, animatorsEnabled = false))
+        assertEquals(0L, MotionPolicy.staggerDelayMs(5, stepMs = 50L, animatorsEnabled = false))
+    }
+
+    @Test
+    fun `stagger delay returns 0 for index 0 or negative index`() {
+        assertEquals(0L, MotionPolicy.staggerDelayMs(0, animatorsEnabled = true))
+        assertEquals(0L, MotionPolicy.staggerDelayMs(-1, animatorsEnabled = true))
+        assertEquals(0L, MotionPolicy.staggerDelayMs(-5, animatorsEnabled = true))
+    }
+
+    @Test
+    fun `stagger delay scales linearly with index when animators enabled`() {
+        assertEquals(30L, MotionPolicy.staggerDelayMs(1, animatorsEnabled = true))
+        assertEquals(60L, MotionPolicy.staggerDelayMs(2, animatorsEnabled = true))
+        assertEquals(90L, MotionPolicy.staggerDelayMs(3, animatorsEnabled = true))
+        assertEquals(120L, MotionPolicy.staggerDelayMs(4, animatorsEnabled = true))
+    }
+
+    @Test
+    fun `stagger delay uses custom step within limits`() {
+        assertEquals(25L, MotionPolicy.staggerDelayMs(1, animatorsEnabled = true, stepMs = 25L))
+        assertEquals(50L, MotionPolicy.staggerDelayMs(2, animatorsEnabled = true, stepMs = 25L))
+    }
+
+    @Test
+    fun `stagger step is clamped to MAX_DURATION_MS`() {
+        val clampedDelay = MotionPolicy.staggerDelayMs(2, stepMs = 200L, animatorsEnabled = true)
+        assertEquals(2 * MotionPolicy.MAX_DURATION_MS, clampedDelay)
+    }
+
+    @Test
+    fun `motion constants are within limits`() {
+        assertTrue(MotionPolicy.STAGGER_STEP_MS <= MotionPolicy.MAX_DURATION_MS)
+        assertTrue(MotionPolicy.PRESS_DURATION_MS <= MotionPolicy.MAX_DURATION_MS)
+        assertTrue(MotionPolicy.FLIP_HALF_DURATION_MS * 2 <= MotionPolicy.MAX_DURATION_MS)
+        assertTrue(MotionPolicy.PRESS_SCALE in 0.9f..0.99f)
+    }
 }

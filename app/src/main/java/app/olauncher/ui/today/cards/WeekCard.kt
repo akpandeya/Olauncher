@@ -12,6 +12,7 @@ import app.olauncher.databinding.CardWeekBinding
 import app.olauncher.databinding.ItemWeekAppBinding
 import app.olauncher.ui.today.TodayCard
 import app.olauncher.ui.today.TodayOrder
+import app.olauncher.ui.today.attachPressScale
 import app.olauncher.wellbeing.DaySnapshot
 import app.olauncher.wellbeing.UsageSnapshotStore
 import app.olauncher.wellbeing.WeekBento
@@ -77,6 +78,11 @@ object WeekCard : TodayCard {
 
 /** Per-view state of the 7 days side; lives and dies with the card's root view. */
 internal class WeekCardView(private val binding: CardWeekBinding) {
+
+    init {
+        binding.tileWeekNotNow.attachPressScale()
+        binding.tileWeekWaterWalk.attachPressScale()
+    }
 
     var current: WeekBento? = null
         private set

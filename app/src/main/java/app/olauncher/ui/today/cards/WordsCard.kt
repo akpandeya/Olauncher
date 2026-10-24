@@ -15,6 +15,7 @@ import app.olauncher.data.store.WordsStore
 import app.olauncher.data.store.WordStats
 import app.olauncher.databinding.CardWordsBinding
 import app.olauncher.ui.today.TodayCard
+import app.olauncher.ui.today.attachPressScale
 import java.time.LocalDate
 
 /** Entries of the Words card long-press menu. */
@@ -142,6 +143,7 @@ object WordsCard : TodayCard {
             },
         )
         cardView.binding.root.tag = cardView
+        cardView.binding.root.attachPressScale()
         cardView.render()
         return cardView.binding.root
     }

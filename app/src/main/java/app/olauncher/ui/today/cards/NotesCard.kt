@@ -72,16 +72,16 @@ object NotesCard : TodayCard {
             v.hideKeyboard()
             true
         }
-        render(b)
+        render(b, animate = true)
         b.root.tag = b
         return b.root
     }
 
     override fun onResume(view: View) {
-        (view.tag as? CardNotesBinding)?.let { render(it) }
+        (view.tag as? CardNotesBinding)?.let { render(it, animate = false) }
     }
 
-    private fun render(b: CardNotesBinding) {
+    private fun render(b: CardNotesBinding, animate: Boolean = false) {
         val context = b.root.context
         val store = store(context)
         val all = store.all()
@@ -111,7 +111,7 @@ object NotesCard : TodayCard {
         b.tvNote.text = Notes.cardTitle(latest)
         b.tvNote.setCompoundDrawablesRelativeWithIntrinsicBounds(if (latest.pinned) R.drawable.ic_pin else 0, 0, 0, 0)
         b.tvNote.compoundDrawablePadding = (8 * context.resources.displayMetrics.density).toInt()
-        ChecklistStyle.bindProgress(latest, b.tvNoteCount, b.pbNote)
+        ChecklistStyle.bindProgress(latest, b.tvNoteCount, b.pbNote, animate = animate)
         for ((index, item) in Notes.cardItems(latest)) {
             val box = LayoutInflater.from(context).inflate(R.layout.item_note_checkbox, b.itemsPanel, false) as CheckBox
             box.text = item.text

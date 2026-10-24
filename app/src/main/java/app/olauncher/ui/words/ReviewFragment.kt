@@ -17,8 +17,10 @@ import app.olauncher.data.store.ReviewSessionLogic
 import app.olauncher.data.store.Word
 import app.olauncher.databinding.FragmentReviewBinding
 import app.olauncher.helper.Haptics
+import app.olauncher.helper.MotionPolicy
 import app.olauncher.helper.showPopupMenu
 import app.olauncher.ui.BaseFragment
+import app.olauncher.ui.today.attachPressScale
 import app.olauncher.ui.today.cards.WordsCard
 import app.olauncher.ui.today.cards.WordsCardLogic
 import java.time.LocalDate
@@ -42,6 +44,7 @@ class ReviewFragment : BaseFragment() {
     private var eventsBeforeSession: List<ReviewEvent> = emptyList()
     private var lastGradeAt = 0L
     private var sessionStarted = false
+    private var progressAnimated = false
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -80,6 +83,7 @@ class ReviewFragment : BaseFragment() {
         binding.btnOpenWords.setOnClickListener { openWords(it) }
 
         binding.btnDone.setOnClickListener { leave(it) }
+        binding.reviewCard.attachPressScale()
 
         // One session per screen visit: resuming (e.g. back from another app) or
         // recreating the view keeps the queue and the summary.
@@ -160,11 +164,24 @@ class ReviewFragment : BaseFragment() {
         b.tvRemaining.isVisible = !finished
         b.tvRemaining.text = context.getString(R.string.words_review_progress, remaining, queue.size)
         b.reviewProgress.max = queue.size.coerceAtLeast(1)
-        b.reviewProgress.progress = answered
+        val animatorsEnabled = MotionPolicy.isAnimationsEnabled(context)
+        val duration = MotionPolicy.durationMs(MotionPolicy.TODAY_DURATION_MS, animatorsEnabled)
+        if (!progressAnimated && animatorsEnabled && duration > 0L && answered > 0) {
+            progressAnimated = true
+            android.animation.ObjectAnimator.ofInt(b.reviewProgress, "progress", 0, answered).apply {
+                this.duration = duration
+                interpolator = android.view.animation.DecelerateInterpolator()
+                start()
+            }
+        } else {
+            if (!progressAnimated) progressAnimated = true
+            b.reviewProgress.progress = answered
+        }
         b.reviewProgress.isVisible = !finished
         // Back lives in the header while reviewing; the summary page ends on Done.
         b.btnBack.isVisible = !finished || sessionEvents.isEmpty()
         b.btnDone.isVisible = finished && sessionEvents.isNotEmpty()
+        b.reviewCard.rotationY = 0f
         b.reviewCard.isVisible = remaining > 0
         b.btnAddToList.isVisible = remaining > 0
         b.summaryContainer.isVisible = remaining == 0 && sessionEvents.isNotEmpty()
@@ -204,8 +221,35 @@ class ReviewFragment : BaseFragment() {
     private fun currentWord(): Word? = queue.getOrNull(answered)
 
     private fun setRevealed(value: Boolean) {
-        revealed = value
-        currentWord()?.let { bindWord(WordsCard.getStore(requireContext()).get(it.id) ?: it) }
+        if (revealed == value) return
+        val context = context ?: return
+        val animatorsEnabled = MotionPolicy.isAnimationsEnabled(context)
+        val halfDuration = MotionPolicy.durationMs(MotionPolicy.FLIP_HALF_DURATION_MS, animatorsEnabled)
+        val card = _binding?.reviewCard
+
+        if (value && animatorsEnabled && halfDuration > 0L && card != null) {
+            val distance = 8000f * resources.displayMetrics.density
+            card.cameraDistance = distance
+            card.animate()
+                .rotationY(90f)
+                .setDuration(halfDuration)
+                .setInterpolator(android.view.animation.AccelerateInterpolator())
+                .withEndAction {
+                    revealed = true
+                    currentWord()?.let { bindWord(WordsCard.getStore(context).get(it.id) ?: it) }
+                    card.rotationY = -90f
+                    card.animate()
+                        .rotationY(0f)
+                        .setDuration(halfDuration)
+                        .setInterpolator(android.view.animation.DecelerateInterpolator())
+                        .start()
+                }
+                .start()
+        } else {
+            revealed = value
+            _binding?.reviewCard?.rotationY = 0f
+            currentWord()?.let { bindWord(WordsCard.getStore(context).get(it.id) ?: it) }
+        }
     }
 
     /** Front: the word and its saved context. Revealed: meaning, example and the three graded buttons. */
