@@ -107,13 +107,6 @@
                         android:layout_height="wrap_content"
                         tools:text="we" />
 
-                    <GridLayout
-                        android:id="@+id/choiceGrid"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        android:columnCount="2" />
-
                 </LinearLayout>
 
                 <LinearLayout
@@ -182,6 +175,21 @@
         android:orientation="vertical"
         android:paddingHorizontal="24dp"
         android:paddingBottom="48dp">
+
+        <ScrollView
+            android:id="@+id/choiceScroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:overScrollMode="never"
+            android:scrollbars="none">
+
+            <GridLayout
+                android:id="@+id/choiceGrid"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:columnCount="2" />
+
+        </ScrollView>
 
         <TextView
             android:id="@+id/btnPrimary"
