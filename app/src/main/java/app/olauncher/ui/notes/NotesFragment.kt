@@ -5,25 +5,27 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
+import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
+import androidx.navigation.fragment.findNavController
 import androidx.core.widget.doOnTextChanged
 import app.olauncher.R
 import app.olauncher.databinding.FragmentNotesBinding
 import app.olauncher.databinding.ItemNoteBinding
 import app.olauncher.helper.Haptics
 import app.olauncher.helper.Note
+import app.olauncher.helper.NoteViewRules
 import app.olauncher.helper.Notes
 import app.olauncher.helper.hideKeyboard
-import app.olauncher.helper.showToast
 import app.olauncher.ui.BaseFragment
 import app.olauncher.ui.today.cards.NotesCard
 import java.time.LocalDate
 import java.time.ZoneId
-import java.time.ZonedDateTime
 
-/** Every open note: pinned first, then the rest, with search and a bar to add a note. */
+/** Every open note: pinned first, then the rest, with search and a bar that opens the Add note sheet. Tapping a row opens the note view. */
 class NotesFragment : BaseFragment() {
 
+    private var savedScrollY = 0
     private var _binding: FragmentNotesBinding? = null
     private val binding get() = _binding!!
 
@@ -40,25 +42,23 @@ class NotesFragment : BaseFragment() {
             v.hideKeyboard()
             true
         }
-        binding.etNewNote.setOnEditorActionListener { v, actionId, _ ->
-            if (actionId != EditorInfo.IME_ACTION_DONE) return@setOnEditorActionListener false
-            val context = v.context
-            when (val parsed = Notes.parse(v.text.toString(), ZonedDateTime.now())) {
-                is Notes.Parsed.Error -> context.showToast(context.getString(R.string.command_cant_read, parsed.token))
-                is Notes.Parsed.Ok -> if (NotesCard.store(context).add(parsed.text, System.currentTimeMillis(), parsed.showFrom)) {
-                    v.text = ""
-                    binding.etSearch.setText("")
-                    render()
-                }
+        val addNote = View.OnClickListener {
+            Haptics.tick(it)
+            AddNoteSheet.show(it.context) {
+                binding.etSearch.setText("")
+                render()
             }
-            v.hideKeyboard()
-            true
         }
+        binding.btnNewNote.setOnClickListener(addNote)
+        binding.btnNewNotePlus.setOnClickListener(addNote)
+        refreshHook = { render() }
     }
 
     override fun onResume() {
         super.onResume()
         render()
+        // Back from the note view: put the list where it was.
+        binding.notesScrollView.post { _binding?.notesScrollView?.scrollTo(0, savedScrollY) }
     }
 
     private fun render() {
@@ -89,7 +89,17 @@ class NotesFragment : BaseFragment() {
         row.tvNoteTitle.text = note.text
         row.tvNoteTitle.isVisible = note.text.isNotEmpty()
         row.ivPin.isVisible = note.pinned
-        row.tvDue.isVisible = note.showFrom?.let { it <= today.toEpochDay() } == true
+        row.tvDue.isVisible = NoteViewRules.isDue(note, today)
+        val preview = if (isChecklist) null else NoteViewRules.bodyPreview(note)
+        row.tvNoteBody.text = preview
+        row.tvNoteBody.isVisible = preview != null
+        row.root.setOnClickListener {
+            Haptics.tick(it)
+            val nav = findNavController()
+            if (nav.currentDestination?.id == R.id.notesFragment) {
+                nav.navigate(R.id.action_notesFragment_to_noteViewFragment, bundleOf(NoteViewFragment.ARG_NOTE_ID to note.id))
+            }
+        }
         val edited = Notes.editedLabel(
             note, today, ZoneId.systemDefault(),
             Notes.EditedFormat(context.getString(R.string.note_edited_today), context.getString(R.string.note_edited_yesterday), context.getString(R.string.note_edited_on)),
@@ -112,15 +122,18 @@ class NotesFragment : BaseFragment() {
             }
             row.itemsPanel.addView(box)
         }
-        if (!isChecklist) {
-            // A plain note's text is the body; keep it normal weight.
-            row.tvNoteTitle.setTypeface(null, android.graphics.Typeface.NORMAL)
-        }
         return row.root
     }
 
     override fun onDestroyView() {
+        savedScrollY = _binding?.notesScrollView?.scrollY ?: savedScrollY
+        refreshHook = null
         super.onDestroyView()
         _binding = null
+    }
+
+    companion object {
+        /** Redraws the open Notes screen; the note view's Undo calls it after the screen is back. */
+        internal var refreshHook: (() -> Unit)? = null
     }
 }

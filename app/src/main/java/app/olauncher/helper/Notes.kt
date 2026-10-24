@@ -395,6 +395,17 @@ class NotesStore(private val read: () -> String?, private val write: (String) ->
         return result
     }
 
+    /** Applies [change] to the note with [id] (given the current time) and saves; a missing id or no change saves nothing. */
+    fun update(id: Long, change: (Note, Long) -> Note) {
+        val before = all()
+        val old = before.firstOrNull { it.id == id } ?: return
+        val new = change(old, System.currentTimeMillis())
+        if (new == old) return
+        write(Notes.encode(before.map { if (it.id == id) new else it }))
+    }
+
+    fun get(id: Long): Note? = all().firstOrNull { it.id == id }
+
     fun markDone(id: Long, done: Boolean = true) = write(Notes.encode(Notes.markDone(all(), id, done)))
     fun setPinned(id: Long, pinned: Boolean) = write(Notes.encode(Notes.setPinned(all(), id, pinned, System.currentTimeMillis())))
     fun toggleItem(noteId: Long, index: Int) = write(Notes.encode(Notes.toggleItem(all(), noteId, index, System.currentTimeMillis())))

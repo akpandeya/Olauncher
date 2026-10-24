@@ -165,7 +165,21 @@
         android:id="@+id/notesFragment"
         android:name="app.olauncher.ui.notes.NotesFragment"
         android:label="NotesFragment"
-        tools:layout="@layout/fragment_notes" />
+        tools:layout="@layout/fragment_notes">
+        <action
+            android:id="@+id/action_notesFragment_to_noteViewFragment"
+            app:destination="@id/noteViewFragment"
+            app:enterAnim="@animator/fade_enter"
+            app:exitAnim="@animator/fade_exit"
+            app:popEnterAnim="@animator/fade_enter"
+            app:popExitAnim="@animator/fade_exit" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/noteViewFragment"
+        android:name="app.olauncher.ui.notes.NoteViewFragment"
+        android:label="NoteViewFragment"
+        tools:layout="@layout/fragment_note_view" />
 
     <fragment
         android:id="@+id/wordsFragment"

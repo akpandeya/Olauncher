@@ -853,7 +853,6 @@
     <string name="notes_screen_empty" tools:ignore="MissingTranslation">No notes yet</string>
     <string name="notes_screen_progress" tools:ignore="MissingTranslation">%1$d of %2$d done</string>
     <string name="notes_screen_due" tools:ignore="MissingTranslation">Due</string>
-    <string name="notes_screen_add_hint" tools:ignore="MissingTranslation">New note: [] Shopping: milk, eggs</string>
     <string name="note_add_title" tools:ignore="MissingTranslation">New note</string>
     <string name="note_add_title_hint" tools:ignore="MissingTranslation">Title</string>
     <string name="note_add_body_hint" tools:ignore="MissingTranslation">Body</string>
@@ -870,6 +869,14 @@
     <string name="note_discard_action" tools:ignore="MissingTranslation">Discard</string>
     <string name="note_delete_title" tools:ignore="MissingTranslation">Delete note?</string>
     <string name="note_delete_message" tools:ignore="MissingTranslation">This note will be removed for good.</string>
+    <string name="note_view_back" tools:ignore="MissingTranslation">Back</string>
+    <string name="note_view_add_item" tools:ignore="MissingTranslation">+ Add item</string>
+    <string name="note_view_date" tools:ignore="MissingTranslation">Date</string>
+    <string name="note_view_move" tools:ignore="MissingTranslation">Move to list</string>
+    <string name="note_view_move_none" tools:ignore="MissingTranslation">No list</string>
+    <string name="note_view_no_lists" tools:ignore="MissingTranslation">No lists yet</string>
+    <string name="note_view_done" tools:ignore="MissingTranslation">Done</string>
+    <string name="note_view_delete" tools:ignore="MissingTranslation">Delete note</string>
     <string name="notes_search_empty" tools:ignore="MissingTranslation">No matching notes</string>
     <string name="saved_card_title">Saved for later · %1$d</string>
     <string name="saved_card_open">Open</string>
