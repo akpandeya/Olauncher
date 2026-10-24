@@ -3,9 +3,11 @@ package app.olauncher.ui.words
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.Gravity
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
 import android.widget.GridLayout
 import android.widget.TextView
 import androidx.annotation.AttrRes
@@ -20,10 +22,13 @@ import app.olauncher.data.store.ConjugationQuiz
 import app.olauncher.data.store.FormStatus
 import app.olauncher.data.store.OfflineGermanStore
 import app.olauncher.data.store.QuizAnswer
+import app.olauncher.data.store.QuizQuestion
 import app.olauncher.data.store.VerbParadigm
 import app.olauncher.data.store.shouldAutoAdvance
 import app.olauncher.databinding.FragmentConjugationBinding
 import app.olauncher.helper.Haptics
+import app.olauncher.helper.hideKeyboard
+import app.olauncher.helper.showKeyboard
 import app.olauncher.ui.BaseFragment
 import app.olauncher.ui.today.attachPressScale
 import kotlinx.coroutines.Dispatchers
@@ -33,10 +38,10 @@ import kotlinx.coroutines.withContext
 /**
  * Full-screen conjugation quiz for the `word` nav argument: the offline
  * dictionary's present-tense cells, asked one pronoun at a time with four
- * form choices. The user picks one, checks, and continues; missed forms come
- * back until answered right, and the page ends on a first-try summary with a
- * retry for the misses. A word with no verb entry (nouns, unknown words) gets
- * a graceful one-liner. System back exits normally.
+ * form choices in multiple choice or an input field in typed mode. The user
+ * picks or types, checks, and continues; missed forms come back until answered
+ * right, and the page ends on a first-try summary.
+ * System back exits normally.
  */
 class ConjugationFragment : BaseFragment() {
 
@@ -46,6 +51,7 @@ class ConjugationFragment : BaseFragment() {
     private var paradigm: VerbParadigm? = null
     private var quiz: ConjugationQuiz? = null
     private var selectedChoice: String? = null
+    private var lastRenderedFormIndex: Int? = null
     private var loadStarted = false
     private var loaded = false
     private var autoAdvanceScheduled = false
@@ -55,6 +61,7 @@ class ConjugationFragment : BaseFragment() {
         if (_binding == null || !q.isAnswered) return@Runnable
         q.advance()
         selectedChoice = null
+        lastRenderedFormIndex = null
         render()
     }
 
@@ -71,10 +78,38 @@ class ConjugationFragment : BaseFragment() {
         super.onViewCreated(view, savedInstanceState)
         binding.licenseNote.text = getText(R.string.wiktionary_license_note)
         binding.licenseNote.movementMethod = android.text.method.LinkMovementMethod.getInstance()
-        binding.btnPrimary.setOnClickListener { onPrimary(it) }
+        binding.btnPrimary.setOnClickListener {
+            if (binding.btnPrimary.text == getString(R.string.conjugation_type_them)) {
+                Haptics.tick(it)
+                startTypedRound()
+            } else {
+                onPrimary(it)
+            }
+        }
+        binding.btnType.setOnClickListener {
+            Haptics.tick(it)
+            startTypedRound()
+        }
         binding.btnSecondary.setOnClickListener {
             Haptics.tick(it)
             findNavController().popBackStack()
+        }
+        binding.etAnswer.setOnEditorActionListener { _, actionId, event ->
+            val isEnter = event?.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN
+            if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_GO || isEnter) {
+                onPrimary(binding.btnPrimary)
+                true
+            } else {
+                false
+            }
+        }
+        binding.etAnswer.setOnKeyListener { _, keyCode, event ->
+            if (keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN) {
+                onPrimary(binding.btnPrimary)
+                true
+            } else {
+                false
+            }
         }
         render()
         // A recreated view re-renders the held state above; only the first view loads.
@@ -97,21 +132,38 @@ class ConjugationFragment : BaseFragment() {
         }
     }
 
+    private fun startTypedRound() {
+        val p = paradigm ?: return
+        quiz = ConjugationQuiz(Conjugation.drillPrompts(p), isTyped = true)
+        selectedChoice = null
+        lastRenderedFormIndex = null
+        render()
+    }
+
     private fun onPrimary(view: View) {
         val q = quiz ?: return
         Haptics.tick(view)
         when {
             q.isRoundFinished -> {
-                // Summary: retry the misses.
-                if (q.startRetry()) {
+                if (!q.isTyped && q.missedForms.isEmpty()) {
+                    startTypedRound()
+                } else if (q.startRetry()) {
                     selectedChoice = null
+                    lastRenderedFormIndex = null
                     render()
                 }
             }
             q.isAnswered -> {
                 q.advance()
                 selectedChoice = null
+                lastRenderedFormIndex = null
                 render()
+            }
+            q.isTyped -> {
+                val input = binding.etAnswer.text?.toString().orEmpty()
+                val result = q.answer(input) ?: return
+                render()
+                if (shouldAutoAdvance(result)) scheduleAutoAdvance()
             }
             else -> Unit
         }
@@ -127,7 +179,8 @@ class ConjugationFragment : BaseFragment() {
 
         b.quizContainer.isVisible = inQuiz
         b.quizCardContent.isVisible = inQuiz
-        b.choiceScroll.isVisible = inQuiz
+        b.choiceScroll.isVisible = inQuiz && !q.isTyped
+        b.typedContainer.isVisible = inQuiz && q.isTyped
         b.questionCard.isVisible = inQuiz
         b.quizCard.isVisible = finished
         b.summaryContainer.isVisible = finished
@@ -135,6 +188,7 @@ class ConjugationFragment : BaseFragment() {
         b.conjugationFooter.isVisible = loaded
         b.btnPrimary.isVisible = !noParadigm
         b.btnSecondary.isVisible = finished
+        b.btnType.isVisible = false
         b.licenseNote.isVisible = !noParadigm
 
         if (noParadigm) {
@@ -169,6 +223,15 @@ class ConjugationFragment : BaseFragment() {
         b.tvPronoun.text = question.pronoun
         b.tvMeaning.text = meaningFor(question.pronoun)
 
+        if (q.isTyped) {
+            renderTypedQuestion(q, question)
+        } else {
+            renderChoiceQuestion(q, question)
+        }
+    }
+
+    private fun renderChoiceQuestion(q: ConjugationQuiz, question: QuizQuestion) {
+        val b = binding
         val answered = q.isAnswered
         b.choiceGrid.removeAllViews()
         for (choice in question.choices) {
@@ -202,6 +265,47 @@ class ConjugationFragment : BaseFragment() {
         b.btnPrimary.isVisible = waitingForContinue
         b.btnPrimary.isEnabled = true
         b.btnPrimary.alpha = 1f
+    }
+
+    private fun renderTypedQuestion(q: ConjugationQuiz, question: QuizQuestion) {
+        val b = binding
+        val answered = q.isAnswered
+        if (!answered) {
+            if (lastRenderedFormIndex != question.formIndex) {
+                lastRenderedFormIndex = question.formIndex
+                b.etAnswer.setText("")
+            }
+            b.etAnswer.isEnabled = true
+            b.etAnswer.isActivated = false
+            b.etAnswer.setBackgroundResource(R.drawable.quiz_choice)
+            b.tvCorrection.isVisible = false
+            b.btnPrimary.setText(R.string.conjugation_check)
+            b.btnPrimary.isVisible = true
+            b.btnPrimary.isEnabled = true
+            b.btnPrimary.alpha = 1f
+            b.etAnswer.requestFocus()
+            b.etAnswer.post { b.etAnswer.showKeyboard() }
+        } else {
+            lastRenderedFormIndex = null
+            b.etAnswer.isEnabled = false
+            val isCorrect = q.lastAnswer?.correct == true
+            if (isCorrect) {
+                b.etAnswer.isActivated = true
+                b.etAnswer.setBackgroundResource(R.drawable.quiz_choice)
+                b.tvCorrection.isVisible = false
+                b.btnPrimary.isVisible = false
+                scheduleAutoAdvance()
+            } else {
+                b.etAnswer.isActivated = false
+                b.etAnswer.setBackgroundResource(R.drawable.quiz_choice_wrong)
+                b.tvCorrection.text = question.answer
+                b.tvCorrection.isVisible = true
+                b.btnPrimary.setText(R.string.conjugation_continue)
+                b.btnPrimary.isVisible = true
+                b.btnPrimary.isEnabled = true
+                b.btnPrimary.alpha = 1f
+            }
+        }
     }
 
     private fun scheduleAutoAdvance() {
@@ -246,14 +350,41 @@ class ConjugationFragment : BaseFragment() {
             b.summaryGrid.addView(tv, cellParams(b.summaryGrid))
         }
         val missed = q.missedForms
-        b.btnPrimary.isVisible = missed.isNotEmpty()
-        b.btnPrimary.isEnabled = true
-        b.btnPrimary.alpha = 1f
-        b.btnPrimary.text = if (missed.size == 1) {
-            context.getString(R.string.conjugation_practise_again, q.pronoun(missed.first()))
+        if (!q.isTyped) {
+            if (missed.isNotEmpty()) {
+                b.btnPrimary.isVisible = true
+                b.btnPrimary.isEnabled = true
+                b.btnPrimary.alpha = 1f
+                b.btnPrimary.text = if (missed.size == 1) {
+                    context.getString(R.string.conjugation_practise_again, q.pronoun(missed.first()))
+                } else {
+                    context.getString(R.string.conjugation_practise_misses)
+                }
+                b.btnType.isVisible = true
+            } else {
+                b.btnPrimary.isVisible = true
+                b.btnPrimary.isEnabled = true
+                b.btnPrimary.alpha = 1f
+                b.btnPrimary.text = context.getString(R.string.conjugation_type_them)
+                b.btnType.isVisible = false
+            }
         } else {
-            context.getString(R.string.conjugation_practise_misses)
+            b.btnType.isVisible = false
+            if (missed.isNotEmpty()) {
+                b.btnPrimary.isVisible = true
+                b.btnPrimary.isEnabled = true
+                b.btnPrimary.alpha = 1f
+                b.btnPrimary.text = if (missed.size == 1) {
+                    context.getString(R.string.conjugation_practise_again, q.pronoun(missed.first()))
+                } else {
+                    context.getString(R.string.conjugation_practise_misses)
+                }
+            } else {
+                b.btnPrimary.isVisible = false
+            }
         }
+        b.btnSecondary.isVisible = true
+        b.root.hideKeyboard()
     }
 
     private enum class TextSize { Large, Small }
@@ -297,6 +428,7 @@ class ConjugationFragment : BaseFragment() {
     override fun onDestroyView() {
         _binding?.root?.removeCallbacks(autoAdvance)
         autoAdvanceScheduled = false
+        _binding?.root?.hideKeyboard()
         super.onDestroyView()
         _binding = null
     }

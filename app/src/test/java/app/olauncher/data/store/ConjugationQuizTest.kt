@@ -169,4 +169,138 @@ class ConjugationQuizTest {
         assertFalse(shouldAutoAdvance(null))
         assertFalse(shouldAutoAdvance(q2.answer(q2.current!!.answer)))
     }
+
+    @Test
+    fun checkTypedAnswerTrimsWhitespace() {
+        assertTrue(checkTypedAnswer("  mache  ", "mache"))
+        assertTrue(checkTypedAnswer("\tmache\n", "mache"))
+        assertTrue(checkTypedAnswer("mache", "  mache  "))
+    }
+
+    @Test
+    fun checkTypedAnswerNfcNormalises() {
+        val decomposed = "w" + "a\u0308" + "re"
+        assertTrue(checkTypedAnswer(decomposed, "wäre"))
+        assertTrue(checkTypedAnswer("wäre", decomposed))
+    }
+
+    @Test
+    fun checkTypedAnswerIsCaseSensitiveExceptFirstLetter() {
+        assertTrue(checkTypedAnswer("Mache", "mache"))
+        assertTrue(checkTypedAnswer("mache", "Mache"))
+        assertTrue(checkTypedAnswer("Äußern", "äußern"))
+        assertTrue(checkTypedAnswer("äußern", "Äußern"))
+
+        assertFalse(checkTypedAnswer("mAche", "mache"))
+        assertFalse(checkTypedAnswer("MACHEN", "machen"))
+        assertFalse(checkTypedAnswer("machsT", "machst"))
+        assertFalse(checkTypedAnswer("mAchE", "mache"))
+    }
+
+    @Test
+    fun checkTypedAnswerRequiresUmlautsWithoutFolding() {
+        assertFalse(checkTypedAnswer("waere", "wäre"))
+        assertFalse(checkTypedAnswer("koennen", "können"))
+        assertFalse(checkTypedAnswer("ueber", "über"))
+    }
+
+    @Test
+    fun checkTypedAnswerHandlesSeparableVerbsAndEmptyStrings() {
+        assertTrue(checkTypedAnswer("fange an", "fange an"))
+        assertTrue(checkTypedAnswer("Fange an", "fange an"))
+        assertFalse(checkTypedAnswer("fange An", "fange an"))
+
+        assertFalse(checkTypedAnswer("", "mache"))
+        assertFalse(checkTypedAnswer("   ", "mache"))
+        assertFalse(checkTypedAnswer("mache", ""))
+        assertTrue(checkTypedAnswer("", ""))
+        assertTrue(checkTypedAnswer("   ", ""))
+    }
+
+    @Test
+    fun typedQuizChecksAnswersWithNormalizationAndFirstLetterCasing() {
+        val q = ConjugationQuiz(machen, Random(7), isTyped = true)
+        assertTrue(q.isTyped)
+        assertTrue(q.current!!.choices.isEmpty())
+
+        val result = q.answer("  Mache  ")
+        assertNotNull(result)
+        assertTrue(result!!.correct)
+        assertEquals("mache", result.answer)
+        assertEquals(result, q.lastAnswer)
+        assertTrue(q.isAnswered)
+    }
+
+    @Test
+    fun typedQuizRetryQueueRepeatsMissedFormsAtTheEndUntilRight() {
+        val q = ConjugationQuiz(machen, Random(7), isTyped = true)
+        // Miss form 0 ("ich")
+        val first = q.answer("machst")!!
+        assertFalse(first.correct)
+        assertEquals("mache", first.answer)
+        q.advance()
+
+        val asked = mutableListOf<String>()
+        while (q.current!!.pronoun != "ich") {
+            asked += q.current!!.pronoun
+            q.answer(q.current!!.answer)
+            q.advance()
+        }
+        assertEquals(listOf("du", "er/sie/es", "wir", "ihr", "sie/Sie"), asked)
+
+        // Miss "ich" again with wrong casing on second letter
+        val second = q.answer("mAche")!!
+        assertFalse(second.correct)
+        q.advance()
+
+        assertEquals("ich", q.current!!.pronoun)
+        val third = q.answer("Mache")!!
+        assertTrue(third.correct)
+        q.advance()
+
+        assertTrue(q.isRoundFinished)
+        assertEquals(5, q.firstTryScore)
+        assertEquals(2, q.missCount(0))
+        assertEquals(listOf(0), q.missedForms)
+        assertEquals(FormStatus.MISSED, q.status(0))
+    }
+
+    @Test
+    fun typedQuizStartRetryRequeuesOnlyMissedForms() {
+        val q = ConjugationQuiz(machen, Random(7), isTyped = true)
+        // Miss du (1) and ihr (4).
+        repeat(6) {
+            val pronoun = q.current!!.pronoun
+            if (pronoun == "du" || pronoun == "ihr") q.answer("wrong") else q.answer(q.current!!.answer)
+            q.advance()
+        }
+        assertEquals("du", q.current!!.pronoun)
+        q.answer("machst")
+        q.advance()
+        assertEquals("ihr", q.current!!.pronoun)
+        q.answer("macht")
+        q.advance()
+        assertTrue(q.isRoundFinished)
+        assertEquals(4, q.firstTryScore)
+        assertEquals(listOf(1, 4), q.missedForms)
+
+        assertTrue(q.startRetry())
+        assertEquals("du", q.current!!.pronoun)
+        q.answer("machst")
+        q.advance()
+        assertEquals("ihr", q.current!!.pronoun)
+        q.answer("macht")
+        q.advance()
+        assertTrue(q.isRoundFinished)
+        assertEquals(4, q.firstTryScore)
+    }
+
+    @Test
+    fun answerTypedWorksDirectlyInAnyMode() {
+        val q = quiz()
+        assertFalse(q.isTyped)
+        val ans = q.answerTyped("Mache")
+        assertNotNull(ans)
+        assertTrue(ans!!.correct)
+    }
 }
