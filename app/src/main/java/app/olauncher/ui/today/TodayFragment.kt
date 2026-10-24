@@ -354,7 +354,14 @@ class TodayFragment : BaseFragment() {
         panel.tvPanelTitle.text = title
         // Cards with their own heading (counts or controls in it) hide the panel's.
         panel.tvPanelTitle.isVisible = !card.drawsOwnHeader
-        if (card.tinted) panel.root.setBackgroundResource(R.drawable.today_panel_held)
+        if (card.tinted) {
+            val pl = panel.root.paddingLeft
+            val pt = panel.root.paddingTop
+            val pr = panel.root.paddingRight
+            val pb = panel.root.paddingBottom
+            panel.root.setBackgroundResource(R.drawable.today_panel_held)
+            panel.root.setPadding(pl, pt, pr, pb)
+        }
         // Grid panels get narrow: titles take one line and make room by ellipsizing.
         panel.tvPanelTitle.maxLines = 1
         panel.tvPanelTitle.ellipsize = android.text.TextUtils.TruncateAt.END
