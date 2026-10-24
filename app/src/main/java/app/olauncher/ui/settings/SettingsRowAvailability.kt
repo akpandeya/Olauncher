@@ -20,6 +20,7 @@ object SettingsRowAvailability {
     private val germanDependentRows = setOf(
         R.id.dictionaryApp,
         R.id.germanClock,
+        R.id.germanOfflineDictionaryOnOff,
         R.id.germanLookupOnOff,
         R.id.germanSpellSuggestOnOff,
         R.id.germanPauseWordOnOff,

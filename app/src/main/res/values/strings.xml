@@ -432,6 +432,34 @@
     <string name="offline_dictionary_plural" tools:ignore="MissingTranslation">plural</string>
     <string name="german_pause_word">Word on the pause screen</string>
     <string name="german_ui">Nudges and pause in German</string>
+    <string name="german_setup_title">Learn German words as you read</string>
+    <string name="german_setup_point_offline">Meanings that work offline</string>
+    <string name="german_setup_point_review">Review your words on Today</string>
+    <string name="german_setup_point_pick">Optional: pick words from any screen</string>
+    <string name="german_setup_start">Set up German</string>
+    <string name="german_setup_not_now">Not now</string>
+    <string name="german_setup_choose_title">Choose what to turn on</string>
+    <string name="german_setup_offline">Offline dictionary</string>
+    <string name="german_setup_offline_note">Works without internet. Nothing leaves your phone.</string>
+    <string name="german_setup_lookup">Look up online</string>
+    <string name="german_setup_lookup_note">Sends the word you pick to Wiktionary.</string>
+    <string name="german_setup_screen_pick">Pick words from the screen</string>
+    <string name="german_setup_screen_pick_note">Needs one permission. Reads the screen only when you press the button.</string>
+    <string name="german_setup_nudges">Nudges and pause in German</string>
+    <string name="german_setup_nudges_note">Only changes the wording. Nothing is sent.</string>
+    <string name="german_setup_change_later">You can change this any time in German settings.</string>
+    <string name="german_setup_continue">Continue</string>
+    <string name="german_setup_back">Back</string>
+    <string name="german_setup_permission_title">Pick words from the screen</string>
+    <string name="german_setup_permission_how_1">This needs the accessibility permission.</string>
+    <string name="german_setup_permission_how_2">Thumbline reads the screen only when you press the accessibility button.</string>
+    <string name="german_setup_permission_how_3">Nothing is stored or sent.</string>
+    <string name="german_setup_permission_skipped">If you skip, screen picks stay off. You can still save words by typing them in the drawer.</string>
+    <string name="german_setup_open_accessibility">Open accessibility settings</string>
+    <string name="german_setup_skip">Skip for now</string>
+    <string name="german_setup_progress">Step %1$d of %2$d</string>
+    <string name="german_offline_dictionary">Offline dictionary</string>
+    <string name="german_offline_dictionary_subtitle">Meanings bundled in the app. Nothing leaves your phone</string>
     <string name="nudge_water_notification_de" translatable="false">Zeit für ein Glas Wasser · heute %d</string>
     <string name="nudge_walk_notification_de" translatable="false">Steh auf und geh ein paar Minuten · heute %d</string>
     <string name="nudge_social_notification_de" translatable="false">Heute %1$d Min. auf %2$s. Leg es weg?</string>

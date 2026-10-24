@@ -115,6 +115,7 @@ class Prefs(context: Context) :
         const val NUDGE_SOCIAL_DAY = "NUDGE_SOCIAL_DAY"
         const val GERMAN_ENABLED = "GERMAN_ENABLED"
         const val GERMAN_UI = "GERMAN_UI"
+        const val GERMAN_OFFLINE_DICTIONARY = "GERMAN_OFFLINE_DICTIONARY"
         const val GERMAN_LOOKUP = "GERMAN_LOOKUP"
         const val GERMAN_DICTIONARY_APP = "GERMAN_DICTIONARY_APP"
         const val GERMAN_SCREEN_PICK = "GERMAN_SCREEN_PICK"

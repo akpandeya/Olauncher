@@ -86,6 +86,13 @@
             app:exitAnim="@animator/fade_exit"
             app:popEnterAnim="@animator/fade_enter"
             app:popExitAnim="@animator/fade_exit" />
+        <action
+            android:id="@+id/action_settingsFragment_to_germanSetupFragment"
+            app:destination="@id/germanSetupFragment"
+            app:enterAnim="@animator/fade_enter"
+            app:exitAnim="@animator/fade_exit"
+            app:popEnterAnim="@animator/fade_enter"
+            app:popExitAnim="@animator/fade_exit" />
     </fragment>
 
     <fragment
@@ -243,5 +250,11 @@
         android:name="app.olauncher.ui.privacy.PrivacyFragment"
         android:label="PrivacyFragment"
         tools:layout="@layout/fragment_privacy" />
+
+    <fragment
+        android:id="@+id/germanSetupFragment"
+        android:name="app.olauncher.ui.german.GermanSetupFragment"
+        android:label="GermanSetupFragment"
+        tools:layout="@layout/fragment_german_setup" />
 
 </navigation>
