@@ -53,6 +53,7 @@
     <color name="scrimClear">#00000000</color>
     <color name="scrimHandle">#66000000</color>
     <color name="accentSystem">@android:color/system_accent1_600</color>
+    <!-- Accent roles: also used for review buttons (#508: No=rose, Almost=sand, Knew=sage) -->
     <color name="accentSage">@color/accentSageLight</color>
     <color name="accentSand">@color/accentSandLight</color>
     <color name="accentSky">@color/accentSkyLight</color>

@@ -277,10 +277,12 @@
                 android:padding="8dp">
 
                 <TextView
+                    android:id="@+id/tvNoLabel"
                     style="@style/TextSmallBold"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/words_grade_no" />
+                    android:text="@string/words_grade_no"
+                    android:textColor="@color/accentRose" />
 
                 <TextView
                     android:id="@+id/tvNoInterval"
@@ -308,10 +310,12 @@
                 android:padding="8dp">
 
                 <TextView
+                    android:id="@+id/tvAlmostLabel"
                     style="@style/TextSmallBold"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/words_almost" />
+                    android:text="@string/words_almost"
+                    android:textColor="@color/accentSand" />
 
                 <TextView
                     android:id="@+id/tvAlmostInterval"
@@ -338,10 +342,12 @@
                 android:padding="8dp">
 
                 <TextView
+                    android:id="@+id/tvKnewLabel"
                     style="@style/TextSmallBold"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/words_grade_knew" />
+                    android:text="@string/words_grade_knew"
+                    android:textColor="@color/accentSage" />
 
                 <TextView
                     android:id="@+id/tvKnewInterval"

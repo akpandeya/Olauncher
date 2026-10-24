@@ -6,6 +6,7 @@ import android.view.Menu
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.navigation.fragment.findNavController
 import app.olauncher.R
@@ -58,6 +59,10 @@ class ReviewFragment : BaseFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        // Three tones for review buttons: No is rose, Almost is sand, Knew it is sage (#508).
+        binding.tvNoLabel.setTextColor(ContextCompat.getColor(view.context, ReviewButtonTones.colorResForResult(ReviewEvent.Result.AGAIN)))
+        binding.tvAlmostLabel.setTextColor(ContextCompat.getColor(view.context, ReviewButtonTones.colorResForResult(ReviewEvent.Result.ALMOST)))
+        binding.tvKnewLabel.setTextColor(ContextCompat.getColor(view.context, ReviewButtonTones.colorResForResult(ReviewEvent.Result.KNEW)))
         binding.btnShowAnswer.setOnClickListener {
             Haptics.tick(it)
             setRevealed(true)

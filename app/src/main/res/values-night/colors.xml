@@ -16,6 +16,7 @@
     <color name="todayPanel">@color/todayPanelDark</color>
     <color name="todayChip">@color/todayChipDark</color>
     <color name="accentSystem">@android:color/system_accent1_200</color>
+    <!-- Accent roles: also used for review buttons (#508: No=rose, Almost=sand, Knew=sage) -->
     <color name="accentSage">@color/accentSageDark</color>
     <color name="accentSand">@color/accentSandDark</color>
     <color name="accentSky">@color/accentSkyDark</color>
