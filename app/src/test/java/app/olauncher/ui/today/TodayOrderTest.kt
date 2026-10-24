@@ -1,6 +1,7 @@
 package app.olauncher.ui.today
 
 import app.olauncher.glance.CalendarEvent
+import app.olauncher.ui.today.cards.HeldCard
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.ZoneId
@@ -47,9 +48,11 @@ class TodayOrderTest {
     }
 
     @Test
-    fun heldWinsOnlyWhenSomethingIsHeld() {
-        assertEquals(95, TodayOrder.heldPriority(true, 47))
-        assertEquals(47, TodayOrder.heldPriority(false, 47))
+    fun heldDefaultPriorityIsBelowEveryOtherCard() {
+        val heldPriority = TodayOrder.defaultPriority(TodayCards.all.indexOf(HeldCard))
+        TodayCards.all.filter { it !== HeldCard }.forEach { card ->
+            assertTrue(card.key, TodayOrder.defaultPriority(TodayCards.all.indexOf(card)) > heldPriority)
+        }
     }
 
     @Test
@@ -68,14 +71,14 @@ class TodayOrderTest {
     }
 
     @Test
-    fun heldAndNextUpBeatEverythingElse() {
+    fun nextUpAndWellbeingBeatTheRest() {
         val cards = listOf(
             Ranked("saved", TodayOrder.defaultPriority(2)),
-            Ranked("held", TodayOrder.heldPriority(true, 47)),
+            Ranked("held", 47),
             Ranked("wellbeing", TodayOrder.wellbeingPriority(19, 46)),
             Ranked("next_up", TodayOrder.NEXT_UP_PRIORITY),
         )
-        assertEquals(listOf("next_up", "held", "wellbeing", "saved"), TodayOrder.order(cards).map { it.key })
+        assertEquals(listOf("next_up", "wellbeing", "saved", "held"), TodayOrder.order(cards).map { it.key })
     }
 
     private val zone: ZoneId = ZoneId.of("Europe/Berlin")

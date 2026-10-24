@@ -56,7 +56,6 @@ object TodayOrder {
         )
 
     const val NEXT_UP_PRIORITY = 100
-    const val HELD_PRIORITY = 95
     const val WEEK_PRIORITY = 90
     const val WELLBEING_PRIORITY = 70
     const val BASE_PRIORITY = 50
@@ -78,8 +77,6 @@ object TodayOrder {
         } else {
             fallback
         }
-
-    fun heldPriority(anyHeld: Boolean, fallback: Int): Int = if (anyHeld) HELD_PRIORITY else fallback
 
     fun weekPriority(day: DayOfWeek, fallback: Int): Int =
         if (day == DayOfWeek.SUNDAY || day == DayOfWeek.MONDAY) WEEK_PRIORITY else fallback
