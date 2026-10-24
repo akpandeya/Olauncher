@@ -165,6 +165,12 @@ object WordsCard : TodayCard {
                     navController.navigate(R.id.action_todayFragment_to_reviewFragment)
                 }
             },
+            onOpenLists = {
+                val navController = fragment.findNavController()
+                if (navController.currentDestination?.id == R.id.todayFragment) {
+                    navController.navigate(R.id.action_todayFragment_to_wordListsFragment)
+                }
+            },
         )
         tile.binding.root.tag = tile
         tile.render()
@@ -182,6 +188,7 @@ internal class WordsTileView(
     val binding: CardWordsTileBinding,
     private val onOpenWords: () -> Unit = {},
     private val onReview: () -> Unit = {},
+    private val onOpenLists: () -> Unit = {},
 ) {
 
     private var due = 0
@@ -190,6 +197,10 @@ internal class WordsTileView(
         binding.root.setOnClickListener {
             Haptics.tick(it)
             if (WordsCardLogic.showReview(due)) onReview() else onOpenWords()
+        }
+        binding.root.setOnLongClickListener { view ->
+            showWordsMenu(view.context, due, onReview, onOpenWords, onOpenLists)
+            true
         }
     }
 
@@ -229,27 +240,9 @@ internal class WordsCardView(
             onOpenWords()
         }
         binding.root.setOnLongClickListener { view ->
-            val context = view.context
-            val items = WordsCardLogic.menuItems(due)
-            context.createChoiceDialog(
-                title = R.string.words,
-                items = items.map { context.getString(labelRes(it)) },
-                onPick = { index ->
-                    when (items[index]) {
-                        WordsCardMenuItem.REVIEW -> onReview()
-                        WordsCardMenuItem.WORDS -> onOpenWords()
-                        WordsCardMenuItem.LISTS -> onOpenLists()
-                    }
-                },
-            ).show()
+            showWordsMenu(view.context, due, onReview, onOpenWords, onOpenLists)
             true
         }
-    }
-
-    private fun labelRes(item: WordsCardMenuItem): Int = when (item) {
-        WordsCardMenuItem.REVIEW -> R.string.words_review_title
-        WordsCardMenuItem.WORDS -> R.string.words
-        WordsCardMenuItem.LISTS -> R.string.word_lists_title
     }
 
     fun render() {
@@ -265,4 +258,34 @@ internal class WordsCardView(
             WordsCardLogic.formatCardLine(context, stats.total, stats.learned)
         }
     }
+}
+
+/** The long-press menu shared by the Words card and the Words tile. */
+private fun showWordsMenu(
+    context: Context,
+    due: Int,
+    onReview: () -> Unit,
+    onOpenWords: () -> Unit,
+    onOpenLists: () -> Unit,
+) {
+    val items = WordsCardLogic.menuItems(due)
+    context.createChoiceDialog(
+        title = R.string.words,
+        items = items.map {
+            context.getString(
+                when (it) {
+                    WordsCardMenuItem.REVIEW -> R.string.words_review_title
+                    WordsCardMenuItem.WORDS -> R.string.words
+                    WordsCardMenuItem.LISTS -> R.string.word_lists_title
+                },
+            )
+        },
+        onPick = { index ->
+            when (items[index]) {
+                WordsCardMenuItem.REVIEW -> onReview()
+                WordsCardMenuItem.WORDS -> onOpenWords()
+                WordsCardMenuItem.LISTS -> onOpenLists()
+            }
+        },
+    ).show()
 }

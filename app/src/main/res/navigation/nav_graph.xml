@@ -246,7 +246,17 @@
         android:id="@+id/reviewFragment"
         android:name="app.olauncher.ui.words.ReviewFragment"
         android:label="ReviewFragment"
-        tools:layout="@layout/fragment_review" />
+        tools:layout="@layout/fragment_review">
+        <action
+            android:id="@+id/action_reviewFragment_to_wordsFragment"
+            app:destination="@id/wordsFragment"
+            app:enterAnim="@animator/fade_enter"
+            app:exitAnim="@animator/fade_exit"
+            app:popEnterAnim="@animator/fade_enter"
+            app:popExitAnim="@animator/fade_exit"
+            app:popUpTo="@id/reviewFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
 
     <fragment
         android:id="@+id/conjugationFragment"

@@ -37,14 +37,42 @@ data class GermanSetupResult(
 object GermanSetupFlow {
 
     /**
-     * Screen picks need an accessibility permission, which is asked for only in step 3.
-     * They stay off unless the user pressed "Open accessibility settings" there; the
-     * step 2 switch alone never turns them on.
+     * The choices the setup opens with: the first time the fixed defaults, afterwards the
+     * stored German settings so finishing again never overwrites what the user changed later.
      */
-    fun result(choices: GermanSetupChoices, openedAccessibilitySettings: Boolean) = GermanSetupResult(
+    fun initialChoices(
+        previouslySetUp: Boolean,
+        offlineDictionary: Boolean,
+        lookupOnline: Boolean,
+        screenPick: Boolean,
+        germanUi: Boolean,
+    ): GermanSetupChoices =
+        if (previouslySetUp) {
+            GermanSetupChoices(offlineDictionary, lookupOnline, screenPick, germanUi)
+        } else {
+            GermanSetupChoices()
+        }
+
+    /** The step after [step], or null when setup ends. The permission step shows only if screen picks are on. */
+    fun next(step: GermanSetupStep, choices: GermanSetupChoices): GermanSetupStep? {
+        val following = step.next() ?: return null
+        return if (following == GermanSetupStep.PERMISSION && !choices.screenPick) null else following
+    }
+
+    /**
+     * Screen picks need an accessibility permission, which is asked for only in step 3, and
+     * step 3 is reached only when the step 2 switch is on. They turn on only when both hold:
+     * the switch is on and the user pressed "Open accessibility settings". [alreadyOn] keeps an
+     * earlier grant when the setup is run again and the permission step is skipped.
+     */
+    fun result(
+        choices: GermanSetupChoices,
+        openedAccessibilitySettings: Boolean,
+        alreadyOn: Boolean = false,
+    ) = GermanSetupResult(
         offlineDictionary = choices.offlineDictionary,
         lookupOnline = choices.lookupOnline,
-        screenPick = openedAccessibilitySettings,
+        screenPick = choices.screenPick && (openedAccessibilitySettings || alreadyOn),
         germanUi = choices.germanNudges,
     )
 }

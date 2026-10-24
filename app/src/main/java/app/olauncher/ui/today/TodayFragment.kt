@@ -327,7 +327,12 @@ class TodayFragment : BaseFragment() {
                     )
                     index = end
                 }
-                card.halfWidth && cards.getOrNull(index + 1)?.halfWidth == true -> {
+                cards.getOrNull(index + 1)?.let { next ->
+                    TodayOrder.pairsAsHalfWidth(
+                        card.halfWidth, card.gridSpan(requireContext()),
+                        next.halfWidth, next.gridSpan(requireContext()),
+                    )
+                } == true -> {
                     container.addView(halfWidthRow(card, cards[index + 1], groupKeys))
                     index += 2
                 }

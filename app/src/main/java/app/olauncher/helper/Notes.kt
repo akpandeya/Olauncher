@@ -196,6 +196,15 @@ object Notes {
     /** The one note a single-note view shows: the first pinned one, else the newest. Null for an empty list. */
     fun featured(notes: List<Note>): Note? = notes.firstOrNull { it.pinned } ?: notes.lastOrNull()
 
+    /**
+     * The note a single-note view shows for search [matches] (a [cardList] order): the one
+     * showing now ([featured] among those whose date has come), else the soonest later match.
+     */
+    fun featuredMatch(matches: List<Note>, today: LocalDate): Note? {
+        val showingNow = matches.filter { it.showFrom == null || it.showFrom <= today.toEpochDay() }
+        return featured(showingNow) ?: matches.firstOrNull()
+    }
+
     fun delete(notes: List<Note>, id: Long): List<Note> = notes.filterNot { it.id == id }
 
     /** Open notes, oldest first (ties by id). */
