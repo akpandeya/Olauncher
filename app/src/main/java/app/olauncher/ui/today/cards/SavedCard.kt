@@ -7,6 +7,7 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.ViewCompat
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import app.olauncher.R
@@ -97,9 +98,13 @@ object SavedCard : TodayCard {
     const val KEY = "saved"
     const val MAX_ACTIVE_VISIBLE = 20
 
+    /** The Today card shows just the latest item until "+N more" is tapped. */
+    const val CARD_VISIBLE = 1
+
     override val key: String = KEY
     override val titleRes: Int = R.string.saved_for_later
     override val emoji: String = "🔖"
+    override val drawsOwnHeader: Boolean = true
 
     var isArchivedExpanded: Boolean = false
     var isActiveExpanded: Boolean = false
@@ -110,13 +115,9 @@ object SavedCard : TodayCard {
         return storeProvider?.invoke(context) ?: SavedItemsStore(context)
     }
 
-    override fun hasContent(context: Context): Boolean {
-        val store = getStore(context)
-        return store.active().isNotEmpty() || store.archived().isNotEmpty()
-    }
-
     override fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View {
         val viewBinding = CardSavedBinding.inflate(inflater, parent, false)
+        ViewCompat.setAccessibilityHeading(viewBinding.tvCardTitle, true)
         val cardView = SavedCardView(viewBinding)
         viewBinding.root.tag = cardView
 
@@ -155,16 +156,25 @@ internal class SavedCardView(private val binding: CardSavedBinding) {
         val totalActive = activeItems.size
         val totalArchived = archivedItems.size
 
+        b.tvCardTitle.text = context.getString(R.string.saved_card_title, totalActive)
+
         // Empty state: shown when there are no active items
         b.tvEmpty.isVisible = totalActive == 0
 
-        // Active items (newest nearest the bottom, at most 20 unless expanded)
+        // Active items: just the latest, or all once "+N more" is tapped
         val visibleActive = SavedCardLogic.getVisibleActiveItems(
             items = activeItems,
             isExpanded = SavedCard.isActiveExpanded,
-            maxCount = SavedCard.MAX_ACTIVE_VISIBLE
+            maxCount = SavedCard.CARD_VISIBLE
         )
-        val moreCount = SavedCardLogic.getMoreCount(totalActive, SavedCard.MAX_ACTIVE_VISIBLE)
+        val moreCount = SavedCardLogic.getMoreCount(totalActive, SavedCard.CARD_VISIBLE)
+
+        val latest = SavedCardLogic.sortActiveItems(activeItems).lastOrNull()
+        b.tvOpenLatest.isVisible = latest != null
+        b.tvOpenLatest.setOnClickListener {
+            Haptics.tick(it)
+            latest?.let { item -> openItem(context, item) }
+        }
 
         b.tvMore.isVisible = !SavedCard.isActiveExpanded && moreCount > 0
         if (b.tvMore.isVisible) {

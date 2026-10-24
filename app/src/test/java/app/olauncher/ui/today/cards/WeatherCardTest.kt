@@ -25,12 +25,9 @@ class WeatherCardTest {
     }
 
     @Test
-    fun `isAvailable follows weatherEnabled and cache existence`() {
-        // True only when weather is on and cache exists
-        assertTrue(WeatherCardLogic.isAvailable(weatherEnabled = true, hasCache = true))
-        assertFalse(WeatherCardLogic.isAvailable(weatherEnabled = false, hasCache = true))
-        assertFalse(WeatherCardLogic.isAvailable(weatherEnabled = true, hasCache = false))
-        assertFalse(WeatherCardLogic.isAvailable(weatherEnabled = false, hasCache = false))
+    fun `isAvailable follows weatherEnabled only, so a missing forecast shows the empty state`() {
+        assertTrue(WeatherCardLogic.isAvailable(weatherEnabled = true))
+        assertFalse(WeatherCardLogic.isAvailable(weatherEnabled = false))
     }
 
     @Test

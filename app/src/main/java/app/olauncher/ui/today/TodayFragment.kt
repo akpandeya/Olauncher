@@ -7,10 +7,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
+import android.widget.LinearLayout
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
+import androidx.fragment.app.Fragment
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.lifecycleScope
@@ -24,10 +26,12 @@ import app.olauncher.data.store.IntentionHistory
 import app.olauncher.data.store.IntentionHistoryStore
 import app.olauncher.databinding.FragmentTodayBinding
 import app.olauncher.databinding.ItemTodayPanelBinding
+import app.olauncher.databinding.ItemWidgetSlotBinding
 import app.olauncher.glance.HeroFormatting
 import app.olauncher.helper.Intention
 import app.olauncher.listener.OnSwipeTouchListener
 import app.olauncher.ui.BaseFragment
+import app.olauncher.ui.today.cards.HeldCard
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -196,9 +200,13 @@ class TodayFragment : BaseFragment() {
 
     private fun populateCards() {
         val context = context ?: return
-        val enabledCards = TodayCards.all.filter {
+        val builtIn = TodayCards.all.filter {
             prefs.isTodayCardEnabled(it.key) && it.isAvailable(context)
-        } + todayWidgets.cards()
+        }
+        // Widgets sit between Next up and Held, as in the design.
+        val heldAt = builtIn.indexOfFirst { it.key == HeldCard.KEY }.takeIf { it >= 0 } ?: builtIn.size
+        val enabledCards = builtIn.take(heldAt) + todayWidgets.cards() + builtIn.drop(heldAt)
+        binding.addWidget.isVisible = todayWidgets.cards().isNotEmpty()
 
         binding.heroWeatherHost.removeAllViews()
         populateHeroDate()
@@ -268,9 +276,9 @@ class TodayFragment : BaseFragment() {
         binding.pinnedCardsContainer.isVisible = plan.pinned.isNotEmpty()
 
         binding.cardsContainer.removeAllViews()
-        // Stack from the bottom up: the first (highest priority) card is the lowest panel.
-        populatePanels(plan.stacked.asReversed(), binding.cardsContainer, plan.stacked.map { it.key })
+        populatePanels(withWidgetSlot(plan.stacked), binding.cardsContainer, plan.stacked.map { it.key })
 
+        // Keep the reader's place on refreshes; the first fill opens the page at the top.
         if (panelsShown) {
             binding.todayScrollView.post {
                 _binding?.todayScrollView?.scrollY = scrollY
@@ -278,13 +286,21 @@ class TodayFragment : BaseFragment() {
             return
         }
         panelsShown = true
-        // With a pinned card the page opens at the top, where it is. Otherwise, when the cards
-        // overflow, open at the bottom, where the top-priority card is.
-        if (plan.pinned.isEmpty()) {
-            binding.todayScrollView.post {
-                _binding?.todayScrollView?.fullScroll(View.FOCUS_DOWN)
-            }
-        }
+    }
+
+    /** Until a widget is added, a dashed "Your widget" card sits before Held (or last). */
+    private fun withWidgetSlot(stacked: List<TodayCard>): List<TodayCard> {
+        if (todayWidgets.cards().isNotEmpty()) return stacked
+        val heldAt = stacked.indexOfFirst { it.key == HeldCard.KEY }.takeIf { it >= 0 } ?: stacked.size
+        return stacked.take(heldAt) + WidgetSlotRow + stacked.drop(heldAt)
+    }
+
+    /** Marks where the widget placeholder goes; it is not a real card and has no panel. */
+    private object WidgetSlotRow : TodayCard {
+        override val key = "widget_slot"
+        override val titleRes = R.string.today_widget
+        override fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View =
+            throw UnsupportedOperationException("drawn by TodayFragment")
     }
 
     /**
@@ -294,20 +310,53 @@ class TodayFragment : BaseFragment() {
     private fun populatePanels(cards: List<TodayCard>, container: ViewGroup, groupKeys: List<String>) {
         var index = 0
         while (index < cards.size) {
-            if (cards[index].gridSpan == null) {
-                container.addView(inflatePanel(container, cards[index], groupKeys))
-                index++
-            } else {
-                var end = index
-                while (end < cards.size && cards[end].gridSpan != null) end++
-                container.addView(
-                    widgetGrid(cards.subList(index, end), groupKeys),
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.WRAP_CONTENT,
-                )
-                index = end
+            val card = cards[index]
+            when {
+                card === WidgetSlotRow -> {
+                    val slot = ItemWidgetSlotBinding.inflate(layoutInflater, container, false)
+                    slot.tvSlotAdd.setOnClickListener { todayWidgets.add() }
+                    container.addView(slot.root)
+                    index++
+                }
+                card.gridSpan != null -> {
+                    var end = index
+                    while (end < cards.size && cards[end].gridSpan != null) end++
+                    container.addView(
+                        widgetGrid(cards.subList(index, end), groupKeys),
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT,
+                    )
+                    index = end
+                }
+                card.halfWidth && cards.getOrNull(index + 1)?.halfWidth == true -> {
+                    container.addView(halfWidthRow(card, cards[index + 1], groupKeys))
+                    index += 2
+                }
+                else -> {
+                    container.addView(inflatePanel(container, card, groupKeys))
+                    index++
+                }
             }
         }
+    }
+
+    /** Two half-width cards side by side, equal height. */
+    private fun halfWidthRow(left: TodayCard, right: TodayCard, groupKeys: List<String>): View {
+        val row = LinearLayout(requireContext()).apply {
+            orientation = LinearLayout.HORIZONTAL
+            isBaselineAligned = false
+        }
+        val gap = (5 * resources.displayMetrics.density).toInt()
+        for ((card, isLeft) in listOf(left to true, right to false)) {
+            val panel = inflatePanel(row, card, groupKeys)
+            val source = panel.layoutParams as ViewGroup.MarginLayoutParams
+            panel.layoutParams = LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply {
+                bottomMargin = source.bottomMargin
+                if (isLeft) marginEnd = gap else marginStart = gap
+            }
+            row.addView(panel)
+        }
+        return row
     }
 
     private fun widgetGrid(cards: List<TodayCard>, groupKeys: List<String>): WidgetGridView {
@@ -327,7 +376,10 @@ class TodayFragment : BaseFragment() {
     private fun inflatePanel(parent: ViewGroup, card: TodayCard, groupKeys: List<String>): View {
         val panel = ItemTodayPanelBinding.inflate(layoutInflater, parent, false)
         val title = card.title(requireContext())
-        panel.tvPanelTitle.text = if (card.emoji.isEmpty()) title else "${card.emoji}  $title"
+        panel.tvPanelTitle.text = title
+        // Cards with their own heading (counts or controls in it) hide the panel's.
+        panel.tvPanelTitle.isVisible = !card.drawsOwnHeader
+        if (card.tinted) panel.root.setBackgroundResource(R.drawable.today_panel_held)
         // Grid panels get narrow: titles take one line and make room by ellipsizing.
         panel.tvPanelTitle.maxLines = 1
         panel.tvPanelTitle.ellipsize = android.text.TextUtils.TruncateAt.END

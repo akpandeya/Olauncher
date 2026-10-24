@@ -6,12 +6,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
-import androidx.core.view.isVisible
+import androidx.core.view.ViewCompat
 import androidx.fragment.app.Fragment
 import app.olauncher.R
 import app.olauncher.data.Prefs
 import app.olauncher.databinding.CardNotesBinding
-import app.olauncher.databinding.ItemNoteBinding
 import app.olauncher.helper.Haptics
 import app.olauncher.helper.Notes
 import app.olauncher.helper.NotesStore
@@ -22,7 +21,7 @@ import app.olauncher.ui.today.TodayCard
 import java.time.LocalDate
 import java.time.ZonedDateTime
 
-/** All open notes: tap marks done (with Undo), long-press deletes, the last line adds a note. */
+/** Half-width card: the open count, the newest note and a line to add one. */
 object NotesCard : TodayCard {
 
     const val KEY = "notes"
@@ -30,6 +29,8 @@ object NotesCard : TodayCard {
     override val key: String = KEY
     override val titleRes: Int = R.string.notes_card_title
     override val emoji: String = "📝"
+    override val drawsOwnHeader: Boolean = true
+    override val halfWidth: Boolean = true
 
     fun store(context: Context): NotesStore {
         val prefs = Prefs(context)
@@ -38,6 +39,7 @@ object NotesCard : TodayCard {
 
     override fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View {
         val b = CardNotesBinding.inflate(inflater, parent, false)
+        ViewCompat.setAccessibilityHeading(b.tvCardTitle, true)
         b.etAddNote.setOnEditorActionListener { v, actionId, _ ->
             if (actionId != EditorInfo.IME_ACTION_DONE) return@setOnEditorActionListener false
             val context = v.context
@@ -64,31 +66,32 @@ object NotesCard : TodayCard {
 
     private fun render(b: CardNotesBinding) {
         val context = b.root.context
-        val inflater = LayoutInflater.from(context)
         val store = store(context)
-        b.notesContainer.removeAllViews()
-        for (note in Notes.cardList(store.all(), LocalDate.now())) {
-            val item = ItemNoteBinding.inflate(inflater, b.notesContainer, false)
-            item.tvNoteText.text = note.text
-            val label = Notes.dateLabel(note)
-            item.tvNoteDate.isVisible = label != null
-            item.tvNoteDate.text = label
-            item.root.setOnClickListener {
-                Haptics.tick(it)
-                store.markDone(note.id)
+        val all = store.all()
+        b.tvCardTitle.text = context.getString(R.string.notes_card_count_title, Notes.open(all).size)
+        // The newest note that is showing now; tap marks it done, long-press deletes it.
+        val latest = Notes.visible(all, LocalDate.now()).lastOrNull()
+        if (latest == null) {
+            b.tvNote.setText(R.string.notes_card_empty)
+            b.tvNote.isClickable = false
+            b.tvNote.isLongClickable = false
+            return
+        }
+        b.tvNote.text = latest.text
+        b.tvNote.setOnClickListener {
+            Haptics.tick(it)
+            store.markDone(latest.id)
+            render(b)
+            UndoMessage.show(context as? Activity, context.getString(R.string.note_marked_done)) {
+                store.markDone(latest.id, done = false)
                 render(b)
-                UndoMessage.show(context as? Activity, context.getString(R.string.note_marked_done)) {
-                    store.markDone(note.id, done = false)
-                    render(b)
-                }
             }
-            item.root.setOnLongClickListener {
-                Haptics.tick(it)
-                store.delete(note.id)
-                render(b)
-                true
-            }
-            b.notesContainer.addView(item.root)
+        }
+        b.tvNote.setOnLongClickListener {
+            Haptics.tick(it)
+            store.delete(latest.id)
+            render(b)
+            true
         }
     }
 }

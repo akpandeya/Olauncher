@@ -183,31 +183,17 @@ class TodayOrderTest {
     }
 
     @Test
-    fun pinnedMovesFollowForwardDisplayOrderAndHideBoundaryActions() {
+    fun movesFollowTopToBottomDisplayOrderAndHideBoundaryActions() {
         val first = TodayOrder.widgetKey(12)
         val last = TodayOrder.widgetKey(34)
-        val order = listOf(first, "hidden", last, "unpinned")
+        val order = listOf(first, "hidden", last, "other")
         val group = listOf(first, last)
-        val swapped = listOf(last, "hidden", first, "unpinned")
+        val swapped = listOf(last, "hidden", first, "other")
 
-        assertNull(TodayOrder.panelMoves(order, first, true, group).up)
-        assertEquals(swapped, TodayOrder.panelMoves(order, first, true, group).down)
-        assertEquals(swapped, TodayOrder.panelMoves(order, last, true, group).up)
-        assertNull(TodayOrder.panelMoves(order, last, true, group).down)
-    }
-
-    @Test
-    fun unpinnedMovesFollowReversedDisplayOrderAndHideBoundaryActions() {
-        val bottom = TodayOrder.widgetKey(12)
-        val top = TodayOrder.widgetKey(34)
-        val order = listOf(bottom, "hidden", top, "pinned")
-        val group = listOf(bottom, top)
-        val swapped = listOf(top, "hidden", bottom, "pinned")
-
-        assertEquals(swapped, TodayOrder.panelMoves(order, bottom, false, group).up)
-        assertNull(TodayOrder.panelMoves(order, bottom, false, group).down)
-        assertNull(TodayOrder.panelMoves(order, top, false, group).up)
-        assertEquals(swapped, TodayOrder.panelMoves(order, top, false, group).down)
+        assertNull(TodayOrder.panelMoves(order, first, group).up)
+        assertEquals(swapped, TodayOrder.panelMoves(order, first, group).down)
+        assertEquals(swapped, TodayOrder.panelMoves(order, last, group).up)
+        assertNull(TodayOrder.panelMoves(order, last, group).down)
     }
 
     @Test

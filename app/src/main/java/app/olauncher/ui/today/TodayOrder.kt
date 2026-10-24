@@ -10,8 +10,8 @@ import java.time.ZoneId
 data class Ranked(val key: String, val priority: Int)
 
 /**
- * Where the Today panels go: [pinned] sit at the top, right under the date; [stacked] fill the
- * bottom-up stack, the first (highest priority) one nearest the thumb.
+ * Where the Today panels go: [pinned] sit at the top, right under the intention; [stacked] follow
+ * below the weather, the first (highest priority) one on top.
  */
 data class TodayPanelSplit(val pinned: List<String>, val stacked: List<String>)
 
@@ -48,14 +48,12 @@ object TodayOrder {
         return keys.map { if (it in groupKeys) moved.next() else it }
     }
 
-    /** Pinned panels render forward; the unpinned stack renders in reverse. Null hides a boundary action. */
-    fun panelMoves(keys: List<String>, key: String, pinned: Boolean, groupKeys: List<String>): TodayPanelMoves {
-        val upOffset = if (pinned) -1 else 1
-        return TodayPanelMoves(
-            up = move(keys, key, upOffset, groupKeys).takeUnless { it == keys },
-            down = move(keys, key, -upOffset, groupKeys).takeUnless { it == keys },
+    /** Panels render top to bottom in list order. Null hides a boundary action. */
+    fun panelMoves(keys: List<String>, key: String, groupKeys: List<String>): TodayPanelMoves =
+        TodayPanelMoves(
+            up = move(keys, key, -1, groupKeys).takeUnless { it == keys },
+            down = move(keys, key, 1, groupKeys).takeUnless { it == keys },
         )
-    }
 
     const val NEXT_UP_PRIORITY = 100
     const val HELD_PRIORITY = 95

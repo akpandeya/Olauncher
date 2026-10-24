@@ -62,5 +62,6 @@
 
     <!--Readable text on photo wallpaper: see ReadableScrim.kt-->
     <color name="readableCard">#B8FFFFFF</color>
+    <color name="heldTint">#33D9A3A3</color>
     <color name="drawerScrimBottom">#99FFFFFF</color>
 </resources>

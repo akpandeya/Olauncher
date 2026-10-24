@@ -62,16 +62,18 @@ class TodayHeroTest {
     }
 
     @Test
-    fun `big temperature and condition line`() {
+    fun `now icon, temperature and condition line`() {
         val forecast = Forecast(11.6, 51, true, 15.0, 8.4, emptyList())
-        assertEquals("🌦 12°", HeroFormatting.bigTemperature(forecast))
+        assertEquals("🌦", HeroFormatting.nowIcon(forecast))
+        assertEquals("12°", HeroFormatting.nowTemperature(forecast))
         assertEquals("Drizzle · 15° / 8°", HeroFormatting.conditionLine(forecast))
     }
 
     @Test
-    fun `big temperature without emoji for unknown code`() {
+    fun `no icon for an unknown code`() {
         val forecast = Forecast(-0.6, 4, true, 1.0, -3.0, emptyList())
-        assertEquals("-1°", HeroFormatting.bigTemperature(forecast))
+        assertEquals("-1°", HeroFormatting.nowTemperature(forecast))
+        assertEquals("", HeroFormatting.nowIcon(forecast))
     }
 
     @Test
