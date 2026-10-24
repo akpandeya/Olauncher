@@ -245,9 +245,9 @@ class TodayOrderTest {
     }
 
     @Test
-    fun halfWidthPairingSkipsCardsDrawnAsGridTiles() {
+    fun halfWidthPairingSkipsCardsWithAGridSpan() {
         assertTrue(TodayOrder.pairsAsHalfWidth(true, null, true, null))
-        // Notes right before a Words tile: the tile packs with the grid, Notes stays alone.
+        // Notes right before a widget: the widget packs with the grid, Notes stays alone.
         assertFalse(TodayOrder.pairsAsHalfWidth(true, null, true, 2))
         assertFalse(TodayOrder.pairsAsHalfWidth(true, 2, true, null))
         assertFalse(TodayOrder.pairsAsHalfWidth(false, null, true, null))

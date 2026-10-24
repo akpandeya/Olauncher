@@ -229,8 +229,6 @@ object SettingsCatalog {
     private val today: List<SettingsItem> = listOf(
     row(key = "todayCards", sectionKey = SettingsSections.KEY_TODAY, titleRes = R.string.today_cards, type = SettingsRowType.CHOICE,
         primaryId = R.id.todayCards, layoutId = R.id.todayCardsLayout, titleId = R.id.todayCardsTitle, valueId = R.id.todayCards),
-    row(key = "todayTiles", sectionKey = SettingsSections.KEY_TODAY, titleRes = R.string.today_tiles, type = SettingsRowType.CHOICE,
-        primaryId = R.id.todayTiles, layoutId = R.id.todayTilesLayout, titleId = R.id.todayTilesTitle, valueId = R.id.todayTiles),
     row(key = "todayOrder", sectionKey = SettingsSections.KEY_TODAY, titleRes = R.string.today_card_order, type = SettingsRowType.TOGGLE,
         primaryId = R.id.todayOrder, layoutId = R.id.todayOrderLayout, titleId = R.id.todayOrderTitle, valueId = R.id.todayOrder),
     row(key = "intentionOnHome", sectionKey = SettingsSections.KEY_TODAY, titleRes = R.string.intention_on_home, type = SettingsRowType.TOGGLE,
