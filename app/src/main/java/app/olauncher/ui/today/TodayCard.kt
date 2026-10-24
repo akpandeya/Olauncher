@@ -10,6 +10,7 @@ import android.view.animation.DecelerateInterpolator
 import androidx.fragment.app.Fragment
 import java.time.ZonedDateTime
 import app.olauncher.helper.MotionPolicy
+import app.olauncher.helper.SystemMotion
 import app.olauncher.ui.today.cards.HeldCard
 import app.olauncher.ui.today.cards.NextUpCard
 import app.olauncher.ui.today.cards.NotesCard
@@ -21,60 +22,40 @@ import app.olauncher.ui.today.cards.WordsCard
 /**
  * Shrinks the view slightly on press and restores to full size on release or cancel.
  * Respects MotionPolicy: transitions are instant when animations are off.
+ *
+ * It never makes the view clickable: a view that is not clickable gets no scale, so a swipe that
+ * starts on it still reaches the page's swipe detector. (A non-clickable view only sees ACTION_DOWN,
+ * so scaling it would leave it stuck small.)
  */
 @SuppressLint("ClickableViewAccessibility")
 fun View.attachPressScale(
     targetScale: Float = MotionPolicy.PRESS_SCALE,
     durationMs: Long = MotionPolicy.PRESS_DURATION_MS,
 ) {
-    if (!isClickable && !isFocusable) {
-        isClickable = true
-    }
     setOnTouchListener { v, event ->
-        val animatorsEnabled = MotionPolicy.isAnimationsEnabled(v.context)
+        if (!v.isClickable) return@setOnTouchListener false
+        val animatorsEnabled = SystemMotion.isAnimationsEnabled(v.context)
         val duration = MotionPolicy.durationMs(durationMs, animatorsEnabled)
+        fun scaleTo(scale: Float) {
+            if (duration > 0L) {
+                // Entry animation leaves its stagger delay on the view; press feedback must not wait for it.
+                v.animate()
+                    .scaleX(scale)
+                    .scaleY(scale)
+                    .setStartDelay(0L)
+                    .setDuration(duration)
+                    .setInterpolator(DecelerateInterpolator())
+                    .start()
+            } else {
+                v.scaleX = scale
+                v.scaleY = scale
+            }
+        }
         when (event.actionMasked) {
-            MotionEvent.ACTION_DOWN -> {
-                if (duration > 0L) {
-                    v.animate()
-                        .scaleX(targetScale)
-                        .scaleY(targetScale)
-                        .setDuration(duration)
-                        .setInterpolator(DecelerateInterpolator())
-                        .start()
-                } else {
-                    v.scaleX = targetScale
-                    v.scaleY = targetScale
-                }
-            }
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                if (duration > 0L) {
-                    v.animate()
-                        .scaleX(1f)
-                        .scaleY(1f)
-                        .setDuration(duration)
-                        .setInterpolator(DecelerateInterpolator())
-                        .start()
-                } else {
-                    v.scaleX = 1f
-                    v.scaleY = 1f
-                }
-            }
-            MotionEvent.ACTION_MOVE -> {
-                if (event.x < 0 || event.x > v.width || event.y < 0 || event.y > v.height) {
-                    if (duration > 0L) {
-                        v.animate()
-                            .scaleX(1f)
-                            .scaleY(1f)
-                            .setDuration(duration)
-                            .setInterpolator(DecelerateInterpolator())
-                            .start()
-                    } else {
-                        v.scaleX = 1f
-                        v.scaleY = 1f
-                    }
-                }
-            }
+            MotionEvent.ACTION_DOWN -> scaleTo(targetScale)
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> scaleTo(1f)
+            MotionEvent.ACTION_MOVE ->
+                if (event.x < 0 || event.x > v.width || event.y < 0 || event.y > v.height) scaleTo(1f)
         }
         false
     }

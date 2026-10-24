@@ -18,6 +18,7 @@ import app.olauncher.data.store.Word
 import app.olauncher.databinding.FragmentReviewBinding
 import app.olauncher.helper.Haptics
 import app.olauncher.helper.MotionPolicy
+import app.olauncher.helper.SystemMotion
 import app.olauncher.helper.showPopupMenu
 import app.olauncher.ui.BaseFragment
 import app.olauncher.ui.today.attachPressScale
@@ -164,7 +165,7 @@ class ReviewFragment : BaseFragment() {
         b.tvRemaining.isVisible = !finished
         b.tvRemaining.text = context.getString(R.string.words_review_progress, remaining, queue.size)
         b.reviewProgress.max = queue.size.coerceAtLeast(1)
-        val animatorsEnabled = MotionPolicy.isAnimationsEnabled(context)
+        val animatorsEnabled = SystemMotion.isAnimationsEnabled(context)
         val duration = MotionPolicy.durationMs(MotionPolicy.TODAY_DURATION_MS, animatorsEnabled)
         if (!progressAnimated && animatorsEnabled && duration > 0L && answered > 0) {
             progressAnimated = true
@@ -223,7 +224,7 @@ class ReviewFragment : BaseFragment() {
     private fun setRevealed(value: Boolean) {
         if (revealed == value) return
         val context = context ?: return
-        val animatorsEnabled = MotionPolicy.isAnimationsEnabled(context)
+        val animatorsEnabled = SystemMotion.isAnimationsEnabled(context)
         val halfDuration = MotionPolicy.durationMs(MotionPolicy.FLIP_HALF_DURATION_MS, animatorsEnabled)
         val card = _binding?.reviewCard
 

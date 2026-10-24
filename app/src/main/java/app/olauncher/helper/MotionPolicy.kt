@@ -1,13 +1,10 @@
 package app.olauncher.helper
 
-import android.animation.ValueAnimator
-import android.content.Context
-
 /**
- * Pure policy for motion and transition durations.
- *
- * When system animators are disabled (e.g. animator duration scale is set to off in developer
- * options), transitions must be instant (duration = 0).
+ * Pure, Context-free policy for motion and transition durations: constants, [durationMs] and
+ * [staggerDelayMs]. Whether animations are on at all is decided by [SystemMotion] (it needs a
+ * Context); callers pass that answer in as `animatorsEnabled`. When it is false, transitions
+ * must be instant (duration = 0).
  */
 object MotionPolicy {
 
@@ -19,8 +16,6 @@ object MotionPolicy {
     const val PRESS_DURATION_MS: Long = 80L
     const val PRESS_SCALE: Float = 0.98f
     const val FLIP_HALF_DURATION_MS: Long = 60L
-
-    var animationsEnabledSupplier: ((Context) -> Boolean)? = null
 
     /**
      * Returns the duration in milliseconds to use for a transition.
@@ -48,13 +43,4 @@ object MotionPolicy {
         val clampedStep = stepMs.coerceIn(0L, MAX_DURATION_MS)
         return index.toLong() * clampedStep
     }
-
-    /**
-     * Checks whether animations are enabled on the device.
-     */
-    fun isAnimationsEnabled(context: Context): Boolean {
-        animationsEnabledSupplier?.let { return it(context) }
-        return !context.isEinkDisplay() && !context.isSystemAnimationsDisabled() && ValueAnimator.areAnimatorsEnabled()
-    }
 }
-

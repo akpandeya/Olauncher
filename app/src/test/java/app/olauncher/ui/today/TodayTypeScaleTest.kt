@@ -13,6 +13,14 @@ import javax.xml.parsers.DocumentBuilderFactory
 
 class TodayTypeScaleTest {
 
+    private val TODAY_CARD_TEXT_STYLES = setOf(
+        "@style/TodayCardStat",
+        "@style/TodayCardLabel",
+        "@style/TodayCardBody",
+        "@style/TodayCardBodyLight",
+        "@style/TodayCardBodyBold",
+    )
+
     private fun resolveFile(relative: String): File {
         return listOf(
             File(relative),
@@ -148,7 +156,7 @@ class TodayTypeScaleTest {
 
             forEachElement(doc.documentElement) { element ->
                 val styleAttr = element.getAttribute("style")
-                if (styleAttr.contains("TodayCard") || styleAttr.contains("Today")) {
+                if (styleAttr in TODAY_CARD_TEXT_STYLES) {
                     usesTodayCardStyle = true
                 }
 
@@ -194,7 +202,7 @@ class TodayTypeScaleTest {
             assertNotNull("View $viewId must exist in ${file.name}", matchedStyle)
             assertTrue(
                 "View $viewId in ${file.name} must use TodayCardStat (was: $matchedStyle)",
-                matchedStyle!!.contains("TodayCardStat") || matchedStyle!!.contains("TodayStat")
+                matchedStyle == "@style/TodayCardStat"
             )
         }
     }

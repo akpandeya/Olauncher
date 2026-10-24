@@ -10,6 +10,7 @@ import android.util.AttributeSet
 import android.view.View
 import app.olauncher.R
 import app.olauncher.helper.MotionPolicy
+import app.olauncher.helper.SystemMotion
 import app.olauncher.helper.getColorFromAttr
 import app.olauncher.wellbeing.DayBar
 import java.time.DayOfWeek
@@ -41,17 +42,15 @@ class DayBarsView @JvmOverloads constructor(
     private var allowanceMin = 0
     private var progressFraction = 1f
     private var animator: ValueAnimator? = null
-    private var hasAnimated = false
 
-    fun setBars(bars: List<DayBar>, scaleMinutes: Int, allowanceMin: Int) {
+    fun setBars(bars: List<DayBar>, scaleMinutes: Int, allowanceMin: Int, animate: Boolean = false) {
         this.bars = bars
         this.scaleMinutes = scaleMinutes.coerceAtLeast(1)
         this.allowanceMin = allowanceMin
 
-        val animatorsEnabled = MotionPolicy.isAnimationsEnabled(context)
+        val animatorsEnabled = SystemMotion.isAnimationsEnabled(context)
         val duration = MotionPolicy.durationMs(MotionPolicy.TODAY_DURATION_MS, animatorsEnabled)
-        if (animatorsEnabled && duration > 0L && !hasAnimated) {
-            hasAnimated = true
+        if (animatorsEnabled && duration > 0L && animate) {
             animator?.cancel()
             animator = ValueAnimator.ofFloat(0f, 1f).apply {
                 this.duration = duration
@@ -63,6 +62,7 @@ class DayBarsView @JvmOverloads constructor(
                 start()
             }
         } else {
+            animator?.cancel()
             progressFraction = 1f
             invalidate()
         }

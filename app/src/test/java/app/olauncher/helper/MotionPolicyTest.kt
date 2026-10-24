@@ -89,4 +89,14 @@ class MotionPolicyTest {
         assertTrue(MotionPolicy.FLIP_HALF_DURATION_MS * 2 <= MotionPolicy.MAX_DURATION_MS)
         assertTrue(MotionPolicy.PRESS_SCALE in 0.9f..0.99f)
     }
+
+    @Test
+    fun `MotionPolicy stays Context free`() {
+        val file = listOf(
+            java.io.File("src/main/java/app/olauncher/helper/MotionPolicy.kt"),
+            java.io.File("app/src/main/java/app/olauncher/helper/MotionPolicy.kt"),
+        ).first { it.isFile }
+        val imports = file.readLines().filter { it.startsWith("import ") }
+        assertTrue("MotionPolicy must not import android: $imports", imports.none { it.startsWith("import android.") })
+    }
 }
