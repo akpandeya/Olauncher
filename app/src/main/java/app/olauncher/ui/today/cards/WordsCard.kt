@@ -10,6 +10,7 @@ import app.olauncher.R
 import app.olauncher.helper.Haptics
 import app.olauncher.helper.createChoiceDialog
 import app.olauncher.data.Prefs
+import app.olauncher.data.store.Leitner
 import app.olauncher.data.store.Word
 import app.olauncher.data.store.WordsStore
 import app.olauncher.data.store.WordStats
@@ -65,6 +66,7 @@ object WordsCardLogic {
         val showAllDone: Boolean,
         val showHint: Boolean,
         val showCounts: Boolean,
+        val showBoxBar: Boolean = !showHint,
     ) {
         val showNext: Boolean get() = nextWord != null
     }
@@ -78,8 +80,14 @@ object WordsCardLogic {
             showAllDone = !noWords && due == 0,
             showHint = noWords,
             showCounts = !noWords,
+            showBoxBar = !noWords,
         )
     }
+
+    fun boxCounts(words: List<Word>): List<Int> = Leitner.boxCounts(words)
+    fun segmentWidths(counts: List<Int>, totalWidth: Float = 1f): List<Float> = Leitner.segmentWidths(counts, totalWidth)
+    @JvmName("segmentWidthsForWords")
+    fun segmentWidths(words: List<Word>, totalWidth: Float = 1f): List<Float> = Leitner.segmentWidths(words, totalWidth)
 
     fun reviewLabel(template: String, due: Int): String = String.format(template, due)
 
@@ -192,6 +200,10 @@ internal class WordsCardView(
         b.tvNextMeaning.text = lines.nextMeaning
         b.tvSide.visibility = if (lines.showAllDone || lines.showHint) View.VISIBLE else View.GONE
         b.tvSide.setText(if (lines.showHint) R.string.words_card_hint else R.string.words_card_all_done)
+        b.boxBar.visibility = if (lines.showBoxBar) View.VISIBLE else View.GONE
+        if (lines.showBoxBar) {
+            b.boxBar.setBoxCounts(stats.boxCounts)
+        }
         b.tvLine.visibility = if (lines.showCounts) View.VISIBLE else View.INVISIBLE
         b.tvLine.text = WordsCardLogic.formatCardLine(context, stats.total, stats.learned)
     }
