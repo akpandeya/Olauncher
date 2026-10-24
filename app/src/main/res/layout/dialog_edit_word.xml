@@ -1,47 +1,129 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="8dp"
-    android:orientation="vertical">
+    android:overScrollMode="never"
+    android:scrollbars="none">
 
-    <androidx.appcompat.widget.AppCompatEditText
-        android:id="@+id/etWord"
-        style="@style/TextMedium"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@null"
-        android:cursorVisible="true"
-        android:hint="@string/words_word_hint"
-        android:inputType="text"
-        android:maxLines="1"
-        android:paddingVertical="8dp"
-        android:shadowColor="@android:color/transparent"
-        android:textColor="?attr/primaryColor"
-        android:textColorHint="?attr/primaryColorTrans80" />
+        android:orientation="vertical">
 
-    <androidx.appcompat.widget.AppCompatEditText
-        android:id="@+id/etMeaning"
-        style="@style/TextSmall"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@null"
-        android:cursorVisible="true"
-        android:hint="@string/words_meaning_hint"
-        android:inputType="textCapSentences|textMultiLine"
-        android:maxLines="6"
-        android:paddingVertical="8dp"
-        android:shadowColor="@android:color/transparent"
-        android:textColor="?attr/primaryColor"
-        android:textColorHint="?attr/primaryColorTrans80" />
+        <TextView
+            style="@style/TextSmallLight"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/words_word_hint" />
 
-    <TextView
-        android:id="@+id/tvSource"
-        style="@style/TextSmallLight"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingVertical="4dp"
-        android:shadowColor="@android:color/transparent"
-        android:visibility="gone" />
+        <androidx.appcompat.widget.AppCompatEditText
+            android:id="@+id/etWord"
+            style="@style/TextMedium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@null"
+            android:cursorVisible="true"
+            android:hint="@string/words_word_hint"
+            android:inputType="text"
+            android:maxLines="1"
+            android:paddingVertical="8dp"
+            android:shadowColor="@android:color/transparent"
+            android:textColor="?attr/primaryColor"
+            android:textColorHint="?attr/primaryColorTrans80" />
 
-</LinearLayout>
+        <TextView
+            style="@style/TextSmallLight"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/words_meaning_hint" />
+
+        <androidx.appcompat.widget.AppCompatEditText
+            android:id="@+id/etMeaning"
+            style="@style/TextSmall"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@null"
+            android:cursorVisible="true"
+            android:hint="@string/words_meaning_hint"
+            android:inputType="textCapSentences|textMultiLine"
+            android:maxLines="6"
+            android:paddingVertical="8dp"
+            android:shadowColor="@android:color/transparent"
+            android:textColor="?attr/primaryColor"
+            android:textColorHint="?attr/primaryColorTrans80" />
+
+        <TextView
+            android:id="@+id/tvSource"
+            style="@style/TextSmallLight"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingVertical="4dp"
+            android:shadowColor="@android:color/transparent"
+            android:visibility="gone" />
+
+        <TextView
+            style="@style/TextSmallLight"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/words_example_hint" />
+
+        <androidx.appcompat.widget.AppCompatEditText
+            android:id="@+id/etExample"
+            style="@style/TextSmall"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@null"
+            android:cursorVisible="true"
+            android:hint="@string/words_example_hint"
+            android:inputType="textCapSentences|textMultiLine"
+            android:maxLines="4"
+            android:paddingVertical="8dp"
+            android:shadowColor="@android:color/transparent"
+            android:textColor="?attr/primaryColor"
+            android:textColorHint="?attr/primaryColorTrans80" />
+
+        <TextView
+            style="@style/TextSmallLight"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/words_edit_lists_heading" />
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/listChips"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            app:chipSpacingHorizontal="8dp"
+            app:chipSpacingVertical="0dp"
+            xmlns:app="http://schemas.android.com/apk/res-auto" />
+
+        <TextView
+            android:id="@+id/tvProgress"
+            style="@style/TextSmallLight"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            tools:text="Box 2 · next review Mon 26 Oct · 6 reviews" />
+
+        <!-- Kept apart from Save, at the bottom -->
+        <TextView
+            android:id="@+id/btnDeleteWord"
+            style="@style/TextSmallBold"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/words_button_outline"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:minHeight="48dp"
+            android:text="@string/words_edit_delete_word" />
+
+    </LinearLayout>
+
+</ScrollView>

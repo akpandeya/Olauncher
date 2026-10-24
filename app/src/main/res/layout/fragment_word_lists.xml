@@ -30,28 +30,39 @@
             android:paddingTop="56dp"
             android:paddingBottom="8dp">
 
-            <!-- User lists -->
+            <!-- "All words": total and due today -->
+            <LinearLayout
+                android:id="@+id/allWordsRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <!-- A card per user list -->
             <LinearLayout
                 android:id="@+id/listsPanel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="12dp"
-                android:background="@drawable/today_panel"
                 android:orientation="vertical"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="8dp"
                 android:visibility="gone"
                 tools:visibility="visible" />
 
-            <!-- Built-in source buckets -->
+            <TextView
+                android:id="@+id/tvSourcesHeading"
+                style="@style/TextSmallLight"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
+                android:text="@string/word_lists_sources_heading"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
+            <!-- Built-in "From screen picks" cards, grouped by where the words were saved -->
             <LinearLayout
                 android:id="@+id/sourcesPanel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/today_panel"
                 android:orientation="vertical"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="8dp"
                 android:visibility="gone"
                 tools:visibility="visible" />
 
@@ -62,6 +73,22 @@
                 android:layout_height="wrap_content"
                 android:paddingVertical="8dp"
                 android:text="@string/word_lists_empty_state"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
+            <TextView
+                android:id="@+id/btnEmptyAdd"
+                style="@style/TextSmallBold"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:minHeight="48dp"
+                android:paddingHorizontal="4dp"
+                android:text="@string/word_lists_add_short"
+                android:textColor="?attr/accentColor"
                 android:visibility="gone"
                 tools:visibility="visible" />
 
@@ -78,26 +105,50 @@
         android:paddingHorizontal="24dp"
         android:paddingBottom="48dp">
 
-        <TextView
-            android:id="@+id/tvTitle"
-            style="@style/TextLarge"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="@string/word_lists_title" />
+            android:gravity="bottom"
+            android:orientation="horizontal">
 
-        <TextView
-            android:id="@+id/btnNewList"
-            style="@style/TextSmallBold"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="?android:attr/selectableItemBackground"
-            android:clickable="true"
-            android:focusable="true"
-            android:gravity="center_vertical"
-            android:minHeight="48dp"
-            android:paddingHorizontal="4dp"
-            android:text="@string/word_lists_new_list" />
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvTitle"
+                    style="@style/TextLarge"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/word_lists_title" />
+
+                <TextView
+                    android:id="@+id/tvCounts"
+                    style="@style/TextSmallLight"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    tools:text="10 words · 3 lists" />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/btnNewList"
+                style="@style/TextSmallBold"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:minHeight="48dp"
+                android:paddingHorizontal="8dp"
+                android:text="@string/word_lists_new_short"
+                android:textColor="?attr/accentColor" />
+
+        </LinearLayout>
 
     </LinearLayout>
 

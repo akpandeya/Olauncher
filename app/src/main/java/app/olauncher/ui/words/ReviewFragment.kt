@@ -2,6 +2,7 @@ package app.olauncher.ui.words
 
 import android.os.Bundle
 import android.os.SystemClock
+import android.view.Menu
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,12 +12,13 @@ import app.olauncher.R
 import app.olauncher.data.store.ReviewComebacks
 import app.olauncher.data.store.ReviewEvent
 import app.olauncher.data.store.ReviewEventsStore
+import app.olauncher.data.store.ReviewPreview
 import app.olauncher.data.store.ReviewSessionLogic
 import app.olauncher.data.store.Word
 import app.olauncher.databinding.FragmentReviewBinding
 import app.olauncher.helper.Haptics
+import app.olauncher.helper.showPopupMenu
 import app.olauncher.ui.BaseFragment
-import app.olauncher.ui.today.WordReveal
 import app.olauncher.ui.today.cards.WordsCard
 import app.olauncher.ui.today.cards.WordsCardLogic
 import java.time.LocalDate
@@ -33,7 +35,7 @@ class ReviewFragment : BaseFragment() {
     private var _binding: FragmentReviewBinding? = null
     private val binding get() = _binding!!
 
-    private var wordReveal: WordReveal? = null
+    private var revealed = false
     private var queue: List<Word> = emptyList()
     private var answered = 0
     private var sessionEvents: List<ReviewEvent> = emptyList()
@@ -52,44 +54,36 @@ class ReviewFragment : BaseFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        wordReveal = WordReveal(
-            binding = binding.wordReveal,
-            onAnswer = { word, knewIt ->
-                grade(word, if (knewIt) ReviewEvent.Result.KNEW else ReviewEvent.Result.AGAIN)
-            },
-            onAlmost = { word ->
-                grade(word, ReviewEvent.Result.ALMOST)
-            },
-            onWordUpdated = { updated ->
-                WordsCard.getStore(requireContext()).update(updated)
-                // Keep the session's snapshot in step so the next word binds fresh.
-                queue = queue.map { if (it.id == updated.id) updated else it }
-                wordReveal?.bind(updated, startRevealed = false)
-            },
-            onWordDeleted = { word ->
-                WordsCard.getStore(requireContext()).delete(word.id)
-                val index = queue.indexOfFirst { it.id == word.id }
-                if (index >= 0) {
-                    queue = queue.filterNot { it.id == word.id }
-                    // A word removed from before the cursor shifts the queue; without
-                    // this, the word at the cursor would be skipped unreviewed.
-                    if (index < answered) answered--
-                }
-                render()
-            },
-            alwaysShowContext = true,
-        ).also { it.showAlmostButton(true) }
-
-        binding.btnDone.setOnClickListener {
+        binding.btnShowAnswer.setOnClickListener {
             Haptics.tick(it)
-            // Ignore a second tap delivered before the first pop lands.
-            if (findNavController().currentDestination?.id == R.id.reviewFragment) {
-                findNavController().navigateUp()
-            }
+            setRevealed(true)
         }
+        binding.tvWord.setOnClickListener {
+            Haptics.tick(it)
+            setRevealed(!revealed)
+        }
+        binding.tvWord.setOnLongClickListener {
+            val word = currentWord() ?: return@setOnLongClickListener false
+            Haptics.longPress(it)
+            showWordPopup(it, word)
+            true
+        }
+        binding.btnNo.setOnClickListener { currentWord()?.let { grade(it, ReviewEvent.Result.AGAIN) } }
+        binding.btnAlmost.setOnClickListener { currentWord()?.let { grade(it, ReviewEvent.Result.ALMOST) } }
+        binding.btnKnew.setOnClickListener { currentWord()?.let { grade(it, ReviewEvent.Result.KNEW) } }
+        binding.btnAddToList.setOnClickListener {
+            val word = currentWord() ?: return@setOnClickListener
+            Haptics.tick(it)
+            WordDialogs.showListsDialog(it.context, word) { }
+        }
+        binding.btnBack.setOnClickListener { leave(it) }
+        binding.btnOpenWords.setOnClickListener { leave(it) }
+
+        binding.btnDone.setOnClickListener { leave(it) }
 
         // One session per screen visit: resuming (e.g. back from another app) or
         // recreating the view keeps the queue and the summary.
+        revealed = savedInstanceState?.getBoolean(KEY_REVEALED) == true
         if (savedInstanceState?.getBoolean(KEY_STARTED) == true && !sessionStarted) {
             restoreSession(savedInstanceState)
         }
@@ -102,6 +96,7 @@ class ReviewFragment : BaseFragment() {
         super.onSaveInstanceState(outState)
         if (!sessionStarted) return
         outState.putBoolean(KEY_STARTED, true)
+        outState.putBoolean(KEY_REVEALED, revealed)
         outState.putInt(KEY_ANSWERED, answered)
         outState.putLongArray(KEY_QUEUE_IDS, queue.map { it.id }.toLongArray())
         outState.putLongArray(KEY_EVENT_IDS, sessionEvents.map { it.id }.toLongArray())
@@ -148,6 +143,7 @@ class ReviewFragment : BaseFragment() {
         )
         sessionEvents = sessionEvents + event
         answered++
+        revealed = false
         render()
     }
 
@@ -158,18 +154,18 @@ class ReviewFragment : BaseFragment() {
         val remaining = queue.size - answered
         val finished = remaining == 0
 
-        b.tvTitle.isVisible = !finished
         b.tvRemaining.isVisible = !finished
-        b.tvRemaining.text = if (remaining > 0) {
-            context.getString(R.string.words_review_remaining, remaining)
-        } else {
-            ""
-        }
-        // The session's only on-screen exit: back from the summary page.
-        b.btnDone.isVisible = finished
+        b.tvRemaining.text = context.getString(R.string.words_review_progress, remaining, queue.size)
+        b.reviewProgress.max = queue.size.coerceAtLeast(1)
+        b.reviewProgress.progress = answered
+        b.reviewProgress.isVisible = !finished
+        // Back lives in the header while reviewing; the summary page ends on Done.
+        b.btnBack.isVisible = !finished || sessionEvents.isEmpty()
+        b.btnDone.isVisible = finished && sessionEvents.isNotEmpty()
         b.reviewCard.isVisible = remaining > 0
+        b.btnAddToList.isVisible = remaining > 0
         b.summaryContainer.isVisible = remaining == 0 && sessionEvents.isNotEmpty()
-        b.tvEmpty.isVisible = remaining == 0 && sessionEvents.isEmpty()
+        b.emptyContainer.isVisible = remaining == 0 && sessionEvents.isEmpty()
         if (remaining == 0 && sessionEvents.isEmpty()) {
             b.tvEmpty.text = context.getString(
                 R.string.words_all_done,
@@ -180,9 +176,11 @@ class ReviewFragment : BaseFragment() {
         if (remaining > 0) {
             val word = queue[answered]
             // A lookup may have refilled the meaning since the session started.
-            wordReveal?.bind(store.get(word.id) ?: word, startRevealed = false)
+            bindWord(store.get(word.id) ?: word)
             return
         }
+        b.btnShowAnswer.isVisible = false
+        b.gradeRow.isVisible = false
 
         if (sessionEvents.isEmpty()) return
         val summary = ReviewSessionLogic.summarize(sessionEvents)
@@ -200,15 +198,100 @@ class ReviewFragment : BaseFragment() {
         }
     }
 
+    private fun currentWord(): Word? = queue.getOrNull(answered)
+
+    private fun setRevealed(value: Boolean) {
+        revealed = value
+        currentWord()?.let { bindWord(WordsCard.getStore(requireContext()).get(it.id) ?: it) }
+    }
+
+    /** Front: the word and its saved context. Revealed: meaning, example and the three graded buttons. */
+    private fun bindWord(word: Word) {
+        val b = _binding ?: return
+        val context = context ?: return
+        val today = WordsCard.epochDaySupplier()
+        b.tvWord.text = word.text
+        b.tvQuestionContext.text = word.context
+        b.tvQuestionContext.isVisible = !revealed && word.context.isNotBlank()
+        b.answerGroup.isVisible = revealed
+        b.tvMeaning.text = if (word.meaning.isBlank()) {
+            context.getString(R.string.words_review_no_meaning)
+        } else {
+            WordsCardLogic.formatMeaning(context, word.meaning, word.meaningSource)
+        }
+        b.tvExample.text = word.context
+        b.tvExampleLabel.isVisible = word.context.isNotBlank()
+        b.tvExample.isVisible = word.context.isNotBlank()
+        b.btnShowAnswer.isVisible = !revealed
+        b.gradeRow.isVisible = revealed
+        if (revealed) {
+            b.tvNoInterval.text = intervalText(context, ReviewPreview.interval(word, ReviewEvent.Result.AGAIN, today))
+            b.tvAlmostInterval.text = intervalText(context, ReviewPreview.interval(word, ReviewEvent.Result.ALMOST, today))
+            b.tvKnewInterval.text = intervalText(context, ReviewPreview.interval(word, ReviewEvent.Result.KNEW, today))
+        }
+    }
+
+    private fun intervalText(context: android.content.Context, interval: ReviewPreview.Interval): String = when (interval) {
+        ReviewPreview.Interval.AgainTomorrow -> context.getString(R.string.words_interval_again)
+        ReviewPreview.Interval.SameBox -> context.getString(R.string.words_interval_same)
+        ReviewPreview.Interval.Learned -> context.getString(R.string.words_interval_learned)
+        is ReviewPreview.Interval.Promoted ->
+            if (interval.days <= 1) {
+                context.getString(R.string.words_interval_box_tomorrow, interval.box)
+            } else {
+                context.getString(R.string.words_interval_box_days, interval.box, interval.days.toInt())
+            }
+    }
+
+    private fun showWordPopup(anchor: View, word: Word) {
+        val context = anchor.context
+        anchor.showPopupMenu(
+            configure = { menu ->
+                menu.add(Menu.NONE, 1, Menu.NONE, R.string.words_edit)
+                menu.add(Menu.NONE, 2, Menu.NONE, R.string.words_delete)
+            }
+        ) { item ->
+            when (item.itemId) {
+                1 -> WordDialogs.showEditDialog(context, word, { viewLifecycleOwnerOrNull() }) { refreshQueueFromStore() }
+                2 -> WordDialogs.showDeleteDialog(context, word) { refreshQueueFromStore() }
+            }
+        }
+    }
+
+    private fun viewLifecycleOwnerOrNull() = if (_binding != null) viewLifecycleOwner else null
+
+    /** Re-reads the queue after an edit or delete; a word removed from before the cursor shifts it. */
+    private fun refreshQueueFromStore() {
+        val context = context ?: return
+        val store = WordsCard.getStore(context)
+        var newAnswered = answered
+        val fresh = ArrayList<Word>()
+        queue.forEachIndexed { index, old ->
+            val current = store.get(old.id)
+            if (current != null) fresh.add(current) else if (index < answered) newAnswered--
+        }
+        queue = fresh
+        answered = newAnswered.coerceAtLeast(0)
+        render()
+    }
+
+    private fun leave(view: View) {
+        Haptics.tick(view)
+        // Ignore a second tap delivered before the first pop lands.
+        if (findNavController().currentDestination?.id == R.id.reviewFragment) {
+            findNavController().navigateUp()
+        }
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
-        wordReveal = null
         _binding = null
     }
 
     private companion object {
         const val GRADE_DEBOUNCE_MS = 300L
         const val KEY_STARTED = "review_started"
+        const val KEY_REVEALED = "review_revealed"
         const val KEY_ANSWERED = "review_answered"
         const val KEY_QUEUE_IDS = "review_queue_ids"
         const val KEY_EVENT_IDS = "review_event_ids"

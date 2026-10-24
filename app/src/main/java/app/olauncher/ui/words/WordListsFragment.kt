@@ -9,11 +9,11 @@ import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.navigation.fragment.findNavController
 import app.olauncher.R
-import app.olauncher.data.store.Word
 import app.olauncher.data.store.WordList
 import app.olauncher.data.store.WordListsLogic
+import app.olauncher.data.store.WordListsSummary
 import app.olauncher.databinding.FragmentWordListsBinding
-import app.olauncher.databinding.ItemWordListBinding
+import app.olauncher.databinding.ItemWordListCardBinding
 import app.olauncher.helper.Haptics
 import app.olauncher.helper.hapticLongClick
 import app.olauncher.helper.showMessageDialog
@@ -39,10 +39,12 @@ class WordListsFragment : BaseFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding.btnNewList.setOnClickListener {
-            Haptics.tick(it)
-            WordDialogs.showListNameDialog(it.context, list = null) { render() }
+        val newList = { v: View ->
+            Haptics.tick(v)
+            WordDialogs.showListNameDialog(v.context, list = null) { render() }
         }
+        binding.btnNewList.setOnClickListener(newList)
+        binding.btnEmptyAdd.setOnClickListener(newList)
     }
 
     override fun onResume() {
@@ -60,17 +62,51 @@ class WordListsFragment : BaseFragment() {
 
         val empty = words.isEmpty() && lists.isEmpty()
         b.tvEmpty.isVisible = empty
+        b.btnEmptyAdd.isVisible = empty
+        b.tvCounts.text = context.getString(
+            R.string.word_lists_count_line,
+            WordsCardLogic.formatWordsCount(context, words.size),
+            if (lists.size == 1) {
+                context.getString(R.string.word_lists_count_single)
+            } else {
+                context.getString(R.string.word_lists_count_plural, lists.size)
+            },
+        )
+
+        // "All words": total and due today
+        b.allWordsRow.removeAllViews()
+        if (!empty) {
+            val allDue = WordListsSummary.dueCount(words, today)
+            val all = ItemWordListCardBinding.inflate(layoutInflater, b.allWordsRow, false)
+            all.tvName.setText(R.string.word_lists_all_words)
+            all.tvSubtitle.text = if (allDue > 0) {
+                context.getString(
+                    R.string.word_lists_all_words_subtitle,
+                    WordsCardLogic.formatWordsCount(context, words.size),
+                    allDue,
+                )
+            } else {
+                context.getString(
+                    R.string.word_lists_all_words_subtitle_done,
+                    WordsCardLogic.formatWordsCount(context, words.size),
+                )
+            }
+            all.tvStatus.isVisible = false
+            all.root.setOnClickListener {
+                Haptics.tick(it)
+                openAllWords()
+            }
+            b.allWordsRow.addView(all.root)
+        }
+
         b.listsPanel.isVisible = lists.isNotEmpty()
         b.listsPanel.removeAllViews()
         for (list in lists) {
-            val members = words.filter { list.id in it.listIds }
-            val item = ItemWordListBinding.inflate(layoutInflater, b.listsPanel, false)
+            val members = WordListsSummary.membersOf(words, list.id)
+            val item = ItemWordListCardBinding.inflate(layoutInflater, b.listsPanel, false)
             item.tvName.text = list.name
-            item.tvSubtitle.text = context.getString(
-                R.string.word_lists_row_subtitle,
-                WordsCardLogic.formatWordsCount(context, members.size),
-                dueCount(members, today),
-            )
+            item.tvSubtitle.text = WordsCardLogic.formatWordsCount(context, members.size)
+            bindDueStatus(item, context, WordListsSummary.dueCount(members, today))
             item.root.setOnClickListener {
                 Haptics.tick(it)
                 openWordList(bundleOf("listId" to list.id))
@@ -83,9 +119,10 @@ class WordListsFragment : BaseFragment() {
 
         val buckets = WordListsLogic.groupBySource(words).filter { it.second.isNotEmpty() }
         b.sourcesPanel.isVisible = buckets.isNotEmpty()
+        b.tvSourcesHeading.isVisible = buckets.isNotEmpty()
         b.sourcesPanel.removeAllViews()
         for ((bucket, bucketWords) in buckets) {
-            val item = ItemWordListBinding.inflate(layoutInflater, b.sourcesPanel, false)
+            val item = ItemWordListCardBinding.inflate(layoutInflater, b.sourcesPanel, false)
             item.tvName.text = context.getString(
                 when (bucket) {
                     WordListsLogic.SourceBucket.WIKTIONARY -> R.string.word_lists_source_wiktionary
@@ -94,6 +131,7 @@ class WordListsFragment : BaseFragment() {
                 }
             )
             item.tvSubtitle.text = WordsCardLogic.formatWordsCount(context, bucketWords.size)
+            bindDueStatus(item, context, WordListsSummary.dueCount(bucketWords, today))
             item.root.setOnClickListener {
                 Haptics.tick(it)
                 openWordList(bundleOf("sourceBucket" to bucket.name))
@@ -107,9 +145,19 @@ class WordListsFragment : BaseFragment() {
         }
     }
 
-    /** Words still in rotation for a row's "n due" count, mirroring the store's stats rule. */
-    private fun dueCount(words: List<Word>, today: Long): Int {
-        return words.count { it.learnedAt == null && it.dueDay <= today }
+    private fun bindDueStatus(item: ItemWordListCardBinding, context: android.content.Context, due: Int) {
+        item.tvStatus.text = if (due > 0) {
+            context.getString(R.string.word_lists_card_due, due)
+        } else {
+            context.getString(R.string.word_lists_card_all_done)
+        }
+    }
+
+    private fun openAllWords() {
+        val navController = findNavController()
+        if (navController.currentDestination?.id == R.id.wordListsFragment) {
+            navController.navigate(R.id.action_wordListsFragment_to_wordsFragment)
+        }
     }
 
     /** Opens the list page for a user list (`listId`) or a source bucket (`sourceBucket`). */

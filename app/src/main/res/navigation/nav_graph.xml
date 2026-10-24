@@ -187,6 +187,15 @@
             app:exitAnim="@animator/fade_exit"
             app:popEnterAnim="@animator/fade_enter"
             app:popExitAnim="@animator/fade_exit" />
+        <action
+            android:id="@+id/action_wordListsFragment_to_wordsFragment"
+            app:destination="@id/wordsFragment"
+            app:enterAnim="@animator/fade_enter"
+            app:exitAnim="@animator/fade_exit"
+            app:popEnterAnim="@animator/fade_enter"
+            app:popExitAnim="@animator/fade_exit"
+            app:popUpTo="@id/wordsFragment"
+            app:popUpToInclusive="true" />
     </fragment>
 
     <fragment
