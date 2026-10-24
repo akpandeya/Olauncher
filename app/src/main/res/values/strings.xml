@@ -501,16 +501,14 @@
     <string name="conjugation_prompt" tools:ignore="MissingTranslation">Conjugate “%1$s”</string>
     <string name="conjugation_check" tools:ignore="MissingTranslation">Check</string>
     <string name="conjugation_continue" tools:ignore="MissingTranslation">Continue</string>
-    <string name="conjugation_right" tools:ignore="MissingTranslation">✓ Right.</string>
-    <string name="conjugation_wrong" tools:ignore="MissingTranslation">Not quite. The answer is %1$s.</string>
     <string name="conjugation_first_try" tools:ignore="MissingTranslation">First try</string>
     <string name="conjugation_score" tools:ignore="MissingTranslation">%1$d of %2$d</string>
     <string name="conjugation_summary_note" tools:ignore="MissingTranslation">Missed forms come back until you get them right.</string>
     <string name="conjugation_practise_again" tools:ignore="MissingTranslation">Practise %1$s again</string>
     <string name="conjugation_practise_misses" tools:ignore="MissingTranslation">Practise missed forms again</string>
     <string name="conjugation_done" tools:ignore="MissingTranslation">Done</string>
-    <string name="conjugation_cell_right" tools:ignore="MissingTranslation">%1$s  %2$s  ✓</string>
-    <string name="conjugation_cell_missed" tools:ignore="MissingTranslation">%1$s  %2$s  ✗ %3$d</string>
+    <string name="conjugation_cell_right" tools:ignore="MissingTranslation">%1$s  %2$s</string>
+    <string name="conjugation_cell_missed" tools:ignore="MissingTranslation">%1$s  %2$s  %3$d miss</string>
     <string name="conjugation_meaning_ich" tools:ignore="MissingTranslation">I</string>
     <string name="conjugation_meaning_du" tools:ignore="MissingTranslation">you (one person)</string>
     <string name="conjugation_meaning_er" tools:ignore="MissingTranslation">he, she, it</string>

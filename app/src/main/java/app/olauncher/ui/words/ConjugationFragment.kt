@@ -111,6 +111,8 @@ class ConjugationFragment : BaseFragment() {
         val inQuiz = loaded && q != null && !q.isRoundFinished
 
         b.quizContainer.isVisible = inQuiz
+        b.quizCardContent.isVisible = inQuiz
+        b.quizCard.isVisible = inQuiz || finished
         b.summaryContainer.isVisible = finished
         b.tvEmpty.isVisible = noParadigm
         b.conjugationFooter.isVisible = loaded
@@ -171,15 +173,6 @@ class ConjugationFragment : BaseFragment() {
             b.choiceGrid.addView(tv, cellParams(b.choiceGrid))
         }
 
-        b.tvFeedback.isVisible = answered
-        if (answered) {
-            val picked = selectedChoice == question.answer
-            b.tvFeedback.text = if (picked) {
-                context.getString(R.string.conjugation_right)
-            } else {
-                context.getString(R.string.conjugation_wrong, question.answer)
-            }
-        }
         b.btnPrimary.setText(if (answered) R.string.conjugation_continue else R.string.conjugation_check)
         val canPress = answered || selectedChoice != null
         b.btnPrimary.isEnabled = canPress
