@@ -120,6 +120,14 @@ internal fun AppDrawerFragment.initAdapter() {
                             findNavController().popBackStack(R.id.mainFragment, false)
                         }
 
+                        is AppModel.Result.Action.AddShopping -> {
+                            val added = NotesStore({ prefs.notesJson }, { prefs.notesJson = it }).addShopping(action.items, System.currentTimeMillis())
+                            if (added > 0) {
+                                requireContext().showToast(getString(R.string.shopping_added, added))
+                                findNavController().popBackStack(R.id.mainFragment, false)
+                            }
+                        }
+
                         is AppModel.Result.Action.SetAlarm -> {
                             try {
                                 startActivity(

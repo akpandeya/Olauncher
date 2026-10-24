@@ -68,11 +68,12 @@ class DrawerSearchTest {
     @Test
     fun `colon alone shows only enabled command rows that fill the query`() {
         val off = DrawerSearch.run(input(":", german = false)).items.filterIsInstance<AppModel.Result>()
-        assertEquals(listOf("help t", "help a", "help e", "help n", "help p"), off.map { it.text })
+        assertEquals(listOf("help t", "help a", "help e", "help n", "help p", "help s"), off.map { it.text })
         assertEquals(AppModel.Result.Action.FillQuery(":t "), off[0].action)
         val on = DrawerSearch.run(input(":", german = true)).items.filterIsInstance<AppModel.Result>()
-        assertEquals(listOf("help t", "help a", "help e", "help n", "help p", "help sw", "help w"), on.map { it.text })
-        assertEquals(AppModel.Result.Action.FillQuery(":sw "), on[5].action)
+        assertEquals(listOf("help t", "help a", "help e", "help n", "help p", "help s", "help sw", "help w"), on.map { it.text })
+        assertEquals(AppModel.Result.Action.FillQuery(":s "), on[5].action)
+        assertEquals(AppModel.Result.Action.FillQuery(":sw "), on[6].action)
     }
 
     @Test
@@ -210,6 +211,14 @@ class DrawerSearchTest {
         assertTrue(a.action is AppModel.Result.Action.SetAlarm)
         val e = commandRows(":e dentist tomorrow 15:00").first()
         assertTrue(e.action is AppModel.Result.Action.AddEvent)
+    }
+
+    @Test
+    fun `shop command shows an add row and none when empty`() {
+        val rows = commandRows(":s milk, eggs")
+        assertEquals(AppModel.Result.Action.AddShopping(listOf("milk", "eggs")), rows.single().action)
+        assertTrue(commandRows(":s").isEmpty())
+        assertTrue(commandRows(":s , ").isEmpty())
     }
 
     @Test

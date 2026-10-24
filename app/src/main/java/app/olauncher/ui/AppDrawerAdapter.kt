@@ -273,6 +273,7 @@ class AppDrawerAdapter(
                         callRowText = { ctx?.getString(R.string.call_number, it) ?: "Call $it" },
                         saveWordRowText = { ctx?.getString(R.string.save_word_row, it) ?: "Save word: $it" },
                         noteRowText = { ctx?.getString(R.string.note_row, it) ?: "Save note: $it" },
+                        shopRowText = { count, shown -> ctx?.getString(R.string.shopping_row, count, shown) ?: "Add $count to Shopping: $shown" },
                         profileChoices = { profileChoicesProvider?.invoke() ?: emptyList() },
                         profileRowText = { ctx?.getString(R.string.profile_switch_row, it) ?: "Switch to $it" },
                         profileNotFoundRowText = { ctx?.getString(R.string.profile_not_found, it) ?: "No profile '$it'" },
@@ -642,6 +643,7 @@ private fun commandHelpText(ctx: android.content.Context?, word: String): String
         "a" -> R.string.command_help_alarm
         "e" -> R.string.command_help_event
         "n" -> R.string.command_help_note
+        "s" -> R.string.command_help_shop
         "p" -> R.string.command_help_profile
         "sw" -> R.string.command_help_save_words
         "w" -> R.string.command_help_look_up
