@@ -68,9 +68,9 @@ stale data.
 - SQLite integrity and foreign-key checks run before publication. Counts are
   reported for inspection, not used to prove source completeness.
 
-## Conjugation forms (schema v2)
+## Conjugation forms and auxiliary (schema v3)
 
-`PRAGMA user_version=2` adds a `forms` table beside `entries` and `lookup`:
+`PRAGMA user_version=3` stores `entries.auxiliary` (haben, sein, or haben/sein for verbs with both auxiliaries) and maintains the `forms` table beside `entries` and `lookup`:
 
 ```
 forms (entry_id REFERENCES entries(id), form, tags)
@@ -93,13 +93,13 @@ marks exactly those standard strong forms with it) and `subordinate-clause`
 rows, which duplicate a separable verb's joined surface. Separable verbs keep
 their split surface forms (e.g. `setze über` for `übersetzen`): those are the
 drilled main-clause cells, and the app resolves a joined/split conflict toward
-the split. Auxiliary choice (haben/sein) lives only in the excluded multiword
-rows; if a drill ever needs it, add an `entries.auxiliary` column rather than
-keeping the phrases.
+the split. Auxiliary choice (haben/sein) lives in `entries.auxiliary` from the
+kaikki auxiliary rows, allowing Perfekt periphrastic tense cells to be built at runtime
+without shipping multiword phrase tables.
 
 The asset has 109,630 lexical entries, 362,523 indexed form/entry pairs and
-298,518 conjugation form cells, occupies 9,633,112 compressed bytes
-(35,627,008 unpacked), and needs no rare-word filtering. Full-source and
+298,518 conjugation form cells, occupies 9,893,510 compressed bytes
+(35,799,040 unpacked), and needs no rare-word filtering. Full-source and
 fixture tests cover `gehen`, `ging → gehen`, `Mädchen → das`, `Haus → Häuser`,
 `Lehrer`, `Studentin → die / Studentinnen`, `mich → ich`, `die → der`
 (article/pronoun), the `machen`/`gehen`/`sein` present paradigms, the

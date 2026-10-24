@@ -43,7 +43,7 @@ class OfflineGermanAssetTest {
 
     @Test
     fun formsTableStoresSingleWordParadigmCells() = withInstalledDatabase { db ->
-        assertEquals(2, db.version)
+        assertEquals(3, db.version)
         db.rawQuery(
             "SELECT sql FROM sqlite_master WHERE type='table' AND name='forms'", null
         ).use { cursor ->

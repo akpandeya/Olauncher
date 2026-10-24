@@ -43,7 +43,7 @@ class OfflineGermanStore(context: Context) {
                 throw e
             }
             try {
-                check(opened.version == 2)
+                check(opened.version in 2..3)
             } catch (e: Exception) {
                 opened.close()
                 deleteInstalled()
@@ -129,16 +129,24 @@ class OfflineGermanStore(context: Context) {
         return try {
             val normalized = Normalizer.normalize(text.trim(), Normalizer.Form.NFC)
             for (candidate in WiktionaryParser.candidates(normalized)) {
+                val hasAuxiliary = db.version >= 3
                 val candidates = db.rawQuery(
-                    """SELECT e.id, e.lemma, e.past, e.participle
-                       FROM lookup l JOIN entries e ON e.id = l.entry_id
-                       WHERE l.form = ? AND e.pos = 'verb'
-                       ORDER BY CASE WHEN e.lemma = ? THEN 0 ELSE 1 END, e.id""",
+                    if (hasAuxiliary) {
+                        """SELECT e.id, e.lemma, e.past, e.participle, e.auxiliary
+                           FROM lookup l JOIN entries e ON e.id = l.entry_id
+                           WHERE l.form = ? AND e.pos = 'verb'
+                           ORDER BY CASE WHEN e.lemma = ? THEN 0 ELSE 1 END, e.id"""
+                    } else {
+                        """SELECT e.id, e.lemma, e.past, e.participle, ''
+                           FROM lookup l JOIN entries e ON e.id = l.entry_id
+                           WHERE l.form = ? AND e.pos = 'verb'
+                           ORDER BY CASE WHEN e.lemma = ? THEN 0 ELSE 1 END, e.id"""
+                    },
                     arrayOf(candidate, candidate)
                 ).use { cursor ->
                     buildList {
                         while (cursor.moveToNext()) {
-                            add(VerbEntryRef(cursor.getLong(0), cursor.getString(1), cursor.getString(2), cursor.getString(3)))
+                            add(VerbEntryRef(cursor.getLong(0), cursor.getString(1), cursor.getString(2), cursor.getString(3), cursor.getString(4)))
                         }
                     }
                 }
@@ -156,7 +164,8 @@ class OfflineGermanStore(context: Context) {
                 }
                 val past = entries.map { it.past }.firstOrNull { it.isNotBlank() }.orEmpty()
                 val participle = entries.map { it.participle }.firstOrNull { it.isNotBlank() }.orEmpty()
-                val parsed = Conjugation.parseAll(entries.first().lemma, rows, past, participle)
+                val auxiliary = entries.map { it.auxiliary }.firstOrNull { it.isNotBlank() }.orEmpty()
+                val parsed = Conjugation.parseAll(entries.first().lemma, rows, past, participle, auxiliary)
                 if (parsed.isNotEmpty()) return parsed
             }
             emptyMap()

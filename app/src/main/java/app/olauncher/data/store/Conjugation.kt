@@ -3,13 +3,21 @@ package app.olauncher.data.store
 enum class Tense {
     PRESENT,
     PRETERITE,
+    PERFEKT,
     SUBJUNCTIVE_II,
     IMPERATIVE,
     STAMMFORMEN,
 }
 
 /** One paradigm cell: [person] is 1..3, [plural] the number, [form] the surface form. */
-data class ParadigmCell(val person: Int, val plural: Boolean, val form: String)
+data class ParadigmCell(
+    val person: Int,
+    val plural: Boolean,
+    val form: String,
+    val forms: List<String> = form.split(Regex("\\s*/\\s*")),
+) {
+    fun accepts(input: String): Boolean = forms.any { checkTypedAnswer(input, it) }
+}
 
 typealias PresentForm = ParadigmCell
 
@@ -69,7 +77,7 @@ object Conjugation {
 
     fun parse(lemma: String, rows: List<Pair<String, String>>, tense: Tense): VerbParadigm? {
         if (tense == Tense.IMPERATIVE) return parseImperative(lemma, rows)
-        if (tense == Tense.STAMMFORMEN) return null
+        if (tense == Tense.STAMMFORMEN || tense == Tense.PERFEKT) return null
         val (requiredTag, excludedTags) = when (tense) {
             Tense.PRESENT -> TAG_PRESENT to NON_PRESENT_TAGS
             Tense.PRETERITE -> TAG_PRETERITE to NON_PRETERITE_TAGS
@@ -142,6 +150,62 @@ object Conjugation {
         )
     }
 
+    private fun habenAux(person: Int, plural: Boolean): String = when (person to plural) {
+        1 to false -> "habe"
+        2 to false -> "hast"
+        3 to false -> "hat"
+        1 to true -> "haben"
+        2 to true -> "habt"
+        3 to true -> "haben"
+        else -> error("invalid person $person plural $plural")
+    }
+
+    private fun seinAux(person: Int, plural: Boolean): String = when (person to plural) {
+        1 to false -> "bin"
+        2 to false -> "bist"
+        3 to false -> "ist"
+        1 to true -> "sind"
+        2 to true -> "seid"
+        3 to true -> "sind"
+        else -> error("invalid person $person plural $plural")
+    }
+
+    fun buildPerfektCells(participle: String, auxiliary: String): List<ParadigmCell> {
+        val p = participle.trim()
+        val aux = auxiliary.trim().lowercase()
+        if (p.isEmpty() || aux.isEmpty()) return emptyList()
+        val hasHaben = "haben" in aux
+        val hasSein = "sein" in aux
+        if (!hasHaben && !hasSein) return emptyList()
+
+        val persons = listOf(
+            1 to false,
+            2 to false,
+            3 to false,
+            1 to true,
+            2 to true,
+            3 to true,
+        )
+        return persons.map { (person, plural) ->
+            val forms = mutableListOf<String>()
+            if (hasHaben) forms.add("${habenAux(person, plural)} $p")
+            if (hasSein) forms.add("${seinAux(person, plural)} $p")
+            ParadigmCell(person, plural, forms.joinToString(" / "), forms)
+        }
+    }
+
+    fun buildPerfektCells(lemma: String, participle: String, auxiliary: String): List<ParadigmCell> =
+        buildPerfektCells(participle, auxiliary)
+
+    fun parsePerfekt(lemma: String, participle: String, auxiliary: String): VerbParadigm? {
+        val cells = buildPerfektCells(participle, auxiliary)
+        if (cells.isEmpty()) return null
+        return VerbParadigm(lemma, Tense.PERFEKT, cells)
+    }
+
+    fun buildPerfekt(lemma: String, participle: String, auxiliary: String): VerbParadigm? =
+        parsePerfekt(lemma, participle, auxiliary)
+
     /** Null when no row lands in a present cell, so the caller can show its graceful state. */
     fun parsePresent(lemma: String, rows: List<Pair<String, String>>): VerbParadigm? =
         parse(lemma, rows, Tense.PRESENT)
@@ -157,10 +221,12 @@ object Conjugation {
         rows: List<Pair<String, String>>,
         past: String = "",
         participle: String = "",
+        auxiliary: String = "",
     ): Map<Tense, VerbParadigm> {
         val map = mutableMapOf<Tense, VerbParadigm>()
         parsePresent(lemma, rows)?.let { map[Tense.PRESENT] = it }
         parsePreterite(lemma, rows)?.let { map[Tense.PRETERITE] = it }
+        parsePerfekt(lemma, participle, auxiliary)?.let { map[Tense.PERFEKT] = it }
         parseSubjunctiveIi(lemma, rows)?.let { map[Tense.SUBJUNCTIVE_II] = it }
         parseImperative(lemma, rows)?.let { map[Tense.IMPERATIVE] = it }
         parseStammformen(lemma, past, participle)?.let { map[Tense.STAMMFORMEN] = it }

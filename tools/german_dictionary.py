@@ -95,6 +95,7 @@ class Entry:
     rare: bool
     # Verb conjugation drill cells: (form, sorted tags) pairs, empty for other POS.
     forms: tuple
+    auxiliary: str = ""
 
 
 def parse_record(record):
@@ -154,6 +155,18 @@ def parse_record(record):
     gloss = lexical[0][0] if lexical else ""
     if len(gloss) > 160:
         gloss = gloss[:157].rsplit(" ", 1)[0] + "…"
+    auxiliaries = []
+    if pos == "verb":
+        for aux in ("haben", "sein"):
+            if any("auxiliary" in tags and not (tags & RARE_TAGS) and aux in value
+                   for value, tags in validated_forms):
+                auxiliaries.append(aux)
+        if not auxiliaries:
+            for aux in ("haben", "sein"):
+                if any("auxiliary" in tags and aux in value
+                       for value, tags in validated_forms):
+                    auxiliaries.append(aux)
+    auxiliary = "/".join(auxiliaries)
     return Entry(
         lemma, pos, gender,
         choose(lambda tags: "plural" in tags and
@@ -172,6 +185,7 @@ def parse_record(record):
         # Headword summaries repeat table rows: keep the first occurrence of each pair.
         tuple(dict.fromkeys((value, tuple(sorted(tags))) for value, tags in validated_forms
                             if pos == "verb" and not tags & NON_CONJUGATION_TAGS)),
+        auxiliary,
     )
 
 
@@ -205,11 +219,12 @@ def write_database(entries, path, drop_rare=False):
     with sqlite3.connect(path) as db:
         db.executescript("""
             PRAGMA page_size=4096;
-            PRAGMA user_version=2;
+            PRAGMA user_version=3;
             CREATE TABLE entries (
                 id INTEGER PRIMARY KEY, lemma TEXT NOT NULL, pos TEXT NOT NULL,
                 gender TEXT NOT NULL, plural TEXT NOT NULL, gloss TEXT NOT NULL,
-                present TEXT NOT NULL, past TEXT NOT NULL, participle TEXT NOT NULL
+                present TEXT NOT NULL, past TEXT NOT NULL, participle TEXT NOT NULL,
+                auxiliary TEXT NOT NULL
             );
             CREATE TABLE forms (
                 entry_id INTEGER NOT NULL REFERENCES entries(id),
@@ -232,9 +247,9 @@ def write_database(entries, path, drop_rare=False):
             if not entry.gloss:
                 continue
             kept += 1
-            db.execute("INSERT INTO entries VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            db.execute("INSERT INTO entries VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                        (kept, entry.lemma, entry.pos, entry.gender, entry.plural, entry.gloss,
-                        entry.present, entry.past, entry.participle))
+                        entry.present, entry.past, entry.participle, entry.auxiliary))
             if entry.forms:
                 db.executemany("INSERT INTO forms VALUES (?, ?, ?)",
                                [(kept, value, " ".join(tags)) for value, tags in entry.forms])
@@ -285,7 +300,7 @@ def build(source, output, expected_sha256, expected_bytes, budget=BUDGET_BYTES):
         else:
             raise InvalidRecord("dictionary exceeds compressed budget even after dropping rare entries")
         stats.update({
-            "schema_version": 2, "source_url": SOURCE_URL,
+            "schema_version": 3, "source_url": SOURCE_URL,
             "source_sha256": expected_sha256, "source_bytes": expected_bytes,
             "database_sha256": hashlib.sha256(database.read_bytes()).hexdigest(),
             "database_bytes": database.stat().st_size,
