@@ -1,12 +1,15 @@
 package app.olauncher.ui.notes
 
+import android.animation.ObjectAnimator
 import android.content.res.ColorStateList
 import android.graphics.drawable.GradientDrawable
 import android.view.View
+import android.view.animation.DecelerateInterpolator
 import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import app.olauncher.R
+import app.olauncher.helper.MotionPolicy
 import app.olauncher.helper.Note
 import app.olauncher.helper.Notes
 import app.olauncher.helper.getColorFromAttr
@@ -18,7 +21,7 @@ object ChecklistStyle {
     private const val DIVIDER_ALPHA = 0x40
 
     /** Sets the "N of M" count (accent colour) and the thin progress bar; both hide for a plain note or an empty checklist. */
-    fun bindProgress(note: Note, count: TextView, bar: ProgressBar) {
+    fun bindProgress(note: Note, count: TextView, bar: ProgressBar, animate: Boolean = false) {
         val context = count.context
         val show = Notes.showsProgressBar(note)
         count.visibility = if (show) View.VISIBLE else View.GONE
@@ -28,7 +31,18 @@ object ChecklistStyle {
         count.text = Notes.countText(note, context.getString(R.string.note_checklist_count))
         count.setTextColor(accent)
         bar.max = MAX
-        bar.progress = (Notes.progressFraction(note) * MAX).toInt()
+        val target = (Notes.progressFraction(note) * MAX).toInt()
+        val animatorsEnabled = MotionPolicy.isAnimationsEnabled(context)
+        val duration = MotionPolicy.durationMs(MotionPolicy.TODAY_DURATION_MS, animatorsEnabled)
+        if (animate && animatorsEnabled && duration > 0L) {
+            ObjectAnimator.ofInt(bar, "progress", 0, target).apply {
+                this.duration = duration
+                interpolator = DecelerateInterpolator()
+                start()
+            }
+        } else {
+            bar.progress = target
+        }
         bar.progressTintList = ColorStateList.valueOf(accent)
         bar.progressBackgroundTintList = ColorStateList.valueOf((accent and 0x00FFFFFF) or (TRACK_ALPHA shl 24))
     }

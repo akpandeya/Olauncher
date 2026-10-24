@@ -19,6 +19,7 @@ import app.olauncher.helper.appUsagePermissionGranted
 import app.olauncher.ui.pause.PauseFormatting
 import app.olauncher.ui.today.TodayCard
 import app.olauncher.ui.today.TodayOrder
+import app.olauncher.ui.today.attachPressScale
 import app.olauncher.ui.today.WellbeingRange
 import app.olauncher.ui.today.WellbeingRanges
 import app.olauncher.wellbeing.HealthLabels
@@ -135,6 +136,10 @@ object WellbeingCard : TodayCard {
                 cardView.release()
             }
         })
+
+        binding.tileWater.attachPressScale()
+        binding.tileWalk.attachPressScale()
+        binding.tileNotNow.attachPressScale()
 
         binding.tileWater.setOnClickListener {
             Haptics.tick(it)

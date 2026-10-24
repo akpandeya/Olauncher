@@ -1,5 +1,6 @@
 package app.olauncher.ui.today.cards
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.DashPathEffect
@@ -8,6 +9,7 @@ import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
 import app.olauncher.R
+import app.olauncher.helper.MotionPolicy
 import app.olauncher.helper.getColorFromAttr
 import app.olauncher.wellbeing.DayBar
 import java.time.DayOfWeek
@@ -37,12 +39,38 @@ class DayBarsView @JvmOverloads constructor(
     private var bars: List<DayBar> = emptyList()
     private var scaleMinutes = 1
     private var allowanceMin = 0
+    private var progressFraction = 1f
+    private var animator: ValueAnimator? = null
+    private var hasAnimated = false
 
     fun setBars(bars: List<DayBar>, scaleMinutes: Int, allowanceMin: Int) {
         this.bars = bars
         this.scaleMinutes = scaleMinutes.coerceAtLeast(1)
         this.allowanceMin = allowanceMin
-        invalidate()
+
+        val animatorsEnabled = MotionPolicy.isAnimationsEnabled(context)
+        val duration = MotionPolicy.durationMs(MotionPolicy.TODAY_DURATION_MS, animatorsEnabled)
+        if (animatorsEnabled && duration > 0L && !hasAnimated) {
+            hasAnimated = true
+            animator?.cancel()
+            animator = ValueAnimator.ofFloat(0f, 1f).apply {
+                this.duration = duration
+                interpolator = android.view.animation.DecelerateInterpolator()
+                addUpdateListener { va ->
+                    progressFraction = va.animatedValue as Float
+                    invalidate()
+                }
+                start()
+            }
+        } else {
+            progressFraction = 1f
+            invalidate()
+        }
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        animator?.cancel()
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -68,7 +96,7 @@ class DayBarsView @JvmOverloads constructor(
         labelPaint.color = faint
         for ((index, bar) in bars.withIndex()) {
             val centre = paddingLeft + slot * index + slot / 2
-            val barHeight = (chartHeight * bar.minutes / scaleMinutes).coerceAtLeast(2 * density)
+            val barHeight = ((chartHeight * bar.minutes / scaleMinutes) * progressFraction).coerceAtLeast(2 * density)
             barPaint.color = if (bar.isToday) ink else faint
             rect.set(centre - barWidth / 2, chartBottom - barHeight, centre + barWidth / 2, chartBottom)
             canvas.drawRoundRect(rect, radius, radius, barPaint)
@@ -78,6 +106,7 @@ class DayBarsView @JvmOverloads constructor(
         if (allowanceMin > 0) {
             val y = chartBottom - chartHeight * allowanceMin / scaleMinutes
             linePaint.color = ink
+            linePaint.alpha = (progressFraction * 255).toInt()
             canvas.drawLine(paddingLeft.toFloat(), y, (width - paddingRight).toFloat(), y, linePaint)
         }
     }

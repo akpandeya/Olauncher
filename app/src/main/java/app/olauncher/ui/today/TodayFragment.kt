@@ -17,6 +17,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
+import app.olauncher.helper.MotionPolicy
 import app.olauncher.helper.StatusBarFade
 import app.olauncher.MainViewModel
 import app.olauncher.R
@@ -215,6 +216,7 @@ class TodayFragment : BaseFragment() {
         for (card in heroCards) {
             val cardView = card.createView(layoutInflater, binding.heroWeatherHost, this)
             if (cardView.parent == null) binding.heroWeatherHost.addView(cardView)
+            cardView.attachPressScale()
         }
         binding.heroWeatherHost.isVisible = heroCards.isNotEmpty()
 
@@ -285,6 +287,52 @@ class TodayFragment : BaseFragment() {
             return
         }
         panelsShown = true
+        animateStaggeredEntry()
+    }
+
+    private fun animateStaggeredEntry() {
+        val b = _binding ?: return
+        val context = context ?: return
+        val animatorsEnabled = MotionPolicy.isAnimationsEnabled(context)
+        if (!animatorsEnabled) return
+
+        val viewsToAnimate = mutableListOf<View>()
+        if (b.heroWeatherHost.isVisible && b.heroWeatherHost.childCount > 0) {
+            for (i in 0 until b.heroWeatherHost.childCount) {
+                viewsToAnimate.add(b.heroWeatherHost.getChildAt(i))
+            }
+        }
+        for (i in 0 until b.pinnedCardsContainer.childCount) {
+            val child = b.pinnedCardsContainer.getChildAt(i)
+            if (child is WidgetGridView) {
+                for (j in 0 until child.childCount) viewsToAnimate.add(child.getChildAt(j))
+            } else {
+                viewsToAnimate.add(child)
+            }
+        }
+        for (i in 0 until b.cardsContainer.childCount) {
+            val child = b.cardsContainer.getChildAt(i)
+            if (child is WidgetGridView) {
+                for (j in 0 until child.childCount) viewsToAnimate.add(child.getChildAt(j))
+            } else {
+                viewsToAnimate.add(child)
+            }
+        }
+
+        val duration = MotionPolicy.durationMs(MotionPolicy.TODAY_DURATION_MS, animatorsEnabled)
+        val offset = 16f * resources.displayMetrics.density
+        for ((index, view) in viewsToAnimate.withIndex()) {
+            val delay = MotionPolicy.staggerDelayMs(index, animatorsEnabled)
+            view.translationY = offset
+            view.alpha = 0f
+            view.animate()
+                .translationY(0f)
+                .alpha(1f)
+                .setDuration(duration)
+                .setStartDelay(delay)
+                .setInterpolator(android.view.animation.DecelerateInterpolator())
+                .start()
+        }
     }
 
     /** Until a widget is added, a dashed "Your widget" card sits at the bottom of the page. */
@@ -313,6 +361,7 @@ class TodayFragment : BaseFragment() {
                 card === WidgetSlotRow -> {
                     val slot = ItemWidgetSlotBinding.inflate(layoutInflater, container, false)
                     slot.tvSlotAdd.setOnClickListener { todayWidgets.add() }
+                    slot.root.attachPressScale()
                     container.addView(slot.root)
                     index++
                 }
@@ -388,6 +437,7 @@ class TodayFragment : BaseFragment() {
 
         val cardView = card.createView(layoutInflater, panel.panelContent, this)
         if (cardView.parent == null) panel.panelContent.addView(cardView)
+        panel.root.attachPressScale()
         return panel.root
     }
 
