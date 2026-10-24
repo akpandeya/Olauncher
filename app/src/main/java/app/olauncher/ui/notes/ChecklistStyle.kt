@@ -10,6 +10,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import app.olauncher.R
 import app.olauncher.helper.MotionPolicy
+import app.olauncher.helper.SystemMotion
 import app.olauncher.helper.Note
 import app.olauncher.helper.Notes
 import app.olauncher.helper.getColorFromAttr
@@ -32,7 +33,7 @@ object ChecklistStyle {
         count.setTextColor(accent)
         bar.max = MAX
         val target = (Notes.progressFraction(note) * MAX).toInt()
-        val animatorsEnabled = MotionPolicy.isAnimationsEnabled(context)
+        val animatorsEnabled = SystemMotion.isAnimationsEnabled(context)
         val duration = MotionPolicy.durationMs(MotionPolicy.TODAY_DURATION_MS, animatorsEnabled)
         if (animate && animatorsEnabled && duration > 0L) {
             ObjectAnimator.ofInt(bar, "progress", 0, target).apply {

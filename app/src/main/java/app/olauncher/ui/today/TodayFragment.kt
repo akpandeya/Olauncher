@@ -18,6 +18,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
 import app.olauncher.helper.MotionPolicy
+import app.olauncher.helper.OnceGate
+import app.olauncher.helper.SystemMotion
 import app.olauncher.helper.StatusBarFade
 import app.olauncher.MainViewModel
 import app.olauncher.R
@@ -52,6 +54,10 @@ class TodayFragment : BaseFragment() {
     private var panelsJob: Job? = null
     private var pastIntentionsOpen = false
     private var panelsShown = false
+
+    /** One-shot motions (progress fills) run once per open of the page, not on every card rebuild. */
+    var motionGate = OnceGate()
+        private set
 
     private val widgetBindLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -293,7 +299,7 @@ class TodayFragment : BaseFragment() {
     private fun animateStaggeredEntry() {
         val b = _binding ?: return
         val context = context ?: return
-        val animatorsEnabled = MotionPolicy.isAnimationsEnabled(context)
+        val animatorsEnabled = SystemMotion.isAnimationsEnabled(context)
         if (!animatorsEnabled) return
 
         val viewsToAnimate = mutableListOf<View>()
@@ -452,6 +458,7 @@ class TodayFragment : BaseFragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         panelsJob?.cancel()
+        motionGate = OnceGate()
         _binding = null
     }
 }

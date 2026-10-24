@@ -10,6 +10,7 @@ import app.olauncher.R
 import app.olauncher.data.Prefs
 import app.olauncher.databinding.CardWeekBinding
 import app.olauncher.databinding.ItemWeekAppBinding
+import app.olauncher.ui.today.TodayFragment
 import app.olauncher.ui.today.TodayCard
 import app.olauncher.ui.today.TodayOrder
 import app.olauncher.ui.today.attachPressScale
@@ -67,6 +68,7 @@ object WeekCard : TodayCard {
         val viewBinding = CardWeekBinding.inflate(inflater, parent, false)
         val cardView = WeekCardView(viewBinding)
         viewBinding.root.tag = cardView
+        cardView.animateNextRender = (fragment as? TodayFragment)?.motionGate?.firstTime("week.bars") == true
         cardView.render()
         return viewBinding.root
     }
@@ -84,6 +86,9 @@ internal class WeekCardView(private val binding: CardWeekBinding) {
         binding.tileWeekWaterWalk.attachPressScale()
     }
 
+    /** True for the first render of a page open only; the day bars then grow from 0. */
+    var animateNextRender = false
+
     var current: WeekBento? = null
         private set
 
@@ -100,7 +105,8 @@ internal class WeekCardView(private val binding: CardWeekBinding) {
             else -> context.getString(R.string.week_review_more_than_week_before, change)
         }
 
-        b.dayBars.setBars(bento.bars, bento.scaleMinutes, bento.allowanceMin)
+        b.dayBars.setBars(bento.bars, bento.scaleMinutes, bento.allowanceMin, animate = animateNextRender)
+        animateNextRender = false
         val allowanceText = when {
             bento.allowanceMin <= 0 -> null
             bento.daysOverAllowance > 0 ->

@@ -22,6 +22,7 @@ import app.olauncher.ui.notes.AddNoteSheet
 import app.olauncher.ui.notes.ChecklistStyle
 import app.olauncher.helper.hideKeyboard
 import app.olauncher.helper.showPopupMenu
+import app.olauncher.ui.today.TodayFragment
 import app.olauncher.ui.today.TodayCard
 import java.time.LocalDate
 import java.time.ZoneId
@@ -72,7 +73,7 @@ object NotesCard : TodayCard {
             v.hideKeyboard()
             true
         }
-        render(b, animate = true)
+        render(b, animate = (fragment as? TodayFragment)?.motionGate?.firstTime("notes.progress") == true)
         b.root.tag = b
         return b.root
     }
