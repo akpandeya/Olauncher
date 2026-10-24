@@ -24,6 +24,7 @@
     <dimen name="today_touch_min_height">48dp</dimen>
     <dimen name="today_chip_padding_horizontal">12dp</dimen>
     <dimen name="today_button_padding_horizontal">16dp</dimen>
+    <dimen name="today_day_bars_height">112dp</dimen>
 
     <dimen name="dialog_blur_behind_radius">4dp</dimen>
     <dimen name="time_words_size">28sp</dimen>

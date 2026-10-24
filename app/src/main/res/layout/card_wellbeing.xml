@@ -29,7 +29,7 @@
 
             <TextView
                 android:id="@+id/tvRangeToday"
-                style="@style/TextSmallBold"
+                style="@style/TodayChip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/today_chip_selectable"
@@ -38,12 +38,11 @@
                 android:gravity="center"
                 android:minHeight="48dp"
                 android:paddingHorizontal="16dp"
-                android:text="@string/wellbeing_range_today"
-                android:textColor="@drawable/text_colors_default" />
+                android:text="@string/wellbeing_range_today" />
 
             <TextView
                 android:id="@+id/tvRangeWeek"
-                style="@style/TextSmallBold"
+                style="@style/TodayChip"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
@@ -53,8 +52,7 @@
                 android:gravity="center"
                 android:minHeight="48dp"
                 android:paddingHorizontal="16dp"
-                android:text="@string/wellbeing_range_week"
-                android:textColor="@drawable/text_colors_default" />
+                android:text="@string/wellbeing_range_week" />
 
         </LinearLayout>
 

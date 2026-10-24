@@ -8,7 +8,7 @@
 
     <TextView
         android:id="@+id/tvAppName"
-        style="@style/TextSmall"
+        style="@style/TodayCardBody"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
@@ -18,7 +18,7 @@
 
     <TextView
         android:id="@+id/tvAppTime"
-        style="@style/TextSmallLight"
+        style="@style/TodayCardBodyLight"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="12dp"
