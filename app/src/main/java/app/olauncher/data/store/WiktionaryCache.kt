@@ -27,6 +27,7 @@ object WiktionaryCacheCodec {
                     obj.put("found", true)
                     obj.put("meaning", result.meaning)
                     obj.put("candidate", result.candidate)
+                    result.baseForm?.let { obj.put("baseForm", it) }
                 }
                 WiktionaryApi.LookupResult.NotFound -> obj.put("found", false)
                 WiktionaryApi.LookupResult.Failed -> continue
@@ -50,7 +51,10 @@ object WiktionaryCacheCodec {
                 val key = obj.getString("key")
                 val storedAt = obj.getLong("storedAt")
                 val result = if (obj.getBoolean("found")) {
-                    WiktionaryApi.LookupResult.Found(obj.getString("meaning"), obj.getString("candidate"))
+                    WiktionaryApi.LookupResult.Found(
+                        obj.getString("meaning"), obj.getString("candidate"),
+                        obj.optString("baseForm").ifEmpty { null }
+                    )
                 } else {
                     WiktionaryApi.LookupResult.NotFound
                 }

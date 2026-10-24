@@ -4,9 +4,17 @@ import app.olauncher.data.AppModel
 import app.olauncher.data.store.WiktionaryApi
 
 object WordLookupRows {
-    fun found(text: String, meaning: String, render: (String, String) -> String) = AppModel.Result(
-        text = render(text, meaning),
-        action = AppModel.Result.Action.SaveWords(listOf(text), meaning),
+    /** When [baseForm] is set the row shows and saves it; the typed [text] is kept as context. */
+    fun found(
+        text: String,
+        meaning: String,
+        baseForm: String? = null,
+        render: (String, String) -> String
+    ) = AppModel.Result(
+        text = render(baseForm ?: text, meaning),
+        action = AppModel.Result.Action.SaveWords(
+            listOf(baseForm ?: text), meaning, context = if (baseForm != null) text else ""
+        ),
         multiline = true
     )
 

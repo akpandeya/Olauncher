@@ -51,8 +51,11 @@ sealed class AppModel : Comparable<AppModel> {
             data class Contact(val lookupUri: String) : Action
             data class Event(val eventId: Long) : Action
             data class Web(val query: String) : Action
-            /** [meaning] is a looked-up Wiktionary meaning; only used when [items] has one item. */
-            data class SaveWords(val items: List<String>, val meaning: String = "") : Action
+            /**
+             * [meaning] is a looked-up Wiktionary meaning; only used when [items] has one item.
+             * [context] is saved with the words (the typed form when [items] holds its base word).
+             */
+            data class SaveWords(val items: List<String>, val meaning: String = "", val context: String = "") : Action
             /** Tap re-runs the `:w` lookup for [text]. */
             data class LookUpWord(val text: String) : Action
             /** Tap puts [query] into the search box (command help rows). */

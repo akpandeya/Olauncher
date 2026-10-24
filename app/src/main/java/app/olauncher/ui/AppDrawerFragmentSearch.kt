@@ -286,7 +286,7 @@ internal fun AppDrawerFragment.lookUpMainRows(ctx: Context, text: String): List<
         val offline = WordLookupRows.offlineOnlyMeaning(state)
             ?: return listOf(dictionaryRow(ctx, text))
         return listOf(
-            WordLookupRows.found(text, offline) { word, definition ->
+            WordLookupRows.found(text, offline, (state as? WiktionaryApi.LookupResult.Found)?.baseForm) { word, definition ->
                 ctx.getString(R.string.word_row_wiktionary_meaning, word, definition)
             },
             dictionaryRow(ctx, text),
@@ -295,7 +295,7 @@ internal fun AppDrawerFragment.lookUpMainRows(ctx: Context, text: String): List<
     val silent = AppModel.Result.Action.OpenDictionary(text, openOnTap = false)
     val row = when (val result = state) {
         null -> AppModel.Result(ctx.getString(R.string.word_row_looking_up), silent)
-        is WiktionaryApi.LookupResult.Found -> WordLookupRows.found(text, result.meaning) { word, definition ->
+        is WiktionaryApi.LookupResult.Found -> WordLookupRows.found(text, result.meaning, result.baseForm) { word, definition ->
             ctx.getString(R.string.word_row_wiktionary_meaning, word, definition)
         }
         WiktionaryApi.LookupResult.NotFound ->
@@ -349,7 +349,7 @@ internal fun AppDrawerFragment.saveWords(action: AppModel.Result.Action.SaveWord
     viewLifecycleOwner.lifecycleScope.launch {
         val result = withContext(Dispatchers.IO) {
             val store = WordsStore(ctx)
-            val res = store.addAll(action.items)
+            val res = store.addAll(action.items, action.context)
             if (action.meaning.isNotBlank() && action.items.size == 1) {
                 res.added.firstOrNull()?.let {
                     store.update(it.copy(meaning = action.meaning, meaningSource = "wiktionary"))

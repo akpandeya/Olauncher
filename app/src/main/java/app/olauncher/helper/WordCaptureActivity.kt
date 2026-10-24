@@ -250,7 +250,7 @@ class WordCaptureActivity : AppCompatActivity() {
             fun render(result: WiktionaryApi.LookupResult) {
                 line.text = when (result) {
                     is WiktionaryApi.LookupResult.Found ->
-                        getString(R.string.word_row_wiktionary_meaning, choice, result.meaning)
+                        getString(R.string.word_row_wiktionary_meaning, result.baseForm ?: choice, result.meaning)
                     WiktionaryApi.LookupResult.NotFound -> getString(R.string.word_row_no_meaning_found)
                     WiktionaryApi.LookupResult.Failed -> getString(R.string.word_row_unreachable)
                 }
