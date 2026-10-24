@@ -13,6 +13,13 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
         android:baselineAligned="true"
         android:orientation="horizontal">
 
@@ -33,6 +40,21 @@
             android:layout_marginStart="6dp"
             android:textColor="@drawable/text_colors_light"
             tools:text="due" />
+
+    </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvOpen"
+            style="@style/TextSmallBold"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:minWidth="48dp"
+            android:minHeight="48dp"
+            android:text="@string/words_card_open" />
 
     </LinearLayout>
 
