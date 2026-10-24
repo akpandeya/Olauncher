@@ -123,11 +123,12 @@ internal fun AppDrawerFragment.scheduleLookup(query: String, delayMs: Long) {
         if (delayMs > 0) delay(delayMs)
         lookupState = text to null
         paradigmState = null
+        val offlineOn = prefs.germanOfflineDictionary
         val (result, paradigm) = withContext(Dispatchers.IO) {
             val store = OfflineGermanStore(ctx)
             // Cheap indexed query next to the meaning fetch; it must also run for
             // saved words, whose meaning fetch below returns without looking up.
-            val paradigm = store.paradigm(text)
+            val paradigm = if (offlineOn) store.paradigm(text) else null
             val saved = savedWord(ctx, text)
             val cache = WiktionaryCache(ctx)
             val result = when {
@@ -135,11 +136,11 @@ internal fun AppDrawerFragment.scheduleLookup(query: String, delayMs: Long) {
                 saved != null && saved.meaning.isNotBlank() -> null
                 // Saved words never touch the network; only the offline dictionary may fill a blank meaning.
                 saved != null -> GermanLookup.lookup(
-                    text, false, store::lookup,
+                    text, false, { if (offlineOn) store.lookup(it) else null },
                     cache::get, { WiktionaryApi.lookup(it) }, cache::put
                 )
                 else -> GermanLookup.lookup(
-                    text, lookupAllowed(), store::lookup,
+                    text, lookupAllowed(), { if (offlineOn) store.lookup(it) else null },
                     cache::get, { WiktionaryApi.lookup(it) }, cache::put
                 )
             }

@@ -245,6 +245,8 @@ object SettingsCatalog {
         primaryId = R.id.germanClock, layoutId = R.id.germanClockLayout, titleId = R.id.germanClockTitle, valueId = R.id.germanClock),
     row(key = "dictionaryApp", sectionKey = SettingsSections.KEY_DEUTSCH, titleRes = R.string.dictionary_app, type = SettingsRowType.CHOICE,
         primaryId = R.id.dictionaryApp, layoutId = R.id.dictionaryAppLayout, titleId = R.id.dictionaryAppTitle, valueId = R.id.dictionaryApp),
+    row(key = "germanOfflineDictionaryOnOff", sectionKey = SettingsSections.KEY_DEUTSCH, titleRes = R.string.german_offline_dictionary, type = SettingsRowType.TOGGLE, shape = SettingsRowShape.SUBTITLE,
+        primaryId = R.id.germanOfflineDictionaryOnOff, layoutId = R.id.germanOfflineDictionaryLayout, titleId = R.id.germanOfflineDictionaryTitle, valueId = R.id.germanOfflineDictionaryOnOff, subtitleRes = R.string.german_offline_dictionary_subtitle, subtitleId = R.id.germanOfflineDictionarySubtitle),
     row(key = "germanLookupOnOff", sectionKey = SettingsSections.KEY_DEUTSCH, titleRes = R.string.german_lookup, type = SettingsRowType.TOGGLE, shape = SettingsRowShape.SUBTITLE,
         primaryId = R.id.germanLookupOnOff, layoutId = R.id.germanLookupLayout, titleId = R.id.germanLookupTitle, valueId = R.id.germanLookupOnOff, subtitleRes = R.string.german_lookup_subtitle, subtitleId = R.id.germanLookupSubtitle),
     row(key = "germanSpellSuggestOnOff", sectionKey = SettingsSections.KEY_DEUTSCH, titleRes = R.string.german_spell_suggest, type = SettingsRowType.TOGGLE, shape = SettingsRowShape.SUBTITLE,

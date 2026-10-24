@@ -143,7 +143,12 @@ import kotlinx.coroutines.withContext
 import java.text.Collator
 
 internal fun SettingsFragment.toggleGerman() {
-    prefs.germanEnabled = !prefs.germanEnabled
+    if (!prefs.germanEnabled) {
+        // Turning German on starts the three-step setup; it enables German only when finished.
+        findNavController().navigate(R.id.action_settingsFragment_to_germanSetupFragment)
+        return
+    }
+    prefs.germanEnabled = false
     syncWordShareEntries()
     WordScreenService.setEnabled(requireContext(), prefs.germanEnabled && prefs.germanScreenPick)
     populateGerman()
@@ -172,6 +177,11 @@ internal fun SettingsFragment.toggleGermanScreenPick() {
 
 internal fun SettingsFragment.toggleGermanSpellSuggest() {
     prefs.germanSpellSuggest = !prefs.germanSpellSuggest
+    populateGerman()
+}
+
+internal fun SettingsFragment.toggleGermanOfflineDictionary() {
+    prefs.germanOfflineDictionary = !prefs.germanOfflineDictionary
     populateGerman()
 }
 
@@ -209,6 +219,8 @@ internal fun SettingsFragment.populateGerman() {
         else -> getString(R.string.system_default)
     }
 
+    binding.germanOfflineDictionaryLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
+    binding.germanOfflineDictionaryOnOff.text = getString(if (prefs.germanOfflineDictionary) R.string.on else R.string.off)
     binding.germanLookupLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
     binding.germanLookupOnOff.text = getString(if (prefs.germanLookup) R.string.on else R.string.off)
     binding.germanSpellSuggestLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE

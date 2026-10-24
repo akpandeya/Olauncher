@@ -74,6 +74,10 @@
     <item name="germanLookupOnOff" type="id" />
     <item name="germanLookupSubtitle" type="id" />
     <item name="germanLookupTitle" type="id" />
+    <item name="germanOfflineDictionaryLayout" type="id" />
+    <item name="germanOfflineDictionaryOnOff" type="id" />
+    <item name="germanOfflineDictionarySubtitle" type="id" />
+    <item name="germanOfflineDictionaryTitle" type="id" />
     <item name="germanOnOff" type="id" />
     <item name="germanPauseWordLayout" type="id" />
     <item name="germanPauseWordOnOff" type="id" />

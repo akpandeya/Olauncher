@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/todayScrimColor"
+    android:clickable="true"
+    android:focusable="true"
+    android:overScrollMode="never"
+    android:scrollbars="none"
+    tools:context=".ui.german.GermanSetupFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingHorizontal="24dp"
+        android:paddingTop="56dp"
+        android:paddingBottom="48dp">
+
+        <LinearLayout
+            android:id="@+id/progressBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <View
+                android:id="@+id/segment1"
+                android:layout_width="0dp"
+                android:layout_height="4dp"
+                android:layout_weight="1"
+                android:background="@drawable/german_setup_segment_on" />
+
+            <View
+                android:id="@+id/segment2"
+                android:layout_width="0dp"
+                android:layout_height="4dp"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/german_setup_segment_off" />
+
+            <View
+                android:id="@+id/segment3"
+                android:layout_width="0dp"
+                android:layout_height="4dp"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:background="@drawable/german_setup_segment_off" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvTitle"
+            style="@style/TextLarge"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingTop="24dp"
+            android:paddingBottom="12dp"
+            tools:text="Learn German words as you read" />
+
+        <!-- Step 1 and 3 body lines -->
+        <LinearLayout
+            android:id="@+id/bodyLines"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+        <!-- Step 2 switches -->
+        <LinearLayout
+            android:id="@+id/choicesContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/today_panel"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="8dp"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tvNote"
+            style="@style/TextSmallLight"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/today_panel"
+            android:padding="16dp"
+            android:layout_marginTop="16dp"
+            android:visibility="gone"
+            tools:text="If you skip, screen picks stay off." />
+
+        <TextView
+            android:id="@+id/btnPrimary"
+            style="@style/TextMedium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/today_chip"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:minHeight="48dp"
+            android:paddingHorizontal="16dp"
+            tools:text="Set up German" />
+
+        <TextView
+            android:id="@+id/btnSecondary"
+            style="@style/TextMedium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/words_button_outline"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:minHeight="48dp"
+            android:paddingHorizontal="16dp"
+            tools:text="Not now" />
+    </LinearLayout>
+</ScrollView>
