@@ -2,6 +2,9 @@ package app.olauncher.ui.today.cards
 
 import android.graphics.Paint
 import android.content.Context
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -19,6 +22,7 @@ import app.olauncher.helper.Notes
 import app.olauncher.helper.NotesStore
 import app.olauncher.helper.showMessageDialog
 import app.olauncher.ui.notes.AddNoteSheet
+import app.olauncher.helper.getColorFromAttr
 import app.olauncher.helper.hideKeyboard
 import app.olauncher.helper.showPopupMenu
 import app.olauncher.ui.today.TodayCard
@@ -127,7 +131,11 @@ object NotesCard : TodayCard {
         )
         val progress = Notes.progressText(latest, context.getString(R.string.notes_card_progress))
         val meta = listOfNotNull(progress, Notes.dateLabel(latest), edited).joinToString(" · ")
-        b.tvNoteDate.text = meta
+        val metaText = SpannableString(meta)
+        if (progress != null) {
+            metaText.setSpan(ForegroundColorSpan(context.getColorFromAttr(R.attr.accentColor)), 0, progress.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+        }
+        b.tvNoteDate.text = metaText
         b.tvNoteDate.visibility = if (meta.isEmpty()) View.GONE else View.VISIBLE
         b.tvNote.setOnLongClickListener {
             Haptics.tick(it)
