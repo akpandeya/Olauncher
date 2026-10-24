@@ -26,6 +26,12 @@
     <dimen name="today_button_padding_horizontal">16dp</dimen>
     <dimen name="today_day_bars_height">112dp</dimen>
 
+    <!-- Conjugation quiz dimens (issue #528) -->
+    <dimen name="quiz_cell_padding">12dp</dimen>
+    <dimen name="quiz_choice_min_height">56dp</dimen>
+    <dimen name="quiz_cell_margin">4dp</dimen>
+    <dimen name="quiz_segment_gap">5dp</dimen>
+
     <dimen name="dialog_blur_behind_radius">4dp</dimen>
     <dimen name="time_words_size">28sp</dimen>
     <dimen name="drawer_row_padding_horizontal">24dp</dimen>
