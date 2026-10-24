@@ -80,11 +80,16 @@ class StudyGridTest {
         // both sides must land on their local dates in the grid.
         val zone = ZoneId.of("Europe/Berlin")
         val today = LocalDate.of(2026, 10, 26)
-        val studied = LocalDate.of(2026, 10, 24)
-        val events = listOf(event(studied.atTime(12, 0).atZone(ZoneId.of("UTC")).toInstant().toEpochMilli()))
+        // 00:30 local on the 25th (DST day) is 22:30 UTC on the 24th; 23:30 local on
+        // the 25th (after the switch, CET) is 22:30 UTC on the 25th. UTC bucketing would
+        // mark the 24th and 25th; local bucketing marks only the 25th.
+        val studied = LocalDate.of(2026, 10, 25)
+        val events = listOf(
+            event(studied.atTime(0, 30).atZone(zone).toInstant().toEpochMilli(), id = 1),
+            event(studied.atTime(23, 30).atZone(zone).toInstant().toEpochMilli(), id = 2),
+        )
         val cells = StudyGrid.build(events, today, zone)
-        val cell = cells.first { it.date == studied }
-        assertTrue(cell.studied)
-        assertFalse(cells.first { it.date == today.minusDays(1) }.studied)
+        assertEquals(listOf(studied), cells.filter { it.studied }.map { it.date })
+        assertFalse(cells.first { it.date == studied.minusDays(1) }.studied)
     }
 }
