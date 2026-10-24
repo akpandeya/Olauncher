@@ -140,6 +140,8 @@ object WellbeingCard : TodayCard {
         binding.tileWater.attachPressScale()
         binding.tileWalk.attachPressScale()
         binding.tileNotNow.attachPressScale()
+        binding.tvRangeToday.attachPressScale()
+        binding.tvRangeWeek.attachPressScale()
 
         binding.tileWater.setOnClickListener {
             Haptics.tick(it)

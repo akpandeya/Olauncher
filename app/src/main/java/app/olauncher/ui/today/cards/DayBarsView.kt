@@ -28,7 +28,7 @@ class DayBarsView @JvmOverloads constructor(
     private val barPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         textAlign = Paint.Align.CENTER
-        textSize = LABEL_SP * resources.displayMetrics.scaledDensity
+        textSize = resources.getDimension(R.dimen.today_label_size)
     }
     private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
@@ -74,7 +74,7 @@ class DayBarsView @JvmOverloads constructor(
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val height = (HEIGHT_DP * density).toInt()
+        val height = resources.getDimensionPixelSize(R.dimen.today_day_bars_height)
         setMeasuredDimension(
             resolveSize(suggestedMinimumWidth, widthMeasureSpec),
             resolveSize(height, heightMeasureSpec),
@@ -114,8 +114,6 @@ class DayBarsView @JvmOverloads constructor(
     private fun shortName(day: DayOfWeek, locale: Locale): String = day.getDisplayName(TextStyle.SHORT, locale).take(2)
 
     private companion object {
-        const val HEIGHT_DP = 112
-        const val LABEL_SP = 12f
         const val BAR_FRACTION = 0.5f
     }
 }
