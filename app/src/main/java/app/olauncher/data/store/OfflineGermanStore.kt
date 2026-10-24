@@ -111,11 +111,20 @@ class OfflineGermanStore(context: Context) {
      * Dispatchers.IO.
      */
     fun paradigm(text: String): VerbParadigm? {
+        val all = paradigms(text)
+        return all[Tense.PRESENT] ?: all.values.firstOrNull()
+    }
+
+    /**
+     * Looks up verb paradigms by tense for [text] (lemma or any inflected form).
+     * Call on Dispatchers.IO.
+     */
+    fun paradigms(text: String): Map<Tense, VerbParadigm> {
         val db = try {
             open()
         } catch (e: Exception) {
             Log.w(TAG, "Offline dictionary unavailable; using existing fallback", e)
-            return null
+            return emptyMap()
         }
         return try {
             val normalized = Normalizer.normalize(text.trim(), Normalizer.Form.NFC)
@@ -145,13 +154,14 @@ class OfflineGermanStore(context: Context) {
                         }
                     }
                 }
-                return Conjugation.parsePresent(entries.first().lemma, rows)
+                val parsed = Conjugation.parseAll(entries.first().lemma, rows)
+                if (parsed.isNotEmpty()) return parsed
             }
-            null
+            emptyMap()
         } catch (e: Exception) {
             Log.w(TAG, "Offline dictionary unreadable; deleting it so the next lookup reinstalls", e)
             discard(db)
-            null
+            emptyMap()
         }
     }
 }

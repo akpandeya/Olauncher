@@ -53,6 +53,7 @@ class ConjugationQuiz(
     private val prompts: List<DrillPrompt>,
     private val random: Random = Random(),
     val isTyped: Boolean = false,
+    val tense: Tense = Tense.PRESENT,
 ) {
     private val missCounts = IntArray(prompts.size)
     private val seen = BooleanArray(prompts.size)

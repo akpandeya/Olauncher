@@ -1,17 +1,33 @@
 package app.olauncher.data.store
 
-/** One present-tense paradigm cell: [person] is 1..3, [plural] the number, [form] the surface form. */
-data class PresentForm(val person: Int, val plural: Boolean, val form: String)
+enum class Tense {
+    PRESENT,
+    PRETERITE,
+    SUBJUNCTIVE_II,
+}
 
-/** A verb lemma plus the present-tense cells the offline dictionary holds for it. */
-data class VerbParadigm(val lemma: String, val present: List<PresentForm>)
+/** One paradigm cell: [person] is 1..3, [plural] the number, [form] the surface form. */
+data class ParadigmCell(val person: Int, val plural: Boolean, val form: String)
+
+typealias PresentForm = ParadigmCell
+
+/** A verb lemma plus the cells the offline dictionary holds for it. */
+data class VerbParadigm(
+    val lemma: String,
+    val tense: Tense,
+    val cells: List<ParadigmCell>,
+) {
+    constructor(lemma: String, cells: List<ParadigmCell>) : this(lemma, Tense.PRESENT, cells)
+
+    val present: List<ParadigmCell> get() = cells
+}
 
 /** One drill card: the [pronoun] prompt and the [form] to recall for it. */
 data class DrillPrompt(val pronoun: String, val form: String)
 
 /**
- * Turns the offline dictionary's `forms` rows for one verb into a drillable
- * present-tense paradigm. Rows are (form, tags) pairs with tags space-joined
+ * Turns the offline dictionary's `forms` rows for one verb into drillable
+ * paradigms per tense. Rows are (form, tags) pairs with tags space-joined
  * ("first-person indicative present singular"); rows of other moods and tenses,
  * and rows without a person/number cell, are skipped. Android-free so the JVM
  * tests drive it directly.
@@ -22,8 +38,19 @@ object Conjugation {
         "subjunctive", "subjunctive-i", "subjunctive-ii",
         "preterite", "past", "participle", "imperative", "infinitive",
     )
+    private val NON_PRETERITE_TAGS = setOf(
+        "present", "subjunctive", "subjunctive-i", "subjunctive-ii",
+        "participle", "imperative", "infinitive",
+    )
+    private val NON_SUBJUNCTIVE_II_TAGS = setOf(
+        "present", "preterite", "past", "subjunctive-i",
+        "participle", "imperative", "infinitive",
+    )
+
     private val PERSON_TAGS = mapOf("first-person" to 1, "second-person" to 2, "third-person" to 3)
     private const val TAG_PRESENT = "present"
+    private const val TAG_PRETERITE = "preterite"
+    private const val TAG_SUBJUNCTIVE_II = "subjunctive-ii"
     private const val TAG_SINGULAR = "singular"
     private const val TAG_PLURAL = "plural"
 
@@ -31,14 +58,18 @@ object Conjugation {
     private val REFLEXIVE_PRONOUNS = setOf("mich", "dich", "sich", "uns", "euch")
 
     /** Orders the drill: 1sg → 2sg → 3sg → 1pl → 2pl → 3pl (number first, then person). */
-    private val CELL_ORDER = compareBy<PresentForm>({ it.plural }, { it.person })
+    private val CELL_ORDER = compareBy<ParadigmCell>({ it.plural }, { it.person })
 
-    /** Null when no row lands in a present cell, so the caller can show its graceful state. */
-    fun parsePresent(lemma: String, rows: List<Pair<String, String>>): VerbParadigm? {
+    fun parse(lemma: String, rows: List<Pair<String, String>>, tense: Tense): VerbParadigm? {
+        val (requiredTag, excludedTags) = when (tense) {
+            Tense.PRESENT -> TAG_PRESENT to NON_PRESENT_TAGS
+            Tense.PRETERITE -> TAG_PRETERITE to NON_PRETERITE_TAGS
+            Tense.SUBJUNCTIVE_II -> TAG_SUBJUNCTIVE_II to NON_SUBJUNCTIVE_II_TAGS
+        }
         val cellForms = mutableMapOf<Pair<Int, Boolean>, MutableList<String>>()
         for ((form, tagLine) in rows) {
             val tags = tagLine.split(' ').filter { it.isNotEmpty() }.toSet()
-            if (TAG_PRESENT !in tags || tags.any { it in NON_PRESENT_TAGS }) continue
+            if (requiredTag !in tags || tags.any { it in excludedTags }) continue
             val person = PERSON_TAGS.entries.firstOrNull { it.key in tags }?.value ?: continue
             val plural = when {
                 TAG_SINGULAR in tags -> false
@@ -50,11 +81,25 @@ object Conjugation {
         if (cellForms.isEmpty()) return null
         return VerbParadigm(
             lemma,
+            tense,
             cellForms.map { (cell, forms) ->
-                PresentForm(cell.first, cell.second, resolveCell(forms))
+                ParadigmCell(cell.first, cell.second, resolveCell(forms))
             }.sortedWith(CELL_ORDER),
         )
     }
+
+    /** Null when no row lands in a present cell, so the caller can show its graceful state. */
+    fun parsePresent(lemma: String, rows: List<Pair<String, String>>): VerbParadigm? =
+        parse(lemma, rows, Tense.PRESENT)
+
+    fun parsePreterite(lemma: String, rows: List<Pair<String, String>>): VerbParadigm? =
+        parse(lemma, rows, Tense.PRETERITE)
+
+    fun parseSubjunctiveIi(lemma: String, rows: List<Pair<String, String>>): VerbParadigm? =
+        parse(lemma, rows, Tense.SUBJUNCTIVE_II)
+
+    fun parseAll(lemma: String, rows: List<Pair<String, String>>): Map<Tense, VerbParadigm> =
+        Tense.values().mapNotNull { tense -> parse(lemma, rows, tense)?.let { tense to it } }.toMap()
 
     /**
      * A cell can hold competing surface forms: a separable split ("setze über")
@@ -84,6 +129,8 @@ object Conjugation {
     }
 
     /** Defective verbs keep only the cells they have; the rest are skipped, not errored. */
-    fun drillPrompts(paradigm: VerbParadigm): List<DrillPrompt> =
-        paradigm.present.sortedWith(CELL_ORDER).map { DrillPrompt(pronoun(it.person, it.plural), it.form) }
+    fun drillPrompts(cells: List<ParadigmCell>): List<DrillPrompt> =
+        cells.sortedWith(CELL_ORDER).map { DrillPrompt(pronoun(it.person, it.plural), it.form) }
+
+    fun drillPrompts(paradigm: VerbParadigm): List<DrillPrompt> = drillPrompts(paradigm.cells)
 }
