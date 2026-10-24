@@ -1,5 +1,6 @@
 package app.olauncher.glance
 
+import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -187,5 +188,16 @@ class WeatherCodesTest {
             WeatherCodes.icon(code, isDay = false)?.let { reachable.add(it) }
         }
         assertEquals(expectedDrawables, reachable)
+    }
+
+    @Test
+    fun `snow icon uses filled snowflake under the cloud`() {
+        val rel = "src/main/res/drawable/ic_weather_snow.xml"
+        val file = listOf(File(rel), File("app/$rel")).first { it.exists() }
+        val xml = file.readText()
+        assertTrue("snow icon should have filled snowflake path", xml.contains("android:fillColor=\"?attr/primaryColor\""))
+        assertTrue("cloud should retain 1.75 stroke width", xml.contains("android:strokeWidth=\"1.75\""))
+        assertTrue("viewport width is 24", xml.contains("android:viewportWidth=\"24\""))
+        assertTrue("viewport height is 24", xml.contains("android:viewportHeight=\"24\""))
     }
 }
