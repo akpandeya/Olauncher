@@ -26,6 +26,9 @@ const val AUTO_ADVANCE_DELAY_MS = 800L
  * - Umlauts required (no ae/oe/ue folding)
  */
 fun checkTypedAnswer(input: String, expected: String): Boolean {
+    if ("/" in expected) {
+        return expected.split(Regex("\\s*/\\s*")).any { checkTypedAnswer(input, it) }
+    }
     val normInput = Normalizer.normalize(input.trim(), Normalizer.Form.NFC)
     val normExpected = Normalizer.normalize(expected.trim(), Normalizer.Form.NFC)
     if (normInput.isEmpty() || normExpected.isEmpty()) {
@@ -101,7 +104,9 @@ class ConjugationQuiz(
         }
         val q = question ?: return null
         if (lastAnswerValue != null) return null
-        val result = QuizAnswer(choice == q.answer, q.answer)
+        val expectedOptions = q.answer.split(Regex("\\s*/\\s*"))
+        val isCorrect = choice == q.answer || choice.trim() in expectedOptions
+        val result = QuizAnswer(isCorrect, q.answer)
         if (!result.correct) missCounts[q.formIndex]++
         lastAnswerValue = result
         return result

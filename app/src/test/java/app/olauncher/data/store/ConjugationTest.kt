@@ -610,4 +610,155 @@ class ConjugationTest {
         assertNull(Conjugation.parseStammformen("machen", "machte", "   "))
         assertNull(Conjugation.parseStammformen("machen", "", ""))
     }
+
+    @Test
+    fun `cell builder for machen builds six Perfekt cells with haben and participle`() {
+        val cells = Conjugation.buildPerfektCells("gemacht", "haben")
+        assertEquals(
+            listOf(
+                ParadigmCell(1, false, "habe gemacht"),
+                ParadigmCell(2, false, "hast gemacht"),
+                ParadigmCell(3, false, "hat gemacht"),
+                ParadigmCell(1, true, "haben gemacht"),
+                ParadigmCell(2, true, "habt gemacht"),
+                ParadigmCell(3, true, "haben gemacht"),
+            ),
+            cells,
+        )
+        val paradigm = Conjugation.parsePerfekt("machen", "gemacht", "haben")!!
+        assertEquals("machen", paradigm.lemma)
+        assertEquals(Tense.PERFEKT, paradigm.tense)
+        assertEquals(
+            listOf(
+                DrillPrompt("ich", "habe gemacht"),
+                DrillPrompt("du", "hast gemacht"),
+                DrillPrompt("er/sie/es", "hat gemacht"),
+                DrillPrompt("wir", "haben gemacht"),
+                DrillPrompt("ihr", "habt gemacht"),
+                DrillPrompt("sie/Sie", "haben gemacht"),
+            ),
+            Conjugation.drillPrompts(paradigm),
+        )
+    }
+
+    @Test
+    fun `cell builder for gehen builds six Perfekt cells with sein and participle`() {
+        val cells = Conjugation.buildPerfektCells("gegangen", "sein")
+        assertEquals(
+            listOf(
+                ParadigmCell(1, false, "bin gegangen"),
+                ParadigmCell(2, false, "bist gegangen"),
+                ParadigmCell(3, false, "ist gegangen"),
+                ParadigmCell(1, true, "sind gegangen"),
+                ParadigmCell(2, true, "seid gegangen"),
+                ParadigmCell(3, true, "sind gegangen"),
+            ),
+            cells,
+        )
+        val paradigm = Conjugation.parsePerfekt("gehen", "gegangen", "sein")!!
+        assertEquals("gehen", paradigm.lemma)
+        assertEquals(Tense.PERFEKT, paradigm.tense)
+        assertEquals(
+            listOf(
+                DrillPrompt("ich", "bin gegangen"),
+                DrillPrompt("du", "bist gegangen"),
+                DrillPrompt("er/sie/es", "ist gegangen"),
+                DrillPrompt("wir", "sind gegangen"),
+                DrillPrompt("ihr", "seid gegangen"),
+                DrillPrompt("sie/Sie", "sind gegangen"),
+            ),
+            Conjugation.drillPrompts(paradigm),
+        )
+    }
+
+    @Test
+    fun `cell builder for fahren with both auxiliaries accepts either auxiliary`() {
+        val cells = Conjugation.buildPerfektCells("gefahren", "haben/sein")
+        assertEquals(
+            listOf(
+                ParadigmCell(1, false, "habe gefahren / bin gefahren"),
+                ParadigmCell(2, false, "hast gefahren / bist gefahren"),
+                ParadigmCell(3, false, "hat gefahren / ist gefahren"),
+                ParadigmCell(1, true, "haben gefahren / sind gefahren"),
+                ParadigmCell(2, true, "habt gefahren / seid gefahren"),
+                ParadigmCell(3, true, "haben gefahren / sind gefahren"),
+            ),
+            cells,
+        )
+
+        val firstCell = cells[0]
+        // Both auxiliaries are accepted
+        org.junit.Assert.assertTrue(firstCell.accepts("habe gefahren"))
+        org.junit.Assert.assertTrue(firstCell.accepts("bin gefahren"))
+        org.junit.Assert.assertTrue(firstCell.accepts("Habe gefahren"))
+        org.junit.Assert.assertTrue(firstCell.accepts("Bin gefahren"))
+        org.junit.Assert.assertFalse(firstCell.accepts("hat gefahren"))
+        org.junit.Assert.assertFalse(firstCell.accepts("ist gefahren"))
+
+        org.junit.Assert.assertTrue(checkTypedAnswer("habe gefahren", firstCell.form))
+        org.junit.Assert.assertTrue(checkTypedAnswer("bin gefahren", firstCell.form))
+        org.junit.Assert.assertFalse(checkTypedAnswer("hat gefahren", firstCell.form))
+
+        val paradigm = Conjugation.parsePerfekt("fahren", "gefahren", "haben/sein")!!
+        assertEquals("fahren", paradigm.lemma)
+        assertEquals(Tense.PERFEKT, paradigm.tense)
+
+        // Multiple choice quiz accepts either auxiliary
+        val mcQuiz = ConjugationQuiz(Conjugation.drillPrompts(paradigm), isTyped = false)
+        val mcAnswer = mcQuiz.answer("bin gefahren")
+        org.junit.Assert.assertNotNull(mcAnswer)
+        org.junit.Assert.assertTrue(mcAnswer!!.correct)
+
+        // Typed quiz accepts either auxiliary
+        val typedQuiz1 = ConjugationQuiz(Conjugation.drillPrompts(paradigm), isTyped = true)
+        val typedAnswer1 = typedQuiz1.answerTyped("bin gefahren")
+        org.junit.Assert.assertNotNull(typedAnswer1)
+        org.junit.Assert.assertTrue(typedAnswer1!!.correct)
+
+        val typedQuiz2 = ConjugationQuiz(Conjugation.drillPrompts(paradigm), isTyped = true)
+        val typedAnswer2 = typedQuiz2.answerTyped("habe gefahren")
+        org.junit.Assert.assertNotNull(typedAnswer2)
+        org.junit.Assert.assertTrue(typedAnswer2!!.correct)
+    }
+
+    @Test
+    fun `parseAll offers all six tenses when auxiliary is provided`() {
+        val combinedRows = machenRows + machenPreteriteRows + machenSubjunctiveIiRows + machenImperativeRows
+        val paradigms = Conjugation.parseAll("machen", combinedRows, "machte", "gemacht", "haben")
+        assertEquals(
+            setOf(Tense.PRESENT, Tense.PRETERITE, Tense.PERFEKT, Tense.SUBJUNCTIVE_II, Tense.IMPERATIVE, Tense.STAMMFORMEN),
+            paradigms.keys,
+        )
+    }
+
+    @Test
+    fun `parseAll omits Perfekt when auxiliary is empty or invalid`() {
+        val combinedRows = machenRows + machenPreteriteRows
+        // Old schema: no auxiliary means no Perfekt option
+        val noAux = Conjugation.parseAll("machen", combinedRows, "machte", "gemacht", "")
+        assertEquals(setOf(Tense.PRESENT, Tense.PRETERITE, Tense.STAMMFORMEN), noAux.keys)
+        org.junit.Assert.assertFalse(Tense.PERFEKT in noAux)
+
+        val blankAux = Conjugation.parseAll("machen", combinedRows, "machte", "gemacht", "   ")
+        org.junit.Assert.assertFalse(Tense.PERFEKT in blankAux)
+
+        val invalidAux = Conjugation.parseAll("machen", combinedRows, "machte", "gemacht", "werden")
+        org.junit.Assert.assertFalse(Tense.PERFEKT in invalidAux)
+    }
+
+    @Test
+    fun `parseAll omits Perfekt when participle is empty`() {
+        val combinedRows = machenRows + machenPreteriteRows
+        val noParticiple = Conjugation.parseAll("machen", combinedRows, "machte", "", "haben")
+        org.junit.Assert.assertFalse(Tense.PERFEKT in noParticiple)
+    }
+
+    @Test
+    fun `parsePerfekt returns null when participle or auxiliary is blank`() {
+        assertNull(Conjugation.parsePerfekt("machen", "", "haben"))
+        assertNull(Conjugation.parsePerfekt("machen", "   ", "haben"))
+        assertNull(Conjugation.parsePerfekt("machen", "gemacht", ""))
+        assertNull(Conjugation.parsePerfekt("machen", "gemacht", "   "))
+        assertNull(Conjugation.parsePerfekt("machen", "gemacht", "unknown"))
+    }
 }

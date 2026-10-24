@@ -573,6 +573,7 @@
     <string name="conjugation_progress" tools:ignore="MissingTranslation">%1$s · %2$d of %3$d</string>
     <string name="conjugation_tense_present" tools:ignore="MissingTranslation">Präsens</string>
     <string name="conjugation_tense_preterite" tools:ignore="MissingTranslation">Präteritum</string>
+    <string name="conjugation_tense_perfekt" tools:ignore="MissingTranslation">Perfekt</string>
     <string name="conjugation_tense_subjunctive_ii" tools:ignore="MissingTranslation">Konjunktiv II</string>
     <string name="conjugation_tense_imperative" tools:ignore="MissingTranslation">Imperativ</string>
     <string name="conjugation_tense_stammformen" tools:ignore="MissingTranslation">Stammformen</string>

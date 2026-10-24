@@ -271,13 +271,16 @@ class GermanDictionaryTest(unittest.TestCase):
             ("macht", "present singular third-person"),
         ], [row for row in self.forms_rows(db, "machen") if row[0] == "macht"])
 
-    def test_stats_report_schema_version_2_and_conjugation_form_count(self):
+    def test_stats_report_schema_version_3_and_conjugation_form_count(self):
         stats = self.build()
         db = self.database()
-        self.assertEqual(2, stats["schema_version"])
+        self.assertEqual(3, stats["schema_version"])
         self.assertEqual(db.execute("SELECT count(*) FROM forms").fetchone()[0],
                          stats["conjugation_forms"])
         self.assertEqual(15, stats["conjugation_forms"])
+        self.assertEqual("sein", self.lookup(db, "gehen")[0]["auxiliary"])
+        self.assertEqual("haben", self.lookup(db, "machen")[0]["auxiliary"])
+        self.assertEqual("", self.lookup(db, "Haus")[0]["auxiliary"])
 
     def test_shipped_asset_metadata_integrity_and_real_lookups(self):
         asset = ROOT / "app/src/main/assets/german-v2.sqlite.gzip"
@@ -291,11 +294,14 @@ class GermanDictionaryTest(unittest.TestCase):
         self.assertEqual(metadata["database_sha256"], hashlib.sha256(raw).hexdigest())
         db = self.database(asset)
         self.assertEqual("ok", db.execute("PRAGMA integrity_check").fetchone()[0])
-        self.assertEqual(2, db.execute("PRAGMA user_version").fetchone()[0])
+        self.assertEqual(3, db.execute("PRAGMA user_version").fetchone()[0])
         self.assertEqual([], db.execute("PRAGMA foreign_key_check").fetchall())
-        self.assertEqual(2, metadata["schema_version"])
+        self.assertEqual(3, metadata["schema_version"])
         self.assertEqual(metadata["conjugation_forms"],
                          db.execute("SELECT count(*) FROM forms").fetchone()[0])
+        self.assertEqual("sein", self.lookup(db, "gehen")[0]["auxiliary"])
+        self.assertEqual("haben", self.lookup(db, "machen")[0]["auxiliary"])
+        self.assertEqual("haben/sein", self.lookup(db, "fahren")[0]["auxiliary"])
         for lemma, expected in (("gehen", GEHEN_PRESENT), ("machen", MACHEN_PRESENT),
                                 ("sein", SEIN_PRESENT)):
             with self.subTest(lemma=lemma):

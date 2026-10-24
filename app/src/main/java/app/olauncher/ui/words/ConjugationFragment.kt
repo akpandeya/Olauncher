@@ -145,6 +145,7 @@ class ConjugationFragment : BaseFragment() {
     private val Tense.labelRes: Int get() = when (this) {
         Tense.PRESENT -> R.string.conjugation_tense_present
         Tense.PRETERITE -> R.string.conjugation_tense_preterite
+        Tense.PERFEKT -> R.string.conjugation_tense_perfekt
         Tense.SUBJUNCTIVE_II -> R.string.conjugation_tense_subjunctive_ii
         Tense.IMPERATIVE -> R.string.conjugation_tense_imperative
         Tense.STAMMFORMEN -> R.string.conjugation_tense_stammformen

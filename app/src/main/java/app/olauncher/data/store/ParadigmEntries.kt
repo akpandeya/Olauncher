@@ -6,6 +6,7 @@ data class VerbEntryRef(
     val lemma: String,
     val past: String = "",
     val participle: String = "",
+    val auxiliary: String = "",
 )
 
 object ParadigmEntries {
