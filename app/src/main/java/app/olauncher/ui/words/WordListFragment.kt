@@ -21,6 +21,7 @@ import app.olauncher.helper.getColorFromAttr
 import app.olauncher.helper.hapticLongClick
 import app.olauncher.helper.showPopupMenu
 import app.olauncher.ui.BaseFragment
+import app.olauncher.ui.today.attachPressScale
 import app.olauncher.ui.today.cards.WordsCard
 import app.olauncher.ui.today.cards.WordsCardLogic
 
@@ -97,6 +98,7 @@ class WordListFragment : BaseFragment() {
         b.wordsContainer.removeAllViews()
         for (word in WordsListLogic.sort(words).asReversed()) {
             val item = ItemWordBinding.inflate(layoutInflater, b.wordsContainer, false)
+            item.root.attachPressScale()
             val status = WordsListLogic.status(word, today)
             item.tvWord.text = word.text
             item.tvMeaning.text = WordsCardLogic.formatMeaning(context, word.meaning, word.meaningSource)
