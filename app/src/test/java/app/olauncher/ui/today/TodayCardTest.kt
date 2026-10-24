@@ -98,6 +98,12 @@ class TodayCardTest {
     }
 
     @Test
+    fun `today tile pref prefix matches spec and differs from the card prefix`() {
+        assertEquals("TODAY_TILE_", Prefs.TODAY_TILE_PREFIX)
+        org.junit.Assert.assertNotEquals(Prefs.TODAY_CARD_PREFIX, Prefs.TODAY_TILE_PREFIX)
+    }
+
+    @Test
     fun `today card contract defaults`() {
         var resumed = false
         val card = object : TodayCard {

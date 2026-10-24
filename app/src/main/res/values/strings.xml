@@ -829,6 +829,11 @@
     <string name="words_card_due">due</string>
     <string name="words_card_line">%1$s · %2$d learned</string>
     <string name="words_card_none">no words</string>
+    <string name="today_tiles">Cards as tiles</string>
+    <string name="words_tile_due">due</string>
+    <string name="words_tile_all_done">all done</string>
+    <string name="words_tile_no_words">no words</string>
+    <string name="words_tile_description">Words, %1$s</string>
     <string name="words_card_open" tools:ignore="MissingTranslation">Open ›</string>
     <string name="notes_card_count_title">Notes · %1$d</string>
     <string name="notes_card_empty">No notes yet</string>

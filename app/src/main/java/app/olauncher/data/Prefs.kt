@@ -93,6 +93,7 @@ class Prefs(context: Context) :
         const val SWIPE_RIGHT_ACTION_APP = 1
         const val SWIPE_RIGHT_ACTION = "SWIPE_RIGHT_ACTION"
         const val TODAY_CARD_PREFIX = "TODAY_CARD_"
+        const val TODAY_TILE_PREFIX = "TODAY_TILE_"
         const val TODAY_ORDER_SMART = "TODAY_ORDER_SMART"
         const val TODAY_WIDGET_IDS = "TODAY_WIDGET_IDS"
         const val TODAY_WIDGET_HEIGHTS = "TODAY_WIDGET_HEIGHTS"
@@ -614,6 +615,11 @@ class Prefs(context: Context) :
     }
 
     fun isTodayCardEnabled(card: TodayCard): Boolean = isTodayCardEnabled(card.key)
+
+    /** True when the card is shown as a compact tile (default off). */
+    fun isTodayTileOn(key: String): Boolean = prefs.getBoolean("$TODAY_TILE_PREFIX$key", false)
+
+    fun setTodayTileOn(key: String, on: Boolean) = prefs.edit { putBoolean("$TODAY_TILE_PREFIX$key", on) }
 
     var todayWidgetIds: List<Int>
         get() = prefs.getString(TODAY_WIDGET_IDS, "").orEmpty().split(",")
