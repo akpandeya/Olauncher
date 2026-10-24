@@ -851,6 +851,7 @@
     <string name="notes_screen_pinned" tools:ignore="MissingTranslation">Pinned</string>
     <string name="notes_screen_open" tools:ignore="MissingTranslation">Open</string>
     <string name="notes_screen_empty" tools:ignore="MissingTranslation">No notes yet</string>
+    <string name="note_checklist_count" tools:ignore="MissingTranslation">%1$d of %2$d</string>
     <string name="notes_screen_progress" tools:ignore="MissingTranslation">%1$d of %2$d done</string>
     <string name="notes_screen_due" tools:ignore="MissingTranslation">Due</string>
     <string name="note_add_title" tools:ignore="MissingTranslation">New note</string>

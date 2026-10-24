@@ -2,9 +2,6 @@ package app.olauncher.ui.today.cards
 
 import android.graphics.Paint
 import android.content.Context
-import android.text.SpannableString
-import android.text.Spanned
-import android.text.style.ForegroundColorSpan
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -22,7 +19,7 @@ import app.olauncher.helper.Notes
 import app.olauncher.helper.NotesStore
 import app.olauncher.helper.showMessageDialog
 import app.olauncher.ui.notes.AddNoteSheet
-import app.olauncher.helper.getColorFromAttr
+import app.olauncher.ui.notes.ChecklistStyle
 import app.olauncher.helper.hideKeyboard
 import app.olauncher.helper.showPopupMenu
 import app.olauncher.ui.today.TodayCard
@@ -101,16 +98,20 @@ object NotesCard : TodayCard {
         val latest = lines.main
         renderExtras(b, lines, today)
         b.itemsPanel.removeAllViews()
+        ChecklistStyle.addDividers(b.itemsPanel)
         if (latest == null) {
             b.tvNote.setText(if (query.isBlank()) R.string.notes_card_empty else R.string.notes_search_empty)
             b.tvNote.isLongClickable = false
             b.tvNote.setCompoundDrawablesRelativeWithIntrinsicBounds(0, 0, 0, 0)
             b.tvNoteDate.visibility = View.GONE
+            b.tvNoteCount.visibility = View.GONE
+            b.pbNote.visibility = View.GONE
             return
         }
         b.tvNote.text = Notes.cardTitle(latest)
         b.tvNote.setCompoundDrawablesRelativeWithIntrinsicBounds(if (latest.pinned) R.drawable.ic_pin else 0, 0, 0, 0)
         b.tvNote.compoundDrawablePadding = (8 * context.resources.displayMetrics.density).toInt()
+        ChecklistStyle.bindProgress(latest, b.tvNoteCount, b.pbNote)
         for ((index, item) in Notes.cardItems(latest)) {
             val box = LayoutInflater.from(context).inflate(R.layout.item_note_checkbox, b.itemsPanel, false) as CheckBox
             box.text = item.text
@@ -129,13 +130,8 @@ object NotesCard : TodayCard {
             latest, today, ZoneId.systemDefault(),
             Notes.EditedFormat(context.getString(R.string.note_edited_today), context.getString(R.string.note_edited_yesterday), context.getString(R.string.note_edited_on)),
         )
-        val progress = Notes.progressText(latest, context.getString(R.string.notes_card_progress))
-        val meta = listOfNotNull(progress, Notes.dateLabel(latest), edited).joinToString(" · ")
-        val metaText = SpannableString(meta)
-        if (progress != null) {
-            metaText.setSpan(ForegroundColorSpan(context.getColorFromAttr(R.attr.accentColor)), 0, progress.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-        }
-        b.tvNoteDate.text = metaText
+        val meta = listOfNotNull(Notes.dateLabel(latest), edited).joinToString(" · ")
+        b.tvNoteDate.text = meta
         b.tvNoteDate.visibility = if (meta.isEmpty()) View.GONE else View.VISIBLE
         b.tvNote.setOnLongClickListener {
             Haptics.tick(it)
