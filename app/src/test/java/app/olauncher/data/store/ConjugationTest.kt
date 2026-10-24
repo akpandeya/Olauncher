@@ -393,5 +393,221 @@ class ConjugationTest {
     fun `tense parser skips rows of conflicting tenses`() {
         assertNull(Conjugation.parsePreterite("gehen", machenRows))
         assertNull(Conjugation.parseSubjunctiveIi("gehen", machenPreteriteRows))
+        assertNull(Conjugation.parseImperative("gehen", machenRows))
+        assertNull(Conjugation.parseImperative("gehen", machenPreteriteRows))
+    }
+
+    private val machenImperativeRows = listOf(
+        "mach" to "imperative second-person singular",
+        "mache" to "imperative second-person singular",
+        "macht" to "imperative plural second-person",
+    )
+
+    @Test
+    fun `regular verb machen parses imperative cells with Sie built from lemma`() {
+        val imperative = Conjugation.parseImperative("machen", machenImperativeRows)!!
+        assertEquals("machen", imperative.lemma)
+        assertEquals(Tense.IMPERATIVE, imperative.tense)
+        assertEquals(
+            listOf(
+                ParadigmCell(2, false, "mach"),
+                ParadigmCell(2, true, "macht"),
+                ParadigmCell(3, true, "machen Sie"),
+            ),
+            imperative.cells,
+        )
+        assertEquals(
+            listOf(
+                DrillPrompt("du", "mach"),
+                DrillPrompt("ihr", "macht"),
+                DrillPrompt("Sie", "machen Sie"),
+            ),
+            Conjugation.drillPrompts(imperative),
+        )
+    }
+
+    @Test
+    fun `regular verb machen parses stammformen from past and participle fields`() {
+        val stammformen = Conjugation.parseStammformen("machen", "machte", "gemacht")!!
+        assertEquals("machen", stammformen.lemma)
+        assertEquals(Tense.STAMMFORMEN, stammformen.tense)
+        assertEquals(
+            listOf(
+                ParadigmCell(1, false, "machte"),
+                ParadigmCell(2, false, "gemacht"),
+            ),
+            stammformen.cells,
+        )
+        assertEquals(
+            listOf(
+                DrillPrompt("Präteritum", "machte"),
+                DrillPrompt("Partizip II", "gemacht"),
+            ),
+            Conjugation.drillPrompts(stammformen),
+        )
+    }
+
+    private val gehenImperativeRows = listOf(
+        "geh" to "imperative second-person singular",
+        "gehe" to "imperative second-person singular",
+        "geht" to "imperative plural second-person",
+    )
+
+    @Test
+    fun `strong verb gehen parses imperative and stammformen correctly`() {
+        val imperative = Conjugation.parseImperative("gehen", gehenImperativeRows)!!
+        assertEquals("gehen", imperative.lemma)
+        assertEquals(
+            listOf(
+                ParadigmCell(2, false, "geh"),
+                ParadigmCell(2, true, "geht"),
+                ParadigmCell(3, true, "gehen Sie"),
+            ),
+            imperative.cells,
+        )
+        assertEquals(
+            listOf(
+                DrillPrompt("du", "geh"),
+                DrillPrompt("ihr", "geht"),
+                DrillPrompt("Sie", "gehen Sie"),
+            ),
+            Conjugation.drillPrompts(imperative),
+        )
+
+        val stammformen = Conjugation.parseStammformen("gehen", "ging", "gegangen")!!
+        assertEquals(
+            listOf(
+                ParadigmCell(1, false, "ging"),
+                ParadigmCell(2, false, "gegangen"),
+            ),
+            stammformen.cells,
+        )
+        assertEquals(
+            listOf(
+                DrillPrompt("Präteritum", "ging"),
+                DrillPrompt("Partizip II", "gegangen"),
+            ),
+            Conjugation.drillPrompts(stammformen),
+        )
+    }
+
+    private val seinImperativeRows = listOf(
+        "sei" to "imperative second-person singular",
+        "seid" to "imperative plural second-person",
+    )
+
+    @Test
+    fun `irregular verb sein parses imperative and stammformen correctly`() {
+        val imperative = Conjugation.parseImperative("sein", seinImperativeRows)!!
+        assertEquals(
+            listOf(
+                ParadigmCell(2, false, "sei"),
+                ParadigmCell(2, true, "seid"),
+                ParadigmCell(3, true, "sein Sie"),
+            ),
+            imperative.cells,
+        )
+
+        val stammformen = Conjugation.parseStammformen("sein", "war", "gewesen")!!
+        assertEquals(
+            listOf(
+                ParadigmCell(1, false, "war"),
+                ParadigmCell(2, false, "gewesen"),
+            ),
+            stammformen.cells,
+        )
+    }
+
+    private val aufstehenImperativeRows = listOf(
+        "steh auf" to "imperative second-person singular",
+        "stehe auf" to "imperative second-person singular",
+        "steht auf" to "imperative plural second-person",
+    )
+
+    @Test
+    fun `separable verb aufstehen prefers split imperative and builds Sie with infinitive`() {
+        val imperative = Conjugation.parseImperative("aufstehen", aufstehenImperativeRows)!!
+        assertEquals(
+            listOf(
+                ParadigmCell(2, false, "steh auf"),
+                ParadigmCell(2, true, "steht auf"),
+                ParadigmCell(3, true, "aufstehen Sie"),
+            ),
+            imperative.cells,
+        )
+        assertEquals(
+            listOf(
+                DrillPrompt("du", "steh auf"),
+                DrillPrompt("ihr", "steht auf"),
+                DrillPrompt("Sie", "aufstehen Sie"),
+            ),
+            Conjugation.drillPrompts(imperative),
+        )
+
+        val stammformen = Conjugation.parseStammformen("aufstehen", "stand auf", "aufgestanden")!!
+        assertEquals(
+            listOf(
+                ParadigmCell(1, false, "stand auf"),
+                ParadigmCell(2, false, "aufgestanden"),
+            ),
+            stammformen.cells,
+        )
+        assertEquals(
+            listOf(
+                DrillPrompt("Präteritum", "stand auf"),
+                DrillPrompt("Partizip II", "aufgestanden"),
+            ),
+            Conjugation.drillPrompts(stammformen),
+        )
+    }
+
+    @Test
+    fun `imperative parser builds Sie using explicit infinitive row if available`() {
+        val rowsWithInfinitive = aufstehenImperativeRows + listOf("aufstehen" to "infinitive")
+        val imperative = Conjugation.parseImperative("aufstehen", rowsWithInfinitive)!!
+        assertEquals("aufstehen Sie", imperative.cells.first { it.person == 3 && it.plural }.form)
+    }
+
+    @Test
+    fun `parseAll offers all five tenses when imperative and stammformen data exist`() {
+        val combinedRows = machenRows + machenPreteriteRows + machenSubjunctiveIiRows + machenImperativeRows
+        val paradigms = Conjugation.parseAll("machen", combinedRows, "machte", "gemacht")
+        assertEquals(
+            setOf(Tense.PRESENT, Tense.PRETERITE, Tense.SUBJUNCTIVE_II, Tense.IMPERATIVE, Tense.STAMMFORMEN),
+            paradigms.keys,
+        )
+    }
+
+    @Test
+    fun `parseAll omits imperative when no imperative rows exist`() {
+        val combinedRows = machenRows + machenPreteriteRows
+        val paradigms = Conjugation.parseAll("machen", combinedRows, "machte", "gemacht")
+        assertEquals(
+            setOf(Tense.PRESENT, Tense.PRETERITE, Tense.STAMMFORMEN),
+            paradigms.keys,
+        )
+        assertNull(Conjugation.parseImperative("machen", combinedRows))
+    }
+
+    @Test
+    fun `parseAll omits stammformen when past or participle is empty`() {
+        val combinedRows = machenRows + machenImperativeRows
+        val noPast = Conjugation.parseAll("machen", combinedRows, "", "gemacht")
+        assertEquals(setOf(Tense.PRESENT, Tense.IMPERATIVE), noPast.keys)
+
+        val noParticiple = Conjugation.parseAll("machen", combinedRows, "machte", "")
+        assertEquals(setOf(Tense.PRESENT, Tense.IMPERATIVE), noParticiple.keys)
+
+        val neither = Conjugation.parseAll("machen", combinedRows, "", "")
+        assertEquals(setOf(Tense.PRESENT, Tense.IMPERATIVE), neither.keys)
+    }
+
+    @Test
+    fun `parseStammformen returns null when either past or participle is blank`() {
+        assertNull(Conjugation.parseStammformen("machen", "", "gemacht"))
+        assertNull(Conjugation.parseStammformen("machen", "   ", "gemacht"))
+        assertNull(Conjugation.parseStammformen("machen", "machte", ""))
+        assertNull(Conjugation.parseStammformen("machen", "machte", "   "))
+        assertNull(Conjugation.parseStammformen("machen", "", ""))
     }
 }

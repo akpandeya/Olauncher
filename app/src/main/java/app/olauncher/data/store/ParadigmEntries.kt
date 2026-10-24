@@ -1,7 +1,12 @@
 package app.olauncher.data.store
 
 /** One verb entry row from the offline dictionary: its id and lemma. */
-data class VerbEntryRef(val id: Long, val lemma: String)
+data class VerbEntryRef(
+    val id: Long,
+    val lemma: String,
+    val past: String = "",
+    val participle: String = "",
+)
 
 object ParadigmEntries {
 

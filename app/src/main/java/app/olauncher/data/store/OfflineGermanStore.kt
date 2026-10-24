@@ -130,7 +130,7 @@ class OfflineGermanStore(context: Context) {
             val normalized = Normalizer.normalize(text.trim(), Normalizer.Form.NFC)
             for (candidate in WiktionaryParser.candidates(normalized)) {
                 val candidates = db.rawQuery(
-                    """SELECT e.id, e.lemma
+                    """SELECT e.id, e.lemma, e.past, e.participle
                        FROM lookup l JOIN entries e ON e.id = l.entry_id
                        WHERE l.form = ? AND e.pos = 'verb'
                        ORDER BY CASE WHEN e.lemma = ? THEN 0 ELSE 1 END, e.id""",
@@ -138,7 +138,7 @@ class OfflineGermanStore(context: Context) {
                 ).use { cursor ->
                     buildList {
                         while (cursor.moveToNext()) {
-                            add(VerbEntryRef(cursor.getLong(0), cursor.getString(1)))
+                            add(VerbEntryRef(cursor.getLong(0), cursor.getString(1), cursor.getString(2), cursor.getString(3)))
                         }
                     }
                 }
@@ -154,7 +154,9 @@ class OfflineGermanStore(context: Context) {
                         }
                     }
                 }
-                val parsed = Conjugation.parseAll(entries.first().lemma, rows)
+                val past = entries.map { it.past }.firstOrNull { it.isNotBlank() }.orEmpty()
+                val participle = entries.map { it.participle }.firstOrNull { it.isNotBlank() }.orEmpty()
+                val parsed = Conjugation.parseAll(entries.first().lemma, rows, past, participle)
                 if (parsed.isNotEmpty()) return parsed
             }
             emptyMap()
