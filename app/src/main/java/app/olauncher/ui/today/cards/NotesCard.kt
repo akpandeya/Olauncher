@@ -17,6 +17,7 @@ import app.olauncher.helper.Notes
 import app.olauncher.helper.NotesStore
 import app.olauncher.helper.UndoMessage
 import app.olauncher.helper.hideKeyboard
+import app.olauncher.helper.showPopupMenu
 import app.olauncher.helper.showToast
 import app.olauncher.ui.today.TodayCard
 import java.time.LocalDate
@@ -26,6 +27,8 @@ import java.time.ZonedDateTime
 object NotesCard : TodayCard {
 
     const val KEY = "notes"
+    private const val MENU_PIN = 1
+    private const val MENU_DELETE = 2
 
     override val key: String = KEY
     override val titleRes: Int = R.string.notes_card_title
@@ -81,10 +84,9 @@ object NotesCard : TodayCard {
         b.etSearchNotes.visibility = if (searching) View.VISIBLE else View.GONE
         val query = if (searching) b.etSearchNotes.text.toString() else ""
         // The newest note that is showing now (or the newest match while searching); tap marks it
-        // done, long-press deletes it.
+        // done, long-press opens a menu (Pin/Unpin, Delete). A pinned note is shown first.
         val today = LocalDate.now()
-        val latest = if (query.isBlank()) Notes.visible(all, today).lastOrNull()
-        else Notes.search(Notes.cardList(all, today), query).lastOrNull()
+        val latest = Notes.featured(if (query.isBlank()) Notes.visible(all, today) else Notes.search(Notes.cardList(all, today), query))
         if (latest == null) {
             b.tvNote.setText(if (query.isBlank()) R.string.notes_card_empty else R.string.notes_search_empty)
             b.tvNote.isClickable = false
@@ -92,6 +94,8 @@ object NotesCard : TodayCard {
             return
         }
         b.tvNote.text = latest.text
+        b.tvNote.setCompoundDrawablesRelativeWithIntrinsicBounds(if (latest.pinned) R.drawable.ic_pin else 0, 0, 0, 0)
+        b.tvNote.compoundDrawablePadding = (8 * context.resources.displayMetrics.density).toInt()
         b.tvNote.setOnClickListener {
             Haptics.tick(it)
             store.markDone(latest.id)
@@ -103,8 +107,16 @@ object NotesCard : TodayCard {
         }
         b.tvNote.setOnLongClickListener {
             Haptics.tick(it)
-            store.delete(latest.id)
-            render(b)
+            it.showPopupMenu(configure = { menu ->
+                menu.add(0, MENU_PIN, 0, if (latest.pinned) R.string.note_unpin else R.string.note_pin)
+                menu.add(0, MENU_DELETE, 1, R.string.note_delete)
+            }) { item ->
+                when (item.itemId) {
+                    MENU_PIN -> store.setPinned(latest.id, !latest.pinned)
+                    MENU_DELETE -> store.delete(latest.id)
+                }
+                render(b)
+            }
             true
         }
     }

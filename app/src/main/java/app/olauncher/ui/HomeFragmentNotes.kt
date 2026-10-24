@@ -51,7 +51,7 @@ internal fun HomeFragment.markTopNoteDone() {
 /** Long-press on the note line: all open notes, each with Done and Delete. */
 internal fun HomeFragment.showNotesDialog() {
     val ctx = context ?: return
-    val notes = notesStore().open()
+    val notes = Notes.pinnedFirst(notesStore().open())
     if (notes.isEmpty()) return
     val dialog = ctx.createDialog(R.string.notes_title, action = 0) { parent ->
         val context = parent.context
@@ -75,7 +75,13 @@ private fun HomeFragment.noteRow(note: Note): View {
         gravity = Gravity.CENTER_VERTICAL
     }
     row.addView(
-        actionText(listOfNotNull(note.text, Notes.dateLabel(note)).joinToString(" · ")).apply { maxLines = 2 },
+        actionText(listOfNotNull(note.text, Notes.dateLabel(note)).joinToString(" · ")).apply {
+            maxLines = 2
+            if (note.pinned) {
+                setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_pin, 0, 0, 0)
+                compoundDrawablePadding = (8 * resources.displayMetrics.density).toInt()
+            }
+        },
         LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f)
     )
     row.addView(actionText(getString(R.string.done)).apply {
