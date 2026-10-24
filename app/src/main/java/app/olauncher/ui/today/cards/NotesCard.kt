@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import androidx.core.view.ViewCompat
+import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.Fragment
 import app.olauncher.R
 import app.olauncher.data.Prefs
@@ -40,6 +41,12 @@ object NotesCard : TodayCard {
     override fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View {
         val b = CardNotesBinding.inflate(inflater, parent, false)
         ViewCompat.setAccessibilityHeading(b.tvCardTitle, true)
+        b.etSearchNotes.doOnTextChanged { _, _, _, _ -> render(b) }
+        b.etSearchNotes.setOnEditorActionListener { v, actionId, _ ->
+            if (actionId != EditorInfo.IME_ACTION_SEARCH) return@setOnEditorActionListener false
+            v.hideKeyboard()
+            true
+        }
         b.etAddNote.setOnEditorActionListener { v, actionId, _ ->
             if (actionId != EditorInfo.IME_ACTION_DONE) return@setOnEditorActionListener false
             val context = v.context
@@ -48,6 +55,7 @@ object NotesCard : TodayCard {
                 is Notes.Parsed.Ok -> {
                     if (store(context).add(parsed.text, System.currentTimeMillis(), parsed.showFrom)) {
                         v.text = ""
+                        b.etSearchNotes.setText("") // re-renders through the text watcher when it had text
                         render(b)
                     }
                 }
@@ -69,10 +77,16 @@ object NotesCard : TodayCard {
         val store = store(context)
         val all = store.all()
         b.tvCardTitle.text = context.getString(R.string.notes_card_count_title, Notes.open(all).size)
-        // The newest note that is showing now; tap marks it done, long-press deletes it.
-        val latest = Notes.visible(all, LocalDate.now()).lastOrNull()
+        val searching = Notes.showSearch(Notes.open(all).size)
+        b.etSearchNotes.visibility = if (searching) View.VISIBLE else View.GONE
+        val query = if (searching) b.etSearchNotes.text.toString() else ""
+        // The newest note that is showing now (or the newest match while searching); tap marks it
+        // done, long-press deletes it.
+        val today = LocalDate.now()
+        val latest = if (query.isBlank()) Notes.visible(all, today).lastOrNull()
+        else Notes.search(Notes.cardList(all, today), query).lastOrNull()
         if (latest == null) {
-            b.tvNote.setText(R.string.notes_card_empty)
+            b.tvNote.setText(if (query.isBlank()) R.string.notes_card_empty else R.string.notes_search_empty)
             b.tvNote.isClickable = false
             b.tvNote.isLongClickable = false
             return

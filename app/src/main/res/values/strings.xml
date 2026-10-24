@@ -827,6 +827,8 @@
     <string name="notes_card_count_title">Notes · %1$d</string>
     <string name="notes_card_empty">No notes yet</string>
     <string name="notes_card_add">+ Add note</string>
+    <string name="notes_search_hint" tools:ignore="MissingTranslation">Search notes</string>
+    <string name="notes_search_empty" tools:ignore="MissingTranslation">No matching notes</string>
     <string name="saved_card_title">Saved for later · %1$d</string>
     <string name="saved_card_open">Open</string>
     <string name="saved_card_empty">Nothing saved yet</string>

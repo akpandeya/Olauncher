@@ -1,5 +1,6 @@
 package app.olauncher.helper
 
+import java.text.Normalizer
 import java.time.LocalDate
 import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
@@ -16,9 +17,11 @@ data class Note(val id: Long, val text: String, val created: Long, val done: Boo
 /** Pure list logic for notes; every function returns a new list. */
 object Notes {
     const val MAX_TEXT_CHARS = 200
+    const val SEARCH_MIN_NOTES = 5
     private const val MAX_OPEN = 100
     private const val MAX_DONE = 20
     private val WHITESPACE = Regex("""\s+""")
+    private val MARKS = Regex("""\p{Mn}+""")
     private val DATE_LABEL = DateTimeFormatter.ofPattern("EEE d MMM", Locale.ENGLISH)
 
     sealed class Parsed {
@@ -120,6 +123,25 @@ object Notes {
             .sortedWith(compareBy({ it.showFrom }, { it.created }, { it.id }))
         return now + later
     }
+
+    /** The Today card shows its search field only once there are enough open notes to need it. */
+    fun showSearch(openCount: Int): Boolean = openCount >= SEARCH_MIN_NOTES
+
+    /**
+     * Notes whose text contains every word of [query], keeping the list order. Case, accents and
+     * `ß` are ignored ("cafe" finds "Café", "strasse" finds "Straße"). A blank query keeps all.
+     */
+    fun search(notes: List<Note>, query: String): List<Note> {
+        val words = fold(query).split(WHITESPACE).filter { it.isNotEmpty() }
+        if (words.isEmpty()) return notes
+        return notes.filter { note ->
+            val haystack = fold(note.text)
+            words.all { it in haystack }
+        }
+    }
+
+    private fun fold(text: String): String =
+        Normalizer.normalize(text.lowercase(Locale.ROOT), Normalizer.Form.NFD).replace(MARKS, "").replace("ß", "ss")
 
     private fun prune(notes: List<Note>): List<Note> {
         val keepDone = notes.filter { it.done }.sortedByDescending { it.created }.take(MAX_DONE).map { it.id }.toSet()
