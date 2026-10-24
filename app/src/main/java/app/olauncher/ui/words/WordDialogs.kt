@@ -2,6 +2,9 @@ package app.olauncher.ui.words
 
 import android.content.Context
 import android.view.LayoutInflater
+import android.util.TypedValue
+import com.google.android.material.chip.Chip
+import java.util.Locale
 import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.view.isVisible
@@ -11,13 +14,16 @@ import app.olauncher.R
 import app.olauncher.data.Prefs
 import app.olauncher.data.store.Word
 import app.olauncher.data.store.WordEdit
+import app.olauncher.data.store.ReviewEventsStore
 import app.olauncher.data.store.WordList
+import app.olauncher.data.store.WordProgress
 import app.olauncher.data.store.WordListsLogic
 import app.olauncher.data.store.WordLookup
 import app.olauncher.data.store.WordsListLogic
 import app.olauncher.data.store.WordsStore
 import app.olauncher.databinding.DialogEditWordBinding
 import app.olauncher.databinding.DialogWordListNameBinding
+import app.olauncher.helper.OlDialog
 import app.olauncher.helper.createDialog
 import app.olauncher.helper.DialogListSizing
 import app.olauncher.helper.createMultiChoiceDialog
@@ -56,6 +62,9 @@ object WordDialogs {
         val prefs = Prefs(context)
         val lookupAllowed = WordLookup.isLookupAllowed(prefs.germanEnabled, prefs.germanLookup)
         var dialogBinding: DialogEditWordBinding? = null
+        var dialogRef: OlDialog? = null
+        // Tick state for the list chips; applied on Save only, so Cancel leaves memberships alone.
+        val selectedLists = word.listIds.toMutableSet()
 
         val dialog = context.createDialog(
             title = R.string.words_edit,
@@ -71,11 +80,18 @@ object WordDialogs {
                         context.showToast(context.getString(R.string.words_already_saved, newText.trim()))
                         return@let
                     }
-                    val outcome = WordEdit.apply(
+                    val applied = WordEdit.apply(
                         word,
                         newText = newText,
                         newMeaning = db.etMeaning.text?.toString().orEmpty(),
                         lookupAllowed = lookupAllowed
+                    )
+                    val knownListIds = store.lists().mapTo(HashSet()) { it.id }
+                    val outcome = applied.copy(
+                        word = applied.word.copy(
+                            context = db.etExample.text?.toString().orEmpty().trim(),
+                            listIds = selectedLists.filter { it in knownListIds },
+                        )
                     )
                     if (outcome.needsLookup && lookupAllowed) {
                         lookUpAgain(context, outcome.word, lifecycleOwner, onChanged)
@@ -90,6 +106,7 @@ object WordDialogs {
                 dialogBinding = db
                 db.etWord.setText(word.text)
                 db.etMeaning.setText(word.meaning)
+                db.etExample.setText(word.context)
                 val sourceRes = when {
                     word.meaning.isBlank() -> 0
                     word.meaningSource.equals("wiktionary", ignoreCase = true) -> R.string.words_source_wiktionary
@@ -98,9 +115,77 @@ object WordDialogs {
                 db.tvSource.isVisible = sourceRes != 0
                 if (sourceRes != 0) db.tvSource.setText(sourceRes)
                 db.etMeaning.focusAtEnd(context)
+                bindListChips(context, db, selectedLists)
+                bindProgress(context, db, word)
+                db.btnDeleteWord.setOnClickListener {
+                    dialogRef?.dismiss()
+                    showDeleteDialog(context, word, onChanged)
+                }
             }.root
         }
+        dialogRef = dialog
         dialog.showRespectingStatusBar()
+    }
+
+    /** One tickable chip per list plus a "+ name" chip that creates a list and ticks it. */
+    private fun bindListChips(context: Context, db: DialogEditWordBinding, selected: MutableSet<String>) {
+        db.listChips.removeAllViews()
+        val store = WordsCard.getStore(context)
+        for (list in store.lists()) {
+            val chip = newChip(context, list.name)
+            chip.isSelected = list.id in selected
+            chip.setOnClickListener {
+                if (!selected.remove(list.id)) selected.add(list.id)
+                it.isSelected = list.id in selected
+            }
+            db.listChips.addView(chip)
+        }
+        val add = newChip(context, context.getString(R.string.words_edit_new_list_chip))
+        add.setOnClickListener {
+            val before = store.lists().mapTo(HashSet()) { it.id }
+            showListNameDialog(context, list = null) {
+                store.lists().firstOrNull { it.id !in before }?.let { selected.add(it.id) }
+                bindListChips(context, db, selected)
+            }
+        }
+        db.listChips.addView(add)
+    }
+
+    private fun newChip(context: Context, label: String): Chip {
+        val chip = Chip(context)
+        chip.text = label
+        chip.isCheckable = false
+        chip.chipBackgroundColor = android.content.res.ColorStateList.valueOf(android.graphics.Color.TRANSPARENT)
+        chip.setChipStrokeWidthResource(R.dimen.strokeHairline)
+        chip.chipStrokeColor = android.content.res.ColorStateList.valueOf(
+            TypedValue().also { context.theme.resolveAttribute(R.attr.primaryColorTrans80, it, true) }.data
+        )
+        chip.setTextColor(TypedValue().also { context.theme.resolveAttribute(R.attr.primaryColor, it, true) }.data)
+        chip.setTextSize(TypedValue.COMPLEX_UNIT_PX, context.resources.getDimension(R.dimen.text_small))
+        chip.rippleColor = null
+        chip.background = androidx.core.content.ContextCompat.getDrawable(context, R.drawable.today_chip_selectable)
+        chip.setEnsureMinTouchTargetSize(true)
+        return chip
+    }
+
+    /** "Box 2 · next review Mon 26 Oct · 6 reviews". */
+    private fun bindProgress(context: Context, db: DialogEditWordBinding, word: Word) {
+        val progress = WordProgress.of(word, ReviewEventsStore(context).all())
+        val reviews = if (progress.reviewCount == 1) {
+            context.getString(R.string.words_progress_reviews_single)
+        } else {
+            context.getString(R.string.words_progress_reviews_plural, progress.reviewCount)
+        }
+        db.tvProgress.text = if (progress.learned) {
+            context.getString(R.string.words_progress_learned, reviews)
+        } else {
+            context.getString(
+                R.string.words_progress_line,
+                progress.box,
+                WordProgress.formatDay(progress.nextReviewDay, Locale.getDefault()),
+                reviews,
+            )
+        }
     }
 
     /** Confirm-then-delete for one word. */

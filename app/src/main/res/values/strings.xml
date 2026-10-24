@@ -460,6 +460,41 @@
     <string name="words_stats_grid" tools:ignore="MissingTranslation">Days studied in the last 12 weeks</string>
     <string name="words_stats_grid_summary" tools:ignore="MissingTranslation">Studied on %1$d of the last %2$d days</string>
     <string name="words_stats_comebacks" tools:ignore="MissingTranslation">%1$d comebacks · %2$d days studied</string>
+    <string name="words_review_back" tools:ignore="MissingTranslation">‹ Back</string>
+    <string name="words_review_progress" tools:ignore="MissingTranslation">%1$d left · %2$d today</string>
+    <string name="words_review_show_answer" tools:ignore="MissingTranslation">Show answer</string>
+    <string name="words_review_meaning_label" tools:ignore="MissingTranslation">Meaning</string>
+    <string name="words_review_example_label" tools:ignore="MissingTranslation">Example</string>
+    <string name="words_review_no_meaning" tools:ignore="MissingTranslation">No meaning saved yet. Long-press the word to add one.</string>
+    <string name="words_grade_no" tools:ignore="MissingTranslation">No</string>
+    <string name="words_grade_knew" tools:ignore="MissingTranslation">Knew it</string>
+    <string name="words_interval_again" tools:ignore="MissingTranslation">Again tomorrow</string>
+    <string name="words_interval_same" tools:ignore="MissingTranslation">Same box</string>
+    <string name="words_interval_box_tomorrow" tools:ignore="MissingTranslation">Box %1$d · tomorrow</string>
+    <string name="words_interval_box_days" tools:ignore="MissingTranslation">Box %1$d · in %2$d days</string>
+    <string name="words_interval_learned" tools:ignore="MissingTranslation">Learned</string>
+    <string name="words_add_to_list" tools:ignore="MissingTranslation">Add to list</string>
+    <string name="words_review_all_done_title" tools:ignore="MissingTranslation">All done</string>
+    <string name="words_review_open_words" tools:ignore="MissingTranslation">Open Words</string>
+    <string name="words_example_hint" tools:ignore="MissingTranslation">Example</string>
+    <string name="words_edit_lists_heading" tools:ignore="MissingTranslation">Lists</string>
+    <string name="words_edit_new_list_chip" tools:ignore="MissingTranslation">+ name</string>
+    <string name="words_edit_delete_word" tools:ignore="MissingTranslation">Delete word</string>
+    <string name="words_progress_line" tools:ignore="MissingTranslation">Box %1$d · next review %2$s · %3$s</string>
+    <string name="words_progress_learned" tools:ignore="MissingTranslation">Learned · %1$s</string>
+    <string name="words_progress_reviews_single" tools:ignore="MissingTranslation">1 review</string>
+    <string name="words_progress_reviews_plural" tools:ignore="MissingTranslation">%d reviews</string>
+    <string name="word_lists_count_line" tools:ignore="MissingTranslation">%1$s · %2$s</string>
+    <string name="word_lists_count_single" tools:ignore="MissingTranslation">1 list</string>
+    <string name="word_lists_count_plural" tools:ignore="MissingTranslation">%d lists</string>
+    <string name="word_lists_new_short" tools:ignore="MissingTranslation">+ New</string>
+    <string name="word_lists_add_short" tools:ignore="MissingTranslation">+ Add</string>
+    <string name="word_lists_all_words" tools:ignore="MissingTranslation">All words</string>
+    <string name="word_lists_all_words_subtitle" tools:ignore="MissingTranslation">%1$s · %2$d due today</string>
+    <string name="word_lists_all_words_subtitle_done" tools:ignore="MissingTranslation">%1$s · all done</string>
+    <string name="word_lists_card_due" tools:ignore="MissingTranslation">%1$d due</string>
+    <string name="word_lists_card_all_done" tools:ignore="MissingTranslation">all done</string>
+    <string name="word_lists_sources_heading" tools:ignore="MissingTranslation">From screen picks</string>
     <string name="words_edit_meaning">Edit meaning</string>
     <string name="words_delete">Delete</string>
     <string name="words_delete_confirm">Delete “%s”?</string>
@@ -479,7 +514,7 @@
     <string name="words_search_clear">Clear search</string>
     <string name="words_search_no_match">No word matches “%s”</string>
     <string name="words_search_count">%1$d of %2$d</string>
-    <string name="word_lists_title" tools:ignore="MissingTranslation">Lists</string>
+    <string name="word_lists_title" tools:ignore="MissingTranslation">Word lists</string>
     <string name="word_lists_new_list" tools:ignore="MissingTranslation">New list</string>
     <string name="word_lists_name_hint" tools:ignore="MissingTranslation">List name</string>
     <string name="word_lists_duplicate" tools:ignore="MissingTranslation">“%s” is already a list</string>
@@ -487,7 +522,7 @@
     <string name="word_lists_row_subtitle" tools:ignore="MissingTranslation">%1$s · %2$d due</string>
     <string name="word_lists_source_wiktionary" tools:ignore="MissingTranslation">Wiktionary</string>
     <string name="word_lists_source_manual" tools:ignore="MissingTranslation">Manual</string>
-    <string name="word_lists_empty_state" tools:ignore="MissingTranslation">Save words first, then group them into lists</string>
+    <string name="word_lists_empty_state" tools:ignore="MissingTranslation">Lists keep your words in groups. A word can sit in more than one list.</string>
     <string name="word_lists_popup_lists" tools:ignore="MissingTranslation">Lists…</string>
     <string name="word_lists_none_yet" tools:ignore="MissingTranslation">No lists yet</string>
     <string name="word_list_title_fallback" tools:ignore="MissingTranslation">List</string>
