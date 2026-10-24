@@ -105,6 +105,12 @@
             android:orientation="horizontal"
             android:weightSum="6" />
 
+        <app.olauncher.ui.today.cards.WeatherChartView
+            android:id="@+id/weatherChart"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" />
+
     </LinearLayout>
 
 </LinearLayout>
