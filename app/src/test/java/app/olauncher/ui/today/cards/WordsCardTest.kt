@@ -4,6 +4,7 @@ import android.view.View
 import app.olauncher.R
 import app.olauncher.data.store.Leitner
 import app.olauncher.data.store.Word
+import app.olauncher.data.store.WordStats
 import app.olauncher.data.store.WordsStore
 import app.olauncher.databinding.CardWordsBinding
 import app.olauncher.ui.today.TodayCards
@@ -154,5 +155,37 @@ class WordsCardTest {
             perViewTypes.any { it.isAssignableFrom(field.type) } || View::class.java.isAssignableFrom(field.type)
         }
         assertTrue("per-view fields on WordsCard: ${leaked.map { it.name }}", leaked.isEmpty())
+    }
+
+    @Test
+    fun `words card tile span is half the grid`() {
+        assertEquals(2, WordsCard.tileSpan)
+    }
+
+    @Test
+    fun `tile text shows the due count with distinct stats`() {
+        val text = WordsCardLogic.tileText(WordStats(total = 12, due = 4, learned = 3))
+        assertEquals("4", text.number)
+        assertEquals(TileCaption.DUE, text.caption)
+    }
+
+    @Test
+    fun `tile text is a tick when nothing is due`() {
+        val text = WordsCardLogic.tileText(WordStats(total = 12, due = 0, learned = 3))
+        assertEquals("\u2713", text.number)
+        assertEquals(TileCaption.ALL_DONE, text.caption)
+    }
+
+    @Test
+    fun `tile text says no words for an empty list`() {
+        val text = WordsCardLogic.tileText(WordStats(total = 0, due = 0, learned = 0))
+        assertEquals("0", text.number)
+        assertEquals(TileCaption.NO_WORDS, text.caption)
+    }
+
+    @Test
+    fun `tile text caps the number`() {
+        assertEquals("99+", WordsCardLogic.tileText(WordStats(total = 200, due = 150, learned = 7)).number)
+        assertEquals("99", WordsCardLogic.tileText(WordStats(total = 200, due = 99, learned = 7)).number)
     }
 }

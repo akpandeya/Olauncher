@@ -59,11 +59,27 @@ interface TodayCard {
      */
     val gridSpan: Int? get() = null
 
+    /** Column span of this card's compact tile, or null when it has no tile variant. */
+    val tileSpan: Int? get() = null
+
+    /** Span the page uses: [gridSpan] unless the card is shown as a tile (see [TodayTiles]). */
+    fun gridSpan(context: Context): Int? = gridSpan
+
     fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View
     fun onResume() {}
 
     /** Called on resume with the view this card returned from [createView]. */
     fun onResume(view: View) = onResume()
+}
+
+/** Pure helpers for the opt-in tile variants of built-in cards. */
+object TodayTiles {
+    /** Grid span of a card: its tile span when the tile is on and exists, else null (full row). */
+    fun span(tileSpan: Int?, tileOn: Boolean): Int? =
+        if (tileOn && tileSpan != null) tileSpan.coerceIn(1, TodayWidgetResize.COLUMNS) else null
+
+    /** Cards that offer a tile variant. */
+    fun tileCards(cards: List<TodayCard>): List<TodayCard> = cards.filter { it.tileSpan != null }
 }
 
 object TodayCards {

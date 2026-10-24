@@ -11,14 +11,40 @@ import app.olauncher.helper.Haptics
 import app.olauncher.helper.createChoiceDialog
 import app.olauncher.data.Prefs
 import app.olauncher.data.store.WordsStore
+import app.olauncher.data.store.WordStats
 import app.olauncher.databinding.CardWordsBinding
+import app.olauncher.databinding.CardWordsTileBinding
 import app.olauncher.ui.today.TodayCard
+import app.olauncher.ui.today.TodayTiles
 import java.time.LocalDate
 
 /** Entries of the Words card long-press menu. */
 enum class WordsCardMenuItem { REVIEW, WORDS, LISTS }
 
+/** What the Words tile shows under its label. */
+enum class TileCaption { DUE, ALL_DONE, NO_WORDS }
+
+/** The big number and the caption line of the Words tile. */
+data class TileText(val number: String, val caption: TileCaption)
+
 object WordsCardLogic {
+
+    const val TILE_NUMBER_CAP = 99
+
+    fun tileText(stats: WordStats): TileText = when {
+        stats.due > 0 -> TileText(
+            if (stats.due > TILE_NUMBER_CAP) "$TILE_NUMBER_CAP+" else stats.due.toString(),
+            TileCaption.DUE,
+        )
+        stats.total > 0 -> TileText("✓", TileCaption.ALL_DONE)
+        else -> TileText("0", TileCaption.NO_WORDS)
+    }
+
+    fun tileCaptionRes(caption: TileCaption): Int = when (caption) {
+        TileCaption.DUE -> R.string.words_tile_due
+        TileCaption.ALL_DONE -> R.string.words_tile_all_done
+        TileCaption.NO_WORDS -> R.string.words_tile_no_words
+    }
 
     /** Long-press menu entries in display order; Review only when words are due. */
     fun menuItems(due: Int): List<WordsCardMenuItem> = buildList {
@@ -78,6 +104,10 @@ object WordsCard : TodayCard {
     override val titleRes: Int = R.string.words
     override val emoji: String = "🇩🇪"
     override val halfWidth: Boolean = true
+    override val tileSpan: Int? = 2
+
+    override fun gridSpan(context: Context): Int? =
+        TodayTiles.span(tileSpan, Prefs(context).isTodayTileOn(KEY))
 
     var storeProvider: ((Context) -> WordsStore)? = null
     var epochDaySupplier: () -> Long = { LocalDate.now().toEpochDay() }
@@ -93,6 +123,7 @@ object WordsCard : TodayCard {
     }
 
     override fun createView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View {
+        if (gridSpan(inflater.context) != null) return createTileView(inflater, parent, fragment)
         val cardView = WordsCardView(
             CardWordsBinding.inflate(inflater, parent, false),
             onOpenWords = {
@@ -119,8 +150,62 @@ object WordsCard : TodayCard {
         return cardView.binding.root
     }
 
+    private fun createTileView(inflater: LayoutInflater, parent: ViewGroup, fragment: Fragment): View {
+        val tile = WordsTileView(
+            CardWordsTileBinding.inflate(inflater, parent, false),
+            onOpenWords = {
+                val navController = fragment.findNavController()
+                if (navController.currentDestination?.id == R.id.todayFragment) {
+                    navController.navigate(R.id.action_todayFragment_to_wordsFragment)
+                }
+            },
+            onReview = {
+                val navController = fragment.findNavController()
+                if (navController.currentDestination?.id == R.id.todayFragment) {
+                    navController.navigate(R.id.action_todayFragment_to_reviewFragment)
+                }
+            },
+        )
+        tile.binding.root.tag = tile
+        tile.render()
+        return tile.binding.root
+    }
+
     override fun onResume(view: View) {
         (view.tag as? WordsCardView)?.render()
+        (view.tag as? WordsTileView)?.render()
+    }
+}
+
+/** Holds the state of one Words tile view (the compact, opt-in variant of the card). */
+internal class WordsTileView(
+    val binding: CardWordsTileBinding,
+    private val onOpenWords: () -> Unit = {},
+    private val onReview: () -> Unit = {},
+) {
+
+    private var due = 0
+
+    init {
+        binding.root.setOnClickListener {
+            Haptics.tick(it)
+            if (WordsCardLogic.showReview(due)) onReview() else onOpenWords()
+        }
+    }
+
+    fun render() {
+        val b = binding
+        val context = b.root.context ?: return
+        val stats = WordsCard.getStore(context).stats(WordsCard.epochDaySupplier())
+        due = stats.due
+        val text = WordsCardLogic.tileText(stats)
+        val caption = context.getString(WordsCardLogic.tileCaptionRes(text.caption))
+        b.tvTileNumber.text = text.number
+        b.tvTileCaption.text = caption
+        b.root.contentDescription = context.getString(
+            R.string.words_tile_description,
+            if (text.caption == TileCaption.DUE) "${stats.due} $caption" else caption,
+        )
     }
 }
 

@@ -239,6 +239,9 @@
     <item name="todayCards" type="id" />
     <item name="todayCardsLayout" type="id" />
     <item name="todayCardsTitle" type="id" />
+    <item name="todayTiles" type="id" />
+    <item name="todayTilesLayout" type="id" />
+    <item name="todayTilesTitle" type="id" />
     <item name="todayOrder" type="id" />
     <item name="todayOrderLayout" type="id" />
     <item name="todayOrderTitle" type="id" />
