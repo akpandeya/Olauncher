@@ -47,19 +47,19 @@ class NotesChecklistTest {
 
     @Test fun toggleRoundTripAndDisplay() {
         val start = listOf(one("[] Shopping: milk, eggs, bread"))
-        val once = Notes.decode(Notes.encode(Notes.toggleItem(start, 1L, 1)))
+        val once = Notes.decode(Notes.encode(Notes.toggleItem(start, 1L, 1, 1L)))
         assertEquals(listOf(false, true, false), once.single().items.map { it.checked })
         assertEquals("Shopping · 1/3", Notes.displayText(once.single()))
-        val twice = Notes.decode(Notes.encode(Notes.toggleItem(once, 1L, 1)))
+        val twice = Notes.decode(Notes.encode(Notes.toggleItem(once, 1L, 1, 1L)))
         assertEquals(listOf(false, false, false), twice.single().items.map { it.checked })
         assertEquals(listOf("milk", "eggs", "bread"), twice.single().items.map { it.text })
     }
 
     @Test fun toggleOutOfRangeOrMissing() {
         val start = listOf(one("[] a, b"))
-        assertEquals(start, Notes.toggleItem(start, 1L, 5))
-        assertEquals(start, Notes.toggleItem(start, 1L, -1))
-        assertEquals(start, Notes.toggleItem(start, 99L, 0))
+        assertEquals(start, Notes.toggleItem(start, 1L, 5, 1L))
+        assertEquals(start, Notes.toggleItem(start, 1L, -1, 1L))
+        assertEquals(start, Notes.toggleItem(start, 99L, 0, 1L))
     }
 
     @Test fun displayTextWithoutTitleAndPlain() {
