@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Word lists</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width:390px;height:844px;box-sizing:border-box;padding:56px 14px 20px;background:#14171c;color:#eef1f5;font-family:Manrope,system-ui,sans-serif;display:flex;flex-direction:column;gap:12px;overflow:hidden">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:0 6px">
+    <div><div style="font-size:28px;font-weight:700;letter-spacing:-.02em">Word lists</div><div style="font-size:13px;color:#8b93a1">10 words · 3 lists</div></div>
+    <span style="font-size:13px;font-weight:700;color:#9fd6b4">+ New</span>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">
+    <div style="grid-column:span 2;background:#1e232b;border-radius:22px;padding:16px;display:flex;justify-content:space-between;align-items:center">
+      <div><div style="font-size:12px;color:#8b93a1">All words</div><div style="font-size:15px;font-weight:600;margin-top:4px">10 words · 0 due today</div></div>
+      <div style="font-size:12px;color:#8b93a1">Open ›</div>
+    </div>
+    <div style="background:#1e232b;border-radius:22px;padding:16px;min-height:132px;display:flex;flex-direction:column;justify-content:space-between">
+      <div style="font-size:15px;font-weight:600">Kitchen</div>
+      <div><div style="font-size:26px;font-weight:700">4</div><div style="font-size:12px;color:#8b93a1">words · 1 due</div></div>
+    </div>
+    <div style="background:#1e232b;border-radius:22px;padding:16px;min-height:132px;display:flex;flex-direction:column;justify-content:space-between">
+      <div style="font-size:15px;font-weight:600">Small talk</div>
+      <div><div style="font-size:26px;font-weight:700">3</div><div style="font-size:12px;color:#8b93a1">words · all done</div></div>
+    </div>
+    <div style="grid-column:span 2;background:#1e232b;border-radius:22px;padding:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:15px;font-weight:600">From screen picks</div>
+        <div style="font-size:12px;color:#8b93a1">Built-in</div>
+      </div>
+      <div style="font-size:13px;color:#8b93a1;margin-top:4px">3 words · grouped by where you saved them</div>
+    </div>
+    <div style="grid-column:span 2;background:#1e232b;border-radius:22px;padding:16px;display:flex;justify-content:space-between;align-items:center;border:1px dashed #2a3039">
+      <div><div style="font-size:14px;color:#b9c0cc">Lists keep your words in groups</div><div style="font-size:12px;color:#8b93a1;margin-top:2px">A word can sit in more than one list</div></div>
+      <span style="font-size:13px;font-weight:700;color:#eef1f5">+ Add</span>
+    </div>
+  </div>
+
+  <div style="margin-top:auto;display:flex;justify-content:space-between;align-items:center;padding:0 6px">
+    <span style="font-size:12px;color:#8b93a1">Example data</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
