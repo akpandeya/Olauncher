@@ -18,6 +18,7 @@ class WordsCardLinesTest {
         assertFalse(l.showNext)
         assertFalse(l.showCounts)
         assertFalse(l.showBoxBar)
+        assertFalse(l.showDayStrip)
     }
 
     @Test
@@ -28,6 +29,7 @@ class WordsCardLinesTest {
         assertFalse(l.showNext)
         assertTrue(l.showCounts)
         assertTrue(l.showBoxBar)
+        assertTrue(l.showDayStrip)
     }
 
     @Test
@@ -39,6 +41,7 @@ class WordsCardLinesTest {
         assertFalse(l.showHint)
         assertTrue(l.showCounts)
         assertTrue(l.showBoxBar)
+        assertTrue(l.showDayStrip)
     }
 
     @Test

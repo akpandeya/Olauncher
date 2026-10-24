@@ -11,6 +11,9 @@ import app.olauncher.helper.Haptics
 import app.olauncher.helper.createChoiceDialog
 import app.olauncher.data.Prefs
 import app.olauncher.data.store.Leitner
+import app.olauncher.data.store.ReviewEvent
+import app.olauncher.data.store.ReviewEventsStore
+import app.olauncher.data.store.StudyGrid
 import app.olauncher.data.store.Word
 import app.olauncher.data.store.WordsStore
 import app.olauncher.data.store.WordStats
@@ -18,6 +21,8 @@ import app.olauncher.databinding.CardWordsBinding
 import app.olauncher.ui.today.TodayCard
 import app.olauncher.ui.today.attachPressScale
 import java.time.LocalDate
+import java.time.ZoneId
+import java.util.Locale
 
 /** Entries of the Words card long-press menu. */
 enum class WordsCardMenuItem { REVIEW, WORDS, LISTS }
@@ -67,6 +72,7 @@ object WordsCardLogic {
         val showHint: Boolean,
         val showCounts: Boolean,
         val showBoxBar: Boolean = !showHint,
+        val showDayStrip: Boolean = !showHint,
     ) {
         val showNext: Boolean get() = nextWord != null
     }
@@ -81,8 +87,16 @@ object WordsCardLogic {
             showHint = noWords,
             showCounts = !noWords,
             showBoxBar = !noWords,
+            showDayStrip = !noWords,
         )
     }
+
+    fun dayStrip(
+        events: List<ReviewEvent>,
+        today: LocalDate,
+        zone: ZoneId,
+        locale: Locale = Locale.getDefault(),
+    ): List<StudyGrid.DayStripCell> = StudyGrid.buildDayStrip(events, today, zone, locale)
 
     fun boxCounts(words: List<Word>): List<Int> = Leitner.boxCounts(words)
     fun segmentWidths(counts: List<Int>, totalWidth: Float = 1f): List<Float> = Leitner.segmentWidths(counts, totalWidth)
@@ -116,10 +130,15 @@ object WordsCard : TodayCard {
     override val emoji: String = "🇩🇪"
 
     var storeProvider: ((Context) -> WordsStore)? = null
+    var reviewEventsProvider: ((Context) -> List<ReviewEvent>)? = null
     var epochDaySupplier: () -> Long = { LocalDate.now().toEpochDay() }
 
     fun getStore(context: Context): WordsStore {
         return storeProvider?.invoke(context) ?: WordsStore(context)
+    }
+
+    fun getReviewEvents(context: Context): List<ReviewEvent> {
+        return reviewEventsProvider?.invoke(context) ?: ReviewEventsStore(context).all()
     }
 
     override fun title(context: Context): CharSequence = context.getString(R.string.words_card_title)
@@ -203,6 +222,13 @@ internal class WordsCardView(
         b.boxBar.visibility = if (lines.showBoxBar) View.VISIBLE else View.GONE
         if (lines.showBoxBar) {
             b.boxBar.setBoxCounts(stats.boxCounts)
+        }
+        b.dayStrip.visibility = if (lines.showDayStrip) View.VISIBLE else View.GONE
+        if (lines.showDayStrip) {
+            val events = WordsCard.getReviewEvents(context)
+            val todayDate = LocalDate.ofEpochDay(WordsCard.epochDaySupplier())
+            val zone = ZoneId.systemDefault()
+            b.dayStrip.setDays(StudyGrid.buildDayStrip(events, todayDate, zone))
         }
         b.tvLine.visibility = if (lines.showCounts) View.VISIBLE else View.INVISIBLE
         b.tvLine.text = WordsCardLogic.formatCardLine(context, stats.total, stats.learned)
