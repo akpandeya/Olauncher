@@ -12,13 +12,27 @@ import org.json.JSONObject
  * One note from `:n`. [created] is epoch millis; [id] is unique within the list.
  * [showFrom] is a local epoch day: the note shows on home from that day on; null means always.
  * [pinned] notes come first on the card and the home line.
+ * A checklist note has [items]; its [text] is then the title and may be empty.
  */
-data class Note(val id: Long, val text: String, val created: Long, val done: Boolean = false, val showFrom: Long? = null, val pinned: Boolean = false)
+data class Note(
+    val id: Long,
+    val text: String,
+    val created: Long,
+    val done: Boolean = false,
+    val showFrom: Long? = null,
+    val pinned: Boolean = false,
+    val items: List<ChecklistItem> = emptyList(),
+)
+
+/** One tickable line of a checklist note. */
+data class ChecklistItem(val text: String, val checked: Boolean = false)
 
 /** Pure list logic for notes; every function returns a new list. */
 object Notes {
     const val MAX_TEXT_CHARS = 200
     const val SEARCH_MIN_NOTES = 5
+    const val MAX_ITEMS = 20
+    private const val CHECKLIST_PREFIX = "[]"
     private const val MAX_OPEN = 100
     private const val MAX_DONE = 20
     private val WHITESPACE = Regex("""\s+""")
@@ -56,6 +70,11 @@ object Notes {
                 JSONObject().put("id", n.id).put("text", n.text).put("created", n.created).put("done", n.done).apply {
                     n.showFrom?.let { put("showFrom", it) }
                     if (n.pinned) put("pinned", true)
+                    if (n.items.isNotEmpty()) {
+                        put("items", JSONArray().also { arr ->
+                            n.items.forEach { arr.put(JSONObject().put("text", it.text).put("checked", it.checked)) }
+                        })
+                    }
                 }
             )
         }
@@ -72,15 +91,63 @@ object Notes {
             for (i in 0 until array.length()) {
                 val o = array.optJSONObject(i) ?: continue
                 val text = o.optString("text", "").trim()
-                if (text.isEmpty() || !o.has("id")) continue
+                val items = decodeItems(o.optJSONArray("items"))
+                if ((text.isEmpty() && items.isEmpty()) || !o.has("id")) continue
                 val id = o.optLong("id", -1L)
                 if (!seen.add(id)) continue
-                result.add(Note(id, text, o.optLong("created", 0L), o.optBoolean("done", false), if (o.has("showFrom")) o.optLong("showFrom") else null, o.optBoolean("pinned", false)))
+                result.add(Note(id, text, o.optLong("created", 0L), o.optBoolean("done", false), if (o.has("showFrom")) o.optLong("showFrom") else null, o.optBoolean("pinned", false), items))
             }
             result
         } catch (_: Exception) {
             emptyList()
         }
+    }
+
+    private fun decodeItems(array: JSONArray?): List<ChecklistItem> {
+        if (array == null) return emptyList()
+        val result = ArrayList<ChecklistItem>()
+        for (i in 0 until array.length()) {
+            val o = array.optJSONObject(i) ?: continue
+            val text = o.optString("text", "").trim()
+            if (text.isNotEmpty()) result.add(ChecklistItem(text, o.optBoolean("checked", false)))
+        }
+        return result
+    }
+
+    /**
+     * Reads `[] Shopping: milk, eggs` as a title and items (`[] milk, eggs` has no title). The title
+     * ends at the first `:` that is followed by a space or the end (so `10:30` is not one), only if that comes before the first `,`. Null when there is no item.
+     */
+    private fun parseChecklist(cleaned: String): Pair<String, List<ChecklistItem>>? {
+        if (!cleaned.startsWith(CHECKLIST_PREFIX)) return null
+        var rest = cleaned.removePrefix(CHECKLIST_PREFIX).trim()
+        var title = ""
+        val colon = Regex(":(\\s|$)").find(rest)?.range?.first ?: -1
+        val comma = rest.indexOf(',')
+        if (colon >= 0 && (comma < 0 || colon < comma)) {
+            title = rest.substring(0, colon).trim()
+            rest = rest.substring(colon + 1)
+        }
+        val items = rest.split(',').map { it.trim() }.filter { it.isNotEmpty() }.take(MAX_ITEMS).map { ChecklistItem(it) }
+        if (items.isEmpty()) return null
+        return title to items
+    }
+
+    /** Ticks or unticks one item. A missing note or out-of-range index leaves the list as it is. */
+    fun toggleItem(notes: List<Note>, noteId: Long, index: Int): List<Note> =
+        notes.map { note ->
+            if (note.id != noteId || index !in note.items.indices) note
+            else note.copy(items = note.items.mapIndexed { i, item -> if (i == index) item.copy(checked = !item.checked) else item })
+        }
+
+    /** Index of the first unticked item, or null for a plain note or a finished checklist. */
+    fun nextUnchecked(note: Note): Int? = note.items.indexOfFirst { !it.checked }.takeIf { it >= 0 }
+
+    /** A plain note's text; a checklist as `Shopping · 1/3` (or `1/3` without a title). */
+    fun displayText(note: Note): String {
+        if (note.items.isEmpty()) return note.text
+        val progress = "${note.items.count { it.checked }}/${note.items.size}"
+        return if (note.text.isEmpty()) progress else "${note.text} · $progress"
     }
 
     /** One-line text for a note: whitespace collapsed, cut to [MAX_TEXT_CHARS]. Empty if blank. */
@@ -91,7 +158,10 @@ object Notes {
         val cleaned = clean(text)
         if (cleaned.isEmpty()) return notes
         val id = (notes.maxOfOrNull { it.id } ?: 0L) + 1L
-        return prune(notes + Note(id, cleaned, now, showFrom = showFrom?.toEpochDay()))
+        val checklist = parseChecklist(cleaned)
+        val note = if (checklist != null) Note(id, checklist.first, now, showFrom = showFrom?.toEpochDay(), items = checklist.second)
+        else Note(id, cleaned, now, showFrom = showFrom?.toEpochDay())
+        return prune(notes + note)
     }
 
     fun markDone(notes: List<Note>, id: Long, done: Boolean = true): List<Note> =
@@ -149,7 +219,7 @@ object Notes {
         val words = fold(query).split(WHITESPACE).filter { it.isNotEmpty() }
         if (words.isEmpty()) return notes
         return notes.filter { note ->
-            val haystack = fold(note.text)
+            val haystack = fold((listOf(note.text) + note.items.map { it.text }).joinToString(" "))
             words.all { it in haystack }
         }
     }
@@ -183,5 +253,6 @@ class NotesStore(private val read: () -> String?, private val write: (String) ->
 
     fun markDone(id: Long, done: Boolean = true) = write(Notes.encode(Notes.markDone(all(), id, done)))
     fun setPinned(id: Long, pinned: Boolean) = write(Notes.encode(Notes.setPinned(all(), id, pinned)))
+    fun toggleItem(noteId: Long, index: Int) = write(Notes.encode(Notes.toggleItem(all(), noteId, index)))
     fun delete(id: Long) = write(Notes.encode(Notes.delete(all(), id)))
 }

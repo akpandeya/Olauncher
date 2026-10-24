@@ -27,7 +27,7 @@ internal fun HomeFragment.populateNoteLine() {
     val today = LocalDate.now()
     val note = Notes.top(all, today)
     val more = Notes.moreText(Notes.moreCount(all, today), getString(R.string.note_home_more))
-    val text = note?.let { getString(R.string.note_home_line, it.text) }
+    val text = note?.let { getString(R.string.note_home_line, Notes.displayText(it)) }
     // Skip unchanged text: the line is a live region and would be re-announced every second.
     if (binding.noteLine.text.toString() != text.orEmpty()) binding.noteLine.text = text
     binding.noteLine.isVisible = text != null
@@ -75,7 +75,7 @@ private fun HomeFragment.noteRow(note: Note): View {
         gravity = Gravity.CENTER_VERTICAL
     }
     row.addView(
-        actionText(listOfNotNull(note.text, Notes.dateLabel(note)).joinToString(" · ")).apply {
+        actionText(listOfNotNull(Notes.displayText(note), Notes.dateLabel(note)).joinToString(" · ")).apply {
             maxLines = 2
             if (note.pinned) {
                 setCompoundDrawablesRelativeWithIntrinsicBounds(R.drawable.ic_pin, 0, 0, 0)
