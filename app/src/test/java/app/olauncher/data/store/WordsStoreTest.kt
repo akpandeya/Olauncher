@@ -124,6 +124,10 @@ class WordsStoreTest {
         assertEquals(3, stats.total)
         assertEquals(1, stats.due) // only w1
         assertEquals(1, stats.learned) // only w3
+        assertEquals(Leitner.learnedBox, stats.boxCounts.size)
+        assertEquals(2, stats.boxCounts[0]) // w1 and w2
+        assertEquals(1, stats.boxCounts[Leitner.learnedBox - 1]) // w3
+        assertEquals(store.boxCounts(), stats.boxCounts)
     }
 
     @Test

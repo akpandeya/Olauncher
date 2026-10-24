@@ -154,4 +154,77 @@ class LeitnerTest {
         assertEquals(1, dueWords.size)
         assertEquals("Aktiv", dueWords[0].text)
     }
+
+    @Test
+    fun `box counts and segment widths with 0 words`() {
+        val emptyWords = emptyList<Word>()
+        val counts = Leitner.boxCounts(emptyWords)
+        assertEquals(Leitner.learnedBox, counts.size)
+        assertEquals(List(Leitner.learnedBox) { 0 }, counts)
+
+        val widths = Leitner.segmentWidths(counts)
+        assertEquals(Leitner.learnedBox, widths.size)
+        assertEquals(List(Leitner.learnedBox) { 0f }, widths)
+
+        val widthsFromWords = Leitner.segmentWidths(emptyWords, totalWidth = 100f)
+        assertEquals(List(Leitner.learnedBox) { 0f }, widthsFromWords)
+    }
+
+    @Test
+    fun `box counts and segment widths when all words are in box 1`() {
+        val words = (1..5).map {
+            Word(id = it.toLong(), text = "word$it", box = 1, dueDay = 1000L, addedAt = 1000L)
+        }
+        val counts = Leitner.boxCounts(words)
+        assertEquals(Leitner.learnedBox, counts.size)
+        assertEquals(5, counts[0])
+        for (i in 1 until Leitner.learnedBox) {
+            assertEquals("Box ${i + 1} should be empty", 0, counts[i])
+        }
+
+        val widths = Leitner.segmentWidths(counts)
+        assertEquals(1.0f, widths[0], 0.0001f)
+        for (i in 1 until Leitner.learnedBox) {
+            assertEquals("Box ${i + 1} width should be 0", 0f, widths[i], 0.0001f)
+        }
+
+        val scaledWidths = Leitner.segmentWidths(counts, totalWidth = 350f)
+        assertEquals(350f, scaledWidths[0], 0.0001f)
+        for (i in 1 until Leitner.learnedBox) {
+            assertEquals(0f, scaledWidths[i], 0.0001f)
+        }
+    }
+
+    @Test
+    fun `box counts and segment widths with one empty box`() {
+        // Boxes 1, 2, 3, 5, 6, 7 have 1 word each; box 4 is empty
+        val boxesWithWords = listOf(1, 2, 3, 5, 6, 7)
+        val words = boxesWithWords.mapIndexed { idx, box ->
+            Word(id = (idx + 1).toLong(), text = "w$idx", box = box, dueDay = 1000L, addedAt = 1000L)
+        }
+        val counts = Leitner.boxCounts(words)
+        assertEquals(Leitner.learnedBox, counts.size)
+        assertEquals(listOf(1, 1, 1, 0, 1, 1, 1), counts)
+
+        val widths = Leitner.segmentWidths(counts)
+        assertEquals(Leitner.learnedBox, widths.size)
+        assertEquals("Empty box 4 must have 0 width", 0f, widths[3], 0.0001f)
+
+        val nonZeroWidths = widths.filterIndexed { index, _ -> index != 3 }
+        assertEquals(6, nonZeroWidths.size)
+        for (w in nonZeroWidths) {
+            assertEquals(1f / 6f, w, 0.0001f)
+        }
+        assertEquals(1f, widths.sum(), 0.0001f)
+    }
+
+    @Test
+    fun `segmentColors smoothly blends from sand to sage across learnedBox segments`() {
+        val sand = 0x00D4C4A8
+        val sage = 0x009CAF88
+        val colors = Leitner.segmentColors(sand, sage, Leitner.learnedBox)
+        assertEquals(Leitner.learnedBox, colors.size)
+        assertEquals("First box must be sand", sand, colors.first())
+        assertEquals("Last box must be sage", sage, colors.last())
+    }
 }

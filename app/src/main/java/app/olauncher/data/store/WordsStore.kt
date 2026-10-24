@@ -39,7 +39,8 @@ data class AddAllResult(
 data class WordStats(
     val total: Int,
     val due: Int,
-    val learned: Int
+    val learned: Int,
+    val boxCounts: List<Int> = emptyList()
 )
 
 object WordsCodec {
@@ -320,8 +321,14 @@ class WordsStore(
         return WordStats(
             total = words.size,
             due = dueCount,
-            learned = learnedCount
+            learned = learnedCount,
+            boxCounts = Leitner.boxCounts(words)
         )
+    }
+
+    @Synchronized
+    fun boxCounts(): List<Int> {
+        return Leitner.boxCounts(loadData().words)
     }
 
     @Synchronized
