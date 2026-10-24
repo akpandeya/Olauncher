@@ -20,6 +20,11 @@
     <dimen name="today_stat_size">34sp</dimen>
     <dimen name="today_body_size">16sp</dimen>
 
+    <!-- Today component touch targets and padding (issue #528) -->
+    <dimen name="today_touch_min_height">48dp</dimen>
+    <dimen name="today_chip_padding_horizontal">12dp</dimen>
+    <dimen name="today_button_padding_horizontal">16dp</dimen>
+
     <dimen name="dialog_blur_behind_radius">4dp</dimen>
     <dimen name="time_words_size">28sp</dimen>
     <dimen name="drawer_row_padding_horizontal">24dp</dimen>

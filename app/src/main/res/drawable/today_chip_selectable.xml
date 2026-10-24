@@ -1,15 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_selected="true">
-        <ripple android:color="?attr/primaryColorTrans50">
+        <ripple android:color="?attr/accentColor">
             <item>
-                <shape android:shape="rectangle">
-                    <solid android:color="?attr/primaryColorTrans50" />
-                    <stroke
-                        android:width="@dimen/strokeHairline"
-                        android:color="?attr/primaryColor" />
-                    <corners android:radius="@dimen/radiusPill" />
-                </shape>
+                <layer-list>
+                    <!-- Outer ambient shadow -->
+                    <item
+                        android:top="2dp"
+                        android:bottom="0dp">
+                        <shape android:shape="rectangle">
+                            <solid android:color="@color/todayTileShadowSoft" />
+                            <corners android:radius="@dimen/radiusPill" />
+                        </shape>
+                    </item>
+                    <!-- Direct soft shadow -->
+                    <item
+                        android:top="1dp"
+                        android:bottom="0dp">
+                        <shape android:shape="rectangle">
+                            <solid android:color="@color/todayTileShadow" />
+                            <corners android:radius="@dimen/radiusPill" />
+                        </shape>
+                    </item>
+                    <!-- Top edge highlight -->
+                    <item
+                        android:top="0dp"
+                        android:bottom="2dp">
+                        <shape android:shape="rectangle">
+                            <solid android:color="@color/todayTileHighlight" />
+                            <corners android:radius="@dimen/radiusPill" />
+                        </shape>
+                    </item>
+                    <!-- Raised tile surface with accent hairline stroke -->
+                    <item
+                        android:top="1dp"
+                        android:bottom="2dp">
+                        <shape android:shape="rectangle">
+                            <solid android:color="@color/todayTile" />
+                            <stroke
+                                android:width="@dimen/strokeHairline"
+                                android:color="?attr/accentColor" />
+                            <corners android:radius="@dimen/radiusPill" />
+                        </shape>
+                    </item>
+                </layer-list>
             </item>
         </ripple>
     </item>

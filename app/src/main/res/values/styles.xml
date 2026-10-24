@@ -165,6 +165,32 @@
         <item name="android:textStyle">bold</item>
     </style>
 
+    <!-- Today components: chip, button (issue #528) -->
+    <style name="TodayChip" parent="TodayCardBody">
+        <item name="android:fontFamily">?attr/labelFontFamily</item>
+        <item name="android:textColor">@drawable/text_colors_chip</item>
+        <item name="android:shadowRadius">0</item>
+    </style>
+
+    <style name="TodayChip.Small" parent="TodayChip">
+        <item name="android:textSize">@dimen/today_label_size</item>
+        <item name="android:shadowRadius">0</item>
+    </style>
+
+    <style name="TodayButton" parent="TodayCardBodyBold">
+        <item name="android:background">@drawable/today_tile</item>
+        <item name="android:gravity">center</item>
+        <item name="android:minHeight">@dimen/today_touch_min_height</item>
+        <item name="android:paddingHorizontal">@dimen/today_button_padding_horizontal</item>
+        <item name="android:textColor">?attr/accent</item>
+        <item name="android:shadowRadius">0</item>
+    </style>
+
+    <style name="TodayButton.Danger" parent="TodayButton">
+        <item name="android:textColor">?attr/dangerColor</item>
+        <item name="android:shadowRadius">0</item>
+    </style>
+
     <!-- Popup menu anchored to a settings row -->
     <style name="OlPopupMenu" parent="Widget.AppCompat.PopupMenu">
         <item name="android:popupBackground">@drawable/rounded_primary_gradient</item>
