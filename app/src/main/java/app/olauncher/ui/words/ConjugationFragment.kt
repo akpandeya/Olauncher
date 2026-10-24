@@ -121,7 +121,8 @@ class ConjugationFragment : BaseFragment() {
         b.quizContainer.isVisible = inQuiz
         b.quizCardContent.isVisible = inQuiz
         b.choiceScroll.isVisible = inQuiz
-        b.quizCard.isVisible = inQuiz || finished
+        b.questionCard.isVisible = inQuiz
+        b.quizCard.isVisible = finished
         b.summaryContainer.isVisible = finished
         b.tvEmpty.isVisible = noParadigm
         b.conjugationFooter.isVisible = loaded
