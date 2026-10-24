@@ -74,6 +74,25 @@ open class UsageRepository(private val context: Context? = null) {
     }
 
     /**
+     * Returns total foreground time in milliseconds across all apps today using [EventLogWrapper].
+     * Returns null if usage stats permission is not granted.
+     */
+    open suspend fun totalForegroundMillisToday(): Long? = withContext(Dispatchers.IO) {
+        val ctx = context ?: return@withContext null
+        if (!ctx.appUsagePermissionGranted()) return@withContext null
+
+        val startTime = startOfTodayMillis()
+        val endTime = System.currentTimeMillis()
+
+        val eventLogWrapper = EventLogWrapper(ctx)
+        val foregroundStats = eventLogWrapper.getForegroundStatsByTimestamps(startTime, endTime)
+        val aggregated = eventLogWrapper.aggregateForegroundStats(foregroundStats)
+        eventLogWrapper.aggregateSimpleUsageStats(aggregated)
+    }
+
+    open suspend fun foregroundMillisToday(): Long? = totalForegroundMillisToday()
+
+    /**
      * Checks if any of the given [pkgs] had an ACTIVITY_RESUMED event in the last [withinMillis] ms.
      * Returns false if usage access is not granted or if [pkgs] is empty.
      */

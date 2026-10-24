@@ -68,4 +68,11 @@ object WellbeingBento {
             .entries.sortedWith(compareByDescending<Map.Entry<String, Long>> { it.value }.thenBy { it.key })
             .take(TOP_APPS)
             .map { label(it.key) to (it.value / 60_000L).toInt() }
+
+    fun meterFill(percent: Int): Float = AllowanceMeter.fill(percent)
+    fun meterFill(usedMinutes: Int, allowanceMin: Int): Float = AllowanceMeter.fill(usedMinutes, allowanceMin)
+    fun meterBand(percent: Int): AllowanceBand = AllowanceMeter.band(percent)
+    fun meterBand(usedMinutes: Int, allowanceMin: Int): AllowanceBand = AllowanceMeter.band(usedMinutes, allowanceMin)
+    fun allowanceMeter(percent: Int): AllowanceMeter = AllowanceMeter.calculate(percent)
+    fun allowanceMeter(usedMinutes: Int, allowanceMin: Int): AllowanceMeter = AllowanceMeter.calculate(usedMinutes, allowanceMin)
 }

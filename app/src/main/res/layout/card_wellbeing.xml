@@ -78,7 +78,7 @@
             android:visibility="gone"
             tools:visibility="visible" />
 
-        <!-- Headline: distracting-app time today, with its caption underneath -->
+        <!-- Headline: total screen time today across all apps, distracting line underneath, and allowance meter -->
         <LinearLayout
             android:id="@+id/llDistracting"
             android:layout_width="match_parent"
@@ -99,7 +99,19 @@
                 style="@style/TodayCardBodyLight"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                tools:text="Distracting · 107 opens · top: YouTube 4 h 7 min" />
+                tools:text="Distracting · 4 h 7 min · 107 opens · top: YouTube 4 h 7 min" />
+
+            <ProgressBar
+                android:id="@+id/pbAllowance"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="4dp"
+                android:layout_marginTop="8dp"
+                android:maxHeight="4dp"
+                android:minHeight="4dp"
+                android:visibility="gone"
+                tools:progress="60"
+                tools:visibility="visible" />
 
         </LinearLayout>
 
