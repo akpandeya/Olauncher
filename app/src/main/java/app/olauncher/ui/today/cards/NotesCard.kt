@@ -29,6 +29,7 @@ object NotesCard : TodayCard {
     const val KEY = "notes"
     private const val MENU_PIN = 1
     private const val MENU_DELETE = 2
+    private const val MENU_TICK = 3
 
     override val key: String = KEY
     override val titleRes: Int = R.string.notes_card_title
@@ -93,7 +94,7 @@ object NotesCard : TodayCard {
             b.tvNote.isLongClickable = false
             return
         }
-        b.tvNote.text = latest.text
+        b.tvNote.text = Notes.displayText(latest)
         b.tvNote.setCompoundDrawablesRelativeWithIntrinsicBounds(if (latest.pinned) R.drawable.ic_pin else 0, 0, 0, 0)
         b.tvNote.compoundDrawablePadding = (8 * context.resources.displayMetrics.density).toInt()
         b.tvNote.setOnClickListener {
@@ -108,10 +109,12 @@ object NotesCard : TodayCard {
         b.tvNote.setOnLongClickListener {
             Haptics.tick(it)
             it.showPopupMenu(configure = { menu ->
-                menu.add(0, MENU_PIN, 0, if (latest.pinned) R.string.note_unpin else R.string.note_pin)
-                menu.add(0, MENU_DELETE, 1, R.string.note_delete)
+                if (Notes.nextUnchecked(latest) != null) menu.add(0, MENU_TICK, 0, R.string.note_tick_next)
+                menu.add(0, MENU_PIN, 1, if (latest.pinned) R.string.note_unpin else R.string.note_pin)
+                menu.add(0, MENU_DELETE, 2, R.string.note_delete)
             }) { item ->
                 when (item.itemId) {
+                    MENU_TICK -> Notes.nextUnchecked(latest)?.let { store.toggleItem(latest.id, it) }
                     MENU_PIN -> store.setPinned(latest.id, !latest.pinned)
                     MENU_DELETE -> store.delete(latest.id)
                 }
