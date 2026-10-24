@@ -38,14 +38,14 @@
 
             <TextView
                 android:id="@+id/tvCounts"
-                style="@style/TextSmallLight"
+                style="@style/TodayCardBodyLight"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 tools:text="4 open · 1 pinned" />
 
             <EditText
                 android:id="@+id/etSearch"
-                style="@style/TextSmall"
+                style="@style/TodayCardBody"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@null"
@@ -58,7 +58,7 @@
 
             <TextView
                 android:id="@+id/tvPinnedHeading"
-                style="@style/TextSmallLight"
+                style="@style/TodayCardLabel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
@@ -74,7 +74,7 @@
 
             <TextView
                 android:id="@+id/tvOpenHeading"
-                style="@style/TextSmallLight"
+                style="@style/TodayCardLabel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
@@ -90,7 +90,7 @@
 
             <TextView
                 android:id="@+id/tvEmpty"
-                style="@style/TextSmall"
+                style="@style/TodayCardBody"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:paddingVertical="8dp"
@@ -109,12 +109,11 @@
 
         <TextView
             android:id="@+id/btnNewNote"
-            style="@style/TextSmallBold"
+            style="@style/TodayButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginEnd="8dp"
             android:layout_weight="1"
-            android:background="@drawable/words_button_outline"
             android:focusable="true"
             android:gravity="center"
             android:minHeight="48dp"
@@ -122,10 +121,9 @@
 
         <TextView
             android:id="@+id/btnNewNotePlus"
-            style="@style/TextSmallBold"
+            style="@style/TodayButton"
             android:layout_width="48dp"
             android:layout_height="48dp"
-            android:background="@drawable/words_button_outline"
             android:contentDescription="@string/note_add_title"
             android:focusable="true"
             android:gravity="center"

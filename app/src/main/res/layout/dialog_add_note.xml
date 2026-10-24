@@ -36,7 +36,7 @@
 
             <androidx.appcompat.widget.AppCompatEditText
                 android:id="@+id/etNoteTitle"
-                style="@style/TextMedium"
+                style="@style/TodayCardBodyBold"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
@@ -53,7 +53,7 @@
 
             <androidx.appcompat.widget.AppCompatEditText
                 android:id="@+id/etNoteBody"
-                style="@style/TextSmall"
+                style="@style/TodayCardBody"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="@null"
@@ -70,93 +70,102 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:minHeight="48dp"
-                android:orientation="horizontal">
+                android:layout_marginTop="8dp"
+                android:background="@drawable/today_panel"
+                android:orientation="vertical"
+                android:paddingHorizontal="16dp">
 
                 <LinearLayout
-                    android:layout_width="0dp"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:gravity="center_vertical"
+                    android:minHeight="48dp"
+                    android:orientation="horizontal">
 
-                    <TextView
-                        style="@style/TextSmall"
-                        android:layout_width="match_parent"
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:text="@string/note_add_checklist" />
+                        android:layout_weight="1"
+                        android:orientation="vertical">
 
-                    <TextView
-                        style="@style/TextSmallLight"
-                        android:layout_width="match_parent"
+                        <TextView
+                            style="@style/TodayCardBody"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/note_add_checklist" />
+
+                        <TextView
+                            style="@style/TodayCardBodyLight"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:text="@string/note_add_checklist_sub" />
+                    </LinearLayout>
+
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/switchChecklist"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/note_add_checklist_sub" />
+                        android:layout_marginStart="12dp"
+                        android:contentDescription="@string/note_add_checklist"
+                        android:minHeight="48dp" />
                 </LinearLayout>
 
-                <androidx.appcompat.widget.SwitchCompat
-                    android:id="@+id/switchChecklist"
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:id="@+id/rowRemind"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:contentDescription="@string/note_add_checklist"
-                    android:minHeight="48dp" />
-            </LinearLayout>
+                    android:background="?attr/selectableItemBackground"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:gravity="center_vertical"
+                    android:minHeight="48dp"
+                    android:orientation="horizontal">
 
-            <LinearLayout
-                android:id="@+id/rowRemind"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="?attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:minHeight="48dp"
-                android:orientation="horizontal">
+                    <TextView
+                        style="@style/TodayCardBody"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/note_add_remind" />
 
-                <TextView
-                    style="@style/TextSmall"
-                    android:layout_width="0dp"
+                    <TextView
+                        android:id="@+id/tvRemindDate"
+                        style="@style/TodayChip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/today_chip"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="2dp"
+                        android:text="@string/note_add_remind_none" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/note_add_remind" />
+                    android:gravity="center_vertical"
+                    android:minHeight="48dp"
+                    android:orientation="horizontal">
 
-                <TextView
-                    android:id="@+id/tvRemindDate"
-                    style="@style/TextSmallBold"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/today_chip"
-                    android:paddingHorizontal="10dp"
-                    android:paddingVertical="2dp"
-                    android:text="@string/note_add_remind_none" />
-            </LinearLayout>
+                    <TextView
+                        style="@style/TodayCardBody"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/note_add_pin" />
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:minHeight="48dp"
-                android:orientation="horizontal">
-
-                <TextView
-                    style="@style/TextSmall"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/note_add_pin" />
-
-                <androidx.appcompat.widget.SwitchCompat
-                    android:id="@+id/switchPin"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
-                    android:contentDescription="@string/note_add_pin"
-                    android:minHeight="48dp" />
+                    <androidx.appcompat.widget.SwitchCompat
+                        android:id="@+id/switchPin"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="12dp"
+                        android:contentDescription="@string/note_add_pin"
+                        android:minHeight="48dp" />
+                </LinearLayout>
             </LinearLayout>
 
             <TextView
                 android:id="@+id/tvListsHeading"
-                style="@style/TextSmallLight"
+                style="@style/TodayCardLabel"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
@@ -173,7 +182,7 @@
                 app:chipSpacingVertical="0dp" />
 
             <TextView
-                style="@style/TextSmallLight"
+                style="@style/TodayCardBodyLight"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
@@ -191,7 +200,7 @@
 
         <TextView
             android:id="@+id/btnNoteCancel"
-            style="@style/TextSmall"
+            style="@style/TodayCardBody"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="?attr/selectableItemBackground"
@@ -203,7 +212,7 @@
 
         <TextView
             android:id="@+id/btnNoteSave"
-            style="@style/TextSmallBold"
+            style="@style/TodayCardBodyBold"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:background="?attr/selectableItemBackground"
@@ -211,6 +220,7 @@
             android:gravity="center"
             android:minHeight="48dp"
             android:paddingHorizontal="16dp"
-            android:text="@string/save" />
+            android:text="@string/save"
+            android:textColor="?attr/accent" />
     </LinearLayout>
 </LinearLayout>

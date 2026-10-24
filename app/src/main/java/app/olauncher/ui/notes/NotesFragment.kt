@@ -18,6 +18,7 @@ import app.olauncher.helper.NoteViewRules
 import app.olauncher.helper.Notes
 import app.olauncher.helper.hideKeyboard
 import app.olauncher.ui.BaseFragment
+import app.olauncher.ui.today.attachPressScale
 import app.olauncher.ui.today.cards.NotesCard
 import java.time.LocalDate
 import java.time.ZoneId
@@ -85,6 +86,7 @@ class NotesFragment : BaseFragment() {
     private fun bindNote(parent: ViewGroup, note: Note, today: LocalDate): View {
         val context = parent.context
         val row = ItemNoteBinding.inflate(layoutInflater, parent, false)
+        row.root.attachPressScale()
         val isChecklist = note.items.isNotEmpty()
         row.tvNoteTitle.text = note.text
         // An untitled checklist keeps the (empty) title so the count stays right-aligned.

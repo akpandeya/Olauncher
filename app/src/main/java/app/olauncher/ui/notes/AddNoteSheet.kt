@@ -2,7 +2,6 @@ package app.olauncher.ui.notes
 
 import android.app.DatePickerDialog
 import android.content.Context
-import android.util.TypedValue
 import android.view.Gravity
 import android.view.KeyEvent
 import android.view.LayoutInflater
@@ -10,7 +9,6 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
-import androidx.core.content.ContextCompat
 import app.olauncher.R
 import app.olauncher.databinding.DialogAddNoteBinding
 import app.olauncher.helper.DraftResult
@@ -20,8 +18,8 @@ import app.olauncher.helper.NoteDraftRules
 import app.olauncher.helper.Notes
 import app.olauncher.helper.OlDialog
 import app.olauncher.helper.createDialog
-import app.olauncher.helper.dpToPx
 import app.olauncher.helper.showToast
+import app.olauncher.ui.today.TodayChips
 import app.olauncher.ui.today.cards.NotesCard
 import app.olauncher.ui.today.cards.WordsCard
 import java.time.LocalDate
@@ -125,25 +123,12 @@ object AddNoteSheet {
         b.tvListsHeading.visibility = visible
         b.noteListChips.visibility = visible
         for (list in lists) {
-            val chip = newChip(context, list.name)
+            val chip = TodayChips.newSelectableChip(context, list.name)
             chip.setOnClickListener {
                 it.isSelected = !it.isSelected
                 if (it.isSelected) selected.add(list.id) else selected.remove(list.id)
             }
             b.noteListChips.addView(chip)
         }
-    }
-
-    /** A plain TextView chip: a Material Chip throws under the app's AppCompat theme. */
-    private fun newChip(context: Context, label: String): TextView = TextView(context).apply {
-        text = label
-        setTextColor(TypedValue().also { context.theme.resolveAttribute(R.attr.primaryColor, it, true) }.data)
-        setTextSize(TypedValue.COMPLEX_UNIT_PX, context.resources.getDimension(R.dimen.text_small))
-        gravity = Gravity.CENTER
-        minHeight = 48.dpToPx()
-        setPadding(12.dpToPx(), 0, 12.dpToPx(), 0)
-        isClickable = true
-        isFocusable = true
-        background = ContextCompat.getDrawable(context, R.drawable.today_chip_selectable)
     }
 }
