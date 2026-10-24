@@ -288,11 +288,10 @@ class TodayFragment : BaseFragment() {
         panelsShown = true
     }
 
-    /** Until a widget is added, a dashed "Your widget" card sits before Held (or last). */
+    /** Until a widget is added, a dashed "Your widget" card sits at the bottom of the page. */
     private fun withWidgetSlot(stacked: List<TodayCard>): List<TodayCard> {
         if (todayWidgets.cards().isNotEmpty()) return stacked
-        val heldAt = stacked.indexOfFirst { it.key == HeldCard.KEY }.takeIf { it >= 0 } ?: stacked.size
-        return stacked.take(heldAt) + WidgetSlotRow + stacked.drop(heldAt)
+        return stacked + WidgetSlotRow
     }
 
     /** Marks where the widget placeholder goes; it is not a real card and has no panel. */
