@@ -176,6 +176,9 @@ class OlDialog(context: Context) : AlertDialog(context) {
     /** Set by [createMultiChoiceDialog]: ticks or unticks a row from outside, e.g. after a permission result. */
     var setItemChecked: (index: Int, checked: Boolean) -> Unit = { _, _ -> }
 
+    /** Set by [createDialog]: changes the action button text, e.g. to show a pick count. */
+    var setActionText: (CharSequence) -> Unit = {}
+
     fun showRespectingStatusBar() {
         val window = window
         if (window == null || Prefs(context).showStatusBar) {
@@ -233,6 +236,7 @@ fun Context.createDialog(
         binding.contentContainer.isVisible = true
     }
     dialog.setView(binding.root)
+    dialog.setActionText = { binding.tvAction.text = it }
     binding.ivClose.setOnClickListener {
         Haptics.perform(it, Haptics.Kind.MENU)
         dialog.dismiss()
@@ -257,7 +261,7 @@ private fun TextView.styleAsDialogRow(context: Context) {
     val ripple = TypedValue()
     context.theme.resolveAttribute(android.R.attr.selectableItemBackground, ripple, true)
     setBackgroundResource(ripple.resourceId)
-    minHeight = context.dp(44)
+    minHeight = context.dp(48)
     gravity = Gravity.CENTER_VERTICAL
 }
 
@@ -266,7 +270,13 @@ private fun Context.scrollingRows(rows: List<View>): View {
         orientation = LinearLayout.VERTICAL
         rows.forEach { addView(it, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)) }
     }
-    return ScrollView(this).apply {
+    val maxHeightPx = DialogListSizing.maxListHeightPx(resources.displayMetrics.heightPixels)
+    // Capped so a long list scrolls and the title and action button stay on screen.
+    return object : ScrollView(this) {
+        override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+            super.onMeasure(widthMeasureSpec, View.MeasureSpec.makeMeasureSpec(maxHeightPx, View.MeasureSpec.AT_MOST))
+        }
+    }.apply {
         addView(column)
         layoutParams = ViewGroup.MarginLayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
             .apply { topMargin = dp(8) }
@@ -321,17 +331,23 @@ fun Context.createMultiChoiceDialog(
     @StringRes neutral: Int = 0,
     onNeutral: () -> Unit = {},
     onToggle: (index: Int, isChecked: Boolean) -> Boolean = { _, _ -> true },
+    actionLabel: ((picked: Int) -> CharSequence)? = null,
     onAction: () -> Unit,
 ): OlDialog {
     val boxes = mutableListOf<CompoundButton>()
     var silent = false
-    val dialog = createDialog(title, action, neutral = neutral, onNeutral = onNeutral, onAction = onAction) { parent ->
+    lateinit var dialog: OlDialog
+    val refreshAction = { actionLabel?.let { label -> dialog.setActionText(label(checked.count { it })) } }
+    dialog = createDialog(title, action, neutral = neutral, onNeutral = onNeutral, onAction = onAction) { parent ->
         val context = parent.context
         context.scrollingRows(
             items.mapIndexed { index, label ->
                 AppCompatCheckBox(context).also { box ->
                     box.styleAsDialogRow(context)
                     box.text = label
+                    box.maxLines = 2
+                    box.ellipsize = android.text.TextUtils.TruncateAt.END
+                    box.setPadding(box.paddingLeft, context.dp(6), box.paddingRight, context.dp(6))
                     box.isChecked = checked[index]
                     box.setOnCheckedChangeListener { _, isChecked ->
                         if (silent) return@setOnCheckedChangeListener
@@ -343,6 +359,7 @@ fun Context.createMultiChoiceDialog(
                             box.isChecked = !isChecked
                             silent = false
                         }
+                        refreshAction()
                     }
                     boxes.add(box)
                 }
@@ -354,7 +371,9 @@ fun Context.createMultiChoiceDialog(
         silent = true
         boxes.getOrNull(index)?.isChecked = isChecked
         silent = false
+        refreshAction()
     }
+    refreshAction()
     return dialog
 }
 
