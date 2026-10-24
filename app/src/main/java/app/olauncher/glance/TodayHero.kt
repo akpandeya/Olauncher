@@ -6,6 +6,7 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Locale
 import kotlin.math.roundToInt
+import androidx.annotation.DrawableRes
 
 /** Picks the hours shown in the hero's hourly row. */
 object HourlyStrip {
@@ -40,6 +41,9 @@ object HeroFormatting {
     /** The icon for the current weather, or empty when the code has none. */
     fun nowIcon(forecast: Forecast): String = WeatherCodes.emoji(forecast.nowCode, forecast.isDay)
 
+    @DrawableRes
+    fun nowIconRes(forecast: Forecast): Int? = WeatherCodes.icon(forecast.nowCode, forecast.isDay)
+
     /** "12°". */
     fun nowTemperature(forecast: Forecast): String = "${forecast.nowTemp.roundToInt()}°"
 
@@ -56,4 +60,8 @@ object HeroFormatting {
     /** Hours carry no day/night flag, so a fixed daylight window picks sun or moon. */
     fun hourEmoji(hour: Hour): String =
         WeatherCodes.emoji(hour.code, hour.time.hour in DAY_FIRST_HOUR..DAY_LAST_HOUR)
+
+    @DrawableRes
+    fun hourIconRes(hour: Hour): Int? =
+        WeatherCodes.icon(hour.code, hour.time.hour in DAY_FIRST_HOUR..DAY_LAST_HOUR)
 }
