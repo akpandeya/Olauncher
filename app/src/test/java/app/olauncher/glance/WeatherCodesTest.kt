@@ -1,7 +1,11 @@
 package app.olauncher.glance
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
+import app.olauncher.R
 
 class WeatherCodesTest {
 
@@ -98,5 +102,90 @@ class WeatherCodesTest {
         for (code in listOf(-1, 4, 10, 100)) {
             assertEquals("", WeatherCodes.emoji(code))
         }
+    }
+
+    @Test
+    fun `icon maps every code group WeatherCodes emoji handles`() {
+        val dayNightGroups = mapOf(
+            R.drawable.ic_weather_overcast to listOf(3),
+            R.drawable.ic_weather_fog to listOf(45, 48),
+            R.drawable.ic_weather_light_rain to listOf(51, 53, 55, 56, 57, 61),
+            R.drawable.ic_weather_heavy_rain to listOf(63, 65, 66, 67, 80, 81, 82),
+            R.drawable.ic_weather_snow to listOf(71, 73, 75, 77, 85, 86),
+            R.drawable.ic_weather_thunderstorm to listOf(95, 96, 99),
+        )
+        for ((iconRes, codes) in dayNightGroups) {
+            for (code in codes) {
+                assertEquals("code $code by day", iconRes, WeatherCodes.icon(code, isDay = true))
+                assertEquals("code $code by night", iconRes, WeatherCodes.icon(code, isDay = false))
+            }
+        }
+    }
+
+    @Test
+    fun `icon distinguishes day and night for codes 0 1 2`() {
+        assertEquals(R.drawable.ic_weather_clear_day, WeatherCodes.icon(0, isDay = true))
+        assertEquals(R.drawable.ic_weather_clear_night, WeatherCodes.icon(0, isDay = false))
+        assertEquals(R.drawable.ic_weather_partly_cloudy, WeatherCodes.icon(1, isDay = true))
+        assertEquals(R.drawable.ic_weather_clear_night, WeatherCodes.icon(1, isDay = false))
+        assertEquals(R.drawable.ic_weather_partly_cloudy, WeatherCodes.icon(2, isDay = true))
+        assertEquals(R.drawable.ic_weather_overcast, WeatherCodes.icon(2, isDay = false))
+    }
+
+    @Test
+    fun `icon defaults to day`() {
+        assertEquals(R.drawable.ic_weather_clear_day, WeatherCodes.icon(0))
+        assertEquals(R.drawable.ic_weather_partly_cloudy, WeatherCodes.icon(1))
+        assertEquals(R.drawable.ic_weather_partly_cloudy, WeatherCodes.icon(2))
+    }
+
+    @Test
+    fun `icon is null for unknown codes`() {
+        for (code in listOf(-1, 4, 10, 100)) {
+            assertNull(WeatherCodes.icon(code))
+            assertNull(WeatherCodes.icon(code, isDay = false))
+        }
+    }
+
+    @Test
+    fun `every code handled by emoji maps to a non-null icon in day and night`() {
+        val documentedCodes = listOf(
+            0, 1, 2, 3,
+            45, 48,
+            51, 53, 55, 56, 57,
+            61, 63, 65, 66, 67,
+            71, 73, 75, 77,
+            80, 81, 82,
+            85, 86,
+            95, 96, 99,
+        )
+        for (code in documentedCodes) {
+            assertTrue("emoji should handle code $code", WeatherCodes.emoji(code).isNotEmpty())
+            assertNotNull("icon should handle code $code by day", WeatherCodes.icon(code, isDay = true))
+            assertNotNull("icon should handle code $code by night", WeatherCodes.icon(code, isDay = false))
+        }
+    }
+
+    @Test
+    fun `all nine weather drawables are reachable from icon mapping`() {
+        val expectedDrawables = setOf(
+            R.drawable.ic_weather_clear_day,
+            R.drawable.ic_weather_clear_night,
+            R.drawable.ic_weather_partly_cloudy,
+            R.drawable.ic_weather_overcast,
+            R.drawable.ic_weather_light_rain,
+            R.drawable.ic_weather_heavy_rain,
+            R.drawable.ic_weather_thunderstorm,
+            R.drawable.ic_weather_snow,
+            R.drawable.ic_weather_fog,
+        )
+        assertEquals(9, expectedDrawables.size)
+
+        val reachable = mutableSetOf<Int>()
+        for (code in 0..100) {
+            WeatherCodes.icon(code, isDay = true)?.let { reachable.add(it) }
+            WeatherCodes.icon(code, isDay = false)?.let { reachable.add(it) }
+        }
+        assertEquals(expectedDrawables, reachable)
     }
 }

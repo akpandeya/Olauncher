@@ -1,8 +1,10 @@
 package app.olauncher.glance
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import app.olauncher.R
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.Locale
@@ -89,5 +91,22 @@ class TodayHeroTest {
         assertEquals("☀️", HeroFormatting.hourEmoji(hour(12, code = 0)))
         assertEquals("🌙", HeroFormatting.hourEmoji(hour(23, code = 0)))
         assertEquals("", HeroFormatting.hourEmoji(hour(12, code = 4)))
+    }
+
+    @Test
+    fun `nowIconRes returns vector drawable resource`() {
+        val forecast = Forecast(11.6, 51, true, 15.0, 8.4, emptyList())
+        assertEquals(R.drawable.ic_weather_light_rain, HeroFormatting.nowIconRes(forecast))
+
+        val unknown = Forecast(11.6, 4, true, 15.0, 8.4, emptyList())
+        assertNull(HeroFormatting.nowIconRes(unknown))
+    }
+
+    @Test
+    fun `hourIconRes uses moon at night and sun by day`() {
+        assertEquals(R.drawable.ic_weather_clear_day, HeroFormatting.hourIconRes(hour(12, code = 0)))
+        assertEquals(R.drawable.ic_weather_clear_night, HeroFormatting.hourIconRes(hour(23, code = 0)))
+        assertEquals(R.drawable.ic_weather_light_rain, HeroFormatting.hourIconRes(hour(9, code = 61)))
+        assertNull(HeroFormatting.hourIconRes(hour(12, code = 4)))
     }
 }

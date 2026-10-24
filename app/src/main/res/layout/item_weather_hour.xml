@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="0dp"
     android:layout_height="wrap_content"
@@ -16,13 +17,14 @@
         android:maxLines="1"
         tools:text="15" />
 
-    <TextView
-        android:id="@+id/tvHourEmoji"
-        style="@style/TextMedium"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <ImageView
+        android:id="@+id/ivHourIcon"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
         android:layout_marginVertical="2dp"
-        tools:text="🌧" />
+        android:contentDescription="@null"
+        app:tint="?attr/primaryColor"
+        tools:src="@drawable/ic_weather_light_rain" />
 
     <TextView
         android:id="@+id/tvHourTemp"

@@ -188,7 +188,14 @@ internal class WeatherCardView(
         if (cached == null) return
         val (forecast, fetchedAt) = cached
 
-        binding.tvIcon.text = HeroFormatting.nowIcon(forecast)
+        val iconRes = HeroFormatting.nowIconRes(forecast)
+        if (iconRes != null) {
+            binding.ivIcon.setImageResource(iconRes)
+            binding.ivIcon.isVisible = true
+        } else {
+            binding.ivIcon.setImageDrawable(null)
+            binding.ivIcon.isVisible = false
+        }
         binding.tvTemp.text = HeroFormatting.nowTemperature(forecast)
         binding.tvLine1.text = HeroFormatting.conditionLine(forecast)
         val now = forecast.cityNow(WeatherCard.nowSupplier())
@@ -220,7 +227,14 @@ internal class WeatherCardView(
         for (hour in hours) {
             val item = ItemWeatherHourBinding.inflate(inflater, row, false)
             item.tvHourLabel.text = HeroFormatting.hourLabel(hour)
-            item.tvHourEmoji.text = HeroFormatting.hourEmoji(hour)
+            val iconRes = HeroFormatting.hourIconRes(hour)
+            if (iconRes != null) {
+                item.ivHourIcon.setImageResource(iconRes)
+                item.ivHourIcon.isVisible = true
+            } else {
+                item.ivHourIcon.setImageDrawable(null)
+                item.ivHourIcon.isVisible = false
+            }
             item.tvHourTemp.text = HeroFormatting.hourTemperature(hour)
             row.addView(item.root)
         }
