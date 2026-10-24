@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Review · front</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700&display=swap">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="width:390px;height:844px;box-sizing:border-box;padding:56px 14px 20px;background:#14171c;color:#eef1f5;font-family:Manrope,system-ui,sans-serif;display:flex;flex-direction:column;gap:12px;overflow:hidden">
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:0 6px">
+    <span style="font-size:14px;color:#8b93a1">‹ Words</span>
+    <span style="font-size:13px;color:#8b93a1">4 left · 12 today</span>
+  </div>
+  <div style="height:4px;border-radius:4px;background:#2a3039;margin:0 6px"><div style="width:33%;height:100%;border-radius:4px;background:#9fd6b4"></div></div>
+
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px;background:#1e232b;border-radius:28px;padding:28px 22px;text-align:center">
+    <div style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#8b93a1">Word · Box 2</div>
+    <div style="font-size:48px;font-weight:700;letter-spacing:-.02em">die Gelegenheit</div>
+    <div style="font-size:14px;color:#8b93a1">“Wir hatten eine tolle Gelegenheit.”</div>
+    <div style="margin-top:18px;font-size:14px;color:#b9c0cc">Tap to reveal the meaning</div>
+  </div>
+
+  <div style="display:flex;justify-content:space-between;align-items:center;padding:0 6px">
+    <span style="font-size:12px;color:#8b93a1">Example data</span>
+    <span style="font-size:12px;color:#8b93a1">Skip ›</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
