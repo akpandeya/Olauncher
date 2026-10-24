@@ -127,6 +127,13 @@
             app:popEnterAnim="@animator/fade_enter"
             app:popExitAnim="@animator/fade_exit" />
         <action
+            android:id="@+id/action_todayFragment_to_wordListsFragment"
+            app:destination="@id/wordListsFragment"
+            app:enterAnim="@animator/fade_enter"
+            app:exitAnim="@animator/fade_exit"
+            app:popEnterAnim="@animator/fade_enter"
+            app:popExitAnim="@animator/fade_exit" />
+        <action
             android:id="@+id/action_todayFragment_to_reviewFragment"
             app:destination="@id/reviewFragment"
             app:enterAnim="@animator/fade_enter"

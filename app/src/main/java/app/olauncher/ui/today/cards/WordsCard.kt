@@ -8,13 +8,24 @@ import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import app.olauncher.R
 import app.olauncher.helper.Haptics
+import app.olauncher.helper.createChoiceDialog
 import app.olauncher.data.Prefs
 import app.olauncher.data.store.WordsStore
 import app.olauncher.databinding.CardWordsBinding
 import app.olauncher.ui.today.TodayCard
 import java.time.LocalDate
 
+/** Entries of the Words card long-press menu. */
+enum class WordsCardMenuItem { REVIEW, WORDS, LISTS }
+
 object WordsCardLogic {
+
+    /** Long-press menu entries in display order; Review only when words are due. */
+    fun menuItems(due: Int): List<WordsCardMenuItem> = buildList {
+        if (showReview(due)) add(WordsCardMenuItem.REVIEW)
+        add(WordsCardMenuItem.WORDS)
+        add(WordsCardMenuItem.LISTS)
+    }
 
     fun isAvailable(germanEnabled: Boolean): Boolean = germanEnabled
 
@@ -90,6 +101,12 @@ object WordsCard : TodayCard {
                     navController.navigate(R.id.action_todayFragment_to_wordsFragment)
                 }
             },
+            onOpenLists = {
+                val navController = fragment.findNavController()
+                if (navController.currentDestination?.id == R.id.todayFragment) {
+                    navController.navigate(R.id.action_todayFragment_to_wordListsFragment)
+                }
+            },
             onReview = {
                 val navController = fragment.findNavController()
                 if (navController.currentDestination?.id == R.id.todayFragment) {
@@ -112,6 +129,7 @@ internal class WordsCardView(
     val binding: CardWordsBinding,
     private val onOpenWords: () -> Unit = {},
     private val onReview: () -> Unit = {},
+    private val onOpenLists: () -> Unit = {},
 ) {
 
     private var due = 0
@@ -121,6 +139,32 @@ internal class WordsCardView(
             Haptics.tick(it)
             if (WordsCardLogic.showReview(due)) onReview() else onOpenWords()
         }
+        binding.tvOpen.setOnClickListener {
+            Haptics.tick(it)
+            onOpenWords()
+        }
+        binding.root.setOnLongClickListener { view ->
+            val context = view.context
+            val items = WordsCardLogic.menuItems(due)
+            context.createChoiceDialog(
+                title = R.string.words,
+                items = items.map { context.getString(labelRes(it)) },
+                onPick = { index ->
+                    when (items[index]) {
+                        WordsCardMenuItem.REVIEW -> onReview()
+                        WordsCardMenuItem.WORDS -> onOpenWords()
+                        WordsCardMenuItem.LISTS -> onOpenLists()
+                    }
+                },
+            ).show()
+            true
+        }
+    }
+
+    private fun labelRes(item: WordsCardMenuItem): Int = when (item) {
+        WordsCardMenuItem.REVIEW -> R.string.words_review_title
+        WordsCardMenuItem.WORDS -> R.string.words
+        WordsCardMenuItem.LISTS -> R.string.word_lists_title
     }
 
     fun render() {
