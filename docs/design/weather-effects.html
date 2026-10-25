@@ -1,0 +1,1107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Weather Effects Prototype</title>
+<style>
+  :root {
+    --page-bg: #eef0f4;
+    --text: #1d2330;
+    --muted: #4d5666;
+    --btn-bg: #ffffff;
+    --btn-border: #c3c9d4;
+    --btn-active-bg: #1d2330;
+    --btn-active-text: #ffffff;
+    --focus: #2563eb;
+
+    /* Wallpaper palettes, one per condition: sky top, sky middle, horizon, hills.
+       These paint the phone, so they do not change with the page theme. */
+    --wx-clear-1: #2f6fc4;    --wx-clear-2: #6ea8e6;    --wx-clear-3: #f3d7a6;    --wx-clear-g: #2c4a3a;
+    --wx-partly-1: #4a7fbf;   --wx-partly-2: #8fb4dc;   --wx-partly-3: #e6dcc8;   --wx-partly-g: #33503f;
+    --wx-overcast-1: #6c7684; --wx-overcast-2: #959ea9; --wx-overcast-3: #b9bec4; --wx-overcast-g: #3b4246;
+    --wx-light-1: #46566b;    --wx-light-2: #6b7a8e;    --wx-light-3: #8a8f99;    --wx-light-g: #2a3138;
+    --wx-heavy-1: #0a1022;    --wx-heavy-2: #121a33;    --wx-heavy-3: #2a1a26;    --wx-heavy-g: #0b0e15;
+    --wx-storm-1: #070b16;    --wx-storm-2: #141a2b;    --wx-storm-3: #231d2b;    --wx-storm-g: #06080d;
+    --wx-snow-1: #8a9bb3;     --wx-snow-2: #b9c6d6;     --wx-snow-3: #e4e9f0;     --wx-snow-g: #dfe6ef;
+    --wx-fog-1: #9aa3ad;      --wx-fog-2: #b7bdc4;      --wx-fog-3: #cfd3d8;      --wx-fog-g: #6d757d;
+    --wx-night-1: #040714;    --wx-night-2: #0c1430;    --wx-night-3: #1a2140;    --wx-night-g: #04060c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page-bg: #11141b;
+      --text: #e8ebf2;
+      --muted: #9aa3b5;
+      --btn-bg: #1b202b;
+      --btn-border: #353d4e;
+      --btn-active-bg: #e8ebf2;
+      --btn-active-text: #11141b;
+      --focus: #7aa7ff;
+    }
+  }
+  :root[data-theme="dark"] {
+    --page-bg: #11141b; --text: #e8ebf2; --muted: #9aa3b5;
+    --btn-bg: #1b202b; --btn-border: #353d4e;
+    --btn-active-bg: #e8ebf2; --btn-active-text: #11141b; --focus: #7aa7ff;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--page-bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100vh;
+    min-height: 100svh;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 32px;
+    gap: 20px;
+  }
+
+  /* ---------- Phone ---------- */
+  .phone {
+    position: relative;
+    width: 390px;
+    max-width: 100%;
+    height: 844px;
+    border-radius: 48px;
+    overflow: hidden;
+    background: #05070c;
+    box-shadow: 0 0 0 9px #0b0d12, 0 0 0 10px #2a2f3a, 0 24px 60px rgba(0,0,0,.35);
+    isolation: isolate;
+    flex: none;
+    /* per-condition values, set by the data-weather rules below */
+    --sky-1: var(--wx-heavy-1); --sky-2: var(--wx-heavy-2); --sky-3: var(--wx-heavy-3); --ground: var(--wx-heavy-g);
+    --bokeh: 0; --wall-filter: blur(2px); --shade: .35;
+  }
+  .phone[data-weather="clear"]    { --sky-1: var(--wx-clear-1); --sky-2: var(--wx-clear-2); --sky-3: var(--wx-clear-3); --ground: var(--wx-clear-g); }
+  .phone[data-weather="partly"]   { --sky-1: var(--wx-partly-1); --sky-2: var(--wx-partly-2); --sky-3: var(--wx-partly-3); --ground: var(--wx-partly-g); }
+  .phone[data-weather="overcast"] { --sky-1: var(--wx-overcast-1); --sky-2: var(--wx-overcast-2); --sky-3: var(--wx-overcast-3); --ground: var(--wx-overcast-g); --wall-filter: blur(2px) saturate(.75); --shade: .45; }
+  .phone[data-weather="light"]    { --sky-1: var(--wx-light-1); --sky-2: var(--wx-light-2); --sky-3: var(--wx-light-3); --ground: var(--wx-light-g); --bokeh: .3; }
+  .phone[data-weather="heavy"]    { --sky-1: var(--wx-heavy-1); --sky-2: var(--wx-heavy-2); --sky-3: var(--wx-heavy-3); --ground: var(--wx-heavy-g); --bokeh: .8; }
+  .phone[data-weather="storm"]    { --sky-1: var(--wx-storm-1); --sky-2: var(--wx-storm-2); --sky-3: var(--wx-storm-3); --ground: var(--wx-storm-g); --bokeh: .6; }
+  .phone[data-weather="snow"]     { --sky-1: var(--wx-snow-1); --sky-2: var(--wx-snow-2); --sky-3: var(--wx-snow-3); --ground: var(--wx-snow-g); --shade: .5; }
+  .phone[data-weather="fog"]      { --sky-1: var(--wx-fog-1); --sky-2: var(--wx-fog-2); --sky-3: var(--wx-fog-3); --ground: var(--wx-fog-g); --bokeh: .2; --wall-filter: blur(8px) saturate(.6) brightness(1.05); --shade: .5; }
+  .phone[data-weather="night"]    { --sky-1: var(--wx-night-1); --sky-2: var(--wx-night-2); --sky-3: var(--wx-night-3); --ground: var(--wx-night-g); --bokeh: .45; }
+
+  /* Painted wallpaper: sky gradient, two hills, blurred bokeh lights. */
+  .wall {
+    position: absolute; inset: -20px;
+    background: linear-gradient(180deg, var(--sky-1) 0%, var(--sky-2) 50%, var(--sky-3) 100%);
+    filter: var(--wall-filter);
+    transition: filter .6s ease;
+  }
+  .ground {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 34%;
+    background:
+      radial-gradient(90% 60% at 18% 100%, var(--ground) 0 62%, transparent 63%),
+      radial-gradient(80% 48% at 86% 100%, var(--ground) 0 60%, transparent 61%);
+    opacity: .9;
+  }
+  .bokeh { position: absolute; inset: -20px; opacity: var(--bokeh); transition: opacity .6s ease; }
+  .b {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(7px);
+    opacity: .75;
+    mix-blend-mode: screen;
+  }
+  .b.r { background: radial-gradient(circle, #ff4a3d 0%, rgba(255,74,61,.55) 55%, rgba(255,74,61,0) 72%); }
+  .b.a { background: radial-gradient(circle, #ffb43a 0%, rgba(255,180,58,.55) 55%, rgba(255,180,58,0) 72%); }
+  .b.u { background: radial-gradient(circle, #4a8dff 0%, rgba(74,141,255,.5) 55%, rgba(74,141,255,0) 72%); }
+  .b.sm { filter: blur(4px); opacity: .6; }
+  .b.lg { filter: blur(11px); opacity: .5; }
+  .shade {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(5,8,16,var(--shade)) 0%, rgba(5,8,16,0) 38%, rgba(5,8,16,0) 60%, rgba(5,8,16,var(--shade)) 100%);
+  }
+  canvas#weather {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    pointer-events: none; display: block;
+  }
+
+  /* Thumbline home: clock on top, apps aligned to the bottom. */
+  .home {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; justify-content: space-between;
+    padding: 70px 28px 64px;
+    color: rgba(255,255,255,.92);
+    text-shadow: 0 1px 14px rgba(0,0,0,.45);
+    user-select: none;
+  }
+  .clock {
+    font-size: 84px; line-height: 1; font-weight: 200; letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .date { font-size: 17px; font-weight: 500; margin-top: 6px; opacity: .9; }
+  .wx-line { font-size: 15px; margin-top: 4px; opacity: .85; }
+  .apps { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; font-size: 22px; font-weight: 400; }
+  .home-bar {
+    position: absolute; left: 50%; bottom: 9px; width: 130px; height: 5px;
+    margin-left: -65px; border-radius: 3px; background: rgba(255,255,255,.55);
+  }
+
+  /* ---------- Controls ---------- */
+  .controls {
+    display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;
+    width: 100%; max-width: 420px;
+  }
+  .controls button, .tools button {
+    min-height: 46px; padding: 8px 6px;
+    font: inherit; font-size: 14px; font-weight: 600;
+    color: var(--text); background: var(--btn-bg);
+    border: 1px solid var(--btn-border); border-radius: 12px;
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  .controls button[aria-pressed="true"], .tools button[aria-pressed="true"] {
+    background: var(--btn-active-bg); color: var(--btn-active-text); border-color: var(--btn-active-bg);
+  }
+  button:focus-visible, input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .tools {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px;
+    width: 100%; max-width: 420px; font-size: 15px;
+  }
+  .wind { display: flex; align-items: center; gap: 10px; flex: 1 1 100%; }
+  .wind input { flex: 1; min-width: 0; accent-color: var(--focus); }
+  .wind output { min-width: 2.5em; text-align: right; font-variant-numeric: tabular-nums; }
+  .tools button { flex: 0 0 auto; min-width: 110px; padding: 8px 16px; }
+  .check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .check input { width: 20px; height: 20px; accent-color: var(--focus); }
+  .status {
+    max-width: 420px; width: 100%; margin: 0; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+    color: var(--muted); overflow-wrap: anywhere;
+  }
+  .note {
+    max-width: 420px; margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted);
+  }
+
+  @media (max-width: 430px) {
+    body { padding: 0 0 24px; gap: 14px; }
+    .phone {
+      width: 100%; height: max(440px, calc(100svh - 300px));
+      border-radius: 0; box-shadow: none;
+    }
+    .home { padding: 48px 24px 48px; }
+    .clock { font-size: 72px; }
+    .apps { gap: 14px; font-size: 20px; }
+    .controls, .tools, .status, .note { padding: 0 16px; }
+  }
+</style>
+</head>
+<body>
+
+<main class="phone" id="phone" data-weather="light" aria-label="Thumbline home screen preview with a weather effect">
+  <div class="wall"><div class="ground"></div></div>
+  <div class="bokeh" aria-hidden="true">
+    <span class="b r lg" style="left:6%;top:38%;width:120px;height:120px"></span>
+    <span class="b a"    style="left:62%;top:30%;width:84px;height:84px"></span>
+    <span class="b u lg" style="left:70%;top:52%;width:130px;height:130px"></span>
+    <span class="b a sm" style="left:24%;top:48%;width:46px;height:46px"></span>
+    <span class="b r sm" style="left:48%;top:44%;width:38px;height:38px"></span>
+    <span class="b u"    style="left:12%;top:62%;width:90px;height:90px"></span>
+    <span class="b a lg" style="left:38%;top:68%;width:140px;height:140px"></span>
+    <span class="b r"    style="left:78%;top:72%;width:76px;height:76px"></span>
+    <span class="b u sm" style="left:56%;top:58%;width:34px;height:34px"></span>
+    <span class="b a sm" style="left:84%;top:40%;width:40px;height:40px"></span>
+    <span class="b r sm" style="left:4%;top:78%;width:52px;height:52px"></span>
+    <span class="b u"    style="left:30%;top:84%;width:70px;height:70px"></span>
+    <span class="b a"    style="left:66%;top:88%;width:96px;height:96px"></span>
+    <span class="b r sm" style="left:90%;top:60%;width:30px;height:30px"></span>
+    <span class="b u sm" style="left:18%;top:30%;width:36px;height:36px"></span>
+  </div>
+  <div class="shade"></div>
+  <canvas id="weather"></canvas>
+  <div class="home">
+    <div>
+      <div class="clock" id="clock">10:24</div>
+      <div class="date">Sun, 25 Oct</div>
+      <div class="wx-line" id="wx-line">11° light rain</div>
+    </div>
+    <ul class="apps">
+      <li>Phone</li>
+      <li>Messages</li>
+      <li>Camera</li>
+      <li>Browser</li>
+      <li>Music</li>
+    </ul>
+  </div>
+  <div class="home-bar"></div>
+</main>
+
+<div class="controls" role="group" aria-label="Weather condition">
+  <button type="button" data-mode="clear" aria-pressed="false">Clear</button>
+  <button type="button" data-mode="partly" aria-pressed="false">Partly cloudy</button>
+  <button type="button" data-mode="overcast" aria-pressed="false">Overcast</button>
+  <button type="button" data-mode="light" aria-pressed="true">Light rain</button>
+  <button type="button" data-mode="heavy" aria-pressed="false">Heavy rain</button>
+  <button type="button" data-mode="storm" aria-pressed="false">Thunderstorm</button>
+  <button type="button" data-mode="snow" aria-pressed="false">Snow</button>
+  <button type="button" data-mode="fog" aria-pressed="false">Fog</button>
+  <button type="button" data-mode="night" aria-pressed="false">Clear night</button>
+</div>
+
+<div class="tools">
+  <label class="wind" for="wind">Wind
+    <input id="wind" type="range" min="0" max="100" step="1" value="30">
+    <output id="wind-value" for="wind">30</output>
+  </label>
+  <button type="button" id="pause" aria-pressed="false">Pause</button>
+  <label class="check"><input type="checkbox" id="reduced"> Reduced motion</label>
+</div>
+
+<p class="status" id="status" aria-live="polite"></p>
+
+<p class="note">
+  Rain drops sit, slip, wobble, tilt with the wind and merge; a moving drop leaves only a faint wet sheen that
+  fades within a few frames. Gusts sweep across the glass from left to right and shake sitting drops loose.
+  Faked: there is no refraction of the real wallpaper, and the sky is painted. Android will differ in timing,
+  density and drawing details.
+</p>
+
+<script>
+'use strict';
+
+// <sim>
+// ============================================================
+// Simulation: pure logic, no DOM. Units are CSS px and seconds.
+// Written so it can be ported to Kotlin line by line.
+// ============================================================
+const STEP = 1 / 30;            // fixed time step in seconds (WeatherEffects.MAX_FPS)
+const TAU = Math.PI * 2;
+const MAX_RADIUS = 15;
+
+// Glass drops. glassDrops uses the app's 0..30 scale (EffectParams.MAX_GLASS_DROPS).
+const DROPS_PER_GLASS_UNIT = 2.5;   // glassDrops 6 -> 15 drops, 30 -> 75 on the glass
+const MAX_DRIFT = 70;               // px/s sideways push on a moving drop at local wind 1
+const MAX_WOBBLE = 4.5 * 5;         // largest wobbleAmp * wobbleFreq, px/s
+// Wind bound: a drop's sideways speed never exceeds MAX_DRIFT + MAX_WOBBLE = 92.5 px/s, local wind is
+// capped at 1, and x is clamped to [r, width - r], so no drop can leave the glass sideways.
+const MAX_TILT = 0.6;               // rad, about 34 degrees
+const STALL_BREAK_WIND = 0.7;       // local wind above this frees a sitting drop, so gusts move drops in waves
+
+// Track sheen that replaces trails: a soft wet spot that is gone within 6 frames.
+const GLINT_SECONDS = 0.2;
+const GLINT_SPACING = 6;            // px of travel between spots
+const MAX_GLINTS = 240;
+
+// Gusts: a band of extra wind that sweeps the glass from left to right.
+const GUST_GAP = [3, 9];            // s between gusts, divided by (0.5 + gust level)
+const GUST_SPEED = [240, 320];      // px/s of the gust front
+const GUST_SIGMA = [60, 100];       // px half-width of the band
+const GUST_STRENGTH = [0.25, 0.5];  // added to the base wind, the sum is capped at 1
+
+// Snow. Flakes wrap side to side, so wind never carries them off the glass.
+const FLAKES_AT_FULL_DENSITY = 140;
+const FLAKE_FALL_PX = 60;           // px/s per unit of fallSpeed
+const MAX_FLAKE_DRIFT = 45;         // px/s at local wind 1; sway adds at most 12 px/s
+// Settling: 35% of flakes stop at a random height between 30% and 100% of the glass, rest 3 to 6 s,
+// then melt over 1 s. At most 40 flakes sit on the glass at once.
+const SETTLE_SHARE = 0.35;
+const SETTLE_HEIGHT = [0.3, 1.0];
+const SETTLE_REST = [3, 6];
+const MELT_SECONDS = 1;
+const MAX_SETTLED = 40;
+
+// Lightning: a strike every 4 to 12 s (uniform, timed from the previous strike). The flash lasts 0.6 s;
+// 35% of strikes flicker a second time 0.18 s after the first.
+const BOLT_GAP = [4, 12];
+const FLASH_SECONDS = 0.6;
+const DOUBLE_FLASH_CHANCE = 0.35;
+const DOUBLE_FLASH_DELAY = 0.18;
+
+// Clouds drift at most 14.4 + CLOUD_WIND_SPEED = 44.4 px/s and wrap around.
+const CLOUD_BASE_SPEED = [6, 12];   // px/s for the back and front layer
+const CLOUD_WIND_SPEED = 30;
+const SUN_TURN = 0.08;              // rad/s the sun rays rotate
+
+// Parameter names and ranges follow EffectParams where the app has them:
+// density 0..1, fallSpeed 0.2..3, glassDrops 0..30, slideSpeed 0..1.2, bolt 0 or 1.
+// New here: wind 0..1 (how much of the wind slider this weather lets through), gustiness 0..1,
+// sun 0..1, clouds 0..1 with cloudLayers 0..2, fog 0..1, stars 0..1, snow on or off.
+const BASE_PARAMS = {
+  density: 0, fallSpeed: 0.2, glassDrops: 0, slideSpeed: 0, bolt: 0,
+  wind: 0, gustiness: 0, sun: 0, clouds: 0, cloudLayers: 0, fog: 0, stars: 0, snow: false,
+};
+function withBase(p) { return Object.freeze(Object.assign({}, BASE_PARAMS, p)); }
+
+const MODES = {
+  clear:    withBase({ sun: 1, wind: 0.3 }),
+  partly:   withBase({ sun: 0.6, clouds: 0.45, cloudLayers: 1, wind: 0.6, gustiness: 0.3 }),
+  overcast: withBase({ clouds: 1, cloudLayers: 2, wind: 0.4, gustiness: 0.2 }),
+  light:    withBase({ density: 0.35, fallSpeed: 1.0, glassDrops: 6, slideSpeed: 0.3, wind: 0.5, gustiness: 0.5 }),
+  heavy:    withBase({ density: 0.9, fallSpeed: 2.2, glassDrops: 26, slideSpeed: 1.0, wind: 1, gustiness: 0.8 }),
+  storm:    withBase({ density: 0.95, fallSpeed: 2.5, glassDrops: 30, slideSpeed: 1.0, wind: 1, gustiness: 1, bolt: 1 }),
+  snow:     withBase({ density: 0.6, fallSpeed: 0.5, snow: true, wind: 0.8, gustiness: 0.6 }),
+  fog:      withBase({ fog: 1, wind: 0.2, gustiness: 0.1 }),
+  night:    withBase({ stars: 1 }),
+};
+
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function randRange(rng, lo, hi) { return lo + (hi - lo) * rng(); }
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+function wrap(x, lo, hi) { const span = hi - lo; return x < lo ? x + span : x >= hi ? x - span : x; }
+
+function createState(mode, width, height, seed, windInput) {
+  const state = {
+    mode, width, height,
+    params: MODES[mode],
+    rng: mulberry32(seed),
+    time: 0,
+    windInput: 0, wind: 0, gust: null, gustTimer: 0,
+    drops: [], glints: [], spawnDebt: 0,
+    flakes: [], clouds: [], haze: [], stars: [],
+    sunPhase: 0,
+    flash: 0, flashAge: -1, flashDouble: false, boltPath: null, boltTimer: 0,
+  };
+  setWind(state, windInput);
+  state.gustTimer = randRange(state.rng, 1, 4);
+  state.boltTimer = randRange(state.rng, 1.5, 5);
+  initClouds(state);
+  initHaze(state);
+  initStars(state);
+  initSnow(state);
+  return state;
+}
+
+// value is the slider position 0..1; the weather decides how much of it reaches the glass.
+function setWind(state, value) {
+  state.windInput = clamp(value, 0, 1);
+  state.wind = state.windInput * state.params.wind;
+}
+
+// Clears the parts of a frame that only make sense in motion (reduced motion still frame).
+function stillFrame(state) {
+  endFlash(state);
+  state.glints.length = 0;
+}
+
+// ---------- wind and gusts ----------
+function updateWind(state, dt) {
+  const { rng, width } = state;
+  const g = state.gust;
+  if (g) {
+    g.x += g.speed * dt;
+    if (g.x - 3 * g.sigma > width) state.gust = null;
+    return;
+  }
+  const gustLevel = state.windInput * state.params.gustiness;
+  if (gustLevel < 0.05) return;
+  state.gustTimer -= dt;
+  if (state.gustTimer > 0) return;
+  state.gustTimer = randRange(rng, GUST_GAP[0], GUST_GAP[1]) / (0.5 + gustLevel);
+  const sigma = randRange(rng, GUST_SIGMA[0], GUST_SIGMA[1]);
+  state.gust = {
+    x: -3 * sigma,
+    sigma,
+    speed: randRange(rng, GUST_SPEED[0], GUST_SPEED[1]),
+    strength: randRange(rng, GUST_STRENGTH[0], GUST_STRENGTH[1]) * (0.5 + 0.5 * gustLevel),
+  };
+}
+
+function gustAt(state, x) {
+  const g = state.gust;
+  if (!g) return 0;
+  const u = (x - g.x) / g.sigma;
+  return g.strength * Math.exp(-0.5 * u * u);
+}
+
+function localWind(state, x) { return Math.min(1, state.wind + gustAt(state, x)); }
+
+// ---------- glass drops ----------
+function makeDrop(state, x, y) {
+  const rng = state.rng;
+  const bias = rng();
+  return {
+    x, y,
+    r: 2 + 7 * bias * bias,                    // 2..9, mostly small
+    vx: 0, vy: 0, tilt: 0,
+    stall: randRange(rng, 0.5, 5),             // seconds sitting still on the glass
+    phase: randRange(rng, 0, TAU),
+    wobbleAmp: randRange(rng, 1.5, 4.5),       // px of sideways travel
+    wobbleFreq: randRange(rng, 2, 5),          // rad/s
+    gx: x, gy: y,                              // where the last sheen spot was left
+  };
+}
+
+function spawnDrop(state) {
+  const x = randRange(state.rng, 6, state.width - 6);
+  const y = randRange(state.rng, 0, state.height * 0.85);
+  state.drops.push(makeDrop(state, x, y));
+}
+
+function terminalSpeed(r) { return 40 + r * 14; }     // px/s, r=9 -> 166
+function gravityFor(r)    { return 300 * (r / 9); }   // px/s^2, bigger drops pull harder
+
+function spawnDrops(state, dt) {
+  const p = state.params;
+  const target = Math.round(p.glassDrops * DROPS_PER_GLASS_UNIT);
+  if (state.drops.length >= target) { state.spawnDebt = 0; return; }
+  state.spawnDebt += (4 + 16 * p.density) * dt;
+  while (state.spawnDebt >= 1 && state.drops.length < target) {
+    spawnDrop(state);
+    state.spawnDebt -= 1;
+  }
+}
+
+function moveDrop(state, d, dt) {
+  const { rng, width } = state;
+  const lw = localWind(state, d.x);
+  const slide = 0.5 + state.params.slideSpeed;   // 0.8 for light rain, 1.5 for heavy
+  if (d.stall > 0) {
+    d.stall -= dt;
+    d.vy = 0;
+    if (lw > STALL_BREAK_WIND && d.r > 3) d.stall = 0;
+  } else {
+    d.vy = Math.min(d.vy + gravityFor(d.r) * slide * dt, terminalSpeed(d.r) * slide);
+    // small drops sometimes catch on the glass again
+    if (d.r < 5 && rng() < 0.35 * dt) d.stall = randRange(rng, 0.3, 1.5);
+  }
+  d.phase += d.wobbleFreq * dt;
+  // resting drops neither sway nor drift; bigger drops catch more of the wind
+  const moving = Math.min(1, d.vy / 40);
+  const push = MAX_DRIFT * lw * moving * (0.4 + 0.6 * Math.min(1, d.r / 9));
+  d.vx += (push - d.vx) * Math.min(1, 4 * dt);
+  const wobble = d.wobbleAmp * d.wobbleFreq * Math.cos(d.phase) * moving;
+  const sideways = d.vx + wobble;
+  d.x += sideways * dt;
+  d.y += d.vy * dt;
+  if (d.x < d.r || d.x > width - d.r) {
+    d.x = clamp(d.x, d.r, width - d.r);
+    d.vx = 0;
+  }
+  // moving drops lean along their path; sitting drops lean a little into the wind
+  d.tilt = d.vy > 0
+    ? clamp(Math.atan2(sideways, Math.max(d.vy, 20)), -MAX_TILT, MAX_TILT)
+    : 0.2 * lw;
+  leaveGlint(state, d);
+}
+
+function leaveGlint(state, d) {
+  if (d.vy <= 0) { d.gx = d.x; d.gy = d.y; return; }
+  if (Math.hypot(d.x - d.gx, d.y - d.gy) < GLINT_SPACING) return;
+  state.glints.push({ x: d.gx, y: d.gy, r: d.r * 0.7, age: 0 });
+  d.gx = d.x; d.gy = d.y;
+}
+
+function mergeDrops(a, b) {
+  const ma = a.r * a.r, mb = b.r * b.r, m = ma + mb;
+  const big = ma >= mb ? a : b;
+  big.x = (a.x * ma + b.x * mb) / m;
+  big.y = (a.y * ma + b.y * mb) / m;
+  big.vx = (a.vx * ma + b.vx * mb) / m;
+  big.vy = (a.vy * ma + b.vy * mb) / m;
+  big.r = Math.min(Math.sqrt(m), MAX_RADIUS);   // area is conserved
+  big.stall = 0;                                // a fresh merge always breaks free
+  return big;
+}
+
+// merge any touching pair (repeat-safe: removed drops are flagged)
+function mergeTouching(state) {
+  const ds = state.drops;
+  for (let i = 0; i < ds.length; i++) {
+    const a = ds[i];
+    if (a.dead) continue;
+    for (let j = i + 1; j < ds.length; j++) {
+      const b = ds[j];
+      if (b.dead) continue;
+      if (Math.hypot(a.x - b.x, a.y - b.y) < (a.r + b.r) * 0.85) {
+        const keep = mergeDrops(a, b);
+        const gone = keep === a ? b : a;
+        gone.dead = true;
+        if (gone === a) break;   // a is gone, stop scanning with it
+      }
+    }
+  }
+}
+
+function updateDrops(state, dt) {
+  spawnDrops(state, dt);
+  for (const d of state.drops) moveDrop(state, d, dt);
+  mergeTouching(state);
+  // a merge grows r, so clamp again to keep the whole drop on the glass
+  for (const d of state.drops) d.x = clamp(d.x, d.r, state.width - d.r);
+  state.drops = state.drops.filter(d => !d.dead && d.y - d.r <= state.height);
+}
+
+function fadeGlints(state, dt) {
+  const gs = state.glints;
+  let w = 0;
+  for (let i = 0; i < gs.length; i++) {
+    gs[i].age += dt;
+    if (gs[i].age < GLINT_SECONDS) gs[w++] = gs[i];
+  }
+  gs.length = w;
+  if (gs.length > MAX_GLINTS) gs.splice(0, gs.length - MAX_GLINTS);
+}
+
+// ---------- snow ----------
+function makeFlake(state, y) {
+  const { rng, width, height, params } = state;
+  const depth = rng();   // 0 far .. 1 near
+  const settles = rng() < SETTLE_SHARE;
+  return {
+    x: randRange(rng, 0, width), y,
+    r: 1 + 2.5 * depth, depth,
+    vy: FLAKE_FALL_PX * params.fallSpeed * (0.6 + 0.8 * depth),
+    phase: randRange(rng, 0, TAU),
+    swayAmp: randRange(rng, 3, 8),       // px
+    swayFreq: randRange(rng, 0.8, 1.5),  // rad/s
+    settleY: settles ? randRange(rng, SETTLE_HEIGHT[0], SETTLE_HEIGHT[1]) * height : Infinity,
+    settled: false, rest: 0, melt: 0,
+  };
+}
+
+function initSnow(state) {
+  if (!state.params.snow) return;
+  const n = Math.round(state.params.density * FLAKES_AT_FULL_DENSITY);
+  for (let i = 0; i < n; i++) state.flakes.push(makeFlake(state, randRange(state.rng, -10, state.height)));
+}
+
+function recycleFlake(state, f) { Object.assign(f, makeFlake(state, -5)); }
+
+function updateSnow(state, dt) {
+  const { width, height } = state;
+  let settledCount = 0;
+  for (const f of state.flakes) if (f.settled) settledCount++;
+  for (const f of state.flakes) {
+    if (f.settled) {
+      if (f.rest > 0) f.rest -= dt; else f.melt += dt;
+      if (f.melt >= MELT_SECONDS) { recycleFlake(state, f); settledCount--; }
+      continue;
+    }
+    const lw = localWind(state, f.x);
+    f.phase += f.swayFreq * dt;
+    f.x = wrap(f.x + (MAX_FLAKE_DRIFT * lw * (0.5 + 0.5 * f.depth) + f.swayAmp * f.swayFreq * Math.cos(f.phase)) * dt, 0, width);
+    f.y += f.vy * dt;
+    if (f.y >= f.settleY && settledCount < MAX_SETTLED) {
+      f.settled = true;
+      f.rest = randRange(state.rng, SETTLE_REST[0], SETTLE_REST[1]);
+      settledCount++;
+    } else if (f.y - f.r > height) {
+      recycleFlake(state, f);
+    }
+  }
+}
+
+// ---------- sky: clouds, haze, stars ----------
+function makeCloud(state, layer, x) {
+  const rng = state.rng;
+  const size = randRange(rng, 90, 170) * (layer === 0 ? 1.3 : 1);
+  const puffs = [];
+  const n = 5 + Math.floor(rng() * 4);
+  for (let i = 0; i < n; i++) {
+    puffs.push({
+      dx: randRange(rng, -0.6, 0.6) * size,
+      dy: randRange(rng, -0.2, 0.15) * size,
+      r: randRange(rng, 0.3, 0.5) * size,
+    });
+  }
+  return {
+    x, size, layer, puffs,
+    y: randRange(rng, 0.02, layer === 0 ? 0.45 : 0.6) * state.height,
+    speed: CLOUD_BASE_SPEED[layer] * randRange(rng, 0.8, 1.2),
+  };
+}
+
+function initClouds(state) {
+  const { rng, params, width } = state;
+  const perLayer = Math.round(2 + params.clouds * 5);
+  for (let layer = 0; layer < params.cloudLayers; layer++) {
+    for (let i = 0; i < perLayer; i++) state.clouds.push(makeCloud(state, layer, randRange(rng, -100, width + 100)));
+  }
+}
+
+function updateClouds(state, dt) {
+  for (const c of state.clouds) {
+    const windShare = c.layer === 0 ? 0.6 : 1;   // far clouds look slower
+    c.x += (c.speed + CLOUD_WIND_SPEED * state.wind * windShare) * dt;
+    if (c.x - c.size > state.width) c.x = -c.size;
+  }
+}
+
+function initHaze(state) {
+  const { rng, params, width, height } = state;
+  if (!params.fog) return;
+  for (let i = 0; i < 7; i++) {
+    state.haze.push({
+      x: randRange(rng, 0, width), y: randRange(rng, 0, height),
+      rx: randRange(rng, 160, 300), ry: randRange(rng, 50, 110),
+      speed: randRange(rng, 4, 10),
+      alpha: randRange(rng, 0.18, 0.32) * params.fog,
+    });
+  }
+}
+
+function updateHaze(state, dt) {
+  for (const h of state.haze) {
+    h.x += h.speed * (1 + 2 * state.wind) * dt;
+    if (h.x - h.rx > state.width) h.x = -h.rx;
+  }
+}
+
+function initStars(state) {
+  const { rng, params, width, height } = state;
+  const n = Math.round(45 * params.stars);
+  for (let i = 0; i < n; i++) {
+    const high = rng();
+    state.stars.push({
+      x: randRange(rng, 0, width),
+      y: high * high * height * 0.6,              // more stars near the top
+      r: randRange(rng, 0.5, 1.6),
+      phase: randRange(rng, 0, TAU),
+      freq: randRange(rng, 0.6, 2.2),             // rad/s twinkle
+    });
+  }
+}
+
+function updateStars(state, dt) {
+  for (const s of state.stars) s.phase += s.freq * dt;
+}
+
+// ---------- lightning ----------
+function makeBoltPath(state) {
+  const { rng, width, height } = state;
+  const pts = [{ x: randRange(rng, 0.2, 0.8) * width, y: 0 }];
+  const reach = randRange(rng, 0.3, 0.55) * height;
+  const lean = randRange(rng, -0.3, 0.3);
+  let last = pts[0];
+  while (last.y < reach) {
+    last = { x: last.x + randRange(rng, -18, 18) + lean * 24, y: last.y + randRange(rng, 18, 34) };
+    pts.push(last);
+  }
+  return pts;
+}
+
+function flashCurve(age, double) {
+  const first = Math.exp(-age * 14);
+  const second = double && age > DOUBLE_FLASH_DELAY ? 0.8 * Math.exp(-(age - DOUBLE_FLASH_DELAY) * 12) : 0;
+  return Math.max(first, second);
+}
+
+function endFlash(state) {
+  state.flashAge = -1;
+  state.flash = 0;
+  state.boltPath = null;
+}
+
+function updateLightning(state, dt) {
+  if (!state.params.bolt) return;
+  if (state.flashAge >= 0) {
+    state.flashAge += dt;
+    state.flash = flashCurve(state.flashAge, state.flashDouble);
+    if (state.flashAge > FLASH_SECONDS) endFlash(state);
+    return;
+  }
+  state.boltTimer -= dt;
+  if (state.boltTimer > 0) return;
+  const rng = state.rng;
+  state.boltTimer = randRange(rng, BOLT_GAP[0], BOLT_GAP[1]);
+  state.flashAge = 0;
+  state.flash = 1;
+  state.flashDouble = rng() < DOUBLE_FLASH_CHANCE;
+  state.boltPath = makeBoltPath(state);
+}
+
+// Advance the world by exactly dt seconds.
+function update(state, dt) {
+  state.time += dt;
+  updateWind(state, dt);
+  if (state.params.glassDrops > 0) updateDrops(state, dt);
+  if (state.params.snow) updateSnow(state, dt);
+  updateClouds(state, dt);
+  updateHaze(state, dt);
+  updateStars(state, dt);
+  state.sunPhase += SUN_TURN * dt;
+  updateLightning(state, dt);
+  fadeGlints(state, dt);
+}
+// </sim>
+
+// ============================================================
+// Drawing: reads state, paints to a 2D context. No logic changes.
+// Colours come from WeatherEffects.tint (day values) where the app has one.
+// ============================================================
+const SUN_RGB = '255,210,122';         // SUN day 0xFFD27A
+const CLOUD_RGB = '242,244,247';       // CLOUDS day 0xF2F4F7
+const CLOUD_GREY_RGB = '168,176,190';  // overcast: greyer than the app's CLOUDS tint
+const FOG_RGB = '230,233,238';         // FOG day 0xFFE6E9EE
+const SNOW_RGB = '255,255,255';        // SNOW day
+const FLASH_RGB = '232,240,255';       // STORM flash, day value 0xFFE8F0FF
+const STAR_RGB = '220,230,255';
+const SHEEN_RGB = '220,232,255';
+
+function rgba(rgb, a) { return 'rgba(' + rgb + ',' + Math.max(0, a).toFixed(3) + ')'; }
+
+function draw(ctx, state) {
+  ctx.clearRect(0, 0, state.width, state.height);
+  if (state.params.sun) drawSun(ctx, state);
+  if (state.stars.length) drawStars(ctx, state);
+  if (state.clouds.length) drawClouds(ctx, state);
+  if (state.haze.length) drawHaze(ctx, state);
+  if (state.flash > 0) drawFlash(ctx, state);      // behind the glass, so drops stay on top
+  if (state.glints.length) drawGlints(ctx, state);
+  if (state.drops.length) drawDrops(ctx, state);
+  if (state.flakes.length) drawFlakes(ctx, state);
+}
+
+function drawSun(ctx, state) {
+  const { width: w, height: h } = state;
+  const s = state.params.sun;
+  const cx = w * 0.86, cy = h * 0.05;
+  const pulse = 0.9 + 0.1 * Math.sin(state.sunPhase * 5);
+  const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, w * 1.1);
+  glow.addColorStop(0, rgba(SUN_RGB, 0.6 * s * pulse));
+  glow.addColorStop(0.18, rgba(SUN_RGB, 0.28 * s));
+  glow.addColorStop(1, rgba(SUN_RGB, 0));
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, w, h);
+  drawSunRays(ctx, cx, cy, w * 1.2, state.sunPhase, s);
+}
+
+// Fixed pseudo-random value in 0..1 for ray i, so each ray keeps its length
+// and brightness from frame to frame (no flicker).
+function rayRandom(i, salt) {
+  const x = Math.sin(i * 12.9898 + salt * 78.233) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+// Rays are soft shafts: 18 rays of uneven length and brightness, each drawn as
+// a wide faint wedge plus a narrower brighter core, fading out along its length.
+function drawSunRays(ctx, cx, cy, len, turn, strength) {
+  const rays = 18;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(turn);
+  ctx.globalCompositeOperation = 'lighter';
+  const passes = [
+    { half: 0.11, alpha: 0.35 },   // wide, soft halo around each ray
+    { half: 0.04, alpha: 0.8 },    // narrow core
+  ];
+  for (let i = 0; i < rays; i++) {
+    const a = (i / rays) * TAU + (rayRandom(i, 1) - 0.5) * 0.12;
+    const rayLen = len * (0.5 + 0.5 * rayRandom(i, 2));
+    const bright = 0.55 + 0.45 * rayRandom(i, 3);
+    for (const pass of passes) {
+      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rayLen);
+      const peak = 0.10 * strength * bright * pass.alpha;
+      g.addColorStop(0, rgba(SUN_RGB, peak));
+      g.addColorStop(0.35, rgba(SUN_RGB, peak * 0.7));
+      g.addColorStop(1, rgba(SUN_RGB, 0));
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, rayLen, a - pass.half, a + pass.half);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+function drawStars(ctx, state) {
+  for (const s of state.stars) {
+    const twinkle = 0.5 + 0.5 * Math.sin(s.phase);
+    ctx.fillStyle = rgba(STAR_RGB, 0.3 + 0.65 * twinkle * twinkle);
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, TAU);
+    ctx.fill();
+  }
+}
+
+function drawClouds(ctx, state) {
+  const rgb = state.mode === 'overcast' ? CLOUD_GREY_RGB : CLOUD_RGB;
+  for (const c of state.clouds) {   // back layer was created first, so it paints first
+    const a = c.layer === 0 ? 0.30 : 0.42;
+    for (const p of c.puffs) {
+      const x = c.x + p.dx, y = c.y + p.dy;
+      const g = ctx.createRadialGradient(x, y, 0, x, y, p.r);
+      g.addColorStop(0, rgba(rgb, a));
+      g.addColorStop(0.6, rgba(rgb, a * 0.6));
+      g.addColorStop(1, rgba(rgb, 0));
+      ctx.fillStyle = g;
+      ctx.fillRect(x - p.r, y - p.r, p.r * 2, p.r * 2);
+    }
+  }
+}
+
+function drawHaze(ctx, state) {
+  ctx.fillStyle = rgba(FOG_RGB, 0.16 * state.params.fog);   // even veil over everything
+  ctx.fillRect(0, 0, state.width, state.height);
+  for (const h of state.haze) {
+    ctx.save();
+    ctx.translate(h.x, h.y);
+    ctx.scale(h.rx / h.ry, 1);
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, h.ry);
+    g.addColorStop(0, rgba(FOG_RGB, h.alpha));
+    g.addColorStop(1, rgba(FOG_RGB, 0));
+    ctx.fillStyle = g;
+    ctx.fillRect(-h.ry, -h.ry, h.ry * 2, h.ry * 2);
+    ctx.restore();
+  }
+}
+
+function drawFlash(ctx, state) {
+  const f = state.flash;
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';   // brightens the wallpaper below
+  ctx.fillStyle = rgba(FLASH_RGB, 0.38 * f);
+  ctx.fillRect(0, 0, state.width, state.height);
+  ctx.restore();
+  if (state.boltPath && f > 0.3) drawBolt(ctx, state.boltPath, f);
+}
+
+function drawBolt(ctx, pts, f) {
+  ctx.save();
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.strokeStyle = rgba(FLASH_RGB, 0.35 * f);
+  ctx.lineWidth = 6;
+  ctx.stroke();
+  ctx.strokeStyle = rgba('255,255,255', 0.9 * f);
+  ctx.lineWidth = 1.6;
+  ctx.stroke();
+  ctx.restore();
+}
+
+// A soft wet spot plus, for its first frame or two, a pin of light. No lines are drawn.
+function drawGlints(ctx, state) {
+  for (const g of state.glints) {
+    const t = g.age / GLINT_SECONDS;
+    const fade = (1 - t) * (1 - t);
+    ctx.fillStyle = rgba(SHEEN_RGB, 0.10 * fade);
+    ctx.beginPath();
+    ctx.arc(g.x, g.y, g.r, 0, TAU);
+    ctx.fill();
+    if (t < 0.35) {
+      ctx.fillStyle = rgba('255,255,255', 0.45 * (1 - t / 0.35));
+      ctx.beginPath();
+      ctx.arc(g.x - g.r * 0.3, g.y, 0.9, 0, TAU);
+      ctx.fill();
+    }
+  }
+}
+
+function drawDrops(ctx, state) {
+  // small drops first so big ones overlap them
+  const sorted = state.drops.slice().sort((a, b) => a.r - b.r);
+  for (const d of sorted) drawDrop(ctx, d);
+}
+
+function drawDrop(ctx, d) {
+  const r = d.r;
+  const speed = Math.hypot(d.vx, d.vy);
+  const stretch = 1 + Math.min(speed / 220, 0.35);   // moving drops are a little long
+  const rx = r * 0.92, ry = r * stretch;
+
+  ctx.save();
+  ctx.translate(d.x, d.y);
+  ctx.rotate(-d.tilt);   // long axis follows the path
+
+  // shadow under the drop
+  ctx.fillStyle = 'rgba(0,0,0,0.28)';
+  ctx.beginPath();
+  ctx.ellipse(r * 0.12, ry * 0.55 + 1, rx * 0.95, ry * 0.7, 0, 0, TAU);
+  ctx.fill();
+
+  // soft body: clear in the middle, brighter low edge (light gathering)
+  const g = ctx.createRadialGradient(0, -ry * 0.25, r * 0.1, 0, 0, ry);
+  g.addColorStop(0, 'rgba(255,255,255,0.05)');
+  g.addColorStop(0.65, 'rgba(200,220,255,0.10)');
+  g.addColorStop(1, 'rgba(230,240,255,0.30)');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, rx, ry, 0, 0, TAU);
+  ctx.fill();
+
+  // darker rim
+  ctx.strokeStyle = 'rgba(0,6,20,0.45)';
+  ctx.lineWidth = Math.max(0.8, r * 0.14);
+  ctx.stroke();
+
+  // specular highlight, top left
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  ctx.beginPath();
+  ctx.arc(-rx * 0.36, -ry * 0.4, Math.max(0.8, r * 0.2), 0, TAU);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawFlakes(ctx, state) {
+  for (const f of state.flakes) {
+    const a = f.settled ? 0.9 * (1 - f.melt / MELT_SECONDS) : 0.45 + 0.45 * f.depth;
+    const halo = f.settled ? f.r * (2 + f.melt) : f.r * 2;   // a melting flake spreads into a wet spot
+    ctx.fillStyle = rgba(SNOW_RGB, a * 0.22);
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, halo, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = rgba(SNOW_RGB, a);
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, f.r, 0, TAU);
+    ctx.fill();
+  }
+}
+
+// ============================================================
+// Page glue: canvas sizing, loop, controls.
+// ============================================================
+const SCENES = {
+  clear:    { time: '10:24', text: '24° clear' },
+  partly:   { time: '10:24', text: '19° partly cloudy' },
+  overcast: { time: '10:24', text: '14° overcast' },
+  light:    { time: '10:24', text: '11° light rain' },
+  heavy:    { time: '18:40', text: '9° heavy rain' },
+  storm:    { time: '18:40', text: '17° thunderstorm' },
+  snow:     { time: '10:24', text: '-2° snow' },
+  fog:      { time: '07:15', text: '6° fog' },
+  night:    { time: '23:12', text: '8° clear night' },
+};
+
+function describe(state) {
+  const p = state.params;
+  const parts = ['mode ' + state.mode];
+  if (p.glassDrops || p.snow) parts.push('density ' + p.density, 'fallSpeed ' + p.fallSpeed);
+  if (p.glassDrops) parts.push('glassDrops ' + p.glassDrops, 'slideSpeed ' + p.slideSpeed);
+  if (p.bolt) parts.push('bolt 1');
+  if (p.sun) parts.push('sun ' + p.sun);
+  if (p.clouds) parts.push('clouds ' + p.clouds + ' x' + p.cloudLayers);
+  if (p.fog) parts.push('fog ' + p.fog);
+  if (p.stars) parts.push('stars ' + p.stars);
+  parts.push('wind ' + state.wind.toFixed(2) + ' (cap ' + p.wind + ')');
+  return parts.join(' · ');
+}
+
+(function () {
+  if (typeof document === 'undefined') return;
+
+  const phone = document.getElementById('phone');
+  const canvas = document.getElementById('weather');
+  const ctx = canvas.getContext('2d');
+  const buttons = document.querySelectorAll('[data-mode]');
+  const pauseBtn = document.getElementById('pause');
+  const windInput = document.getElementById('wind');
+  const windValue = document.getElementById('wind-value');
+  const reducedBox = document.getElementById('reduced');
+  const statusEl = document.getElementById('status');
+  const clockEl = document.getElementById('clock');
+  const wxLineEl = document.getElementById('wx-line');
+  const reducedQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  let mode = 'light';
+  let state = null;
+  let paused = false;
+  let rafId = 0;
+  let lastTime = 0;
+  let accumulator = 0;
+
+  function windFraction() { return Number(windInput.value) / 100; }
+
+  function warmUp(s, seconds) {
+    for (let i = 0; i < Math.round(seconds / STEP); i++) update(s, STEP);
+  }
+
+  function reset() {
+    const w = phone.clientWidth, h = phone.clientHeight;
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    state = createState(mode, w, h, (Math.random() * 1e9) | 0, windFraction());
+    warmUp(state, 6);   // start with drops already on the glass
+    if (reducedBox.checked) stillFrame(state);
+    draw(ctx, state);
+    statusEl.textContent = describe(state);
+  }
+
+  function frame(now) {
+    rafId = requestAnimationFrame(frame);
+    accumulator += Math.min((now - lastTime) / 1000, 0.25);
+    lastTime = now;
+    let steps = 0;
+    while (accumulator >= STEP && steps < 5) {
+      update(state, STEP);
+      accumulator -= STEP;
+      steps++;
+    }
+    if (steps === 5) accumulator = 0;   // too far behind, drop the backlog
+    if (steps > 0) draw(ctx, state);
+  }
+
+  function shouldRun() {
+    return !paused && !document.hidden && !reducedBox.checked;
+  }
+
+  function sync() {
+    if (shouldRun()) {
+      if (!rafId) {
+        lastTime = performance.now();
+        accumulator = 0;
+        rafId = requestAnimationFrame(frame);
+      }
+    } else if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = 0;
+    }
+  }
+
+  function setMode(next) {
+    mode = next;
+    buttons.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
+    phone.dataset.weather = mode;
+    clockEl.textContent = SCENES[mode].time;
+    wxLineEl.textContent = SCENES[mode].text;
+    reset();
+    sync();
+  }
+
+  buttons.forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
+  pauseBtn.addEventListener('click', () => {
+    paused = !paused;
+    pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+    pauseBtn.setAttribute('aria-pressed', String(paused));
+    sync();
+  });
+  windInput.addEventListener('input', () => {
+    windValue.textContent = windInput.value;
+    setWind(state, windFraction());
+    statusEl.textContent = describe(state);
+  });
+  reducedBox.checked = reducedQuery.matches;
+  reducedBox.addEventListener('change', () => { reset(); sync(); });
+  reducedQuery.addEventListener('change', () => {
+    reducedBox.checked = reducedQuery.matches;
+    reset();
+    sync();
+  });
+  document.addEventListener('visibilitychange', sync);
+
+  let resizeTimer = 0;
+  if ('ResizeObserver' in window) {
+    new ResizeObserver(() => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => { reset(); sync(); }, 120);
+    }).observe(phone);
+  } else {
+    window.addEventListener('resize', () => { reset(); sync(); });
+  }
+
+  setMode(mode);   // with reduced motion this draws one still frame and never starts the loop
+})();
+</script>
+</body>
+</html>
