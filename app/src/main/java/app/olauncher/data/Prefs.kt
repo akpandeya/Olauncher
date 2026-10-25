@@ -164,6 +164,7 @@ class Prefs(context: Context) :
         const val SEARCH_ENGINE_CUSTOM_URL = "SEARCH_ENGINE_CUSTOM_URL"
         const val DRAWER_NEW_FIRST = "DRAWER_NEW_FIRST"
         const val DRAWER_LETTER_STRIP = "DRAWER_LETTER_STRIP"
+        const val LETTER_STRIP_HINT_SHOWN = "LETTER_STRIP_HINT_SHOWN"
         const val NEW_APP_TIP_SEEN = "NEW_APP_TIP_SEEN"
         const val DRAWER_RECENTS = "DRAWER_RECENTS"
         const val SEARCH_CONTACTS = "SEARCH_CONTACTS"

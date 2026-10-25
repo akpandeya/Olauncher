@@ -46,10 +46,24 @@ internal fun AppDrawerFragment.setupLetterStripLayout() {
     zone.removeAllViews()
     if (isStart) {
         zone.addView(binding.letterStrip)
+        zone.addView(binding.letterStripHint)
         zone.addView(binding.letterPreview)
     } else {
         zone.addView(binding.letterPreview)
+        zone.addView(binding.letterStripHint)
         zone.addView(binding.letterStrip)
+    }
+    binding.letterStripHint.setOnClickListener {
+        dismissLetterStripHint()
+    }
+}
+
+internal fun AppDrawerFragment.dismissLetterStripHint() {
+    if (binding.letterStripHint.isVisible) {
+        binding.letterStripHint.isVisible = false
+        prefs.letterStripHintShown = true
+    } else if (!prefs.letterStripHintShown) {
+        prefs.letterStripHintShown = true
     }
 }
 
@@ -63,12 +77,20 @@ internal fun AppDrawerFragment.updateLetterStripVisibility(query: String? = bind
     binding.letterStripContainer.isVisible = show
     if (!show) {
         binding.letterPreview.visibility = View.INVISIBLE
+        binding.letterStripHint.isVisible = false
+    } else {
+        val showHint = LetterStripVisibility.shouldShowHint(
+            hintShown = prefs.letterStripHintShown,
+            stripVisible = true,
+        )
+        binding.letterStripHint.isVisible = showHint
     }
 }
 
 internal fun AppDrawerFragment.populateLetterStrip(ordered: List<AppModel>) {
     if (!prefs.drawerLetterStrip) {
         binding.letterStripContainer.isVisible = false
+        binding.letterStripHint.isVisible = false
         updateListInsetForStrip()
         return
     }
@@ -137,6 +159,7 @@ internal fun AppDrawerFragment.setupLetterStripTouchListener() {
 
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN, MotionEvent.ACTION_MOVE -> {
+                dismissLetterStripHint()
                 view.parent?.requestDisallowInterceptTouchEvent(true)
                 val stripIndex = LetterIndex.letterAt(event.y, view.height, stripLetters.size)
                 val letter = LetterIndex.nearestPresent(stripLetters, letterPosList.map { it.letter }.toSet(), stripIndex)
