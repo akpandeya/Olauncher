@@ -1,0 +1,1551 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Home Weather Mock</title>
+<style>
+  /* =========================================================
+     Tokens. Light is the base; dark is declared twice (system
+     setting and explicit choice) and the two blocks must match.
+     Home wallpaper per look: --wx-<look>-1/2/3 (sky top, middle,
+     horizon) and --wx-<look>-g (hills). Home text: --ink, --ink2,
+     --halo. Storm and night keep dark skies and light text in
+     both themes (set on .phone further down).
+     ========================================================= */
+  :root {
+    --page-bg: #e9ebef;
+    --text: #141821;
+    --muted: #4d5666;
+    --btn-bg: #ffffff;
+    --btn-border: #c3c9d4;
+    --btn-active-bg: #141821;
+    --btn-active-text: #ffffff;
+    --focus: #2563eb;
+
+    --wx-clear-1: #8fbbe8;    --wx-clear-2: #c4dcf3;    --wx-clear-3: #f4e4c4;    --wx-clear-g: #87a88a;
+    --wx-partly-1: #9fbcdc;   --wx-partly-2: #cbdbeb;   --wx-partly-3: #e9e2d2;   --wx-partly-g: #8ea592;
+    --wx-overcast-1: #b0b8c2; --wx-overcast-2: #c9cfd6; --wx-overcast-3: #dadde1; --wx-overcast-g: #8b9399;
+    --wx-light-1: #9aa7b7;    --wx-light-2: #b6c0cc;    --wx-light-3: #cbd2da;    --wx-light-g: #7a8590;
+    --wx-heavy-1: #8592a3;    --wx-heavy-2: #a0abb9;    --wx-heavy-3: #b8c0ca;    --wx-heavy-g: #67717b;
+    --wx-snow-1: #c0ccda;     --wx-snow-2: #d8dfe8;     --wx-snow-3: #edf0f4;     --wx-snow-g: #f5f7fa;
+    --wx-fog-1: #c1c6cc;      --wx-fog-2: #d1d5d9;      --wx-fog-3: #e0e2e5;      --wx-fog-g: #a3aab0;
+    --wx-none-1: #d4d9e0;     --wx-none-2: #e2e6eb;     --wx-none-3: #eceef2;     --wx-none-g: #b8bfc8;
+    /* storm and night: the same dark sky in both themes */
+    --wx-storm-1: #070b16;    --wx-storm-2: #141a2b;    --wx-storm-3: #231d2b;    --wx-storm-g: #06080d;
+    --wx-night-1: #040714;    --wx-night-2: #0c1430;    --wx-night-3: #1a2140;    --wx-night-g: #04060c;
+
+    --ink: #0f141b; --ink2: #333c49; --halo: rgba(255,255,255,.6);
+    --shade-rgb: 255,255,255; --shade: .28;
+
+    /* Icon tokens, copied from the Thumbline Weather Icons page (via today-weather.html). */
+    --sun-hi:#FFE7A0; --sun-lo:#E9A23B; --glow:#FFC850; --ray:#EDAE44; --cloud-hi:#FFFFFF; --cloud-lo:#BCC9D3;
+    --storm-hi:#A3B3C0; --storm-lo:#5E7080; --drop-hi:#8CBEDD; --drop-lo:#2E6585; --bolt-hi:#FFE08A; --bolt-lo:#E39A1F;
+    --moon-hi:#FFF0B3; --moon-lo:#D6A02E; --star:#C2A56A; --snow-hi:#FFFFFF; --snow-lo:#A9CBE0; --flake:#2E6585;
+    --fog:#7F93A2; --icon-shadow:rgba(30,50,70,.38);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page-bg: #0b0d11; --text: #eef1f5; --muted: #9aa3b5;
+      --btn-bg: #1b202b; --btn-border: #353d4e; --btn-active-bg: #e8ebf2; --btn-active-text: #11141b; --focus: #7aa7ff;
+
+      --wx-clear-1: #2f6fc4;    --wx-clear-2: #6ea8e6;    --wx-clear-3: #f3d7a6;    --wx-clear-g: #2c4a3a;
+      --wx-partly-1: #4a7fbf;   --wx-partly-2: #8fb4dc;   --wx-partly-3: #e6dcc8;   --wx-partly-g: #33503f;
+      --wx-overcast-1: #6c7684; --wx-overcast-2: #959ea9; --wx-overcast-3: #b9bec4; --wx-overcast-g: #3b4246;
+      --wx-light-1: #46566b;    --wx-light-2: #6b7a8e;    --wx-light-3: #8a8f99;    --wx-light-g: #2a3138;
+      --wx-heavy-1: #0a1022;    --wx-heavy-2: #121a33;    --wx-heavy-3: #2a1a26;    --wx-heavy-g: #0b0e15;
+      --wx-snow-1: #8a9bb3;     --wx-snow-2: #b9c6d6;     --wx-snow-3: #e4e9f0;     --wx-snow-g: #dfe6ef;
+      --wx-fog-1: #9aa3ad;      --wx-fog-2: #b7bdc4;      --wx-fog-3: #cfd3d8;      --wx-fog-g: #6d757d;
+      --wx-none-1: #1a1f28;     --wx-none-2: #232a35;     --wx-none-3: #2d3440;     --wx-none-g: #12161c;
+
+      --ink: #f4f7fb; --ink2: #cdd6e2; --halo: rgba(4,8,18,.55);
+      --shade-rgb: 5,8,16; --shade: .38;
+
+      --sun-hi:#FFEBB0; --sun-lo:#F0B24A; --glow:#F2B84B; --ray:#F5C566; --cloud-hi:#F2F6F9; --cloud-lo:#9BAAB6;
+      --storm-hi:#8E9DAA; --storm-lo:#55636F; --drop-hi:#BBD8EA; --drop-lo:#6FA4C6; --bolt-hi:#FFE08A; --bolt-lo:#F0A93A;
+      --moon-hi:#FFF4B8; --moon-lo:#E9B84A; --star:#F4EAD0; --snow-hi:#FFFFFF; --snow-lo:#BFD9EA; --flake:#96B9D0;
+      --fog:#8FA1AE; --icon-shadow:rgba(0,0,0,.60);
+    }
+  }
+  :root[data-theme="dark"] {
+      --page-bg: #0b0d11; --text: #eef1f5; --muted: #9aa3b5;
+      --btn-bg: #1b202b; --btn-border: #353d4e; --btn-active-bg: #e8ebf2; --btn-active-text: #11141b; --focus: #7aa7ff;
+
+      --wx-clear-1: #2f6fc4;    --wx-clear-2: #6ea8e6;    --wx-clear-3: #f3d7a6;    --wx-clear-g: #2c4a3a;
+      --wx-partly-1: #4a7fbf;   --wx-partly-2: #8fb4dc;   --wx-partly-3: #e6dcc8;   --wx-partly-g: #33503f;
+      --wx-overcast-1: #6c7684; --wx-overcast-2: #959ea9; --wx-overcast-3: #b9bec4; --wx-overcast-g: #3b4246;
+      --wx-light-1: #46566b;    --wx-light-2: #6b7a8e;    --wx-light-3: #8a8f99;    --wx-light-g: #2a3138;
+      --wx-heavy-1: #0a1022;    --wx-heavy-2: #121a33;    --wx-heavy-3: #2a1a26;    --wx-heavy-g: #0b0e15;
+      --wx-snow-1: #8a9bb3;     --wx-snow-2: #b9c6d6;     --wx-snow-3: #e4e9f0;     --wx-snow-g: #dfe6ef;
+      --wx-fog-1: #9aa3ad;      --wx-fog-2: #b7bdc4;      --wx-fog-3: #cfd3d8;      --wx-fog-g: #6d757d;
+      --wx-none-1: #1a1f28;     --wx-none-2: #232a35;     --wx-none-3: #2d3440;     --wx-none-g: #12161c;
+
+      --ink: #f4f7fb; --ink2: #cdd6e2; --halo: rgba(4,8,18,.55);
+      --shade-rgb: 5,8,16; --shade: .38;
+
+      --sun-hi:#FFEBB0; --sun-lo:#F0B24A; --glow:#F2B84B; --ray:#F5C566; --cloud-hi:#F2F6F9; --cloud-lo:#9BAAB6;
+      --storm-hi:#8E9DAA; --storm-lo:#55636F; --drop-hi:#BBD8EA; --drop-lo:#6FA4C6; --bolt-hi:#FFE08A; --bolt-lo:#F0A93A;
+      --moon-hi:#FFF4B8; --moon-lo:#E9B84A; --star:#F4EAD0; --snow-hi:#FFFFFF; --snow-lo:#BFD9EA; --flake:#96B9D0;
+      --fog:#8FA1AE; --icon-shadow:rgba(0,0,0,.60);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--page-bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    overflow-x: hidden;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 24px 16px 40px;
+    gap: 16px;
+  }
+  .intro, .panel, .note, .status { width: 100%; max-width: 420px; }
+  .intro h1 { font-size: 18px; margin: 0 0 4px; }
+  .intro p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted); }
+
+  /* ---------- Phone ---------- */
+  .phone {
+    position: relative;
+    width: 390px; max-width: 100%;
+    height: 844px; max-height: max(560px, calc(100svh - 48px)); min-height: 560px;
+    border-radius: 44px;
+    overflow: hidden;
+    background: #05070c;
+    box-shadow: 0 0 0 8px #0b0d12, 0 0 0 9px #2a2f3a, 0 24px 60px rgba(0,0,0,.3);
+    isolation: isolate;
+    flex: none;
+    --sky-1: var(--wx-none-1); --sky-2: var(--wx-none-2); --sky-3: var(--wx-none-3); --ground: var(--wx-none-g);
+    --bokeh: 0; --wall-filter: blur(2px);
+  }
+  .phone[data-weather="clear"]    { --sky-1: var(--wx-clear-1); --sky-2: var(--wx-clear-2); --sky-3: var(--wx-clear-3); --ground: var(--wx-clear-g); }
+  .phone[data-weather="partly"]   { --sky-1: var(--wx-partly-1); --sky-2: var(--wx-partly-2); --sky-3: var(--wx-partly-3); --ground: var(--wx-partly-g); }
+  .phone[data-weather="overcast"] { --sky-1: var(--wx-overcast-1); --sky-2: var(--wx-overcast-2); --sky-3: var(--wx-overcast-3); --ground: var(--wx-overcast-g); --wall-filter: blur(2px) saturate(.75); }
+  .phone[data-weather="light"]    { --sky-1: var(--wx-light-1); --sky-2: var(--wx-light-2); --sky-3: var(--wx-light-3); --ground: var(--wx-light-g); --bokeh: .3; }
+  .phone[data-weather="heavy"]    { --sky-1: var(--wx-heavy-1); --sky-2: var(--wx-heavy-2); --sky-3: var(--wx-heavy-3); --ground: var(--wx-heavy-g); --bokeh: .8; }
+  .phone[data-weather="storm"]    { --sky-1: var(--wx-storm-1); --sky-2: var(--wx-storm-2); --sky-3: var(--wx-storm-3); --ground: var(--wx-storm-g); --bokeh: .6; }
+  .phone[data-weather="snow"]     { --sky-1: var(--wx-snow-1); --sky-2: var(--wx-snow-2); --sky-3: var(--wx-snow-3); --ground: var(--wx-snow-g); }
+  .phone[data-weather="fog"]      { --sky-1: var(--wx-fog-1); --sky-2: var(--wx-fog-2); --sky-3: var(--wx-fog-3); --ground: var(--wx-fog-g); --bokeh: .2; --wall-filter: blur(8px) saturate(.6) brightness(1.05); }
+  .phone[data-weather="night"]    { --sky-1: var(--wx-night-1); --sky-2: var(--wx-night-2); --sky-3: var(--wx-night-3); --ground: var(--wx-night-g); --bokeh: .45; }
+  /* Dark-sky looks: light text and the dark icon set in both themes. */
+  .phone[data-weather="storm"], .phone[data-weather="night"] {
+    --ink: #f4f7fb; --ink2: #cdd6e2; --halo: rgba(4,8,18,.6); --shade-rgb: 5,8,16; --shade: .38;
+    --sun-hi:#FFEBB0; --sun-lo:#F0B24A; --glow:#F2B84B; --ray:#F5C566; --cloud-hi:#F2F6F9; --cloud-lo:#9BAAB6;
+    --storm-hi:#8E9DAA; --storm-lo:#55636F; --drop-hi:#BBD8EA; --drop-lo:#6FA4C6; --bolt-hi:#FFE08A; --bolt-lo:#F0A93A;
+    --moon-hi:#FFF4B8; --moon-lo:#E9B84A; --star:#F4EAD0; --snow-hi:#FFFFFF; --snow-lo:#BFD9EA; --flake:#96B9D0;
+    --fog:#8FA1AE; --icon-shadow:rgba(0,0,0,.60);
+  }
+
+  /* Painted wallpaper (from weather-effects.html): sky gradient, two hills, bokeh. */
+  .wall {
+    position: absolute; inset: -20px;
+    background: linear-gradient(180deg, var(--sky-1) 0%, var(--sky-2) 50%, var(--sky-3) 100%);
+    filter: var(--wall-filter);
+  }
+  .ground {
+    position: absolute; left: 0; right: 0; bottom: 0; height: 34%;
+    background:
+      radial-gradient(90% 60% at 18% 100%, var(--ground) 0 62%, transparent 63%),
+      radial-gradient(80% 48% at 86% 100%, var(--ground) 0 60%, transparent 61%);
+    opacity: .9;
+  }
+  .bokeh { position: absolute; inset: -20px; opacity: var(--bokeh); }
+  .b { position: absolute; border-radius: 50%; filter: blur(7px); opacity: .75; mix-blend-mode: screen; }
+  .b.r { background: radial-gradient(circle, #ff4a3d 0%, rgba(255,74,61,.55) 55%, rgba(255,74,61,0) 72%); }
+  .b.a { background: radial-gradient(circle, #ffb43a 0%, rgba(255,180,58,.55) 55%, rgba(255,180,58,0) 72%); }
+  .b.u { background: radial-gradient(circle, #4a8dff 0%, rgba(74,141,255,.5) 55%, rgba(74,141,255,0) 72%); }
+  .b.sm { filter: blur(4px); opacity: .6; }
+  .b.lg { filter: blur(11px); opacity: .5; }
+  .shade {
+    position: absolute; inset: 0;
+    background: linear-gradient(180deg, rgba(var(--shade-rgb),var(--shade)) 0%, rgba(var(--shade-rgb),0) 38%,
+      rgba(var(--shade-rgb),0) 60%, rgba(var(--shade-rgb),var(--shade)) 100%);
+  }
+  canvas#weather { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; display: block; }
+
+  /* ---------- Thumbline home: clock and date row on top, apps at the bottom ---------- */
+  .home {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; justify-content: space-between;
+    padding: 56px 24px 48px;
+    color: var(--ink);
+    text-shadow: 0 0 1px var(--halo), 0 1px 10px var(--halo);
+    user-select: none;
+  }
+  .clock { font-size: 76px; line-height: 1; font-weight: 200; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+  .meta {
+    display: flex; flex-wrap: wrap; align-items: center; column-gap: 2px; row-gap: 2px;
+    margin-top: 6px; font-size: 13px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+  }
+  .meta > span { padding: 0 3px; }
+  .meta .wx { display: inline-flex; align-items: center; gap: 5px; font-variant-numeric: tabular-nums; }
+  .meta .wx .wi { filter: drop-shadow(0 0 3px var(--halo)); }
+  .next { margin-top: 8px; padding: 0 3px; font-size: 14px; color: var(--ink2); }
+  .apps { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; font-size: 21px; font-weight: 400; justify-items: start; }
+  .shortcuts {
+    position: absolute; right: 16px; bottom: 96px;
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .shortcuts svg { display: block; width: 40px; height: 40px; filter: drop-shadow(0 1px 4px rgba(0,0,0,.25)); }
+  .home-bar {
+    position: absolute; left: 50%; bottom: 9px; width: 120px; height: 5px;
+    margin-left: -60px; border-radius: 3px; background: var(--ink); opacity: .45;
+  }
+
+  /* Vector icons (Thumbline Weather Icons, section A). 24-unit grid. */
+  .wi { display: block; overflow: visible; flex: none; }
+  .spin { transform-box: fill-box; transform-origin: center; animation: spin 48s linear infinite; }
+  .glow { animation: breathe 6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  .tw { animation: tw 3.2s ease-in-out infinite; }
+  .bolt { animation: flash 5s steps(1) infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes breathe { 50% { opacity: .7; transform: scale(.94); } }
+  @keyframes tw { 50% { opacity: .25; } }
+  @keyframes flash { 0%, 88%, 94%, 100% { opacity: 1; } 91%, 97% { opacity: .55; } }
+  .defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+  /* Pause and reduced motion hold the icon on its current frame. Button icons never move. */
+  html.still .phone .wi * { animation-play-state: paused !important; }
+  .looks .wi * { animation: none !important; }
+  @media (prefers-reduced-motion: reduce) { .phone .wi * { animation-play-state: paused !important; } }
+
+  /* ---------- Mock controls ---------- */
+  .panel { display: flex; flex-direction: column; gap: 10px; }
+  .panel h2 { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .looks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  @media (min-width: 380px) { .looks { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  .panel button {
+    min-height: 44px; padding: 6px 8px;
+    font: inherit; font-size: 13px; font-weight: 600;
+    color: var(--text); background: var(--btn-bg);
+    border: 1px solid var(--btn-border); border-radius: 12px;
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
+    display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 0;
+  }
+  .panel button span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .panel button[aria-pressed="true"] { background: var(--btn-active-bg); color: var(--btn-active-text); border-color: var(--btn-active-bg); }
+  button:focus-visible, input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 14px; }
+  .seg { display: flex; gap: 6px; }
+  .seg button { min-width: 64px; }
+  .wind { display: flex; align-items: center; gap: 10px; width: 100%; }
+  .wind input { flex: 1; min-width: 0; accent-color: var(--focus); }
+  .wind output { min-width: 2.5em; text-align: right; font-variant-numeric: tabular-nums; }
+  .check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .check input { width: 20px; height: 20px; accent-color: var(--focus); }
+  .status { margin: 0; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); overflow-wrap: anywhere; }
+  .note { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted); }
+
+  @media (max-width: 430px) {
+    .phone { border-radius: 28px; box-shadow: 0 0 0 1px #2a2f3a, 0 12px 30px rgba(0,0,0,.25); }
+    .home { padding: 48px 20px 40px; }
+    .clock { font-size: 64px; }
+    .apps { gap: 13px; font-size: 19px; }
+    .shortcuts { right: 12px; bottom: 84px; gap: 12px; }
+    .shortcuts svg { width: 36px; height: 36px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="intro">
+  <h1>Home weather</h1>
+  <p>Thumbline home with vector weather icons and rain hitting the glass. Example data.</p>
+</header>
+
+<main class="phone" id="phone" data-weather="light" aria-label="Thumbline home screen preview">
+  <svg class="defs" id="home-defs" width="0" height="0" aria-hidden="true" focusable="false"></svg>
+  <div class="wall"><div class="ground"></div></div>
+  <div class="bokeh" aria-hidden="true">
+    <span class="b r lg" style="left:6%;top:38%;width:120px;height:120px"></span>
+    <span class="b a"    style="left:62%;top:30%;width:84px;height:84px"></span>
+    <span class="b u lg" style="left:70%;top:52%;width:130px;height:130px"></span>
+    <span class="b a sm" style="left:24%;top:48%;width:46px;height:46px"></span>
+    <span class="b r sm" style="left:48%;top:44%;width:38px;height:38px"></span>
+    <span class="b u"    style="left:12%;top:62%;width:90px;height:90px"></span>
+    <span class="b a lg" style="left:38%;top:68%;width:140px;height:140px"></span>
+    <span class="b r"    style="left:78%;top:72%;width:76px;height:76px"></span>
+    <span class="b u sm" style="left:56%;top:58%;width:34px;height:34px"></span>
+    <span class="b a sm" style="left:84%;top:40%;width:40px;height:40px"></span>
+    <span class="b r sm" style="left:4%;top:78%;width:52px;height:52px"></span>
+    <span class="b u"    style="left:30%;top:84%;width:70px;height:70px"></span>
+    <span class="b a"    style="left:66%;top:88%;width:96px;height:96px"></span>
+  </div>
+  <div class="shade"></div>
+  <canvas id="weather"></canvas>
+  <div class="home">
+    <div class="top">
+      <div class="clock keep" id="clock">10:24</div>
+      <div class="meta keep" id="meta">
+        <span class="date">Sun, 25 Oct</span><span class="sep" id="sep" aria-hidden="true">·</span><span class="wx" id="wx"></span>
+      </div>
+      <div class="next keep">14:30 · Dentist</div>
+    </div>
+    <ul class="apps">
+      <li class="keep">Phone</li>
+      <li class="keep">Messages</li>
+      <li class="keep">Camera</li>
+      <li class="keep">Browser</li>
+      <li class="keep">Music</li>
+      <li class="keep">Notes</li>
+    </ul>
+  </div>
+  <div class="shortcuts keep" aria-label="Quick shortcuts">
+    <svg viewBox="0 0 40 40" role="img" aria-label="Phone"><circle cx="20" cy="20" r="20" fill="#2fa36b"/><path d="M14.5 11.5c1-.6 2.2-.3 2.8.6l1.6 2.6c.5.8.3 1.9-.4 2.5l-1.2 1c.9 2 2.4 3.6 4.4 4.5l1-1.2c.6-.7 1.7-.9 2.5-.4l2.6 1.6c.9.6 1.2 1.8.6 2.8l-.8 1.3c-.7 1.1-2 1.6-3.3 1.3-5.3-1.4-9.3-5.4-10.7-10.7-.3-1.3.2-2.6 1.3-3.3z" fill="#fff"/></svg>
+    <svg viewBox="0 0 40 40" role="img" aria-label="Camera"><circle cx="20" cy="20" r="20" fill="#3a4250"/><rect x="10" y="14" width="20" height="14" rx="3" fill="#fff"/><rect x="16" y="11.5" width="8" height="4" rx="1.5" fill="#fff"/><circle cx="20" cy="21" r="4.2" fill="#3a4250"/><circle cx="20" cy="21" r="2.4" fill="#9fb6d6"/></svg>
+    <svg viewBox="0 0 40 40" role="img" aria-label="Maps"><circle cx="20" cy="20" r="20" fill="#e2563f"/><path d="M20 10a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7z" fill="#fff"/><circle cx="20" cy="17" r="2.6" fill="#e2563f"/></svg>
+    <svg viewBox="0 0 40 40" role="img" aria-label="Music"><circle cx="20" cy="20" r="20" fill="#7a5af0"/><path d="M24 10v13.2a3.6 3.6 0 1 1-2-3.2V13l-6 1.6v10.6a3.6 3.6 0 1 1-2-3.2V13l10-3z" fill="#fff"/></svg>
+  </div>
+  <div class="home-bar"></div>
+</main>
+
+<section class="panel" aria-labelledby="looks-h">
+  <h2 id="looks-h">Preview only</h2>
+  <div class="looks" id="looks" role="group" aria-label="Preview only: weather look. Not a setting in the app."></div>
+  <label class="wind" for="wind">Wind
+    <input id="wind" type="range" min="0" max="100" step="1" value="30">
+    <output id="wind-value" for="wind">30</output>
+  </label>
+  <div class="row">
+    <div class="seg" role="group" aria-label="Theme (mock tool)">
+      <button type="button" data-theme-set="auto" aria-pressed="true"><span>Auto</span></button>
+      <button type="button" data-theme-set="light" aria-pressed="false"><span>Light</span></button>
+      <button type="button" data-theme-set="dark" aria-pressed="false"><span>Dark</span></button>
+    </div>
+    <button type="button" id="pause" aria-pressed="false"><span>Pause</span></button>
+    <label class="check"><input type="checkbox" id="reduced"> Reduced motion</label>
+  </div>
+  <svg class="defs" id="panel-defs" width="0" height="0" aria-hidden="true" focusable="false"></svg>
+</section>
+
+<p class="status" id="status" aria-live="polite"></p>
+
+<p class="note">
+  The glass water is the home prototype's: drops sit, slip, merge and leave a short wet sheen. New for rain looks:
+  a few drops hit the glass. Each hit makes a thin ring and two to four small beads that slide downwind and fade.
+  Wind (0 to 100, default 30) sets how far the beads slide; each look lets only part of it through. Hits mostly land
+  away from the clock, date and app names. The look buttons are for this preview only. Theme, pause and reduced
+  motion are mock tools; the app follows the system.
+</p>
+
+<script>
+'use strict';
+
+// <sim>
+// ============================================================
+// Simulation: pure logic, no DOM. Units are CSS px and seconds.
+// Written so it can be ported to Kotlin line by line.
+// ============================================================
+const STEP = 1 / 30;            // fixed time step in seconds (WeatherEffects.MAX_FPS)
+const TAU = Math.PI * 2;
+const MAX_RADIUS = 15;
+
+// Glass drops. glassDrops uses the app's 0..30 scale (EffectParams.MAX_GLASS_DROPS).
+const DROPS_PER_GLASS_UNIT = 2.5;   // glassDrops 6 -> 15 drops, 30 -> 75 on the glass
+const MAX_DRIFT = 70;               // px/s sideways push on a moving drop at local wind 1
+const MAX_WOBBLE = 4.5 * 5;         // largest wobbleAmp * wobbleFreq, px/s
+// Wind bound: a drop's sideways speed never exceeds MAX_DRIFT + MAX_WOBBLE = 92.5 px/s, local wind is
+// capped at 1, and x is clamped to [r, width - r], so no drop can leave the glass sideways.
+const MAX_TILT = 0.6;               // rad, about 34 degrees
+const STALL_BREAK_WIND = 0.7;       // local wind above this frees a sitting drop, so gusts move drops in waves
+
+// Track sheen that replaces trails: a soft wet spot that is gone within 6 frames.
+const GLINT_SECONDS = 0.2;
+const GLINT_SPACING = 6;            // px of travel between spots
+const MAX_GLINTS = 240;
+
+// Gusts: a band of extra wind that sweeps the glass from left to right.
+const GUST_GAP = [3, 9];            // s between gusts, divided by (0.5 + gust level)
+const GUST_SPEED = [240, 320];      // px/s of the gust front
+const GUST_SIGMA = [60, 100];       // px half-width of the band
+const GUST_STRENGTH = [0.25, 0.5];  // added to the base wind, the sum is capped at 1
+
+// Snow. Flakes wrap side to side, so wind never carries them off the glass.
+const FLAKES_AT_FULL_DENSITY = 140;
+const FLAKE_FALL_PX = 60;           // px/s per unit of fallSpeed
+const MAX_FLAKE_DRIFT = 45;         // px/s at local wind 1; sway adds at most 12 px/s
+// Settling: 35% of flakes stop at a random height between 30% and 100% of the glass, rest 3 to 6 s,
+// then melt over 1 s. At most 40 flakes sit on the glass at once.
+const SETTLE_SHARE = 0.35;
+const SETTLE_HEIGHT = [0.3, 1.0];
+const SETTLE_REST = [3, 6];
+const MELT_SECONDS = 1;
+const MAX_SETTLED = 40;
+
+// Lightning: a strike every 4 to 12 s (uniform, timed from the previous strike). The flash lasts 0.6 s;
+// 35% of strikes flicker a second time 0.18 s after the first.
+const BOLT_GAP = [4, 12];
+const FLASH_SECONDS = 0.6;
+const DOUBLE_FLASH_CHANCE = 0.35;
+const DOUBLE_FLASH_DELAY = 0.18;
+
+// Clouds drift at most 14.4 + CLOUD_WIND_SPEED = 44.4 px/s and wrap around.
+const CLOUD_BASE_SPEED = [6, 12];   // px/s for the back and front layer
+const CLOUD_WIND_SPEED = 30;
+const SUN_TURN = 0.08;              // rad/s the sun rays rotate
+
+// Parameter names and ranges follow EffectParams where the app has them:
+// density 0..1, fallSpeed 0.2..3, glassDrops 0..30, slideSpeed 0..1.2, bolt 0 or 1.
+// New here: wind 0..1 (how much of the wind slider this weather lets through), gustiness 0..1,
+// sun 0..1, clouds 0..1 with cloudLayers 0..2, fog 0..1, stars 0..1, snow on or off.
+const BASE_PARAMS = {
+  density: 0, fallSpeed: 0.2, glassDrops: 0, slideSpeed: 0, bolt: 0,
+  wind: 0, gustiness: 0, sun: 0, clouds: 0, cloudLayers: 0, fog: 0, stars: 0, snow: false,
+};
+function withBase(p) { return Object.freeze(Object.assign({}, BASE_PARAMS, p)); }
+
+const MODES = {
+  clear:    withBase({ sun: 1, wind: 0.3 }),
+  partly:   withBase({ sun: 0.6, clouds: 0.45, cloudLayers: 1, wind: 0.6, gustiness: 0.3 }),
+  overcast: withBase({ clouds: 1, cloudLayers: 2, wind: 0.4, gustiness: 0.2 }),
+  light:    withBase({ density: 0.35, fallSpeed: 1.0, glassDrops: 6, slideSpeed: 0.3, wind: 0.5, gustiness: 0.5 }),
+  heavy:    withBase({ density: 0.9, fallSpeed: 2.2, glassDrops: 26, slideSpeed: 1.0, wind: 1, gustiness: 0.8 }),
+  storm:    withBase({ density: 0.95, fallSpeed: 2.5, glassDrops: 30, slideSpeed: 1.0, wind: 1, gustiness: 1, bolt: 1 }),
+  snow:     withBase({ density: 0.6, fallSpeed: 0.5, snow: true, wind: 0.8, gustiness: 0.6 }),
+  fog:      withBase({ fog: 1, wind: 0.2, gustiness: 0.1 }),
+  night:    withBase({ stars: 1 }),
+};
+
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function randRange(rng, lo, hi) { return lo + (hi - lo) * rng(); }
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+function wrap(x, lo, hi) { const span = hi - lo; return x < lo ? x + span : x >= hi ? x - span : x; }
+
+function createState(mode, width, height, seed, windInput) {
+  const state = {
+    mode, width, height,
+    params: MODES[mode],
+    rng: mulberry32(seed),
+    time: 0,
+    windInput: 0, wind: 0, gust: null, gustTimer: 0,
+    drops: [], glints: [], spawnDebt: 0,
+    flakes: [], clouds: [], haze: [], stars: [],
+    sunPhase: 0,
+    flash: 0, flashAge: -1, flashDouble: false, boltPath: null, boltTimer: 0,
+  };
+  setWind(state, windInput);
+  state.gustTimer = randRange(state.rng, 1, 4);
+  state.boltTimer = randRange(state.rng, 1.5, 5);
+  initClouds(state);
+  initHaze(state);
+  initStars(state);
+  initSnow(state);
+  return state;
+}
+
+// value is the slider position 0..1; the weather decides how much of it reaches the glass.
+function setWind(state, value) {
+  state.windInput = clamp(value, 0, 1);
+  state.wind = state.windInput * state.params.wind;
+}
+
+// Clears the parts of a frame that only make sense in motion (reduced motion still frame).
+function stillFrame(state) {
+  endFlash(state);
+  state.glints.length = 0;
+}
+
+// ---------- wind and gusts ----------
+function updateWind(state, dt) {
+  const { rng, width } = state;
+  const g = state.gust;
+  if (g) {
+    g.x += g.speed * dt;
+    if (g.x - 3 * g.sigma > width) state.gust = null;
+    return;
+  }
+  const gustLevel = state.windInput * state.params.gustiness;
+  if (gustLevel < 0.05) return;
+  state.gustTimer -= dt;
+  if (state.gustTimer > 0) return;
+  state.gustTimer = randRange(rng, GUST_GAP[0], GUST_GAP[1]) / (0.5 + gustLevel);
+  const sigma = randRange(rng, GUST_SIGMA[0], GUST_SIGMA[1]);
+  state.gust = {
+    x: -3 * sigma,
+    sigma,
+    speed: randRange(rng, GUST_SPEED[0], GUST_SPEED[1]),
+    strength: randRange(rng, GUST_STRENGTH[0], GUST_STRENGTH[1]) * (0.5 + 0.5 * gustLevel),
+  };
+}
+
+function gustAt(state, x) {
+  const g = state.gust;
+  if (!g) return 0;
+  const u = (x - g.x) / g.sigma;
+  return g.strength * Math.exp(-0.5 * u * u);
+}
+
+function localWind(state, x) { return Math.min(1, state.wind + gustAt(state, x)); }
+
+// ---------- glass drops ----------
+function makeDrop(state, x, y) {
+  const rng = state.rng;
+  const bias = rng();
+  return {
+    x, y,
+    r: 2 + 7 * bias * bias,                    // 2..9, mostly small
+    vx: 0, vy: 0, tilt: 0,
+    stall: randRange(rng, 0.5, 5),             // seconds sitting still on the glass
+    phase: randRange(rng, 0, TAU),
+    wobbleAmp: randRange(rng, 1.5, 4.5),       // px of sideways travel
+    wobbleFreq: randRange(rng, 2, 5),          // rad/s
+    gx: x, gy: y,                              // where the last sheen spot was left
+  };
+}
+
+function spawnDrop(state) {
+  const x = randRange(state.rng, 6, state.width - 6);
+  const y = randRange(state.rng, 0, state.height * 0.85);
+  state.drops.push(makeDrop(state, x, y));
+}
+
+function terminalSpeed(r) { return 40 + r * 14; }     // px/s, r=9 -> 166
+function gravityFor(r)    { return 300 * (r / 9); }   // px/s^2, bigger drops pull harder
+
+function spawnDrops(state, dt) {
+  const p = state.params;
+  const target = Math.round(p.glassDrops * DROPS_PER_GLASS_UNIT);
+  if (state.drops.length >= target) { state.spawnDebt = 0; return; }
+  state.spawnDebt += (4 + 16 * p.density) * dt;
+  while (state.spawnDebt >= 1 && state.drops.length < target) {
+    spawnDrop(state);
+    state.spawnDebt -= 1;
+  }
+}
+
+function moveDrop(state, d, dt) {
+  const { rng, width } = state;
+  const lw = localWind(state, d.x);
+  const slide = 0.5 + state.params.slideSpeed;   // 0.8 for light rain, 1.5 for heavy
+  if (d.stall > 0) {
+    d.stall -= dt;
+    d.vy = 0;
+    if (lw > STALL_BREAK_WIND && d.r > 3) d.stall = 0;
+  } else {
+    d.vy = Math.min(d.vy + gravityFor(d.r) * slide * dt, terminalSpeed(d.r) * slide);
+    // small drops sometimes catch on the glass again
+    if (d.r < 5 && rng() < 0.35 * dt) d.stall = randRange(rng, 0.3, 1.5);
+  }
+  d.phase += d.wobbleFreq * dt;
+  // resting drops neither sway nor drift; bigger drops catch more of the wind
+  const moving = Math.min(1, d.vy / 40);
+  const push = MAX_DRIFT * lw * moving * (0.4 + 0.6 * Math.min(1, d.r / 9));
+  d.vx += (push - d.vx) * Math.min(1, 4 * dt);
+  const wobble = d.wobbleAmp * d.wobbleFreq * Math.cos(d.phase) * moving;
+  const sideways = d.vx + wobble;
+  d.x += sideways * dt;
+  d.y += d.vy * dt;
+  if (d.x < d.r || d.x > width - d.r) {
+    d.x = clamp(d.x, d.r, width - d.r);
+    d.vx = 0;
+  }
+  // moving drops lean along their path; sitting drops lean a little into the wind
+  d.tilt = d.vy > 0
+    ? clamp(Math.atan2(sideways, Math.max(d.vy, 20)), -MAX_TILT, MAX_TILT)
+    : 0.2 * lw;
+  leaveGlint(state, d);
+}
+
+function leaveGlint(state, d) {
+  if (d.vy <= 0) { d.gx = d.x; d.gy = d.y; return; }
+  if (Math.hypot(d.x - d.gx, d.y - d.gy) < GLINT_SPACING) return;
+  state.glints.push({ x: d.gx, y: d.gy, r: d.r * 0.7, age: 0 });
+  d.gx = d.x; d.gy = d.y;
+}
+
+function mergeDrops(a, b) {
+  const ma = a.r * a.r, mb = b.r * b.r, m = ma + mb;
+  const big = ma >= mb ? a : b;
+  big.x = (a.x * ma + b.x * mb) / m;
+  big.y = (a.y * ma + b.y * mb) / m;
+  big.vx = (a.vx * ma + b.vx * mb) / m;
+  big.vy = (a.vy * ma + b.vy * mb) / m;
+  big.r = Math.min(Math.sqrt(m), MAX_RADIUS);   // area is conserved
+  big.stall = 0;                                // a fresh merge always breaks free
+  return big;
+}
+
+// merge any touching pair (repeat-safe: removed drops are flagged)
+function mergeTouching(state) {
+  const ds = state.drops;
+  for (let i = 0; i < ds.length; i++) {
+    const a = ds[i];
+    if (a.dead) continue;
+    for (let j = i + 1; j < ds.length; j++) {
+      const b = ds[j];
+      if (b.dead) continue;
+      if (Math.hypot(a.x - b.x, a.y - b.y) < (a.r + b.r) * 0.85) {
+        const keep = mergeDrops(a, b);
+        const gone = keep === a ? b : a;
+        gone.dead = true;
+        if (gone === a) break;   // a is gone, stop scanning with it
+      }
+    }
+  }
+}
+
+function updateDrops(state, dt) {
+  spawnDrops(state, dt);
+  for (const d of state.drops) moveDrop(state, d, dt);
+  mergeTouching(state);
+  // a merge grows r, so clamp again to keep the whole drop on the glass
+  for (const d of state.drops) d.x = clamp(d.x, d.r, state.width - d.r);
+  state.drops = state.drops.filter(d => !d.dead && d.y - d.r <= state.height);
+}
+
+function fadeGlints(state, dt) {
+  const gs = state.glints;
+  let w = 0;
+  for (let i = 0; i < gs.length; i++) {
+    gs[i].age += dt;
+    if (gs[i].age < GLINT_SECONDS) gs[w++] = gs[i];
+  }
+  gs.length = w;
+  if (gs.length > MAX_GLINTS) gs.splice(0, gs.length - MAX_GLINTS);
+}
+
+// ---------- snow ----------
+function makeFlake(state, y) {
+  const { rng, width, height, params } = state;
+  const depth = rng();   // 0 far .. 1 near
+  const settles = rng() < SETTLE_SHARE;
+  return {
+    x: randRange(rng, 0, width), y,
+    r: 1 + 2.5 * depth, depth,
+    vy: FLAKE_FALL_PX * params.fallSpeed * (0.6 + 0.8 * depth),
+    phase: randRange(rng, 0, TAU),
+    swayAmp: randRange(rng, 3, 8),       // px
+    swayFreq: randRange(rng, 0.8, 1.5),  // rad/s
+    settleY: settles ? randRange(rng, SETTLE_HEIGHT[0], SETTLE_HEIGHT[1]) * height : Infinity,
+    settled: false, rest: 0, melt: 0,
+  };
+}
+
+function initSnow(state) {
+  if (!state.params.snow) return;
+  const n = Math.round(state.params.density * FLAKES_AT_FULL_DENSITY);
+  for (let i = 0; i < n; i++) state.flakes.push(makeFlake(state, randRange(state.rng, -10, state.height)));
+}
+
+function recycleFlake(state, f) { Object.assign(f, makeFlake(state, -5)); }
+
+function updateSnow(state, dt) {
+  const { width, height } = state;
+  let settledCount = 0;
+  for (const f of state.flakes) if (f.settled) settledCount++;
+  for (const f of state.flakes) {
+    if (f.settled) {
+      if (f.rest > 0) f.rest -= dt; else f.melt += dt;
+      if (f.melt >= MELT_SECONDS) { recycleFlake(state, f); settledCount--; }
+      continue;
+    }
+    const lw = localWind(state, f.x);
+    f.phase += f.swayFreq * dt;
+    f.x = wrap(f.x + (MAX_FLAKE_DRIFT * lw * (0.5 + 0.5 * f.depth) + f.swayAmp * f.swayFreq * Math.cos(f.phase)) * dt, 0, width);
+    f.y += f.vy * dt;
+    if (f.y >= f.settleY && settledCount < MAX_SETTLED) {
+      f.settled = true;
+      f.rest = randRange(state.rng, SETTLE_REST[0], SETTLE_REST[1]);
+      settledCount++;
+    } else if (f.y - f.r > height) {
+      recycleFlake(state, f);
+    }
+  }
+}
+
+// ---------- sky: clouds, haze, stars ----------
+function makeCloud(state, layer, x) {
+  const rng = state.rng;
+  const size = randRange(rng, 90, 170) * (layer === 0 ? 1.3 : 1);
+  const puffs = [];
+  const n = 5 + Math.floor(rng() * 4);
+  for (let i = 0; i < n; i++) {
+    puffs.push({
+      dx: randRange(rng, -0.6, 0.6) * size,
+      dy: randRange(rng, -0.2, 0.15) * size,
+      r: randRange(rng, 0.3, 0.5) * size,
+    });
+  }
+  return {
+    x, size, layer, puffs,
+    y: randRange(rng, 0.02, layer === 0 ? 0.45 : 0.6) * state.height,
+    speed: CLOUD_BASE_SPEED[layer] * randRange(rng, 0.8, 1.2),
+  };
+}
+
+function initClouds(state) {
+  const { rng, params, width } = state;
+  const perLayer = Math.round(2 + params.clouds * 5);
+  for (let layer = 0; layer < params.cloudLayers; layer++) {
+    for (let i = 0; i < perLayer; i++) state.clouds.push(makeCloud(state, layer, randRange(rng, -100, width + 100)));
+  }
+}
+
+function updateClouds(state, dt) {
+  for (const c of state.clouds) {
+    const windShare = c.layer === 0 ? 0.6 : 1;   // far clouds look slower
+    c.x += (c.speed + CLOUD_WIND_SPEED * state.wind * windShare) * dt;
+    if (c.x - c.size > state.width) c.x = -c.size;
+  }
+}
+
+function initHaze(state) {
+  const { rng, params, width, height } = state;
+  if (!params.fog) return;
+  for (let i = 0; i < 7; i++) {
+    state.haze.push({
+      x: randRange(rng, 0, width), y: randRange(rng, 0, height),
+      rx: randRange(rng, 160, 300), ry: randRange(rng, 50, 110),
+      speed: randRange(rng, 4, 10),
+      alpha: randRange(rng, 0.18, 0.32) * params.fog,
+    });
+  }
+}
+
+function updateHaze(state, dt) {
+  for (const h of state.haze) {
+    h.x += h.speed * (1 + 2 * state.wind) * dt;
+    if (h.x - h.rx > state.width) h.x = -h.rx;
+  }
+}
+
+function initStars(state) {
+  const { rng, params, width, height } = state;
+  const n = Math.round(45 * params.stars);
+  for (let i = 0; i < n; i++) {
+    const high = rng();
+    state.stars.push({
+      x: randRange(rng, 0, width),
+      y: high * high * height * 0.6,              // more stars near the top
+      r: randRange(rng, 0.5, 1.6),
+      phase: randRange(rng, 0, TAU),
+      freq: randRange(rng, 0.6, 2.2),             // rad/s twinkle
+    });
+  }
+}
+
+function updateStars(state, dt) {
+  for (const s of state.stars) s.phase += s.freq * dt;
+}
+
+// ---------- lightning ----------
+function makeBoltPath(state) {
+  const { rng, width, height } = state;
+  const pts = [{ x: randRange(rng, 0.2, 0.8) * width, y: 0 }];
+  const reach = randRange(rng, 0.3, 0.55) * height;
+  const lean = randRange(rng, -0.3, 0.3);
+  let last = pts[0];
+  while (last.y < reach) {
+    last = { x: last.x + randRange(rng, -18, 18) + lean * 24, y: last.y + randRange(rng, 18, 34) };
+    pts.push(last);
+  }
+  return pts;
+}
+
+function flashCurve(age, double) {
+  const first = Math.exp(-age * 14);
+  const second = double && age > DOUBLE_FLASH_DELAY ? 0.8 * Math.exp(-(age - DOUBLE_FLASH_DELAY) * 12) : 0;
+  return Math.max(first, second);
+}
+
+function endFlash(state) {
+  state.flashAge = -1;
+  state.flash = 0;
+  state.boltPath = null;
+}
+
+function updateLightning(state, dt) {
+  if (!state.params.bolt) return;
+  if (state.flashAge >= 0) {
+    state.flashAge += dt;
+    state.flash = flashCurve(state.flashAge, state.flashDouble);
+    if (state.flashAge > FLASH_SECONDS) endFlash(state);
+    return;
+  }
+  state.boltTimer -= dt;
+  if (state.boltTimer > 0) return;
+  const rng = state.rng;
+  state.boltTimer = randRange(rng, BOLT_GAP[0], BOLT_GAP[1]);
+  state.flashAge = 0;
+  state.flash = 1;
+  state.flashDouble = rng() < DOUBLE_FLASH_CHANCE;
+  state.boltPath = makeBoltPath(state);
+}
+
+// Advance the world by exactly dt seconds.
+function update(state, dt) {
+  state.time += dt;
+  updateWind(state, dt);
+  if (state.params.glassDrops > 0) updateDrops(state, dt);
+  if (state.params.snow) updateSnow(state, dt);
+  updateClouds(state, dt);
+  updateHaze(state, dt);
+  updateStars(state, dt);
+  state.sunPhase += SUN_TURN * dt;
+  updateLightning(state, dt);
+  fadeGlints(state, dt);
+}
+// </sim>
+
+// <sim-impacts>
+// ============================================================
+// Rain hitting the glass: pure logic, no DOM. Rain looks only.
+// A hit is a ring that grows and fades, plus a few beads that are
+// flung out and slide downwind, then fade. Positions are a pure
+// function of the hit's age, so the drawing never changes them.
+// ============================================================
+const IMPACT_LOOKS = Object.freeze(['light', 'heavy', 'storm']);
+const IMPACT_RATE = Object.freeze({ light: 1.4, heavy: 2.6, storm: 3.0 });   // hits per second on a 390 x 844 glass
+const IMPACT_REF_AREA = 390 * 844;
+const MAX_IMPACTS = 7;                 // live hits at once, so app names stay readable
+const RING_SECONDS = 0.5;
+const RING_RADIUS = [5, 11];           // px at full size
+const SPLASH_SECONDS = 0.1;            // the bright point where the drop lands
+const BEADS_PER_IMPACT = [2, 4];
+const BEAD_RADIUS = [0.8, 2.0];
+const BEAD_LIFE = [1.0, 1.8];          // s
+const BEAD_SPREAD = 4;                 // px the splash throws a bead in any direction
+const BEAD_SLIDE_WIND = 60;            // px downwind at local wind 1 (local wind = slider x look share + gust)
+const BEAD_SAG = [1, 6];               // px down the glass over a bead's life
+const BEAD_SLIDE_RATE = 2.6;           // 1/s: 1 - e^(-2.6 t) of the slide is done after t seconds
+const BEAD_FADE_IN = 0.06;             // s
+const BEAD_FADE_OUT = 0.4;             // last share of a bead's life spent fading
+const KEEP_OUT_SKIP = 0.8;             // chance a hit that lands on text is dropped
+const KEEP_OUT_TRIES = 3;
+const STAY_CHANCE = 0.2;               // share of hits that leave a small drop on the glass
+
+function isImpactLook(mode) { return IMPACT_LOOKS.indexOf(mode) >= 0; }
+
+// The home state: the prototype's state plus hits. null for "no forecast".
+function createHomeState(mode, width, height, seed, windInput, keepOut) {
+  if (!MODES[mode]) return null;
+  const state = createState(mode, width, height, seed, windInput);
+  state.impacts = [];
+  state.impactDebt = 0;
+  state.impactRate = isImpactLook(mode) ? IMPACT_RATE[mode] * clamp((width * height) / IMPACT_REF_AREA, 0.5, 1) : 0;
+  state.keepOut = (keepOut || []).map(r => Object.freeze({ x: r.x, y: r.y, w: r.w, h: r.h }));
+  return state;
+}
+
+function inKeepOut(state, x, y) {
+  for (const r of state.keepOut) if (x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h) return true;
+  return false;
+}
+
+function pickImpactSpot(state) {
+  const { rng, width, height } = state;
+  for (let i = 0; i < KEEP_OUT_TRIES; i++) {
+    const x = randRange(rng, 8, width - 8);
+    const y = randRange(rng, height * 0.03, height * 0.97);
+    if (!inKeepOut(state, x, y) || rng() >= KEEP_OUT_SKIP) return { x, y };
+  }
+  return null;
+}
+
+function makeImpact(state, x, y) {
+  const rng = state.rng;
+  const lw = localWind(state, x);   // the wind where it lands decides the slide
+  const beads = [];
+  const n = BEADS_PER_IMPACT[0] + Math.floor(rng() * (BEADS_PER_IMPACT[1] - BEADS_PER_IMPACT[0] + 1));
+  for (let i = 0; i < n; i++) {
+    const a = randRange(rng, 0, TAU);
+    const spread = randRange(rng, 0.4, 1) * BEAD_SPREAD;
+    beads.push({
+      dx: Math.cos(a) * spread + BEAD_SLIDE_WIND * lw * randRange(rng, 0.55, 1),
+      dy: Math.sin(a) * spread * 0.6 + randRange(rng, BEAD_SAG[0], BEAD_SAG[1]),
+      r: randRange(rng, BEAD_RADIUS[0], BEAD_RADIUS[1]),
+      life: randRange(rng, BEAD_LIFE[0], BEAD_LIFE[1]),
+    });
+  }
+  return { x, y, age: 0, ringR: randRange(rng, RING_RADIUS[0], RING_RADIUS[1]), beads, life: Math.max(RING_SECONDS, ...beads.map(b => b.life)) };
+}
+
+function spawnImpacts(state, dt) {
+  if (!state.impactRate) return;
+  state.impactDebt += state.impactRate * dt;
+  while (state.impactDebt >= 1) {
+    state.impactDebt -= 1;
+    if (state.impacts.length >= MAX_IMPACTS) continue;
+    const spot = pickImpactSpot(state);
+    if (!spot) continue;
+    state.impacts.push(makeImpact(state, spot.x, spot.y));
+    // some hits stay on the glass and join the prototype's drops
+    const target = Math.round(state.params.glassDrops * DROPS_PER_GLASS_UNIT);
+    if (state.rng() < STAY_CHANCE && state.drops.length < target) {
+      const d = makeDrop(state, spot.x, spot.y);
+      d.r = randRange(state.rng, 1.5, 3);
+      state.drops.push(d);
+    }
+  }
+}
+
+function updateImpacts(state, dt) {
+  spawnImpacts(state, dt);
+  for (const im of state.impacts) im.age += dt;
+  state.impacts = state.impacts.filter(im => im.age < im.life);
+}
+
+// Ring at this age: radius and strength 0..1, or null once it is gone.
+function ringAt(im) {
+  const t = im.age / RING_SECONDS;
+  if (t >= 1) return null;
+  const grow = 1 - (1 - t) * (1 - t);   // fast out, slow at the edge
+  return { r: im.ringR * (0.2 + 0.8 * grow), strength: 1 - t };
+}
+
+// Bead at this age: position and strength 0..1, or null once it has faded.
+function beadAt(im, b) {
+  if (im.age >= b.life) return null;
+  const k = 1 - Math.exp(-BEAD_SLIDE_RATE * im.age);
+  const fadeIn = Math.min(1, im.age / BEAD_FADE_IN);
+  const left = 1 - im.age / b.life;
+  const fadeOut = Math.min(1, left / BEAD_FADE_OUT);
+  return { x: im.x + b.dx * k, y: im.y + b.dy * k, r: b.r, strength: fadeIn * fadeOut };
+}
+
+function updateHome(state, dt) {
+  update(state, dt);
+  updateImpacts(state, dt);
+}
+// </sim-impacts>
+
+// <forecast>
+// ============================================================
+// Forecast to look: pure, mirrors app.olauncher.glance.WeatherCodes.
+// The look follows the same grouping as WeatherCodes.icon(), so the
+// effect never disagrees with the icon on the card.
+// ============================================================
+function lookForForecast(code, isDay) {
+  switch (code) {
+    case 0: return isDay ? 'clear' : 'night';
+    case 1: return isDay ? 'partly' : 'night';
+    case 2: return isDay ? 'partly' : 'overcast';
+    case 3: return 'overcast';
+    case 45: case 48: return 'fog';
+    case 51: case 53: case 55: case 56: case 57: case 61: return 'light';
+    case 63: case 65: case 66: case 67: case 80: case 81: case 82: return 'heavy';
+    case 71: case 73: case 75: case 77: case 85: case 86: return 'snow';
+    case 95: case 96: case 99: return 'storm';
+    default: return null;   // unknown code: plain card, no effect
+  }
+}
+
+function conditionText(code, isDay) {
+  switch (code) {
+    case 0: return isDay ? 'clear' : 'clear night';
+    case 1: return 'mainly clear';
+    case 2: return 'partly cloudy';
+    case 3: return 'overcast';
+    case 45: case 48: return 'fog';
+    case 51: case 53: case 55: return 'drizzle';
+    case 56: case 57: return 'freezing drizzle';
+    case 61: return 'light rain';
+    case 63: return 'rain';
+    case 65: return 'heavy rain';
+    case 66: case 67: return 'freezing rain';
+    case 71: case 73: case 75: return 'snow';
+    case 77: return 'snow grains';
+    case 80: case 81: case 82: return 'showers';
+    case 85: case 86: return 'snow showers';
+    case 95: case 96: case 99: return 'thunderstorm';
+    default: return '—';
+  }
+}
+
+// The card icon follows the same grouping as WeatherCodes.icon(), which is
+// also the look grouping, so the icon name is the look name.
+function iconFor(code, isDay) { return lookForForecast(code, isDay); }
+// </forecast>
+
+// <icons>
+// ============================================================
+// Vector icons: copied from the Thumbline Weather Icons page (section A).
+// Pure string builders, no DOM. `s` is an id suffix so the card and the
+// preview buttons each own a set of gradient defs (the card's set follows
+// the card look; gradients resolve their colours where the defs sit).
+// ============================================================
+const ICON_LABELS = Object.freeze({
+  clear: 'Clear day', partly: 'Partly cloudy', overcast: 'Overcast', light: 'Light rain', heavy: 'Heavy rain',
+  storm: 'Thunderstorm', snow: 'Snow', fog: 'Fog', night: 'Clear night',
+});
+
+function iconDefs(s) {
+  return '<defs>'
+    + '<radialGradient id="gSun' + s + '" cx=".35" cy=".3" r=".8"><stop offset="0" style="stop-color:var(--sun-hi)"/><stop offset="1" style="stop-color:var(--sun-lo)"/></radialGradient>'
+    + '<radialGradient id="gGlow' + s + '" cx=".5" cy=".5" r=".5"><stop offset="0" style="stop-color:var(--glow);stop-opacity:.6"/><stop offset=".55" style="stop-color:var(--glow);stop-opacity:.18"/><stop offset="1" style="stop-color:var(--glow);stop-opacity:0"/></radialGradient>'
+    + '<linearGradient id="gCloud' + s + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--cloud-hi)"/><stop offset="1" style="stop-color:var(--cloud-lo)"/></linearGradient>'
+    + '<linearGradient id="gStorm' + s + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--storm-hi)"/><stop offset="1" style="stop-color:var(--storm-lo)"/></linearGradient>'
+    + '<linearGradient id="gDrop' + s + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--drop-hi)"/><stop offset="1" style="stop-color:var(--drop-lo)"/></linearGradient>'
+    + '<linearGradient id="gBolt' + s + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--bolt-hi)"/><stop offset="1" style="stop-color:var(--bolt-lo)"/></linearGradient>'
+    + '<linearGradient id="gMoon' + s + '" x1=".1" y1=".1" x2=".9" y2=".9"><stop offset="0" style="stop-color:var(--moon-hi)"/><stop offset="1" style="stop-color:var(--moon-lo)"/></linearGradient>'
+    + '<linearGradient id="gSnow' + s + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--snow-hi)"/><stop offset="1" style="stop-color:var(--snow-lo)"/></linearGradient>'
+    + '<linearGradient id="gFog' + s + '" x1="0" y1="0" x2="1" y2="0"><stop offset="0" style="stop-color:var(--fog);stop-opacity:.15"/><stop offset=".5" style="stop-color:var(--fog);stop-opacity:.9"/><stop offset="1" style="stop-color:var(--fog);stop-opacity:.15"/></linearGradient>'
+    + '<filter id="fShadow' + s + '" x="-25%" y="-25%" width="150%" height="160%"><feDropShadow dx="0" dy=".7" stdDeviation=".6" style="flood-color:var(--icon-shadow)"/></filter>'
+    + '</defs>';
+}
+
+function sunBody(s, x, y, scale, r) {
+  let rays = '';
+  for (let a = 0; a < 360; a += 45) rays += '<polygon points="10.6,5.2 13.4,5.2 12,1.4" transform="rotate(' + a + ' 12 12)" fill="var(--ray)"/>';
+  return '<g transform="translate(' + x + ' ' + y + ') scale(' + scale + ') translate(-12 -12)">'
+    + '<circle class="glow" cx="12" cy="12" r="11.6" fill="url(#gGlow' + s + ')"/><g class="spin">' + rays + '</g>'
+    + '<circle cx="12" cy="12" r="' + r + '" fill="url(#gSun' + s + ')" filter="url(#fShadow' + s + ')"/>'
+    + '<ellipse cx="10.6" cy="10.4" rx="1.7" ry="1" fill="#fff" opacity=".45"/></g>';
+}
+const CLOUD_PATH = 'M7.5 19a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18.4 10.6 4.2 4.2 0 0 1 17.5 19z';
+function cloudBody(s, transform, grad, shadow) {
+  return '<g transform="' + transform + '"' + (shadow ? ' filter="url(#fShadow' + s + ')"' : '') + '>'
+    + '<path d="' + CLOUD_PATH + '" fill="url(#' + grad + s + ')"/><ellipse cx="12.4" cy="8.9" rx="3.3" ry="1.3" fill="#fff" opacity=".3"/></g>';
+}
+function streak(s, x, y, w, h, deg) {
+  const cx = +(x + w / 2).toFixed(2), cy = +(y + h / 2).toFixed(2);
+  return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="' + (w / 2) + '" transform="rotate(' + deg + ' ' + cx + ' ' + cy + ')" fill="url(#gDrop' + s + ')"/>';
+}
+function snowflake() {
+  const arm = 'd="M11.25 12 L11.4 4.4 L12 2.4 L12.6 4.4 L12.75 12 Z M12 8.3 L9.2 5.5 L10.1 4.6 L12 6.4 L13.9 4.6 L14.8 5.5 Z"';
+  let arms = '';
+  for (let a = 0; a < 360; a += 60) arms += '<path transform="rotate(' + a + ' 12 12)" ' + arm + '/>';
+  return '<g transform="translate(12.2 18.6) scale(.45) translate(-12 -12)" fill="var(--flake)">' + arms + '<circle cx="12" cy="12" r="1.5"/></g>';
+}
+function starPath(delay, x, y, k) {
+  return '<path class="tw" style="animation-delay:' + delay + 's" transform="translate(' + x + ' ' + y + ') scale(' + k + ')" d="M0 -1.6 L.4 -.4 L1.6 0 L.4 .4 L0 1.6 L-.4 .4 L-1.6 0 L-.4 -.4Z" fill="var(--star)"/>';
+}
+
+function iconBody(name, s) {
+  switch (name) {
+    case 'clear': return sunBody(s, 12, 12, 1, 5.3);
+    case 'partly': return sunBody(s, 7.4, 6.6, 0.92, 4.7) + cloudBody(s, 'translate(3.2 4.2) scale(0.82)', 'gCloud', true);
+    case 'overcast': return cloudBody(s, 'translate(5.5 -0.5) scale(0.72)', 'gStorm', false) + cloudBody(s, 'translate(1.2 3.4) scale(0.86)', 'gCloud', true);
+    case 'light': return cloudBody(s, 'translate(2.8 -3.6) scale(0.93)', 'gStorm', true)
+      + streak(s, 7.6, 16.6, 1.5, 3.4, 14) + streak(s, 11.4, 18.2, 1.5, 3.4, 14) + streak(s, 15.2, 16.6, 1.5, 3.4, 14);
+    case 'heavy': return cloudBody(s, 'translate(2.8 -3.8) scale(0.93)', 'gStorm', true)
+      + streak(s, 6, 15.9, 1.6, 4.6, 16) + streak(s, 9.2, 18, 1.6, 4.6, 16) + streak(s, 12.4, 15.9, 1.6, 4.6, 16)
+      + streak(s, 15.6, 18, 1.6, 4.6, 16) + streak(s, 18.8, 15.9, 1.6, 4.6, 16);
+    case 'storm': return cloudBody(s, 'translate(2.8 -3.8) scale(0.93)', 'gStorm', true)
+      + '<polygon class="bolt" points="13.4,13 9.2,19 11.9,19 10.6,23.4 15.8,16.6 13,16.6 14.6,13" fill="url(#gBolt' + s + ')" stroke="var(--bolt-lo)" stroke-width=".25" stroke-linejoin="round"/>'
+      + streak(s, 5.8, 17, 1.4, 3.2, 14) + streak(s, 17.6, 17, 1.4, 3.2, 14);
+    case 'snow': return cloudBody(s, 'translate(2.8 -3.6) scale(0.93)', 'gStorm', true) + snowflake();
+    case 'fog': return cloudBody(s, 'translate(3.4 -1.4) scale(0.82)', 'gCloud', true)
+      + '<rect x="3" y="14.4" width="18" height="1.8" rx=".9" fill="url(#gFog' + s + ')"/>'
+      + '<rect x="5" y="17.4" width="15" height="1.8" rx=".9" fill="url(#gFog' + s + ')"/>'
+      + '<rect x="2.5" y="20.4" width="13" height="1.8" rx=".9" fill="url(#gFog' + s + ')"/>';
+    case 'night': return '<path d="M15.5 4.2a8.2 8.2 0 1 0 4.3 12.9A6.8 6.8 0 0 1 15.5 4.2z" fill="url(#gMoon' + s + ')" filter="url(#fShadow' + s + ')"/>'
+      + '<circle cx="10" cy="10.5" r="1.2" fill="var(--moon-lo)" opacity=".25"/><circle cx="9.2" cy="15.2" r=".8" fill="var(--moon-lo)" opacity=".22"/>'
+      + starPath(0, 19.2, 5.2, 1.05) + starPath(0.9, 21, 11.5, 0.6) + starPath(1.7, 17.2, 21, 0.5);
+    default: return null;
+  }
+}
+
+function escapeAttr(t) { return String(t).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+
+// label: accessible name (role="img"); null makes the icon decorative.
+function iconSvg(name, size, label, s) {
+  const body = iconBody(name, s);
+  if (body === null) return '';
+  const a11y = label === null ? 'aria-hidden="true" focusable="false"' : 'role="img" aria-label="' + escapeAttr(label) + '"';
+  return '<svg class="wi" width="' + size + '" height="' + size + '" viewBox="0 0 24 24" ' + a11y + '>' + body + '</svg>';
+}
+// </icons>
+
+// ============================================================
+// Drawing: reads state, paints to a 2D context. No logic changes.
+// Colours come from WeatherEffects.tint (day values) where the app has one.
+// ============================================================
+const SUN_RGB = '255,210,122';         // SUN day 0xFFD27A
+const CLOUD_RGB = '242,244,247';       // CLOUDS day 0xF2F4F7
+const CLOUD_GREY_RGB = '168,176,190';  // overcast: greyer than the app's CLOUDS tint
+const FOG_RGB = '230,233,238';         // FOG day 0xFFE6E9EE
+const SNOW_RGB = '255,255,255';        // SNOW day
+const FLASH_RGB = '232,240,255';       // STORM flash, day value 0xFFE8F0FF
+const STAR_RGB = '220,230,255';
+const SHEEN_RGB = '220,232,255';
+
+function rgba(rgb, a) { return 'rgba(' + rgb + ',' + Math.max(0, a).toFixed(3) + ')'; }
+
+function draw(ctx, state) {
+  ctx.clearRect(0, 0, state.width, state.height);
+  if (state.params.sun) drawSun(ctx, state);
+  if (state.stars.length) drawStars(ctx, state);
+  if (state.clouds.length) drawClouds(ctx, state);
+  if (state.haze.length) drawHaze(ctx, state);
+  if (state.flash > 0) drawFlash(ctx, state);      // behind the glass, so drops stay on top
+  if (state.glints.length) drawGlints(ctx, state);
+  if (state.drops.length) drawDrops(ctx, state);
+  if (state.flakes.length) drawFlakes(ctx, state);
+}
+
+function drawSun(ctx, state) {
+  const { width: w, height: h } = state;
+  const s = state.params.sun;
+  const cx = w * 0.86, cy = h * 0.05;
+  const pulse = 0.9 + 0.1 * Math.sin(state.sunPhase * 5);
+  const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, w * 1.1);
+  glow.addColorStop(0, rgba(SUN_RGB, 0.6 * s * pulse));
+  glow.addColorStop(0.18, rgba(SUN_RGB, 0.28 * s));
+  glow.addColorStop(1, rgba(SUN_RGB, 0));
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, w, h);
+  drawSunRays(ctx, cx, cy, w * 1.2, state.sunPhase, s);
+}
+
+// Fixed pseudo-random value in 0..1 for ray i, so each ray keeps its length
+// and brightness from frame to frame (no flicker).
+function rayRandom(i, salt) {
+  const x = Math.sin(i * 12.9898 + salt * 78.233) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+// Rays are soft shafts: 18 rays of uneven length and brightness, each drawn as
+// a wide faint wedge plus a narrower brighter core, fading out along its length.
+function drawSunRays(ctx, cx, cy, len, turn, strength) {
+  const rays = 18;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(turn);
+  ctx.globalCompositeOperation = 'lighter';
+  const passes = [
+    { half: 0.11, alpha: 0.35 },   // wide, soft halo around each ray
+    { half: 0.04, alpha: 0.8 },    // narrow core
+  ];
+  for (let i = 0; i < rays; i++) {
+    const a = (i / rays) * TAU + (rayRandom(i, 1) - 0.5) * 0.12;
+    const rayLen = len * (0.5 + 0.5 * rayRandom(i, 2));
+    const bright = 0.55 + 0.45 * rayRandom(i, 3);
+    for (const pass of passes) {
+      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rayLen);
+      const peak = 0.10 * strength * bright * pass.alpha;
+      g.addColorStop(0, rgba(SUN_RGB, peak));
+      g.addColorStop(0.35, rgba(SUN_RGB, peak * 0.7));
+      g.addColorStop(1, rgba(SUN_RGB, 0));
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, rayLen, a - pass.half, a + pass.half);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+function drawStars(ctx, state) {
+  for (const s of state.stars) {
+    const twinkle = 0.5 + 0.5 * Math.sin(s.phase);
+    ctx.fillStyle = rgba(STAR_RGB, 0.3 + 0.65 * twinkle * twinkle);
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, TAU);
+    ctx.fill();
+  }
+}
+
+function drawClouds(ctx, state) {
+  const rgb = state.mode === 'overcast' ? CLOUD_GREY_RGB : CLOUD_RGB;
+  for (const c of state.clouds) {   // back layer was created first, so it paints first
+    const a = c.layer === 0 ? 0.30 : 0.42;
+    for (const p of c.puffs) {
+      const x = c.x + p.dx, y = c.y + p.dy;
+      const g = ctx.createRadialGradient(x, y, 0, x, y, p.r);
+      g.addColorStop(0, rgba(rgb, a));
+      g.addColorStop(0.6, rgba(rgb, a * 0.6));
+      g.addColorStop(1, rgba(rgb, 0));
+      ctx.fillStyle = g;
+      ctx.fillRect(x - p.r, y - p.r, p.r * 2, p.r * 2);
+    }
+  }
+}
+
+function drawHaze(ctx, state) {
+  ctx.fillStyle = rgba(FOG_RGB, 0.16 * state.params.fog);   // even veil over everything
+  ctx.fillRect(0, 0, state.width, state.height);
+  for (const h of state.haze) {
+    ctx.save();
+    ctx.translate(h.x, h.y);
+    ctx.scale(h.rx / h.ry, 1);
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, h.ry);
+    g.addColorStop(0, rgba(FOG_RGB, h.alpha));
+    g.addColorStop(1, rgba(FOG_RGB, 0));
+    ctx.fillStyle = g;
+    ctx.fillRect(-h.ry, -h.ry, h.ry * 2, h.ry * 2);
+    ctx.restore();
+  }
+}
+
+function drawFlash(ctx, state) {
+  const f = state.flash;
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';   // brightens the wallpaper below
+  ctx.fillStyle = rgba(FLASH_RGB, 0.38 * f);
+  ctx.fillRect(0, 0, state.width, state.height);
+  ctx.restore();
+  if (state.boltPath && f > 0.3) drawBolt(ctx, state.boltPath, f);
+}
+
+function drawBolt(ctx, pts, f) {
+  ctx.save();
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.strokeStyle = rgba(FLASH_RGB, 0.35 * f);
+  ctx.lineWidth = 6;
+  ctx.stroke();
+  ctx.strokeStyle = rgba('255,255,255', 0.9 * f);
+  ctx.lineWidth = 1.6;
+  ctx.stroke();
+  ctx.restore();
+}
+
+// A soft wet spot plus, for its first frame or two, a pin of light. No lines are drawn.
+function drawGlints(ctx, state) {
+  for (const g of state.glints) {
+    const t = g.age / GLINT_SECONDS;
+    const fade = (1 - t) * (1 - t);
+    ctx.fillStyle = rgba(SHEEN_RGB, 0.10 * fade);
+    ctx.beginPath();
+    ctx.arc(g.x, g.y, g.r, 0, TAU);
+    ctx.fill();
+    if (t < 0.35) {
+      ctx.fillStyle = rgba('255,255,255', 0.45 * (1 - t / 0.35));
+      ctx.beginPath();
+      ctx.arc(g.x - g.r * 0.3, g.y, 0.9, 0, TAU);
+      ctx.fill();
+    }
+  }
+}
+
+function drawDrops(ctx, state) {
+  // small drops first so big ones overlap them
+  const sorted = state.drops.slice().sort((a, b) => a.r - b.r);
+  for (const d of sorted) drawDrop(ctx, d);
+}
+
+function drawDrop(ctx, d) {
+  const r = d.r;
+  const speed = Math.hypot(d.vx, d.vy);
+  const stretch = 1 + Math.min(speed / 220, 0.35);   // moving drops are a little long
+  const rx = r * 0.92, ry = r * stretch;
+
+  ctx.save();
+  ctx.translate(d.x, d.y);
+  ctx.rotate(-d.tilt);   // long axis follows the path
+
+  // shadow under the drop
+  ctx.fillStyle = 'rgba(0,0,0,0.28)';
+  ctx.beginPath();
+  ctx.ellipse(r * 0.12, ry * 0.55 + 1, rx * 0.95, ry * 0.7, 0, 0, TAU);
+  ctx.fill();
+
+  // soft body: clear in the middle, brighter low edge (light gathering)
+  const g = ctx.createRadialGradient(0, -ry * 0.25, r * 0.1, 0, 0, ry);
+  g.addColorStop(0, 'rgba(255,255,255,0.05)');
+  g.addColorStop(0.65, 'rgba(200,220,255,0.10)');
+  g.addColorStop(1, 'rgba(230,240,255,0.30)');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, rx, ry, 0, 0, TAU);
+  ctx.fill();
+
+  // darker rim
+  ctx.strokeStyle = 'rgba(0,6,20,0.45)';
+  ctx.lineWidth = Math.max(0.8, r * 0.14);
+  ctx.stroke();
+
+  // specular highlight, top left
+  ctx.fillStyle = 'rgba(255,255,255,0.92)';
+  ctx.beginPath();
+  ctx.arc(-rx * 0.36, -ry * 0.4, Math.max(0.8, r * 0.2), 0, TAU);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawFlakes(ctx, state) {
+  for (const f of state.flakes) {
+    const a = f.settled ? 0.9 * (1 - f.melt / MELT_SECONDS) : 0.45 + 0.45 * f.depth;
+    const halo = f.settled ? f.r * (2 + f.melt) : f.r * 2;   // a melting flake spreads into a wet spot
+    ctx.fillStyle = rgba(SNOW_RGB, a * 0.22);
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, halo, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = rgba(SNOW_RGB, a);
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, f.r, 0, TAU);
+    ctx.fill();
+  }
+}
+
+// Hits on the glass. A thin bright ring with a faint dark edge, so it shows
+// on light and dark skies; beads are tiny copies of a glass drop.
+const IMPACT_RGB = '236,244,255';
+const IMPACT_EDGE_RGB = '0,10,30';
+const RING_ALPHA = 0.65;
+const BEAD_ALPHA = 0.9;
+
+function drawHome(ctx, state) {
+  draw(ctx, state);
+  if (state.impacts.length) drawImpacts(ctx, state);
+}
+
+function drawImpacts(ctx, state) {
+  for (const im of state.impacts) {
+    const ring = ringAt(im);
+    if (ring) {
+      ctx.lineWidth = 1.2;
+      ctx.strokeStyle = rgba(IMPACT_EDGE_RGB, 0.3 * ring.strength);
+      ctx.beginPath();
+      ctx.ellipse(im.x, im.y + 0.6, ring.r + 0.8, (ring.r + 0.8) * 0.9, 0, 0, TAU);
+      ctx.stroke();
+      ctx.strokeStyle = rgba(IMPACT_RGB, RING_ALPHA * ring.strength);
+      ctx.beginPath();
+      ctx.ellipse(im.x, im.y, ring.r, ring.r * 0.9, 0, 0, TAU);
+      ctx.stroke();
+    }
+    if (im.age < SPLASH_SECONDS) {
+      ctx.fillStyle = rgba('255,255,255', 0.7 * (1 - im.age / SPLASH_SECONDS));
+      ctx.beginPath();
+      ctx.arc(im.x, im.y, 1.8, 0, TAU);
+      ctx.fill();
+    }
+    for (const b of im.beads) {
+      const p = beadAt(im, b);
+      if (p) drawBead(ctx, p);
+    }
+  }
+}
+
+function drawBead(ctx, p) {
+  const a = BEAD_ALPHA * p.strength;
+  ctx.fillStyle = rgba('0,0,0', 0.22 * a);
+  ctx.beginPath();
+  ctx.arc(p.x + 0.3, p.y + p.r * 0.5, p.r, 0, TAU);
+  ctx.fill();
+  ctx.fillStyle = rgba('215,230,255', 0.35 * a);
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, p.r, 0, TAU);
+  ctx.fill();
+  ctx.strokeStyle = rgba(IMPACT_EDGE_RGB, 0.35 * a);
+  ctx.lineWidth = 0.7;
+  ctx.stroke();
+  ctx.fillStyle = rgba('255,255,255', 0.95 * a);
+  ctx.beginPath();
+  ctx.arc(p.x - p.r * 0.35, p.y - p.r * 0.35, Math.max(0.5, p.r * 0.35), 0, TAU);
+  ctx.fill();
+}
+
+// ============================================================
+// Page glue: canvas sizing, loop, controls. Example data only.
+// ============================================================
+const LOOK_NAMES = ['clear', 'partly', 'overcast', 'light', 'heavy', 'storm', 'snow', 'fog', 'night'];
+
+// Forecast code and day flag per preview; the look and icon come from lookForForecast().
+const SCENES = {
+  clear:    { code: 0,  isDay: true,  temp: 24, at: '10:24' },
+  partly:   { code: 2,  isDay: true,  temp: 19, at: '10:24' },
+  overcast: { code: 3,  isDay: true,  temp: 11, at: '13:05' },
+  light:    { code: 61, isDay: true,  temp: 11, at: '10:24' },
+  heavy:    { code: 65, isDay: true,  temp: 9,  at: '16:40' },
+  storm:    { code: 95, isDay: true,  temp: 17, at: '18:10' },
+  snow:     { code: 73, isDay: true,  temp: -2, at: '10:24' },
+  fog:      { code: 45, isDay: true,  temp: 6,  at: '07:15' },
+  night:    { code: 0,  isDay: false, temp: 8,  at: '23:12' },
+  none:     null,
+};
+
+function deg(n) { return (n < 0 ? '−' + Math.abs(n) : String(n)) + '°'; }
+function capitalise(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+function describe(state) {   // as in weather-effects.html
+  const p = state.params;
+  const parts = ['look ' + state.mode];
+  if (p.glassDrops || p.snow) parts.push('density ' + p.density, 'fallSpeed ' + p.fallSpeed);
+  if (p.glassDrops) parts.push('glassDrops ' + p.glassDrops, 'slideSpeed ' + p.slideSpeed);
+  if (p.bolt) parts.push('bolt 1');
+  if (p.sun) parts.push('sun ' + p.sun);
+  if (p.clouds) parts.push('clouds ' + p.clouds + ' x' + p.cloudLayers);
+  if (p.fog) parts.push('fog ' + p.fog);
+  if (p.stars) parts.push('stars ' + p.stars);
+  parts.push('wind ' + state.wind.toFixed(2) + ' (share ' + p.wind + ')');
+  return parts.join(' · ');
+}
+
+function describeHome(state, sceneKey) {
+  if (!state) return 'No forecast: date only, no weather, no effect.';
+  const parts = [describe(state)];
+  if (state.impactRate) parts.push('hits ' + state.impactRate.toFixed(2) + '/s, live ' + state.impacts.length + '/' + MAX_IMPACTS);
+  return sceneKey + ' · ' + parts.join(' · ');
+}
+
+(function () {
+  if (typeof document === 'undefined') return;
+
+  const root = document.documentElement;
+  const phone = document.getElementById('phone');
+  const canvas = document.getElementById('weather');
+  const ctx = canvas.getContext('2d');
+  const looksEl = document.getElementById('looks');
+  const pauseBtn = document.getElementById('pause');
+  const windInput = document.getElementById('wind');
+  const windValue = document.getElementById('wind-value');
+  const reducedBox = document.getElementById('reduced');
+  const statusEl = document.getElementById('status');
+  const clockEl = document.getElementById('clock');
+  const wxEl = document.getElementById('wx');
+  const sepEl = document.getElementById('sep');
+  const themeBtns = document.querySelectorAll('[data-theme-set]');
+  const reducedQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  document.getElementById('home-defs').innerHTML = iconDefs('H');
+  document.getElementById('panel-defs').innerHTML = iconDefs('P');
+
+  // Preview-only look buttons, each with its icon.
+  looksEl.innerHTML = LOOK_NAMES.concat(['none']).map(k => {
+    const sc = SCENES[k];
+    const icon = sc ? iconSvg(iconFor(sc.code, sc.isDay), 18, null, 'P') : '';
+    const label = sc ? ICON_LABELS[k] : 'No forecast';
+    return '<button type="button" data-look="' + k + '" aria-pressed="false">' + icon + '<span>' + label + '</span></button>';
+  }).join('');
+  const lookBtns = looksEl.querySelectorAll('[data-look]');
+
+  const params = new URLSearchParams(location.search);
+  let sceneKey = SCENES.hasOwnProperty(params.get('look')) ? params.get('look') : 'light';
+  let state = null;
+  let paused = params.get('pause') === '1';
+  let rafId = 0;
+  let lastTime = 0;
+  let accumulator = 0;
+
+  function windFraction() { return Number(windInput.value) / 100; }
+
+  function keepOutRects() {
+    const box = phone.getBoundingClientRect();
+    const pad = 6;
+    return Array.from(phone.querySelectorAll('.keep')).map(el => {
+      const r = el.getBoundingClientRect();
+      return { x: r.left - box.left - pad, y: r.top - box.top - pad, w: r.width + 2 * pad, h: r.height + 2 * pad };
+    });
+  }
+
+  function renderText() {
+    const sc = SCENES[sceneKey];
+    clockEl.textContent = sc ? sc.at : '10:24';
+    if (!sc) { wxEl.innerHTML = ''; wxEl.hidden = true; sepEl.hidden = true; return; }
+    const look = iconFor(sc.code, sc.isDay);
+    const label = capitalise(conditionText(sc.code, sc.isDay)) + ', ' + deg(sc.temp);
+    wxEl.hidden = false; sepEl.hidden = false;
+    wxEl.setAttribute('aria-label', label);
+    wxEl.setAttribute('role', 'img');
+    wxEl.innerHTML = iconSvg(look, 20, null, 'H') + '<span aria-hidden="true">' + deg(sc.temp) + '</span>';
+  }
+
+  function warmUp(s, seconds) {
+    for (let i = 0; i < Math.round(seconds / STEP); i++) updateHome(s, STEP);
+  }
+
+  function reset() {
+    const w = phone.clientWidth, h = phone.clientHeight;
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    const sc = SCENES[sceneKey];
+    const look = sc ? lookForForecast(sc.code, sc.isDay) : null;
+    const seed = params.has('seed') ? Number(params.get('seed')) : (Math.random() * 1e9) | 0;
+    state = look ? createHomeState(look, w, h, seed, windFraction(), keepOutRects()) : null;
+    if (state) {
+      warmUp(state, 6);   // start with water already on the glass
+      if (reducedBox.checked) stillFrame(state);
+      drawHome(ctx, state);
+    }
+    statusEl.textContent = describeHome(state, sceneKey);
+  }
+
+  function frame(now) {
+    rafId = requestAnimationFrame(frame);
+    accumulator += Math.min((now - lastTime) / 1000, 0.25);
+    lastTime = now;
+    let steps = 0;
+    while (accumulator >= STEP && steps < 5) {
+      updateHome(state, STEP);
+      accumulator -= STEP;
+      steps++;
+    }
+    if (steps === 5) accumulator = 0;
+    if (steps > 0) drawHome(ctx, state);
+  }
+
+  function shouldRun() { return !!state && !paused && !document.hidden && !reducedBox.checked; }
+
+  function sync() {
+    root.classList.toggle('still', paused || reducedBox.checked);
+    if (shouldRun()) {
+      if (!rafId) {
+        lastTime = performance.now();
+        accumulator = 0;
+        rafId = requestAnimationFrame(frame);
+      }
+    } else if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = 0;
+    }
+  }
+
+  function setScene(key) {
+    sceneKey = key;
+    lookBtns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.look === key)));
+    const sc = SCENES[key];
+    phone.dataset.weather = sc ? lookForForecast(sc.code, sc.isDay) : 'none';
+    renderText();
+    reset();
+    sync();
+  }
+
+  function setTheme(t) {
+    if (t === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', t);
+    themeBtns.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.themeSet === t)));
+  }
+
+  lookBtns.forEach(b => b.addEventListener('click', () => setScene(b.dataset.look)));
+  themeBtns.forEach(b => b.addEventListener('click', () => setTheme(b.dataset.themeSet)));
+  pauseBtn.addEventListener('click', () => {
+    paused = !paused;
+    pauseBtn.firstChild.textContent = paused ? 'Resume' : 'Pause';
+    pauseBtn.setAttribute('aria-pressed', String(paused));
+    sync();
+  });
+  windInput.addEventListener('input', () => {
+    windValue.textContent = windInput.value;
+    if (state) setWind(state, windFraction());
+    statusEl.textContent = describeHome(state, sceneKey);
+  });
+  reducedBox.checked = reducedQuery.matches || params.get('reduced') === '1';
+  reducedBox.addEventListener('change', () => { reset(); sync(); });
+  reducedQuery.addEventListener('change', () => { reducedBox.checked = reducedQuery.matches; reset(); sync(); });
+  document.addEventListener('visibilitychange', sync);
+
+  let resizeTimer = 0;
+  if ('ResizeObserver' in window) {
+    new ResizeObserver(() => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => { reset(); sync(); }, 120);
+    }).observe(phone);
+  } else {
+    window.addEventListener('resize', () => { reset(); sync(); });
+  }
+
+  if (params.get('theme')) setTheme(params.get('theme'));
+  if (paused) { pauseBtn.firstChild.textContent = 'Resume'; pauseBtn.setAttribute('aria-pressed', 'true'); }
+  setScene(sceneKey);
+})();
+</script>
+</body>
+</html>
