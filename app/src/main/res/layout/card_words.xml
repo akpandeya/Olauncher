@@ -56,16 +56,6 @@
                 tools:text="Next: verschieden" />
 
             <TextView
-                android:id="@+id/tvNextMeaning"
-                style="@style/TodayCardBodyLight"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:visibility="gone"
-                tools:text="different" />
-
-            <TextView
                 android:id="@+id/tvSide"
                 style="@style/TodayCardBodyLight"
                 android:layout_width="wrap_content"

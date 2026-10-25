@@ -6,6 +6,7 @@ import android.view.Gravity
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
+import android.view.WindowInsets
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.GridLayout
@@ -28,6 +29,7 @@ import app.olauncher.data.store.Tense
 import app.olauncher.data.store.VerbParadigm
 import app.olauncher.data.store.shouldAutoAdvance
 import app.olauncher.databinding.FragmentConjugationBinding
+import app.olauncher.helper.DrawerScrollHelper
 import app.olauncher.helper.Haptics
 import app.olauncher.helper.hideKeyboard
 import app.olauncher.helper.showKeyboard
@@ -80,6 +82,20 @@ class ConjugationFragment : BaseFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        // Edge-to-edge window is not resized for the keyboard: pad the page by the IME inset
+        // (minus the footer's own bottom padding) so the card and Check button stay above it.
+        val footerBottomPadding = binding.conjugationFooter.paddingBottom
+        binding.root.setOnApplyWindowInsetsListener { root, insets ->
+            val padding = DrawerScrollHelper.imeBottomPadding(
+                drawerBottomSearch = true,
+                imeBottom = insets.getInsets(WindowInsets.Type.ime()).bottom,
+                searchBottomMargin = footerBottomPadding,
+            )
+            if (root.paddingBottom != padding)
+                root.setPadding(root.paddingLeft, root.paddingTop, root.paddingRight, padding)
+            insets
+        }
+        binding.root.requestApplyInsets()
         binding.licenseNote.text = getText(R.string.wiktionary_license_note)
         binding.licenseNote.movementMethod = android.text.method.LinkMovementMethod.getInstance()
         binding.btnPrimary.setOnClickListener {

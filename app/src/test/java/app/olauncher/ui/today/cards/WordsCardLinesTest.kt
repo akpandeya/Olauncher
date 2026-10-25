@@ -33,10 +33,10 @@ class WordsCardLinesTest {
     }
 
     @Test
-    fun nextWordWithMeaning() {
+    fun nextWordCarriesOnlyTheWord() {
         val l = WordsCardLogic.lines(total = 10, due = 7, next = word("verschieden", " different "))
         assertEquals("verschieden", l.nextWord)
-        assertEquals("different", l.nextMeaning)
+        assertTrue(WordsCardLogic.Lines::class.java.declaredFields.none { it.name.contains("eaning") })
         assertFalse(l.showAllDone)
         assertFalse(l.showHint)
         assertTrue(l.showCounts)
@@ -45,9 +45,8 @@ class WordsCardLinesTest {
     }
 
     @Test
-    fun nextWordWithBlankMeaningHidesMeaning() {
+    fun nextWordWithBlankMeaningStillShowsWord() {
         val l = WordsCardLogic.lines(total = 3, due = 1, next = word("Fernweh", "   "))
         assertEquals("Fernweh", l.nextWord)
-        assertNull(l.nextMeaning)
     }
 }
