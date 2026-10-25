@@ -57,6 +57,9 @@ import java.time.ZoneId
 class PauseFragment : Fragment() {
 
     companion object {
+        // Dimmed states stay above 3:1 over the pause scrim; 0.4 fell below it on bright wallpapers.
+        private const val UNSELECTED_ALPHA = 0.6f
+        private const val DISABLED_ALPHA = 0.6f
         var storeProvider: ((Context) -> WordsStore)? = null
         var usageRepositoryProvider: ((Context) -> UsageRepository)? = null
         var pauseLogProvider: ((Context) -> PauseLog)? = null
@@ -301,13 +304,13 @@ class PauseFragment : Fragment() {
             bored.isSelected = false
             bored.setTextColor(primaryColor)
         } else {
-            reply.alpha = if (selected == PauseWhy.REPLY) 1.0f else 0.4f
+            reply.alpha = if (selected == PauseWhy.REPLY) 1.0f else UNSELECTED_ALPHA
             reply.isSelected = (selected == PauseWhy.REPLY)
             reply.setTextColor(if (selected == PauseWhy.REPLY) accentColor else primaryColor)
-            lookup.alpha = if (selected == PauseWhy.LOOKUP) 1.0f else 0.4f
+            lookup.alpha = if (selected == PauseWhy.LOOKUP) 1.0f else UNSELECTED_ALPHA
             lookup.isSelected = (selected == PauseWhy.LOOKUP)
             lookup.setTextColor(if (selected == PauseWhy.LOOKUP) accentColor else primaryColor)
-            bored.alpha = if (selected == PauseWhy.BORED) 1.0f else 0.4f
+            bored.alpha = if (selected == PauseWhy.BORED) 1.0f else UNSELECTED_ALPHA
             bored.isSelected = (selected == PauseWhy.BORED)
             bored.setTextColor(if (selected == PauseWhy.BORED) accentColor else primaryColor)
         }
@@ -347,7 +350,7 @@ class PauseFragment : Fragment() {
 
         binding.btnOpen.isEnabled = isReady
         // Open stays quieter than Not now (70%) even when ready.
-        binding.btnOpen.alpha = if (isReady) 0.7f else 0.4f
+        binding.btnOpen.alpha = if (isReady) 0.7f else DISABLED_ALPHA
 
         val accentColor = context?.getColorFromAttr(R.attr.accentColor) ?: binding.btnOpen.currentTextColor
         val primaryColor = context?.getColorFromAttr(R.attr.primaryColor) ?: binding.btnOpen.currentTextColor

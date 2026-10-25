@@ -69,6 +69,7 @@
     <color name="readableCard">#B8FFFFFF</color>
     <color name="heldTint">#33D9A3A3</color>
     <color name="drawerScrimBottom">#99FFFFFF</color>
+    <color name="pauseScrim">#CCFFFFFF</color>
 
     <!-- Today raised surfaces (issue #495) -->
     <color name="todayPanelHighlight">#FFFFFF</color>

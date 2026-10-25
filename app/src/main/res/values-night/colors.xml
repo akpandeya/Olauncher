@@ -29,6 +29,7 @@
     <!--Readable text on photo wallpaper: see ReadableScrim.kt-->
     <color name="readableCard">#B8000000</color>
     <color name="drawerScrimBottom">#99000000</color>
+    <color name="pauseScrim">#CC000000</color>
 
     <!-- Today raised surfaces (issue #495) -->
     <color name="todayPanelHighlight">#2EFFFFFF</color>
