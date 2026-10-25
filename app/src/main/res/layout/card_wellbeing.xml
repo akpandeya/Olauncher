@@ -295,7 +295,7 @@
                 style="@style/TodayCardBodyLight"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/health_exercise_goal" />
+                tools:text="Goal 45 min" />
 
         </LinearLayout>
 

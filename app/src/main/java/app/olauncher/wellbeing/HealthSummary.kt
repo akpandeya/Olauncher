@@ -40,6 +40,7 @@ data class HealthDay(
 /** Last 7 days Health Connect summary with daily values and averages. */
 data class HealthWeekSummary(
     val exerciseMinutesAvg: Long? = null,
+    val exerciseMinutesTotal: Long? = null,
     val restingHeartRateAvg: Long? = null,
     val sleepMinutesAvg: Long? = null,
     val sleepBedTime: LocalTime? = null,
@@ -134,14 +135,14 @@ object HealthSummaryFormatting {
             )
         }
 
-        val exerciseAvg = if (exerciseSessions == null || exerciseSessions.isEmpty()) {
+        val exerciseTotal = if (exerciseSessions == null || exerciseSessions.isEmpty()) {
             null
         } else {
-            val total = daySummaries.sumOf { it.exerciseMinutes ?: 0L }
-            if (total > 0L && days.isNotEmpty()) {
-                (total * 2 + days.size) / (days.size * 2L)
-            } else null
+            daySummaries.sumOf { it.exerciseMinutes ?: 0L }.takeIf { it > 0L }
         }
+        val exerciseAvg = if (exerciseTotal != null && days.isNotEmpty()) {
+            (exerciseTotal * 2 + days.size) / (days.size * 2L)
+        } else null
 
         val restingAvg = if (restingRecords == null) {
             null
@@ -165,6 +166,7 @@ object HealthSummaryFormatting {
 
         return HealthWeekSummary(
             exerciseMinutesAvg = exerciseAvg,
+            exerciseMinutesTotal = exerciseTotal,
             restingHeartRateAvg = restingAvg,
             sleepMinutesAvg = sleepAvg,
             sleepBedTime = bedAvg,

@@ -164,6 +164,7 @@ class HealthSummaryTest {
         )
 
         assertNull(summary.exerciseMinutesAvg)
+        assertNull(summary.exerciseMinutesTotal)
         assertNull(summary.restingHeartRateAvg)
         assertNull(summary.sleepMinutesAvg)
         assertTrue(summary.days.all { it.exerciseMinutes == null })
@@ -207,6 +208,7 @@ class HealthSummaryTest {
         )
 
         assertEquals(15L, summary.exerciseMinutesAvg)
+        assertEquals(105L, summary.exerciseMinutesTotal)
         assertEquals(60L, summary.restingHeartRateAvg)
         assertEquals(450L, summary.sleepMinutesAvg)
         assertEquals(LocalTime.of(23, 15), summary.sleepBedTime)

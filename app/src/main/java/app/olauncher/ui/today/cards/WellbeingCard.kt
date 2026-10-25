@@ -34,6 +34,7 @@ import app.olauncher.wellbeing.HealthWeekSummary
 import app.olauncher.wellbeing.WalkCount
 import app.olauncher.wellbeing.HealthSummaryFormatting
 import app.olauncher.wellbeing.DaySnapshot
+import app.olauncher.wellbeing.ExerciseGoal
 import app.olauncher.wellbeing.Nudges
 import app.olauncher.wellbeing.PausePolicy
 import app.olauncher.wellbeing.SocialTimeWorker
@@ -367,10 +368,10 @@ internal class WellbeingCardView(
         val isWeek = weekShown()
         if (isWeek) {
             val week = weekHealth
-            val exerciseAvg = week?.exerciseMinutesAvg
-            b.tvExercise.text = if (exerciseAvg != null) "${exerciseAvg} min" else HealthSummaryFormatting.DASH
+            val exerciseTotal = week?.exerciseMinutesTotal
+            b.tvExercise.text = if (exerciseTotal != null) "${exerciseTotal} min" else HealthSummaryFormatting.DASH
             b.tvExerciseLabel.text = context.getString(R.string.health_tile_exercise)
-            b.tvExerciseSub.text = context.getString(R.string.health_exercise_goal)
+            b.tvExerciseSub.text = context.getString(R.string.health_exercise_goal_week, ExerciseGoal.WEEKLY_MIN)
 
             val restingAvg = week?.restingHeartRateAvg
             b.tvRestingHr.text = if (restingAvg != null) restingAvg.toString() else HealthSummaryFormatting.DASH
@@ -392,7 +393,7 @@ internal class WellbeingCardView(
             val exercise = today?.exerciseMinutes
             b.tvExercise.text = if (exercise != null) "${exercise} min" else HealthSummaryFormatting.DASH
             b.tvExerciseLabel.text = context.getString(R.string.health_tile_exercise)
-            b.tvExerciseSub.text = context.getString(R.string.health_exercise_goal)
+            b.tvExerciseSub.text = context.getString(R.string.health_exercise_goal, ExerciseGoal.DAILY_MIN)
 
             val resting = today?.restingHeartRate
             b.tvRestingHr.text = if (resting != null) resting.toString() else HealthSummaryFormatting.DASH
