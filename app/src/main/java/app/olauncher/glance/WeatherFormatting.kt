@@ -145,8 +145,7 @@ object WeatherFormatting {
         if (forecast.nowTemp.isNaN()) return null
         if (now - fetchedAt > MAX_AGE_MILLIS) return null
         val temp = forecast.nowTemp.roundToInt()
-        val emoji = WeatherCodes.emoji(forecast.nowCode, forecast.isDay)
-        return if (emoji.isEmpty()) "$temp°" else "$emoji $temp°"
+        return "$temp°"
     }
 
     fun chartGeometry(

@@ -67,46 +67,6 @@ class WeatherCodesTest {
     }
 
     @Test
-    fun `emoji maps every code group`() {
-        val groups = mapOf(
-            "☁️" to listOf(3),
-            "🌫" to listOf(45, 48),
-            "🌦" to listOf(51, 53, 55, 56, 57),
-            "🌧" to listOf(61, 63, 65, 66, 67, 80, 81, 82),
-            "🌨" to listOf(71, 73, 75, 77, 85, 86),
-            "⛈" to listOf(95, 96, 99),
-        )
-        for ((emoji, codes) in groups) {
-            for (code in codes) {
-                assertEquals("code $code", emoji, WeatherCodes.emoji(code, isDay = true))
-                assertEquals("code $code night", emoji, WeatherCodes.emoji(code, isDay = false))
-            }
-        }
-    }
-
-    @Test
-    fun `emoji differs between day and night for codes 0 1 2`() {
-        assertEquals("☀️", WeatherCodes.emoji(0, isDay = true))
-        assertEquals("🌙", WeatherCodes.emoji(0, isDay = false))
-        assertEquals("🌤", WeatherCodes.emoji(1, isDay = true))
-        assertEquals("🌙", WeatherCodes.emoji(1, isDay = false))
-        assertEquals("⛅", WeatherCodes.emoji(2, isDay = true))
-        assertEquals("☁️", WeatherCodes.emoji(2, isDay = false))
-    }
-
-    @Test
-    fun `emoji defaults to day`() {
-        assertEquals("☀️", WeatherCodes.emoji(0))
-    }
-
-    @Test
-    fun `emoji is empty for unknown codes`() {
-        for (code in listOf(-1, 4, 10, 100)) {
-            assertEquals("", WeatherCodes.emoji(code))
-        }
-    }
-
-    @Test
     fun `iconFor maps each WeatherLook to expected drawable`() {
         assertEquals(R.drawable.ic_weather_clear_day, WeatherCodes.iconFor(WeatherLook.CLEAR))
         assertEquals(R.drawable.ic_weather_partly_cloudy, WeatherCodes.iconFor(WeatherLook.PARTLY))
@@ -120,7 +80,7 @@ class WeatherCodesTest {
     }
 
     @Test
-    fun `icon maps every code group WeatherCodes emoji handles`() {
+    fun `icon maps every code group`() {
         val dayNightGroups = mapOf(
             R.drawable.ic_weather_overcast to listOf(3),
             R.drawable.ic_weather_fog to listOf(45, 48),
@@ -163,7 +123,7 @@ class WeatherCodesTest {
     }
 
     @Test
-    fun `every code handled by emoji maps to a non-null icon in day and night`() {
+    fun `every documented code maps to a non-null icon in day and night`() {
         val documentedCodes = listOf(
             0, 1, 2, 3,
             45, 48,
@@ -175,7 +135,6 @@ class WeatherCodesTest {
             95, 96, 99,
         )
         for (code in documentedCodes) {
-            assertTrue("emoji should handle code $code", WeatherCodes.emoji(code).isNotEmpty())
             assertNotNull("icon should handle code $code by day", WeatherCodes.icon(code, isDay = true))
             assertNotNull("icon should handle code $code by night", WeatherCodes.icon(code, isDay = false))
         }

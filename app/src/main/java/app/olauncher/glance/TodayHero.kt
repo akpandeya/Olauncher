@@ -38,9 +38,6 @@ object HeroFormatting {
     fun capitalise(text: String): String =
         text.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString() }
 
-    /** The icon for the current weather, or empty when the code has none. */
-    fun nowIcon(forecast: Forecast): String = WeatherCodes.emoji(forecast.nowCode, forecast.isDay)
-
     @DrawableRes
     fun nowIconRes(forecast: Forecast): Int? = WeatherCodes.icon(forecast.nowCode, forecast.isDay)
 
@@ -56,10 +53,6 @@ object HeroFormatting {
     fun hourLabel(hour: Hour): String = String.format(Locale.ROOT, "%02d", hour.time.hour)
 
     fun hourTemperature(hour: Hour): String = "${hour.temp.roundToInt()}°"
-
-    /** Hours carry no day/night flag, so a fixed daylight window picks sun or moon. */
-    fun hourEmoji(hour: Hour): String =
-        WeatherCodes.emoji(hour.code, hour.time.hour in DAY_FIRST_HOUR..DAY_LAST_HOUR)
 
     @DrawableRes
     fun hourIconRes(hour: Hour): Int? =
