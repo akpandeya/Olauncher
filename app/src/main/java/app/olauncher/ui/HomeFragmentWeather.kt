@@ -1,26 +1,34 @@
 package app.olauncher.ui
 
 import android.content.SharedPreferences
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.style.ImageSpan
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import app.olauncher.MainActivity
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
-import app.olauncher.helper.HomeMetaLine
+import app.olauncher.glance.Forecast
 import app.olauncher.glance.WeatherCache
+import app.olauncher.glance.WeatherCodes
 import app.olauncher.glance.WeatherFormatting
+import app.olauncher.helper.HomeMetaLine
 import app.olauncher.helper.WeatherEffect
 import app.olauncher.helper.WeatherEffects
+import app.olauncher.helper.WeatherIconStyle
+import app.olauncher.helper.WeatherJsonCache
 import app.olauncher.helper.WeatherLooks
 import app.olauncher.helper.WeatherSimRect
+import app.olauncher.helper.dpToPx
 import androidx.lifecycle.lifecycleScope
-import app.olauncher.glance.Forecast
-import app.olauncher.helper.WeatherJsonCache
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Locale
+import kotlin.math.roundToInt
 
 private var weatherMemory: WeatherJsonCache<Pair<Forecast, Long>>? = null
 
@@ -45,10 +53,27 @@ internal fun HomeFragment.refreshWeatherMemory() {
     }
 }
 
-internal fun HomeFragment.combinedWeatherText(): String? {
+internal fun HomeFragment.combinedWeatherText(): CharSequence? {
     if (!prefs.weatherEnabled) return null
     val cached = cachedForecast() ?: return null
-    return WeatherFormatting.homeLine(cached.first, cached.second)
+    val line = WeatherFormatting.homeLine(cached.first, cached.second) ?: return null
+    val forecast = cached.first
+    val look = WeatherLooks.forForecast(forecast.nowCode, forecast.isDay) ?: return line
+    val ctx = context ?: return line
+    val iconRes = WeatherCodes.homeIconFor(look, prefs.homeWeatherIconStyle)
+    val drawable = ContextCompat.getDrawable(ctx, iconRes)?.mutate() ?: return line
+    val iconSize = binding.date.textSize.roundToInt()
+    drawable.setBounds(0, 0, iconSize, iconSize)
+    if (prefs.homeWeatherIconStyle == WeatherIconStyle.MONOCHROME) {
+        drawable.setTint(binding.date.currentTextColor)
+    }
+    val span = ImageSpan(drawable, ImageSpan.ALIGN_CENTER)
+    val builder = SpannableStringBuilder()
+    builder.append("\uFFFC")
+    builder.setSpan(span, 0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+    builder.append(" ")
+    builder.append(line)
+    return builder
 }
 
 /** Puts the weather under the date when both do not fit on one row. */
@@ -57,7 +82,15 @@ internal fun HomeFragment.layoutDateWeatherRow() {
     fun widthOf(view: TextView): Float {
         if (!view.isVisible) return 0f
         val text = view.text?.toString().orEmpty().uppercase(Locale.getDefault())
-        return view.paint.measureText(text) + view.paddingStart + view.paddingEnd
+        val startDrawable = view.compoundDrawablesRelative[0] ?: view.compoundDrawables[0]
+        val drawableWidth = if (startDrawable != null) {
+            val bWidth = startDrawable.bounds.width()
+            if (bWidth > 0) bWidth.toFloat() else startDrawable.intrinsicWidth.coerceAtLeast(0).toFloat()
+        } else {
+            0f
+        }
+        val drawablePadding = if (drawableWidth > 0f) view.compoundDrawablePadding.toFloat() else 0f
+        return view.paint.measureText(text) + drawableWidth + drawablePadding + view.paddingStart + view.paddingEnd
     }
     val stacked = HomeMetaLine.shouldStack(
         dateWidthPx = widthOf(binding.date),
@@ -161,6 +194,7 @@ internal fun HomeFragment.populateWeather() {
     if (prefs.homeInfoCombined || !prefs.weatherEnabled || prefs.dateTimeVisibility == Constants.DateTime.OFF) {
         binding.weather.isVisible = false
         binding.weatherSeparator.isVisible = false
+        binding.weather.setCompoundDrawablesRelative(null, null, null, null)
         return
     }
     val cached = cachedForecast()
@@ -172,9 +206,30 @@ internal fun HomeFragment.populateWeather() {
 
     if (line != null) {
         binding.weather.text = line
+        val forecast = cached?.first
+        val look = if (forecast != null) WeatherLooks.forForecast(forecast.nowCode, forecast.isDay) else null
+        val ctx = context
+        if (look != null && ctx != null) {
+            val iconRes = WeatherCodes.homeIconFor(look, prefs.homeWeatherIconStyle)
+            val drawable = ContextCompat.getDrawable(ctx, iconRes)?.mutate()
+            if (drawable != null) {
+                val iconSize = binding.weather.textSize.roundToInt()
+                drawable.setBounds(0, 0, iconSize, iconSize)
+                if (prefs.homeWeatherIconStyle == WeatherIconStyle.MONOCHROME) {
+                    drawable.setTint(binding.weather.currentTextColor)
+                }
+                binding.weather.setCompoundDrawablesRelative(drawable, null, null, null)
+                binding.weather.compoundDrawablePadding = 4.dpToPx()
+            } else {
+                binding.weather.setCompoundDrawablesRelative(null, null, null, null)
+            }
+        } else {
+            binding.weather.setCompoundDrawablesRelative(null, null, null, null)
+        }
         binding.weather.isVisible = true
     } else {
         binding.weather.isVisible = false
+        binding.weather.setCompoundDrawablesRelative(null, null, null, null)
     }
     // Only show the dot between the two when both are visible side by side.
     layoutDateWeatherRow()

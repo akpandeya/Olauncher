@@ -26,8 +26,8 @@ class SettingsCatalogTest {
     fun `every setting of the old layout is present in its section`() {
         val actual = SettingsSections.all.associate { it.key to SettingsCatalog.rowsFor(it.key).map { row -> row.key } }
         assertEquals(INVENTORY, actual)
-        assertEquals(89, SettingsCatalog.rows.size)
-        assertEquals(88, SettingsCatalog.rows.count { it.searchable })
+        assertEquals(90, SettingsCatalog.rows.size)
+        assertEquals(89, SettingsCatalog.rows.count { it.searchable })
     }
 
     @Test
@@ -360,6 +360,7 @@ class SettingsCatalogTest {
             "musicPulse",
             "glowStrength",
             "weatherEffects",
+            "weatherIcons",
         ),
         SettingsSections.KEY_GESTURES to listOf(
             "swipeLeftApp",

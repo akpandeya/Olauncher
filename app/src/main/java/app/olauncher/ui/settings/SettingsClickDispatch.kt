@@ -145,6 +145,7 @@ private fun SettingsFragment.handleAppearanceClick(view: View): Boolean {
         R.id.textBrightness, R.id.textBrightnessTitle, R.id.textBrightnessLayout -> cycleTextBrightness()
         R.id.musicPulse, R.id.musicPulseTitle, R.id.musicPulseLayout -> tickOnChange(view) { toggleMusicPulse() }
         R.id.weatherEffects, R.id.weatherEffectsTitle, R.id.weatherEffectsLayout -> tickOnChange(view) { toggleWeatherEffects() }
+        R.id.weatherIcons, R.id.weatherIconsTitle, R.id.weatherIconsLayout -> tickOnChange(view) { toggleWeatherIcons() }
 
         else -> return false
     }

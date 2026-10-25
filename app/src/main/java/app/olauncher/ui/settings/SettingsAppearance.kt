@@ -46,6 +46,7 @@ import android.widget.TextView
 import app.olauncher.helper.DrawerScrollHelper
 import app.olauncher.helper.MusicPulse
 import app.olauncher.helper.HandSide
+import app.olauncher.helper.WeatherIconStyle
 import app.olauncher.helper.HomeSet
 import app.olauncher.helper.HomeSets
 import app.olauncher.ui.settings.SettingsRow
@@ -484,6 +485,26 @@ internal fun SettingsFragment.toggleWeatherEffects() {
 
 internal fun SettingsFragment.populateWeatherEffects() {
     binding.weatherEffects.text = getString(if (prefs.homeWeatherEffects) R.string.on else R.string.off)
+}
+
+internal fun SettingsFragment.toggleWeatherIcons() {
+    prefs.homeWeatherIconStyle = if (prefs.homeWeatherIconStyle == WeatherIconStyle.COLOUR) {
+        WeatherIconStyle.MONOCHROME
+    } else {
+        WeatherIconStyle.COLOUR
+    }
+    populateWeatherIcons()
+    viewModel.toggleDateTime()
+}
+
+internal fun SettingsFragment.populateWeatherIcons() {
+    binding.weatherIcons.text = getString(
+        if (prefs.homeWeatherIconStyle == WeatherIconStyle.MONOCHROME) {
+            R.string.weather_icon_style_monochrome
+        } else {
+            R.string.weather_icon_style_colour
+        }
+    )
 }
 
 /** Strength and duration sliders. Save on every change and buzz once on release so the user can feel the new setting. */

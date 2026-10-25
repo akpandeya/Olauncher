@@ -62,6 +62,9 @@
     <string name="glow_strength_percent">%1$d%%</string>
     <string name="music_pulse">Music pulse</string>
     <string name="weather_effects">Weather effects</string>
+    <string name="weather_icons" tools:ignore="MissingTranslation">Weather icons</string>
+    <string name="weather_icon_style_colour" tools:ignore="MissingTranslation">Colour</string>
+    <string name="weather_icon_style_monochrome" tools:ignore="MissingTranslation">Monochrome</string>
     <string name="text_contrast_follow_theme">Follow theme</string>
     <string name="auto">Auto</string>
     <string name="always">Always</string>
