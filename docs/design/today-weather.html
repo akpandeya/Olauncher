@@ -1,0 +1,1581 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Today Weather Mock</title>
+<style>
+  /* =========================================================
+     Tokens. Light is the base; dark is declared twice (system
+     setting and explicit choice) and the two blocks must match.
+     Weather card tokens: --sky-<look>-1/2 (card sky, top/bottom),
+     --ink-<look> (main text), --ink2-<look> (small grey text),
+     --halo-<look> (text shadow that keeps glyph edges clear).
+     ========================================================= */
+  :root {
+    --page-bg: #e9ebef;
+    --surface: #f4f5f8;
+    --card: #ffffff;
+    --tile: #eef0f4;
+    --line: #d5d9e0;
+    --text: #141821;
+    --muted: #535c6a;
+    --soft: #3d4552;
+    --seg-on-bg: #141821;
+    --seg-on-text: #ffffff;
+    --held-bg: #fbecea;
+    --held-label: #8a3b36;
+    --held-text: #6e2f2b;
+    --held-action: #9a2f28;
+    --btn-bg: #ffffff;
+    --btn-border: #c3c9d4;
+    --btn-active-bg: #141821;
+    --btn-active-text: #ffffff;
+    --focus: #2563eb;
+    --pass: #17663a;
+    --fail: #b42318;
+
+    --sky-clear-1: #cfe2f6;    --sky-clear-2: #f4e7cf;    --ink-clear: #0f141b;    --ink2-clear: #36404f;    --halo-clear: rgba(255,255,255,.55);
+    --sky-partly-1: #d3e0ee;   --sky-partly-2: #e8e5dc;   --ink-partly: #0f141b;   --ink2-partly: #36404f;   --halo-partly: rgba(255,255,255,.55);
+    --sky-overcast-1: #d0d5dc; --sky-overcast-2: #dfe2e6; --ink-overcast: #0f141b; --ink2-overcast: #36404f; --halo-overcast: rgba(255,255,255,.55);
+    --sky-light-1: #c3ccd7;    --sky-light-2: #d2d9e1;    --ink-light: #0f141b;    --ink2-light: #333d4b;    --halo-light: rgba(255,255,255,.5);
+    --sky-heavy-1: #aeb8c5;    --sky-heavy-2: #c0c8d2;    --ink-heavy: #0b0f15;    --ink2-heavy: #262f3b;    --halo-heavy: rgba(255,255,255,.45);
+    --sky-storm-1: #0d1222;    --sky-storm-2: #1a1d2e;    --ink-storm: #f4f7fb;    --ink2-storm: #cdd6e2;    --halo-storm: rgba(4,8,18,.6);
+    --sky-snow-1: #b2bfcf;     --sky-snow-2: #c8d2de;     --ink-snow: #0b0f15;     --ink2-snow: #262f3b;     --halo-snow: rgba(255,255,255,.4);
+    --sky-fog-1: #ccd1d6;      --sky-fog-2: #dcdfe2;      --ink-fog: #0f141b;      --ink2-fog: #36404f;      --halo-fog: rgba(255,255,255,.5);
+    --sky-night-1: #0a1022;    --sky-night-2: #161e3c;    --ink-night: #f4f7fb;    --ink2-night: #cdd6e2;    --halo-night: rgba(4,8,18,.6);
+
+    /* Icon and rain tokens, copied from the Thumbline Weather Icons page.
+       --flake is that page's --sky (renamed: --sky-* already means card sky here). */
+    --sun-hi:#FFE7A0; --sun-lo:#E9A23B; --glow:#FFC850; --ray:#EDAE44; --cloud-hi:#FFFFFF; --cloud-lo:#BCC9D3;
+    --storm-hi:#A3B3C0; --storm-lo:#5E7080; --drop-hi:#8CBEDD; --drop-lo:#2E6585; --bolt-hi:#FFE08A; --bolt-lo:#E39A1F;
+    --moon-hi:#FFF0B3; --moon-lo:#D6A02E; --star:#C2A56A; --snow-hi:#FFFFFF; --snow-lo:#A9CBE0; --flake:#2E6585;
+    --fog:#7F93A2; --icon-shadow:rgba(30,50,70,.38);
+    --rain-far:rgba(46,101,133,.30); --rain-mid:rgba(46,101,133,.55); --rain-near:rgba(33,84,112,.85);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page-bg: #0b0d11; --surface: #14171c; --card: #1e232b; --tile: #2a3039; --line: #2a3039;
+      --text: #eef1f5; --muted: #8b93a1; --soft: #b9c0cc;
+      --seg-on-bg: #eef1f5; --seg-on-text: #14171c;
+      --held-bg: #2a1f1f; --held-label: #d9a3a3; --held-text: #c9a0a0; --held-action: #f0b4b4;
+      --btn-bg: #1b202b; --btn-border: #353d4e; --btn-active-bg: #e8ebf2; --btn-active-text: #11141b; --focus: #7aa7ff;
+      --pass: #6fd49a; --fail: #ff8a80;
+
+      --sky-clear-1: #143a63;    --sky-clear-2: #1c4874;    --ink-clear: #f4f7fb;    --ink2-clear: #cdd6e2;    --halo-clear: rgba(4,10,24,.55);
+      --sky-partly-1: #1b3758;   --sky-partly-2: #25405d;   --ink-partly: #f4f7fb;   --ink2-partly: #cdd6e2;   --halo-partly: rgba(4,10,24,.55);
+      --sky-overcast-1: #2f3640; --sky-overcast-2: #3b434e; --ink-overcast: #f4f7fb; --ink2-overcast: #cdd6e2; --halo-overcast: rgba(4,10,24,.55);
+      --sky-light-1: #243244;    --sky-light-2: #2e3e51;    --ink-light: #f4f7fb;    --ink2-light: #cdd6e2;    --halo-light: rgba(4,10,24,.55);
+      --sky-heavy-1: #101828;    --sky-heavy-2: #182133;    --ink-heavy: #f4f7fb;    --ink2-heavy: #cdd6e2;    --halo-heavy: rgba(4,10,24,.6);
+      --sky-storm-1: #0a0f1d;    --sky-storm-2: #171a2a;    --ink-storm: #f4f7fb;    --ink2-storm: #cdd6e2;    --halo-storm: rgba(4,8,18,.6);
+      --sky-snow-1: #26313f;     --sky-snow-2: #35404e;     --ink-snow: #f4f7fb;     --ink2-snow: #cdd6e2;     --halo-snow: rgba(4,10,24,.6);
+      --sky-fog-1: #2c3238;      --sky-fog-2: #383f46;      --ink-fog: #f4f7fb;      --ink2-fog: #cdd6e2;      --halo-fog: rgba(4,10,24,.6);
+      --sky-night-1: #060a1a;    --sky-night-2: #111833;    --ink-night: #f4f7fb;    --ink2-night: #cdd6e2;    --halo-night: rgba(4,8,18,.6);
+
+      --sun-hi:#FFEBB0; --sun-lo:#F0B24A; --glow:#F2B84B; --ray:#F5C566; --cloud-hi:#F2F6F9; --cloud-lo:#9BAAB6;
+      --storm-hi:#8E9DAA; --storm-lo:#55636F; --drop-hi:#BBD8EA; --drop-lo:#6FA4C6; --bolt-hi:#FFE08A; --bolt-lo:#F0A93A;
+      --moon-hi:#FFF4B8; --moon-lo:#E9B84A; --star:#F4EAD0; --snow-hi:#FFFFFF; --snow-lo:#BFD9EA; --flake:#96B9D0;
+      --fog:#8FA1AE; --icon-shadow:rgba(0,0,0,.60);
+      --rain-far:rgba(150,185,208,.40); --rain-mid:rgba(150,185,208,.70); --rain-near:rgba(205,226,240,.90);
+    }
+  }
+  :root[data-theme="dark"] {
+      --page-bg: #0b0d11; --surface: #14171c; --card: #1e232b; --tile: #2a3039; --line: #2a3039;
+      --text: #eef1f5; --muted: #8b93a1; --soft: #b9c0cc;
+      --seg-on-bg: #eef1f5; --seg-on-text: #14171c;
+      --held-bg: #2a1f1f; --held-label: #d9a3a3; --held-text: #c9a0a0; --held-action: #f0b4b4;
+      --btn-bg: #1b202b; --btn-border: #353d4e; --btn-active-bg: #e8ebf2; --btn-active-text: #11141b; --focus: #7aa7ff;
+      --pass: #6fd49a; --fail: #ff8a80;
+
+      --sky-clear-1: #143a63;    --sky-clear-2: #1c4874;    --ink-clear: #f4f7fb;    --ink2-clear: #cdd6e2;    --halo-clear: rgba(4,10,24,.55);
+      --sky-partly-1: #1b3758;   --sky-partly-2: #25405d;   --ink-partly: #f4f7fb;   --ink2-partly: #cdd6e2;   --halo-partly: rgba(4,10,24,.55);
+      --sky-overcast-1: #2f3640; --sky-overcast-2: #3b434e; --ink-overcast: #f4f7fb; --ink2-overcast: #cdd6e2; --halo-overcast: rgba(4,10,24,.55);
+      --sky-light-1: #243244;    --sky-light-2: #2e3e51;    --ink-light: #f4f7fb;    --ink2-light: #cdd6e2;    --halo-light: rgba(4,10,24,.55);
+      --sky-heavy-1: #101828;    --sky-heavy-2: #182133;    --ink-heavy: #f4f7fb;    --ink2-heavy: #cdd6e2;    --halo-heavy: rgba(4,10,24,.6);
+      --sky-storm-1: #0a0f1d;    --sky-storm-2: #171a2a;    --ink-storm: #f4f7fb;    --ink2-storm: #cdd6e2;    --halo-storm: rgba(4,8,18,.6);
+      --sky-snow-1: #26313f;     --sky-snow-2: #35404e;     --ink-snow: #f4f7fb;     --ink2-snow: #cdd6e2;     --halo-snow: rgba(4,10,24,.6);
+      --sky-fog-1: #2c3238;      --sky-fog-2: #383f46;      --ink-fog: #f4f7fb;      --ink2-fog: #cdd6e2;      --halo-fog: rgba(4,10,24,.6);
+      --sky-night-1: #060a1a;    --sky-night-2: #111833;    --ink-night: #f4f7fb;    --ink2-night: #cdd6e2;    --halo-night: rgba(4,8,18,.6);
+
+      --sun-hi:#FFEBB0; --sun-lo:#F0B24A; --glow:#F2B84B; --ray:#F5C566; --cloud-hi:#F2F6F9; --cloud-lo:#9BAAB6;
+      --storm-hi:#8E9DAA; --storm-lo:#55636F; --drop-hi:#BBD8EA; --drop-lo:#6FA4C6; --bolt-hi:#FFE08A; --bolt-lo:#F0A93A;
+      --moon-hi:#FFF4B8; --moon-lo:#E9B84A; --star:#F4EAD0; --snow-hi:#FFFFFF; --snow-lo:#BFD9EA; --flake:#96B9D0;
+      --fog:#8FA1AE; --icon-shadow:rgba(0,0,0,.60);
+      --rain-far:rgba(150,185,208,.40); --rain-mid:rgba(150,185,208,.70); --rain-near:rgba(205,226,240,.90);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--page-bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    overflow-x: hidden;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 24px 16px 40px;
+    gap: 18px;
+  }
+  .intro, .panel { width: 100%; max-width: 420px; }
+  .intro h1 { font-size: 18px; margin: 0 0 4px; }
+  .intro p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted); }
+
+  /* ---------- Phone and Today page ---------- */
+  .phone {
+    position: relative;
+    width: 390px; max-width: 100%;
+    height: 844px; max-height: calc(100svh - 40px); min-height: 560px;
+    border-radius: 44px;
+    overflow: hidden;
+    background: var(--surface);
+    box-shadow: 0 0 0 8px #0b0d12, 0 0 0 9px #2a2f3a, 0 24px 60px rgba(0,0,0,.3);
+    flex: none;
+  }
+  .today {
+    position: absolute; inset: 0;
+    overflow-y: auto; overflow-x: hidden;
+    padding: 52px 14px 24px;
+    display: flex; flex-direction: column; gap: 10px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .greet { padding: 0 4px 4px; display: flex; justify-content: space-between; align-items: flex-end; }
+  .greet .day { font-size: 28px; font-weight: 700; letter-spacing: -.02em; }
+  .greet .date { font-size: 13px; color: var(--muted); }
+  .chip { font-size: 11px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 4px 8px; }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .card { background: var(--card); border-radius: 22px; padding: 16px; min-width: 0; }
+  .full { grid-column: span 2; }
+  .label { font-size: 12px; color: var(--muted); }
+  .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .link { font-size: 12px; color: var(--muted); white-space: nowrap; }
+  .big { font-size: 16px; font-weight: 600; margin-top: 4px; }
+  .half { min-height: 118px; display: flex; flex-direction: column; justify-content: space-between; }
+  .num { font-size: 30px; font-weight: 700; }
+  .num small { font-size: 13px; font-weight: 600; color: var(--muted); }
+  .seg { display: flex; gap: 4px; background: var(--surface); border-radius: 999px; padding: 3px; }
+  .seg span { padding: 5px 12px; border-radius: 999px; font-size: 12px; color: var(--muted); }
+  .seg span.on { background: var(--seg-on-bg); color: var(--seg-on-text); font-weight: 700; }
+  .tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+  .tile { background: var(--tile); border-radius: 16px; padding: 12px; }
+  .tile b { display: block; font-size: 22px; }
+  .next { display: flex; flex-direction: column; gap: 10px; font-size: 14px; }
+  .next div { display: flex; gap: 12px; }
+  .next div span:first-child { width: 76px; flex: none; color: var(--muted); }
+  .widget { border: 1px dashed var(--line); }
+  .held { background: var(--held-bg); padding: 14px 16px; }
+  .held .label { color: var(--held-label); }
+  .held .sub { font-size: 12px; color: var(--held-text); margin-top: 2px; }
+  .held .act { font-size: 13px; font-weight: 700; color: var(--held-action); padding: 10px 4px; }
+
+  /* ---------- Weather card: the only place effects play ---------- */
+  .wx {
+    position: relative; overflow: hidden; isolation: isolate;
+    padding: 16px;
+    --sky-1: var(--card); --sky-2: var(--card); --ink: var(--text); --ink2: var(--muted); --halo: transparent;
+    color: var(--ink);
+  }
+  .wx[data-look="clear"]    { --sky-1: var(--sky-clear-1);    --sky-2: var(--sky-clear-2);    --ink: var(--ink-clear);    --ink2: var(--ink2-clear);    --halo: var(--halo-clear); }
+  .wx[data-look="partly"]   { --sky-1: var(--sky-partly-1);   --sky-2: var(--sky-partly-2);   --ink: var(--ink-partly);   --ink2: var(--ink2-partly);   --halo: var(--halo-partly); }
+  .wx[data-look="overcast"] { --sky-1: var(--sky-overcast-1); --sky-2: var(--sky-overcast-2); --ink: var(--ink-overcast); --ink2: var(--ink2-overcast); --halo: var(--halo-overcast); }
+  .wx[data-look="light"]    { --sky-1: var(--sky-light-1);    --sky-2: var(--sky-light-2);    --ink: var(--ink-light);    --ink2: var(--ink2-light);    --halo: var(--halo-light); }
+  .wx[data-look="heavy"]    { --sky-1: var(--sky-heavy-1);    --sky-2: var(--sky-heavy-2);    --ink: var(--ink-heavy);    --ink2: var(--ink2-heavy);    --halo: var(--halo-heavy); }
+  .wx[data-look="storm"]    { --sky-1: var(--sky-storm-1);    --sky-2: var(--sky-storm-2);    --ink: var(--ink-storm);    --ink2: var(--ink2-storm);    --halo: var(--halo-storm); }
+  .wx[data-look="snow"]     { --sky-1: var(--sky-snow-1);     --sky-2: var(--sky-snow-2);     --ink: var(--ink-snow);     --ink2: var(--ink2-snow);     --halo: var(--halo-snow); }
+  .wx[data-look="fog"]      { --sky-1: var(--sky-fog-1);      --sky-2: var(--sky-fog-2);      --ink: var(--ink-fog);      --ink2: var(--ink2-fog);      --halo: var(--halo-fog); }
+  .wx[data-look="night"]    { --sky-1: var(--sky-night-1);    --sky-2: var(--sky-night-2);    --ink: var(--ink-night);    --ink2: var(--ink2-night);    --halo: var(--halo-night); }
+  /* Storm and night have a dark sky in both themes, so their icons and rain use the dark tokens.
+     The card's own gradient defs sit inside .wx, so the gradients pick this up too. */
+  .wx[data-look="storm"], .wx[data-look="night"] {
+      --sun-hi:#FFEBB0; --sun-lo:#F0B24A; --glow:#F2B84B; --ray:#F5C566; --cloud-hi:#F2F6F9; --cloud-lo:#9BAAB6;
+      --storm-hi:#8E9DAA; --storm-lo:#55636F; --drop-hi:#BBD8EA; --drop-lo:#6FA4C6; --bolt-hi:#FFE08A; --bolt-lo:#F0A93A;
+      --moon-hi:#FFF4B8; --moon-lo:#E9B84A; --star:#F4EAD0; --snow-hi:#FFFFFF; --snow-lo:#BFD9EA; --flake:#96B9D0;
+      --fog:#8FA1AE; --icon-shadow:rgba(0,0,0,.60);
+      --rain-far:rgba(150,185,208,.40); --rain-mid:rgba(150,185,208,.70); --rain-near:rgba(205,226,240,.90);
+  }
+  .wx-sky { position: absolute; inset: 0; z-index: -2; background: linear-gradient(180deg, var(--sky-1), var(--sky-2)); }
+  .wx canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; display: block; }
+  .wx .t { text-shadow: 0 0 1px var(--halo), 0 0 6px var(--halo); }
+  .wx-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .wx-main { display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .wx-icon { width: 46px; height: 46px; flex: none; display: flex; align-items: center; justify-content: center; }
+
+  /* Vector icons (Thumbline Weather Icons, section A). 24-unit grid. */
+  .wi { display: block; overflow: visible; flex: none; }
+  .spin { transform-box: fill-box; transform-origin: center; animation: spin 48s linear infinite; }
+  .glow { animation: breathe 6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+  .tw { animation: tw 3.2s ease-in-out infinite; }
+  .bolt { animation: flash 5s steps(1) infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes breathe { 50% { opacity: .7; transform: scale(.94); } }
+  @keyframes tw { 50% { opacity: .25; } }
+  @keyframes flash { 0%, 88%, 94%, 100% { opacity: 1; } 91%, 97% { opacity: .55; } }
+  .defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+  /* Rain with depth (Thumbline Weather Icons, section C): three CSS streak
+     layers plus ripples. Positions come from rainPlan(); wind sets the
+     --dx-* and --tilt-* values on .wx-rain; --fall is the card height + 80. */
+  .wx-rain {
+    position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
+    opacity: .7;   /* RAIN_OPACITY in the script; the text cut-out does the rest */
+    -webkit-mask-size: 100% 100%; mask-size: 100% 100%;
+    -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+    --fall: 260px;
+  }
+  .wx-rain i { position: absolute; top: 0; display: block; border-radius: 2px;
+    animation-name: fall; animation-timing-function: linear; animation-iteration-count: infinite; }
+  .wx-rain .far  { width: 1px;   height: 12px; background: linear-gradient(transparent, var(--rain-far)); filter: blur(.6px);
+    --dx: var(--dx-far, -44px);  --tilt: var(--tilt-far, 8deg); }
+  .wx-rain .mid  { width: 1.5px; height: 22px; background: linear-gradient(transparent, var(--rain-mid));
+    --dx: var(--dx-mid, -54px);  --tilt: var(--tilt-mid, 8deg); }
+  .wx-rain .near { width: 2px;   height: 40px; background: linear-gradient(transparent, var(--rain-near));
+    --dx: var(--dx-near, -70px); --tilt: var(--tilt-near, 10deg); }
+  @keyframes fall {
+    from { transform: translate(0, -60px) rotate(var(--tilt)); }
+    to   { transform: translate(var(--dx), var(--fall)) rotate(var(--tilt)); }
+  }
+  .wx-rain u { position: absolute; width: 30px; height: 8px; margin-left: -15px; border: 1px solid var(--rain-near);
+    border-radius: 50%; opacity: 0; text-decoration: none;
+    animation-name: ripple; animation-timing-function: ease-out; animation-iteration-count: infinite; }
+  @keyframes ripple { 0% { transform: scale(.1); opacity: .9; } 100% { transform: scale(1); opacity: 0; } }
+
+  /* Pause, reduced motion, card off screen: hold every card animation on its
+     current frame (a still frame, not an empty card). Button icons never move. */
+  html.still .wx *, html.still .wx *::before { animation-play-state: paused !important; }
+  .looks .wi * { animation: none !important; }
+  @media (prefers-reduced-motion: reduce) {
+    .wx *, .wx *::before { animation-play-state: paused !important; }
+  }
+  .wx-temp { font-size: 44px; font-weight: 300; line-height: 1; letter-spacing: -.03em; }
+  .wx-cond { font-size: 13px; color: var(--ink2); margin-top: 4px; }
+  .wx-side { text-align: right; font-size: 12px; color: var(--ink2); line-height: 1.5; flex: none; }
+  .wx-hours {
+    display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 4px;
+    margin-top: 14px; text-align: center; font-size: 12px;
+  }
+  .wx-hours > div { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .wx-hours .h { color: var(--ink2); }
+  .wx-hours .e { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; }
+  .wx-empty { display: none; }
+  .wx[data-look="none"] .wx-top, .wx[data-look="none"] .wx-hours { display: none; }
+  .wx[data-look="none"] .wx-empty { display: flex; }
+  .wx[data-look="none"] canvas, .wx[data-look="none"] .wx-rain { display: none; }
+  .wx-empty .act { font-size: 13px; font-weight: 700; padding: 8px 4px; }
+
+  /* ---------- Mock controls (not part of the app) ---------- */
+  .panel h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; font-weight: 700; }
+  .panel p.hint { margin: 0 0 10px; font-size: 13px; line-height: 1.45; color: var(--muted); }
+  .looks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  @media (min-width: 380px) { .looks { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  .panel button {
+    min-height: 44px; padding: 8px 6px;
+    font: inherit; font-size: 14px; font-weight: 600;
+    color: var(--text); background: var(--btn-bg);
+    border: 1px solid var(--btn-border); border-radius: 12px;
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  .looks button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+  .looks .bi { display: inline-flex; width: 20px; height: 20px; flex: none; }
+  .looks .bi:empty { display: none; }
+  .panel button[aria-pressed="true"] { background: var(--btn-active-bg); color: var(--btn-active-text); border-color: var(--btn-active-bg); }
+  button:focus-visible, input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .tools { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; font-size: 15px; }
+  .wind { display: flex; align-items: center; gap: 10px; flex: 1 1 100%; }
+  .wind input { flex: 1; min-width: 0; accent-color: var(--focus); }
+  .wind output { min-width: 2.5em; text-align: right; font-variant-numeric: tabular-nums; }
+  .themes { display: flex; gap: 6px; flex: 1 1 100%; }
+  .themes button { flex: 1; }
+  .check { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .check input { width: 20px; height: 20px; accent-color: var(--focus); }
+  .status { margin: 10px 0 0; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--muted); overflow-wrap: anywhere; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+  th, td { text-align: left; padding: 5px 4px; border-bottom: 1px solid var(--line); }
+  th { font-size: 12px; color: var(--muted); font-weight: 600; }
+  td.pass { color: var(--pass); font-weight: 700; }
+  td.fail { color: var(--fail); font-weight: 700; }
+  .note { font-size: 13px; line-height: 1.5; color: var(--muted); margin: 8px 0 0; }
+
+  @media (max-width: 430px) {
+    .phone { border-radius: 28px; box-shadow: 0 0 0 1px var(--line); height: max(560px, calc(100svh - 120px)); }
+  }
+</style>
+</head>
+<body>
+
+<header class="intro">
+  <h1>Today page: weather effects</h1>
+  <p>Design mock. Bento layout (option C) with the effect playing inside the Weather card only. Example data.</p>
+</header>
+
+<main class="phone" aria-label="Thumbline Today page preview">
+  <div class="today" id="today">
+    <div class="greet">
+      <div><div class="day">Samstag</div><div class="date">24. Oktober</div></div>
+      <div class="chip">Example data</div>
+    </div>
+
+    <div class="grid">
+      <!-- Intention line -->
+      <div class="card full row">
+        <div><div class="label">Today I want to…</div><div class="big">Write the Berlin notes</div></div>
+        <div class="link">Past ›</div>
+      </div>
+
+      <!-- Weather: sky, CSS rain, effect canvas, then text on top.
+           The icon gradient defs live inside the card so storm and night
+           can switch them to the dark tokens. -->
+      <section class="card full wx" id="wx" data-look="overcast" aria-label="Weather">
+        <svg class="defs" id="wx-defs" width="0" height="0" aria-hidden="true" focusable="false"></svg>
+        <div class="wx-sky" aria-hidden="true"></div>
+        <div class="wx-rain" id="wx-rain" aria-hidden="true"></div>
+        <canvas id="wx-canvas" aria-hidden="true"></canvas>
+        <div class="wx-top">
+          <div class="wx-main">
+            <div class="wx-icon" id="wx-icon" aria-hidden="true"></div>
+            <div class="ko">
+              <div class="wx-temp t" id="wx-temp">11°</div>
+              <div class="wx-cond t" id="wx-cond">Overcast · 12° / 7°</div>
+            </div>
+          </div>
+          <div class="wx-side t ko" id="wx-side">Dry for 12 h<br>Near you · 01:50</div>
+        </div>
+        <div class="wx-hours t" id="wx-hours"></div>
+        <div class="wx-empty row">
+          <div class="t" style="font-size:14px">Weather is not available.</div>
+          <span class="act">Set location</span>
+        </div>
+      </section>
+
+      <!-- Words and Notes, half width -->
+      <div class="card half">
+        <div class="label">Words · DE</div>
+        <div><div class="num">0 <small>due</small></div><div class="label">10 words · 3 learned</div></div>
+      </div>
+      <div class="card half">
+        <div class="label">Notes · 4</div>
+        <div><div style="font-size:14px">Milk, eggs, bread</div><div class="label" style="margin-top:4px">+ Add note</div></div>
+      </div>
+
+      <!-- Wellbeing, Today view -->
+      <div class="card full">
+        <div class="row">
+          <div class="label">Wellbeing</div>
+          <div class="seg"><span class="on">Today</span><span>7 days</span></div>
+        </div>
+        <div style="font-size:34px;font-weight:700;margin-top:12px;letter-spacing:-.02em">4 h 7 min</div>
+        <div style="font-size:13px;color:var(--muted)">Distracting · 107 opens · top: YouTube 4 h 7 min</div>
+        <div class="tiles">
+          <div class="tile"><b>29</b><span class="label">Water</span></div>
+          <div class="tile"><b>10</b><span class="label">Walk</span></div>
+          <div class="tile"><b>5</b><span class="label">Not now</span></div>
+        </div>
+        <div style="font-size:12px;color:var(--soft);margin-top:10px">Opened anyway 18 · mostly “Look something up”</div>
+      </div>
+
+      <!-- Saved for later -->
+      <div class="card full row">
+        <div><div class="label">Saved for later · 12</div><div style="font-size:14px;margin-top:4px">Latest: Bike lanes in Berlin</div></div>
+        <div class="link">Open ›</div>
+      </div>
+
+      <!-- Next up -->
+      <div class="card full next">
+        <div class="label">Next up</div>
+        <div><span>All day</span><span>Aviral Birthday</span></div>
+        <div><span>Tomorrow</span><span>Daylight Saving Time ends</span></div>
+        <div><span>Mon</span><span>BER – P89 (Office)</span></div>
+        <div><span>Mon</span><span>Maharishi Valmiki Jayanti</span></div>
+      </div>
+
+      <!-- Widget slot -->
+      <div class="card full row widget">
+        <div><div style="font-size:14px;color:var(--soft)">Your widget</div><div class="label">Widgets you add appear here</div></div>
+        <span style="font-size:13px;font-weight:700;padding:8px 4px">+ Add</span>
+      </div>
+
+      <!-- Held -->
+      <div class="card full row held">
+        <div><div class="label">Held · 1</div><div style="font-size:14px;margin-top:2px">YouTube · latest 02:31</div><div class="sub">The Verge</div></div>
+        <span class="act">Clear all</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<section class="panel" aria-labelledby="looks-h">
+  <h2 id="looks-h">Preview only</h2>
+  <p class="hint">The app has no look picker: the look follows the current hour of the forecast. These buttons swap the example forecast so each look can be seen.</p>
+  <div class="looks" role="group" aria-label="Example forecast, preview only">
+    <button type="button" data-scene="clear"><span class="bi" data-icon="clear" aria-hidden="true"></span>Clear</button>
+    <button type="button" data-scene="partly"><span class="bi" data-icon="partly" aria-hidden="true"></span>Partly</button>
+    <button type="button" data-scene="overcast" aria-pressed="true"><span class="bi" data-icon="overcast" aria-hidden="true"></span>Overcast</button>
+    <button type="button" data-scene="light"><span class="bi" data-icon="light" aria-hidden="true"></span>Light rain</button>
+    <button type="button" data-scene="heavy"><span class="bi" data-icon="heavy" aria-hidden="true"></span>Heavy rain</button>
+    <button type="button" data-scene="storm"><span class="bi" data-icon="storm" aria-hidden="true"></span>Storm</button>
+    <button type="button" data-scene="snow"><span class="bi" data-icon="snow" aria-hidden="true"></span>Snow</button>
+    <button type="button" data-scene="fog"><span class="bi" data-icon="fog" aria-hidden="true"></span>Fog</button>
+    <button type="button" data-scene="night"><span class="bi" data-icon="night" aria-hidden="true"></span>Night</button>
+    <button type="button" data-scene="none">No forecast</button>
+  </div>
+  <p class="status" id="status" aria-live="polite"></p>
+  <svg class="defs" id="panel-defs" width="0" height="0" aria-hidden="true" focusable="false"></svg>
+</section>
+
+<section class="panel" aria-labelledby="set-h">
+  <h2 id="set-h">Settings and mock tools</h2>
+  <div class="tools">
+    <label class="wind" for="wind">Wind
+      <input id="wind" type="range" min="0" max="100" step="1" value="30">
+      <output id="wind-value" for="wind">30</output>
+    </label>
+    <div class="themes" role="group" aria-label="Theme (mock)">
+      <button type="button" data-theme-choice="auto" aria-pressed="true">Auto</button>
+      <button type="button" data-theme-choice="light" aria-pressed="false">Light</button>
+      <button type="button" data-theme-choice="dark" aria-pressed="false">Dark</button>
+    </div>
+    <button type="button" id="pause" aria-pressed="false" style="min-width:110px;padding:8px 16px">Pause</button>
+    <label class="check"><input type="checkbox" id="reduced"> Reduced motion</label>
+  </div>
+  <p class="note">Wind is the same 0 to 100 user setting as on home (default 30). Each look lets only part of it through. Theme, pause and reduced motion are mock tools; the app follows the system.</p>
+</section>
+
+<section class="panel" aria-labelledby="read-h">
+  <h2 id="read-h">Readability check</h2>
+  <p class="hint">Worst case per look: darkest and lightest sky stop, with the strongest effect pixel the look can draw sitting under the text after the text keep-out (at most 15% of the effect remains over text). Target 4.5:1 for all card text, small grey text included.</p>
+  <table>
+    <thead><tr><th>Look</th><th>Light main / small</th><th>Dark main / small</th></tr></thead>
+    <tbody id="read-rows"></tbody>
+  </table>
+  <p class="note">Not measured: the weather icons (pictures, no text contrast target), the text halo (counted as zero help), and anti-aliased edges in a real renderer.</p>
+</section>
+
+<script>
+'use strict';
+
+// <forecast>
+// ============================================================
+// Forecast to look: pure, mirrors app.olauncher.glance.WeatherCodes.
+// The look follows the same grouping as WeatherCodes.icon(), so the
+// effect never disagrees with the icon on the card.
+// ============================================================
+function lookForForecast(code, isDay) {
+  switch (code) {
+    case 0: return isDay ? 'clear' : 'night';
+    case 1: return isDay ? 'partly' : 'night';
+    case 2: return isDay ? 'partly' : 'overcast';
+    case 3: return 'overcast';
+    case 45: case 48: return 'fog';
+    case 51: case 53: case 55: case 56: case 57: case 61: return 'light';
+    case 63: case 65: case 66: case 67: case 80: case 81: case 82: return 'heavy';
+    case 71: case 73: case 75: case 77: case 85: case 86: return 'snow';
+    case 95: case 96: case 99: return 'storm';
+    default: return null;   // unknown code: plain card, no effect
+  }
+}
+
+function conditionText(code, isDay) {
+  switch (code) {
+    case 0: return isDay ? 'clear' : 'clear night';
+    case 1: return 'mainly clear';
+    case 2: return 'partly cloudy';
+    case 3: return 'overcast';
+    case 45: case 48: return 'fog';
+    case 51: case 53: case 55: return 'drizzle';
+    case 56: case 57: return 'freezing drizzle';
+    case 61: return 'light rain';
+    case 63: return 'rain';
+    case 65: return 'heavy rain';
+    case 66: case 67: return 'freezing rain';
+    case 71: case 73: case 75: return 'snow';
+    case 77: return 'snow grains';
+    case 80: case 81: case 82: return 'showers';
+    case 85: case 86: return 'snow showers';
+    case 95: case 96: case 99: return 'thunderstorm';
+    default: return '—';
+  }
+}
+
+// The card icon follows the same grouping as WeatherCodes.icon(), which is
+// also the look grouping, so the icon name is the look name.
+function iconFor(code, isDay) { return lookForForecast(code, isDay); }
+// </forecast>
+
+// <icons>
+// ============================================================
+// Vector icons: copied from the Thumbline Weather Icons page (section A).
+// Pure string builders, no DOM. `s` is an id suffix so the card and the
+// preview buttons each own a set of gradient defs (the card's set follows
+// the card look; gradients resolve their colours where the defs sit).
+// ============================================================
+const ICON_LABELS = Object.freeze({
+  clear: 'Clear day', partly: 'Partly cloudy', overcast: 'Overcast', light: 'Light rain', heavy: 'Heavy rain',
+  storm: 'Thunderstorm', snow: 'Snow', fog: 'Fog', night: 'Clear night',
+});
+
+function iconDefs(s) {
+  return '<defs>'
+    + '<radialGradient id="gSun' + s + '" cx=".35" cy=".3" r=".8"><stop offset="0" style="stop-color:var(--sun-hi)"/><stop offset="1" style="stop-color:var(--sun-lo)"/></radialGradient>'
+    + '<radialGradient id="gGlow' + s + '" cx=".5" cy=".5" r=".5"><stop offset="0" style="stop-color:var(--glow);stop-opacity:.6"/><stop offset=".55" style="stop-color:var(--glow);stop-opacity:.18"/><stop offset="1" style="stop-color:var(--glow);stop-opacity:0"/></radialGradient>'
+    + '<linearGradient id="gCloud' + s + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--cloud-hi)"/><stop offset="1" style="stop-color:var(--cloud-lo)"/></linearGradient>'
+    + '<linearGradient id="gStorm' + s + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--storm-hi)"/><stop offset="1" style="stop-color:var(--storm-lo)"/></linearGradient>'
+    + '<linearGradient id="gDrop' + s + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--drop-hi)"/><stop offset="1" style="stop-color:var(--drop-lo)"/></linearGradient>'
+    + '<linearGradient id="gBolt' + s + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--bolt-hi)"/><stop offset="1" style="stop-color:var(--bolt-lo)"/></linearGradient>'
+    + '<linearGradient id="gMoon' + s + '" x1=".1" y1=".1" x2=".9" y2=".9"><stop offset="0" style="stop-color:var(--moon-hi)"/><stop offset="1" style="stop-color:var(--moon-lo)"/></linearGradient>'
+    + '<linearGradient id="gSnow' + s + '" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--snow-hi)"/><stop offset="1" style="stop-color:var(--snow-lo)"/></linearGradient>'
+    + '<linearGradient id="gFog' + s + '" x1="0" y1="0" x2="1" y2="0"><stop offset="0" style="stop-color:var(--fog);stop-opacity:.15"/><stop offset=".5" style="stop-color:var(--fog);stop-opacity:.9"/><stop offset="1" style="stop-color:var(--fog);stop-opacity:.15"/></linearGradient>'
+    + '<filter id="fShadow' + s + '" x="-25%" y="-25%" width="150%" height="160%"><feDropShadow dx="0" dy=".7" stdDeviation=".6" style="flood-color:var(--icon-shadow)"/></filter>'
+    + '</defs>';
+}
+
+function sunBody(s, x, y, scale, r) {
+  let rays = '';
+  for (let a = 0; a < 360; a += 45) rays += '<polygon points="10.6,5.2 13.4,5.2 12,1.4" transform="rotate(' + a + ' 12 12)" fill="var(--ray)"/>';
+  return '<g transform="translate(' + x + ' ' + y + ') scale(' + scale + ') translate(-12 -12)">'
+    + '<circle class="glow" cx="12" cy="12" r="11.6" fill="url(#gGlow' + s + ')"/><g class="spin">' + rays + '</g>'
+    + '<circle cx="12" cy="12" r="' + r + '" fill="url(#gSun' + s + ')" filter="url(#fShadow' + s + ')"/>'
+    + '<ellipse cx="10.6" cy="10.4" rx="1.7" ry="1" fill="#fff" opacity=".45"/></g>';
+}
+const CLOUD_PATH = 'M7.5 19a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18.4 10.6 4.2 4.2 0 0 1 17.5 19z';
+function cloudBody(s, transform, grad, shadow) {
+  return '<g transform="' + transform + '"' + (shadow ? ' filter="url(#fShadow' + s + ')"' : '') + '>'
+    + '<path d="' + CLOUD_PATH + '" fill="url(#' + grad + s + ')"/><ellipse cx="12.4" cy="8.9" rx="3.3" ry="1.3" fill="#fff" opacity=".3"/></g>';
+}
+function streak(s, x, y, w, h, deg) {
+  const cx = +(x + w / 2).toFixed(2), cy = +(y + h / 2).toFixed(2);
+  return '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="' + (w / 2) + '" transform="rotate(' + deg + ' ' + cx + ' ' + cy + ')" fill="url(#gDrop' + s + ')"/>';
+}
+function snowflake() {
+  const arm = 'd="M11.25 12 L11.4 4.4 L12 2.4 L12.6 4.4 L12.75 12 Z M12 8.3 L9.2 5.5 L10.1 4.6 L12 6.4 L13.9 4.6 L14.8 5.5 Z"';
+  let arms = '';
+  for (let a = 0; a < 360; a += 60) arms += '<path transform="rotate(' + a + ' 12 12)" ' + arm + '/>';
+  return '<g transform="translate(12.2 18.6) scale(.45) translate(-12 -12)" fill="var(--flake)">' + arms + '<circle cx="12" cy="12" r="1.5"/></g>';
+}
+function starPath(delay, x, y, k) {
+  return '<path class="tw" style="animation-delay:' + delay + 's" transform="translate(' + x + ' ' + y + ') scale(' + k + ')" d="M0 -1.6 L.4 -.4 L1.6 0 L.4 .4 L0 1.6 L-.4 .4 L-1.6 0 L-.4 -.4Z" fill="var(--star)"/>';
+}
+
+function iconBody(name, s) {
+  switch (name) {
+    case 'clear': return sunBody(s, 12, 12, 1, 5.3);
+    case 'partly': return sunBody(s, 7.4, 6.6, 0.92, 4.7) + cloudBody(s, 'translate(3.2 4.2) scale(0.82)', 'gCloud', true);
+    case 'overcast': return cloudBody(s, 'translate(5.5 -0.5) scale(0.72)', 'gStorm', false) + cloudBody(s, 'translate(1.2 3.4) scale(0.86)', 'gCloud', true);
+    case 'light': return cloudBody(s, 'translate(2.8 -3.6) scale(0.93)', 'gStorm', true)
+      + streak(s, 7.6, 16.6, 1.5, 3.4, 14) + streak(s, 11.4, 18.2, 1.5, 3.4, 14) + streak(s, 15.2, 16.6, 1.5, 3.4, 14);
+    case 'heavy': return cloudBody(s, 'translate(2.8 -3.8) scale(0.93)', 'gStorm', true)
+      + streak(s, 6, 15.9, 1.6, 4.6, 16) + streak(s, 9.2, 18, 1.6, 4.6, 16) + streak(s, 12.4, 15.9, 1.6, 4.6, 16)
+      + streak(s, 15.6, 18, 1.6, 4.6, 16) + streak(s, 18.8, 15.9, 1.6, 4.6, 16);
+    case 'storm': return cloudBody(s, 'translate(2.8 -3.8) scale(0.93)', 'gStorm', true)
+      + '<polygon class="bolt" points="13.4,13 9.2,19 11.9,19 10.6,23.4 15.8,16.6 13,16.6 14.6,13" fill="url(#gBolt' + s + ')" stroke="var(--bolt-lo)" stroke-width=".25" stroke-linejoin="round"/>'
+      + streak(s, 5.8, 17, 1.4, 3.2, 14) + streak(s, 17.6, 17, 1.4, 3.2, 14);
+    case 'snow': return cloudBody(s, 'translate(2.8 -3.6) scale(0.93)', 'gStorm', true) + snowflake();
+    case 'fog': return cloudBody(s, 'translate(3.4 -1.4) scale(0.82)', 'gCloud', true)
+      + '<rect x="3" y="14.4" width="18" height="1.8" rx=".9" fill="url(#gFog' + s + ')"/>'
+      + '<rect x="5" y="17.4" width="15" height="1.8" rx=".9" fill="url(#gFog' + s + ')"/>'
+      + '<rect x="2.5" y="20.4" width="13" height="1.8" rx=".9" fill="url(#gFog' + s + ')"/>';
+    case 'night': return '<path d="M15.5 4.2a8.2 8.2 0 1 0 4.3 12.9A6.8 6.8 0 0 1 15.5 4.2z" fill="url(#gMoon' + s + ')" filter="url(#fShadow' + s + ')"/>'
+      + '<circle cx="10" cy="10.5" r="1.2" fill="var(--moon-lo)" opacity=".25"/><circle cx="9.2" cy="15.2" r=".8" fill="var(--moon-lo)" opacity=".22"/>'
+      + starPath(0, 19.2, 5.2, 1.05) + starPath(0.9, 21, 11.5, 0.6) + starPath(1.7, 17.2, 21, 0.5);
+    default: return null;
+  }
+}
+
+function escapeAttr(t) { return String(t).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+
+// label: accessible name (role="img"); null makes the icon decorative.
+function iconSvg(name, size, label, s) {
+  const body = iconBody(name, s);
+  if (body === null) return '';
+  const a11y = label === null ? 'aria-hidden="true" focusable="false"' : 'role="img" aria-label="' + escapeAttr(label) + '"';
+  return '<svg class="wi" width="' + size + '" height="' + size + '" viewBox="0 0 24 24" ' + a11y + '>' + body + '</svg>';
+}
+// </icons>
+
+// <sim>
+// ============================================================
+// Simulation: pure logic, no DOM. Units are CSS px and seconds.
+// Same model as docs/design/weather-effects.html (home), with two
+// changes: createState takes a scale so a small card gets fewer and
+// smaller things than the full home screen, and the card has no glass
+// drops: rain on the card is the CSS streak system (see <rain>).
+// ============================================================
+const STEP = 1 / 30;            // fixed time step in seconds (WeatherEffects.MAX_FPS)
+const TAU = Math.PI * 2;
+
+const GUST_GAP = [3, 9];
+const GUST_SPEED = [240, 320];
+const GUST_SIGMA = [60, 100];
+const GUST_STRENGTH = [0.25, 0.5];
+
+const FLAKES_AT_FULL_DENSITY = 140;
+const FLAKE_FALL_PX = 60;
+const MAX_FLAKE_DRIFT = 45;
+const SETTLE_SHARE = 0.35;
+const SETTLE_HEIGHT = [0.3, 1.0];
+const SETTLE_REST = [3, 6];
+const MELT_SECONDS = 1;
+const MAX_SETTLED = 40;
+
+const BOLT_GAP = [4, 12];
+const FLASH_SECONDS = 0.6;
+const DOUBLE_FLASH_CHANCE = 0.35;
+const DOUBLE_FLASH_DELAY = 0.18;
+
+const CLOUD_BASE_SPEED = [6, 12];
+const CLOUD_WIND_SPEED = 30;
+const SUN_TURN = 0.08;
+
+// Home reference size (the home prototype phone). A card scales counts by
+// sqrt(area share) and sizes by height share, each clamped.
+const REF_WIDTH = 390, REF_HEIGHT = 844;
+function scaleFor(width, height) {
+  return Object.freeze({
+    count: clamp(Math.sqrt((width * height) / (REF_WIDTH * REF_HEIGHT)), 0.3, 1),
+    size: clamp(height / 400, 0.4, 1),
+  });
+}
+
+const BASE_PARAMS = {
+  density: 0, fallSpeed: 0.2, bolt: 0,
+  wind: 0, gustiness: 0, sun: 0, clouds: 0, cloudLayers: 0, fog: 0, stars: 0, snow: false,
+};
+function withBase(p) { return Object.freeze(Object.assign({}, BASE_PARAMS, p)); }
+
+// Same nine presets as home, minus the glass-drop fields (glassDrops, slideSpeed).
+// density and fallSpeed drive the CSS rain on light, heavy and storm.
+const MODES = {
+  clear:    withBase({ sun: 1, wind: 0.3 }),
+  partly:   withBase({ sun: 0.6, clouds: 0.45, cloudLayers: 1, wind: 0.6, gustiness: 0.3 }),
+  overcast: withBase({ clouds: 1, cloudLayers: 2, wind: 0.4, gustiness: 0.2 }),
+  light:    withBase({ density: 0.35, fallSpeed: 1.0, wind: 0.5, gustiness: 0.5 }),
+  heavy:    withBase({ density: 0.9, fallSpeed: 2.2, wind: 1, gustiness: 0.8 }),
+  storm:    withBase({ density: 0.95, fallSpeed: 2.5, wind: 1, gustiness: 1, bolt: 1 }),
+  snow:     withBase({ density: 0.6, fallSpeed: 0.5, snow: true, wind: 0.8, gustiness: 0.6 }),
+  fog:      withBase({ fog: 1, wind: 0.2, gustiness: 0.1 }),
+  night:    withBase({ stars: 1 }),
+};
+
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return function () {
+    a = (a + 0x6D2B79F5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function randRange(rng, lo, hi) { return lo + (hi - lo) * rng(); }
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+function wrap(x, lo, hi) { const span = hi - lo; return x < lo ? x + span : x >= hi ? x - span : x; }
+
+function createState(mode, width, height, seed, windInput, scale) {
+  const state = {
+    mode, width, height,
+    scale: scale || scaleFor(width, height),
+    params: MODES[mode],
+    rng: mulberry32(seed),
+    time: 0,
+    windInput: 0, wind: 0, gust: null, gustTimer: 0,
+    flakes: [], clouds: [], haze: [], stars: [],
+    sunPhase: 0,
+    flash: 0, flashAge: -1, flashDouble: false, boltPath: null, boltTimer: 0,
+  };
+  setWind(state, windInput);
+  state.gustTimer = randRange(state.rng, 1, 4);
+  state.boltTimer = randRange(state.rng, 1.5, 5);
+  initClouds(state);
+  initHaze(state);
+  initStars(state);
+  initSnow(state);
+  return state;
+}
+
+// value is the wind setting 0..1 (slider / 100); the weather decides how much reaches the card.
+function setWind(state, value) {
+  state.windInput = clamp(value, 0, 1);
+  state.wind = state.windInput * state.params.wind;
+}
+
+function stillFrame(state) {
+  endFlash(state);
+}
+
+// ---------- wind and gusts ----------
+function updateWind(state, dt) {
+  const { rng, width } = state;
+  const g = state.gust;
+  if (g) {
+    g.x += g.speed * dt;
+    if (g.x - 3 * g.sigma > width) state.gust = null;
+    return;
+  }
+  const gustLevel = state.windInput * state.params.gustiness;
+  if (gustLevel < 0.05) return;
+  state.gustTimer -= dt;
+  if (state.gustTimer > 0) return;
+  state.gustTimer = randRange(rng, GUST_GAP[0], GUST_GAP[1]) / (0.5 + gustLevel);
+  const sigma = randRange(rng, GUST_SIGMA[0], GUST_SIGMA[1]);
+  state.gust = {
+    x: -3 * sigma,
+    sigma,
+    speed: randRange(rng, GUST_SPEED[0], GUST_SPEED[1]),
+    strength: randRange(rng, GUST_STRENGTH[0], GUST_STRENGTH[1]) * (0.5 + 0.5 * gustLevel),
+  };
+}
+
+function gustAt(state, x) {
+  const g = state.gust;
+  if (!g) return 0;
+  const u = (x - g.x) / g.sigma;
+  return g.strength * Math.exp(-0.5 * u * u);
+}
+
+function localWind(state, x) { return Math.min(1, state.wind + gustAt(state, x)); }
+
+// ---------- snow ----------
+function makeFlake(state, y) {
+  const { rng, width, height, params } = state;
+  const depth = rng();
+  const settles = rng() < SETTLE_SHARE;
+  return {
+    x: randRange(rng, 0, width), y,
+    r: 1 + 2.5 * depth, depth,
+    vy: FLAKE_FALL_PX * params.fallSpeed * (0.6 + 0.8 * depth),
+    phase: randRange(rng, 0, TAU),
+    swayAmp: randRange(rng, 3, 8),
+    swayFreq: randRange(rng, 0.8, 1.5),
+    settleY: settles ? randRange(rng, SETTLE_HEIGHT[0], SETTLE_HEIGHT[1]) * height : Infinity,
+    settled: false, rest: 0, melt: 0,
+  };
+}
+
+function initSnow(state) {
+  if (!state.params.snow) return;
+  const n = Math.round(state.params.density * FLAKES_AT_FULL_DENSITY * state.scale.count);
+  for (let i = 0; i < n; i++) state.flakes.push(makeFlake(state, randRange(state.rng, -10, state.height)));
+}
+
+function recycleFlake(state, f) { Object.assign(f, makeFlake(state, -5)); }
+
+function updateSnow(state, dt) {
+  const { width, height } = state;
+  const maxSettled = Math.round(MAX_SETTLED * state.scale.count);
+  let settledCount = 0;
+  for (const f of state.flakes) if (f.settled) settledCount++;
+  for (const f of state.flakes) {
+    if (f.settled) {
+      if (f.rest > 0) f.rest -= dt; else f.melt += dt;
+      if (f.melt >= MELT_SECONDS) { recycleFlake(state, f); settledCount--; }
+      continue;
+    }
+    const lw = localWind(state, f.x);
+    f.phase += f.swayFreq * dt;
+    f.x = wrap(f.x + (MAX_FLAKE_DRIFT * lw * (0.5 + 0.5 * f.depth) + f.swayAmp * f.swayFreq * Math.cos(f.phase)) * dt, 0, width);
+    f.y += f.vy * dt;
+    if (f.y >= f.settleY && settledCount < maxSettled) {
+      f.settled = true;
+      f.rest = randRange(state.rng, SETTLE_REST[0], SETTLE_REST[1]);
+      settledCount++;
+    } else if (f.y - f.r > height) {
+      recycleFlake(state, f);
+    }
+  }
+}
+
+// ---------- sky: clouds, haze, stars ----------
+function makeCloud(state, layer, x) {
+  const rng = state.rng;
+  const size = randRange(rng, 90, 170) * (layer === 0 ? 1.3 : 1) * state.scale.size;
+  const puffs = [];
+  const n = 5 + Math.floor(rng() * 4);
+  for (let i = 0; i < n; i++) {
+    puffs.push({
+      dx: randRange(rng, -0.6, 0.6) * size,
+      dy: randRange(rng, -0.2, 0.15) * size,
+      r: randRange(rng, 0.3, 0.5) * size,
+    });
+  }
+  return {
+    x, size, layer, puffs,
+    y: randRange(rng, 0.02, layer === 0 ? 0.45 : 0.6) * state.height,
+    speed: CLOUD_BASE_SPEED[layer] * randRange(rng, 0.8, 1.2),
+  };
+}
+
+function initClouds(state) {
+  const { rng, params, width } = state;
+  const perLayer = Math.round(2 + params.clouds * 5);
+  for (let layer = 0; layer < params.cloudLayers; layer++) {
+    for (let i = 0; i < perLayer; i++) state.clouds.push(makeCloud(state, layer, randRange(rng, -100, width + 100)));
+  }
+}
+
+function updateClouds(state, dt) {
+  for (const c of state.clouds) {
+    const windShare = c.layer === 0 ? 0.6 : 1;
+    c.x += (c.speed + CLOUD_WIND_SPEED * state.wind * windShare) * dt;
+    if (c.x - c.size > state.width) c.x = -c.size;
+  }
+}
+
+function initHaze(state) {
+  const { rng, params, width, height, scale } = state;
+  if (!params.fog) return;
+  for (let i = 0; i < 7; i++) {
+    state.haze.push({
+      x: randRange(rng, 0, width), y: randRange(rng, 0, height),
+      rx: randRange(rng, 160, 300) * scale.size, ry: randRange(rng, 50, 110) * scale.size,
+      speed: randRange(rng, 4, 10),
+      alpha: randRange(rng, 0.18, 0.32) * params.fog,
+    });
+  }
+}
+
+function updateHaze(state, dt) {
+  for (const h of state.haze) {
+    h.x += h.speed * (1 + 2 * state.wind) * dt;
+    if (h.x - h.rx > state.width) h.x = -h.rx;
+  }
+}
+
+function initStars(state) {
+  const { rng, params, width, height } = state;
+  const n = Math.round(45 * params.stars * state.scale.count);
+  for (let i = 0; i < n; i++) {
+    const high = rng();
+    state.stars.push({
+      x: randRange(rng, 0, width),
+      y: high * high * height * 0.6,
+      r: randRange(rng, 0.5, 1.6),
+      phase: randRange(rng, 0, TAU),
+      freq: randRange(rng, 0.6, 2.2),
+    });
+  }
+}
+
+function updateStars(state, dt) {
+  for (const s of state.stars) s.phase += s.freq * dt;
+}
+
+// ---------- lightning ----------
+function makeBoltPath(state) {
+  const { rng, width, height } = state;
+  const pts = [{ x: randRange(rng, 0.2, 0.8) * width, y: 0 }];
+  const reach = randRange(rng, 0.3, 0.55) * height;
+  const lean = randRange(rng, -0.3, 0.3);
+  let last = pts[0];
+  while (last.y < reach) {
+    last = { x: last.x + randRange(rng, -18, 18) + lean * 24, y: last.y + randRange(rng, 18, 34) };
+    pts.push(last);
+  }
+  return pts;
+}
+
+function flashCurve(age, double) {
+  const first = Math.exp(-age * 14);
+  const second = double && age > DOUBLE_FLASH_DELAY ? 0.8 * Math.exp(-(age - DOUBLE_FLASH_DELAY) * 12) : 0;
+  return Math.max(first, second);
+}
+
+function endFlash(state) {
+  state.flashAge = -1;
+  state.flash = 0;
+  state.boltPath = null;
+}
+
+function updateLightning(state, dt) {
+  if (!state.params.bolt) return;
+  if (state.flashAge >= 0) {
+    state.flashAge += dt;
+    state.flash = flashCurve(state.flashAge, state.flashDouble);
+    if (state.flashAge > FLASH_SECONDS) endFlash(state);
+    return;
+  }
+  state.boltTimer -= dt;
+  if (state.boltTimer > 0) return;
+  const rng = state.rng;
+  state.boltTimer = randRange(rng, BOLT_GAP[0], BOLT_GAP[1]);
+  state.flashAge = 0;
+  state.flash = 1;
+  state.flashDouble = rng() < DOUBLE_FLASH_CHANCE;
+  state.boltPath = makeBoltPath(state);
+}
+
+function update(state, dt) {
+  state.time += dt;
+  updateWind(state, dt);
+  if (state.params.snow) updateSnow(state, dt);
+  updateClouds(state, dt);
+  updateHaze(state, dt);
+  updateStars(state, dt);
+  state.sunPhase += SUN_TURN * dt;
+  updateLightning(state, dt);
+}
+// </sim>
+
+// <rain>
+// ============================================================
+// Rain with depth: pure, no DOM. Plans the CSS streaks (Thumbline
+// Weather Icons, section C) for one card size. Seeded, so the same
+// look and size always give the same streaks. Units are px and seconds.
+// ============================================================
+const RAIN_LOOKS = Object.freeze(['light', 'heavy', 'storm']);
+const RAIN_OPACITY = 0.7;                   // .wx-rain opacity in the CSS
+const RAIN_REF_AREA = 360 * 200;            // section C scene size
+const RAIN_TRAVEL_REF = 350;                // section C fall distance (-60 to 290 px)
+const RAIN_EXTRA_FALL = 80;                 // streaks leave the card before they wrap
+const MAX_STREAKS = 90;                     // phone cost cap (section C heavy uses about 84)
+const MAX_RIPPLES = 10;
+// Per layer: streaks at density 1 on the reference area, base duration at
+// fallSpeed 1 over the reference travel, and the drift at full wind.
+const RAIN_LAYERS = Object.freeze({
+  far:  Object.freeze({ max: 50, duration: 2.3,  jitter: 0.3,  maxDrift: 110 }),
+  mid:  Object.freeze({ max: 28, duration: 1.35, jitter: 0.08, maxDrift: 135 }),
+  near: Object.freeze({ max: 13, duration: 0.72, jitter: 0.07, maxDrift: 175 }),
+});
+const RAIN_LAYER_NAMES = Object.freeze(['far', 'mid', 'near']);
+
+function isRainLook(look) { return RAIN_LOOKS.indexOf(look) >= 0; }
+
+function seedFor(text) {               // FNV-1a, deterministic seed from a string
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) { h ^= text.charCodeAt(i); h = Math.imul(h, 0x01000193); }
+  return h >>> 0;
+}
+
+function round2(v) { return Math.round(v * 100) / 100; }
+
+// Returns { travel, fall, layers: { far|mid|near: [{ left, dur, delay }] }, ripples: [...], streaks }.
+// left is a % of the card width, dur and delay are seconds (delay <= 0 so the
+// card starts mid-shower). Streaks start up to 15% right of the card so wind
+// drift does not leave the right edge empty.
+function rainPlan(look, width, height, seed) {
+  const p = MODES[look];
+  const empty = { travel: 0, fall: 0, layers: { far: [], mid: [], near: [] }, ripples: [], streaks: 0 };
+  if (!p || !isRainLook(look) || !(width > 0) || !(height > 0)) return empty;
+  const rng = mulberry32(seed);
+  const area = clamp((width * height) / RAIN_REF_AREA, 0.5, 1);
+  const fall = Math.round(height + RAIN_EXTRA_FALL);
+  const travel = fall + 60;
+  const pace = (travel / RAIN_TRAVEL_REF) * Math.pow(p.fallSpeed, -0.55);
+  const wanted = RAIN_LAYER_NAMES.map(n => Math.round(RAIN_LAYERS[n].max * p.density * area));
+  const total = wanted.reduce((a, b) => a + b, 0);
+  const cut = total > MAX_STREAKS ? MAX_STREAKS / total : 1;
+  const layers = {};
+  let streaks = 0;
+  RAIN_LAYER_NAMES.forEach((name, li) => {
+    const spec = RAIN_LAYERS[name];
+    const n = Math.floor(wanted[li] * cut);
+    const out = [];
+    for (let i = 0; i < n; i++) {
+      const dur = (spec.duration + randRange(rng, -spec.jitter, spec.jitter)) * pace;
+      out.push({ left: round2(randRange(rng, -5, 115)), dur: round2(dur), delay: round2(-randRange(rng, 0, dur)) });
+    }
+    layers[name] = out;
+    streaks += n;
+  });
+  const ripples = [];
+  const nr = Math.min(MAX_RIPPLES, Math.round(10 * p.density * area));
+  const rdur = round2(1.2 * Math.pow(p.fallSpeed, -0.36));
+  for (let i = 0; i < nr; i++) ripples.push({ left: round2(randRange(rng, 5, 95)), bottom: Math.round(randRange(rng, 2, 10)), dur: rdur, delay: round2(-randRange(rng, 0, rdur)) });
+  return { travel, fall, layers, ripples, streaks };
+}
+
+// Wind setting 0..1 to the per-layer CSS drift (--dx, px) and tilt (--tilt, deg).
+// The look lets only part of the setting through (MODES[look].wind), as on home.
+// The tilt follows the streak's path, so a streak always points where it goes.
+function rainWind(look, windFraction, travel) {
+  const p = MODES[look];
+  const w = clamp(windFraction, 0, 1) * (p ? p.wind : 0);
+  const out = {};
+  for (const name of RAIN_LAYER_NAMES) {
+    const dx = -RAIN_LAYERS[name].maxDrift * w;
+    out[name] = { dx: round2(dx), tilt: round2(travel > 0 ? Math.atan2(-dx, travel) * 180 / Math.PI : 0) };
+  }
+  return out;
+}
+// </rain>
+
+// <readability>
+// ============================================================
+// Readability check: pure, no DOM. For each look it takes the sky
+// stops and the strongest pixel each effect can paint, applies the
+// text keep-out, and returns the lowest contrast for main and small text.
+// ============================================================
+const KEEP_OUT = 0.85;             // least share of the effect removed over text (see applyKeepOut, keepOutMask)
+const MIN_CONTRAST = 4.5;          // all card text, including 12 px grey text
+
+// Strongest canvas or rain pixel per effect: rgb and alpha before keep-out.
+// Stacks are effects that can overlap at one pixel, painted in order.
+const OVERLAYS = {
+  sun:      [{ rgb: [255, 210, 122], a: 0.6 }, { rgb: [255, 210, 122], a: 0.08 }],   // glow peak + ray core
+  cloud:    [{ rgb: [242, 244, 247], a: 0.42 }, { rgb: [242, 244, 247], a: 0.42 }],  // two front puffs
+  cloudGrey:[{ rgb: [168, 176, 190], a: 0.42 }, { rgb: [168, 176, 190], a: 0.42 }],
+  fog:      [{ rgb: [230, 233, 238], a: 0.16 }, { rgb: [230, 233, 238], a: 0.32 }, { rgb: [230, 233, 238], a: 0.32 }],
+  // CSS rain: far + mid + near streak ends and a ripple ring stacked on one pixel,
+  // each times RAIN_OPACITY. Ink is the light-sky rain colour, pale the dark-sky one.
+  rainInk:  [{ rgb: [46, 101, 133], a: 0.30 * RAIN_OPACITY }, { rgb: [46, 101, 133], a: 0.55 * RAIN_OPACITY },
+             { rgb: [33, 84, 112], a: 0.85 * RAIN_OPACITY }, { rgb: [33, 84, 112], a: 0.85 * 0.9 * RAIN_OPACITY }],
+  rainPale: [{ rgb: [150, 185, 208], a: 0.40 * RAIN_OPACITY }, { rgb: [150, 185, 208], a: 0.70 * RAIN_OPACITY },
+             { rgb: [205, 226, 240], a: 0.90 * RAIN_OPACITY }, { rgb: [205, 226, 240], a: 0.90 * 0.9 * RAIN_OPACITY }],
+  flake:    [{ rgb: [255, 255, 255], a: 0.2 }, { rgb: [255, 255, 255], a: 0.9 }],      // halo + core
+  flash:    [{ rgb: [232, 240, 255], a: 0.38 }, { rgb: [255, 255, 255], a: 0.9 }],     // flash + bolt core
+  star:     [{ rgb: [220, 230, 255], a: 0.95 }],
+};
+const LOOK_OVERLAYS = {
+  clear: ['sun'],
+  partly: ['sun', 'cloud', 'sun+cloud'],
+  overcast: ['cloudGrey'],
+  light: ['rainInk', 'rainPale'],      // both colours checked, whichever theme draws
+  heavy: ['rainInk', 'rainPale'],
+  storm: ['rainInk', 'rainPale', 'flash', 'rainPale+flash'],
+  snow: ['flake'],
+  fog: ['fog'],
+  night: ['star'],
+};
+
+function hexToRgb(hex) {
+  const h = hex.trim().replace('#', '');
+  return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16));
+}
+function luminance(rgb) {
+  const c = rgb.map(v => { const s = v / 255; return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4); });
+  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+}
+function contrast(a, b) {
+  const la = luminance(a), lb = luminance(b);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+// Flatten a stack onto a transparent canvas pixel (premultiplied), then cut by keep-out.
+function canvasPixel(stack, keepOut) {
+  let r = 0, g = 0, b = 0, a = 0;
+  for (const o of stack) {
+    r = o.rgb[0] * o.a + r * (1 - o.a);
+    g = o.rgb[1] * o.a + g * (1 - o.a);
+    b = o.rgb[2] * o.a + b * (1 - o.a);
+    a = o.a + a * (1 - o.a);
+  }
+  const k = 1 - keepOut;
+  return { pr: r * k, pg: g * k, pb: b * k, a: a * k };
+}
+function over(px, bg) {
+  return [px.pr + bg[0] * (1 - px.a), px.pg + bg[1] * (1 - px.a), px.pb + bg[2] * (1 - px.a)];
+}
+function stackFor(name) {
+  return name.split('+').reduce((acc, n) => acc.concat(OVERLAYS[n]), []);
+}
+// tokens: { sky1, sky2, ink, ink2 } hex strings for one look in one theme.
+function worstContrast(look, tokens, keepOut) {
+  const s1 = hexToRgb(tokens.sky1), s2 = hexToRgb(tokens.sky2);
+  const mid = s1.map((v, i) => Math.round((v + s2[i]) / 2));
+  const ink = hexToRgb(tokens.ink), ink2 = hexToRgb(tokens.ink2);
+  let main = Infinity, small = Infinity, worstBy = 'sky';
+  for (const sky of [s1, mid, s2]) {
+    const cases = [['sky', sky]].concat((LOOK_OVERLAYS[look] || []).map(n => [n, over(canvasPixel(stackFor(n), keepOut), sky)]));
+    for (const [name, bg] of cases) {
+      const c1 = contrast(ink, bg), c2 = contrast(ink2, bg);
+      if (c2 < small) { small = c2; worstBy = name; }
+      main = Math.min(main, c1);
+    }
+  }
+  return { main, small, worstBy, pass: Math.min(main, small) >= MIN_CONTRAST };
+}
+// </readability>
+
+// <draw>
+// ============================================================
+// Drawing: reads state, paints to a 2D context. No logic changes.
+// view = { sun: {x, y} in px, keepOut: [{x, y, w, h}] text boxes in px }.
+// ============================================================
+const SUN_RGB = '255,210,122';
+const CLOUD_RGB = '242,244,247';
+const CLOUD_GREY_RGB = '168,176,190';
+const FOG_RGB = '230,233,238';
+const SNOW_RGB = '255,255,255';
+const FLASH_RGB = '232,240,255';
+const STAR_RGB = '220,230,255';
+
+function rgba(rgb, a) { return 'rgba(' + rgb + ',' + Math.max(0, a).toFixed(3) + ')'; }
+
+function draw(ctx, state, view) {
+  ctx.clearRect(0, 0, state.width, state.height);
+  if (state.params.sun) drawSun(ctx, state, view.sun);
+  if (state.stars.length) drawStars(ctx, state);
+  if (state.clouds.length) drawClouds(ctx, state);
+  if (state.haze.length) drawHaze(ctx, state);
+  if (state.flash > 0) drawFlash(ctx, state);
+  if (state.flakes.length) drawFlakes(ctx, state);
+  if (view.keepOut.length) applyKeepOut(ctx, view.keepOut);
+}
+
+// Fade effects under text with a soft, blurred hole (destination-out).
+// Each text box is padded by KEEP_OUT_PAD and blurred with sigma KEEP_OUT_SIGMA,
+// so even at a text box corner at least KEEP_OUT_PEAK * Phi(PAD / SIGMA)^2 =
+// 0.87 * 0.99^2 = 0.85 (= KEEP_OUT, used by the readability check) is removed.
+// The shape is drawn off the canvas and only its shadow lands, so the hole has
+// no hard edge. Android: Paint with PorterDuff.Mode.DST_OUT and a BlurMaskFilter.
+const KEEP_OUT_PEAK = 0.87;
+const KEEP_OUT_PAD = 14;     // px
+const KEEP_OUT_SIGMA = 6;    // px
+function applyKeepOut(ctx, rects) {
+  const dpr = ctx.getTransform ? ctx.getTransform().a : 1;   // shadows ignore the transform
+  const away = 100000;
+  ctx.save();
+  ctx.globalCompositeOperation = 'destination-out';
+  ctx.fillStyle = '#000';
+  ctx.shadowColor = rgba('0,0,0', KEEP_OUT_PEAK);
+  ctx.shadowBlur = 2 * KEEP_OUT_SIGMA * dpr;
+  ctx.shadowOffsetX = away * dpr;
+  for (const r of rects) {
+    const p = KEEP_OUT_PAD;
+    roundRect(ctx, r.x - p - away, r.y - p, r.w + 2 * p, r.h + 2 * p, p);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+function roundRect(ctx, x, y, w, h, r) {
+  const rr = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + rr, y);
+  ctx.arcTo(x + w, y, x + w, y + h, rr);
+  ctx.arcTo(x + w, y + h, x, y + h, rr);
+  ctx.arcTo(x, y + h, x, y, rr);
+  ctx.arcTo(x, y, x + w, y, rr);
+  ctx.closePath();
+}
+
+// On the card the sun sits behind the weather icon, not in the corner.
+function drawSun(ctx, state, at) {
+  const { width: w, height: h } = state;
+  const s = state.params.sun;
+  const cx = at ? at.x : w * 0.12, cy = at ? at.y : h * 0.2;
+  const pulse = 0.9 + 0.1 * Math.sin(state.sunPhase * 5);
+  const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, w * 1.1);
+  glow.addColorStop(0, rgba(SUN_RGB, 0.6 * s * pulse));
+  glow.addColorStop(0.18, rgba(SUN_RGB, 0.28 * s));
+  glow.addColorStop(1, rgba(SUN_RGB, 0));
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, w, h);
+  drawSunRays(ctx, cx, cy, w * 1.2, state.sunPhase, s);
+}
+
+function rayRandom(i, salt) {
+  const x = Math.sin(i * 12.9898 + salt * 78.233) * 43758.5453;
+  return x - Math.floor(x);
+}
+
+function drawSunRays(ctx, cx, cy, len, turn, strength) {
+  const rays = 18;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(turn);
+  ctx.globalCompositeOperation = 'lighter';
+  const passes = [
+    { half: 0.11, alpha: 0.35 },
+    { half: 0.04, alpha: 0.8 },
+  ];
+  for (let i = 0; i < rays; i++) {
+    const a = (i / rays) * TAU + (rayRandom(i, 1) - 0.5) * 0.12;
+    const rayLen = len * (0.5 + 0.5 * rayRandom(i, 2));
+    const bright = 0.55 + 0.45 * rayRandom(i, 3);
+    for (const pass of passes) {
+      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, rayLen);
+      const peak = 0.10 * strength * bright * pass.alpha;
+      g.addColorStop(0, rgba(SUN_RGB, peak));
+      g.addColorStop(0.35, rgba(SUN_RGB, peak * 0.7));
+      g.addColorStop(1, rgba(SUN_RGB, 0));
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, rayLen, a - pass.half, a + pass.half);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+function drawStars(ctx, state) {
+  for (const s of state.stars) {
+    const twinkle = 0.5 + 0.5 * Math.sin(s.phase);
+    ctx.fillStyle = rgba(STAR_RGB, 0.3 + 0.65 * twinkle * twinkle);
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, TAU);
+    ctx.fill();
+  }
+}
+
+function drawClouds(ctx, state) {
+  const rgb = state.mode === 'overcast' ? CLOUD_GREY_RGB : CLOUD_RGB;
+  for (const c of state.clouds) {
+    const a = c.layer === 0 ? 0.30 : 0.42;
+    for (const p of c.puffs) {
+      const x = c.x + p.dx, y = c.y + p.dy;
+      const g = ctx.createRadialGradient(x, y, 0, x, y, p.r);
+      g.addColorStop(0, rgba(rgb, a));
+      g.addColorStop(0.6, rgba(rgb, a * 0.6));
+      g.addColorStop(1, rgba(rgb, 0));
+      ctx.fillStyle = g;
+      ctx.fillRect(x - p.r, y - p.r, p.r * 2, p.r * 2);
+    }
+  }
+}
+
+function drawHaze(ctx, state) {
+  ctx.fillStyle = rgba(FOG_RGB, 0.16 * state.params.fog);
+  ctx.fillRect(0, 0, state.width, state.height);
+  for (const h of state.haze) {
+    ctx.save();
+    ctx.translate(h.x, h.y);
+    ctx.scale(h.rx / h.ry, 1);
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, h.ry);
+    g.addColorStop(0, rgba(FOG_RGB, h.alpha));
+    g.addColorStop(1, rgba(FOG_RGB, 0));
+    ctx.fillStyle = g;
+    ctx.fillRect(-h.ry, -h.ry, h.ry * 2, h.ry * 2);
+    ctx.restore();
+  }
+}
+
+function drawFlash(ctx, state) {
+  const f = state.flash;
+  ctx.save();
+  ctx.globalCompositeOperation = 'screen';
+  ctx.fillStyle = rgba(FLASH_RGB, 0.38 * f);
+  ctx.fillRect(0, 0, state.width, state.height);
+  ctx.restore();
+  if (state.boltPath && f > 0.3) drawBolt(ctx, state.boltPath, f);
+}
+
+function drawBolt(ctx, pts, f) {
+  ctx.save();
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.strokeStyle = rgba(FLASH_RGB, 0.35 * f);
+  ctx.lineWidth = 6;
+  ctx.stroke();
+  ctx.strokeStyle = rgba('255,255,255', 0.9 * f);
+  ctx.lineWidth = 1.6;
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawFlakes(ctx, state) {
+  for (const f of state.flakes) {
+    const a = f.settled ? 0.9 * (1 - f.melt / MELT_SECONDS) : 0.45 + 0.45 * f.depth;
+    const halo = f.settled ? f.r * (2 + f.melt) : f.r * 2;
+    ctx.fillStyle = rgba(SNOW_RGB, a * 0.22);
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, halo, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = rgba(SNOW_RGB, a);
+    ctx.beginPath();
+    ctx.arc(f.x, f.y, f.r, 0, TAU);
+    ctx.fill();
+  }
+}
+
+// Rain streaks as HTML: one <i> per streak with inline position and timing
+// (as in section C), and one <u> per ripple.
+function rainMarkup(plan) {
+  let html = '';
+  for (const name of RAIN_LAYER_NAMES) {
+    for (const d of plan.layers[name]) {
+      html += '<i class="' + name + '" style="left:' + d.left + '%;animation-duration:' + d.dur + 's;animation-delay:' + d.delay + 's"></i>';
+    }
+  }
+  for (const r of plan.ripples) {
+    html += '<u style="left:' + r.left + '%;bottom:' + r.bottom + 'px;animation-duration:' + r.dur + 's;animation-delay:' + r.delay + 's"></u>';
+  }
+  return html;
+}
+
+// The same soft cut-out under text as applyKeepOut, for the CSS rain: an
+// SVG mask image (inline data URI, no network) whose alpha is 1 outside text
+// and 1 - KEEP_OUT_PEAK at the centre of each padded, blurred text box.
+// feGaussianBlur stdDeviation = KEEP_OUT_SIGMA matches shadowBlur = 2 * sigma.
+function keepOutMask(width, height, rects) {
+  const w = Math.max(1, Math.round(width)), h = Math.max(1, Math.round(height));
+  const p = KEEP_OUT_PAD;
+  const holes = rects.map(r => '<rect x="' + round2(r.x - p) + '" y="' + round2(r.y - p) + '" width="' + round2(r.w + 2 * p)
+    + '" height="' + round2(r.h + 2 * p) + '" rx="' + p + '"/>').join('');
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '">'
+    + '<defs><filter id="b" filterUnits="userSpaceOnUse" x="0" y="0" width="' + w + '" height="' + h + '"><feGaussianBlur stdDeviation="' + KEEP_OUT_SIGMA + '"/></filter>'
+    + '<mask id="m" maskUnits="userSpaceOnUse" x="0" y="0" width="' + w + '" height="' + h + '"><rect width="' + w + '" height="' + h + '" fill="#fff"/>'
+    + '<g filter="url(#b)" fill="#000" fill-opacity="' + KEEP_OUT_PEAK + '">' + holes + '</g></mask></defs>'
+    + '<rect width="' + w + '" height="' + h + '" fill="#000" mask="url(#m)"/></svg>';
+  return 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")';
+}
+// </draw>
+
+// ============================================================
+// Example forecasts. One per look plus the empty state. In the app
+// this comes from Forecast; the look is never stored or picked.
+// ============================================================
+const LOOK_NAMES = ['clear', 'partly', 'overcast', 'light', 'heavy', 'storm', 'snow', 'fog', 'night'];
+
+const SCENES = {
+  clear:    { code: 0,  isDay: true,  temp: 24, hi: 26, lo: 14, side: 'Dry for 24 h', at: '10:24',
+              hours: [['11', 0, true, 24], ['12', 0, true, 25], ['13', 0, true, 26], ['14', 1, true, 26], ['15', 1, true, 25], ['16', 2, true, 24]] },
+  partly:   { code: 2,  isDay: true,  temp: 19, hi: 21, lo: 12, side: 'Dry for 18 h', at: '10:24',
+              hours: [['11', 2, true, 19], ['12', 2, true, 20], ['13', 1, true, 21], ['14', 1, true, 21], ['15', 2, true, 20], ['16', 3, true, 19]] },
+  overcast: { code: 3,  isDay: true,  temp: 11, hi: 12, lo: 7,  side: 'Dry for 12 h', at: '01:50',
+              hours: [['02', 3, false, 11], ['03', 3, false, 11], ['04', 3, false, 11], ['05', 3, false, 11], ['06', 3, false, 11], ['07', 3, true, 10]] },
+  light:    { code: 61, isDay: true,  temp: 11, hi: 13, lo: 8,  side: 'Rain until 14:00', at: '10:24',
+              hours: [['11', 61, true, 11], ['12', 61, true, 12], ['13', 51, true, 12], ['14', 3, true, 13], ['15', 3, true, 13], ['16', 2, true, 12]] },
+  heavy:    { code: 65, isDay: true,  temp: 9,  hi: 10, lo: 6,  side: 'Rain until 21:00', at: '16:40',
+              hours: [['17', 65, true, 9], ['18', 65, false, 9], ['19', 63, false, 8], ['20', 63, false, 8], ['21', 61, false, 7], ['22', 3, false, 7]] },
+  storm:    { code: 95, isDay: true,  temp: 17, hi: 22, lo: 14, side: 'Storm until 20:00', at: '18:10',
+              hours: [['19', 95, true, 17], ['20', 95, false, 16], ['21', 63, false, 15], ['22', 61, false, 15], ['23', 3, false, 14], ['00', 3, false, 14]] },
+  snow:     { code: 73, isDay: true,  temp: -2, hi: 0,  lo: -5, side: 'Snow until 15:00', at: '10:24',
+              hours: [['11', 73, true, -2], ['12', 73, true, -1], ['13', 71, true, -1], ['14', 71, true, 0], ['15', 3, true, 0], ['16', 3, true, -1]] },
+  fog:      { code: 45, isDay: true,  temp: 6,  hi: 11, lo: 4,  side: 'Fog clears by 10:00', at: '07:15',
+              hours: [['08', 45, true, 6], ['09', 45, true, 7], ['10', 3, true, 8], ['11', 2, true, 9], ['12', 2, true, 10], ['13', 1, true, 11]] },
+  night:    { code: 0,  isDay: false, temp: 8,  hi: 13, lo: 6,  side: 'Dry for 12 h', at: '23:12',
+              hours: [['00', 0, false, 8], ['01', 0, false, 7], ['02', 1, false, 7], ['03', 1, false, 6], ['04', 2, false, 6], ['05', 2, false, 6]] },
+  none:     null,
+};
+
+function capitalise(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+function deg(n) { return (n < 0 ? '−' + Math.abs(n) : String(n)) + '°'; }
+
+function describe(state, scene, plan) {
+  if (!state) return 'No forecast: plain card, no effect.';
+  const p = state.params;
+  const parts = ['code ' + scene.code + (scene.isDay ? ' day' : ' night') + ' → look ' + state.mode];
+  if (plan && plan.streaks) parts.push('streaks ' + plan.layers.far.length + '/' + plan.layers.mid.length + '/' + plan.layers.near.length + ' · ripples ' + plan.ripples.length);
+  if (p.snow) parts.push('flakes ' + state.flakes.length);
+  if (p.clouds) parts.push('clouds ' + state.clouds.length);
+  if (p.stars) parts.push('stars ' + state.stars.length);
+  if (p.bolt) parts.push('bolt');
+  parts.push('wind ' + state.wind.toFixed(2) + ' (cap ' + p.wind + ')');
+  parts.push('scale ' + state.scale.count.toFixed(2) + '/' + state.scale.size.toFixed(2));
+  return parts.join(' · ');
+}
+
+// Node check hook: lets a headless script run the pure parts.
+if (typeof module !== 'undefined') {
+  module.exports = { lookForForecast, conditionText, iconFor, iconSvg, iconDefs, ICON_LABELS, createState, update, setWind, scaleFor,
+    rainPlan, rainWind, rainMarkup, keepOutMask, seedFor, isRainLook, MAX_STREAKS,
+    worstContrast, MODES, SCENES, LOOK_NAMES, STEP, KEEP_OUT, MIN_CONTRAST };
+}
+
+// ============================================================
+// Page glue: DOM, canvas sizing, loop, controls.
+// ============================================================
+(function () {
+  if (typeof document === 'undefined') return;
+
+  const root = document.documentElement;
+  const card = document.getElementById('wx');
+  const canvas = document.getElementById('wx-canvas');
+  const rainEl = document.getElementById('wx-rain');
+  const ctx = canvas.getContext('2d');
+  const sceneButtons = document.querySelectorAll('[data-scene]');
+  const themeButtons = document.querySelectorAll('[data-theme-choice]');
+  const pauseBtn = document.getElementById('pause');
+  const windInput = document.getElementById('wind');
+  const windValue = document.getElementById('wind-value');
+  const reducedBox = document.getElementById('reduced');
+  const statusEl = document.getElementById('status');
+  const reducedQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const el = id => document.getElementById(id);
+
+  let sceneKey = 'overcast';
+  let state = null;
+  let view = { sun: null, keepOut: [] };
+  let plan = null;
+  let paused = false;
+  let onScreen = true;
+  let rafId = 0, lastTime = 0, accumulator = 0;
+
+  function windFraction() { return Number(windInput.value) / 100; }
+
+  // Icon defs: one set inside the card (follows the card look), one for the buttons.
+  el('wx-defs').innerHTML = iconDefs('');
+  el('panel-defs').innerHTML = iconDefs('-p');
+  document.querySelectorAll('.looks .bi[data-icon]').forEach(n => { n.innerHTML = iconSvg(n.dataset.icon, 20, null, '-p'); });
+
+  function applyRainWind() {
+    if (!plan || !plan.streaks) return;
+    const wind = rainWind(sceneLook(), windFraction(), plan.travel);
+    for (const name of RAIN_LAYER_NAMES) {
+      rainEl.style.setProperty('--dx-' + name, wind[name].dx + 'px');
+      rainEl.style.setProperty('--tilt-' + name, wind[name].tilt + 'deg');
+    }
+  }
+  function sceneLook() { const sc = SCENES[sceneKey]; return sc ? lookForForecast(sc.code, sc.isDay) : null; }
+
+  function renderText(scene) {
+    if (!scene) return;
+    const look = iconFor(scene.code, scene.isDay);
+    el('wx-icon').innerHTML = iconSvg(look, 46, ICON_LABELS[look] || '', '');
+    el('wx-temp').textContent = deg(scene.temp);
+    el('wx-cond').textContent = capitalise(conditionText(scene.code, scene.isDay)) + ' · ' + deg(scene.hi) + '\u00a0/\u00a0' + deg(scene.lo);   // high/low never splits
+    el('wx-side').innerHTML = '';
+    el('wx-side').append(scene.side, document.createElement('br'), 'Near you · ' + scene.at);
+    const hours = el('wx-hours');
+    hours.innerHTML = '';
+    for (const [h, code, isDay, t] of scene.hours) {
+      const cell = document.createElement('div');
+      const hs = document.createElement('span'); hs.className = 'h ko'; hs.textContent = h;
+      const es = document.createElement('span'); es.className = 'e';
+      es.innerHTML = iconSvg(iconFor(code, isDay), 22, conditionText(code, isDay), '');
+      const ts = document.createElement('span'); ts.className = 'ko'; ts.textContent = deg(t);
+      cell.append(hs, es, ts);
+      hours.append(cell);
+    }
+  }
+
+  // Text boxes in canvas px; the icon also anchors the sun.
+  function measureView() {
+    const base = card.getBoundingClientRect();
+    const keepOut = [];
+    card.querySelectorAll('.ko').forEach(n => {
+      const r = n.getBoundingClientRect();
+      if (r.width && r.height) keepOut.push({ x: r.left - base.left, y: r.top - base.top, w: r.width, h: r.height });
+    });
+    const ir = el('wx-icon').getBoundingClientRect();
+    return { sun: { x: ir.left - base.left + ir.width / 2, y: ir.top - base.top + ir.height / 2 }, keepOut };
+  }
+
+  function reset() {
+    const scene = SCENES[sceneKey];
+    const look = scene ? lookForForecast(scene.code, scene.isDay) : null;
+    card.dataset.look = look || 'none';
+    renderText(scene);
+    if (!look) {
+      state = null; plan = null; rainEl.innerHTML = '';
+      ctx.clearRect(0, 0, canvas.width, canvas.height); statusEl.textContent = describe(null); return;
+    }
+    const w = card.clientWidth, h = card.clientHeight;
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    state = createState(look, w, h, seedFor(look + ':' + w + 'x' + h), windFraction());
+    for (let i = 0; i < Math.round(6 / STEP); i++) update(state, STEP);   // start with the scene in place
+    if (reducedBox.checked) stillFrame(state);
+    view = measureView();
+    draw(ctx, state, view);
+    // CSS rain: deterministic plan for this look and size, wind as CSS vars, text cut-out as a mask.
+    plan = rainPlan(look, w, h, seedFor('rain:' + look + ':' + w + 'x' + h));
+    rainEl.innerHTML = rainMarkup(plan);
+    rainEl.style.setProperty('--fall', plan.fall + 'px');
+    applyRainWind();
+    const mask = plan.streaks ? keepOutMask(w, h, view.keepOut) : 'none';
+    rainEl.style.webkitMaskImage = mask;
+    rainEl.style.maskImage = mask;
+    statusEl.textContent = describe(state, scene, plan);
+  }
+
+  function frame(now) {
+    rafId = requestAnimationFrame(frame);
+    accumulator += Math.min((now - lastTime) / 1000, 0.25);
+    lastTime = now;
+    let steps = 0;
+    while (accumulator >= STEP && steps < 5) { update(state, STEP); accumulator -= STEP; steps++; }
+    if (steps === 5) accumulator = 0;
+    if (steps > 0) draw(ctx, state, view);
+  }
+
+  // The effect runs only while the card is on screen, the page is visible and motion is allowed.
+  // The canvas loop also needs something to paint (light and heavy rain are CSS only).
+  function shouldRun() { return !!state && !paused && onScreen && !document.hidden && !reducedBox.checked; }
+  function canvasHasWork(p) { return !!(p.sun || p.clouds || p.fog || p.stars || p.snow || p.bolt); }
+  function sync() {
+    root.classList.toggle('still', !shouldRun());   // pauses the CSS rain and icon animations
+    if (shouldRun() && canvasHasWork(state.params)) {
+      if (!rafId) { lastTime = performance.now(); accumulator = 0; rafId = requestAnimationFrame(frame); }
+    } else if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+  }
+
+  function setScene(key) {
+    sceneKey = key;
+    sceneButtons.forEach(b => b.setAttribute('aria-pressed', String(b.dataset.scene === key)));
+    reset();
+    sync();
+  }
+
+  // ---------- readability table ----------
+  function readTokens(theme) {
+    const prev = root.getAttribute('data-theme');
+    root.setAttribute('data-theme', theme);
+    const cs = getComputedStyle(root);
+    const out = {};
+    for (const look of LOOK_NAMES) {
+      out[look] = {
+        sky1: cs.getPropertyValue('--sky-' + look + '-1'), sky2: cs.getPropertyValue('--sky-' + look + '-2'),
+        ink: cs.getPropertyValue('--ink-' + look), ink2: cs.getPropertyValue('--ink2-' + look),
+      };
+    }
+    if (prev === null) root.removeAttribute('data-theme'); else root.setAttribute('data-theme', prev);
+    return out;
+  }
+  function renderReadability() {
+    const light = readTokens('light'), dark = readTokens('dark');
+    const rows = el('read-rows');
+    rows.innerHTML = '';
+    for (const look of LOOK_NAMES) {
+      const tr = document.createElement('tr');
+      const name = document.createElement('td'); name.textContent = look;
+      tr.append(name);
+      for (const t of [light, dark]) {
+        const res = worstContrast(look, t[look], KEEP_OUT);
+        const td = document.createElement('td');
+        td.className = res.pass ? 'pass' : 'fail';
+        td.textContent = res.main.toFixed(1) + ' / ' + res.small.toFixed(1) + (res.pass ? '' : ' ✗');
+        td.title = 'worst case: ' + res.worstBy;
+        tr.append(td);
+      }
+      rows.append(tr);
+    }
+  }
+
+  // ---------- controls ----------
+  sceneButtons.forEach(b => b.addEventListener('click', () => setScene(b.dataset.scene)));
+  themeButtons.forEach(b => b.addEventListener('click', () => {
+    const choice = b.dataset.themeChoice;
+    if (choice === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', choice);
+    themeButtons.forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+  }));
+  pauseBtn.addEventListener('click', () => {
+    paused = !paused;
+    pauseBtn.textContent = paused ? 'Resume' : 'Pause';
+    pauseBtn.setAttribute('aria-pressed', String(paused));
+    sync();
+  });
+  windInput.addEventListener('input', () => {
+    windValue.textContent = windInput.value;
+    if (state) { setWind(state, windFraction()); applyRainWind(); statusEl.textContent = describe(state, SCENES[sceneKey], plan); }
+  });
+  reducedBox.checked = reducedQuery.matches;
+  reducedBox.addEventListener('change', () => { reset(); sync(); });
+  reducedQuery.addEventListener('change', () => { reducedBox.checked = reducedQuery.matches; reset(); sync(); });
+  document.addEventListener('visibilitychange', sync);
+
+  if ('IntersectionObserver' in window) {
+    new IntersectionObserver(entries => {
+      onScreen = entries[0].isIntersecting;
+      sync();
+    }, { root: document.getElementById('today') }).observe(card);
+  }
+
+  let resizeTimer = 0;
+  if ('ResizeObserver' in window) {
+    new ResizeObserver(() => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => { reset(); sync(); }, 120);
+    }).observe(card);
+  } else {
+    window.addEventListener('resize', () => { reset(); sync(); });
+  }
+
+  renderReadability();
+  setScene(sceneKey);
+})();
+</script>
+</body>
+</html>

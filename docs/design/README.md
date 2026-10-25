@@ -12,5 +12,6 @@ All mock-ups show example data. Real values come from the app.
 | [notes.md](notes.md) | Open notes list | `Notes.dc.html` |
 | [german-words.md](german-words.md) | German setup, review, lists, edit word, conjugation | `LangA/B/C`, `ReviewFront`, `ReviewAnswer`, `AddToList`, `Lists`, `EditWord`, `Conjugation`, `ConjugationSummary` (all `.dc.html`) |
 | Home weather effects (prototype) | Rain drops without trails, wind, nine weather looks, sun rays | [`weather-effects.html`](weather-effects.html) (standalone page, open in a browser; not a canvas file) |
+| Today weather card (prototype) | Vector weather icons, CSS rain streaks with ripples, readability per look | [`today-weather.html`](today-weather.html) (standalone page, open in a browser; not a canvas file) |
 
 Where text and a mock-up disagree, the text doc wins.
