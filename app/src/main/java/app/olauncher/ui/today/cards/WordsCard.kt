@@ -63,11 +63,10 @@ object WordsCardLogic {
 
     /**
      * What the right side and footer of the full-width card show. [nextWord] is the next due word
-     * (null when nothing is due); [nextMeaning] is null when the meaning is blank.
+     * (null when nothing is due). The meaning is never part of the Today card, so it does not give away the answer.
      */
     data class Lines(
         val nextWord: String?,
-        val nextMeaning: String?,
         val showAllDone: Boolean,
         val showHint: Boolean,
         val showCounts: Boolean,
@@ -82,7 +81,6 @@ object WordsCardLogic {
         val nextWord = if (!noWords && due > 0) next?.text?.trim()?.takeIf { it.isNotEmpty() } else null
         return Lines(
             nextWord = nextWord,
-            nextMeaning = if (nextWord != null) next?.meaning?.trim()?.takeIf { it.isNotEmpty() } else null,
             showAllDone = !noWords && due == 0,
             showHint = noWords,
             showCounts = !noWords,
@@ -215,8 +213,6 @@ internal class WordsCardView(
         b.tvDueLabel.setText(if (stats.total == 0) R.string.words_card_none else R.string.words_card_due)
         b.tvNextWord.visibility = if (lines.showNext) View.VISIBLE else View.GONE
         b.tvNextWord.text = lines.nextWord?.let { context.getString(R.string.words_card_next, it) }
-        b.tvNextMeaning.visibility = if (lines.nextMeaning != null) View.VISIBLE else View.GONE
-        b.tvNextMeaning.text = lines.nextMeaning
         b.tvSide.visibility = if (lines.showAllDone || lines.showHint) View.VISIBLE else View.GONE
         b.tvSide.setText(if (lines.showHint) R.string.words_card_hint else R.string.words_card_all_done)
         b.boxBar.visibility = if (lines.showBoxBar) View.VISIBLE else View.GONE
