@@ -27,19 +27,6 @@ object WeatherCodes {
         else -> "—"
     }
 
-    /** Emoji for a WMO weather code; empty when the code is unknown so callers can skip it. */
-    fun emoji(code: Int, isDay: Boolean = true): String = when (code) {
-        0, 1 -> if (isDay) (if (code == 0) "☀️" else "🌤") else "🌙"
-        2 -> if (isDay) "⛅" else "☁️"
-        3 -> "☁️"
-        45, 48 -> "🌫"
-        51, 53, 55, 56, 57 -> "🌦"
-        61, 63, 65, 66, 67, 80, 81, 82 -> "🌧"
-        71, 73, 75, 77, 85, 86 -> "🌨"
-        95, 96, 99 -> "⛈"
-        else -> ""
-    }
-
     /** Vector icon resource for an animated weather look. */
     @DrawableRes
     fun iconFor(look: WeatherLook): Int = when (look) {

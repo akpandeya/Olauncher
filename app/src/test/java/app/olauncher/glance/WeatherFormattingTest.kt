@@ -29,7 +29,7 @@ class WeatherFormattingTest {
             fetchedAt = fetchedAt,
             now = now,
         )
-        assertEquals("🌧 0°", line)
+        assertEquals("0°", line)
     }
 
     @Test
@@ -38,53 +38,53 @@ class WeatherFormattingTest {
         val fetchedAt = now - 1000L
 
         assertEquals(
-            "🌧 12°",
+            "12°",
             WeatherFormatting.homeLine(sampleForecast(nowTemp = 12.0, nowCode = 61), fetchedAt, now),
         )
         assertEquals(
-            "🌧 12°",
+            "12°",
             WeatherFormatting.homeLine(sampleForecast(nowTemp = 12.3, nowCode = 61), fetchedAt, now),
         )
         assertEquals(
-            "🌧 13°",
+            "13°",
             WeatherFormatting.homeLine(sampleForecast(nowTemp = 12.6, nowCode = 61), fetchedAt, now),
         )
         assertEquals(
-            "⛅ 12°",
+            "12°",
             WeatherFormatting.homeLine(sampleForecast(nowTemp = 12.0, nowCode = 2), fetchedAt, now),
         )
         assertEquals(
-            "🌧 0°",
+            "0°",
             WeatherFormatting.homeLine(sampleForecast(nowTemp = 0.0, nowCode = 61), fetchedAt, now),
         )
         assertEquals(
-            "🌧 0°",
+            "0°",
             WeatherFormatting.homeLine(sampleForecast(nowTemp = -0.0, nowCode = 61), fetchedAt, now),
         )
         assertEquals(
-            "🌧 0°",
+            "0°",
             WeatherFormatting.homeLine(sampleForecast(nowTemp = -0.1, nowCode = 61), fetchedAt, now),
         )
         assertEquals(
-            "🌧 -1°",
+            "-1°",
             WeatherFormatting.homeLine(sampleForecast(nowTemp = -0.6, nowCode = 61), fetchedAt, now),
         )
         assertEquals(
-            "🌧 -5°",
+            "-5°",
             WeatherFormatting.homeLine(sampleForecast(nowTemp = -5.4, nowCode = 61), fetchedAt, now),
         )
         assertEquals(
-            "🌧 -6°",
+            "-6°",
             WeatherFormatting.homeLine(sampleForecast(nowTemp = -5.6, nowCode = 61), fetchedAt, now),
         )
         assertEquals(
-            "🌙 15°",
+            "15°",
             WeatherFormatting.homeLine(sampleForecast(nowTemp = 15.0, nowCode = 0, isDay = false), fetchedAt, now),
         )
     }
 
     @Test
-    fun `unknown code drops the emoji and keeps the temperature`() {
+    fun `unknown code returns temperature`() {
         val now = 10_000_000L
         assertEquals(
             "7°",
@@ -132,19 +132,19 @@ class WeatherFormattingTest {
 
         // immediately after fetch
         assertEquals(
-            "🌧 12°",
+            "12°",
             WeatherFormatting.homeLine(sampleForecast(), fetchedAt, now = fetchedAt),
         )
 
         // 3 hours later
         assertEquals(
-            "🌧 12°",
+            "12°",
             WeatherFormatting.homeLine(sampleForecast(), fetchedAt, now = fetchedAt + 3 * 60 * 60 * 1000L),
         )
 
         // exactly 6 hours later
         assertEquals(
-            "🌧 12°",
+            "12°",
             WeatherFormatting.homeLine(sampleForecast(), fetchedAt, now = fetchedAt + sixHoursMillis),
         )
     }
