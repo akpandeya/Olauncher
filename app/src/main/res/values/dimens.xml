@@ -26,6 +26,13 @@
     <dimen name="today_button_padding_horizontal">16dp</dimen>
     <dimen name="today_day_bars_height">112dp</dimen>
 
+    <!-- 7 days tiles: one-line values shrink to fit; height in sp so it grows with large text -->
+    <dimen name="today_tile_stat_min_size">20sp</dimen>
+    <dimen name="today_tile_stat_height">50sp</dimen>
+    <dimen name="today_tile_min_height">112dp</dimen>
+    <dimen name="today_tile_gap">6dp</dimen>
+    <dimen name="today_tile_row_gap">12dp</dimen>
+
     <!-- Conjugation quiz dimens (issue #528) -->
     <dimen name="quiz_cell_padding">12dp</dimen>
     <dimen name="quiz_choice_min_height">56dp</dimen>

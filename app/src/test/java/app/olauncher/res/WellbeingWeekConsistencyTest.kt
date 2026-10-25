@@ -129,7 +129,7 @@ class WellbeingWeekConsistencyTest {
             )
         }
 
-        val weekTiles = listOf("tileWeekNotNow", "tileWeekWaterWalk")
+        val weekTiles = listOf("tileWeekNotNow", "tileWeekWaterWalk", "tileWeekExercise", "tileWeekRestingHr", "tileWeekSleep")
         val weekDoc = parseXml(resolveFile("src/main/res/layout/card_week.xml"))
         for (tileId in weekTiles) {
             val tile = findElementById(weekDoc, tileId)
@@ -197,5 +197,47 @@ class WellbeingWeekConsistencyTest {
             "WellbeingCard.kt must attach press scale to tvRangeWeek",
             source.contains("binding.tvRangeWeek.attachPressScale()"),
         )
+    }
+
+    @Test
+    fun `all five 7 days tiles share one structure label then one-line value then subline`() {
+        val doc = parseXml(resolveFile("src/main/res/layout/card_week.xml"))
+        val tiles = listOf("tileWeekNotNow", "tileWeekWaterWalk", "tileWeekExercise", "tileWeekRestingHr", "tileWeekSleep")
+        val minHeights = mutableSetOf<String>()
+        for (tileId in tiles) {
+            val tile = findElementById(doc, tileId)
+            assertNotNull("card_week.xml must contain $tileId", tile)
+            minHeights += tile!!.getAttribute("android:minHeight")
+            assertEquals("$tileId padding", "12dp", tile.getAttribute("android:padding"))
+            val texts = mutableListOf<Element>()
+            val children = tile.childNodes
+            for (i in 0 until children.length) {
+                val child = children.item(i)
+                if (child is Element && child.tagName == "TextView") texts += child
+            }
+            assertEquals("$tileId must hold label, value and subline", 3, texts.size)
+            assertEquals("$tileId label style", "@style/TodayCardLabel", texts[0].getAttribute("style"))
+            assertEquals("$tileId value style", "@style/TodayCardStat", texts[1].getAttribute("style"))
+            assertEquals("$tileId value must stay on one line", "1", texts[1].getAttribute("android:maxLines"))
+            assertEquals("$tileId value shrinks to fit", "uniform", texts[1].getAttribute("android:autoSizeTextType"))
+            assertEquals("$tileId subline style", "@style/TodayCardBodyLight", texts[2].getAttribute("style"))
+        }
+        assertEquals("all 7 days tiles must share one minHeight", setOf("@dimen/today_tile_min_height"), minHeights)
+    }
+
+    @Test
+    fun `every week tile id in card_week xml is referenced from Kotlin`() {
+        val kotlin = listOf(
+            "src/main/java/app/olauncher/ui/today/cards/WeekCard.kt",
+            "src/main/java/app/olauncher/ui/today/cards/WellbeingCard.kt",
+        ).joinToString("\n") { resolveFile(it).readText() }
+        val ids = listOf(
+            "tvWeekNotNow", "tvWeekNotNowSub", "tvWeekWaterWalk",
+            "llWeekHealth", "tileWeekExercise", "tileWeekRestingHr", "tileWeekSleep",
+            "tvWeekExercise", "tvWeekExerciseSub", "tvWeekRestingHr", "tvWeekSleep", "tvWeekSleepSub",
+        )
+        for (id in ids) {
+            assertTrue("$id must be used in Kotlin", kotlin.contains(".$id"))
+        }
     }
 }

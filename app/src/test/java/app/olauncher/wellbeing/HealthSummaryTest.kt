@@ -234,10 +234,130 @@ class HealthSummaryTest {
             endMs = LocalDate.of(2026, 1, 3).atTime(8, 0).atZone(zone).toInstant().toEpochMilli(),
         )
 
-        val (bed, wake) = HealthSummaryFormatting.averageBedAndWakeTimes(listOf(n1, n2), zone)
+        val (bed, wake) = HealthSummaryFormatting.averageBedAndWakeTimes(listOf(n1, n2), zone)!!
         assertEquals(LocalTime.of(0, 0), bed)
         assertEquals(LocalTime.of(7, 30), wake)
         assertEquals("00:00 – 07:30", HealthSummaryFormatting.formatBedWakeTime(bed, wake))
+    }
+
+    private fun night(zone: ZoneId, bedDay: LocalDate, bed: LocalTime, wakeDay: LocalDate, wake: LocalTime): SleepNight {
+        val start = bedDay.atTime(bed).atZone(zone).toInstant().toEpochMilli()
+        val end = wakeDay.atTime(wake).atZone(zone).toInstant().toEpochMilli()
+        return SleepNight(minutes = (end - start) / min, startMs = start, endMs = end)
+    }
+
+    @Test
+    fun bedTimeAverageCrossesMidnightAsCircularMean() {
+        val zone = ZoneOffset.UTC
+        val d1 = LocalDate.of(2026, 1, 1)
+        val nights = listOf(
+            night(zone, d1, LocalTime.of(23, 0), d1.plusDays(1), LocalTime.of(7, 0)),
+            night(zone, d1.plusDays(2), LocalTime.of(1, 0), d1.plusDays(2), LocalTime.of(9, 0)),
+        )
+        val avg = HealthSummaryFormatting.averageBedAndWakeTimes(nights, zone)
+        assertNotNull(avg)
+        assertEquals(LocalTime.of(0, 0), avg!!.bed)
+        assertEquals(LocalTime.of(8, 0), avg.wake)
+    }
+
+    @Test
+    fun bedAndWakeAverageForNormalNights() {
+        val zone = ZoneOffset.UTC
+        val d1 = LocalDate.of(2026, 3, 1)
+        val nights = listOf(
+            night(zone, d1, LocalTime.of(22, 30), d1.plusDays(1), LocalTime.of(6, 50)),
+            night(zone, d1.plusDays(1), LocalTime.of(22, 40), d1.plusDays(2), LocalTime.of(7, 10)),
+            night(zone, d1.plusDays(2), LocalTime.of(22, 50), d1.plusDays(3), LocalTime.of(7, 30)),
+        )
+        val avg = HealthSummaryFormatting.averageBedAndWakeTimes(nights, zone)!!
+        assertEquals(LocalTime.of(22, 40), avg.bed)
+        assertEquals(LocalTime.of(7, 10), avg.wake)
+        assertEquals("22:40", HealthSummaryFormatting.formatClock(avg.bed))
+        assertEquals("07:10", HealthSummaryFormatting.formatClock(avg.wake))
+    }
+
+    @Test
+    fun circularMeanOfWakeTimesAroundMidnight() {
+        assertEquals(0, HealthSummaryFormatting.circularMeanMinuteOfDay(listOf(23 * 60 + 50, 10)))
+        assertEquals(23 * 60 + 55, HealthSummaryFormatting.circularMeanMinuteOfDay(listOf(23 * 60 + 50, 0)))
+        assertEquals(7 * 60, HealthSummaryFormatting.circularMeanMinuteOfDay(listOf(7 * 60)))
+        assertNull(HealthSummaryFormatting.circularMeanMinuteOfDay(emptyList()))
+    }
+
+    @Test
+    fun scatteredClockTimesHaveNoAverage() {
+        // 06:00 and 18:00 point in opposite directions on the clock: no meaningful mean.
+        assertNull(HealthSummaryFormatting.circularMeanMinuteOfDay(listOf(6 * 60, 18 * 60)))
+    }
+
+    @Test
+    fun implausibleBedToWakeGapHidesTimes() {
+        // Bed 22:25, wake 15:50 the next day is a 17 h 25 gap: not shown.
+        val zone = ZoneOffset.UTC
+        val d1 = LocalDate.of(2026, 10, 24)
+        val nights = listOf(night(zone, d1, LocalTime.of(22, 25), d1.plusDays(1), LocalTime.of(15, 50)))
+        assertNull(HealthSummaryFormatting.averageBedAndWakeTimes(nights, zone))
+        assertNull(HealthSummaryFormatting.averageBedAndWakeTimes(emptyList(), zone))
+    }
+
+    @Test
+    fun afternoonNapDoesNotBecomeTheWeekWakeTime() {
+        val zone = ZoneOffset.UTC
+        val day = LocalDate.of(2026, 10, 25)
+        val dayStart = day.atStartOfDay(zone).toInstant().toEpochMilli()
+        val sessions = listOf(
+            SleepSpan(dayStart - 95 * min, dayStart + 6 * hour + 40 * min), // 22:25 – 06:40
+            SleepSpan(dayStart + 14 * hour, dayStart + 15 * hour + 50 * min), // nap 14:00 – 15:50
+        )
+
+        // The Today view keeps its existing span: first bed to last wake, total minutes with the nap.
+        val today = HealthSummaryFormatting.sleepNightEndingToday(sessions, dayStart, dayStart + 24 * hour)!!
+        assertEquals(dayStart - 95 * min, today.startMs)
+        assertEquals(dayStart + 15 * hour + 50 * min, today.endMs)
+        assertEquals(495L + 110L, today.minutes)
+
+        val week = HealthSummaryFormatting.bucketAndAverageWeek(
+            days = listOf(day),
+            zone = zone,
+            exerciseSessions = null,
+            restingRecords = null,
+            sleepRecords = sessions,
+        )
+        assertEquals(LocalTime.of(22, 25), week.sleepBedTime)
+        assertEquals(LocalTime.of(6, 40), week.sleepWakeTime)
+    }
+
+    @Test
+    fun weekValuesFitOnOneShortLine() {
+        val week = HealthWeekSummary(
+            exerciseMinutesTotal = 1227,
+            restingHeartRateAvg = 57,
+            sleepMinutesAvg = 445,
+            sleepBedTime = LocalTime.of(22, 40),
+            sleepWakeTime = LocalTime.of(7, 10),
+        )
+        val values = HealthSummaryFormatting.weekValues(week)
+        assertEquals("20 h 27", values.exercise)
+        assertEquals("57", values.restingHr)
+        assertEquals("7 h 25", values.sleep)
+        assertEquals("22:40", values.bedTime)
+        assertEquals("07:10", values.wakeTime)
+    }
+
+    @Test
+    fun weekValuesHideTimesUnlessBothAreValid() {
+        val onlyBed = HealthSummaryFormatting.weekValues(HealthWeekSummary(sleepMinutesAvg = 400, sleepBedTime = LocalTime.of(23, 0)))
+        assertNull(onlyBed.bedTime)
+        assertNull(onlyBed.wakeTime)
+
+        val empty = HealthSummaryFormatting.weekValues(null)
+        assertEquals(HealthSummaryFormatting.DASH, empty.exercise)
+        assertEquals(HealthSummaryFormatting.DASH, empty.restingHr)
+        assertEquals(HealthSummaryFormatting.DASH, empty.sleep)
+        assertNull(empty.bedTime)
+        assertNull(empty.wakeTime)
+
+        assertEquals("45 min", HealthSummaryFormatting.weekValues(HealthWeekSummary(exerciseMinutesTotal = 45)).exercise)
     }
 
     @Test

@@ -57,69 +57,252 @@
         android:layout_height="wrap_content"
         android:orientation="vertical" />
 
+    <!-- One grid of equal tiles with one style: label, one-line value, subline.
+         Two per row; Sleep spans the last row because its bed and wake line is the longest. -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:baselineAligned="false"
-        android:orientation="horizontal">
+        android:orientation="vertical">
 
         <LinearLayout
-            android:id="@+id/tileWeekNotNow"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_marginEnd="6dp"
-            android:layout_weight="1"
-            android:background="@drawable/today_tile"
-            android:minHeight="96dp"
-            android:orientation="vertical"
-            android:padding="12dp">
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:baselineAligned="false"
+            android:orientation="horizontal">
 
-            <TextView
-                style="@style/TodayCardLabel"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/not_now" />
+            <LinearLayout
+                android:id="@+id/tileWeekNotNow"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginEnd="@dimen/today_tile_gap"
+                android:layout_weight="1"
+                android:background="@drawable/today_tile"
+                android:minHeight="@dimen/today_tile_min_height"
+                android:orientation="vertical"
+                android:padding="12dp">
 
-            <TextView
-                android:id="@+id/tvWeekNotNow"
-                style="@style/TodayCardStat"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                tools:text="31" />
+                <TextView
+                    style="@style/TodayCardLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="2"
+                    android:text="@string/not_now" />
 
-            <TextView
-                android:id="@+id/tvWeekNotNowSub"
-                style="@style/TodayCardBodyLight"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                tools:text="Opened anyway 15 · mostly “Just bored”" />
+                <TextView
+                    android:id="@+id/tvWeekNotNow"
+                    style="@style/TodayCardStat"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/today_tile_stat_height"
+                    android:autoSizeMaxTextSize="@dimen/today_stat_size"
+                    android:autoSizeMinTextSize="@dimen/today_tile_stat_min_size"
+                    android:autoSizeTextType="uniform"
+                    android:gravity="center_vertical|start"
+                    android:maxLines="1"
+                    tools:text="31" />
+
+                <TextView
+                    android:id="@+id/tvWeekNotNowSub"
+                    style="@style/TodayCardBodyLight"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="2"
+                    tools:text="Opened anyway 15 · mostly “Just bored”" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/tileWeekWaterWalk"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_marginStart="@dimen/today_tile_gap"
+                android:layout_weight="1"
+                android:background="@drawable/today_tile"
+                android:minHeight="@dimen/today_tile_min_height"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <TextView
+                    style="@style/TodayCardLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="2"
+                    android:text="@string/wellbeing_week_water_walk" />
+
+                <TextView
+                    android:id="@+id/tvWeekWaterWalk"
+                    style="@style/TodayCardStat"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/today_tile_stat_height"
+                    android:autoSizeMaxTextSize="@dimen/today_stat_size"
+                    android:autoSizeMinTextSize="@dimen/today_tile_stat_min_size"
+                    android:autoSizeTextType="uniform"
+                    android:gravity="center_vertical|start"
+                    android:maxLines="1"
+                    tools:text="34 · 12" />
+
+                <TextView
+                    style="@style/TodayCardBodyLight"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="2"
+                    android:text="@string/wellbeing_week_water_walk_sub" />
+
+            </LinearLayout>
 
         </LinearLayout>
 
+        <!-- Health Connect tiles; filled and shown by the Wellbeing card only -->
         <LinearLayout
-            android:id="@+id/tileWeekWaterWalk"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_marginStart="6dp"
-            android:layout_weight="1"
-            android:background="@drawable/today_tile"
-            android:minHeight="96dp"
+            android:id="@+id/llWeekHealth"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="12dp">
+            android:visibility="gone"
+            tools:visibility="visible">
 
-            <TextView
-                style="@style/TodayCardLabel"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/wellbeing_week_water_walk" />
+                android:layout_marginTop="@dimen/today_tile_row_gap"
+                android:baselineAligned="false"
+                android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/tvWeekWaterWalk"
-                style="@style/TodayCardStat"
+                <LinearLayout
+                    android:id="@+id/tileWeekExercise"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginEnd="@dimen/today_tile_gap"
+                    android:layout_weight="1"
+                    android:background="@drawable/today_tile"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:minHeight="@dimen/today_tile_min_height"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <TextView
+                        style="@style/TodayCardLabel"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="2"
+                        android:text="@string/health_tile_exercise" />
+
+                    <TextView
+                        android:id="@+id/tvWeekExercise"
+                        style="@style/TodayCardStat"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/today_tile_stat_height"
+                        android:autoSizeMaxTextSize="@dimen/today_stat_size"
+                        android:autoSizeMinTextSize="@dimen/today_tile_stat_min_size"
+                        android:autoSizeTextType="uniform"
+                        android:gravity="center_vertical|start"
+                        android:maxLines="1"
+                        tools:text="20 h 27" />
+
+                    <TextView
+                        android:id="@+id/tvWeekExerciseSub"
+                        style="@style/TodayCardBodyLight"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="2"
+                        tools:text="Goal 315 min this week" />
+
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/tileWeekRestingHr"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="@dimen/today_tile_gap"
+                    android:layout_weight="1"
+                    android:background="@drawable/today_tile"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:minHeight="@dimen/today_tile_min_height"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <TextView
+                        style="@style/TodayCardLabel"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="2"
+                        android:text="@string/health_tile_resting_hr" />
+
+                    <TextView
+                        android:id="@+id/tvWeekRestingHr"
+                        style="@style/TodayCardStat"
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/today_tile_stat_height"
+                        android:autoSizeMaxTextSize="@dimen/today_stat_size"
+                        android:autoSizeMinTextSize="@dimen/today_tile_stat_min_size"
+                        android:autoSizeTextType="uniform"
+                        android:gravity="center_vertical|start"
+                        android:maxLines="1"
+                        tools:text="58" />
+
+                    <TextView
+                        style="@style/TodayCardBodyLight"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="2"
+                        android:text="@string/wellbeing_week_resting_hr_sub" />
+
+                </LinearLayout>
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/tileWeekSleep"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                tools:text="34 · 12" />
+                android:layout_marginTop="@dimen/today_tile_row_gap"
+                android:background="@drawable/today_tile"
+                android:clickable="true"
+                android:focusable="true"
+                android:minHeight="@dimen/today_tile_min_height"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <TextView
+                    style="@style/TodayCardLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="2"
+                    android:text="@string/wellbeing_week_sleep_label" />
+
+                <TextView
+                    android:id="@+id/tvWeekSleep"
+                    style="@style/TodayCardStat"
+                    android:layout_width="match_parent"
+                    android:layout_height="@dimen/today_tile_stat_height"
+                    android:autoSizeMaxTextSize="@dimen/today_stat_size"
+                    android:autoSizeMinTextSize="@dimen/today_tile_stat_min_size"
+                    android:autoSizeTextType="uniform"
+                    android:gravity="center_vertical|start"
+                    android:maxLines="1"
+                    tools:text="7 h 25" />
+
+                <TextView
+                    android:id="@+id/tvWeekSleepSub"
+                    style="@style/TodayCardBodyLight"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="2"
+                    tools:text="bed 22:40 · wake 07:10" />
+
+            </LinearLayout>
 
         </LinearLayout>
 

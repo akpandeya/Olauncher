@@ -201,6 +201,10 @@ object WellbeingCard : TodayCard {
         binding.tileExercise.setOnClickListener(onHealthClick)
         binding.tileRestingHr.setOnClickListener(onHealthClick)
         binding.tileSleep.setOnClickListener(onHealthClick)
+        for (tile in listOf(cardView.weekBinding.tileWeekExercise, cardView.weekBinding.tileWeekRestingHr, cardView.weekBinding.tileWeekSleep)) {
+            tile.attachPressScale()
+            tile.setOnClickListener(onHealthClick)
+        }
 
         binding.tileWater.setOnClickListener {
             Haptics.tick(it)
@@ -253,9 +257,9 @@ internal class WellbeingCardView(
     private var weekHealth: HealthWeekSummary? = null
 
     /** The 7 days side lives in this card; it keeps its own per-view state. */
-    private val weekView: WeekCardView = WeekCardView(
-        CardWeekBinding.inflate(LayoutInflater.from(binding.root.context), binding.weekContent, true),
-    )
+    val weekBinding: CardWeekBinding =
+        CardWeekBinding.inflate(LayoutInflater.from(binding.root.context), binding.weekContent, true)
+    private val weekView: WeekCardView = WeekCardView(weekBinding)
 
     init {
         ViewCompat.setAccessibilityHeading(binding.tvWellbeingTitle, true)
@@ -327,13 +331,14 @@ internal class WellbeingCardView(
         healthJob?.cancel()
         if (!prefs.healthConnectEnabled) {
             b.llHealth.isVisible = false
+            weekBinding.llWeekHealth.isVisible = false
             b.tvHealth.isVisible = false
             autoWalks = null
             todayHealth = null
             weekHealth = null
             return
         }
-        b.llHealth.isVisible = true
+        renderHealthTiles()
         b.tvHealth.isVisible = false
 
         val scope = scope() ?: return
@@ -359,35 +364,28 @@ internal class WellbeingCardView(
         val b = binding
         val context = b.root.context ?: return
         val prefs = Prefs(context)
+        val w = weekBinding
         if (!prefs.healthConnectEnabled) {
             b.llHealth.isVisible = false
+            w.llWeekHealth.isVisible = false
             return
         }
-        b.llHealth.isVisible = true
-
+        // The 7 days side shows its Health tiles inside its own tile grid; Today keeps its row.
         val isWeek = weekShown()
+        b.llHealth.isVisible = !isWeek
+        w.llWeekHealth.isVisible = isWeek
+
         if (isWeek) {
-            val week = weekHealth
-            val exerciseTotal = week?.exerciseMinutesTotal
-            b.tvExercise.text = if (exerciseTotal != null) "${exerciseTotal} min" else HealthSummaryFormatting.DASH
-            b.tvExerciseLabel.text = context.getString(R.string.health_tile_exercise)
-            b.tvExerciseSub.text = context.getString(R.string.health_exercise_goal_week, ExerciseGoal.WEEKLY_MIN)
-
-            val restingAvg = week?.restingHeartRateAvg
-            b.tvRestingHr.text = if (restingAvg != null) restingAvg.toString() else HealthSummaryFormatting.DASH
-            b.tvRestingHrLabel.text = context.getString(R.string.health_tile_resting_hr)
-            b.tvRestingHrSub.text = context.getString(R.string.health_unit_bpm)
-
-            val sleepAvg = week?.sleepMinutesAvg
-            b.tvSleep.text = if (sleepAvg != null) HealthSummaryFormatting.formatDuration(sleepAvg) else HealthSummaryFormatting.DASH
-            b.tvSleepLabel.text = context.getString(R.string.health_tile_sleep)
-            val bed = week?.sleepBedTime
-            val wake = week?.sleepWakeTime
-            val timesText = if (bed != null && wake != null) {
-                HealthSummaryFormatting.formatBedWakeTime(bed, wake)
+            val values = HealthSummaryFormatting.weekValues(weekHealth)
+            w.tvWeekExercise.text = values.exercise
+            w.tvWeekExerciseSub.text = context.getString(R.string.health_exercise_goal_week, ExerciseGoal.WEEKLY_MIN)
+            w.tvWeekRestingHr.text = values.restingHr
+            w.tvWeekSleep.text = values.sleep
+            val timesText = if (values.bedTime != null && values.wakeTime != null) {
+                context.getString(R.string.wellbeing_week_sleep_times, values.bedTime, values.wakeTime)
             } else ""
-            b.tvSleepSub.text = timesText
-            b.tvSleepSub.isVisible = timesText.isNotEmpty()
+            w.tvWeekSleepSub.text = timesText
+            w.tvWeekSleepSub.isVisible = timesText.isNotEmpty()
         } else {
             val today = todayHealth
             val exercise = today?.exerciseMinutes
