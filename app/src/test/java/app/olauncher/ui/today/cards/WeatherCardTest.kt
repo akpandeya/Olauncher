@@ -4,10 +4,12 @@ import android.view.View
 import app.olauncher.R
 import app.olauncher.databinding.CardWeatherBinding
 import app.olauncher.glance.Forecast
+import app.olauncher.helper.WeatherLook
 import app.olauncher.ui.today.TodayCards
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.LocalDateTime
@@ -102,5 +104,47 @@ class WeatherCardTest {
             perViewTypes.any { it.isAssignableFrom(field.type) } || View::class.java.isAssignableFrom(field.type)
         }
         assertTrue("per-view fields on WeatherCard: ${leaked.map { it.name }}", leaked.isEmpty())
+    }
+
+    @Test
+    fun `WeatherCardLogic lookFor picks look for forecast code and day state`() {
+        assertEquals(WeatherLook.CLEAR, WeatherCardLogic.lookFor(0, isDay = true))
+        assertEquals(WeatherLook.CLEAR_NIGHT, WeatherCardLogic.lookFor(0, isDay = false))
+        assertEquals(WeatherLook.PARTLY, WeatherCardLogic.lookFor(1, isDay = true))
+        assertEquals(WeatherLook.OVERCAST, WeatherCardLogic.lookFor(3, isDay = true))
+        assertEquals(WeatherLook.FOG, WeatherCardLogic.lookFor(45, isDay = true))
+        assertEquals(WeatherLook.LIGHT_RAIN, WeatherCardLogic.lookFor(61, isDay = true))
+        assertEquals(WeatherLook.HEAVY_RAIN, WeatherCardLogic.lookFor(65, isDay = true))
+        assertEquals(WeatherLook.SNOW, WeatherCardLogic.lookFor(71, isDay = true))
+        assertEquals(WeatherLook.STORM, WeatherCardLogic.lookFor(95, isDay = true))
+    }
+
+    @Test
+    fun `WeatherCardLogic lookFor returns null for unknown code`() {
+        assertNull(WeatherCardLogic.lookFor(-1, isDay = true))
+        assertNull(WeatherCardLogic.lookFor(999, isDay = true))
+        assertNull(WeatherCardLogic.lookFor(4, isDay = false))
+    }
+
+    @Test
+    fun `WeatherCardLogic lookFor on Forecast selects matching look`() {
+        val forecast = Forecast(
+            nowTemp = 18.0,
+            nowCode = 0,
+            isDay = true,
+            todayMax = 22.0,
+            todayMin = 14.0,
+            hours = emptyList(),
+        )
+        assertEquals(WeatherLook.CLEAR, WeatherCardLogic.lookFor(forecast))
+
+        val nightForecast = forecast.copy(isDay = false)
+        assertEquals(WeatherLook.CLEAR_NIGHT, WeatherCardLogic.lookFor(nightForecast))
+
+        val stormForecast = forecast.copy(nowCode = 95)
+        assertEquals(WeatherLook.STORM, WeatherCardLogic.lookFor(stormForecast))
+
+        val unknownForecast = forecast.copy(nowCode = 999)
+        assertNull(WeatherCardLogic.lookFor(unknownForecast))
     }
 }
