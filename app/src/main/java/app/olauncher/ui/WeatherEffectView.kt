@@ -55,6 +55,10 @@ class WeatherEffectView @JvmOverloads constructor(
     private var currentParams: WeatherLookParams? = null
     private var keepOutRects: List<WeatherSimRect> = emptyList()
 
+    // The sim and every mock constant are in CSS px, which equal dp; the canvas is scaled by density.
+    private val density: Float
+        get() = resources.displayMetrics.density.coerceAtLeast(0.1f)
+
     // Normalised y ranges (top1, bottom1, top2, bottom2) where glass drops are faded out for text.
     private var textBand = floatArrayOf(0f, 0f, 0f, 0f)
     private var running = false
@@ -159,9 +163,11 @@ class WeatherEffectView @JvmOverloads constructor(
     private val impactRect = RectF()
     private val impactEdgePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
+        strokeWidth = 1.2f
     }
     private val impactRingPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
+        strokeWidth = 1.2f
     }
     private val splashPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
@@ -174,6 +180,7 @@ class WeatherEffectView @JvmOverloads constructor(
     }
     private val beadEdgePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
+        strokeWidth = 0.7f
     }
     private val beadHighlightPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
@@ -251,10 +258,13 @@ class WeatherEffectView @JvmOverloads constructor(
         setWeather(look, null, true)
     }
 
+    /** Keep-out rects in view pixel coordinates; stored in dp to match the sim. */
     fun setKeepOutRects(rects: List<WeatherSimRect>) {
-        if (keepOutRects == rects) return
-        keepOutRects = rects
-        sim?.keepOut = rects
+        val d = density
+        val dpRects = rects.map { WeatherSimRect(it.x / d, it.y / d, it.w / d, it.h / d) }
+        if (keepOutRects == dpRects) return
+        keepOutRects = dpRects
+        sim?.keepOut = dpRects
     }
 
     /** Pixel y ranges of the clock block and the app list; glass drops fade out over them. */
@@ -283,8 +293,8 @@ class WeatherEffectView @JvmOverloads constructor(
     fun rebuildSim() {
         val look = currentLook
         val params = currentParams
-        val w = width.toFloat()
-        val h = height.toFloat()
+        val w = width / density
+        val h = height / density
 
         if (look == null || params == null || w <= 0f || h <= 0f) {
             sim = null
@@ -342,8 +352,8 @@ class WeatherEffectView @JvmOverloads constructor(
     private fun initHail() {
         val s = sim ?: return
         val rng = s.rng
-        val w = width.toFloat().coerceAtLeast(1f)
-        val h = height.toFloat().coerceAtLeast(1f)
+        val w = s.width.coerceAtLeast(1f)
+        val h = s.height.coerceAtLeast(1f)
         for (i in hailPellets.indices) {
             val p = hailPellets[i]
             p.x = WeatherSim.randRange(rng, 0f, w)
@@ -358,8 +368,8 @@ class WeatherEffectView @JvmOverloads constructor(
         val s = sim ?: return
         val rng = s.rng
         val wind = s.wind
-        val w = width.toFloat()
-        val h = height.toFloat()
+        val w = s.width
+        val h = s.height
         for (i in hailPellets.indices) {
             val p = hailPellets[i]
             p.y += p.vy * dt
@@ -432,7 +442,14 @@ class WeatherEffectView @JvmOverloads constructor(
         super.onDraw(canvas)
         val s = sim ?: return
         if (width <= 0 || height <= 0) return
+        canvas.save()
+        canvas.scale(density, density)
+        drawScene(canvas, s)
+        canvas.restore()
+    }
 
+    /** Draws one frame in sim (dp) coordinates; the caller has scaled the canvas by density. */
+    private fun drawScene(canvas: Canvas, s: WeatherSim) {
         // -------------------------------------------------------------
         // Sky layers (sun, stars, clouds, haze) - drawn before flash in mock order
         // -------------------------------------------------------------
@@ -451,7 +468,7 @@ class WeatherEffectView @JvmOverloads constructor(
 
         // 1. Flash (behind the glass, so drops stay on top)
         if (s.flash > 0f) {
-            drawFlash(canvas, s.flash)
+            drawFlash(canvas, s)
         }
 
         // 2. Sheen spots
@@ -461,7 +478,7 @@ class WeatherEffectView @JvmOverloads constructor(
 
         // Frost (icy edge vignette)
         if (frostStrength > 0f && frostBitmap != null) {
-            frostDstRect.set(0f, 0f, width.toFloat(), height.toFloat())
+            frostDstRect.set(0f, 0f, s.width, s.height)
             canvas.drawBitmap(frostBitmap!!, null, frostDstRect, frostPaint)
         }
 
@@ -496,7 +513,7 @@ class WeatherEffectView @JvmOverloads constructor(
     }
 
     internal fun drawSun(canvas: Canvas, sim: WeatherSim) {
-        skyPainter.drawSun(canvas, sim, width.toFloat(), height.toFloat())
+        skyPainter.drawSun(canvas, sim, sim.width, sim.height)
     }
 
     internal fun drawSunRays(
@@ -519,13 +536,13 @@ class WeatherEffectView @JvmOverloads constructor(
     }
 
     internal fun drawHaze(canvas: Canvas, sim: WeatherSim) {
-        skyPainter.drawHaze(canvas, sim, width.toFloat(), height.toFloat())
+        skyPainter.drawHaze(canvas, sim, sim.width, sim.height)
     }
 
-    private fun drawFlash(canvas: Canvas, f: Float) {
+    private fun drawFlash(canvas: Canvas, sim: WeatherSim) {
         flashPaint.color = WeatherLookColors.FLASH
-        flashPaint.alpha = (0.38f * f * 255f).roundToInt().coerceIn(0, 255)
-        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), flashPaint)
+        flashPaint.alpha = (0.38f * sim.flash * 255f).roundToInt().coerceIn(0, 255)
+        canvas.drawRect(0f, 0f, sim.width, sim.height, flashPaint)
     }
 
     private fun drawGlints(canvas: Canvas, sim: WeatherSim) {
@@ -550,7 +567,7 @@ class WeatherEffectView @JvmOverloads constructor(
         sortedDrops.clear()
         sortedDrops.addAll(sim.drops)
         Collections.sort(sortedDrops, dropComparator)
-        val h = height.toFloat().coerceAtLeast(1f)
+        val h = sim.height.coerceAtLeast(1f)
         for (i in 0 until sortedDrops.size) {
             val d = sortedDrops[i]
             val mask = textBandMask(d.y / h)
