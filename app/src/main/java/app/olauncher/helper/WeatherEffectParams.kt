@@ -1,7 +1,7 @@
 package app.olauncher.helper
 
 /**
- * Numbers handed to the weather shader as uniforms. All values are clamped to the ranges below.
+ * Parameters for weather effects. All values are clamped to the ranges below.
  * [density] 0..1 streak/flake amount; [fallSpeed] 0.2..3 fall speed; [glassDrops] 0..30 drops on the glass;
  * [slideSpeed] 0..1.2 how fast glass drops slide; [frost] 0..1 icy edge; [hail] 0 or 1; [bolt] 0 or 1.
  */

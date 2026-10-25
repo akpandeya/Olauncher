@@ -49,9 +49,9 @@ object WeatherEffects {
     fun selectSpec(enabled: Boolean, code: Int?): EffectSpec =
         if (!enabled || code == null) specFor(Int.MIN_VALUE) else specFor(code)
 
-    /** Frames move only while Home is visible, an effect is shown and system animations are on. */
-    fun shouldAnimate(homeVisible: Boolean, effect: WeatherEffect, animatorsEnabled: Boolean): Boolean =
-        homeVisible && effect != WeatherEffect.NONE && animatorsEnabled
+    /** Frames move only while Home is visible, a weather look is shown and system animations are on. */
+    fun shouldAnimate(homeVisible: Boolean, look: WeatherLook?, animatorsEnabled: Boolean): Boolean =
+        homeVisible && look != null && animatorsEnabled
 
     /** NONE when the setting is off or there is no cached weather code. */
     fun select(enabled: Boolean, code: Int?): WeatherEffect {
@@ -59,18 +59,17 @@ object WeatherEffects {
         return forCode(code)
     }
 
-    fun tint(effect: WeatherEffect, isDay: Boolean): EffectTint {
-        val (day, night) = when (effect) {
-            WeatherEffect.SUN -> 0xFFFFD27A.toInt() to 0xFFBFD4FF.toInt()
-            WeatherEffect.FOG -> 0xFFE6E9EE.toInt() to 0xFF8E98A8.toInt()
-            WeatherEffect.RAIN -> 0xFFB8D8F0.toInt() to 0xFF6F86A6.toInt()
-            WeatherEffect.SNOW -> 0xFFFFFFFF.toInt() to 0xFFDDE6F5.toInt()
-            WeatherEffect.STORM -> 0xFFB0C4DE.toInt() to 0xFF5C6F8F.toInt()
-            WeatherEffect.CLOUDS -> 0xFFF2F4F7.toInt() to 0xFF55627A.toInt()
-            WeatherEffect.NONE -> 0x00000000 to 0x00000000
+    fun tint(effect: WeatherEffect, isDay: Boolean = true): EffectTint {
+        val color = when (effect) {
+            WeatherEffect.SUN -> WeatherLookColors.SUN
+            WeatherEffect.FOG -> WeatherLookColors.FOG
+            WeatherEffect.RAIN -> 0xFFB8D8F0.toInt()
+            WeatherEffect.SNOW -> WeatherLookColors.SNOW
+            WeatherEffect.STORM -> 0xFFB0C4DE.toInt()
+            WeatherEffect.CLOUDS -> WeatherLookColors.CLOUDS
+            WeatherEffect.NONE -> 0x00000000
         }
-        val primary = if (isDay) day else night
-        val flash = if (isDay) 0xFFE8F0FF.toInt() else 0xFF9FB3D6.toInt()
-        return EffectTint(primary, if (effect == WeatherEffect.STORM) flash else primary)
+        val flash = WeatherLookColors.FLASH
+        return EffectTint(color, if (effect == WeatherEffect.STORM) flash else color)
     }
 }
