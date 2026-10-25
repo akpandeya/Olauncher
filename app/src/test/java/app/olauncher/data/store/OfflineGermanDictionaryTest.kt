@@ -12,11 +12,15 @@ class OfflineGermanDictionaryTest {
     )
     private val maedchen = OfflineGermanEntry("Mädchen", "noun", "das", "Mädchen", "girl", "", "", "")
     private val haus = OfflineGermanEntry("Haus", "noun", "das", "Häuser", "house, building", "", "", "")
+    private val hund = OfflineGermanEntry("Hund", "noun", "der", "Hunde", "dog", "", "", "")
+    private val katze = OfflineGermanEntry("Katze", "noun", "die", "Katzen", "cat", "", "", "")
     private val dictionary = OfflineGermanDictionary { form ->
         when (form) {
             "gehen", "ging" -> listOf(gehen)
             "Mädchen" -> listOf(maedchen)
             "Haus", "Häuser" -> listOf(haus)
+            "Hund", "Hunde" -> listOf(hund)
+            "Katze", "Katzen" -> listOf(katze)
             else -> emptyList()
         }
     }
@@ -106,5 +110,19 @@ class OfflineGermanDictionaryTest {
         ))
         assertEquals("NetworkQuery" to result, written)
         assertTrue(networkCalled)
+    }
+
+    @Test
+    fun `gender lookups extract noun gender and return null for verbs and misses`() {
+        assertEquals("der", dictionary.gender("Hund"))
+        assertEquals("der", dictionary.gender("der Hund"))
+        assertEquals("die", dictionary.gender("Katze"))
+        assertEquals("die", dictionary.gender("die Katze"))
+        assertEquals("das", dictionary.gender("Mädchen"))
+        assertEquals("das", dictionary.gender("Haus"))
+        assertEquals("das", dictionary.gender("Häuser"))
+        assertNull(dictionary.gender("gehen"))
+        assertNull(dictionary.gender("ging"))
+        assertNull(dictionary.gender("unknown"))
     }
 }

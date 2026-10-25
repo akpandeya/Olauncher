@@ -18,6 +18,8 @@ class OfflineGermanStore(context: Context) {
     @Volatile
     private var database: SQLiteDatabase? = null
 
+    private val genderCache = java.util.concurrent.ConcurrentHashMap<String, String>()
+
     private fun deleteInstalled() {
         File(appContext.noBackupFilesDir, "german-dictionary").listFiles()
             ?.filter { it.extension == "sqlite" }
@@ -59,6 +61,7 @@ class OfflineGermanStore(context: Context) {
         synchronized(this) {
             if (database === opened) database = null
         }
+        genderCache.clear()
         try {
             opened.close()
         } catch (_: Exception) {
@@ -93,6 +96,48 @@ class OfflineGermanStore(context: Context) {
                     }
                 }
             }.lookup(text, pluralLabel)
+        } catch (e: Exception) {
+            Log.w(TAG, "Offline dictionary unreadable; deleting it so the next lookup reinstalls", e)
+            discard(db)
+            null
+        }
+    }
+
+    /**
+     * Looks up noun gender for [text] (e.g. "der", "die", "das"), or null if unknown (#515).
+     * First query hits the database; subsequent calls for the same word are served from cache.
+     */
+    fun gender(text: String): String? {
+        val clean = text.trim()
+        if (clean.isEmpty()) return null
+        val cached = genderCache[clean]
+        if (cached != null) return cached.takeIf { it.isNotEmpty() }
+        val db = try {
+            open()
+        } catch (e: Exception) {
+            Log.w(TAG, "Offline dictionary unavailable; using existing fallback", e)
+            return null
+        }
+        return try {
+            val normalized = Normalizer.normalize(clean, Normalizer.Form.NFC)
+            var result: String? = null
+            for (candidate in WiktionaryParser.candidates(normalized)) {
+                val found = db.rawQuery(
+                    """SELECT e.gender FROM lookup l JOIN entries e ON e.id = l.entry_id WHERE l.form = ?
+                       ORDER BY CASE WHEN e.lemma = ? THEN 0 ELSE 1 END, e.id LIMIT 1""",
+                    arrayOf(candidate, candidate)
+                ).use { cursor ->
+                    if (cursor.moveToNext()) {
+                        cursor.getString(0)
+                    } else null
+                }
+                if (!found.isNullOrBlank()) {
+                    result = found
+                    break
+                }
+            }
+            genderCache[clean] = result.orEmpty()
+            result
         } catch (e: Exception) {
             Log.w(TAG, "Offline dictionary unreadable; deleting it so the next lookup reinstalls", e)
             discard(db)

@@ -53,11 +53,15 @@
     <color name="scrimClear">#00000000</color>
     <color name="scrimHandle">#66000000</color>
     <color name="accentSystem">@android:color/system_accent1_600</color>
-    <!-- Accent roles: also used for review buttons (#508: No=rose, Almost=sand, Knew=sage) -->
+    <!-- Accent roles: also used for review buttons (#508: No=rose, Almost=sand, Knew=sage) and noun articles (#515: der=sky/blue, die=rose, das=sage) -->
     <color name="accentSage">@color/accentSageLight</color>
     <color name="accentSand">@color/accentSandLight</color>
     <color name="accentSky">@color/accentSkyLight</color>
     <color name="accentRose">@color/accentRoseLight</color>
+    <!-- Article colours (#515: der=sky/blue, die=rose, das=sage) -->
+    <color name="articleDer">@color/accentSky</color>
+    <color name="articleDie">@color/accentRose</color>
+    <color name="articleDas">@color/accentSage</color>
     <!--Destructive action text (hide, delete, reset)-->
     <color name="danger">@color/accentRoseLight</color>
 

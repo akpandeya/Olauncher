@@ -16,11 +16,15 @@
     <color name="todayPanel">@color/todayPanelDark</color>
     <color name="todayChip">@color/todayChipDark</color>
     <color name="accentSystem">@android:color/system_accent1_200</color>
-    <!-- Accent roles: also used for review buttons (#508: No=rose, Almost=sand, Knew=sage) -->
+    <!-- Accent roles: also used for review buttons (#508: No=rose, Almost=sand, Knew=sage) and noun articles (#515: der=sky/blue, die=rose, das=sage) -->
     <color name="accentSage">@color/accentSageDark</color>
     <color name="accentSand">@color/accentSandDark</color>
     <color name="accentSky">@color/accentSkyDark</color>
     <color name="accentRose">@color/accentRoseDark</color>
+    <!-- Article colours (#515: der=sky/blue, die=rose, das=sage) -->
+    <color name="articleDer">@color/accentSky</color>
+    <color name="articleDie">@color/accentRose</color>
+    <color name="articleDas">@color/accentSage</color>
     <color name="danger">@color/accentRoseDark</color>
     <!--Readable text on photo wallpaper: see ReadableScrim.kt-->
     <color name="readableCard">#B8000000</color>
