@@ -17,6 +17,14 @@
         android:layout_marginBottom="3dp"
         android:importantForAccessibility="no" />
 
+    <app.olauncher.ui.today.cards.WeatherRainView
+        android:id="@+id/weatherRain"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="1dp"
+        android:layout_marginBottom="3dp"
+        android:importantForAccessibility="no" />
+
     <LinearLayout
         android:id="@+id/llWeatherContent"
         android:layout_width="match_parent"

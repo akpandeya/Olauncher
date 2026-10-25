@@ -132,7 +132,9 @@ object WeatherCard : TodayCard {
     }
 
     override fun onResume(view: View) {
-        (view.tag as? WeatherCardView)?.render()
+        val cardView = view.tag as? WeatherCardView
+        cardView?.render()
+        cardView?.binding?.weatherRain?.onResume()
     }
 
     fun openWeatherApp(fragment: Fragment) {
@@ -192,10 +194,33 @@ internal class WeatherCardView(
         private set
 
     init {
+        binding.weatherRain.keepOutSupplier = {
+            val density = binding.root.resources.displayMetrics.density
+            WeatherKeepOut.collectRects(
+                binding.weatherRain,
+                WeatherKeepOut.collectKeepOutViews(binding),
+                WeatherKeepOut.PAD * density,
+            )
+        }
+        binding.llWeatherContent.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
+            updateKeepOut()
+        }
         binding.root.setOnClickListener {
             Haptics.tick(it)
             // Without a forecast the tap tries again instead of opening the weather app.
             if (binding.tvUnavailable.isVisible) WeatherWorker.runOnce(it.context) else onOpenWeather()
+        }
+    }
+
+    private fun updateKeepOut() {
+        if (binding.weatherRain.width > 0 && binding.weatherRain.height > 0) {
+            val density = binding.root.resources.displayMetrics.density
+            val rects = WeatherKeepOut.collectRects(
+                binding.weatherRain,
+                WeatherKeepOut.collectKeepOutViews(binding),
+                WeatherKeepOut.PAD * density,
+            )
+            binding.weatherRain.keepOutRects = rects
         }
     }
 
@@ -243,10 +268,12 @@ internal class WeatherCardView(
             fetchedAt = fetchedAt,
             asOfTemplate = context.getString(R.string.weather_as_of),
         )
+        updateKeepOut()
     }
 
     private fun applyLook(look: WeatherLook?) {
         currentLook = look
+        binding.weatherRain.setLook(look)
         val context = binding.root.context ?: return
         val themeIsDark = (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
             Configuration.UI_MODE_NIGHT_YES
