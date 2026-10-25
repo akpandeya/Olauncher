@@ -71,6 +71,7 @@ class AppDrawerFragment : BaseFragment() {
     private var keyboardWasShown = false
     private var lastOrdered: List<AppModel> = emptyList()
     internal var lastSelectedLetter: Char? = null
+    internal var lastScaledStripIndex: Int = -1
 
     internal val viewModel: MainViewModel by activityViewModels()
     internal var _binding: FragmentAppDrawerBinding? = null
@@ -286,6 +287,7 @@ class AppDrawerFragment : BaseFragment() {
         paradigmState = null
         searchTextView = null
         lastSelectedLetter = null
+        lastScaledStripIndex = -1
         letterPosList = emptyList()
         stripLetters = emptyList()
         _binding = null

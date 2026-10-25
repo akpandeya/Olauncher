@@ -76,6 +76,8 @@ object LetterIndex {
     fun listInsetPx(stripWidthPx: Int, rowPaddingPx: Int, listMarginPx: Int): Int =
         (stripWidthPx - rowPaddingPx - listMarginPx).coerceAtLeast(0)
 
+    fun scaleForDistance(distance: Int): Float = LetterStripSizing.scaleForDistance(distance)
+
     fun letterFor(label: String): Char {
         val trimmed = label.trimStart()
         if (trimmed.isEmpty()) return '#'

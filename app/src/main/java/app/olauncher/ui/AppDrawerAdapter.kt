@@ -46,10 +46,13 @@ import app.olauncher.helper.DrawerFilterState
 import app.olauncher.helper.DrawerSearch
 import app.olauncher.helper.DrawerSearchInput
 import app.olauncher.helper.LetterStripTarget
+import app.olauncher.helper.MotionPolicy
 import app.olauncher.helper.RecentApp
+import app.olauncher.helper.SystemMotion
 import android.util.Log
 
 private const val TAG = "AppDrawerAdapter"
+private const val HIGHLIGHT_PAYLOAD = "PAYLOAD_HIGHLIGHT"
 
 class AppDrawerAdapter(
     private var flag: Int,
@@ -122,6 +125,25 @@ class AppDrawerAdapter(
     private val myUserHandle = android.os.Process.myUserHandle()
     private var adapterContext: Context? = context
 
+    var highlightedPosition: Int = -1
+        private set
+
+    fun setHighlightedPosition(position: Int) {
+        if (highlightedPosition == position) return
+        val oldPos = highlightedPosition
+        highlightedPosition = position
+        if (oldPos in 0 until itemCount) {
+            notifyItemChanged(oldPos, HIGHLIGHT_PAYLOAD)
+        }
+        if (position in 0 until itemCount) {
+            notifyItemChanged(position, HIGHLIGHT_PAYLOAD)
+        }
+    }
+
+    fun clearHighlight() {
+        setHighlightedPosition(-1)
+    }
+
     val hasResultRow: Boolean
         get() = currentList.any { it is AppModel.Result }
 
@@ -191,6 +213,20 @@ class AppDrawerAdapter(
         }
     }
 
+    override fun onBindViewHolder(
+        holder: RecyclerView.ViewHolder,
+        position: Int,
+        payloads: MutableList<Any>,
+    ) {
+        if (payloads.contains(HIGHLIGHT_PAYLOAD)) {
+            if (holder is ViewHolder) {
+                holder.bindHighlight(position == highlightedPosition, animate = true)
+            }
+            return
+        }
+        super.onBindViewHolder(holder, position, payloads)
+    }
+
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         try {
             if (position !in 0 until itemCount) return
@@ -244,6 +280,7 @@ class AppDrawerAdapter(
                         appDistractingListener,
                         isHidden,
                         isDistracting,
+                        isHighlighted = position == highlightedPosition,
                     )
                 }
             }
@@ -306,6 +343,7 @@ class AppDrawerAdapter(
                 searchQuery = state.searchQuery
                 isBangSearch = state.isBangSearch
                 autoLaunch = state.autoLaunch
+                highlightedPosition = -1
                 (recyclerView?.layoutManager as? LinearLayoutManager)?.let { lm ->
                     lm.stackFromEnd = bottomSearch
                 }
@@ -353,12 +391,14 @@ class AppDrawerAdapter(
         this.appsList = newList
         this.appFilteredScores = emptyList()
         this.searchQuery = ""
+        this.highlightedPosition = -1
         submitList(newList)
     }
 
     /** Removes an app from the full and displayed lists without mutating either in place. */
     fun removeApp(app: AppModel) {
         appsList = DrawerAdapterLogic.removeApp(appsList, app)
+        this.highlightedPosition = -1
         submitList(DrawerAdapterLogic.removeApp(currentList, app))
     }
 
@@ -468,7 +508,9 @@ class AppDrawerAdapter(
             appDistractingListener: ((AppModel) -> Unit)?,
             isHidden: Boolean,
             isDistracting: Boolean,
+            isHighlighted: Boolean = false,
         ) = with(binding) {
+            bindHighlight(isHighlighted, animate = false)
             renameLayout.visibility = View.GONE
             appTitle.visibility = View.VISIBLE
 
@@ -615,6 +657,23 @@ class AppDrawerAdapter(
             appRenameClose.setOnClickListener {
                 renameLayout.visibility = View.GONE
                 appTitle.visibility = View.VISIBLE
+            }
+        }
+
+        fun bindHighlight(isHighlighted: Boolean, animate: Boolean = true) {
+            val animatorsEnabled = runCatching {
+                SystemMotion.isAnimationsEnabled(binding.root.context)
+            }.getOrDefault(false)
+            val duration = MotionPolicy.durationMs(MotionPolicy.DEFAULT_DURATION_MS, animatorsEnabled)
+            val targetAlpha = if (isHighlighted) 1f else 0f
+            if (animate && duration > 0L) {
+                binding.highlightPill.animate()
+                    .alpha(targetAlpha)
+                    .setDuration(duration)
+                    .start()
+            } else {
+                binding.highlightPill.animate().cancel()
+                binding.highlightPill.alpha = targetAlpha
             }
         }
 

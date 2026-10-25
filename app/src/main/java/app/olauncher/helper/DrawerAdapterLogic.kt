@@ -50,6 +50,9 @@ object DrawerAdapterLogic {
 
     fun strongMatches(scores: List<Int>): Int = scores.count { it >= AppMatcher.SCORE_SUBSTRING }
 
+    fun shouldHighlightRow(rowIndex: Int, highlightedIndex: Int): Boolean =
+        highlightedIndex >= 0 && rowIndex == highlightedIndex
+
     /** The row nearest the search box, which auto-launch would open. */
     fun autoLaunchCandidate(list: List<AppModel>, bottomSearch: Boolean): AppModel? =
         if (bottomSearch) list.lastOrNull() else list.firstOrNull()

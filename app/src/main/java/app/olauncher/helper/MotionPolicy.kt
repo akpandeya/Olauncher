@@ -16,6 +16,7 @@ object MotionPolicy {
     const val PRESS_DURATION_MS: Long = 80L
     const val PRESS_SCALE: Float = 0.98f
     const val FLIP_HALF_DURATION_MS: Long = 60L
+    const val FISHEYE_DURATION_MS: Long = 80L
 
     /**
      * Returns the duration in milliseconds to use for a transition.
