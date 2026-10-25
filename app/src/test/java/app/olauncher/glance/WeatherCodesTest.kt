@@ -7,6 +7,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import app.olauncher.R
+import app.olauncher.helper.WeatherLook
 
 class WeatherCodesTest {
 
@@ -103,6 +104,19 @@ class WeatherCodesTest {
         for (code in listOf(-1, 4, 10, 100)) {
             assertEquals("", WeatherCodes.emoji(code))
         }
+    }
+
+    @Test
+    fun `iconFor maps each WeatherLook to expected drawable`() {
+        assertEquals(R.drawable.ic_weather_clear_day, WeatherCodes.iconFor(WeatherLook.CLEAR))
+        assertEquals(R.drawable.ic_weather_partly_cloudy, WeatherCodes.iconFor(WeatherLook.PARTLY))
+        assertEquals(R.drawable.ic_weather_overcast, WeatherCodes.iconFor(WeatherLook.OVERCAST))
+        assertEquals(R.drawable.ic_weather_light_rain, WeatherCodes.iconFor(WeatherLook.LIGHT_RAIN))
+        assertEquals(R.drawable.ic_weather_heavy_rain, WeatherCodes.iconFor(WeatherLook.HEAVY_RAIN))
+        assertEquals(R.drawable.ic_weather_thunderstorm, WeatherCodes.iconFor(WeatherLook.STORM))
+        assertEquals(R.drawable.ic_weather_snow, WeatherCodes.iconFor(WeatherLook.SNOW))
+        assertEquals(R.drawable.ic_weather_fog, WeatherCodes.iconFor(WeatherLook.FOG))
+        assertEquals(R.drawable.ic_weather_clear_night, WeatherCodes.iconFor(WeatherLook.CLEAR_NIGHT))
     }
 
     @Test
