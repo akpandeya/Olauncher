@@ -1,10 +1,13 @@
 package app.olauncher.ui.today.cards
 
 import android.content.Context
+import android.content.res.ColorStateList
+import android.content.res.Configuration
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
+import android.graphics.drawable.GradientDrawable
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
@@ -29,11 +32,14 @@ import app.olauncher.glance.HourlyStrip
 import app.olauncher.glance.RainOutlook
 import app.olauncher.glance.RainOutlookLabels
 import app.olauncher.glance.WeatherCache
+import app.olauncher.glance.WeatherCardReadability
 import app.olauncher.glance.WeatherChartGeometry
 import app.olauncher.glance.WeatherCodes
 import app.olauncher.glance.WeatherLocation
 import app.olauncher.glance.WeatherWorker
 import app.olauncher.helper.OpenTargets
+import app.olauncher.helper.WeatherLook
+import app.olauncher.helper.WeatherLooks
 import app.olauncher.helper.getColorFromAttr
 import app.olauncher.helper.getUserHandleFromString
 import app.olauncher.ui.today.TodayCard
@@ -48,6 +54,12 @@ object WeatherCardLogic {
 
     /** The card shows whenever weather is on; without a forecast yet it says so instead of vanishing. */
     fun isAvailable(weatherEnabled: Boolean): Boolean = weatherEnabled
+
+    fun lookFor(forecast: Forecast): WeatherLook? =
+        WeatherLooks.forForecast(forecast.nowCode, forecast.isDay)
+
+    fun lookFor(nowCode: Int, isDay: Boolean): WeatherLook? =
+        WeatherLooks.forForecast(nowCode, isDay)
 
     fun formatLine1(
         nowTemp: Double,
@@ -170,6 +182,15 @@ internal class WeatherCardView(
     val binding: CardWeatherBinding,
     private val onOpenWeather: () -> Unit = {},
 ) {
+    private val defaultTempColor: ColorStateList = binding.tvTemp.textColors
+    private val defaultLine1Color: ColorStateList = binding.tvLine1.textColors
+    private val defaultLine2Color: ColorStateList = binding.tvLine2.textColors
+    private val defaultLine3Color: ColorStateList = binding.tvLine3.textColors
+    private val defaultIconTint: ColorStateList? = binding.ivIcon.imageTintList
+
+    var currentLook: WeatherLook? = null
+        private set
+
     init {
         binding.root.setOnClickListener {
             Haptics.tick(it)
@@ -185,8 +206,13 @@ internal class WeatherCardView(
         val cached = cache.read()
         binding.llForecast.isVisible = cached != null
         binding.tvUnavailable.isVisible = cached == null
-        if (cached == null) return
+        if (cached == null) {
+            applyLook(null)
+            return
+        }
         val (forecast, fetchedAt) = cached
+        val look = WeatherLooks.forForecast(forecast.nowCode, forecast.isDay)
+        applyLook(look)
 
         val iconRes = HeroFormatting.nowIconRes(forecast)
         if (iconRes != null) {
@@ -199,7 +225,7 @@ internal class WeatherCardView(
         binding.tvTemp.text = HeroFormatting.nowTemperature(forecast)
         binding.tvLine1.text = HeroFormatting.conditionLine(forecast)
         val now = forecast.cityNow(WeatherCard.nowSupplier())
-        renderHours(forecast, now)
+        renderHours(forecast, now, look)
         val rainLine = RainOutlook.summary(
             forecast.hours,
             RainOutlookLabels(
@@ -219,11 +245,76 @@ internal class WeatherCardView(
         )
     }
 
-    private fun renderHours(forecast: Forecast, now: LocalDateTime) {
+    private fun applyLook(look: WeatherLook?) {
+        currentLook = look
+        val context = binding.root.context ?: return
+        val themeIsDark = (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+            Configuration.UI_MODE_NIGHT_YES
+
+        if (look != null) {
+            val style = WeatherCardReadability.styleFor(look, themeIsDark)
+            val skyDrawable = GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                intArrayOf(style.sky1, style.sky2),
+            ).apply {
+                cornerRadius = context.resources.getDimension(R.dimen.radiusMedium)
+            }
+            binding.weatherSky.background = skyDrawable
+            binding.weatherSky.isVisible = true
+
+            val density = context.resources.displayMetrics.density
+            val haloRadius = WeatherCardReadability.KEEP_OUT_SIGMA * density
+
+            binding.tvTemp.setTextColor(style.ink)
+            binding.tvTemp.setShadowLayer(haloRadius, 0f, 0f, style.halo)
+
+            binding.tvLine1.setTextColor(style.ink)
+            binding.tvLine1.setShadowLayer(haloRadius, 0f, 0f, style.halo)
+
+            binding.tvLine2.setTextColor(style.ink2)
+            binding.tvLine2.setShadowLayer(haloRadius, 0f, 0f, style.halo)
+
+            binding.tvLine3.setTextColor(style.ink2)
+            binding.tvLine3.setShadowLayer(haloRadius, 0f, 0f, style.halo)
+
+            binding.ivIcon.imageTintList = ColorStateList.valueOf(style.ink)
+            binding.weatherChart.curveColor = style.ink
+            binding.weatherChart.barColor = (style.ink and 0x00FFFFFF) or 0x66000000
+        } else {
+            binding.weatherSky.background = null
+            binding.weatherSky.isVisible = false
+
+            binding.tvTemp.setTextColor(defaultTempColor)
+            binding.tvTemp.setShadowLayer(0f, 0f, 0f, 0)
+
+            binding.tvLine1.setTextColor(defaultLine1Color)
+            binding.tvLine1.setShadowLayer(0f, 0f, 0f, 0)
+
+            binding.tvLine2.setTextColor(defaultLine2Color)
+            binding.tvLine2.setShadowLayer(0f, 0f, 0f, 0)
+
+            binding.tvLine3.setTextColor(defaultLine3Color)
+            binding.tvLine3.setShadowLayer(0f, 0f, 0f, 0)
+
+            binding.ivIcon.imageTintList = defaultIconTint ?: ColorStateList.valueOf(context.getColorFromAttr(R.attr.primaryColor))
+            binding.weatherChart.curveColor = null
+            binding.weatherChart.barColor = null
+        }
+        binding.tvUnavailable.setShadowLayer(0f, 0f, 0f, 0)
+    }
+
+    private fun renderHours(forecast: Forecast, now: LocalDateTime, look: WeatherLook?) {
         val row = binding.hourlyRow
         row.removeAllViews()
         val inflater = LayoutInflater.from(row.context)
         val hours = HourlyStrip.next(forecast.hours, now)
+        val context = row.context
+        val themeIsDark = (context.resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
+            Configuration.UI_MODE_NIGHT_YES
+        val style = look?.let { WeatherCardReadability.styleFor(it, themeIsDark) }
+        val density = context.resources.displayMetrics.density
+        val haloRadius = WeatherCardReadability.KEEP_OUT_SIGMA * density
+
         for (hour in hours) {
             val item = ItemWeatherHourBinding.inflate(inflater, row, false)
             item.tvHourLabel.text = HeroFormatting.hourLabel(hour)
@@ -236,6 +327,15 @@ internal class WeatherCardView(
                 item.ivHourIcon.isVisible = false
             }
             item.tvHourTemp.text = HeroFormatting.hourTemperature(hour)
+
+            if (style != null) {
+                item.tvHourLabel.setTextColor(style.ink2)
+                item.tvHourLabel.setShadowLayer(haloRadius, 0f, 0f, style.halo)
+                item.tvHourTemp.setTextColor(style.ink2)
+                item.tvHourTemp.setShadowLayer(haloRadius, 0f, 0f, style.halo)
+                item.ivHourIcon.imageTintList = ColorStateList.valueOf(style.ink)
+            }
+
             row.addView(item.root)
         }
         row.isVisible = row.childCount > 0
@@ -253,6 +353,18 @@ class WeatherChartView @JvmOverloads constructor(
 ) : View(context, attrs) {
 
     private val density = resources.displayMetrics.density
+
+    var curveColor: Int? = null
+        set(value) {
+            field = value
+            invalidate()
+        }
+
+    var barColor: Int? = null
+        set(value) {
+            field = value
+            invalidate()
+        }
 
     private val curvePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
@@ -286,8 +398,8 @@ class WeatherChartView @JvmOverloads constructor(
         super.onDraw(canvas)
         if (hours.isEmpty() || width <= 0 || height <= 0) return
 
-        val ink = context.getColorFromAttr(R.attr.primaryColor)
-        val faint = context.getColorFromAttr(R.attr.primaryColorTrans50)
+        val ink = curveColor ?: context.getColorFromAttr(R.attr.primaryColor)
+        val faint = barColor ?: context.getColorFromAttr(R.attr.primaryColorTrans50)
 
         curvePaint.color = ink
         barPaint.color = faint
