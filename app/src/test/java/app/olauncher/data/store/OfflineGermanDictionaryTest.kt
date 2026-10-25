@@ -14,8 +14,10 @@ class OfflineGermanDictionaryTest {
     private val haus = OfflineGermanEntry("Haus", "noun", "das", "Häuser", "house, building", "", "", "")
     private val hund = OfflineGermanEntry("Hund", "noun", "der", "Hunde", "dog", "", "", "")
     private val katze = OfflineGermanEntry("Katze", "noun", "die", "Katzen", "cat", "", "", "")
+    private val gehenNoun = OfflineGermanEntry("Gehen", "noun", "das", "", "walking", "", "", "")
     private val dictionary = OfflineGermanDictionary { form ->
         when (form) {
+            "Gehen" -> listOf(gehenNoun)
             "gehen", "ging" -> listOf(gehen)
             "Mädchen" -> listOf(maedchen)
             "Haus", "Häuser" -> listOf(haus)
@@ -124,5 +126,12 @@ class OfflineGermanDictionaryTest {
         assertNull(dictionary.gender("gehen"))
         assertNull(dictionary.gender("ging"))
         assertNull(dictionary.gender("unknown"))
+    }
+
+    @Test
+    fun `lowercase verb with a same-spelling noun gets no gender but the noun keeps it`() {
+        assertNull(dictionary.gender("gehen"))
+        assertEquals("das", dictionary.gender("Gehen"))
+        assertEquals("das", OfflineGermanDictionary.genderOf("haus") { if (it == "Haus") listOf(haus) else emptyList() })
     }
 }

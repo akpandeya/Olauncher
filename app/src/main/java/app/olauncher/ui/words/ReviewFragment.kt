@@ -9,8 +9,13 @@ import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.navigation.fragment.findNavController
+import androidx.lifecycle.lifecycleScope
 import app.olauncher.R
-import app.olauncher.data.store.OfflineGermanStore
+import app.olauncher.data.Prefs
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import app.olauncher.data.store.SharedOfflineGermanStore
 import app.olauncher.data.store.ReviewComebacks
 import app.olauncher.data.store.ReviewEvent
 import app.olauncher.data.store.ReviewEventsStore
@@ -48,11 +53,7 @@ class ReviewFragment : BaseFragment() {
     private var lastGradeAt = 0L
     private var sessionStarted = false
     private var progressAnimated = false
-    private var offlineGermanStore: OfflineGermanStore? = null
     internal var genderResolver: ((String) -> String?)? = null
-
-    private fun getOfflineStore(context: android.content.Context): OfflineGermanStore =
-        offlineGermanStore ?: OfflineGermanStore(context).also { offlineGermanStore = it }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -269,10 +270,18 @@ class ReviewFragment : BaseFragment() {
         val b = _binding ?: return
         val context = context ?: return
         val today = WordsCard.epochDaySupplier()
-        val gender = NounArticle.extractLeadingArticle(word.text)
-            ?: (genderResolver?.invoke(word.text) ?: getOfflineStore(context).gender(word.text))
-        val formatted = NounArticle.format(word.text, gender)
-        NounArticle.applyToTextView(b.tvWord, formatted)
+        val immediate = NounArticle.extractLeadingArticle(word.text) ?: genderResolver?.invoke(word.text)
+        NounArticle.applyToTextView(b.tvWord, NounArticle.format(word.text, immediate))
+        if (immediate == null && genderResolver == null && Prefs(context).germanOfflineDictionary) {
+            val appContext = context.applicationContext
+            viewLifecycleOwner.lifecycleScope.launch {
+                val found = withContext(Dispatchers.IO) { SharedOfflineGermanStore.get(appContext).gender(word.text) }
+                val current = _binding
+                if (found != null && current != null && currentWord()?.id == word.id) {
+                    NounArticle.applyToTextView(current.tvWord, NounArticle.format(word.text, found))
+                }
+            }
+        }
         b.tvQuestionContext.text = word.context
         b.tvQuestionContext.isVisible = !revealed && word.context.isNotBlank()
         b.answerGroup.isVisible = revealed
@@ -357,7 +366,6 @@ class ReviewFragment : BaseFragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        offlineGermanStore = null
         _binding = null
     }
 

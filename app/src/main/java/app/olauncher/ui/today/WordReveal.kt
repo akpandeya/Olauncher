@@ -9,7 +9,13 @@ import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.view.isVisible
 import app.olauncher.R
-import app.olauncher.data.store.OfflineGermanStore
+import androidx.lifecycle.findViewTreeLifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import app.olauncher.data.Prefs
+import app.olauncher.data.store.SharedOfflineGermanStore
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import app.olauncher.data.store.Word
 import app.olauncher.databinding.DialogEditMeaningBinding
 import app.olauncher.databinding.ViewWordRevealBinding
@@ -28,7 +34,7 @@ class WordReveal(
     var onWordDeleted: ((word: Word) -> Unit)? = null,
     private val alwaysShowMeaning: Boolean = false,
     /** Show the saved context before the reveal, as the review session's flashcard front does. */
-    private val alwaysShowContext: Boolean = true,
+    private val alwaysShowContext: Boolean = false,
 ) {
     internal var genderResolver: ((String) -> String?)? = null
 
@@ -74,10 +80,18 @@ class WordReveal(
         val keepReveal = startRevealed ?: (currentWord?.id == word.id && isRevealed)
         currentWord = word
         val context = binding.root.context
-        val gender = NounArticle.extractLeadingArticle(word.text)
-            ?: (genderResolver?.invoke(word.text) ?: OfflineGermanStore(context).gender(word.text))
-        val formatted = NounArticle.format(word.text, gender)
-        NounArticle.applyToTextView(binding.tvWord, formatted)
+        val immediate = NounArticle.extractLeadingArticle(word.text)
+            ?: genderResolver?.invoke(word.text)
+        NounArticle.applyToTextView(binding.tvWord, NounArticle.format(word.text, immediate))
+        if (immediate == null && genderResolver == null && Prefs(context).germanOfflineDictionary) {
+            val appContext = context.applicationContext
+            binding.root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
+                val found = withContext(Dispatchers.IO) { SharedOfflineGermanStore.get(appContext).gender(word.text) }
+                if (found != null && currentWord?.id == word.id) {
+                    NounArticle.applyToTextView(binding.tvWord, NounArticle.format(word.text, found))
+                }
+            }
+        }
         binding.tvMeaning.text = WordsCardLogic.formatMeaning(context, word.meaning, word.meaningSource)
         binding.tvContext.text = word.context
         setRevealed(keepReveal)

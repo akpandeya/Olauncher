@@ -43,15 +43,22 @@ class OfflineGermanDictionary(private val findEntries: (String) -> List<OfflineG
         return null
     }
 
-    fun gender(text: String): String? {
-        val normalized = Normalizer.normalize(text.trim(), Normalizer.Form.NFC)
-        val candidates = WiktionaryParser.candidates(normalized)
-        for (candidate in candidates) {
-            val entries = findEntries(candidate)
-            val found = entries.firstOrNull { it.gender.isNotBlank() }?.gender
-            if (!found.isNullOrBlank()) return found
+    /**
+     * Noun gender for [text], or null. The first spelling that has any entry decides: a verb such
+     * as "gehen" must not fall through to the noun "Gehen" (#515). Shared with [OfflineGermanStore].
+     */
+    fun gender(text: String): String? = genderOf(text, findEntries)
+
+    companion object {
+        fun genderOf(text: String, findEntries: (String) -> List<OfflineGermanEntry>): String? {
+            val normalized = Normalizer.normalize(text.trim(), Normalizer.Form.NFC)
+            for (candidate in WiktionaryParser.candidates(normalized)) {
+                val entries = findEntries(candidate)
+                if (entries.isEmpty()) continue
+                return entries.firstOrNull { it.gender.isNotBlank() }?.gender
+            }
+            return null
         }
-        return null
     }
 }
 
