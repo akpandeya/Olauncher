@@ -69,6 +69,24 @@ class OfflineGermanStore(context: Context) {
         deleteInstalled()
     }
 
+    private fun queryEntries(db: SQLiteDatabase, candidate: String, limit: Int): List<OfflineGermanEntry> =
+        db.rawQuery(
+            """SELECT e.lemma, e.pos, e.gender, e.plural, e.gloss, e.present, e.past, e.participle
+               FROM lookup l JOIN entries e ON e.id = l.entry_id WHERE l.form = ?
+               ORDER BY CASE WHEN e.lemma = ? THEN 0 ELSE 1 END, e.id LIMIT $limit""",
+            arrayOf(candidate, candidate)
+        ).use { cursor ->
+            buildList {
+                while (cursor.moveToNext()) {
+                    add(OfflineGermanEntry(
+                        cursor.getString(0), cursor.getString(1), cursor.getString(2),
+                        cursor.getString(3), cursor.getString(4), cursor.getString(5),
+                        cursor.getString(6), cursor.getString(7)
+                    ))
+                }
+            }
+        }
+
     fun lookup(text: String): WiktionaryApi.LookupResult.Found? {
         val pluralLabel = appContext.getString(R.string.offline_dictionary_plural)
         val db = try {
@@ -78,24 +96,7 @@ class OfflineGermanStore(context: Context) {
             return null
         }
         return try {
-            OfflineGermanDictionary { candidate ->
-                db.rawQuery(
-                    """SELECT e.lemma, e.pos, e.gender, e.plural, e.gloss, e.present, e.past, e.participle
-                       FROM lookup l JOIN entries e ON e.id = l.entry_id WHERE l.form = ?
-                       ORDER BY CASE WHEN e.lemma = ? THEN 0 ELSE 1 END, e.id LIMIT 2""",
-                    arrayOf(candidate, candidate)
-                ).use { cursor ->
-                    buildList {
-                        while (cursor.moveToNext()) {
-                            add(OfflineGermanEntry(
-                                cursor.getString(0), cursor.getString(1), cursor.getString(2),
-                                cursor.getString(3), cursor.getString(4), cursor.getString(5),
-                                cursor.getString(6), cursor.getString(7)
-                            ))
-                        }
-                    }
-                }
-            }.lookup(text, pluralLabel)
+            OfflineGermanDictionary { candidate -> queryEntries(db, candidate, 2) }.lookup(text, pluralLabel)
         } catch (e: Exception) {
             Log.w(TAG, "Offline dictionary unreadable; deleting it so the next lookup reinstalls", e)
             discard(db)
@@ -119,23 +120,7 @@ class OfflineGermanStore(context: Context) {
             return null
         }
         return try {
-            val normalized = Normalizer.normalize(clean, Normalizer.Form.NFC)
-            var result: String? = null
-            for (candidate in WiktionaryParser.candidates(normalized)) {
-                val found = db.rawQuery(
-                    """SELECT e.gender FROM lookup l JOIN entries e ON e.id = l.entry_id WHERE l.form = ?
-                       ORDER BY CASE WHEN e.lemma = ? THEN 0 ELSE 1 END, e.id LIMIT 1""",
-                    arrayOf(candidate, candidate)
-                ).use { cursor ->
-                    if (cursor.moveToNext()) {
-                        cursor.getString(0)
-                    } else null
-                }
-                if (!found.isNullOrBlank()) {
-                    result = found
-                    break
-                }
-            }
+            val result = OfflineGermanDictionary.genderOf(clean) { candidate -> queryEntries(db, candidate, 8) }
             genderCache[clean] = result.orEmpty()
             result
         } catch (e: Exception) {
@@ -220,4 +205,15 @@ class OfflineGermanStore(context: Context) {
             emptyMap()
         }
     }
+}
+
+/** One process-wide store so the database is unpacked and opened once, not per bind. */
+object SharedOfflineGermanStore {
+    @Volatile
+    private var instance: OfflineGermanStore? = null
+
+    fun get(context: Context): OfflineGermanStore =
+        instance ?: synchronized(this) {
+            instance ?: OfflineGermanStore(context.applicationContext).also { instance = it }
+        }
 }
