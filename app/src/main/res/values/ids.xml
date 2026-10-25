@@ -248,6 +248,9 @@
     <item name="weatherEffects" type="id" />
     <item name="weatherEffectsLayout" type="id" />
     <item name="weatherEffectsTitle" type="id" />
+    <item name="weatherIcons" type="id" />
+    <item name="weatherIconsLayout" type="id" />
+    <item name="weatherIconsTitle" type="id" />
     <item name="weatherLayout" type="id" />
     <item name="weatherTitle" type="id" />
     <item name="wellbeingSection" type="id" />

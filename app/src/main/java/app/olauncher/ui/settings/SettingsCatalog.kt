@@ -292,6 +292,8 @@ object SettingsCatalog {
         primaryId = R.id.glowStrength, layoutId = R.id.glowStrengthLayout, titleId = R.id.glowStrengthTitle, valueId = R.id.glowStrength, seekBarId = R.id.glowStrengthSeekBar),
     row(key = "weatherEffects", sectionKey = SettingsSections.KEY_APPEARANCE, titleRes = R.string.weather_effects, type = SettingsRowType.TOGGLE,
         primaryId = R.id.weatherEffects, layoutId = R.id.weatherEffectsLayout, titleId = R.id.weatherEffectsTitle, valueId = R.id.weatherEffects),
+    row(key = "weatherIcons", sectionKey = SettingsSections.KEY_APPEARANCE, titleRes = R.string.weather_icons, type = SettingsRowType.TOGGLE,
+        primaryId = R.id.weatherIcons, layoutId = R.id.weatherIconsLayout, titleId = R.id.weatherIconsTitle, valueId = R.id.weatherIcons),
     )
 
     private val gestures: List<SettingsItem> = listOf(

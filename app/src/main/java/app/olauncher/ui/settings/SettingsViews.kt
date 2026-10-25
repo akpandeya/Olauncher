@@ -168,6 +168,7 @@ internal class SettingsViews(private val frame: FragmentSettingsBinding) {
     val toggleLock: TextView get() = textView(R.id.toggleLock)
     val weather: TextView get() = textView(R.id.weather)
     val weatherEffects: TextView get() = textView(R.id.weatherEffects)
+    val weatherIcons: TextView get() = textView(R.id.weatherIcons)
     val windDown: TextView get() = textView(R.id.windDown)
     val windDownGreyOnOff: TextView get() = textView(R.id.windDownGreyOnOff)
 }

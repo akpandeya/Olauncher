@@ -2,6 +2,7 @@ package app.olauncher.glance
 
 import androidx.annotation.DrawableRes
 import app.olauncher.R
+import app.olauncher.helper.WeatherIconStyle
 import app.olauncher.helper.WeatherLook
 import app.olauncher.helper.WeatherLooks
 
@@ -39,6 +40,23 @@ object WeatherCodes {
         WeatherLook.SNOW -> R.drawable.ic_weather_snow
         WeatherLook.FOG -> R.drawable.ic_weather_fog
         WeatherLook.CLEAR_NIGHT -> R.drawable.ic_weather_clear_night
+    }
+
+    /** Pure resolver returning the colour or monochrome drawable for a look and style on Home. */
+    @DrawableRes
+    fun homeIconFor(look: WeatherLook, style: WeatherIconStyle = WeatherIconStyle.DEFAULT): Int = when (style) {
+        WeatherIconStyle.MONOCHROME -> iconFor(look)
+        WeatherIconStyle.COLOUR -> when (look) {
+            WeatherLook.CLEAR -> R.drawable.ic_weather_clear_day_color
+            WeatherLook.PARTLY -> R.drawable.ic_weather_partly_cloudy_color
+            WeatherLook.OVERCAST -> R.drawable.ic_weather_overcast_color
+            WeatherLook.LIGHT_RAIN -> R.drawable.ic_weather_light_rain_color
+            WeatherLook.HEAVY_RAIN -> R.drawable.ic_weather_heavy_rain_color
+            WeatherLook.STORM -> R.drawable.ic_weather_thunderstorm_color
+            WeatherLook.SNOW -> R.drawable.ic_weather_snow_color
+            WeatherLook.FOG -> R.drawable.ic_weather_fog_color
+            WeatherLook.CLEAR_NIGHT -> R.drawable.ic_weather_clear_night_color
+        }
     }
 
     /** Vector icon resource for a WMO weather code and day/night state. Null when unknown. */

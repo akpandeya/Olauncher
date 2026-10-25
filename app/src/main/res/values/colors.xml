@@ -80,4 +80,30 @@
     <color name="todayTileShadow">#24000000</color>
     <color name="todayTileShadowSoft">#0D000000</color>
     <color name="todayTileStroke">#14000000</color>
+
+    <!-- Weather icon tokens (home-weather-mock.html) -->
+    <color name="weatherSunHi">#FFE7A0</color>
+    <color name="weatherSunLo">#E9A23B</color>
+    <color name="weatherGlow">#FFC850</color>
+    <color name="weatherGlowTrans60">#99FFC850</color>
+    <color name="weatherGlowTrans18">#2EFFC850</color>
+    <color name="weatherGlowClear">#00FFC850</color>
+    <color name="weatherRay">#EDAE44</color>
+    <color name="weatherCloudHi">#FFFFFF</color>
+    <color name="weatherCloudLo">#BCC9D3</color>
+    <color name="weatherStormHi">#A3B3C0</color>
+    <color name="weatherStormLo">#5E7080</color>
+    <color name="weatherDropHi">#8CBEDD</color>
+    <color name="weatherDropLo">#2E6585</color>
+    <color name="weatherBoltHi">#FFE08A</color>
+    <color name="weatherBoltLo">#E39A1F</color>
+    <color name="weatherMoonHi">#FFF0B3</color>
+    <color name="weatherMoonLo">#D6A02E</color>
+    <color name="weatherStar">#C2A56A</color>
+    <color name="weatherSnowHi">#FFFFFF</color>
+    <color name="weatherSnowLo">#A9CBE0</color>
+    <color name="weatherFlake">#2E6585</color>
+    <color name="weatherFog">#7F93A2</color>
+    <color name="weatherFogTrans15">#267F93A2</color>
+    <color name="weatherFogTrans90">#E67F93A2</color>
 </resources>

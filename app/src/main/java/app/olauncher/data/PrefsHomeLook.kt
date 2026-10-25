@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import android.view.Gravity
 import androidx.core.content.edit
 import app.olauncher.helper.MusicPulse
+import app.olauncher.helper.WeatherIconStyle
 import app.olauncher.data.Prefs.Companion.BATTERY_MODE
 import app.olauncher.data.Prefs.Companion.BATTERY_MODE_AUTO
 import app.olauncher.data.Prefs.Companion.BRIGHTNESS_FULL
@@ -50,6 +51,8 @@ interface HomeLookPrefs {
 
     /** Weather animation (sun, rain, snow, fog, clouds, storm) drawn over the wallpaper. */
     var homeWeatherEffects: Boolean
+
+    var homeWeatherIconStyle: WeatherIconStyle
 
     var homeShortcuts: Boolean
 
@@ -98,6 +101,7 @@ internal class HomeLookPrefsStore(private val prefs: SharedPreferences) : HomeLo
     private val HOME_MUSIC_PULSE = "HOME_MUSIC_PULSE"
     private val HOME_GLOW_STRENGTH = "HOME_GLOW_STRENGTH"
     private val HOME_WEATHER_EFFECTS = "HOME_WEATHER_EFFECTS"
+    private val HOME_WEATHER_ICON_STYLE = "HOME_WEATHER_ICON_STYLE"
     private val SHORTCUT_COUNT = "SHORTCUT_COUNT"
     private val SHORTCUT_SIZE_STEP = "SHORTCUT_SIZE_STEP"
     private val SHORTCUT_SIDE_START = "SHORTCUT_SIDE_START"
@@ -175,6 +179,10 @@ internal class HomeLookPrefsStore(private val prefs: SharedPreferences) : HomeLo
     override var homeWeatherEffects: Boolean
         get() = prefs.getBoolean(HOME_WEATHER_EFFECTS, false)
         set(value) = prefs.edit { putBoolean(HOME_WEATHER_EFFECTS, value).apply() }
+
+    override var homeWeatherIconStyle: WeatherIconStyle
+        get() = WeatherIconStyle.from(prefs.getString(HOME_WEATHER_ICON_STYLE, null))
+        set(value) = prefs.edit { putString(HOME_WEATHER_ICON_STYLE, value.key).apply() }
 
     override var homeShortcuts: Boolean
         get() = prefs.getBoolean(HOME_SHORTCUTS, false)
