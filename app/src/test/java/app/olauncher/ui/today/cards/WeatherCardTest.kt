@@ -147,4 +147,28 @@ class WeatherCardTest {
         val unknownForecast = forecast.copy(nowCode = 999)
         assertNull(WeatherCardLogic.lookFor(unknownForecast))
     }
+
+    @Test
+    fun `rain plan at 320, 360 and 412 dp generates deterministic layers and bounds`() {
+        val rainLooks = listOf(WeatherLook.LIGHT_RAIN, WeatherLook.HEAVY_RAIN, WeatherLook.STORM)
+        val widths = listOf(320f, 360f, 412f)
+        val cardHeight = 200f
+
+        for (look in rainLooks) {
+            for (width in widths) {
+                val seed = app.olauncher.glance.RainMotionGate.seedFor(look, width, cardHeight)
+                val plan = app.olauncher.glance.RainStreakPlan.plan(look, width, cardHeight, seed)
+
+                assertTrue("Streaks must be > 0 for look $look at width $width", plan.streaks > 0)
+                assertTrue("Ripples must be > 0 for look $look at width $width", plan.ripples.isNotEmpty())
+                assertEquals(cardHeight + 80f, plan.fall, 0.001f)
+                assertEquals(plan.fall + 60f, plan.travel, 0.001f)
+
+                // Same look and size must produce identical plan
+                val seed2 = app.olauncher.glance.RainMotionGate.seedFor(look, width, cardHeight)
+                val plan2 = app.olauncher.glance.RainStreakPlan.plan(look, width, cardHeight, seed2)
+                assertEquals(plan, plan2)
+            }
+        }
+    }
 }
