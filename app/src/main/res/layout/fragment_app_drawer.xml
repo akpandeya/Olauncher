@@ -119,6 +119,20 @@
                 tools:text="S"
                 tools:visibility="visible" />
 
+            <TextView
+                android:id="@+id/letterStripHint"
+                style="@style/TextSmall"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:layout_marginHorizontal="8dp"
+                android:background="@drawable/bg_pill"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="6dp"
+                android:text="@string/letter_strip_hint"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
             <LinearLayout
                 android:id="@+id/letterStrip"
                 android:layout_width="wrap_content"

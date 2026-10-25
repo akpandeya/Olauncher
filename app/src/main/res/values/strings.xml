@@ -96,6 +96,7 @@
     <string name="search_contacts_permission_message">Thumbline reads your contacts on this phone to find people in search</string>
     <string name="recent">Recent</string>
     <string name="drawer_search_hint">Search</string>
+    <string name="letter_strip_hint" tools:ignore="MissingTranslation">Drag to scroll</string>
     <string name="new_app_tip_title">New app</string>
     <string name="new_app_tip_message">The ✦ marks an app installed in the last 24 hours.</string>
     <string name="hide">Hide</string>

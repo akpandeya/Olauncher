@@ -7,6 +7,7 @@ import app.olauncher.data.Prefs.Companion.DRAWER_BOTTOM_SEARCH
 import app.olauncher.data.Prefs.Companion.DRAWER_LETTER_STRIP
 import app.olauncher.data.Prefs.Companion.DRAWER_NEW_FIRST
 import app.olauncher.data.Prefs.Companion.DRAWER_RECENTS
+import app.olauncher.data.Prefs.Companion.LETTER_STRIP_HINT_SHOWN
 import app.olauncher.data.Prefs.Companion.NEW_APP_TIP_SEEN
 import app.olauncher.data.Prefs.Companion.RECENT_APPS
 import app.olauncher.data.Prefs.Companion.SEARCH_CONTACTS
@@ -20,6 +21,8 @@ interface DrawerPrefs {
     var drawerNewFirst: Boolean
 
     var drawerLetterStrip: Boolean
+
+    var letterStripHintShown: Boolean
 
     var newAppTipSeen: Boolean
 
@@ -48,6 +51,10 @@ internal class DrawerPrefsStore(private val prefs: SharedPreferences) : DrawerPr
     override var drawerLetterStrip: Boolean
         get() = prefs.getBoolean(DRAWER_LETTER_STRIP, false)
         set(value) = prefs.edit { putBoolean(DRAWER_LETTER_STRIP, value).apply() }
+
+    override var letterStripHintShown: Boolean
+        get() = prefs.getBoolean(LETTER_STRIP_HINT_SHOWN, false)
+        set(value) = prefs.edit { putBoolean(LETTER_STRIP_HINT_SHOWN, value).apply() }
 
     override var newAppTipSeen: Boolean
         get() = prefs.getBoolean(NEW_APP_TIP_SEEN, false)
