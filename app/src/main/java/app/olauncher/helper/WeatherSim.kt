@@ -160,7 +160,7 @@ class WeatherSim(
     val height: Float,
     val seed: Long,
     val params: WeatherLookParams = look.params,
-    val keepOut: List<WeatherSimRect> = emptyList(),
+    var keepOut: List<WeatherSimRect> = emptyList(),
 ) {
     companion object {
         const val STEP: Float = 1f / 30f

@@ -69,11 +69,12 @@ class WeatherEffectsTest {
     }
 
     @Test
-    fun dayAndNightTintsDiffer() {
+    fun nightUsesDayTokens() {
         WeatherEffect.values().filter { it != WeatherEffect.NONE }.forEach { effect ->
             val day = WeatherEffects.tint(effect, isDay = true)
             val night = WeatherEffects.tint(effect, isDay = false)
-            assertNotEquals("$effect day vs night", day.primary, night.primary)
+            assertEquals("$effect day vs night primary", day.primary, night.primary)
+            assertEquals("$effect day vs night secondary", day.secondary, night.secondary)
         }
     }
 
@@ -138,9 +139,9 @@ class WeatherEffectsTest {
 
     @Test
     fun shouldAnimateNeedsHomeEffectAndAnimators() {
-        assertTrue(WeatherEffects.shouldAnimate(true, WeatherEffect.RAIN, true))
-        assertFalse(WeatherEffects.shouldAnimate(false, WeatherEffect.RAIN, true))
-        assertFalse(WeatherEffects.shouldAnimate(true, WeatherEffect.NONE, true))
-        assertFalse(WeatherEffects.shouldAnimate(true, WeatherEffect.SNOW, false))
+        assertTrue(WeatherEffects.shouldAnimate(true, WeatherLook.LIGHT_RAIN, true))
+        assertFalse(WeatherEffects.shouldAnimate(false, WeatherLook.LIGHT_RAIN, true))
+        assertFalse(WeatherEffects.shouldAnimate(true, null, true))
+        assertFalse(WeatherEffects.shouldAnimate(true, WeatherLook.SNOW, false))
     }
 }

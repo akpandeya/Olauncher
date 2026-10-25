@@ -12,6 +12,8 @@ import app.olauncher.glance.WeatherCache
 import app.olauncher.glance.WeatherFormatting
 import app.olauncher.helper.WeatherEffect
 import app.olauncher.helper.WeatherEffects
+import app.olauncher.helper.WeatherLooks
+import app.olauncher.helper.WeatherSimRect
 import androidx.lifecycle.lifecycleScope
 import app.olauncher.glance.Forecast
 import app.olauncher.helper.WeatherJsonCache
@@ -91,18 +93,66 @@ internal fun HomeFragment.initWeatherListener() {
 internal fun HomeFragment.applyWeatherEffects() {
     val binding = _binding ?: return
     val forecast = cachedForecast()?.first
-    val spec = WeatherEffects.selectSpec(prefs.homeWeatherEffects, forecast?.nowCode)
-    val effect = spec.effect
+    val code = if (prefs.homeWeatherEffects) forecast?.nowCode else null
+    val isDay = forecast?.isDay ?: true
+    val look = if (code != null) WeatherLooks.forForecast(code, isDay) else null
     val view = binding.weatherEffects
-    view.setEffect(spec, WeatherEffects.tint(effect, forecast?.isDay ?: true))
-    view.isVisible = effect != WeatherEffect.NONE
+    view.isVisible = look != null
+    view.setWeather(look = look, code = code, isDay = isDay)
     // With system animations off the view stays visible and draws one still frame.
-    view.setRunning(WeatherEffects.shouldAnimate(homeVisible, effect, MainActivity.animatorsEnabledSupplier()))
-    view.post {
-        if (_binding == null) return@post
+    view.setRunning(WeatherEffects.shouldAnimate(homeVisible, look, MainActivity.animatorsEnabledSupplier()))
+
+    fun updateBandsAndKeepOut() {
+        if (_binding == null) return
         val clock = binding.dateTimeLayout
         val apps = binding.homeAppsLayout
         view.setTextBands(clock.top, clock.bottom, apps.top, apps.bottom)
+
+        val rects = mutableListOf<WeatherSimRect>()
+        fun addRect(v: android.view.View) {
+            if (!v.isVisible || v.width <= 0 || v.height <= 0) return
+            val locV = IntArray(2)
+            val locW = IntArray(2)
+            v.getLocationInWindow(locV)
+            view.getLocationInWindow(locW)
+            rects.add(
+                WeatherSimRect(
+                    x = (locV[0] - locW[0]).toFloat(),
+                    y = (locV[1] - locW[1]).toFloat(),
+                    w = v.width.toFloat(),
+                    h = v.height.toFloat(),
+                )
+            )
+        }
+
+        if (clock.isVisible) {
+            addRect(clock)
+        }
+        if (apps.isVisible) {
+            var addedAnyChild = false
+            for (i in 0 until apps.childCount) {
+                val child = apps.getChildAt(i)
+                if (child.isVisible && child.width > 0 && child.height > 0) {
+                    addRect(child)
+                    addedAnyChild = true
+                }
+            }
+            if (!addedAnyChild) {
+                addRect(apps)
+            }
+        }
+        val shortcuts = binding.shortcutsLayout
+        if (shortcuts.isVisible) {
+            addRect(shortcuts)
+        }
+        view.setKeepOutRects(rects)
+    }
+
+    if (view.width > 0 && view.height > 0) {
+        updateBandsAndKeepOut()
+    }
+    view.post {
+        updateBandsAndKeepOut()
     }
 }
 
