@@ -93,6 +93,14 @@ class AppDrawerAdapterLogicTest {
     }
 
     @Test
+    fun shouldHighlightRow_isTrueOnlyForMatchingNonNegativeIndex() {
+        assertTrue(DrawerAdapterLogic.shouldHighlightRow(rowIndex = 3, highlightedIndex = 3))
+        assertFalse(DrawerAdapterLogic.shouldHighlightRow(rowIndex = 3, highlightedIndex = 4))
+        assertFalse(DrawerAdapterLogic.shouldHighlightRow(rowIndex = 3, highlightedIndex = -1))
+        assertFalse(DrawerAdapterLogic.shouldHighlightRow(rowIndex = -1, highlightedIndex = -1))
+    }
+
+    @Test
     fun autoLaunchCandidate_isFirstForTopSearchAndLastForBottomSearch() {
         val list = listOf(app("com.a"), app("com.b"), app("com.c"))
         assertEquals("com.a", DrawerAdapterLogic.autoLaunchCandidate(list, bottomSearch = false)?.appPackage)

@@ -223,4 +223,11 @@ class LetterIndexTest {
         assertEquals('A', LetterIndex.nearestPresent(strip, setOf('A', 'C'), 1))
         assertEquals(null, LetterIndex.nearestPresent(strip, emptySet(), 3))
     }
+
+    @Test
+    fun `scaleForDistance delegates to LetterStripSizing`() {
+        for (d in -5..5) {
+            assertEquals(LetterStripSizing.scaleForDistance(d), LetterIndex.scaleForDistance(d), 0.001f)
+        }
+    }
 }

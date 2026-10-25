@@ -18,6 +18,8 @@ import app.olauncher.helper.Haptics
 import app.olauncher.helper.LetterIndex
 import app.olauncher.helper.LetterPos
 import app.olauncher.helper.LetterStripSizing
+import app.olauncher.helper.MotionPolicy
+import app.olauncher.helper.SystemMotion
 
 private const val TAG = "AppDrawerFragment"
 
@@ -78,6 +80,8 @@ internal fun AppDrawerFragment.updateLetterStripVisibility(query: String? = bind
     if (!show) {
         binding.letterPreview.visibility = View.INVISIBLE
         binding.letterStripHint.isVisible = false
+        adapter.clearHighlight()
+        resetLetterStripScale()
     } else {
         val showHint = LetterStripVisibility.shouldShowHint(
             hintShown = prefs.letterStripHintShown,
@@ -91,6 +95,8 @@ internal fun AppDrawerFragment.populateLetterStrip(ordered: List<AppModel>) {
     if (!prefs.drawerLetterStrip) {
         binding.letterStripContainer.isVisible = false
         binding.letterStripHint.isVisible = false
+        adapter.clearHighlight()
+        resetLetterStripScale()
         updateListInsetForStrip()
         return
     }
@@ -105,6 +111,10 @@ internal fun AppDrawerFragment.populateLetterStrip(ordered: List<AppModel>) {
     stripLetters = LetterIndex.stripLetters(letterPosList)
     val presentLetters = letterPosList.map { it.letter }.toSet()
     binding.letterStrip.removeAllViews()
+    binding.letterStrip.clipChildren = false
+    binding.letterStripZone.clipChildren = false
+    lastScaledStripIndex = -1
+    adapter.clearHighlight()
     for (letter in stripLetters) {
         val tv = TextView(requireContext()).apply {
             layoutParams = LinearLayout.LayoutParams(
@@ -162,9 +172,12 @@ internal fun AppDrawerFragment.setupLetterStripTouchListener() {
                 dismissLetterStripHint()
                 view.parent?.requestDisallowInterceptTouchEvent(true)
                 val stripIndex = LetterIndex.letterAt(event.y, view.height, stripLetters.size)
+                applyLetterStripScale(stripIndex)
                 val letter = LetterIndex.nearestPresent(stripLetters, letterPosList.map { it.letter }.toSet(), stripIndex)
                 val pos = letterPosList.firstOrNull { it.letter == letter }
                 if (pos != null) {
+                    val targetPosition = adapter.getTargetPositionForOrderedIndex(pos.index)
+                    adapter.setHighlightedPosition(targetPosition)
                     if (pos.letter != lastSelectedLetter) {
                         lastSelectedLetter = pos.letter
                         Haptics.tick(binding.root)
@@ -178,10 +191,69 @@ internal fun AppDrawerFragment.setupLetterStripTouchListener() {
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 lastSelectedLetter = null
                 binding.letterPreview.visibility = View.INVISIBLE
+                adapter.clearHighlight()
+                resetLetterStripScale()
                 view.parent?.requestDisallowInterceptTouchEvent(false)
                 true
             }
             else -> false
+        }
+    }
+}
+
+internal fun AppDrawerFragment.applyLetterStripScale(selectedIndex: Int) {
+    if (selectedIndex == lastScaledStripIndex) return
+    lastScaledStripIndex = selectedIndex
+
+    val strip = binding.letterStrip
+    val count = strip.childCount
+    if (count == 0 || selectedIndex !in 0 until count) return
+
+    val animatorsEnabled = context?.let {
+        runCatching { SystemMotion.isAnimationsEnabled(it) }.getOrDefault(false)
+    } ?: false
+    val duration = MotionPolicy.durationMs(MotionPolicy.FISHEYE_DURATION_MS, animatorsEnabled)
+
+    for (i in 0 until count) {
+        val child = strip.getChildAt(i) ?: continue
+        val targetScale = LetterStripSizing.scaleForDistance(i - selectedIndex)
+        if (duration > 0L) {
+            child.animate()
+                .scaleX(targetScale)
+                .scaleY(targetScale)
+                .setDuration(duration)
+                .start()
+        } else {
+            child.animate().cancel()
+            child.scaleX = targetScale
+            child.scaleY = targetScale
+        }
+    }
+}
+
+internal fun AppDrawerFragment.resetLetterStripScale() {
+    lastScaledStripIndex = -1
+    val strip = binding.letterStrip
+    val count = strip.childCount
+    if (count == 0) return
+
+    val animatorsEnabled = context?.let {
+        runCatching { SystemMotion.isAnimationsEnabled(it) }.getOrDefault(false)
+    } ?: false
+    val duration = MotionPolicy.durationMs(MotionPolicy.FISHEYE_DURATION_MS, animatorsEnabled)
+
+    for (i in 0 until count) {
+        val child = strip.getChildAt(i) ?: continue
+        if (duration > 0L) {
+            child.animate()
+                .scaleX(LetterStripSizing.SCALE_REST)
+                .scaleY(LetterStripSizing.SCALE_REST)
+                .setDuration(duration)
+                .start()
+        } else {
+            child.animate().cancel()
+            child.scaleX = LetterStripSizing.SCALE_REST
+            child.scaleY = LetterStripSizing.SCALE_REST
         }
     }
 }
@@ -191,6 +263,7 @@ internal fun AppDrawerFragment.scrollToLetter(pos: LetterPos) {
     if (totalCount <= 0) return
 
     val targetPosition = adapter.getTargetPositionForOrderedIndex(pos.index)
+    adapter.setHighlightedPosition(targetPosition)
 
     val rv = binding.recyclerView
     val offset = LetterIndex.scrollOffsetPx(

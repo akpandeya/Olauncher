@@ -87,7 +87,14 @@ class MotionPolicyTest {
         assertTrue(MotionPolicy.STAGGER_STEP_MS <= MotionPolicy.MAX_DURATION_MS)
         assertTrue(MotionPolicy.PRESS_DURATION_MS <= MotionPolicy.MAX_DURATION_MS)
         assertTrue(MotionPolicy.FLIP_HALF_DURATION_MS * 2 <= MotionPolicy.MAX_DURATION_MS)
+        assertTrue(MotionPolicy.FISHEYE_DURATION_MS <= MotionPolicy.MAX_DURATION_MS)
         assertTrue(MotionPolicy.PRESS_SCALE in 0.9f..0.99f)
+    }
+
+    @Test
+    fun `fisheye motion duration follows system animations setting`() {
+        assertEquals(80L, MotionPolicy.durationMs(MotionPolicy.FISHEYE_DURATION_MS, animatorsEnabled = true))
+        assertEquals(0L, MotionPolicy.durationMs(MotionPolicy.FISHEYE_DURATION_MS, animatorsEnabled = false))
     }
 
     @Test

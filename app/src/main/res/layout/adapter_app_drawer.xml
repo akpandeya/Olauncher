@@ -7,6 +7,16 @@
     android:minHeight="48dp"
     android:animateLayoutChanges="true">
 
+    <View
+        android:id="@+id/highlightPill"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginVertical="2dp"
+        android:alpha="0"
+        android:background="@drawable/bg_pill"
+        android:importantForAccessibility="no" />
+
     <TextView
         android:id="@+id/appTitle"
         style="@style/TextLarge"
