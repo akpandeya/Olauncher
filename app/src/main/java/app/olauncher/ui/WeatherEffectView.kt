@@ -65,6 +65,9 @@ class WeatherEffectView @JvmOverloads constructor(
     private var lastSimWidth: Float = 0f
     private var lastSimHeight: Float = 0f
 
+    // Sky layers
+    private val skyPainter = WeatherSkyPainter()
+
     // Frost & Hail
     private var frostStrength: Float = 0f
     private var isHail: Boolean = false
@@ -431,8 +434,20 @@ class WeatherEffectView @JvmOverloads constructor(
         if (width <= 0 || height <= 0) return
 
         // -------------------------------------------------------------
-        // Sky layers (sun, stars, clouds, haze) - to be added by task 03
+        // Sky layers (sun, stars, clouds, haze) - drawn before flash in mock order
         // -------------------------------------------------------------
+        if (s.params.sun > 0f) {
+            drawSun(canvas, s)
+        }
+        if (s.stars.isNotEmpty()) {
+            drawStars(canvas, s)
+        }
+        if (s.clouds.isNotEmpty()) {
+            drawClouds(canvas, s)
+        }
+        if (s.params.fog > 0f || s.haze.isNotEmpty()) {
+            drawHaze(canvas, s)
+        }
 
         // 1. Flash (behind the glass, so drops stay on top)
         if (s.flash > 0f) {
@@ -478,6 +493,33 @@ class WeatherEffectView @JvmOverloads constructor(
         if (s.impacts.isNotEmpty()) {
             drawImpacts(canvas, s)
         }
+    }
+
+    internal fun drawSun(canvas: Canvas, sim: WeatherSim) {
+        skyPainter.drawSun(canvas, sim, width.toFloat(), height.toFloat())
+    }
+
+    internal fun drawSunRays(
+        canvas: Canvas,
+        cx: Float,
+        cy: Float,
+        len: Float,
+        turn: Float,
+        strength: Float,
+    ) {
+        skyPainter.drawSunRays(canvas, cx, cy, len, turn, strength)
+    }
+
+    internal fun drawStars(canvas: Canvas, sim: WeatherSim) {
+        skyPainter.drawStars(canvas, sim)
+    }
+
+    internal fun drawClouds(canvas: Canvas, sim: WeatherSim) {
+        skyPainter.drawClouds(canvas, sim)
+    }
+
+    internal fun drawHaze(canvas: Canvas, sim: WeatherSim) {
+        skyPainter.drawHaze(canvas, sim, width.toFloat(), height.toFloat())
     }
 
     private fun drawFlash(canvas: Canvas, f: Float) {
