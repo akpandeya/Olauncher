@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.navigation.fragment.findNavController
 import app.olauncher.R
+import app.olauncher.data.store.OfflineGermanStore
 import app.olauncher.data.store.ReviewComebacks
 import app.olauncher.data.store.ReviewEvent
 import app.olauncher.data.store.ReviewEventsStore
@@ -47,6 +48,11 @@ class ReviewFragment : BaseFragment() {
     private var lastGradeAt = 0L
     private var sessionStarted = false
     private var progressAnimated = false
+    private var offlineGermanStore: OfflineGermanStore? = null
+    internal var genderResolver: ((String) -> String?)? = null
+
+    private fun getOfflineStore(context: android.content.Context): OfflineGermanStore =
+        offlineGermanStore ?: OfflineGermanStore(context).also { offlineGermanStore = it }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -263,7 +269,10 @@ class ReviewFragment : BaseFragment() {
         val b = _binding ?: return
         val context = context ?: return
         val today = WordsCard.epochDaySupplier()
-        b.tvWord.text = word.text
+        val gender = NounArticle.extractLeadingArticle(word.text)
+            ?: (genderResolver?.invoke(word.text) ?: getOfflineStore(context).gender(word.text))
+        val formatted = NounArticle.format(word.text, gender)
+        NounArticle.applyToTextView(b.tvWord, formatted)
         b.tvQuestionContext.text = word.context
         b.tvQuestionContext.isVisible = !revealed && word.context.isNotBlank()
         b.answerGroup.isVisible = revealed
@@ -348,6 +357,7 @@ class ReviewFragment : BaseFragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        offlineGermanStore = null
         _binding = null
     }
 

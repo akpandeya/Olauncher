@@ -42,6 +42,17 @@ class OfflineGermanDictionary(private val findEntries: (String) -> List<OfflineG
         }
         return null
     }
+
+    fun gender(text: String): String? {
+        val normalized = Normalizer.normalize(text.trim(), Normalizer.Form.NFC)
+        val candidates = WiktionaryParser.candidates(normalized)
+        for (candidate in candidates) {
+            val entries = findEntries(candidate)
+            val found = entries.firstOrNull { it.gender.isNotBlank() }?.gender
+            if (!found.isNullOrBlank()) return found
+        }
+        return null
+    }
 }
 
 /** Keeps offline hits independent of network consent and of stale online cache entries. */

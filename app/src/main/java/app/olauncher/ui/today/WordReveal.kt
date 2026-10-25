@@ -9,6 +9,7 @@ import android.view.inputmethod.InputMethodManager
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.view.isVisible
 import app.olauncher.R
+import app.olauncher.data.store.OfflineGermanStore
 import app.olauncher.data.store.Word
 import app.olauncher.databinding.DialogEditMeaningBinding
 import app.olauncher.databinding.ViewWordRevealBinding
@@ -17,6 +18,7 @@ import app.olauncher.helper.createDialog
 import app.olauncher.helper.showMessageDialog
 import app.olauncher.helper.showPopupMenu
 import app.olauncher.ui.today.cards.WordsCardLogic
+import app.olauncher.ui.words.NounArticle
 
 class WordReveal(
     val binding: ViewWordRevealBinding,
@@ -26,8 +28,10 @@ class WordReveal(
     var onWordDeleted: ((word: Word) -> Unit)? = null,
     private val alwaysShowMeaning: Boolean = false,
     /** Show the saved context before the reveal, as the review session's flashcard front does. */
-    private val alwaysShowContext: Boolean = false,
+    private val alwaysShowContext: Boolean = true,
 ) {
+    internal var genderResolver: ((String) -> String?)? = null
+
     var currentWord: Word? = null
         private set
 
@@ -69,8 +73,12 @@ class WordReveal(
     fun bind(word: Word, startRevealed: Boolean? = null) {
         val keepReveal = startRevealed ?: (currentWord?.id == word.id && isRevealed)
         currentWord = word
-        binding.tvWord.text = word.text
-        binding.tvMeaning.text = WordsCardLogic.formatMeaning(binding.root.context, word.meaning, word.meaningSource)
+        val context = binding.root.context
+        val gender = NounArticle.extractLeadingArticle(word.text)
+            ?: (genderResolver?.invoke(word.text) ?: OfflineGermanStore(context).gender(word.text))
+        val formatted = NounArticle.format(word.text, gender)
+        NounArticle.applyToTextView(binding.tvWord, formatted)
+        binding.tvMeaning.text = WordsCardLogic.formatMeaning(context, word.meaning, word.meaningSource)
         binding.tvContext.text = word.context
         setRevealed(keepReveal)
     }
