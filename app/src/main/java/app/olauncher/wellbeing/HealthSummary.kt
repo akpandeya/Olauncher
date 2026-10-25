@@ -23,8 +23,21 @@ data class HealthSummary(
 /** A sleep session as epoch milliseconds. It may start the evening before. */
 data class SleepSpan(val startMs: Long, val endMs: Long)
 
-/** A sleep night ending on a given day, with total minutes and span bounds. */
-data class SleepNight(val minutes: Long, val startMs: Long, val endMs: Long)
+/**
+ * A sleep night ending on a given day, with total minutes and span bounds.
+ * [startMs] and [endMs] cover every session ending that day, naps included.
+ * [mainStartMs] and [mainEndMs] are the longest session only: the real bed and wake times.
+ */
+data class SleepNight(
+    val minutes: Long,
+    val startMs: Long,
+    val endMs: Long,
+    val mainStartMs: Long = startMs,
+    val mainEndMs: Long = endMs,
+)
+
+/** Average bed and wake clock times over several nights. */
+data class BedWakeAverage(val bed: LocalTime, val wake: LocalTime)
 
 /** A resting heart rate sample as epoch milliseconds and bpm. */
 data class RestingSample(val timeMs: Long, val bpm: Long)
@@ -46,6 +59,18 @@ data class HealthWeekSummary(
     val sleepBedTime: LocalTime? = null,
     val sleepWakeTime: LocalTime? = null,
     val days: List<HealthDay> = emptyList(),
+)
+
+/**
+ * Text for the 7 days Health tiles. [bedTime] and [wakeTime] are both set or both null;
+ * they are null when there is no trustworthy average, and the tile then hides the line.
+ */
+data class WeekHealthValues(
+    val exercise: String,
+    val restingHr: String,
+    val sleep: String,
+    val bedTime: String?,
+    val wakeTime: String?,
 )
 
 /** Display templates for the Health line. Each holds one %1$s for its value. */
@@ -71,10 +96,13 @@ object HealthSummaryFormatting {
         val inRange = sessions.filter { it.endMs >= dayStartMs && it.endMs < dayEndMs && it.endMs > it.startMs }
         val total = inRange.sumOf { (it.endMs - it.startMs) / 60_000L }
         return if (total > 0) {
+            val main = inRange.maxBy { it.endMs - it.startMs }
             SleepNight(
                 minutes = total,
                 startMs = inRange.minOf { it.startMs },
                 endMs = inRange.maxOf { it.endMs },
+                mainStartMs = main.startMs,
+                mainEndMs = main.endMs,
             )
         } else null
     }
@@ -159,8 +187,8 @@ object HealthSummaryFormatting {
                 Triple(null, null, null)
             } else {
                 val avgMins = (nights.sumOf { it.minutes } * 2 + nights.size) / (nights.size * 2L)
-                val (bed, wake) = averageBedAndWakeTimes(nights, zone)
-                Triple(avgMins, bed, wake)
+                val times = averageBedAndWakeTimes(nights, zone)
+                Triple(avgMins, times?.bed, times?.wake)
             }
         }
 
@@ -176,36 +204,78 @@ object HealthSummaryFormatting {
     }
 
     /**
-     * Calculates the average bedtime and wake time across the provided nights, handling
-     * bedtimes that cross midnight (e.g., 23:30 and 00:30 average to 00:00).
+     * Average bed and wake time over [nights], using each night's main (longest) session so a
+     * nap does not count as the wake time. Both are circular means on the 24-hour clock, so
+     * 23:00 and 01:00 average to 00:00 and 23:50 and 00:10 to 00:00.
+     * Returns null when the times are too scattered to have a meaningful average, or when the
+     * average bed-to-wake gap is not a plausible night (outside [MIN_SLEEP_GAP_MIN]..[MAX_SLEEP_GAP_MIN]).
      */
-    fun averageBedAndWakeTimes(nights: List<SleepNight>, zone: ZoneId): Pair<LocalTime, LocalTime> {
-        require(nights.isNotEmpty())
-
-        val wakeMinutes = nights.map {
-            val local = LocalTime.ofInstant(Instant.ofEpochMilli(it.endMs), zone)
-            local.hour * 60 + local.minute
-        }
-        val avgWakeMinute = (wakeMinutes.sum() * 2 + wakeMinutes.size) / (wakeMinutes.size * 2)
-        val wakeLocal = LocalTime.of((avgWakeMinute / 60) % 24, avgWakeMinute % 60)
-
-        val bedRelativeMinutes = nights.map {
-            val local = LocalTime.ofInstant(Instant.ofEpochMilli(it.startMs), zone)
-            val minOfDay = local.hour * 60 + local.minute
-            if (minOfDay >= 12 * 60) minOfDay - 24 * 60 else minOfDay
-        }
-        val sumBed = bedRelativeMinutes.sum()
-        val count = bedRelativeMinutes.size
-        val avgBedRelative = if (sumBed >= 0) {
-            (sumBed * 2 + count) / (count * 2)
-        } else {
-            (sumBed * 2 - count) / (count * 2)
-        }
-        val normalizedBed = ((avgBedRelative % 1440) + 1440) % 1440
-        val bedLocal = LocalTime.of(normalizedBed / 60, normalizedBed % 60)
-
-        return Pair(bedLocal, wakeLocal)
+    fun averageBedAndWakeTimes(nights: List<SleepNight>, zone: ZoneId): BedWakeAverage? {
+        if (nights.isEmpty()) return null
+        val bed = circularMeanMinuteOfDay(nights.map { minuteOfDay(it.mainStartMs, zone) }) ?: return null
+        val wake = circularMeanMinuteOfDay(nights.map { minuteOfDay(it.mainEndMs, zone) }) ?: return null
+        val gap = Math.floorMod(wake - bed, MINUTES_PER_DAY)
+        if (gap !in MIN_SLEEP_GAP_MIN..MAX_SLEEP_GAP_MIN) return null
+        return BedWakeAverage(
+            bed = LocalTime.of(bed / 60, bed % 60),
+            wake = LocalTime.of(wake / 60, wake % 60),
+        )
     }
+
+    /**
+     * Circular mean of clock times given as minutes since midnight, rounded to the minute.
+     * Each time is a point on a 24-hour circle; the mean is the direction of their sum.
+     * Returns null for an empty list or when the points spread so far that the mean is
+     * not meaningful (mean resultant length below [MIN_CLOCK_CONCENTRATION]).
+     */
+    fun circularMeanMinuteOfDay(minutes: List<Int>): Int? {
+        if (minutes.isEmpty()) return null
+        var sumSin = 0.0
+        var sumCos = 0.0
+        for (m in minutes) {
+            val angle = 2 * Math.PI * m / MINUTES_PER_DAY
+            sumSin += Math.sin(angle)
+            sumCos += Math.cos(angle)
+        }
+        val concentration = Math.hypot(sumSin, sumCos) / minutes.size
+        if (concentration < MIN_CLOCK_CONCENTRATION) return null
+        val meanAngle = Math.atan2(sumSin, sumCos)
+        val meanMinute = Math.round(meanAngle / (2 * Math.PI) * MINUTES_PER_DAY).toInt()
+        return Math.floorMod(meanMinute, MINUTES_PER_DAY)
+    }
+
+    private fun minuteOfDay(epochMs: Long, zone: ZoneId): Int {
+        val local = LocalTime.ofInstant(Instant.ofEpochMilli(epochMs), zone)
+        return local.hour * 60 + local.minute
+    }
+
+    private const val MINUTES_PER_DAY = 24 * 60
+
+    /** Two times 8 h apart give 0.5; more scatter than that has no useful average. */
+    private const val MIN_CLOCK_CONCENTRATION = 0.5
+
+    private const val MIN_SLEEP_GAP_MIN = 2 * 60
+    private const val MAX_SLEEP_GAP_MIN = 16 * 60
+
+    /**
+     * Values for the 7 days Health tiles: weekly exercise total and average sleep as
+     * "20 h 27" (one short line), average resting HR, and average bed and wake times.
+     */
+    fun weekValues(week: HealthWeekSummary?): WeekHealthValues {
+        val bed = week?.sleepBedTime
+        val wake = week?.sleepWakeTime
+        val timesValid = bed != null && wake != null
+        return WeekHealthValues(
+            exercise = week?.exerciseMinutesTotal?.let { formatDuration(it) } ?: DASH,
+            restingHr = week?.restingHeartRateAvg?.toString() ?: DASH,
+            sleep = week?.sleepMinutesAvg?.let { formatDuration(it) } ?: DASH,
+            bedTime = if (timesValid) formatClock(bed!!) else null,
+            wakeTime = if (timesValid) formatClock(wake!!) else null,
+        )
+    }
+
+    /** A clock time as "HH:mm", for example "07:10". */
+    fun formatClock(time: LocalTime): String = time.format(TIME_FORMATTER)
 
     /** Formats bed and wake times as "HH:mm – HH:mm". */
     fun formatBedWakeTime(bed: LocalTime, wake: LocalTime): String =

@@ -6,6 +6,7 @@ import android.graphics.Canvas
 import android.graphics.DashPathEffect
 import android.graphics.Paint
 import android.graphics.RectF
+import android.graphics.Typeface
 import android.util.AttributeSet
 import android.view.View
 import app.olauncher.R
@@ -18,7 +19,10 @@ import java.time.LocalDate
 import java.time.format.TextStyle
 import java.util.Locale
 
-/** Seven bars, one per day, with today highlighted and a dashed line at the daily allowance. */
+/**
+ * Seven bars, one per day, all in one colour, with a dashed line at the daily allowance.
+ * Today is marked by a bold, full-colour day label only.
+ */
 class DayBarsView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
@@ -90,16 +94,19 @@ class DayBarsView @JvmOverloads constructor(
         val chartHeight = chartBottom - paddingTop
         val slot = (width - paddingLeft - paddingRight).toFloat() / bars.size
         val barWidth = slot * BAR_FRACTION
-        val radius = 4 * density
+        val minHeight = DayBarsGeometry.MIN_BAR_DP * density
+        val maxRadius = DayBarsGeometry.MAX_RADIUS_DP * density
         val locale = Locale.getDefault()
 
-        labelPaint.color = faint
+        barPaint.color = faint
         for ((index, bar) in bars.withIndex()) {
             val centre = paddingLeft + slot * index + slot / 2
-            val barHeight = ((chartHeight * bar.minutes / scaleMinutes) * progressFraction).coerceAtLeast(2 * density)
-            barPaint.color = if (bar.isToday) ink else faint
+            val barHeight = DayBarsGeometry.barHeight(chartHeight, bar.minutes, scaleMinutes, progressFraction, minHeight)
+            val radius = DayBarsGeometry.cornerRadius(barHeight, maxRadius)
             rect.set(centre - barWidth / 2, chartBottom - barHeight, centre + barWidth / 2, chartBottom)
             canvas.drawRoundRect(rect, radius, radius, barPaint)
+            labelPaint.color = if (bar.isToday) ink else faint
+            labelPaint.typeface = if (bar.isToday) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
             val weekday = LocalDate.ofEpochDay(bar.epochDay).dayOfWeek
             canvas.drawText(shortName(weekday, locale), centre, height - 4 * density, labelPaint)
         }

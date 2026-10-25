@@ -918,6 +918,10 @@
     <string name="wellbeing_week_no_apps">No distracting apps used</string>
     <string name="wellbeing_week_not_now_sub">Opened anyway %1$d</string>
     <string name="wellbeing_week_water_walk">Water · Walk</string>
+    <string name="wellbeing_week_water_walk_sub">Done this week</string>
+    <string name="wellbeing_week_resting_hr_sub">bpm · avg per day</string>
+    <string name="wellbeing_week_sleep_label">Sleep · avg per night</string>
+    <string name="wellbeing_week_sleep_times">bed %1$s · wake %2$s</string>
     <string name="wellbeing_week_bars_description">Distracting time for each of the last 7 days. %1$s</string>
     <string name="wellbeing_allowance_meter_description">Daily allowance progress: %1$d%%</string>
     <string name="wellbeing_heat_row_description">Distracting apps hourly usage today</string>
