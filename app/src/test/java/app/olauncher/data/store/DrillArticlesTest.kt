@@ -50,67 +50,67 @@ class DrillArticlesTest {
         // -ung: die
         val wohnung = items["___ Wohnung"]
         assertNotNull(wohnung)
-        assertEquals("-ung: die", wohnung?.hint)
+        assertEquals("-ung → feminin", wohnung?.hint)
 
         // -heit: die
         val freiheit = items["___ Freiheit"]
         assertNotNull(freiheit)
-        assertEquals("-heit: die", freiheit?.hint)
+        assertEquals("-heit → feminin", freiheit?.hint)
 
         // -keit: die
         val moeglichkeit = items["___ Möglichkeit"]
         assertNotNull(moeglichkeit)
-        assertEquals("-keit: die", moeglichkeit?.hint)
+        assertEquals("-keit → feminin", moeglichkeit?.hint)
 
         // -schaft: die
         val freundschaft = items["___ Freundschaft"]
         assertNotNull(freundschaft)
-        assertEquals("-schaft: die", freundschaft?.hint)
+        assertEquals("-schaft → feminin", freundschaft?.hint)
 
         // -ion: die
         val station = items["___ Station"]
         assertNotNull(station)
-        assertEquals("-ion: die", station?.hint)
+        assertEquals("-ion → feminin", station?.hint)
 
         // -chen: das
         val maedchen = items["___ Mädchen"]
         assertNotNull(maedchen)
-        assertEquals("-chen: das", maedchen?.hint)
+        assertEquals("-chen → neutral", maedchen?.hint)
 
         // -lein: das
         val fraeulein = items["___ Fräulein"]
         assertNotNull(fraeulein)
-        assertEquals("-lein: das", fraeulein?.hint)
+        assertEquals("-lein → neutral", fraeulein?.hint)
 
         // -ment: das
         val dokument = items["___ Dokument"]
         assertNotNull(dokument)
-        assertEquals("-ment: das", dokument?.hint)
+        assertEquals("-ment → neutral", dokument?.hint)
 
         // -um: das
         val museum = items["___ Museum"]
         assertNotNull(museum)
-        assertEquals("-um: das", museum?.hint)
+        assertEquals("-um → neutral", museum?.hint)
 
         // -tät: die
         val uni = items["___ Universität"]
         assertNotNull(uni)
-        assertEquals("-tät: die", uni?.hint)
+        assertEquals("-tät → feminin", uni?.hint)
 
         // -ei: die
         val baeckerei = items["___ Bäckerei"]
         assertNotNull(baeckerei)
-        assertEquals("-ei: die", baeckerei?.hint)
+        assertEquals("-ei → feminin", baeckerei?.hint)
 
         // -ismus: der
         val optimismus = items["___ Optimismus"]
         assertNotNull(optimismus)
-        assertEquals("-ismus: der", optimismus?.hint)
+        assertEquals("-ismus → maskulin", optimismus?.hint)
 
         // -ling: der
         val fruehling = items["___ Frühling"]
         assertNotNull(fruehling)
-        assertEquals("-ling: der", fruehling?.hint)
+        assertEquals("-ling → maskulin", fruehling?.hint)
     }
 
     @Test

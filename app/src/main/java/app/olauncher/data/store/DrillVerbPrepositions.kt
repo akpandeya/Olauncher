@@ -575,7 +575,9 @@ object DrillVerbPrepositions {
             val caseKey = matchingWord?.let { "${it.id}" }
                 ?: "verbprep:${pair.verb}:${pair.preposition}:1"
 
-            val hint = "${pair.verb} ${pair.preposition} + ${pair.case}"
+            // Gap hint names the verb and its case but never the preposition (the gap answer).
+            // The case item's answer IS the case name, so it carries no hint at all.
+            val gapHint = "${pair.verb} + ${pair.case}"
 
             listOf(
                 DrillItem(
@@ -583,14 +585,13 @@ object DrillVerbPrepositions {
                     prompt = pair.sentence,
                     answer = pair.preposition,
                     choices = pair.choices,
-                    hint = hint,
+                    hint = gapHint,
                 ),
                 DrillItem(
                     id = DrillItemId(DrillType.VERB_PREPOSITIONS, caseKey),
                     prompt = "Welcher Fall folgt auf „${pair.verb} ${pair.preposition}“?",
                     answer = pair.case,
                     choices = CASE_CHOICES,
-                    hint = hint,
                 ),
             )
         }

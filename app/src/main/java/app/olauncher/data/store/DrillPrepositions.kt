@@ -17,6 +17,8 @@ object DrillPrepositions {
         val templates: List<ItemTemplate>,
     )
 
+    // Which-case questions are answered with the case name itself, so they carry no
+    // hint: any hint naming the case would reveal the answer.
     private val WHICH_CASE_CHOICES = listOf("Akkusativ", "Dativ", "Genitiv")
 
     internal val ENTRIES: List<PrepositionEntry> = listOf(
@@ -28,7 +30,6 @@ object DrillPrepositions {
                     prompt = "Welcher Fall folgt auf „durch“?",
                     answer = "Akkusativ",
                     choices = WHICH_CASE_CHOICES,
-                    hint = "Akkusativ",
                 ),
                 ItemTemplate(
                     prompt = "Ich gehe durch ___ Park.",
@@ -45,7 +46,6 @@ object DrillPrepositions {
                     prompt = "Welcher Fall folgt auf „für“?",
                     answer = "Akkusativ",
                     choices = WHICH_CASE_CHOICES,
-                    hint = "Akkusativ",
                 ),
                 ItemTemplate(
                     prompt = "Das Geschenk ist für ___ Vater.",
@@ -62,7 +62,6 @@ object DrillPrepositions {
                     prompt = "Welcher Fall folgt auf „gegen“?",
                     answer = "Akkusativ",
                     choices = WHICH_CASE_CHOICES,
-                    hint = "Akkusativ",
                 ),
                 ItemTemplate(
                     prompt = "Das Auto fährt gegen ___ Baum.",
@@ -79,7 +78,6 @@ object DrillPrepositions {
                     prompt = "Welcher Fall folgt auf „ohne“?",
                     answer = "Akkusativ",
                     choices = WHICH_CASE_CHOICES,
-                    hint = "Akkusativ",
                 ),
                 ItemTemplate(
                     prompt = "Wir gehen ohne ___ Hund spazieren.",
@@ -96,7 +94,6 @@ object DrillPrepositions {
                     prompt = "Welcher Fall folgt auf „um“?",
                     answer = "Akkusativ",
                     choices = WHICH_CASE_CHOICES,
-                    hint = "Akkusativ",
                 ),
                 ItemTemplate(
                     prompt = "Die Kinder laufen um ___ Tisch.",
@@ -113,7 +110,6 @@ object DrillPrepositions {
                     prompt = "Welcher Fall folgt auf „bis“?",
                     answer = "Akkusativ",
                     choices = WHICH_CASE_CHOICES,
-                    hint = "Akkusativ",
                 ),
                 ItemTemplate(
                     prompt = "Er wartet bis ___ nächsten Tag.",
@@ -130,7 +126,6 @@ object DrillPrepositions {
                     prompt = "Welcher Fall folgt auf „entlang“ (nachgestellt)?",
                     answer = "Akkusativ",
                     choices = WHICH_CASE_CHOICES,
-                    hint = "Akkusativ",
                 ),
                 ItemTemplate(
                     prompt = "Wir spazieren ___ Fluss entlang.",
@@ -149,7 +144,6 @@ object DrillPrepositions {
                     prompt = "Welcher Fall folgt auf „aus“?",
                     answer = "Dativ",
                     choices = WHICH_CASE_CHOICES,
-                    hint = "Dativ",
                 ),
                 ItemTemplate(
                     prompt = "Er kommt aus ___ Haus.",
@@ -166,7 +160,6 @@ object DrillPrepositions {
                     prompt = "Welcher Fall folgt auf „bei“?",
                     answer = "Dativ",
                     choices = WHICH_CASE_CHOICES,
-                    hint = "Dativ",
                 ),
                 ItemTemplate(
                     prompt = "Sie wohnt bei ___ Eltern.",
@@ -183,7 +176,6 @@ object DrillPrepositions {
                     prompt = "Welcher Fall folgt auf „mit“?",
                     answer = "Dativ",
                     choices = WHICH_CASE_CHOICES,
-                    hint = "Dativ",
                 ),
                 ItemTemplate(
                     prompt = "Ich fahre mit ___ Bus.",
@@ -200,7 +192,6 @@ object DrillPrepositions {
                     prompt = "Welcher Fall folgt auf „nach“?",
                     answer = "Dativ",
                     choices = WHICH_CASE_CHOICES,
-                    hint = "Dativ",
                 ),
                 ItemTemplate(
                     prompt = "Nach ___ Unterricht gehen wir essen.",
@@ -217,7 +208,6 @@ object DrillPrepositions {
                     prompt = "Welcher Fall folgt auf „seit“?",
                     answer = "Dativ",
                     choices = WHICH_CASE_CHOICES,
-                    hint = "Dativ",
                 ),
                 ItemTemplate(
                     prompt = "Seit ___ Unfall ist er vorsichtig.",
@@ -234,7 +224,6 @@ object DrillPrepositions {
                     prompt = "Welcher Fall folgt auf „von“?",
                     answer = "Dativ",
                     choices = WHICH_CASE_CHOICES,
-                    hint = "Dativ",
                 ),
                 ItemTemplate(
                     prompt = "Der Brief ist von ___ Chef.",
@@ -251,7 +240,6 @@ object DrillPrepositions {
                     prompt = "Welcher Fall folgt auf „zu“?",
                     answer = "Dativ",
                     choices = WHICH_CASE_CHOICES,
-                    hint = "Dativ",
                 ),
                 ItemTemplate(
                     prompt = "Ich gehe zu ___ Arzt.",
@@ -268,7 +256,6 @@ object DrillPrepositions {
                     prompt = "Welcher Fall folgt auf „gegenüber“?",
                     answer = "Dativ",
                     choices = WHICH_CASE_CHOICES,
-                    hint = "Dativ",
                 ),
                 ItemTemplate(
                     prompt = "Das Hotel liegt gegenüber ___ Park.",
@@ -287,7 +274,6 @@ object DrillPrepositions {
                     prompt = "Welcher Fall folgt auf „wegen“?",
                     answer = "Genitiv",
                     choices = WHICH_CASE_CHOICES,
-                    hint = "Genitiv",
                 ),
                 ItemTemplate(
                     prompt = "Wegen ___ Wetters bleiben wir hier.",
@@ -304,7 +290,6 @@ object DrillPrepositions {
                     prompt = "Welcher Fall folgt auf „trotz“?",
                     answer = "Genitiv",
                     choices = WHICH_CASE_CHOICES,
-                    hint = "Genitiv",
                 ),
                 ItemTemplate(
                     prompt = "Trotz ___ Regens geht sie raus.",
@@ -321,7 +306,6 @@ object DrillPrepositions {
                     prompt = "Welcher Fall folgt auf „während“?",
                     answer = "Genitiv",
                     choices = WHICH_CASE_CHOICES,
-                    hint = "Genitiv",
                 ),
                 ItemTemplate(
                     prompt = "Während ___ Fahrt lesen wir.",
@@ -338,7 +322,6 @@ object DrillPrepositions {
                     prompt = "Welcher Fall folgt auf „statt“?",
                     answer = "Genitiv",
                     choices = WHICH_CASE_CHOICES,
-                    hint = "Genitiv",
                 ),
                 ItemTemplate(
                     prompt = "Statt ___ Kaffees trinkt er Tee.",
@@ -358,13 +341,13 @@ object DrillPrepositions {
                     prompt = "Das Bild hängt an ___ Wand.",
                     answer = "der",
                     choices = listOf("der", "die", "den", "dem"),
-                    hint = "Wo? Dativ",
+                    hint = "Wo? → location",
                 ),
                 ItemTemplate(
                     prompt = "Ich hänge das Bild an ___ Wand.",
                     answer = "die",
                     choices = listOf("die", "der", "den", "dem"),
-                    hint = "Wohin? Akkusativ",
+                    hint = "Wohin? → movement",
                 ),
             ),
         ),
@@ -375,13 +358,13 @@ object DrillPrepositions {
                     prompt = "Das Buch liegt auf ___ Tisch.",
                     answer = "dem",
                     choices = listOf("dem", "den", "der", "das"),
-                    hint = "Wo? Dativ",
+                    hint = "Wo? → location",
                 ),
                 ItemTemplate(
                     prompt = "Ich lege das Buch auf ___ Tisch.",
                     answer = "den",
                     choices = listOf("den", "dem", "der", "das"),
-                    hint = "Wohin? Akkusativ",
+                    hint = "Wohin? → movement",
                 ),
             ),
         ),
@@ -392,13 +375,13 @@ object DrillPrepositions {
                     prompt = "Der Hund schläft hinter ___ Haus.",
                     answer = "dem",
                     choices = listOf("dem", "das", "den", "des"),
-                    hint = "Wo? Dativ",
+                    hint = "Wo? → location",
                 ),
                 ItemTemplate(
                     prompt = "Der Hund rennt hinter ___ Haus.",
                     answer = "das",
                     choices = listOf("das", "dem", "den", "des"),
-                    hint = "Wohin? Akkusativ",
+                    hint = "Wohin? → movement",
                 ),
             ),
         ),
@@ -409,13 +392,13 @@ object DrillPrepositions {
                     prompt = "Wir sitzen in ___ Garten.",
                     answer = "dem",
                     choices = listOf("dem", "den", "der", "das"),
-                    hint = "Wo? Dativ",
+                    hint = "Wo? → location",
                 ),
                 ItemTemplate(
                     prompt = "Wir gehen in ___ Garten.",
                     answer = "den",
                     choices = listOf("den", "dem", "der", "das"),
-                    hint = "Wohin? Akkusativ",
+                    hint = "Wohin? → movement",
                 ),
             ),
         ),
@@ -426,13 +409,13 @@ object DrillPrepositions {
                     prompt = "Er steht neben ___ Fenster.",
                     answer = "dem",
                     choices = listOf("dem", "das", "den", "des"),
-                    hint = "Wo? Dativ",
+                    hint = "Wo? → location",
                 ),
                 ItemTemplate(
                     prompt = "Er stellt sich neben ___ Fenster.",
                     answer = "das",
                     choices = listOf("das", "dem", "den", "des"),
-                    hint = "Wohin? Akkusativ",
+                    hint = "Wohin? → movement",
                 ),
             ),
         ),
@@ -443,13 +426,13 @@ object DrillPrepositions {
                     prompt = "Die Lampe hängt über ___ Tisch.",
                     answer = "dem",
                     choices = listOf("dem", "den", "der", "das"),
-                    hint = "Wo? Dativ",
+                    hint = "Wo? → location",
                 ),
                 ItemTemplate(
                     prompt = "Er hängt die Lampe über ___ Tisch.",
                     answer = "den",
                     choices = listOf("den", "dem", "der", "das"),
-                    hint = "Wohin? Akkusativ",
+                    hint = "Wohin? → movement",
                 ),
             ),
         ),
@@ -460,13 +443,13 @@ object DrillPrepositions {
                     prompt = "Die Katze schläft unter ___ Bett.",
                     answer = "dem",
                     choices = listOf("dem", "das", "den", "des"),
-                    hint = "Wo? Dativ",
+                    hint = "Wo? → location",
                 ),
                 ItemTemplate(
                     prompt = "Die Katze kriecht unter ___ Bett.",
                     answer = "das",
                     choices = listOf("das", "dem", "den", "des"),
-                    hint = "Wohin? Akkusativ",
+                    hint = "Wohin? → movement",
                 ),
             ),
         ),
@@ -477,13 +460,13 @@ object DrillPrepositions {
                     prompt = "Das Auto steht vor ___ Garage.",
                     answer = "der",
                     choices = listOf("der", "die", "den", "dem"),
-                    hint = "Wo? Dativ",
+                    hint = "Wo? → location",
                 ),
                 ItemTemplate(
                     prompt = "Das Auto fährt vor ___ Garage.",
                     answer = "die",
                     choices = listOf("die", "der", "den", "dem"),
-                    hint = "Wohin? Akkusativ",
+                    hint = "Wohin? → movement",
                 ),
             ),
         ),
@@ -494,13 +477,13 @@ object DrillPrepositions {
                     prompt = "Das Kind sitzt zwischen ___ Stühlen.",
                     answer = "den",
                     choices = listOf("den", "dem", "der", "die"),
-                    hint = "Wo? Dativ",
+                    hint = "Wo? → location",
                 ),
                 ItemTemplate(
                     prompt = "Das Kind setzt sich zwischen ___ Stühle.",
                     answer = "die",
                     choices = listOf("die", "den", "der", "dem"),
-                    hint = "Wohin? Akkusativ",
+                    hint = "Wohin? → movement",
                 ),
             ),
         ),
