@@ -39,6 +39,8 @@ android {
         release {
             debuggable false
             minifyEnabled true
+            // Same committed key as debug, so release builds update each other in place.
+            signingConfig signingConfigs.debug
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         debug {

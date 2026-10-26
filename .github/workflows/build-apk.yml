@@ -29,12 +29,12 @@ jobs:
         run: python3 -m unittest discover -s tools/tests -v
 
       - name: Build debug APK, run unit tests and lint
-        run: ./gradlew assembleDebug testDebugUnitTest lintDebug --no-daemon
+        run: ./gradlew assembleRelease testDebugUnitTest lintDebug --no-daemon
 
       - uses: actions/upload-artifact@v4
         with:
-          name: thumbline-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          name: thumbline-release-apk
+          path: app/build/outputs/apk/release/*.apk
           if-no-files-found: error
 
   release:
@@ -48,7 +48,7 @@ jobs:
 
       - uses: actions/download-artifact@v4
         with:
-          name: thumbline-debug-apk
+          name: thumbline-release-apk
           path: apk
 
       - name: Create release
