@@ -111,12 +111,10 @@ object DrillPrepositions {
                     answer = "Akkusativ",
                     choices = WHICH_CASE_CHOICES,
                 ),
-                ItemTemplate(
-                    prompt = "Er wartet bis ___ nächsten Tag.",
-                    answer = "den",
-                    choices = listOf("den", "dem", "der", "des"),
-                    hint = "bis + Akkusativ",
-                ),
+                // No sentence item: "bis" + Akkusativ appears naturally without an
+                // article ("bis nächsten Montag"), and "bis den/des ..." is not
+                // idiomatic German, so an article-gap sentence would teach a form
+                // native speakers avoid.
             ),
         ),
         PrepositionEntry(
@@ -226,9 +224,9 @@ object DrillPrepositions {
                     choices = WHICH_CASE_CHOICES,
                 ),
                 ItemTemplate(
-                    prompt = "Der Brief ist von ___ Chef.",
-                    answer = "dem",
-                    choices = listOf("dem", "den", "der", "des"),
+                    prompt = "Das Paket ist von ___ Großeltern.",
+                    answer = "den",
+                    choices = listOf("den", "dem", "der", "des"),
                     hint = "von + Dativ",
                 ),
             ),
@@ -423,15 +421,15 @@ object DrillPrepositions {
             preposition = "über",
             templates = listOf(
                 ItemTemplate(
-                    prompt = "Die Lampe hängt über ___ Tisch.",
+                    prompt = "Die Lampe hängt über ___ Sofa.",
                     answer = "dem",
                     choices = listOf("dem", "den", "der", "das"),
                     hint = "Wo? → location",
                 ),
                 ItemTemplate(
-                    prompt = "Er hängt die Lampe über ___ Tisch.",
-                    answer = "den",
-                    choices = listOf("den", "dem", "der", "das"),
+                    prompt = "Er hängt die Lampe über ___ Sofa.",
+                    answer = "das",
+                    choices = listOf("das", "dem", "den", "der"),
                     hint = "Wohin? → movement",
                 ),
             ),

@@ -278,47 +278,47 @@ object DrillAdjectiveEndings {
         // Genitiv Femininum (der ... -en)
         AdjectiveEndingTemplate(
             key = "gen_weak_f_freundin",
-            pattern = "Das ist das Auto {art} gut${DrillItem.GAP_MARKER} Freundin.",
+            pattern = "Er repariert das Auto {art} gut${DrillItem.GAP_MARKER} Freundin.",
             declension = AdjectiveEndings.Declension.WEAK,
             case = ArticleForms.Case.GENITIVE,
             gender = ArticleForms.Gender.FEMININE,
-            trigger = "sein",
+            trigger = "reparieren",
         ),
         AdjectiveEndingTemplate(
             key = "gen_weak_f_schuelerin",
-            pattern = "Die Noten {art} fleißig${DrillItem.GAP_MARKER} Schülerin sind hervorragend.",
+            pattern = "Der Lehrer lobt die Noten {art} fleißig${DrillItem.GAP_MARKER} Schülerin.",
             declension = AdjectiveEndings.Declension.WEAK,
             case = ArticleForms.Case.GENITIVE,
             gender = ArticleForms.Gender.FEMININE,
-            trigger = "sein",
+            trigger = "loben",
         ),
 
         // Genitiv Neutrum (des ... -en)
         AdjectiveEndingTemplate(
             key = "gen_weak_n_hauses",
-            pattern = "Das Dach {art} modern${DrillItem.GAP_MARKER} Hauses ist flach.",
+            pattern = "Der Schornstein {art} modern${DrillItem.GAP_MARKER} Hauses raucht.",
             declension = AdjectiveEndings.Declension.WEAK,
             case = ArticleForms.Case.GENITIVE,
             gender = ArticleForms.Gender.NEUTER,
-            trigger = "sein",
+            trigger = "rauchen",
         ),
         AdjectiveEndingTemplate(
             key = "gen_weak_n_maedchens",
-            pattern = "Das Lächeln {art} klein${DrillItem.GAP_MARKER} Mädchens ist bezaubernd.",
+            pattern = "Wir bewundern das Lächeln {art} klein${DrillItem.GAP_MARKER} Mädchens.",
             declension = AdjectiveEndings.Declension.WEAK,
             case = ArticleForms.Case.GENITIVE,
             gender = ArticleForms.Gender.NEUTER,
-            trigger = "sein",
+            trigger = "bewundern",
         ),
 
         // Genitiv Plural (der ... -en)
         AdjectiveEndingTemplate(
             key = "gen_weak_pl_eltern",
-            pattern = "Das Haus {art} nett${DrillItem.GAP_MARKER} Eltern liegt am See.",
+            pattern = "Der Garten {art} nett${DrillItem.GAP_MARKER} Eltern grenzt an den See.",
             declension = AdjectiveEndings.Declension.WEAK,
             case = ArticleForms.Case.GENITIVE,
             gender = ArticleForms.Gender.PLURAL,
-            trigger = "liegen",
+            trigger = "grenzen",
         ),
         AdjectiveEndingTemplate(
             key = "gen_weak_pl_kinder",
@@ -362,21 +362,21 @@ object DrillAdjectiveEndings {
         ),
         AdjectiveEndingTemplate(
             key = "nom_mixed_f_uhr",
-            pattern = "Das ist {art} teur${DrillItem.GAP_MARKER} Uhr aus der Schweiz.",
+            pattern = "Dort hängt {art} teur${DrillItem.GAP_MARKER} Uhr aus der Schweiz.",
             declension = AdjectiveEndings.Declension.MIXED,
             case = ArticleForms.Case.NOMINATIVE,
             gender = ArticleForms.Gender.FEMININE,
-            trigger = "sein",
+            trigger = "hängen",
         ),
 
         // Nominativ Neutrum (ein ... -es)
         AdjectiveEndingTemplate(
             key = "nom_mixed_n_buch",
-            pattern = "Das ist {art} spannend${DrillItem.GAP_MARKER} Buch über Geschichte.",
+            pattern = "Auf dem Tisch liegt {art} spannend${DrillItem.GAP_MARKER} Buch über Geschichte.",
             declension = AdjectiveEndings.Declension.MIXED,
             case = ArticleForms.Case.NOMINATIVE,
             gender = ArticleForms.Gender.NEUTER,
-            trigger = "sein",
+            trigger = "liegen",
         ),
         AdjectiveEndingTemplate(
             key = "nom_mixed_n_kind",
@@ -390,19 +390,19 @@ object DrillAdjectiveEndings {
         // Nominativ Plural (keine ... -en)
         AdjectiveEndingTemplate(
             key = "nom_mixed_pl_wolken",
-            pattern = "Heute sind {art} dunkel${DrillItem.GAP_MARKER} Wolken am Himmel.",
+            pattern = "Heute stehen {art} dunkel${DrillItem.GAP_MARKER} Wolken am Himmel.",
             declension = AdjectiveEndings.Declension.MIXED,
             case = ArticleForms.Case.NOMINATIVE,
             gender = ArticleForms.Gender.PLURAL,
-            trigger = "sein",
+            trigger = "stehen",
         ),
         AdjectiveEndingTemplate(
             key = "nom_mixed_pl_fehler",
-            pattern = "Das sind {art} schwer${DrillItem.GAP_MARKER} Fehler im Text.",
+            pattern = "Im Text stehen {art} schwer${DrillItem.GAP_MARKER} Fehler.",
             declension = AdjectiveEndings.Declension.MIXED,
             case = ArticleForms.Case.NOMINATIVE,
             gender = ArticleForms.Gender.PLURAL,
-            trigger = "sein",
+            trigger = "stehen",
         ),
 
         // Akkusativ Maskulinum (einen ... -en)
@@ -604,6 +604,9 @@ object DrillAdjectiveEndings {
         ),
 
         // Genitiv Plural (keiner ... -en)
+        // "keiner" + Genitiv Plural is rare in natural German, so both items use
+        // "trotz", where the genitive plural reads acceptably when the outcome is
+        // surprising.
         AdjectiveEndingTemplate(
             key = "gen_mixed_pl_zeugen",
             pattern = "Trotz {art} sicher${DrillItem.GAP_MARKER} Zeugen wurde der Fall gelöst.",
@@ -613,12 +616,12 @@ object DrillAdjectiveEndings {
             trigger = "trotz",
         ),
         AdjectiveEndingTemplate(
-            key = "gen_mixed_pl_buecher",
-            pattern = "Mangels {art} gut${DrillItem.GAP_MARKER} Bücher las er alte Zeitungen.",
+            key = "gen_mixed_pl_vorkenntnisse",
+            pattern = "Trotz {art} groß${DrillItem.GAP_MARKER} Vorkenntnisse bestand sie die Prüfung.",
             declension = AdjectiveEndings.Declension.MIXED,
             case = ArticleForms.Case.GENITIVE,
             gender = ArticleForms.Gender.PLURAL,
-            trigger = "mangels",
+            trigger = "trotz",
         ),
     )
 

@@ -673,7 +673,7 @@ object DrillPronouns {
             category = Category.REFLEXIVE,
             templates = listOf(
                 ItemTemplate(
-                    prompt = "Zieh die Mütze auf, sonst erkältest du ___ bei dem Wind!",
+                    prompt = "Zieh die Mütze auf, sonst erkältest du ___ noch!",
                     answer = "dich",
                     choices = listOf("dich", "dir", "mich", "sich"),
                     hint = "sich erkälten (2. Person)",
