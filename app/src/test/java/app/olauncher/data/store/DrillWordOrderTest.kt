@@ -76,8 +76,8 @@ class DrillWordOrderTest {
                 // In subordinate clauses, the verb is at the end of the clause
                 for (order in entry.item.accepted) {
                     val lastWord = order.last().lowercase()
-                    // Verbs at the end in our subordinate clause items: ist, hat, regnet, kommst, wird, scheint, habe, brauchst, haben
-                    val verbEndings = listOf("ist", "hat", "regnet", "kommst", "kommt", "wird", "scheint", "habe", "brauchst", "haben")
+                    // Verbs at the end in our subordinate clause items: ist, hat, regnet, kommst, wird, scheint, habe, brauchst, haben, bin
+                    val verbEndings = listOf("ist", "hat", "regnet", "kommst", "kommt", "wird", "scheint", "habe", "brauchst", "haben", "bin")
                     assertTrue(
                         "Accepted order must end with conjugated verb in subordinate clause: $order",
                         lastWord in verbEndings,

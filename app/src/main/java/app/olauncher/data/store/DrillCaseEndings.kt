@@ -60,8 +60,8 @@ object DrillCaseEndings {
         ),
         CaseEndingTemplate(
             key = "nom_m_tisch",
-            prompt = "Das ist ${DrillItem.GAP_MARKER} Tisch von Paul.",
-            trigger = "sein",
+            prompt = "Auf dem Tisch liegt ${DrillItem.GAP_MARKER} Roman von Paul.",
+            trigger = "Subjekt",
             case = ArticleForms.Case.NOMINATIVE,
             gender = ArticleForms.Gender.MASCULINE,
         ),
@@ -104,8 +104,8 @@ object DrillCaseEndings {
         ),
         CaseEndingTemplate(
             key = "nom_n_auto",
-            prompt = "Das ist ${DrillItem.GAP_MARKER} neue Auto.",
-            trigger = "sein",
+            prompt = "${DrillItem.GAP_MARKER} neue Auto steht in der Garage.",
+            trigger = "Subjekt",
             case = ArticleForms.Case.NOMINATIVE,
             gender = ArticleForms.Gender.NEUTER,
         ),
@@ -126,8 +126,8 @@ object DrillCaseEndings {
         ),
         CaseEndingTemplate(
             key = "nom_pl_freunde",
-            prompt = "Das sind ${DrillItem.GAP_MARKER} besten Freunde.",
-            trigger = "sein",
+            prompt = "Hier treffen sich ${DrillItem.GAP_MARKER} besten Freunde.",
+            trigger = "Subjekt",
             case = ArticleForms.Case.NOMINATIVE,
             gender = ArticleForms.Gender.PLURAL,
         ),
@@ -239,7 +239,7 @@ object DrillCaseEndings {
         ),
         CaseEndingTemplate(
             key = "akk_pl_fuer_grosseltern",
-            prompt = "Die Blumen sind für ${DrillItem.GAP_MARKER} Großeltern.",
+            prompt = "Diese Blumen sind für ${DrillItem.GAP_MARKER} Großeltern.",
             trigger = "für",
             case = ArticleForms.Case.ACCUSATIVE,
             gender = ArticleForms.Gender.PLURAL,
@@ -353,6 +353,9 @@ object DrillCaseEndings {
 
         // ==========================================
         // 4. Genitiv (12 items)
+        //
+        // Triggers are deliberately varied so no trigger is dense enough to
+        // repeat within a shuffled round (see DrillContentAuditTest).
         // ==========================================
         // Maskulin (des)
         CaseEndingTemplate(
@@ -364,18 +367,20 @@ object DrillCaseEndings {
         ),
         CaseEndingTemplate(
             key = "gen_m_wegen_streiks",
-            prompt = "Wegen ${DrillItem.GAP_MARKER} Streiks fährt kein Zug.",
+            prompt = "Wegen ${DrillItem.GAP_MARKER} Streiks fährt heute kein Zug.",
             trigger = "wegen",
             case = ArticleForms.Case.GENITIVE,
             gender = ArticleForms.Gender.MASCULINE,
         ),
+        // Neutrum (des)
         CaseEndingTemplate(
-            key = "gen_m_waehrend_sommers",
-            prompt = "Während ${DrillItem.GAP_MARKER} Sommers reisen wir viel.",
+            key = "gen_n_waehrend_konzerts",
+            prompt = "Während ${DrillItem.GAP_MARKER} Konzerts war es ruhig.",
             trigger = "während",
             case = ArticleForms.Case.GENITIVE,
-            gender = ArticleForms.Gender.MASCULINE,
+            gender = ArticleForms.Gender.NEUTER,
         ),
+        // Maskulin (des)
         CaseEndingTemplate(
             key = "gen_m_anstatt_kaffees",
             prompt = "Anstatt ${DrillItem.GAP_MARKER} Kaffees trinkt er Tee.",
@@ -385,47 +390,48 @@ object DrillCaseEndings {
         ),
         // Feminin (der)
         CaseEndingTemplate(
-            key = "gen_f_trotz_kaelte",
-            prompt = "Trotz ${DrillItem.GAP_MARKER} Kälte spielt das Kind draußen.",
-            trigger = "trotz",
+            key = "gen_f_ausserhalb_stadt",
+            prompt = "Außerhalb ${DrillItem.GAP_MARKER} Stadt gibt es kaum Parkplätze.",
+            trigger = "außerhalb",
             case = ArticleForms.Case.GENITIVE,
             gender = ArticleForms.Gender.FEMININE,
         ),
         CaseEndingTemplate(
-            key = "gen_f_wegen_verspaetung",
-            prompt = "Wegen ${DrillItem.GAP_MARKER} Verspätung verpasst er den Termin.",
-            trigger = "wegen",
+            key = "gen_f_innerhalb_woche",
+            prompt = "Innerhalb ${DrillItem.GAP_MARKER} Woche war alles erledigt.",
+            trigger = "innerhalb",
             case = ArticleForms.Case.GENITIVE,
             gender = ArticleForms.Gender.FEMININE,
         ),
         CaseEndingTemplate(
-            key = "gen_f_waehrend_pause",
-            prompt = "Während ${DrillItem.GAP_MARKER} Pause essen wir.",
-            trigger = "während",
+            key = "gen_f_anlaesslich_feier",
+            prompt = "Anlässlich ${DrillItem.GAP_MARKER} Feier backen wir Kuchen.",
+            trigger = "anlässlich",
             case = ArticleForms.Case.GENITIVE,
             gender = ArticleForms.Gender.FEMININE,
         ),
         // Neutrum (des)
         CaseEndingTemplate(
-            key = "gen_n_trotz_unwetters",
-            prompt = "Trotz ${DrillItem.GAP_MARKER} Unwetters fliegen wir heute.",
-            trigger = "trotz",
+            key = "gen_n_unweit_bahnhofs",
+            prompt = "Unweit ${DrillItem.GAP_MARKER} Bahnhofs liegt ein kleines Café.",
+            trigger = "unweit",
             case = ArticleForms.Case.GENITIVE,
             gender = ArticleForms.Gender.NEUTER,
         ),
         CaseEndingTemplate(
-            key = "gen_n_wegen_festes",
-            prompt = "Wegen ${DrillItem.GAP_MARKER} Festes ist die Straße gesperrt.",
-            trigger = "wegen",
+            key = "gen_n_jenseits_dorfes",
+            prompt = "Jenseits ${DrillItem.GAP_MARKER} Dorfes liegt eine kleine Kirche.",
+            trigger = "jenseits",
             case = ArticleForms.Case.GENITIVE,
             gender = ArticleForms.Gender.NEUTER,
         ),
+        // Maskulin (des)
         CaseEndingTemplate(
-            key = "gen_n_waehrend_konzerts",
-            prompt = "Während ${DrillItem.GAP_MARKER} Konzerts war es ruhig.",
-            trigger = "während",
+            key = "gen_m_infolge_unfalls",
+            prompt = "Infolge ${DrillItem.GAP_MARKER} Unfalls wurde die Straße gesperrt.",
+            trigger = "infolge",
             case = ArticleForms.Case.GENITIVE,
-            gender = ArticleForms.Gender.NEUTER,
+            gender = ArticleForms.Gender.MASCULINE,
         ),
         // Plural (der)
         CaseEndingTemplate(

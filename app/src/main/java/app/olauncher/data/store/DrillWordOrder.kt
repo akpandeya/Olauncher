@@ -208,9 +208,9 @@ object DrillWordOrder {
             category = Category.VERB_LAST_SUBORDINATE,
             item = WordOrderItem(
                 id = DrillItemId(DrillType.WORD_ORDER, "sub_wenn_anrufen"),
-                tiles = listOf("Ich", "rufe", "dich", "an", "wenn", "ich", "Zeit", "habe"),
+                tiles = listOf("Ich", "rufe", "dich", "an", "wenn", "ich", "fertig", "bin"),
                 accepted = listOf(
-                    listOf("Ich", "rufe", "dich", "an", "wenn", "ich", "Zeit", "habe"),
+                    listOf("Ich", "rufe", "dich", "an", "wenn", "ich", "fertig", "bin"),
                 ),
                 hint = "Nebensatz: Konjugiertes Verb am Satzende nach wenn",
             ),

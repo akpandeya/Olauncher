@@ -328,7 +328,7 @@ object DrillVerbPrepositions {
             verb = "berichten",
             preposition = "von",
             case = "Dativ",
-            sentence = "Die Reporterin berichtet live ${DrillItem.GAP_MARKER} dem Unfallort.",
+            sentence = "Die Reporterin berichtet live ${DrillItem.GAP_MARKER} der Unfallstelle.",
             choices = listOf("von", "über", "aus", "bei"),
         ),
         // 40. warnen vor + Dativ
@@ -352,7 +352,7 @@ object DrillVerbPrepositions {
             verb = "fliehen",
             preposition = "vor",
             case = "Dativ",
-            sentence = "Die Tiere fliehen vor Schreck ${DrillItem.GAP_MARKER} dem Feuer.",
+            sentence = "Die Tiere fliehen ${DrillItem.GAP_MARKER} dem Feuer.",
             choices = listOf("vor", "von", "aus", "bei"),
         ),
         // 43. leiden an + Dativ
@@ -368,7 +368,7 @@ object DrillVerbPrepositions {
             verb = "leiden",
             preposition = "unter",
             case = "Dativ",
-            sentence = "Viele Menschen im Sommer leiden ${DrillItem.GAP_MARKER} der großen Hitze.",
+            sentence = "Viele Menschen leiden im Sommer ${DrillItem.GAP_MARKER} der großen Hitze.",
             choices = listOf("unter", "an", "von", "bei"),
         ),
         // 45. zweifeln an + Dativ
@@ -400,7 +400,7 @@ object DrillVerbPrepositions {
             verb = "sterben",
             preposition = "an",
             case = "Dativ",
-            sentence = "Früher starben viele Leute ${DrillItem.GAP_MARKER} einfachen Infektionen.",
+            sentence = "Früher starben viele Menschen ${DrillItem.GAP_MARKER} einfachen Infektionen.",
             choices = listOf("an", "von", "aus", "durch"),
         ),
         // 49. sich gewöhnen an + Akkusativ
