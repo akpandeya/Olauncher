@@ -21,8 +21,11 @@ import app.olauncher.data.store.ReviewEvent
 import app.olauncher.data.store.ReviewEventsStore
 import app.olauncher.data.store.ReviewPreview
 import app.olauncher.data.store.ReviewSessionLogic
+import app.olauncher.data.store.ReviewSummaryItem
+import app.olauncher.data.store.ReviewSummaryLogic
 import app.olauncher.data.store.Word
 import app.olauncher.databinding.FragmentReviewBinding
+import app.olauncher.databinding.ItemReviewSummaryBinding
 import app.olauncher.helper.Haptics
 import app.olauncher.helper.MotionPolicy
 import app.olauncher.helper.SystemMotion
@@ -197,6 +200,7 @@ class ReviewFragment : BaseFragment() {
         b.reviewCard.rotationY = 0f
         b.reviewCard.isVisible = remaining > 0
         b.btnAddToList.isVisible = remaining > 0
+        b.summaryHeader.isVisible = remaining == 0 && sessionEvents.isNotEmpty()
         b.summaryContainer.isVisible = remaining == 0 && sessionEvents.isNotEmpty()
         b.emptyContainer.isVisible = remaining == 0 && sessionEvents.isEmpty()
         if (remaining == 0 && sessionEvents.isEmpty()) {
@@ -228,6 +232,41 @@ class ReviewFragment : BaseFragment() {
             b.tvComeback.isVisible = true
         } else {
             b.tvComeback.isVisible = false
+        }
+
+        val eventMap = sessionEvents.associateBy { it.wordId }
+        val summaryItems = queue.mapIndexed { index, word ->
+            val event = eventMap[word.id]
+            val result = event?.result ?: ReviewEvent.Result.KNEW
+            val currentWord = store.get(word.id) ?: word
+            ReviewSummaryItem(word = currentWord, result = result, sessionIndex = index)
+        }
+        val sortedItems = ReviewSummaryLogic.sort(summaryItems)
+
+        b.summaryList.removeAllViews()
+        for (item in sortedItems) {
+            val rowBinding = ItemReviewSummaryBinding.inflate(layoutInflater, b.summaryList, false)
+            rowBinding.tvWord.text = item.word.text
+            when (item.result) {
+                ReviewEvent.Result.KNEW -> {
+                    rowBinding.ivMark.setImageResource(R.drawable.ic_check)
+                    rowBinding.ivMark.setColorFilter(ContextCompat.getColor(context, R.color.accentSage))
+                    rowBinding.tvMeaning.isVisible = false
+                }
+                ReviewEvent.Result.ALMOST -> {
+                    rowBinding.ivMark.setImageResource(R.drawable.ic_dot)
+                    rowBinding.ivMark.setColorFilter(ContextCompat.getColor(context, R.color.accentSand))
+                    rowBinding.tvMeaning.isVisible = false
+                }
+                ReviewEvent.Result.AGAIN -> {
+                    rowBinding.ivMark.setImageResource(R.drawable.ic_close)
+                    rowBinding.ivMark.setColorFilter(ContextCompat.getColor(context, R.color.accentRose))
+                    val correction = ReviewSummaryLogic.formatCorrection(item.word.meaning, item.word.context)
+                    rowBinding.tvMeaning.text = correction
+                    rowBinding.tvMeaning.isVisible = correction.isNotEmpty()
+                }
+            }
+            b.summaryList.addView(rowBinding.root)
         }
     }
 

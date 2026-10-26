@@ -58,6 +58,36 @@
             tools:max="13"
             tools:progress="10" />
 
+        <!-- Summary header pinned at top when finished -->
+        <LinearLayout
+            android:id="@+id/summaryHeader"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <TextView
+                android:id="@+id/tvSummary"
+                style="@style/TextSmall"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingVertical="4dp"
+                tools:text="Done · 5 knew · 2 almost · 1 again" />
+
+            <TextView
+                android:id="@+id/tvComeback"
+                style="@style/TextSmall"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingVertical="4dp"
+                android:textColor="?attr/accentColor"
+                android:visibility="gone"
+                tools:text="Welcome back — comeback #7"
+                tools:visibility="visible" />
+
+        </LinearLayout>
+
     </LinearLayout>
 
     <ScrollView
@@ -166,24 +196,11 @@
                 android:visibility="gone"
                 tools:visibility="visible">
 
-                <TextView
-                    android:id="@+id/tvSummary"
-                    style="@style/TextSmall"
+                <LinearLayout
+                    android:id="@+id/summaryList"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:paddingVertical="4dp"
-                    tools:text="Done · 5 knew · 2 almost · 1 again" />
-
-                <TextView
-                    android:id="@+id/tvComeback"
-                    style="@style/TextSmall"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingVertical="4dp"
-                    android:textColor="?attr/accentColor"
-                    android:visibility="gone"
-                    tools:text="Welcome back — comeback #7"
-                    tools:visibility="visible" />
+                    android:orientation="vertical" />
 
             </LinearLayout>
 

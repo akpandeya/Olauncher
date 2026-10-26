@@ -50,6 +50,7 @@ class DrillQuiz(
 
     private val firstAttemptsMap = mutableMapOf<DrillItemId, Boolean>()
     private val itemResultsMap = mutableMapOf<DrillItemId, DrillResult>()
+    private val learnerAnswersMap = mutableMapOf<DrillItemId, String>()
     private val typedMissIds = mutableSetOf<DrillItemId>()
     private val queue = ArrayDeque<DrillItem>()
     private var question: DrillQuizQuestion? = null
@@ -102,6 +103,9 @@ class DrillQuiz(
     /** Map of overall results for each item in the round. */
     fun itemResults(): Map<DrillItemId, DrillResult> = itemResultsMap.toMap()
 
+    /** Map of learner answers for items that were wrong or almost. */
+    fun learnerAnswers(): Map<DrillItemId, String> = learnerAnswersMap.toMap()
+
     /** Number of items answered correctly on the very first try. */
     val firstTryScore: Int get() = firstAttemptsMap.values.count { it }
 
@@ -119,6 +123,9 @@ class DrillQuiz(
         val isCorrect = choice == q.answer || choice.trim() in expectedOptions
         val result = QuizAnswer(isCorrect, q.answer)
         recordAttempt(q.item, isCorrect)
+        if (!isCorrect && q.item.id !in learnerAnswersMap) {
+            learnerAnswersMap[q.item.id] = choice
+        }
         lastAnswerValue = result
         return result
     }
@@ -144,6 +151,7 @@ class DrillQuiz(
         if (!nearMissOffered && isNearMiss(input, q.answer)) {
             nearMissOffered = true
             awaitingRetry = true
+            learnerAnswersMap[q.item.id] = input.trim()
             return QuizAnswer(correct = false, answer = q.answer, isNearMiss = true)
         }
 
@@ -152,6 +160,7 @@ class DrillQuiz(
         nearMissOffered = false
         val result = QuizAnswer(correct = false, answer = q.answer)
         lastAnswerValue = result
+        learnerAnswersMap[q.item.id] = input.trim()
         recordTypedResult(q.item, DrillResult.WRONG)
         return result
     }
