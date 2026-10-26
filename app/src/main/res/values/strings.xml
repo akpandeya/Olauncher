@@ -578,6 +578,7 @@
     <string name="drill_type_prepositions" tools:ignore="MissingTranslation">Prepositions</string>
     <string name="drill_type_pronouns" tools:ignore="MissingTranslation">Pronouns</string>
     <string name="drill_type_articles" tools:ignore="MissingTranslation">Articles</string>
+    <string name="drill_type_plurals" tools:ignore="MissingTranslation">Plurals</string>
     <string name="drill_type_with_percentage" tools:ignore="MissingTranslation">%1$s · %2$d%%</string>
     <string name="drill_round_choice" tools:ignore="MissingTranslation">Multiple choice</string>
     <string name="drill_round_typed" tools:ignore="MissingTranslation">Type the answer</string>

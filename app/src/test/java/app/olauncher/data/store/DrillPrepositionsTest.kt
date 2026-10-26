@@ -143,6 +143,6 @@ class DrillPrepositionsTest {
         }
 
         // Unsupported types return empty list
-        assertTrue(DrillTables.items(DrillType.PLURALS).isEmpty())
+        assertTrue(DrillTables.items(DrillType.CASE_ENDINGS).isEmpty())
     }
 }

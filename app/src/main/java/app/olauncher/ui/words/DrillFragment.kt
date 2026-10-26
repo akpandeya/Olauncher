@@ -128,7 +128,12 @@ class DrillFragment : BaseFragment() {
                     SharedOfflineGermanStore.get(appContext).gender(text)
                 } else null
             }
-            val items = DrillTables.items(drillType, words, genderLookup)
+            val pluralLookup: (String) -> String? = { text ->
+                if (Prefs(appContext).germanOfflineDictionary) {
+                    SharedOfflineGermanStore.get(appContext).plural(text)
+                } else null
+            }
+            val items = DrillTables.items(drillType, words, genderLookup, pluralLookup)
             if (items.isNotEmpty()) {
                 quiz = DrillQuiz(items)
             }
@@ -150,7 +155,12 @@ class DrillFragment : BaseFragment() {
                         SharedOfflineGermanStore.get(appContext).gender(text)
                     } else null
                 }
-                val items = DrillTables.items(drillType, words, genderLookup)
+                val pluralLookup: (String) -> String? = { text ->
+                    if (Prefs(appContext).germanOfflineDictionary) {
+                        SharedOfflineGermanStore.get(appContext).plural(text)
+                    } else null
+                }
+                val items = DrillTables.items(drillType, words, genderLookup, pluralLookup)
                 quiz = DrillQuiz(items)
                 selectedChoice = null
                 lastRenderedItemId = null
