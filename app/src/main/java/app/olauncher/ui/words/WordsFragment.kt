@@ -15,6 +15,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.fragment.findNavController
 import app.olauncher.R
 import app.olauncher.data.Prefs
+import app.olauncher.data.store.DrillTables
 import app.olauncher.data.store.ReviewComebacks
 import app.olauncher.data.store.ReviewEventsStore
 import app.olauncher.data.store.StudyGrid
@@ -26,6 +27,7 @@ import app.olauncher.databinding.ItemWordBinding
 import app.olauncher.helper.DrawerScrollHelper
 import app.olauncher.helper.DictionaryApps
 import app.olauncher.helper.Haptics
+import app.olauncher.helper.createChoiceDialog
 import app.olauncher.helper.dpToPx
 import app.olauncher.helper.getColorFromAttr
 import app.olauncher.helper.hapticLongClick
@@ -63,6 +65,7 @@ class WordsFragment : BaseFragment() {
             true
         }
         binding.btnClearSearch.setOnClickListener { binding.etSearch.text?.clear() }
+        binding.tvTitle.setOnClickListener { openDrillsPicker() }
 
         // The activity is edge-to-edge, so the window is not resized for the keyboard.
         // Pad the page by the IME inset so the search field stays just above the keyboard.
@@ -192,6 +195,7 @@ class WordsFragment : BaseFragment() {
             configure = { menu ->
                 menu.add(Menu.NONE, 1, Menu.NONE, R.string.words_edit)
                 menu.add(Menu.NONE, 5, Menu.NONE, R.string.words_conjugate)
+                menu.add(Menu.NONE, 6, Menu.NONE, R.string.drills)
                 menu.add(Menu.NONE, 2, Menu.NONE, DictionaryApps.actionLabel(context, Prefs(context).germanDictionaryApp))
                 menu.add(Menu.NONE, 4, Menu.NONE, R.string.word_lists_popup_lists)
                 menu.add(Menu.NONE, 3, Menu.NONE, R.string.words_delete)
@@ -200,10 +204,42 @@ class WordsFragment : BaseFragment() {
             when (item.itemId) {
                 1 -> WordDialogs.showEditDialog(context, word, ::liveViewLifecycleOwner) { render() }
                 5 -> openConjugation(word)
+                6 -> openDrillsPicker()
                 2 -> DictionaryApps.open(context, word.text)
                 4 -> WordDialogs.showListsDialog(context, word) { render() }
                 3 -> WordDialogs.showDeleteDialog(context, word) { render() }
             }
+        }
+    }
+
+    private fun openDrillsPicker() {
+        val context = context ?: return
+        val available = DrillTables.available()
+        if (available.isEmpty()) return
+        val prefs = Prefs(context)
+        val lastType = prefs.drillLastType
+        val checkedIndex = available.indexOfFirst { it.id == lastType }.let { if (it >= 0) it else 0 }
+        val dialog = context.createChoiceDialog(
+            title = R.string.drills,
+            items = available.map { type -> context.getString(DrillTables.labelRes(type)) },
+            checkedIndex = checkedIndex,
+            onPick = { index ->
+                val picked = available[index]
+                prefs.drillLastType = picked.id
+                openDrill(picked.id)
+            },
+        )
+        dialog.showRespectingStatusBar()
+    }
+
+    private fun openDrill(drillTypeId: String) {
+        Haptics.tick(binding.root)
+        val navController = findNavController()
+        if (navController.currentDestination?.id == R.id.wordsFragment) {
+            navController.navigate(
+                R.id.action_wordsFragment_to_drillFragment,
+                bundleOf("drillType" to drillTypeId),
+            )
         }
     }
 

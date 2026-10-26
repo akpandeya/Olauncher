@@ -207,6 +207,13 @@
             app:exitAnim="@animator/fade_exit"
             app:popEnterAnim="@animator/fade_enter"
             app:popExitAnim="@animator/fade_exit" />
+        <action
+            android:id="@+id/action_wordsFragment_to_drillFragment"
+            app:destination="@id/drillFragment"
+            app:enterAnim="@animator/fade_enter"
+            app:exitAnim="@animator/fade_exit"
+            app:popEnterAnim="@animator/fade_enter"
+            app:popExitAnim="@animator/fade_exit" />
     </fragment>
 
     <fragment
@@ -293,5 +300,15 @@
         android:name="app.olauncher.ui.german.GermanSetupFragment"
         android:label="GermanSetupFragment"
         tools:layout="@layout/fragment_german_setup" />
+
+    <fragment
+        android:id="@+id/drillFragment"
+        android:name="app.olauncher.ui.words.DrillFragment"
+        android:label="DrillFragment"
+        tools:layout="@layout/fragment_drill">
+        <argument
+            android:name="drillType"
+            app:argType="string" />
+    </fragment>
 
 </navigation>
