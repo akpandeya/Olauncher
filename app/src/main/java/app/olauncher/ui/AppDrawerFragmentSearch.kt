@@ -45,6 +45,10 @@ import app.olauncher.data.store.OfflineGermanStore
 import app.olauncher.helper.WordSuggest
 import app.olauncher.helper.WordLookupRows
 import app.olauncher.helper.DictionaryApps
+import app.olauncher.helper.DrawerDrills
+import app.olauncher.data.store.DrillScores
+import app.olauncher.data.store.DrillTables
+import app.olauncher.ui.today.cards.DrillsCardLogic
 import app.olauncher.data.store.WordLookup
 import app.olauncher.data.store.WordsStore
 import kotlinx.coroutines.delay
@@ -176,6 +180,35 @@ internal fun AppDrawerFragment.suggestItems(query: String): List<String> =
     }
 
 internal fun AppDrawerFragment.suggestOnlineAllowed(): Boolean = prefs.germanEnabled && prefs.germanSpellSuggest
+
+/**
+ * Drill rows for the drawer search: typing "drill" offers the suggested round and the
+ * hub; nothing shows when German is off or the query is not a drill query.
+ */
+internal fun AppDrawerFragment.drillRows(query: String): List<AppModel.Result> {
+    if (!prefs.germanEnabled || !DrawerDrills.matches(query)) return emptyList()
+    val ctx = context ?: return emptyList()
+    val suggested = DrillsCardLogic.suggestedType(
+        DrillTables.available(),
+        DrillScores.decode(prefs.drillScores),
+        prefs.drillLastType,
+    ) ?: return emptyList()
+    val suggestedText = ctx.getString(
+        R.string.drills_card_suggested,
+        ctx.getString(DrillTables.labelRes(suggested)),
+        DrillTables.ROUND_SIZE,
+    )
+    return DrawerDrills.rows(
+        query = query,
+        germanEnabled = prefs.germanEnabled,
+        suggestedTypeId = suggested.id,
+        suggestedRowText = suggestedText,
+        allDrillsText = ctx.getString(R.string.drills_drawer_all),
+    ).map { row ->
+        if (row.typeId == null) AppModel.Result(row.text, AppModel.Result.Action.OpenDrills)
+        else AppModel.Result(row.text, AppModel.Result.Action.StartDrill(row.typeId))
+    }
+}
 
 /** Cancels any pending online suggestion and, when allowed, starts one for the unmatched `:sw` items. */
 internal fun AppDrawerFragment.scheduleSuggest(query: String, delayMs: Long) {

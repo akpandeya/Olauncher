@@ -41,6 +41,8 @@ class DrawerSearchInput(
     val currencyRows: (String) -> List<AppModel.Result>,
     val spellRows: (List<String>) -> List<AppModel.Result>,
     val lookUpRows: (String) -> List<AppModel.Result>,
+    /** Drill rows for a "drill" query; empty unless German is on. */
+    val drillRows: (String) -> List<AppModel.Result> = { emptyList() },
     /** Current local time, injectable for tests. */
     val now: () -> java.time.LocalTime = { java.time.LocalTime.now() },
     /** Current moment with zone, injectable for tests. */
@@ -181,6 +183,7 @@ object DrawerSearch {
             }
             null -> Unit
         }
+        safeAdd(rows) { input.drillRows(query) }
         // Runs on the Filter worker thread; a newer query supersedes this one.
         safeAdd(rows) {
             val source = input.contactSource()

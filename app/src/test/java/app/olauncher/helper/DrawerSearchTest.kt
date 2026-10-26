@@ -41,6 +41,7 @@ class DrawerSearchTest {
         profiles: List<app.olauncher.data.ProfileChoice> = emptyList(),
         calendar: (String) -> List<AppModel.Result> = { emptyList() },
         currency: (String) -> List<AppModel.Result> = { emptyList() },
+        drills: (String) -> List<AppModel.Result> = { emptyList() },
     ) = DrawerSearchInput(
         query = query,
         apps = apps,
@@ -61,6 +62,7 @@ class DrawerSearchTest {
         currencyRows = currency,
         spellRows = { emptyList() },
         lookUpRows = { emptyList() },
+        drillRows = drills,
         profileChoices = { profiles },
         userKey = { "u0" },
     )
@@ -175,6 +177,21 @@ class DrawerSearchTest {
         val cal = AppModel.Result("Event", AppModel.Result.Action.Event(7L))
         val result = DrawerSearch.run(input("1 eur", currency = { listOf(cur) }, calendar = { listOf(cal) }))
         assertEquals(listOf<AppModel>(cur, cal), result.items.filterIsInstance<AppModel.Result>().filter { it === cur || it === cal })
+    }
+
+    @Test
+    fun `drill rows come before apps for a drill query`() {
+        val drillRow = AppModel.Result("Suggested: Plurals · Start 10", AppModel.Result.Action.StartDrill("plurals"))
+        val matchingApp = app("Drill Master")
+        val result = DrawerSearch.run(input("drill", listOf(matchingApp), drills = { listOf(drillRow) }))
+        assertEquals(listOf<AppModel>(drillRow, matchingApp), result.items)
+    }
+
+    @Test
+    fun `throwing drill provider adds no rows and does not crash`() {
+        val a = app("Drill Master")
+        val result = DrawerSearch.run(input("drill", listOf(a), drills = { throw IllegalStateException("boom") }))
+        assertEquals(listOf<AppModel>(a), result.items)
     }
 
     @Test
