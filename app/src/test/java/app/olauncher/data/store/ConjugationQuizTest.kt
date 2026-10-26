@@ -303,4 +303,92 @@ class ConjugationQuizTest {
         assertNotNull(ans)
         assertTrue(ans!!.correct)
     }
+
+    @Test
+    fun isNearMissIdentifiesOneLetterAddedMissingOrWrong() {
+        // One letter added
+        assertTrue(isNearMiss("macher", "mache"))
+        assertTrue(isNearMiss("smache", "mache"))
+        assertTrue(isNearMiss("fange ann", "fange an"))
+
+        // One letter missing
+        assertTrue(isNearMiss("mach", "mache"))
+        assertTrue(isNearMiss("ache", "mache"))
+        assertTrue(isNearMiss("fange a", "fange an"))
+
+        // One letter wrong (substitution)
+        assertTrue(isNearMiss("macht", "mache"))
+        assertTrue(isNearMiss("sache", "mache"))
+        assertTrue(isNearMiss("fange am", "fange an"))
+
+        // First letter case is insensitive
+        assertTrue(isNearMiss("Macht", "mache"))
+        assertTrue(isNearMiss("Macher", "mache"))
+        assertTrue(isNearMiss("macht", "Mache"))
+    }
+
+    @Test
+    fun isNearMissIdentifiesUmlautEquivalents() {
+        // ä <-> ae
+        assertTrue(isNearMiss("waere", "wäre"))
+        assertTrue(isNearMiss("Waere", "wäre"))
+        assertTrue(isNearMiss("wäre", "waere"))
+
+        // ö <-> oe
+        assertTrue(isNearMiss("koennen", "können"))
+        assertTrue(isNearMiss("Koennen", "können"))
+        assertTrue(isNearMiss("können", "koennen"))
+
+        // ü <-> ue
+        assertTrue(isNearMiss("ueber", "über"))
+        assertTrue(isNearMiss("Ueber", "über"))
+        assertTrue(isNearMiss("über", "ueber"))
+
+        // ß <-> ss
+        assertTrue(isNearMiss("gross", "groß"))
+        assertTrue(isNearMiss("Gross", "groß"))
+        assertTrue(isNearMiss("groß", "gross"))
+
+        // Base vowel vs umlaut is 1 letter wrong (covered by edit distance 1)
+        assertTrue(isNearMiss("ware", "wäre"))
+        assertTrue(isNearMiss("konnen", "können"))
+        assertTrue(isNearMiss("uber", "über"))
+    }
+
+    @Test
+    fun isNearMissRejectsExactMatches() {
+        assertFalse(isNearMiss("mache", "mache"))
+        assertFalse(isNearMiss("Mache", "mache"))
+        assertFalse(isNearMiss("wäre", "wäre"))
+        assertFalse(isNearMiss("Wäre", "wäre"))
+        assertFalse(isNearMiss("groß", "groß"))
+    }
+
+    @Test
+    fun isNearMissRejectsMultipleDifferences() {
+        // Umlaut equivalent AND extra letter
+        assertFalse(isNearMiss("waeren", "wäre"))
+
+        // 2 or more letters wrong
+        assertFalse(isNearMiss("machst", "mache"))
+        assertFalse(isNearMiss("machen", "machst"))
+        assertFalse(isNearMiss("xyz", "mache"))
+        assertFalse(isNearMiss("completely wrong", "mache"))
+    }
+
+    @Test
+    fun isNearMissRejectsEmptyAndWhitespaceStrings() {
+        assertFalse(isNearMiss("", "mache"))
+        assertFalse(isNearMiss("   ", "mache"))
+        assertFalse(isNearMiss("mache", ""))
+        assertFalse(isNearMiss("", ""))
+    }
+
+    @Test
+    fun isNearMissHandlesSlashAlternativesAndTrimming() {
+        assertTrue(isNearMiss("  macht  ", "mache"))
+        assertTrue(isNearMiss("habe gefahre", "habe gefahren / bin gefahren"))
+        assertTrue(isNearMiss("bin gefahre", "habe gefahren / bin gefahren"))
+        assertFalse(isNearMiss("habe gefahren", "habe gefahren / bin gefahren"))
+    }
 }

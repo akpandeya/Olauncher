@@ -592,6 +592,7 @@
     <string name="drill_progress" tools:ignore="MissingTranslation">%1$s · %2$d of %3$d</string>
     <string name="drill_empty_state" tools:ignore="MissingTranslation">No drill items found</string>
     <string name="drill_restart" tools:ignore="MissingTranslation">Restart</string>
+    <string name="drill_near_miss" tools:ignore="MissingTranslation">Very close. Check the spelling and try once more.</string>
     <string name="conjugation_not_in_dictionary" tools:ignore="MissingTranslation">“%1$s” isn\'t a verb in the offline dictionary</string>
     <string name="conjugation_progress" tools:ignore="MissingTranslation">%1$s · %2$d of %3$d</string>
     <string name="conjugation_tense_present" tools:ignore="MissingTranslation">Präsens</string>

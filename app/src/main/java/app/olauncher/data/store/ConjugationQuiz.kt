@@ -10,7 +10,12 @@ enum class FormStatus { PENDING, RIGHT_FIRST_TRY, MISSED }
 data class QuizQuestion(val formIndex: Int, val pronoun: String, val answer: String, val choices: List<String>)
 
 /** The outcome of one pick: whether it was [correct] and the form that was asked for. */
-data class QuizAnswer(val correct: Boolean, val answer: String)
+data class QuizAnswer(
+    val correct: Boolean,
+    val answer: String,
+    val isNearMiss: Boolean = false,
+    val isAlmost: Boolean = false,
+)
 
 /** Only a right answer moves on by itself; a wrong one waits so the right form can be read. */
 fun shouldAutoAdvance(answer: QuizAnswer?): Boolean = answer?.correct == true
@@ -43,6 +48,79 @@ fun checkTypedAnswer(input: String, expected: String): Boolean {
         return false
     }
     return normInput.drop(1) == normExpected.drop(1)
+}
+
+private val UMLAUT_EQUIVALENTS = listOf(
+    "ä" to "ae",
+    "ö" to "oe",
+    "ü" to "ue",
+    "ß" to "ss",
+)
+
+private fun levenshteinDistance(s1: String, s2: String): Int {
+    if (s1 == s2) return 0
+    if (s1.isEmpty()) return s2.length
+    if (s2.isEmpty()) return s1.length
+
+    val prev = IntArray(s2.length + 1) { it }
+    val curr = IntArray(s2.length + 1)
+
+    for (i in 1..s1.length) {
+        curr[0] = i
+        for (j in 1..s2.length) {
+            val cost = if (s1[i - 1] == s2[j - 1]) 0 else 1
+            curr[j] = minOf(
+                curr[j - 1] + 1,
+                prev[j] + 1,
+                prev[j - 1] + cost,
+            )
+        }
+        System.arraycopy(curr, 0, prev, 0, s2.length + 1)
+    }
+    return prev[s2.length]
+}
+
+private fun isOneUmlautEquivalentAway(s1: String, s2: String): Boolean {
+    for ((single, double) in UMLAUT_EQUIVALENTS) {
+        var idx = s1.indexOf(single)
+        while (idx >= 0) {
+            val replaced = s1.substring(0, idx) + double + s1.substring(idx + single.length)
+            if (replaced == s2) return true
+            idx = s1.indexOf(single, idx + 1)
+        }
+        idx = s1.indexOf(double)
+        while (idx >= 0) {
+            val replaced = s1.substring(0, idx) + single + s1.substring(idx + double.length)
+            if (replaced == s2) return true
+            idx = s1.indexOf(double, idx + 1)
+        }
+    }
+    return false
+}
+
+/**
+ * Checks whether [input] is a near miss for [expected]:
+ * - Not an exact match (exact match returns false)
+ * - One letter added, missing, or wrong (Levenshtein distance == 1)
+ * - One umlaut-equivalent difference (ä/ae, ö/oe, ü/ue, ß/ss)
+ * - Case-sensitive except for the first letter
+ */
+fun isNearMiss(input: String, expected: String): Boolean {
+    if (checkTypedAnswer(input, expected)) return false
+    if ("/" in expected) {
+        return expected.split(Regex("\\s*/\\s*")).any { isNearMiss(input, it) }
+    }
+    val normInput = Normalizer.normalize(input.trim(), Normalizer.Form.NFC)
+    val normExpected = Normalizer.normalize(expected.trim(), Normalizer.Form.NFC)
+    if (normInput.isEmpty() || normExpected.isEmpty()) {
+        return false
+    }
+    val s1 = normInput.replaceFirstChar { it.lowercase() }
+    val s2 = normExpected.replaceFirstChar { it.lowercase() }
+    if (levenshteinDistance(s1, s2) == 1) {
+        return true
+    }
+    return isOneUmlautEquivalentAway(s1, s2)
 }
 
 /**
