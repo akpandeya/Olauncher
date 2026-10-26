@@ -364,8 +364,10 @@ Motion principles for the implementation:
   out toward the left for 140ms, the new card slides in from the right for 220ms,
   easing `cubic-bezier(.2, 0, 0, 1)` (decelerate). Only the question card animates —
   the header, progress and segment bar stay put.
-- Right answer: the tile settles to `accentSage` and a check mark pops for 180ms;
-  auto-advance after about 500ms.
+- Right answer: the tapped tile settles to `accentSage` and pops for 180ms, settling
+  from a 1.12 overshoot; the `✓` joins the tile text inside the same pop (the Android
+  equivalent of the mock's separately popped check glyph — a typed right answer pops
+  the answer field the same way, with no check glyph). Auto-advance after about 500ms.
 - Wrong answer: a brief `accentRose` flash plus a 320ms shake on the tapped tile,
   other tiles dim, then the inline correction (one-line rule, one tap to continue)
   slides up for 200ms — the same correction language as #639.
