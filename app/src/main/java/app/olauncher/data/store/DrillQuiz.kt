@@ -130,12 +130,7 @@ class DrillQuiz(
         val isExact = checkTypedAnswer(input, q.answer)
         if (isExact) {
             val wasNearMiss = nearMissOffered
-            val result = QuizAnswer(
-                correct = true,
-                answer = q.answer,
-                isNearMiss = false,
-                isAlmost = wasNearMiss,
-            )
+            val result = QuizAnswer(correct = true, answer = q.answer, isAlmost = wasNearMiss)
             awaitingRetry = false
             nearMissOffered = false
             lastAnswerValue = result
@@ -148,23 +143,13 @@ class DrillQuiz(
         if (!nearMissOffered && isNearMiss(input, q.answer)) {
             nearMissOffered = true
             awaitingRetry = true
-            return QuizAnswer(
-                correct = false,
-                answer = q.answer,
-                isNearMiss = true,
-                isAlmost = false,
-            )
+            return QuizAnswer(correct = false, answer = q.answer, isNearMiss = true)
         }
 
         // Second miss (if nearMissOffered) or far miss (not near miss on first try)
         awaitingRetry = false
         nearMissOffered = false
-        val result = QuizAnswer(
-            correct = false,
-            answer = q.answer,
-            isNearMiss = false,
-            isAlmost = false,
-        )
+        val result = QuizAnswer(correct = false, answer = q.answer)
         lastAnswerValue = result
         recordTypedResult(q.item, DrillResult.WRONG)
         return result
@@ -207,7 +192,9 @@ class DrillQuiz(
     }
 
     private fun recordTypedResult(item: DrillItem, result: DrillResult) {
-        if (round == DrillRound.TYPED) {
+        if (round != DrillRound.TYPED) return
+        // A miss anywhere in the typed round stays a miss, so a later correct retry cannot erase it.
+        if (itemResultsMap[item.id] != DrillResult.WRONG) {
             itemResultsMap[item.id] = result
         }
         if (item.id !in firstAttemptsMap) {
