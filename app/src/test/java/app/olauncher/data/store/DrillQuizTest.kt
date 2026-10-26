@@ -551,4 +551,19 @@ class DrillQuizTest {
         assertEquals(DrillResult.WRONG, quiz.itemResults()[item1.id])
         assertEquals(0, quiz.almostScore)
     }
+
+    @Test
+    fun choiceMissDoesNotCarryIntoTypedRound() {
+        val quiz = DrillQuiz(listOf(item1))
+        // Choice round: wrong pick, then the re-queued item is picked right
+        quiz.answer("bei")
+        quiz.advance()
+        quiz.answer("mit")
+        quiz.advance()
+
+        // Typed round: a correct typed answer sets the typed-round result
+        assertEquals(DrillRound.TYPED, quiz.round)
+        quiz.answerTyped("mit")
+        assertEquals(DrillResult.RIGHT, quiz.itemResults()[item1.id])
+    }
 }

@@ -50,6 +50,7 @@ class DrillQuiz(
 
     private val firstAttemptsMap = mutableMapOf<DrillItemId, Boolean>()
     private val itemResultsMap = mutableMapOf<DrillItemId, DrillResult>()
+    private val typedMissIds = mutableSetOf<DrillItemId>()
     private val queue = ArrayDeque<DrillItem>()
     private var question: DrillQuizQuestion? = null
     private var lastAnswerValue: QuizAnswer? = null
@@ -193,10 +194,9 @@ class DrillQuiz(
 
     private fun recordTypedResult(item: DrillItem, result: DrillResult) {
         if (round != DrillRound.TYPED) return
-        // A miss anywhere in the typed round stays a miss, so a later correct retry cannot erase it.
-        if (itemResultsMap[item.id] != DrillResult.WRONG) {
-            itemResultsMap[item.id] = result
-        }
+        if (result == DrillResult.WRONG) typedMissIds.add(item.id)
+        // A miss earlier in the typed round stays a miss, so a later correct retry cannot erase it.
+        itemResultsMap[item.id] = if (item.id in typedMissIds) DrillResult.WRONG else result
         if (item.id !in firstAttemptsMap) {
             firstAttemptsMap[item.id] = result == DrillResult.RIGHT
         }
