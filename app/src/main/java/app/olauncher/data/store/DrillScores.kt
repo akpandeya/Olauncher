@@ -102,6 +102,60 @@ object DrillScores {
         if (choiceAnswered + typedAnswered < MIN_ABANDONED_ANSWERS) null
         else roundEvidence(hasTypedRound, choiceAnswered, choiceRight, typedAnswered, typedRight)
 
+    /** One type's share of a finished or abandoned round, ready for [recordRound]. */
+    data class TypeRoundEvidence(
+        val asked: Int,
+        val firstTryRight: Int,
+        /** Right answers of this type: right choice picks plus right typed answers. */
+        val rightAnswers: Int,
+        val evidence: RoundEvidence,
+    )
+
+    /**
+     * Splits one round's answers per drill type, so a mixed round scores every type
+     * through its own evidence (#639). [first] holds the round's first attempts (choice
+     * and typed); [typed] holds the typed answers. Every answer lands on the type of
+     * its item only — a type never sees another type's typed answers.
+     *
+     * Typed answers carry the typed weight for their own type, including the types that
+     * used to be choice-only: the ladder graduates their items into typed questions too.
+     *
+     * An abandoned round is recorded only when at least [MIN_ABANDONED_ANSWERS] answers
+     * were given across the whole round — the threshold is checked once for the round
+     * (#624), never per type — and each present type then keeps its own evidence.
+     */
+    fun roundEvidenceByType(
+        first: Map<DrillItemId, Boolean>,
+        typed: Map<DrillItemId, DrillResult>,
+        abandoned: Boolean,
+    ): Map<DrillType, TypeRoundEvidence> {
+        if (abandoned && first.size < MIN_ABANDONED_ANSWERS) return emptyMap()
+        val typedIds = typed.keys
+        return (first.keys + typed.keys)
+            .map { it.type }
+            .distinct()
+            .associateWith { type ->
+                val typeFirst = first.filterKeys { it.type == type }
+                val typeTyped = typed.filterKeys { it.type == type }
+                // Typed answers are counted once, through typeTyped, never as choices too.
+                val typeChoices = typeFirst.filterKeys { it !in typedIds }
+                val choiceRight = typeChoices.values.count { it }
+                val typedRight = typeTyped.values.count { it == DrillResult.RIGHT }
+                TypeRoundEvidence(
+                    asked = typeFirst.size,
+                    firstTryRight = typeFirst.values.count { it },
+                    rightAnswers = choiceRight + typedRight,
+                    evidence = roundEvidence(
+                        hasTypedRound = typeTyped.isNotEmpty(),
+                        choiceAnswered = typeChoices.size,
+                        choiceRight = choiceRight,
+                        typedAnswered = typeTyped.size,
+                        typedRight = typedRight,
+                    ),
+                )
+            }
+    }
+
     /**
      * Adds one round to the score for [typeId]. The decayed counts are multiplied by [DECAY]
      * and the round evidence is added; the raw [asked] and [firstTryRight] keys keep their

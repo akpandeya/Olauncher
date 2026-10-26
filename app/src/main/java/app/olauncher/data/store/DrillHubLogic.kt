@@ -86,4 +86,29 @@ object DrillHubLogic {
         lastTypeId: String?,
     ): DrillType? =
         DrillScores.rankedWeakestFirst(types, scores).firstOrNull() ?: continueType(types, lastTypeId)
+
+    /**
+     * The hub's mixed round: the 2 to 3 weakest-ranked types that have a score,
+     * weakest first, with word order left out — it runs on its own round screen and
+     * never mixes, so the button must not name a type the round cannot contain. A
+     * single type when fewer than two mixable types have a score; when word order is
+     * the only scored type, that single round is a word-order round, as before.
+     *
+     * Only the hub's Practise-weakest button suggests this mix. The Today card and
+     * the drawer still start the single weakest type through [weakestType]; wiring
+     * them to the mix is future work.
+     */
+    fun weakestMix(
+        types: List<DrillType>,
+        scores: Map<String, DrillScores.Score>,
+        lastTypeId: String?,
+    ): List<DrillType> {
+        val ranked = DrillScores.rankedWeakestFirst(types, scores)
+        val mix = ranked.filterNot { it == DrillType.WORD_ORDER }.take(MIX_MAX_TYPES)
+        if (mix.isNotEmpty()) return mix
+        return listOfNotNull(weakestType(types, scores, lastTypeId))
+    }
+
+    /** How many types a mixed round samples at most. */
+    const val MIX_MAX_TYPES = 3
 }

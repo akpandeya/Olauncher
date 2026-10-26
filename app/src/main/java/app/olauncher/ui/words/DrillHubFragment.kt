@@ -22,8 +22,9 @@ import app.olauncher.ui.BaseFragment
 
 /**
  * Full-screen drills hub: the 9 drill types weakest first, with Continue and Practise weakest
- * suggestion buttons on top. A row tap starts a 10-item round of that type. The popup picker
- * it replaces lived in WordsFragment.
+ * suggestion buttons on top. A row tap starts a 5-8 item round of that type; Practise weakest
+ * starts the mixed round of the 2-3 weakest types. The popup picker it replaces lived in
+ * WordsFragment.
  */
 class DrillHubFragment : BaseFragment() {
 
@@ -48,19 +49,20 @@ class DrillHubFragment : BaseFragment() {
         val lastTypeId = prefs.drillLastType
 
         val continueType = DrillHubLogic.continueType(types, lastTypeId)
-        val weakestType = DrillHubLogic.weakestType(types, scores, lastTypeId)
+        val weakestMix = DrillHubLogic.weakestMix(types, scores, lastTypeId)
         // DrillTables.available() is a fixed list, so this only guards a future empty table.
         binding.btnContinue.isVisible = continueType != null
-        binding.btnWeakest.isVisible = weakestType != null
+        binding.btnWeakest.isVisible = weakestMix.isNotEmpty()
         binding.btnContinue.text = continueType?.let {
             getString(R.string.drill_hub_continue, getString(DrillTables.labelRes(it)))
         }
         binding.btnContinue.setOnClickListener { continueType?.let(::startRound) }
 
-        binding.btnWeakest.text = weakestType?.let {
-            getString(R.string.drill_hub_practise_weakest, getString(DrillTables.labelRes(it)))
+        binding.btnWeakest.text = weakestMix.joinToString(" · ") { getString(DrillTables.labelRes(it)) }
+            .let { getString(R.string.drill_hub_practise_weakest, it) }
+        binding.btnWeakest.setOnClickListener {
+            if (weakestMix.isNotEmpty()) startMixedRound(weakestMix)
         }
-        binding.btnWeakest.setOnClickListener { weakestType?.let(::startRound) }
 
         renderRows(types, scores)
     }
@@ -100,17 +102,28 @@ class DrillHubFragment : BaseFragment() {
         }
     }
 
-    /** A tap starts a 10-item round of the type and makes it the new last type. */
+    /** A tap starts a round of the type and makes it the new last type. */
     private fun startRound(type: DrillType) {
         val b = _binding ?: return
         Haptics.tick(b.root)
         Prefs(b.root.context.applicationContext).drillLastType = type.id
+        navigateToRound(listOf(type))
+    }
+
+    /** Starts a mixed round over the 2-3 weakest types. */
+    private fun startMixedRound(types: List<DrillType>) {
+        val b = _binding ?: return
+        Haptics.tick(b.root)
+        navigateToRound(types)
+    }
+
+    private fun navigateToRound(types: List<DrillType>) {
         val navController = findNavController()
         // Ignore a second tap delivered before the first navigation lands.
         if (navController.currentDestination?.id == R.id.drillHubFragment) {
             navController.navigate(
                 R.id.action_drillHubFragment_to_drillFragment,
-                bundleOf("drillType" to type.id),
+                bundleOf("drillType" to types.joinToString(",") { it.id }),
             )
         }
     }

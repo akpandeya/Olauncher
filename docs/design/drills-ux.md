@@ -76,6 +76,10 @@ answer submitted (a close-spelling retry is part of the same interaction, not a 
 one), or a Continue tap after a flashcard or an inline correction. A 5-item round with
 one flashcard and one correction lands around 7 interactions.
 
+The ~12 interactions are a soft target, not an enforced cap: an 8-step round answered
+wrong throughout runs about 15 interactions (an answer plus a Continue each), which
+stays acceptable because the round itself is still 8 items long.
+
 ### Round shape
 
 Every round draws 5 to 8 items — from one type, or from the 2 to 3 weakest types for
@@ -101,7 +105,14 @@ Rules:
   correctly twice across rounds. This replaces the per-type typed/choice-only flag:
   typing is per item, so every type can eventually type.
 - At most 3 typed questions per round.
-- No two consecutive questions of the same format. The round shuffles until this holds.
+- At most 1 flashcard per round (`DrillRoundPlanner.MAX_FLASHCARDS_PER_ROUND`). The
+  ladder gives every brand-new item a flashcard, but the cap keeps the round moving:
+  a first round of 8 brand-new items shows 1 flashcard and 7 cold taps.
+- No two consecutive questions of the same format. The round shuffles until this holds;
+  it is best-effort. Known shortfall: a round where every item is brand new and of one
+  type is all tap (plus at most one flashcard), so the rule cannot hold there.
+- A "Practise misses" round feeds neither the per-type scores nor the per-item maturity:
+  graduation counts fresh rounds, not repeats of the same misses in one sitting.
 - Word order keeps its tap-to-arrange view as its tap rung.
 - Listen-and-tap needs TTS, which stays parked in #532; it is in the ladder as the
   planned rung, not new content.

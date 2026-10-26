@@ -106,6 +106,40 @@ class DrillSummaryLogicTest {
     }
 
     @Test
+    fun `formatPrompt shows the answer and the near-miss note on an almost row`() {
+        assertEquals(
+            "___ Sonne ist hell (diez → die · near miss, one retry used)",
+            DrillSummaryLogic.formatPrompt(
+                "___ Sonne ist hell",
+                DrillResult.ALMOST,
+                "diez",
+                answer = "die",
+                almostNote = "near miss, one retry used",
+            ),
+        )
+        // Without note or answer it falls back to the plain learner answer.
+        assertEquals(
+            "du machst (machstt)",
+            DrillSummaryLogic.formatPrompt("du machst", DrillResult.ALMOST, "machstt", answer = null, almostNote = null),
+        )
+        assertEquals(
+            "du machst (machstt → macht)",
+            DrillSummaryLogic.formatPrompt("du machst", DrillResult.ALMOST, "machstt", answer = "macht"),
+        )
+        // Wrong rows ignore the almost fields.
+        assertEquals(
+            "Ich gehe durch ___ Park. (dem)",
+            DrillSummaryLogic.formatPrompt(
+                "Ich gehe durch ___ Park.",
+                DrillResult.WRONG,
+                "dem",
+                answer = "den",
+                almostNote = "near miss, one retry used",
+            ),
+        )
+    }
+
+    @Test
     fun `formatCorrection combines answer and hint without duplication`() {
         // Prompt differs from answer: answer shown, hint appended when distinct.
         assertEquals("den · durch + Akkusativ", DrillSummaryLogic.formatCorrection("Prompt 0", "den", "durch + Akkusativ"))

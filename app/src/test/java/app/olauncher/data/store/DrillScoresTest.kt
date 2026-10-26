@@ -285,6 +285,103 @@ class DrillScoresTest {
     }
 
     @Test
+    fun `round evidence by type splits a mixed round per type`() {
+        val first = mapOf(
+            DrillItemId(DrillType.PREPOSITIONS, "prep:a") to true,
+            DrillItemId(DrillType.PREPOSITIONS, "prep:b") to false,
+            DrillItemId(DrillType.ARTICLES, "art:c") to true,
+            DrillItemId(DrillType.ARTICLES, "art:d") to true,
+        )
+
+        val byType = DrillScores.roundEvidenceByType(first, emptyMap(), abandoned = false)
+
+        assertEquals(setOf(DrillType.PREPOSITIONS, DrillType.ARTICLES), byType.keys)
+        val prep = byType[DrillType.PREPOSITIONS]!!
+        val articles = byType[DrillType.ARTICLES]!!
+        assertEquals(2, prep.asked)
+        assertEquals(1, prep.firstTryRight)
+        assertEquals(1, prep.rightAnswers)
+        assertEquals(2.0, prep.evidence.askedDelta, 1e-9)
+        assertEquals(1.0, prep.evidence.rightDelta, 1e-9)
+        assertEquals(2, articles.asked)
+        assertEquals(2, articles.firstTryRight)
+        assertEquals(2.0, articles.evidence.askedDelta, 1e-9)
+        assertEquals(2.0, articles.evidence.rightDelta, 1e-9)
+    }
+
+    @Test
+    fun `typed answers stay on their own type in a mixed round`() {
+        val typed = mapOf(
+            DrillItemId(DrillType.PREPOSITIONS, "prep:a") to DrillResult.RIGHT,
+            DrillItemId(DrillType.PREPOSITIONS, "prep:b") to DrillResult.RIGHT,
+        )
+        val first = mapOf(
+            DrillItemId(DrillType.PREPOSITIONS, "prep:a") to true,
+            DrillItemId(DrillType.PREPOSITIONS, "prep:b") to true,
+            DrillItemId(DrillType.ARTICLES, "art:c") to false,
+        )
+
+        val byType = DrillScores.roundEvidenceByType(first, typed, abandoned = false)
+
+        // Two typed rights on prepositions must not add anything to articles.
+        val articles = byType[DrillType.ARTICLES]!!
+        assertEquals(1, articles.asked)
+        assertEquals(0, articles.firstTryRight)
+        assertEquals(0, articles.rightAnswers)
+        assertEquals(1.0, articles.evidence.askedDelta, 1e-9)
+        assertEquals(0.0, articles.evidence.rightDelta, 1e-9)
+        // The prepositions side carries the typed weight: 2 typed at 2/3 each.
+        val prep = byType[DrillType.PREPOSITIONS]!!
+        assertEquals(2, prep.asked)
+        assertEquals(2 * 2.0 / 3.0, prep.evidence.askedDelta, 1e-9)
+        assertEquals(2 * 2.0 / 3.0, prep.evidence.rightDelta, 1e-9)
+    }
+
+    @Test
+    fun `typed answers on a choice-only type carry the typed weight`() {
+        // The ladder graduates case-endings items into typed questions even though the
+        // type used to be choice-only; their typed answers must count as evidence.
+        val typed = mapOf(
+            DrillItemId(DrillType.CASE_ENDINGS, "case:a") to DrillResult.RIGHT,
+            DrillItemId(DrillType.CASE_ENDINGS, "case:b") to DrillResult.WRONG,
+        )
+        val first = mapOf(
+            DrillItemId(DrillType.CASE_ENDINGS, "case:a") to true,
+            DrillItemId(DrillType.CASE_ENDINGS, "case:b") to false,
+        )
+
+        val byType = DrillScores.roundEvidenceByType(first, typed, abandoned = false)
+        val caseEndings = byType[DrillType.CASE_ENDINGS]!!
+
+        assertEquals(2, caseEndings.asked)
+        assertEquals(1, caseEndings.firstTryRight)
+        assertEquals(1, caseEndings.rightAnswers)
+        assertEquals(2 * 2.0 / 3.0, caseEndings.evidence.askedDelta, 1e-9)
+        assertEquals(1 * 2.0 / 3.0, caseEndings.evidence.rightDelta, 1e-9)
+    }
+
+    @Test
+    fun `an abandoned mixed round checks the three-answer threshold once for the round`() {
+        val first = mapOf(
+            DrillItemId(DrillType.PREPOSITIONS, "prep:a") to true,
+            DrillItemId(DrillType.PREPOSITIONS, "prep:b") to false,
+            DrillItemId(DrillType.ARTICLES, "art:c") to true,
+            DrillItemId(DrillType.ARTICLES, "art:d") to false,
+        )
+
+        // Four answers across the round is enough for both types, though neither type
+        // reaches three answers alone.
+        val byType = DrillScores.roundEvidenceByType(first, emptyMap(), abandoned = true)
+        assertEquals(setOf(DrillType.PREPOSITIONS, DrillType.ARTICLES), byType.keys)
+        assertEquals(2, byType[DrillType.PREPOSITIONS]!!.asked)
+        assertEquals(2, byType[DrillType.ARTICLES]!!.asked)
+
+        // Below three answers for the whole round, nothing is recorded at all.
+        val short = first - DrillItemId(DrillType.ARTICLES, "art:d") - DrillItemId(DrillType.ARTICLES, "art:c")
+        assertTrue(DrillScores.roundEvidenceByType(short, emptyMap(), abandoned = true).isEmpty())
+    }
+
+    @Test
     fun `a number is shown only after about two rounds`() {
         // One round: no number, "1 round" is shown instead.
         assertNull(DrillScores.Score(10, 7, 10.0, 7.0, rounds = 1).displayPercentage)
