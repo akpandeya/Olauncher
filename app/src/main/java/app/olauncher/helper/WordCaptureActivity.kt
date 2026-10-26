@@ -160,8 +160,8 @@ class WordCaptureActivity : AppCompatActivity() {
     }
 
     /**
-     * [contexts] (screen pick only) maps a lowercase choice to its own line; choices are grouped by
-     * that line and each saved word keeps its line as context. Otherwise [context] is used for all.
+     * [contexts] (screen pick only) maps a lowercase choice to its own sentence; choices are grouped by
+     * that sentence and each saved word keeps its sentence as context. Otherwise [context] is used for all.
      */
     private fun showPicker(
         choices: List<String>,
@@ -280,7 +280,7 @@ class WordCaptureActivity : AppCompatActivity() {
         for (choice in choices) {
             val line = contexts?.get(choice.lowercase())
             if (line != null && lastLine != null && line != lastLine) {
-                // A full-width spacer forces the next line's words onto a new row
+                // A full-width spacer forces the next sentence's words onto a new row
                 binding.wordsContainer.addView(
                     View(this),
                     ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, paddingVertical)
