@@ -537,4 +537,33 @@ class DrillQuizTest {
         assertEquals(0, quiz.firstTryScore)
         assertEquals(0, quiz.almostScore)
     }
+
+    @Test
+    fun missInTypedRoundStaysWrongWhenLaterRetryIsRight() {
+        val quiz = DrillQuiz(listOf(item1), startRound = DrillRound.TYPED)
+        // Far miss marks the item wrong and re-queues it
+        quiz.answerTyped("completely wrong")
+        quiz.advance()
+
+        // Later correct answer on the re-queued pass does not erase the miss
+        val retry = quiz.answerTyped("mit")
+        assertTrue(retry!!.correct)
+        assertEquals(DrillResult.WRONG, quiz.itemResults()[item1.id])
+        assertEquals(0, quiz.almostScore)
+    }
+
+    @Test
+    fun choiceMissDoesNotCarryIntoTypedRound() {
+        val quiz = DrillQuiz(listOf(item1))
+        // Choice round: wrong pick, then the re-queued item is picked right
+        quiz.answer("bei")
+        quiz.advance()
+        quiz.answer("mit")
+        quiz.advance()
+
+        // Typed round: a correct typed answer sets the typed-round result
+        assertEquals(DrillRound.TYPED, quiz.round)
+        quiz.answerTyped("mit")
+        assertEquals(DrillResult.RIGHT, quiz.itemResults()[item1.id])
+    }
 }

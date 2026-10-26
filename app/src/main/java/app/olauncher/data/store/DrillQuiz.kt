@@ -50,6 +50,7 @@ class DrillQuiz(
 
     private val firstAttemptsMap = mutableMapOf<DrillItemId, Boolean>()
     private val itemResultsMap = mutableMapOf<DrillItemId, DrillResult>()
+    private val typedMissIds = mutableSetOf<DrillItemId>()
     private val queue = ArrayDeque<DrillItem>()
     private var question: DrillQuizQuestion? = null
     private var lastAnswerValue: QuizAnswer? = null
@@ -130,12 +131,7 @@ class DrillQuiz(
         val isExact = checkTypedAnswer(input, q.answer)
         if (isExact) {
             val wasNearMiss = nearMissOffered
-            val result = QuizAnswer(
-                correct = true,
-                answer = q.answer,
-                isNearMiss = false,
-                isAlmost = wasNearMiss,
-            )
+            val result = QuizAnswer(correct = true, answer = q.answer, isAlmost = wasNearMiss)
             awaitingRetry = false
             nearMissOffered = false
             lastAnswerValue = result
@@ -148,23 +144,13 @@ class DrillQuiz(
         if (!nearMissOffered && isNearMiss(input, q.answer)) {
             nearMissOffered = true
             awaitingRetry = true
-            return QuizAnswer(
-                correct = false,
-                answer = q.answer,
-                isNearMiss = true,
-                isAlmost = false,
-            )
+            return QuizAnswer(correct = false, answer = q.answer, isNearMiss = true)
         }
 
         // Second miss (if nearMissOffered) or far miss (not near miss on first try)
         awaitingRetry = false
         nearMissOffered = false
-        val result = QuizAnswer(
-            correct = false,
-            answer = q.answer,
-            isNearMiss = false,
-            isAlmost = false,
-        )
+        val result = QuizAnswer(correct = false, answer = q.answer)
         lastAnswerValue = result
         recordTypedResult(q.item, DrillResult.WRONG)
         return result
@@ -207,9 +193,10 @@ class DrillQuiz(
     }
 
     private fun recordTypedResult(item: DrillItem, result: DrillResult) {
-        if (round == DrillRound.TYPED) {
-            itemResultsMap[item.id] = result
-        }
+        if (round != DrillRound.TYPED) return
+        if (result == DrillResult.WRONG) typedMissIds.add(item.id)
+        // A miss earlier in the typed round stays a miss, so a later correct retry cannot erase it.
+        itemResultsMap[item.id] = if (item.id in typedMissIds) DrillResult.WRONG else result
         if (item.id !in firstAttemptsMap) {
             firstAttemptsMap[item.id] = result == DrillResult.RIGHT
         }
