@@ -21,10 +21,16 @@ import app.olauncher.data.Prefs
 import app.olauncher.data.store.Conjugation
 import app.olauncher.data.store.AUTO_ADVANCE_DELAY_MS
 import app.olauncher.data.store.ConjugationQuiz
+import app.olauncher.data.store.DrillItemId
+import app.olauncher.data.store.DrillReviewFeed
+import app.olauncher.data.store.DrillScores
+import app.olauncher.data.store.DrillType
 import app.olauncher.data.store.FormStatus
 import app.olauncher.data.store.OfflineGermanStore
 import app.olauncher.data.store.QuizAnswer
 import app.olauncher.data.store.QuizQuestion
+import app.olauncher.data.store.ReviewEventsStore
+import app.olauncher.data.store.ReviewSessionLogic
 import app.olauncher.data.store.Tense
 import app.olauncher.data.store.VerbParadigm
 import app.olauncher.data.store.shouldAutoAdvance
@@ -35,6 +41,7 @@ import app.olauncher.helper.hideKeyboard
 import app.olauncher.helper.showKeyboard
 import app.olauncher.ui.BaseFragment
 import app.olauncher.ui.today.attachPressScale
+import app.olauncher.ui.today.cards.WordsCard
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -61,6 +68,8 @@ class ConjugationFragment : BaseFragment() {
     private var loadStarted = false
     private var loaded = false
     private var autoAdvanceScheduled = false
+    private val recordedQuizzes = mutableSetOf<ConjugationQuiz>()
+    private val sessionGradedWordIds = mutableSetOf<Long>()
     private val autoAdvance = Runnable {
         autoAdvanceScheduled = false
         val q = quiz ?: return@Runnable
@@ -428,6 +437,7 @@ class ConjugationFragment : BaseFragment() {
     }
 
     private fun renderSummary(q: ConjugationQuiz) {
+        recordFinishedRound(q)
         val b = binding
         val context = b.root.context
         b.tvScore.text = context.getString(R.string.conjugation_score, q.firstTryScore, q.total)
@@ -480,6 +490,45 @@ class ConjugationFragment : BaseFragment() {
         }
         b.btnSecondary.isVisible = true
         b.root.hideKeyboard()
+    }
+
+    private fun recordFinishedRound(q: ConjugationQuiz) {
+        if (!recordedQuizzes.add(q)) return
+        val context = context ?: return
+        val appContext = context.applicationContext
+        val prefs = Prefs(appContext)
+        DrillScores.recordRound(prefs, DrillType.CONJUGATION.id, q.total, q.firstTryScore)
+
+        val words = WordsCard.getStore(appContext).all()
+        val wordArg = arguments?.getString("word").orEmpty()
+        val matchingWord = words.find { it.text.trim().equals(wordArg.trim(), ignoreCase = true) }
+            ?: words.find { it.id == arguments?.getLong("wordId", -1L) }
+        if (matchingWord != null) {
+            val attempts = linkedMapOf<DrillItemId, Boolean>()
+            for (i in 0 until q.total) {
+                val isCorrect = q.missCount(i) == 0
+                attempts[DrillItemId(DrillType.CONJUGATION, "${matchingWord.id}:$i")] = isCorrect
+            }
+            val today = WordsCard.epochDaySupplier()
+            val grades = DrillReviewFeed.grades(attempts, words, today)
+            val store = WordsCard.getStore(appContext)
+            val events = ReviewEventsStore(appContext)
+            val now = System.currentTimeMillis()
+            for (grade in grades) {
+                if (sessionGradedWordIds.add(grade.word.id)) {
+                    val current = store.get(grade.word.id) ?: grade.word
+                    ReviewSessionLogic.gradeAndLog(
+                        word = current,
+                        result = grade.result,
+                        today = today,
+                        reviewedAt = now,
+                        saveWord = store::update,
+                        events = events,
+                        source = grade.source,
+                    )
+                }
+            }
+        }
     }
 
     private enum class TextSize { Large, Small }

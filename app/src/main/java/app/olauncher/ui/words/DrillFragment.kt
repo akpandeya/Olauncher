@@ -15,14 +15,19 @@ import androidx.annotation.AttrRes
 import androidx.core.view.isVisible
 import androidx.navigation.fragment.findNavController
 import app.olauncher.R
+import app.olauncher.data.Prefs
 import app.olauncher.data.store.AUTO_ADVANCE_DELAY_MS
 import app.olauncher.data.store.DrillItem
 import app.olauncher.data.store.DrillQuiz
 import app.olauncher.data.store.DrillQuizQuestion
+import app.olauncher.data.store.DrillReviewFeed
 import app.olauncher.data.store.DrillRound
+import app.olauncher.data.store.DrillScores
 import app.olauncher.data.store.DrillTables
 import app.olauncher.data.store.DrillType
 import app.olauncher.data.store.QuizAnswer
+import app.olauncher.data.store.ReviewEventsStore
+import app.olauncher.data.store.ReviewSessionLogic
 import app.olauncher.data.store.shouldAutoAdvance
 import app.olauncher.databinding.FragmentDrillBinding
 import app.olauncher.helper.DrawerScrollHelper
@@ -47,6 +52,8 @@ class DrillFragment : BaseFragment() {
     private var selectedChoice: String? = null
     private var lastRenderedItemId: String? = null
     private var autoAdvanceScheduled = false
+    private var recordedQuiz: DrillQuiz? = null
+    private val sessionGradedWordIds = mutableSetOf<Long>()
 
     private val autoAdvance = Runnable {
         autoAdvanceScheduled = false
@@ -323,6 +330,7 @@ class DrillFragment : BaseFragment() {
     }
 
     private fun renderSummary(q: DrillQuiz) {
+        recordFinishedRound(q)
         val b = binding
         val context = b.root.context
         b.tvScore.text = context.getString(R.string.conjugation_score, q.firstTryScore, q.total)
@@ -332,6 +340,36 @@ class DrillFragment : BaseFragment() {
         b.btnPrimary.alpha = 1f
         b.btnSecondary.isVisible = true
         b.root.hideKeyboard()
+    }
+
+    private fun recordFinishedRound(q: DrillQuiz) {
+        if (recordedQuiz === q) return
+        recordedQuiz = q
+        val context = context ?: return
+        val appContext = context.applicationContext
+        val prefs = Prefs(appContext)
+        DrillScores.recordRound(prefs, drillType.id, q.total, q.firstTryScore)
+
+        val words = WordsCard.getStore(appContext).all()
+        val today = WordsCard.epochDaySupplier()
+        val grades = DrillReviewFeed.grades(q.firstAttempts(), words, today)
+        val store = WordsCard.getStore(appContext)
+        val events = ReviewEventsStore(appContext)
+        val now = System.currentTimeMillis()
+        for (grade in grades) {
+            if (sessionGradedWordIds.add(grade.word.id)) {
+                val current = store.get(grade.word.id) ?: grade.word
+                ReviewSessionLogic.gradeAndLog(
+                    word = current,
+                    result = grade.result,
+                    today = today,
+                    reviewedAt = now,
+                    saveWord = store::update,
+                    events = events,
+                    source = grade.source,
+                )
+            }
+        }
     }
 
     private fun newCell(text: String): TextView = TextView(binding.root.context).apply {
