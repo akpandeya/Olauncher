@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.provider.Settings
+import app.olauncher.BuildConfig
 import app.olauncher.data.Prefs
 
 /**
@@ -15,7 +16,7 @@ object SystemGrey {
     const val KEY_MODE = "accessibility_display_daltonizer"
     const val MODE_GREY = 0
     const val MODE_OFF = -1
-    const val GRANT_COMMAND = "adb shell pm grant app.thumbline.debug android.permission.WRITE_SECURE_SETTINGS"
+    val GRANT_COMMAND = "adb shell pm grant ${BuildConfig.APPLICATION_ID} android.permission.WRITE_SECURE_SETTINGS"
 
     /** The two system values. Grey is enabled = 1, mode = 0. */
     data class Daltonizer(val enabled: Int, val mode: Int) {
