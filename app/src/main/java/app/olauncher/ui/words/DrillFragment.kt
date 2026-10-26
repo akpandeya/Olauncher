@@ -145,7 +145,7 @@ class DrillFragment : BaseFragment() {
 
         if (drillType == DrillType.WORD_ORDER) {
             if (wordOrderQuiz == null) {
-                val items = WordOrderQuiz.items(words)
+                val items = DrillTables.roundWordOrderItems(words)
                 if (items.isNotEmpty()) {
                     wordOrderQuiz = WordOrderQuiz(items)
                 }
@@ -162,9 +162,9 @@ class DrillFragment : BaseFragment() {
                         SharedOfflineGermanStore.get(appContext).plural(text)
                     } else null
                 }
-                val items = DrillTables.items(drillType, words, genderLookup, pluralLookup)
+                val items = DrillTables.roundItems(drillType, words, genderLookup, pluralLookup)
                 if (items.isNotEmpty()) {
-                    quiz = DrillQuiz(items)
+                    quiz = DrillQuiz(items, isChoiceOnly = drillType.isChoiceOnly)
                 }
             }
         }
@@ -180,7 +180,7 @@ class DrillFragment : BaseFragment() {
                 q.isFinished -> {
                     val appContext = view.context.applicationContext
                     val words = WordsCard.getStore(appContext).all()
-                    val items = WordOrderQuiz.items(words)
+                    val items = DrillTables.roundWordOrderItems(words)
                     wordOrderQuiz = WordOrderQuiz(items)
                     render()
                 }
@@ -214,8 +214,8 @@ class DrillFragment : BaseFragment() {
                         SharedOfflineGermanStore.get(appContext).plural(text)
                     } else null
                 }
-                val items = DrillTables.items(drillType, words, genderLookup, pluralLookup)
-                quiz = DrillQuiz(items)
+                val items = DrillTables.roundItems(drillType, words, genderLookup, pluralLookup)
+                quiz = DrillQuiz(items, isChoiceOnly = drillType.isChoiceOnly)
                 selectedChoice = null
                 lastRenderedItemId = null
                 render()

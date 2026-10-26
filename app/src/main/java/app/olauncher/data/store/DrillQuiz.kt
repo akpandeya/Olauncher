@@ -23,7 +23,8 @@ data class DrillQuizQuestion(
 /**
  * Quiz engine for drills.
  *
- * Runs a multiple-choice round first, followed by a typed round over the same items.
+ * Runs a multiple-choice round first, followed by a typed round over the same items
+ * for types that keep a typed round. Choice-only types finish after the choice round.
  * A wrong answer puts the item back at the end of the current round.
  * First-try accuracy is tracked across items in the session and never changes during retries
  * or the typed round.
@@ -31,7 +32,10 @@ data class DrillQuizQuestion(
 class DrillQuiz(
     val items: List<DrillItem>,
     private val random: Random = Random(),
+    val isChoiceOnly: Boolean = items.firstOrNull()?.id?.type?.isChoiceOnly ?: false,
 ) {
+    val hasTypedRound: Boolean get() = !isChoiceOnly
+
     private val firstAttemptsMap = mutableMapOf<DrillItemId, Boolean>()
     private val queue = ArrayDeque<DrillItem>()
     private var question: DrillQuizQuestion? = null
@@ -119,7 +123,7 @@ class DrillQuiz(
         }
         lastAnswerValue = null
         if (queue.isEmpty()) {
-            if (round == DrillRound.CHOICE) {
+            if (round == DrillRound.CHOICE && hasTypedRound) {
                 round = DrillRound.TYPED
                 queue.addAll(items)
                 buildQuestion()
@@ -149,5 +153,9 @@ class DrillQuiz(
             item.choices.shuffled(random)
         }
         question = DrillQuizQuestion(item, choices, round)
+    }
+
+    companion object {
+        const val ROUND_SIZE = DRILL_ROUND_SIZE
     }
 }

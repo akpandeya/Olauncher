@@ -1,23 +1,40 @@
 package app.olauncher.data.store
 
 /**
+ * Round shape for a drill: whether it has a typed round after the choice round,
+ * or is choice-only.
+ */
+enum class DrillRoundShape {
+    CHOICE_THEN_TYPED,
+    CHOICE_ONLY,
+}
+
+/** Default number of items in a drill round. */
+const val DRILL_ROUND_SIZE = 10
+
+/**
  * Drill types supported by the app.
  *
  * Note: These IDs are stored in persistent data (preferences, review events, practice items),
  * so they must remain stable.
  */
-enum class DrillType(val id: String) {
+enum class DrillType(val id: String, val isChoiceOnly: Boolean = false) {
     PREPOSITIONS("prepositions"),
     PRONOUNS("pronouns"),
     ARTICLES("articles"),
     PLURALS("plurals"),
-    CASE_ENDINGS("case_endings"),
+    CASE_ENDINGS("case_endings", isChoiceOnly = true),
     VERB_PREPOSITIONS("verb_prepositions"),
     SEPARABLE_VERBS("separable_verbs"),
-    ADJECTIVE_ENDINGS("adjective_endings"),
-    WORD_ORDER("word_order"),
+    ADJECTIVE_ENDINGS("adjective_endings", isChoiceOnly = true),
+    WORD_ORDER("word_order", isChoiceOnly = true),
     CONJUGATION("conjugation"),
     CLOZE("cloze");
+
+    val hasTypedRound: Boolean get() = !isChoiceOnly
+
+    val roundShape: DrillRoundShape
+        get() = if (isChoiceOnly) DrillRoundShape.CHOICE_ONLY else DrillRoundShape.CHOICE_THEN_TYPED
 
     companion object {
         fun fromId(id: String): DrillType? = values().firstOrNull { it.id == id }
