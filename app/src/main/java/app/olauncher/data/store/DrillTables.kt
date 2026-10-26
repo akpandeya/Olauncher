@@ -17,6 +17,7 @@ object DrillTables {
         DrillType.CASE_ENDINGS,
         DrillType.VERB_PREPOSITIONS,
         DrillType.SEPARABLE_VERBS,
+        DrillType.ADJECTIVE_ENDINGS,
     )
 
     /** Builds the drill items for the given [type] and saved [words]. */
@@ -34,6 +35,7 @@ object DrillTables {
         DrillType.CASE_ENDINGS -> DrillCaseEndings.items(words, genderLookup)
         DrillType.VERB_PREPOSITIONS -> DrillVerbPrepositions.items(words)
         DrillType.SEPARABLE_VERBS -> DrillSeparableVerbs.items(words, presentLookup)
+        DrillType.ADJECTIVE_ENDINGS -> DrillAdjectiveEndings.items(words)
         else -> emptyList()
     }
 
@@ -46,6 +48,7 @@ object DrillTables {
         DrillType.CASE_ENDINGS -> R.string.drill_type_case_endings
         DrillType.VERB_PREPOSITIONS -> R.string.drill_type_verb_prepositions
         DrillType.SEPARABLE_VERBS -> R.string.drill_type_separable_verbs
+        DrillType.ADJECTIVE_ENDINGS -> R.string.drill_type_adjective_endings
         else -> R.string.drills
     }
 }
