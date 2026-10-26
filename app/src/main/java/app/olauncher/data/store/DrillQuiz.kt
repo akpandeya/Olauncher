@@ -50,6 +50,7 @@ class DrillQuiz(
 
     private val firstAttemptsMap = mutableMapOf<DrillItemId, Boolean>()
     private val itemResultsMap = mutableMapOf<DrillItemId, DrillResult>()
+    private val typedResultsMap = mutableMapOf<DrillItemId, DrillResult>()
     private val learnerAnswersMap = mutableMapOf<DrillItemId, String>()
     private val typedMissIds = mutableSetOf<DrillItemId>()
     private val queue = ArrayDeque<DrillItem>()
@@ -102,6 +103,9 @@ class DrillQuiz(
 
     /** Map of overall results for each item in the round. */
     fun itemResults(): Map<DrillItemId, DrillResult> = itemResultsMap.toMap()
+
+    /** Results of the typed answers given so far, keyed by item; items not typed yet are absent. */
+    fun typedResults(): Map<DrillItemId, DrillResult> = typedResultsMap.toMap()
 
     /** Map of learner answers for items that were wrong or almost. */
     fun learnerAnswers(): Map<DrillItemId, String> = learnerAnswersMap.toMap()
@@ -205,7 +209,9 @@ class DrillQuiz(
         if (round != DrillRound.TYPED) return
         if (result == DrillResult.WRONG) typedMissIds.add(item.id)
         // A miss earlier in the typed round stays a miss, so a later correct retry cannot erase it.
-        itemResultsMap[item.id] = if (item.id in typedMissIds) DrillResult.WRONG else result
+        val finalResult = if (item.id in typedMissIds) DrillResult.WRONG else result
+        itemResultsMap[item.id] = finalResult
+        typedResultsMap[item.id] = finalResult
         if (item.id !in firstAttemptsMap) {
             firstAttemptsMap[item.id] = result == DrillResult.RIGHT
         }

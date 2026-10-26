@@ -570,9 +570,21 @@ class DrillFragment : BaseFragment() {
         recordedQuiz = q
         val context = context ?: return
         val appContext = context.applicationContext
-        val prefs = Prefs(appContext)
         if (!isPractiseMissesRound) {
-            DrillScores.recordRound(prefs, drillType.id, q.total, q.firstTryScore)
+            val first = q.firstAttempts()
+            val choiceRight = first.values.count { it }
+            val typed = q.typedResults()
+            recordScoreRound(
+                choiceAnswered = first.size,
+                choiceRight = choiceRight,
+                evidence = DrillScores.roundEvidence(
+                    hasTypedRound = drillType.hasTypedRound,
+                    choiceAnswered = first.size,
+                    choiceRight = choiceRight,
+                    typedAnswered = typed.size,
+                    typedRight = typed.values.count { it == DrillResult.RIGHT },
+                ),
+            )
         }
 
         val words = WordsCard.getStore(appContext).all()
@@ -723,9 +735,18 @@ class DrillFragment : BaseFragment() {
         recordedQuiz = q
         val context = context ?: return
         val appContext = context.applicationContext
-        val prefs = Prefs(appContext)
         if (!isPractiseMissesRound) {
-            DrillScores.recordRound(prefs, drillType.id, q.total, q.firstTryScore)
+            val first = q.firstAttempts()
+            val choiceRight = first.values.count { it }
+            recordScoreRound(
+                choiceAnswered = first.size,
+                choiceRight = choiceRight,
+                evidence = DrillScores.roundEvidence(
+                    hasTypedRound = false,
+                    choiceAnswered = first.size,
+                    choiceRight = choiceRight,
+                ),
+            )
         }
 
         val words = WordsCard.getStore(appContext).all()
@@ -747,6 +768,63 @@ class DrillFragment : BaseFragment() {
                     source = grade.source,
                 )
             }
+        }
+    }
+
+    /**
+     * Records one round into the per-type score: the decayed counts take the round [evidence]
+     * (typed answers are the main evidence), the raw keys take the first-try counts.
+     */
+    private fun recordScoreRound(
+        choiceAnswered: Int,
+        choiceRight: Int,
+        evidence: DrillScores.RoundEvidence,
+    ) {
+        val context = context ?: return
+        DrillScores.recordRound(
+            Prefs(context.applicationContext),
+            drillType.id,
+            asked = choiceAnswered,
+            firstTryRight = choiceRight,
+            askedEvidence = evidence.askedDelta,
+            rightEvidence = evidence.rightDelta,
+        )
+    }
+
+    /**
+     * An abandoned round still counts the answers already given, but only when at least
+     * [DrillScores.MIN_ABANDONED_ANSWERS] were given; items not reached are not counted.
+     * Rounds already recorded and practise-misses rounds are skipped.
+     */
+    private fun recordAbandonedRound() {
+        if (isPractiseMissesRound) return
+        if (drillType == DrillType.WORD_ORDER) {
+            val q = wordOrderQuiz ?: return
+            if (q === recordedQuiz || q.isFinished) return
+            val first = q.firstAttempts()
+            val choiceRight = first.values.count { it }
+            val evidence = DrillScores.abandonedRoundEvidence(
+                hasTypedRound = false,
+                choiceAnswered = first.size,
+                choiceRight = choiceRight,
+            ) ?: return
+            recordedQuiz = q
+            recordScoreRound(choiceAnswered = first.size, choiceRight = choiceRight, evidence = evidence)
+        } else {
+            val q = quiz ?: return
+            if (q === recordedQuiz || q.isFinished) return
+            val first = q.firstAttempts()
+            val choiceRight = first.values.count { it }
+            val typed = q.typedResults()
+            val evidence = DrillScores.abandonedRoundEvidence(
+                hasTypedRound = drillType.hasTypedRound,
+                choiceAnswered = first.size,
+                choiceRight = choiceRight,
+                typedAnswered = typed.size,
+                typedRight = typed.values.count { it == DrillResult.RIGHT },
+            ) ?: return
+            recordedQuiz = q
+            recordScoreRound(choiceAnswered = first.size, choiceRight = choiceRight, evidence = evidence)
         }
     }
 
@@ -776,6 +854,7 @@ class DrillFragment : BaseFragment() {
     }
 
     override fun onDestroyView() {
+        recordAbandonedRound()
         _binding?.root?.removeCallbacks(autoAdvance)
         autoAdvanceScheduled = false
         _binding?.root?.hideKeyboard()

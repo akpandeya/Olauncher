@@ -220,21 +220,26 @@ class WordsFragment : BaseFragment() {
         val prefs = Prefs(context)
         val lastType = prefs.drillLastType
         val scores = DrillScores.decode(prefs.drillScores)
-        val checkedIndex = available.indexOfFirst { it.id == lastType }.let { if (it >= 0) it else 0 }
+        // Weakest first over the smoothed score, types never played after the ranked ones.
+        val ranked = DrillScores.rankedWeakestFirst(available, scores)
+        val ordered = ranked + available.filterNot { it in ranked }
+        // Pre-selects the last played type; with drillLastType unset, index 0 intentionally pre-selects the weakest type.
+        val checkedIndex = ordered.indexOfFirst { it.id == lastType }.let { if (it >= 0) it else 0 }
         val dialog = context.createChoiceDialog(
             title = R.string.drills,
-            items = available.map { type ->
+            items = ordered.map { type ->
                 val base = context.getString(DrillTables.labelRes(type))
                 val score = scores[type.id]
-                if (score != null && score.asked > 0) {
-                    context.getString(R.string.drill_type_with_percentage, base, score.percentage)
-                } else {
-                    base
+                val shown = if (score != null && score.asked > 0) score.displayPercentage else null
+                when {
+                    shown != null -> context.getString(R.string.drill_type_with_percentage, base, shown)
+                    score != null && score.asked > 0 -> context.getString(R.string.drill_type_one_round, base)
+                    else -> base
                 }
             },
             checkedIndex = checkedIndex,
             onPick = { index ->
-                val picked = available[index]
+                val picked = ordered[index]
                 prefs.drillLastType = picked.id
                 openDrill(picked.id)
             },
