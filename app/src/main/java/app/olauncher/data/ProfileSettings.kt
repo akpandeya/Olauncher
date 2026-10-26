@@ -2,6 +2,7 @@ package app.olauncher.data
 
 import app.olauncher.helper.HomeSets
 import app.olauncher.helper.MusicPulse
+import app.olauncher.ui.today.cards.DrillsCard
 import app.olauncher.ui.today.cards.HeldCard
 import app.olauncher.ui.today.cards.NextUpCard
 import app.olauncher.ui.today.cards.NotesCard
@@ -162,7 +163,7 @@ data class ProfileSettings(
     companion object {
         val KNOWN_CARDS: List<String> = listOf(
             WeatherCard.KEY, NextUpCard.KEY, SavedCard.KEY, HeldCard.KEY,
-            WellbeingCard.KEY, WordsCard.KEY, NotesCard.KEY,
+            WellbeingCard.KEY, WordsCard.KEY, NotesCard.KEY, DrillsCard.KEY,
         )
 
         private const val F_HOME_APPS_COUNT = "homeAppsCount"

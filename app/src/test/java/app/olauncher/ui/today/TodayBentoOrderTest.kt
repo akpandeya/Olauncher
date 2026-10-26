@@ -1,5 +1,6 @@
 package app.olauncher.ui.today
 
+import app.olauncher.ui.today.cards.DrillsCard
 import app.olauncher.ui.today.cards.HeldCard
 import app.olauncher.ui.today.cards.NextUpCard
 import app.olauncher.ui.today.cards.NotesCard
@@ -18,7 +19,7 @@ class TodayBentoOrderTest {
     fun `built-in cards follow the design order`() {
         assertEquals(
             listOf(
-                WeatherCard.KEY, WordsCard.KEY, NotesCard.KEY, WellbeingCard.KEY,
+                WeatherCard.KEY, WordsCard.KEY, DrillsCard.KEY, NotesCard.KEY, WellbeingCard.KEY,
                 SavedCard.KEY, NextUpCard.KEY, HeldCard.KEY,
             ),
             TodayCards.all.map { it.key },

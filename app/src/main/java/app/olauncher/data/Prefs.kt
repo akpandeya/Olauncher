@@ -129,6 +129,7 @@ class Prefs(context: Context) :
         const val GERMAN_CLOCK_IN_WORTEN = 2
         const val DRILL_LAST_TYPE = "DRILL_LAST_TYPE"
         const val DRILL_SCORES = "DRILL_SCORES"
+        const val DRILL_LAST_ROUND = "DRILL_LAST_ROUND"
         const val BATTERY_MODE = "BATTERY_MODE"
         const val BATTERY_MODE_AUTO = 0
         const val BATTERY_MODE_ALWAYS = 1
@@ -761,6 +762,11 @@ class Prefs(context: Context) :
     var drillScores: String
         get() = prefs.getString(DRILL_SCORES, "") ?: ""
         set(value) = prefs.edit { putString(DRILL_SCORES, value).apply() }
+
+    /** JSON of the most recent drill round, shown on the Today Drills card; see [DrillLastRound]. */
+    var drillLastRound: String
+        get() = prefs.getString(DRILL_LAST_ROUND, "") ?: ""
+        set(value) = prefs.edit { putString(DRILL_LAST_ROUND, value).apply() }
 
     fun registerPreferenceChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
         prefs.registerOnSharedPreferenceChangeListener(listener)
