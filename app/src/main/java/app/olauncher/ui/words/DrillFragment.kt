@@ -28,6 +28,7 @@ import app.olauncher.data.store.DrillType
 import app.olauncher.data.store.QuizAnswer
 import app.olauncher.data.store.ReviewEventsStore
 import app.olauncher.data.store.ReviewSessionLogic
+import app.olauncher.data.store.SharedOfflineGermanStore
 import app.olauncher.data.store.shouldAutoAdvance
 import app.olauncher.databinding.FragmentDrillBinding
 import app.olauncher.helper.DrawerScrollHelper
@@ -120,8 +121,14 @@ class DrillFragment : BaseFragment() {
         if (quiz == null) {
             val typeStr = arguments?.getString("drillType").orEmpty()
             drillType = DrillType.fromId(typeStr) ?: DrillType.PREPOSITIONS
-            val words = WordsCard.getStore(view.context.applicationContext).all()
-            val items = DrillTables.items(drillType, words)
+            val appContext = view.context.applicationContext
+            val words = WordsCard.getStore(appContext).all()
+            val genderLookup: (String) -> String? = { text ->
+                if (Prefs(appContext).germanOfflineDictionary) {
+                    SharedOfflineGermanStore.get(appContext).gender(text)
+                } else null
+            }
+            val items = DrillTables.items(drillType, words, genderLookup)
             if (items.isNotEmpty()) {
                 quiz = DrillQuiz(items)
             }
@@ -136,8 +143,14 @@ class DrillFragment : BaseFragment() {
         when {
             q.isFinished -> {
                 // Restart quiz
-                val words = WordsCard.getStore(view.context.applicationContext).all()
-                val items = DrillTables.items(drillType, words)
+                val appContext = view.context.applicationContext
+                val words = WordsCard.getStore(appContext).all()
+                val genderLookup: (String) -> String? = { text ->
+                    if (Prefs(appContext).germanOfflineDictionary) {
+                        SharedOfflineGermanStore.get(appContext).gender(text)
+                    } else null
+                }
+                val items = DrillTables.items(drillType, words, genderLookup)
                 quiz = DrillQuiz(items)
                 selectedChoice = null
                 lastRenderedItemId = null
