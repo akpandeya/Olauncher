@@ -15,8 +15,6 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.fragment.findNavController
 import app.olauncher.R
 import app.olauncher.data.Prefs
-import app.olauncher.data.store.DrillScores
-import app.olauncher.data.store.DrillTables
 import app.olauncher.data.store.ReviewComebacks
 import app.olauncher.data.store.ReviewEventsStore
 import app.olauncher.data.store.StudyGrid
@@ -28,7 +26,6 @@ import app.olauncher.databinding.ItemWordBinding
 import app.olauncher.helper.DrawerScrollHelper
 import app.olauncher.helper.DictionaryApps
 import app.olauncher.helper.Haptics
-import app.olauncher.helper.createChoiceDialog
 import app.olauncher.helper.dpToPx
 import app.olauncher.helper.getColorFromAttr
 import app.olauncher.helper.hapticLongClick
@@ -66,7 +63,7 @@ class WordsFragment : BaseFragment() {
             true
         }
         binding.btnClearSearch.setOnClickListener { binding.etSearch.text?.clear() }
-        binding.tvTitle.setOnClickListener { openDrillsPicker() }
+        binding.tvTitle.setOnClickListener { openDrillsHub() }
 
         // The activity is edge-to-edge, so the window is not resized for the keyboard.
         // Pad the page by the IME inset so the search field stays just above the keyboard.
@@ -205,7 +202,7 @@ class WordsFragment : BaseFragment() {
             when (item.itemId) {
                 1 -> WordDialogs.showEditDialog(context, word, ::liveViewLifecycleOwner) { render() }
                 5 -> openConjugation(word)
-                6 -> openDrillsPicker()
+                6 -> openDrillsHub()
                 2 -> DictionaryApps.open(context, word.text)
                 4 -> WordDialogs.showListsDialog(context, word) { render() }
                 3 -> WordDialogs.showDeleteDialog(context, word) { render() }
@@ -213,48 +210,13 @@ class WordsFragment : BaseFragment() {
         }
     }
 
-    private fun openDrillsPicker() {
-        val context = context ?: return
-        val available = DrillTables.available()
-        if (available.isEmpty()) return
-        val prefs = Prefs(context)
-        val lastType = prefs.drillLastType
-        val scores = DrillScores.decode(prefs.drillScores)
-        // Weakest first over the smoothed score, types never played after the ranked ones.
-        val ranked = DrillScores.rankedWeakestFirst(available, scores)
-        val ordered = ranked + available.filterNot { it in ranked }
-        // Pre-selects the last played type; with drillLastType unset, index 0 intentionally pre-selects the weakest type.
-        val checkedIndex = ordered.indexOfFirst { it.id == lastType }.let { if (it >= 0) it else 0 }
-        val dialog = context.createChoiceDialog(
-            title = R.string.drills,
-            items = ordered.map { type ->
-                val base = context.getString(DrillTables.labelRes(type))
-                val score = scores[type.id]
-                val shown = if (score != null && score.asked > 0) score.displayPercentage else null
-                when {
-                    shown != null -> context.getString(R.string.drill_type_with_percentage, base, shown)
-                    score != null && score.asked > 0 -> context.getString(R.string.drill_type_one_round, base)
-                    else -> base
-                }
-            },
-            checkedIndex = checkedIndex,
-            onPick = { index ->
-                val picked = ordered[index]
-                prefs.drillLastType = picked.id
-                openDrill(picked.id)
-            },
-        )
-        dialog.showRespectingStatusBar()
-    }
-
-    private fun openDrill(drillTypeId: String) {
+    /** Opens the full-screen drills hub; a row tap there starts a round of a type. */
+    private fun openDrillsHub() {
         Haptics.tick(binding.root)
         val navController = findNavController()
+        // Ignore a second tap delivered before the first navigation lands.
         if (navController.currentDestination?.id == R.id.wordsFragment) {
-            navController.navigate(
-                R.id.action_wordsFragment_to_drillFragment,
-                bundleOf("drillType" to drillTypeId),
-            )
+            navController.navigate(R.id.action_wordsFragment_to_drillHubFragment)
         }
     }
 
