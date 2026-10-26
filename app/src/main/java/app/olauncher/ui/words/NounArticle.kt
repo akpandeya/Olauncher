@@ -59,6 +59,16 @@ object NounArticle {
     }
 
     /**
+     * Strips a leading article from [text] if present (e.g. "der Hund" -> "Hund", "Die Katze" -> "Katze").
+     * Returns the trimmed original text if no leading der/die/das is present.
+     */
+    fun stripLeadingArticle(text: String): String {
+        val trimmed = text.trim()
+        val match = LEADING_ARTICLE_REGEX.matchEntire(trimmed) ?: return trimmed
+        return match.groupValues[2].trim()
+    }
+
+    /**
      * Resolves the gender for [text]: from a leading der/die/das in [text],
      * or from [dictionaryGender]. Returns "der", "die", "das", or null if unknown.
      */

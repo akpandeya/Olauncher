@@ -52,6 +52,18 @@ class NounArticleTest {
     }
 
     @Test
+    fun `stripLeadingArticle removes leading der die das`() {
+        assertEquals("Hund", NounArticle.stripLeadingArticle("der Hund"))
+        assertEquals("Katze", NounArticle.stripLeadingArticle("Die Katze"))
+        assertEquals("Haus", NounArticle.stripLeadingArticle("DAS Haus"))
+        assertEquals("Frau", NounArticle.stripLeadingArticle("  die   Frau  "))
+        assertEquals("Rückkehr", NounArticle.stripLeadingArticle("Rückkehr"))
+        assertEquals("Dermatologe", NounArticle.stripLeadingArticle("Dermatologe"))
+        assertEquals("der", NounArticle.stripLeadingArticle("der"))
+        assertEquals("", NounArticle.stripLeadingArticle(""))
+    }
+
+    @Test
     fun `resolveGender resolves from leading article or dictionary`() {
         assertEquals("der", NounArticle.resolveGender("der Hund"))
         assertEquals("die", NounArticle.resolveGender("Die Katze"))
