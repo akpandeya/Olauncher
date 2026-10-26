@@ -566,4 +566,92 @@ class DrillQuizTest {
         quiz.answerTyped("mit")
         assertEquals(DrillResult.RIGHT, quiz.itemResults()[item1.id])
     }
+
+    @Test
+    fun typedResultsTrackOnlyFinalTypedOutcomes() {
+        val quiz = DrillQuiz(listOf(item1, item2), startRound = DrillRound.TYPED)
+
+        // Near miss first: no final outcome yet, so no typed result.
+        quiz.answerTyped("mi")
+        assertTrue(quiz.typedResults().isEmpty())
+
+        // Exact retry: final outcome ALMOST.
+        quiz.answerTyped("mit")
+        assertEquals(mapOf(item1.id to DrillResult.ALMOST), quiz.typedResults())
+        quiz.advance()
+
+        // Far miss on item2: final outcome WRONG.
+        quiz.answerTyped("completely wrong")
+        assertEquals(
+            mapOf(item1.id to DrillResult.ALMOST, item2.id to DrillResult.WRONG),
+            quiz.typedResults(),
+        )
+    }
+
+    @Test
+    fun typedResultsKeepAMissWhenTheRetryIsRight() {
+        val quiz = DrillQuiz(listOf(item1), startRound = DrillRound.TYPED)
+        quiz.answerTyped("completely wrong")
+        quiz.advance()
+        quiz.answerTyped("mit")
+
+        assertEquals(mapOf(item1.id to DrillResult.WRONG), quiz.typedResults())
+    }
+
+    @Test
+    fun choiceRoundAnswersDoNotAppearInTypedResults() {
+        val quiz = DrillQuiz(listOf(item1))
+        quiz.answer(item1.answer)
+
+        assertTrue(quiz.typedResults().isEmpty())
+    }
+
+    @Test
+    fun typedResultsCoverOnlyTheItemsTypedSoFar() {
+        val quiz = DrillQuiz(listOf(item1, item2), startRound = DrillRound.TYPED)
+        quiz.answerTyped("mit")
+        quiz.advance()
+
+        // item1 has a typed answer, item2 was not reached.
+        assertEquals(mapOf(item1.id to DrillResult.RIGHT), quiz.typedResults())
+        assertEquals(1, quiz.firstAttempts().size)
+    }
+
+    @Test
+    fun choiceThenTypedRoundYieldsTheRankingEvidence() {
+        // Choice round: item1 right first try, item2 wrong first try then right on retry.
+        // Typed round: item1 typed right, item2 typed wrong and staying wrong on its retry.
+        val quiz = DrillQuiz(listOf(item1, item2))
+        quiz.answer(item1.answer)
+        quiz.advance()
+        quiz.answer(wrongChoice(item2))
+        quiz.advance()
+        quiz.answer(item2.answer)
+        quiz.advance()
+        assertEquals(DrillRound.TYPED, quiz.round)
+
+        // Nothing typed yet, so only the choice evidence exists.
+        assertTrue(quiz.typedResults().isEmpty())
+
+        quiz.answerTyped(item1.answer)
+        quiz.advance()
+        quiz.answerTyped("completely wrong")
+        quiz.advance()
+        quiz.answerTyped(item2.answer)
+
+        assertEquals(mapOf(item1.id to DrillResult.RIGHT, item2.id to DrillResult.WRONG), quiz.typedResults())
+        assertEquals(mapOf(item1.id to true, item2.id to false), quiz.firstAttempts())
+
+        // The evidence a full round records for the decayed counts: 2 items, right once in
+        // both the choice and the typed phase.
+        val evidence = DrillScores.roundEvidence(
+            hasTypedRound = true,
+            choiceAnswered = quiz.firstAttempts().size,
+            choiceRight = quiz.firstTryScore,
+            typedAnswered = quiz.typedResults().size,
+            typedRight = quiz.typedResults().values.count { it == DrillResult.RIGHT },
+        )
+        assertEquals(2.0, evidence.askedDelta, 1e-9)
+        assertEquals(1.0 / 3.0 + 1 * 2.0 / 3.0, evidence.rightDelta, 1e-9)
+    }
 }
