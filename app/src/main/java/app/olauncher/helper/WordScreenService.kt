@@ -20,6 +20,7 @@ class WordScreenService : AccessibilityService() {
     companion object {
         const val EXTRA_SCREEN_LINES = "app.olauncher.SCREEN_LINES"
         private const val MAX_LINES = 600
+        private val NEWLINE_REGEX = Regex("""[\n\r]+""")
 
         fun setEnabled(context: Context, enabled: Boolean) {
             val state = if (enabled) {
@@ -59,30 +60,31 @@ class WordScreenService : AccessibilityService() {
     private fun pickFromScreen() {
         val prefs = Prefs(applicationContext)
         if (!prefs.germanEnabled || !prefs.germanScreenPick) return
-        val lines = ArrayList<String>()
+        val paragraphs = ArrayList<String>()
         try {
             val root = rootInActiveWindow
             if (root != null && root.packageName?.toString() != packageName) {
-                collect(root, lines)
+                collect(root, paragraphs)
             }
         } catch (_: Exception) {
         }
-        if (lines.isEmpty()) {
+        if (paragraphs.isEmpty()) {
             applicationContext.showToast(getString(R.string.nothing_to_pick_here))
             return
         }
         val intent = Intent(applicationContext, WordCaptureActivity::class.java)
-            .putStringArrayListExtra(EXTRA_SCREEN_LINES, lines)
+            .putStringArrayListExtra(EXTRA_SCREEN_LINES, paragraphs)
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         startActivity(intent)
     }
 
+    /** Each node's full text stays one paragraph; the picker splits it into sentences. */
     private fun collect(node: AccessibilityNodeInfo, out: MutableList<String>) {
         if (out.size >= MAX_LINES) return
         if (node.isPassword || !node.isVisibleToUser) return
         val text = node.text?.toString()?.takeIf { it.isNotBlank() }
             ?: node.contentDescription?.toString()?.takeIf { it.isNotBlank() }
-        if (text != null) out.add(text)
+        if (text != null) out.add(text.replace(NEWLINE_REGEX, " "))
         for (i in 0 until node.childCount) {
             val child = node.getChild(i) ?: continue
             collect(child, out)
