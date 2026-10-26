@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Brief rose flash on a wrong drill tile (#640); it settles back to quiz_choice_wrong -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/accentRose" />
+    <corners android:radius="@dimen/radiusMedium" />
+</shape>

@@ -1,5 +1,6 @@
 package app.olauncher.ui.words
 
+import android.animation.ObjectAnimator
 import android.os.Bundle
 import android.util.TypedValue
 import android.view.Gravity
@@ -8,6 +9,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
+import android.view.animation.PathInterpolator
 import android.view.inputmethod.EditorInfo
 import android.widget.GridLayout
 import android.widget.TextView
@@ -17,7 +19,6 @@ import androidx.core.view.isVisible
 import androidx.navigation.fragment.findNavController
 import app.olauncher.R
 import app.olauncher.data.Prefs
-import app.olauncher.data.store.AUTO_ADVANCE_DELAY_MS
 import app.olauncher.data.store.DrillFormat
 import app.olauncher.data.store.DrillItem
 import app.olauncher.data.store.DrillItemHistory
@@ -43,6 +44,7 @@ import app.olauncher.databinding.ItemDrillSummaryBinding
 import app.olauncher.helper.DrawerScrollHelper
 import app.olauncher.helper.Haptics
 import app.olauncher.helper.hideKeyboard
+import app.olauncher.helper.isSystemAnimationsDisabled
 import app.olauncher.helper.showKeyboard
 import app.olauncher.ui.BaseFragment
 import app.olauncher.ui.today.attachPressScale
@@ -71,6 +73,12 @@ class DrillFragment : BaseFragment() {
     private var hintRevealedForItemId: String? = null
     private var recordedQuiz: Any? = null
     private var isPractiseMissesRound = false
+    /** Feedback motion runs once per question, at the moment the answer lands (#640). */
+    private var feedbackAnimatedItemId: String? = null
+    /** The near-miss sand border pulse runs once per retried typed answer (#640). */
+    private var nearMissPulsedItemId: String? = null
+    /** True while a question-card exit is in flight, so a double tap cannot skip ahead. */
+    private var transitionInProgress = false
     private val sessionGradedWordIds = mutableSetOf<Long>()
     private val roundRandom = Random()
 
@@ -82,17 +90,28 @@ class DrillFragment : BaseFragment() {
         if (isWordOrderRound) {
             val q = wordOrderQuiz ?: return@Runnable
             if (!q.isAnswered) return@Runnable
-            q.advance()
-            render()
+            advanceWithMotion(binding.questionCard) {
+                q.advance()
+                render()
+            }
             return@Runnable
         }
         val q = quiz ?: return@Runnable
         if (!q.isAnswered) return@Runnable
-        q.advance()
+        advanceWithMotion(binding.questionCard) {
+            q.advance()
+            resetQuestionState()
+            render()
+        }
+    }
+
+    /** Clears the per-question render state when the round moves to the next question. */
+    private fun resetQuestionState() {
         selectedChoice = null
         lastRenderedItemId = null
         hintRevealedForItemId = null
-        render()
+        feedbackAnimatedItemId = null
+        nearMissPulsedItemId = null
     }
 
     override fun onCreateView(
@@ -194,6 +213,7 @@ class DrillFragment : BaseFragment() {
         }
 
         render()
+        animateQuestionEnter(motionSpec())
     }
 
     /** The per-item maturity counts (rounds answered right), decoded from prefs. */
@@ -248,11 +268,15 @@ class DrillFragment : BaseFragment() {
                         random = roundRandom,
                     )
                     wordOrderQuiz = WordOrderQuiz(items)
+                    resetQuestionState()
                     render()
+                    animateQuestionEnter(motionSpec())
                 }
                 q.isAnswered -> {
-                    q.advance()
-                    render()
+                    advanceWithMotion(binding.questionCard) {
+                        q.advance()
+                        render()
+                    }
                 }
                 else -> {
                     val result = q.check() ?: return
@@ -270,18 +294,17 @@ class DrillFragment : BaseFragment() {
                 // "Another 5": a new shuffled round of the same type or mix.
                 isPractiseMissesRound = false
                 quiz = buildRound()
-                selectedChoice = null
-                lastRenderedItemId = null
-                hintRevealedForItemId = null
+                resetQuestionState()
                 render()
+                animateQuestionEnter(motionSpec())
             }
             q.isAnswered -> {
                 // Continues past a flashcard, an inline correction, or a right answer.
-                q.advance()
-                selectedChoice = null
-                lastRenderedItemId = null
-                hintRevealedForItemId = null
-                render()
+                advanceWithMotion(binding.questionCard) {
+                    q.advance()
+                    resetQuestionState()
+                    render()
+                }
             }
             q.currentFormat == DrillFormat.TYPED -> {
                 val input = binding.etAnswer.text?.toString().orEmpty()
@@ -302,7 +325,9 @@ class DrillFragment : BaseFragment() {
             if (missedItems.isNotEmpty()) {
                 isPractiseMissesRound = true
                 wordOrderQuiz = WordOrderQuiz(missedItems)
+                resetQuestionState()
                 render()
+                animateQuestionEnter(motionSpec())
             }
             return
         }
@@ -313,10 +338,9 @@ class DrillFragment : BaseFragment() {
         buildMissesRound(missedItems)?.let { misses ->
             isPractiseMissesRound = true
             quiz = misses
-            selectedChoice = null
-            lastRenderedItemId = null
-            hintRevealedForItemId = null
+            resetQuestionState()
             render()
+            animateQuestionEnter(motionSpec())
         }
     }
 
@@ -502,15 +526,28 @@ class DrillFragment : BaseFragment() {
         val correctChoice = question.correctChoice
         b.choiceGrid.removeAllViews()
 
+        // Feedback targets for the #640 micro-animations, collected while binding.
+        var tappedTile: TextView? = null
+        var wrongTile: TextView? = null
+        val neutralTiles = ArrayList<TextView>()
+
         for (choice in question.choices) {
             val tv = newCell(formatChoiceToken(choice) ?: choice)
             tv.gravity = Gravity.CENTER
             tv.minHeight = resources.getDimensionPixelSize(R.dimen.quiz_choice_min_height)
 
             when (ConjugationCellLook.of(answered, choice, correctChoice.orEmpty(), selectedChoice)) {
-                ConjugationCellLook.RIGHT -> tv.isActivated = true
-                ConjugationCellLook.WRONG -> tv.setBackgroundResource(R.drawable.quiz_choice_wrong)
-                ConjugationCellLook.NEUTRAL -> Unit
+                ConjugationCellLook.RIGHT -> {
+                    tv.isActivated = true
+                    // The tapped tile on a right answer settles and pops its check; a
+                    // right-lit tile after a wrong answer is the reveal, not the tap.
+                    if (answered && choice == selectedChoice) tappedTile = tv
+                }
+                ConjugationCellLook.WRONG -> {
+                    tv.setBackgroundResource(R.drawable.quiz_choice_wrong)
+                    wrongTile = tv
+                }
+                ConjugationCellLook.NEUTRAL -> if (answered) neutralTiles.add(tv)
             }
 
             if (!answered) {
@@ -546,6 +583,23 @@ class DrillFragment : BaseFragment() {
         b.btnPrimary.isVisible = waitingForContinue
         b.btnPrimary.isEnabled = true
         b.btnPrimary.alpha = 1f
+
+        // Feedback micro-animations run once, at the moment the answer lands (#640),
+        // after this render has decided what the correction reveals.
+        val feedbackKey = question.id.toString()
+        if (answered && feedbackAnimatedItemId != feedbackKey) {
+            feedbackAnimatedItemId = feedbackKey
+            animateChoiceFeedback(q, tappedTile, wrongTile, neutralTiles)
+            if (waitingForContinue) {
+                // The mock rises the whole correction block: the rule, the answer and
+                // the Continue button that just appeared with them.
+                animateCorrectionRise(
+                    motionSpec(),
+                    b.btnPrimary,
+                    *revealedCorrectionViews(feedbackKey).toTypedArray(),
+                )
+            }
+        }
     }
 
     private fun renderTypedQuestion(q: DrillQuiz, question: DrillQuizQuestion) {
@@ -565,6 +619,7 @@ class DrillFragment : BaseFragment() {
                 b.tvCorrection.text = getString(R.string.drill_near_miss)
                 b.tvCorrection.isVisible = true
                 b.etAnswer.setSelection(b.etAnswer.text?.length ?: 0)
+                pulseNearMissBorder(b, currentItemId)
             } else {
                 b.tvCorrection.isVisible = false
             }
@@ -594,13 +649,240 @@ class DrillFragment : BaseFragment() {
                 b.btnPrimary.isEnabled = true
                 b.btnPrimary.alpha = 1f
             }
+            // Feedback micro-animations run once, at the moment the answer lands (#640).
+            if (feedbackAnimatedItemId != currentItemId) {
+                feedbackAnimatedItemId = currentItemId
+                val spec = motionSpec()
+                if (isCorrect) {
+                    popView(b.etAnswer, spec, fadeWhenReduced = false)
+                } else {
+                    shakeView(b.etAnswer, spec)
+                    animateCorrectionRise(spec, *revealedCorrectionViews(currentItemId).toTypedArray())
+                }
+            }
         }
     }
 
     private fun scheduleAutoAdvance() {
         if (autoAdvanceScheduled) return
         autoAdvanceScheduled = true
-        _binding?.root?.postDelayed(autoAdvance, AUTO_ADVANCE_DELAY_MS)
+        _binding?.root?.postDelayed(autoAdvance, motionSpec().autoAdvanceMs)
+    }
+
+    // ---------------------------------------------------------------------
+    // Motion (#640): the decisions live in DrillMotion (Context-free, JVM
+    // tested by DrillMotionDesignLanguageTest); this wiring only applies them.
+    // ---------------------------------------------------------------------
+
+    /** Reduced motion is the system "remove animations" setting — the app adds no toggle. */
+    private fun motionSpec(): DrillMotion.Spec =
+        DrillMotion.spec(context?.isSystemAnimationsDisabled() ?: false)
+
+    /** cubic-bezier(.2, 0, 0, 1) — the decelerate easing every drill motion shares. */
+    private fun easeInterpolator() = PathInterpolator(
+        DrillMotion.EASE_CONTROL_X1,
+        DrillMotion.EASE_CONTROL_Y1,
+        DrillMotion.EASE_CONTROL_X2,
+        DrillMotion.EASE_CONTROL_Y2,
+    )
+
+    /** Slide/rise distance in px, or 0 when reduced motion removed the translation. */
+    private fun densityPx(dp: Float, translates: Boolean): Float =
+        if (translates) dp * resources.displayMetrics.density else 0f
+
+    /**
+     * The question-card transition (#640): [exitView] (the question card, or the whole
+     * round when a fresh one starts) fades out toward the left, then [advance] re-binds
+     * and the new card slides in from the right. Sequential, no gap, no overlap — the
+     * header, progress line and segment bar never move.
+     */
+    private fun advanceWithMotion(exitView: View, advance: () -> Unit) {
+        if (transitionInProgress) return
+        val b = _binding ?: return
+        transitionInProgress = true
+        val spec = motionSpec()
+        b.root.removeCallbacks(autoAdvance)
+        autoAdvanceScheduled = false
+        exitView.animate()
+            .translationX(-densityPx(DrillMotion.SLIDE_X_DP, spec.translates))
+            .alpha(0f)
+            .setDuration(spec.exitMs)
+            .setInterpolator(easeInterpolator())
+            .withEndAction {
+                transitionInProgress = false
+                if (_binding == null) return@withEndAction
+                advance()
+                animateQuestionEnter(spec)
+            }
+    }
+
+    /** Enter-only variant: the first question of a fresh round or of the screen. */
+    private fun animateQuestionEnter(spec: DrillMotion.Spec) {
+        val card = _binding?.questionCard ?: return
+        if (!card.isVisible) return
+        card.translationX = densityPx(DrillMotion.SLIDE_X_DP, spec.translates)
+        card.alpha = 0f
+        card.animate()
+            .translationX(0f)
+            .alpha(1f)
+            .setStartDelay(0) // view.animate() reuses the animator; drop any prior summary delay
+            .setDuration(spec.enterMs)
+            .setInterpolator(easeInterpolator())
+            .start()
+    }
+
+    /** The pop: the view overshoots slightly and settles; reduced motion fades it instead. */
+    private fun popView(view: View, spec: DrillMotion.Spec, fadeWhenReduced: Boolean) {
+        if (spec.scales) {
+            view.scaleX = DrillMotion.POP_MAX_SCALE
+            view.scaleY = DrillMotion.POP_MAX_SCALE
+            view.animate()
+                .scaleX(1f)
+                .scaleY(1f)
+                .setStartDelay(0) // view.animate() reuses the animator; drop any prior delay
+                .setDuration(spec.popMs)
+                .setInterpolator(easeInterpolator())
+                .start()
+        } else if (fadeWhenReduced) {
+            view.alpha = 0f
+            view.animate()
+                .alpha(1f)
+                .setStartDelay(0) // view.animate() reuses the animator; drop any prior delay
+                .setDuration(spec.popMs)
+                .setInterpolator(easeInterpolator())
+                .start()
+        }
+    }
+
+    /** The wrong-answer shake on the tapped tile; dropped entirely under reduced motion. */
+    private fun shakeView(view: View, spec: DrillMotion.Spec) {
+        if (!spec.shakes) return
+        val shakePx = densityPx(DrillMotion.SHAKE_X_DP, translates = true)
+        val fractions = DrillMotion.shakeFractions()
+        val values = FloatArray(fractions.size + 2)
+        values[0] = 0f
+        fractions.forEachIndexed { index, fraction -> values[index + 1] = fraction * shakePx }
+        values[values.size - 1] = 0f
+        ObjectAnimator.ofFloat(view, View.TRANSLATION_X, *values).apply {
+            duration = spec.shakeMs
+            interpolator = easeInterpolator()
+            start()
+        }
+    }
+
+    /**
+     * The inline correction slides up once, when the wrong answer lands: every view
+     * this render just revealed — the rule line in the hint, the answer in the
+     * correction, the Continue button where it just appeared — rises together for
+     * [DrillMotion.RISE_MS], like the mock's one correction block.
+     */
+    private fun animateCorrectionRise(spec: DrillMotion.Spec, vararg views: View) {
+        for (view in views) {
+            view.translationY = densityPx(DrillMotion.RISE_Y_DP, spec.translates)
+            view.alpha = 0f
+            view.animate()
+                .translationY(0f)
+                .alpha(1f)
+                .setStartDelay(0) // view.animate() reuses the animator; drop the summary's stagger delay
+                .setDuration(spec.riseMs)
+                .setInterpolator(easeInterpolator())
+                .start()
+        }
+    }
+
+    /**
+     * The correction views the wrong-answer render just revealed: the rule line in the
+     * hint — unless the learner revealed it earlier, that line is old news — and the
+     * answer line in the correction.
+     */
+    private fun revealedCorrectionViews(feedbackKey: String): List<View> {
+        val b = _binding ?: return emptyList()
+        val views = ArrayList<View>()
+        val hintShowsRule = b.tvHint.isVisible && !b.tvHint.isClickable
+        if (hintShowsRule && hintRevealedForItemId != feedbackKey) views.add(b.tvHint)
+        if (b.tvCorrection.isVisible) views.add(b.tvCorrection)
+        return views
+    }
+
+    /** Right or wrong on a choice tile: settle/flash + shake, the rest of the grid dims. */
+    private fun animateChoiceFeedback(
+        q: DrillQuiz,
+        tappedTile: TextView?,
+        wrongTile: TextView?,
+        neutralTiles: List<TextView>,
+    ) {
+        val spec = motionSpec()
+        if (q.lastAnswer?.correct == true) {
+            tappedTile?.let { tile ->
+                tile.text = tile.text.toString() + " \u2713"
+                popView(tile, spec, fadeWhenReduced = false)
+            }
+        } else {
+            wrongTile?.let { tile ->
+                tile.setBackgroundResource(R.drawable.quiz_choice_wrong_flash)
+                tile.postDelayed({
+                    if (_binding != null) tile.setBackgroundResource(R.drawable.quiz_choice_wrong)
+                }, spec.flashMs)
+                shakeView(tile, spec)
+            }
+            // The correction rise itself runs in the render that reveals it, after
+            // this tile motion, with the views that just appeared.
+        }
+        // The rest of the grid falls back so the tapped tile carries the verdict.
+        for (tile in neutralTiles) tile.alpha = DrillMotion.DIMMED_ALPHA
+    }
+
+    /**
+     * Near miss (#622) motion (#640): a soft accentSand border pulse — no shake, no rose,
+     * no reveal — then back to the resting border while the single retry stays open.
+     */
+    private fun pulseNearMissBorder(b: FragmentDrillBinding, itemId: String) {
+        if (nearMissPulsedItemId == itemId) return
+        nearMissPulsedItemId = itemId
+        val spec = motionSpec()
+        b.etAnswer.setBackgroundResource(R.drawable.quiz_choice_near)
+        b.root.postDelayed({
+            val bind = _binding ?: return@postDelayed
+            val quizNow = quiz
+            val stillAwaitingRetry = quizNow != null && !quizNow.isAnswered &&
+                quizNow.isAwaitingRetry && quizNow.current?.id?.toString() == itemId
+            if (stillAwaitingRetry) {
+                bind.etAnswer.setBackgroundResource(R.drawable.quiz_choice)
+            }
+        }, spec.shakeMs)
+    }
+
+    /**
+     * Summary entrance (#640): the counts pop, the rows rise with a 50ms stagger
+     * (misses first — [DrillSummaryLogic.sort] order), the buttons come last, all
+     * inside the ~700ms budget.
+     */
+    private fun animateSummaryEntrance() {
+        val b = _binding ?: return
+        val spec = motionSpec()
+        popView(b.tvSummaryCounts, spec, fadeWhenReduced = true)
+        val rowCount = b.summaryList.childCount
+        for (index in 0 until rowCount) {
+            val row = b.summaryList.getChildAt(index)
+            row.translationY = densityPx(DrillMotion.RISE_Y_DP, spec.translates)
+            row.alpha = 0f
+            row.animate()
+                .translationY(0f)
+                .alpha(1f)
+                .setStartDelay(DrillMotion.summaryRowDelayMs(index, rowCount, spec))
+                .setDuration(spec.rowMs)
+                .setInterpolator(easeInterpolator())
+                .start()
+        }
+        for (button in listOf(b.btnPrimary, b.btnPractiseMisses, b.btnSecondary)) {
+            button.alpha = 0f
+            button.animate()
+                .alpha(1f)
+                .setStartDelay(DrillMotion.summaryButtonsDelayMs(rowCount, spec))
+                .setDuration(spec.rowMs)
+                .setInterpolator(easeInterpolator())
+                .start()
+        }
     }
 
     private fun renderSegments(q: DrillQuiz) {
@@ -676,6 +958,8 @@ class DrillFragment : BaseFragment() {
         b.btnSecondary.isVisible = true
         b.btnSecondary.isEnabled = true
         b.btnSecondary.alpha = 1f
+
+        animateSummaryEntrance()
 
         b.root.hideKeyboard()
     }
@@ -844,6 +1128,14 @@ class DrillFragment : BaseFragment() {
                 b.btnPrimary.isEnabled = true
                 b.btnPrimary.alpha = 1f
             }
+            // Feedback runs once per question, at the moment the answer lands (#640).
+            val feedbackKey = "wo:" + question.item.id
+            if (feedbackAnimatedItemId != feedbackKey) {
+                feedbackAnimatedItemId = feedbackKey
+                if (lastAnswer?.correct != true) {
+                    animateCorrectionRise(motionSpec(), *revealedCorrectionViews(feedbackKey).toTypedArray())
+                }
+            }
         }
     }
 
@@ -910,6 +1202,8 @@ class DrillFragment : BaseFragment() {
         b.btnSecondary.isVisible = true
         b.btnSecondary.isEnabled = true
         b.btnSecondary.alpha = 1f
+
+        animateSummaryEntrance()
 
         b.root.hideKeyboard()
     }

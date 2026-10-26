@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Near-miss border pulse on a typed drill answer (#640): soft sand, no rose, no shake.
+     The resting layer-list of quiz_choice with only the surface stroke turned accentSand,
+     so the 320ms pulse swaps the stroke without shifting the tile outline or shadow. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Outer ambient shadow -->
+    <item
+        android:top="2dp"
+        android:bottom="0dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/todayTileShadowSoft" />
+            <corners android:radius="@dimen/radiusMedium" />
+        </shape>
+    </item>
+    <!-- Direct soft shadow -->
+    <item
+        android:top="1dp"
+        android:bottom="0dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/todayTileShadow" />
+            <corners android:radius="@dimen/radiusMedium" />
+        </shape>
+    </item>
+    <!-- Top edge highlight -->
+    <item
+        android:top="0dp"
+        android:bottom="2dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/todayTileHighlight" />
+            <corners android:radius="@dimen/radiusMedium" />
+        </shape>
+    </item>
+    <!-- Raised tile surface, near-miss sand stroke -->
+    <item
+        android:top="1dp"
+        android:bottom="2dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/todayTile" />
+            <stroke
+                android:width="@dimen/strokeThin"
+                android:color="@color/accentSand" />
+            <corners android:radius="@dimen/radiusMedium" />
+        </shape>
+    </item>
+</layer-list>
