@@ -9,7 +9,7 @@ drills are started, run, summarised and ranked. It does not add new drill conten
 - A full-screen hub lists the 9 drill types, weakest first.
 - A round is 10 shuffled items: a choice round, then a typed round for types that keep one.
 - A near-miss spelling gets one retry instead of a wrong mark.
-- The summary lists every item with a tick, a cross or an amber mark.
+- The summary is an adaptive screen: every item listed, misses at the top, scrolling when long.
 - Ranking uses a smoothed score over decayed counts, so old rounds fade.
 - The drawer gets an optional search command only. No permanent rows.
 
@@ -71,9 +71,9 @@ types that keep a typed round. Choice-only types end after the choice round.
 | Adjective endings | choice only |
 | Word order | choice only (the tap-to-arrange view) |
 
-The agreed rule is "typed rounds stay for nouns, prepositions and verb forms". Articles
-and plurals count as nouns. Pronouns, verb + preposition and separable verbs count as
-verb forms. See Open questions if that mapping needs a check.
+Decided: typed rounds stay for nouns, prepositions and verb forms. Articles and
+plurals count as nouns. Pronouns, verb + preposition and separable verbs count as
+verb forms. The table above is the final mapping.
 
 A per-type flag in the drill type table says typed or choice-only.
 
@@ -97,13 +97,25 @@ On a near miss:
 
 ## Summary screen
 
-The drill summary replaces the single score line. The header keeps the counts, for
-example "7 right · 1 almost · 2 wrong".
+Decided: an adaptive screen. It replaces the single score line. The header keeps the
+counts, for example "7 right · 1 almost · 2 wrong", and stays pinned.
 
-Below it, a list of all 10 items. Wrong items come first, then almost, then right.
+Below it, a list of all items in the round (10, or fewer for a small type). The misses
+sit at the top, so they are visible without scrolling. When the list is long, the
+whole screen stays readable: the header and the buttons stay in place and the list
+scrolls between them.
+
+Sort order, lowest score first:
+
+- The data has no score per item. `DrillScores` keeps a score per drill type only, and
+  `DrillItem` has no score field. So the sort uses each item's first-try result
+  (`DrillQuiz.firstAttempts`), misses first: wrong, then almost, then right.
+- Items with the same result keep round order.
+
 Each row has:
 
-- a mark: green tick for right, red cross for wrong, amber for almost,
+- a mark: green tick for right, red cross for wrong, amber for almost (the
+  `accentSage`, `accentRose` and `accentSand` colours below),
 - the prompt, with the learner's answer when it was wrong or almost.
 
 Under each red item: the correct answer and its one-line rule (the existing `hint`
@@ -230,16 +242,11 @@ Everything below is the smallest addition. Nothing here replaces an existing tok
 
 ## Open questions
 
-These are not decided.
-
-1. Does the summary list every item, or only the misses? Listing all is more
-   complete. Listing misses is shorter on a phone.
-2. Does "almost" keep its own amber colour, or join red? Amber is clearer. Red is
-   simpler and matches "not first try".
-3. Do the drill summary and the review summary share one component, or two that look
+1. Do the drill summary and the review summary share one component, or two that look
    alike? One component is less code but ties two screens together.
-4. Is the type mapping for typed rounds right (pronouns, verb + preposition and
-   separable verbs as verb forms)?
+
+Decided, no longer open: the typed or choice-only mapping (Rounds), the adaptive
+summary with misses on top (Summary screen), and the green, red and amber marks.
 
 ## Out of scope
 
