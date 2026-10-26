@@ -96,6 +96,7 @@ class WordOrderQuiz(
     private val random: Random = Random(),
 ) {
     private val firstAttemptsMap = mutableMapOf<DrillItemId, Boolean>()
+    private val learnerAnswersMap = mutableMapOf<DrillItemId, String>()
     private val queue = ArrayDeque<WordOrderItem>()
     private var question: WordOrderQuestion? = null
     private var lastAnswerValue: QuizAnswer? = null
@@ -121,6 +122,11 @@ class WordOrderQuiz(
 
     fun firstAttempts(): Map<DrillItemId, Boolean> = firstAttemptsMap.toMap()
 
+    fun itemResults(): Map<DrillItemId, DrillResult> =
+        items.associate { it.id to if (firstAttemptsMap[it.id] == true) DrillResult.RIGHT else DrillResult.WRONG }
+
+    fun learnerAnswers(): Map<DrillItemId, String> = learnerAnswersMap.toMap()
+
     val firstTryScore: Int get() = firstAttemptsMap.values.count { it }
 
     fun selectTile(tile: WordOrderTile): Boolean {
@@ -141,6 +147,9 @@ class WordOrderQuiz(
         val isCorrect = order in q.item.accepted || q.item.accepted.any { it.map(String::lowercase) == lowerOrder }
         val result = QuizAnswer(isCorrect, q.item.canonicalAnswer)
         recordAttempt(q.item, isCorrect)
+        if (!isCorrect && q.item.id !in learnerAnswersMap) {
+            learnerAnswersMap[q.item.id] = order.joinToString(" ")
+        }
         lastAnswerValue = result
         return result
     }

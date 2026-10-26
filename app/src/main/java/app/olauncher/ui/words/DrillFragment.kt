@@ -12,6 +12,7 @@ import android.view.inputmethod.EditorInfo
 import android.widget.GridLayout
 import android.widget.TextView
 import androidx.annotation.AttrRes
+import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.navigation.fragment.findNavController
 import app.olauncher.R
@@ -20,9 +21,12 @@ import app.olauncher.data.store.AUTO_ADVANCE_DELAY_MS
 import app.olauncher.data.store.DrillItem
 import app.olauncher.data.store.DrillQuiz
 import app.olauncher.data.store.DrillQuizQuestion
+import app.olauncher.data.store.DrillResult
 import app.olauncher.data.store.DrillReviewFeed
 import app.olauncher.data.store.DrillRound
 import app.olauncher.data.store.DrillScores
+import app.olauncher.data.store.DrillSummaryItem
+import app.olauncher.data.store.DrillSummaryLogic
 import app.olauncher.data.store.DrillTables
 import app.olauncher.data.store.DrillType
 import app.olauncher.data.store.QuizAnswer
@@ -33,6 +37,7 @@ import app.olauncher.data.store.WordOrderItem
 import app.olauncher.data.store.WordOrderQuiz
 import app.olauncher.data.store.shouldAutoAdvance
 import app.olauncher.databinding.FragmentDrillBinding
+import app.olauncher.databinding.ItemDrillSummaryBinding
 import app.olauncher.helper.DrawerScrollHelper
 import app.olauncher.helper.Haptics
 import app.olauncher.helper.hideKeyboard
@@ -57,6 +62,7 @@ class DrillFragment : BaseFragment() {
     private var lastRenderedItemId: String? = null
     private var autoAdvanceScheduled = false
     private var recordedQuiz: Any? = null
+    private var isPractiseMissesRound = false
     private val sessionGradedWordIds = mutableSetOf<Long>()
 
     private val autoAdvance = Runnable {
@@ -105,6 +111,9 @@ class DrillFragment : BaseFragment() {
 
         binding.btnPrimary.setOnClickListener {
             onPrimary(it)
+        }
+        binding.btnPractiseMisses.setOnClickListener {
+            onPractiseMisses(it)
         }
         binding.btnSecondary.setOnClickListener {
             Haptics.tick(it)
@@ -178,6 +187,7 @@ class DrillFragment : BaseFragment() {
             Haptics.tick(view)
             when {
                 q.isFinished -> {
+                    isPractiseMissesRound = false
                     val appContext = view.context.applicationContext
                     val words = WordsCard.getStore(appContext).all()
                     val items = DrillTables.roundWordOrderItems(words)
@@ -202,6 +212,7 @@ class DrillFragment : BaseFragment() {
         when {
             q.isFinished -> {
                 // Restart quiz
+                isPractiseMissesRound = false
                 val appContext = view.context.applicationContext
                 val words = WordsCard.getStore(appContext).all()
                 val genderLookup: (String) -> String? = { text ->
@@ -236,6 +247,32 @@ class DrillFragment : BaseFragment() {
         }
     }
 
+    private fun onPractiseMisses(view: View) {
+        Haptics.tick(view)
+        if (drillType == DrillType.WORD_ORDER) {
+            val q = wordOrderQuiz ?: return
+            val results = q.itemResults()
+            val missedItems = q.items.filter { results[it.id]?.isRight == false }
+            if (missedItems.isNotEmpty()) {
+                isPractiseMissesRound = true
+                wordOrderQuiz = WordOrderQuiz(missedItems)
+                render()
+            }
+            return
+        }
+
+        val q = quiz ?: return
+        val results = q.itemResults()
+        val missedItems = q.items.filter { results[it.id]?.isRight == false }
+        if (missedItems.isNotEmpty()) {
+            isPractiseMissesRound = true
+            quiz = DrillQuiz(missedItems, isChoiceOnly = drillType.isChoiceOnly)
+            selectedChoice = null
+            lastRenderedItemId = null
+            render()
+        }
+    }
+
     private fun render() {
         val b = _binding ?: return
         val context = context ?: return
@@ -247,24 +284,26 @@ class DrillFragment : BaseFragment() {
             val inQuiz = q != null && !q.isFinished
 
             b.quizContainer.isVisible = inQuiz
+            b.summaryHeader.isVisible = finished
             b.questionCard.isVisible = inQuiz
             b.choiceScroll.isVisible = false
             b.typedContainer.isVisible = false
             b.wordOrderView.isVisible = inQuiz
             b.quizCard.isVisible = finished
-            b.summaryContainer.isVisible = finished
             b.tvEmpty.isVisible = empty
             b.btnPrimary.isVisible = !empty
             b.btnSecondary.isVisible = finished
 
             if (empty) {
                 b.btnPrimary.isVisible = false
+                b.btnPractiseMisses.isVisible = false
                 return
             }
             if (finished) {
                 renderWordOrderSummary(q)
                 return
             }
+            b.btnPractiseMisses.isVisible = false
             if (inQuiz) {
                 renderWordOrderQuestion(q)
             }
@@ -278,24 +317,26 @@ class DrillFragment : BaseFragment() {
         val inQuiz = q != null && !q.isFinished
 
         b.quizContainer.isVisible = inQuiz
+        b.summaryHeader.isVisible = finished
         b.questionCard.isVisible = inQuiz
         b.choiceScroll.isVisible = inQuiz && !q.isTyped
         b.typedContainer.isVisible = inQuiz && q.isTyped
         b.wordOrderView.isVisible = false
         b.quizCard.isVisible = finished
-        b.summaryContainer.isVisible = finished
         b.tvEmpty.isVisible = empty
         b.btnPrimary.isVisible = !empty
         b.btnSecondary.isVisible = finished
 
         if (empty) {
             b.btnPrimary.isVisible = false
+            b.btnPractiseMisses.isVisible = false
             return
         }
         if (finished) {
             renderSummary(q)
             return
         }
+        b.btnPractiseMisses.isVisible = false
         if (inQuiz) {
             renderQuestion(q)
         }
@@ -450,13 +491,81 @@ class DrillFragment : BaseFragment() {
         recordFinishedRound(q)
         val b = binding
         val context = b.root.context
-        b.tvScore.text = context.getString(R.string.conjugation_score, q.firstTryScore, q.total)
-        b.btnPrimary.setText(R.string.drill_restart)
+        val results = q.itemResults()
+        val rightCount = results.values.count { it == DrillResult.RIGHT }
+        val almostCount = q.almostScore
+        val wrongCount = results.values.count { it == DrillResult.WRONG }
+
+        b.tvSummaryTitle.text = context.getString(DrillTables.labelRes(drillType))
+        b.tvSummaryCounts.text = context.getString(R.string.drill_summary_counts, rightCount, almostCount, wrongCount)
+
+        val learnerAnswers = q.learnerAnswers()
+        val summaryItems = q.items.mapIndexed { index, item ->
+            val res = results[item.id] ?: if (q.firstAttempts()[item.id] == true) DrillResult.RIGHT else DrillResult.WRONG
+            DrillSummaryItem(
+                id = item.id,
+                prompt = item.prompt,
+                answer = item.answer,
+                hint = item.hint,
+                result = res,
+                learnerAnswer = learnerAnswers[item.id],
+                roundIndex = index,
+            )
+        }
+        val sortedItems = DrillSummaryLogic.sort(summaryItems)
+
+        bindSummaryRows(sortedItems)
+
+        b.btnPrimary.setText(R.string.drill_summary_another)
         b.btnPrimary.isVisible = true
         b.btnPrimary.isEnabled = true
         b.btnPrimary.alpha = 1f
+
+        val hasMisses = wrongCount > 0 || almostCount > 0
+        b.btnPractiseMisses.setText(R.string.drill_summary_practise_misses)
+        b.btnPractiseMisses.isVisible = hasMisses
+        b.btnPractiseMisses.isEnabled = hasMisses
+
+        b.btnSecondary.setText(R.string.drill_summary_done)
         b.btnSecondary.isVisible = true
+        b.btnSecondary.isEnabled = true
+        b.btnSecondary.alpha = 1f
+
         b.root.hideKeyboard()
+    }
+
+    /**
+     * Binds the sorted summary rows shared by the drill and word-order summaries:
+     * mark icon, tint, prompt text, and correction line per result.
+     */
+    private fun bindSummaryRows(items: List<DrillSummaryItem>) {
+        val b = binding
+        val context = b.root.context
+        b.summaryList.removeAllViews()
+        for (item in items) {
+            val itemBinding = ItemDrillSummaryBinding.inflate(layoutInflater, b.summaryList, false)
+            itemBinding.tvPrompt.text = DrillSummaryLogic.formatPrompt(item.prompt, item.result, item.learnerAnswer)
+            when (item.result) {
+                DrillResult.RIGHT -> {
+                    itemBinding.ivMark.setImageResource(R.drawable.ic_check)
+                    itemBinding.ivMark.setColorFilter(ContextCompat.getColor(context, R.color.accentSage))
+                    itemBinding.tvCorrection.isVisible = false
+                }
+                DrillResult.ALMOST -> {
+                    itemBinding.ivMark.setImageResource(R.drawable.ic_dot)
+                    itemBinding.ivMark.setColorFilter(ContextCompat.getColor(context, R.color.accentSand))
+                    itemBinding.tvCorrection.isVisible = false
+                }
+                DrillResult.WRONG -> {
+                    itemBinding.ivMark.setImageResource(R.drawable.ic_close)
+                    itemBinding.ivMark.setColorFilter(ContextCompat.getColor(context, R.color.accentRose))
+                    val correction = DrillSummaryLogic.formatCorrection(item.answer, item.hint)
+                    itemBinding.tvCorrection.text = correction
+                    itemBinding.tvCorrection.isVisible = correction.isNotEmpty()
+                }
+            }
+            b.summaryList.addView(itemBinding.root)
+        }
     }
 
     private fun recordFinishedRound(q: DrillQuiz) {
@@ -465,7 +574,9 @@ class DrillFragment : BaseFragment() {
         val context = context ?: return
         val appContext = context.applicationContext
         val prefs = Prefs(appContext)
-        DrillScores.recordRound(prefs, drillType.id, q.total, q.firstTryScore)
+        if (!isPractiseMissesRound) {
+            DrillScores.recordRound(prefs, drillType.id, q.total, q.firstTryScore)
+        }
 
         val words = WordsCard.getStore(appContext).all()
         val today = WordsCard.epochDaySupplier()
@@ -570,12 +681,46 @@ class DrillFragment : BaseFragment() {
         recordFinishedWordOrderRound(q)
         val b = binding
         val context = b.root.context
-        b.tvScore.text = context.getString(R.string.conjugation_score, q.firstTryScore, q.total)
-        b.btnPrimary.setText(R.string.drill_restart)
+        val results = q.itemResults()
+        val rightCount = q.firstTryScore
+        val almostCount = 0
+        val wrongCount = q.total - q.firstTryScore
+
+        b.tvSummaryTitle.text = context.getString(R.string.drill_type_word_order)
+        b.tvSummaryCounts.text = context.getString(R.string.drill_summary_counts, rightCount, almostCount, wrongCount)
+
+        val learnerAnswers = q.learnerAnswers()
+        val summaryItems = q.items.mapIndexed { index, item ->
+            val res = results[item.id] ?: if (q.firstAttempts()[item.id] == true) DrillResult.RIGHT else DrillResult.WRONG
+            DrillSummaryItem(
+                id = item.id,
+                prompt = item.canonicalAnswer,
+                answer = item.canonicalAnswer,
+                hint = item.hint,
+                result = res,
+                learnerAnswer = learnerAnswers[item.id],
+                roundIndex = index,
+            )
+        }
+        val sortedItems = DrillSummaryLogic.sort(summaryItems)
+
+        bindSummaryRows(sortedItems)
+
+        b.btnPrimary.setText(R.string.drill_summary_another)
         b.btnPrimary.isVisible = true
         b.btnPrimary.isEnabled = true
         b.btnPrimary.alpha = 1f
+
+        val hasMisses = wrongCount > 0
+        b.btnPractiseMisses.setText(R.string.drill_summary_practise_misses)
+        b.btnPractiseMisses.isVisible = hasMisses
+        b.btnPractiseMisses.isEnabled = hasMisses
+
+        b.btnSecondary.setText(R.string.drill_summary_done)
         b.btnSecondary.isVisible = true
+        b.btnSecondary.isEnabled = true
+        b.btnSecondary.alpha = 1f
+
         b.root.hideKeyboard()
     }
 
@@ -585,7 +730,9 @@ class DrillFragment : BaseFragment() {
         val context = context ?: return
         val appContext = context.applicationContext
         val prefs = Prefs(appContext)
-        DrillScores.recordRound(prefs, drillType.id, q.total, q.firstTryScore)
+        if (!isPractiseMissesRound) {
+            DrillScores.recordRound(prefs, drillType.id, q.total, q.firstTryScore)
+        }
 
         val words = WordsCard.getStore(appContext).all()
         val today = WordsCard.epochDaySupplier()
