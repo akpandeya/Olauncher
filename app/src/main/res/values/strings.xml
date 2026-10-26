@@ -584,8 +584,6 @@
     <string name="drill_type_separable_verbs" tools:ignore="MissingTranslation">Separable verbs</string>
     <string name="drill_type_adjective_endings" tools:ignore="MissingTranslation">Adjective endings</string>
     <string name="drill_type_word_order" tools:ignore="MissingTranslation">Word order</string>
-    <string name="drill_type_with_percentage" tools:ignore="MissingTranslation">%1$s · %2$d%%</string>
-    <string name="drill_type_one_round" tools:ignore="MissingTranslation">%1$s · 1 round</string>
     <string name="drill_round_choice" tools:ignore="MissingTranslation">Multiple choice</string>
     <string name="drill_round_typed" tools:ignore="MissingTranslation">Type the answer</string>
     <string name="drill_round_word_order" tools:ignore="MissingTranslation">Word order</string>
@@ -597,6 +595,11 @@
     <string name="drill_summary_another" tools:ignore="MissingTranslation">Another 10</string>
     <string name="drill_summary_practise_misses" tools:ignore="MissingTranslation">Practise misses</string>
     <string name="drill_summary_done" tools:ignore="MissingTranslation">Done</string>
+    <string name="drill_hub_continue" tools:ignore="MissingTranslation">Continue: %1$s</string>
+    <string name="drill_hub_practise_weakest" tools:ignore="MissingTranslation">Practise weakest: %1$s</string>
+    <string name="drill_hub_stat" tools:ignore="MissingTranslation">%1$d%% · %2$d rounds</string>
+    <string name="drill_hub_one_round" tools:ignore="MissingTranslation">1 round</string>
+    <string name="drill_hub_new" tools:ignore="MissingTranslation">New</string>
     <string name="conjugation_not_in_dictionary" tools:ignore="MissingTranslation">“%1$s” isn\'t a verb in the offline dictionary</string>
     <string name="conjugation_progress" tools:ignore="MissingTranslation">%1$s · %2$d of %3$d</string>
     <string name="conjugation_tense_present" tools:ignore="MissingTranslation">Präsens</string>

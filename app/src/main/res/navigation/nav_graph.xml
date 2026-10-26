@@ -208,8 +208,8 @@
             app:popEnterAnim="@animator/fade_enter"
             app:popExitAnim="@animator/fade_exit" />
         <action
-            android:id="@+id/action_wordsFragment_to_drillFragment"
-            app:destination="@id/drillFragment"
+            android:id="@+id/action_wordsFragment_to_drillHubFragment"
+            app:destination="@id/drillHubFragment"
             app:enterAnim="@animator/fade_enter"
             app:exitAnim="@animator/fade_exit"
             app:popEnterAnim="@animator/fade_enter"
@@ -309,6 +309,20 @@
         <argument
             android:name="drillType"
             app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/drillHubFragment"
+        android:name="app.olauncher.ui.words.DrillHubFragment"
+        android:label="DrillHubFragment"
+        tools:layout="@layout/fragment_drill_hub">
+        <action
+            android:id="@+id/action_drillHubFragment_to_drillFragment"
+            app:destination="@id/drillFragment"
+            app:enterAnim="@animator/fade_enter"
+            app:exitAnim="@animator/fade_exit"
+            app:popEnterAnim="@animator/fade_enter"
+            app:popExitAnim="@animator/fade_exit" />
     </fragment>
 
 </navigation>
