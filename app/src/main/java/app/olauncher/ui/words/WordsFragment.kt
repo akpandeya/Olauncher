@@ -64,6 +64,7 @@ class WordsFragment : BaseFragment() {
         }
         binding.btnClearSearch.setOnClickListener { binding.etSearch.text?.clear() }
         binding.tvTitle.setOnClickListener { openDrillsHub() }
+        binding.btnDrills.setOnClickListener { openDrillsHub() }
 
         // The activity is edge-to-edge, so the window is not resized for the keyboard.
         // Pad the page by the IME inset so the search field stays just above the keyboard.
@@ -120,6 +121,7 @@ class WordsFragment : BaseFragment() {
                 findNavController().navigate(R.id.action_wordsFragment_to_wordListsFragment)
             }
         }
+        b.btnDrills.isVisible = WordsCardLogic.showDrillsButton(Prefs(context).germanEnabled)
         renderStats(b, context, today)
         b.tvMatchCount.isVisible = searching
         b.tvMatchCount.text = context.getString(R.string.words_search_count, shown.size, words.size)

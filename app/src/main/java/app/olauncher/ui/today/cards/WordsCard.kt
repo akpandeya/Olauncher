@@ -38,6 +38,9 @@ object WordsCardLogic {
 
     fun isAvailable(germanEnabled: Boolean): Boolean = germanEnabled
 
+    /** The Words page header shows the Drills button whenever German is on, like the Words card. */
+    fun showDrillsButton(germanEnabled: Boolean): Boolean = isAvailable(germanEnabled)
+
     fun formatWordsCount(context: Context, total: Int): String {
         return if (total == 1) {
             context.getString(R.string.words_count_single)
