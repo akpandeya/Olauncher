@@ -190,4 +190,75 @@ class DrillTest {
         assertFalse(check.isValid)
         assertTrue(check.problems.any { "between 2 and 4" in it })
     }
+
+    @Test
+    fun roundShapePerTypeFlagsMatchSpecification() {
+        val expectedChoiceOnly = setOf(
+            DrillType.CASE_ENDINGS,
+            DrillType.ADJECTIVE_ENDINGS,
+            DrillType.WORD_ORDER,
+        )
+
+        val expectedTyped = setOf(
+            DrillType.PREPOSITIONS,
+            DrillType.PRONOUNS,
+            DrillType.ARTICLES,
+            DrillType.PLURALS,
+            DrillType.VERB_PREPOSITIONS,
+            DrillType.SEPARABLE_VERBS,
+        )
+
+        for (type in expectedChoiceOnly) {
+            assertTrue("Expected $type to be choice-only", type.isChoiceOnly)
+            assertFalse("Expected $type not to have typed round", type.hasTypedRound)
+            assertEquals("Expected $type roundShape to be CHOICE_ONLY", DrillRoundShape.CHOICE_ONLY, type.roundShape)
+            assertTrue("DrillTables.isChoiceOnly mismatch for $type", DrillTables.isChoiceOnly(type))
+            assertFalse("DrillTables.hasTypedRound mismatch for $type", DrillTables.hasTypedRound(type))
+            assertEquals(DrillRoundShape.CHOICE_ONLY, DrillTables.roundShape(type))
+        }
+
+        for (type in expectedTyped) {
+            assertFalse("Expected $type to not be choice-only", type.isChoiceOnly)
+            assertTrue("Expected $type to have typed round", type.hasTypedRound)
+            assertEquals("Expected $type roundShape to be CHOICE_THEN_TYPED", DrillRoundShape.CHOICE_THEN_TYPED, type.roundShape)
+            assertFalse("DrillTables.isChoiceOnly mismatch for $type", DrillTables.isChoiceOnly(type))
+            assertTrue("DrillTables.hasTypedRound mismatch for $type", DrillTables.hasTypedRound(type))
+            assertEquals(DrillRoundShape.CHOICE_THEN_TYPED, DrillTables.roundShape(type))
+        }
+    }
+
+    @Test
+    fun selectRoundTakesTenShuffledItemsOrAllIfFewer() {
+        val items15 = (1..15).map { "item$it" }
+        val round15 = DrillTables.selectRound(items15, limit = 10, random = java.util.Random(123))
+        assertEquals(10, round15.size)
+        assertEquals(10, round15.distinct().size)
+        assertTrue(items15.containsAll(round15))
+
+        val items4 = (1..4).map { "item$it" }
+        val round4 = DrillTables.selectRound(items4, limit = 10, random = java.util.Random(123))
+        assertEquals(4, round4.size)
+        assertEquals(items4.toSet(), round4.toSet())
+
+        val items10 = (1..10).map { "item$it" }
+        val round10 = DrillTables.selectRound(items10, limit = 10, random = java.util.Random(123))
+        assertEquals(10, round10.size)
+        assertEquals(items10.toSet(), round10.toSet())
+
+        val empty = emptyList<String>()
+        val roundEmpty = DrillTables.selectRound(empty, limit = 10)
+        assertTrue(roundEmpty.isEmpty())
+    }
+
+    @Test
+    fun roundItemsLimitsToTenItems() {
+        val prepositionRound = DrillTables.roundItems(DrillType.PREPOSITIONS)
+        assertEquals(10, prepositionRound.size)
+
+        val caseEndingsRound = DrillTables.roundItems(DrillType.CASE_ENDINGS)
+        assertEquals(10, caseEndingsRound.size)
+
+        val wordOrderRound = DrillTables.roundWordOrderItems()
+        assertEquals(10, wordOrderRound.size)
+    }
 }

@@ -410,4 +410,16 @@ class WordOrderQuizTest {
         val matchingItem = itemsWithWords.first { it.tiles.contains("Kino") }
         assertTrue(matchingItem.id.encode().startsWith("word_order:777:"))
     }
+
+    @Test
+    fun roundItemsLimitsToTenShuffledItems() {
+        val roundItems = WordOrderQuiz.roundItems()
+        assertEquals(10, roundItems.size)
+        assertEquals(10, roundItems.distinctBy { it.id }.size)
+
+        // All items should be valid
+        for (item in roundItems) {
+            assertTrue(item.validate().isValid)
+        }
+    }
 }

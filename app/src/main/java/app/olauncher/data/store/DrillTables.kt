@@ -1,12 +1,15 @@
 package app.olauncher.data.store
 
 import app.olauncher.R
+import java.util.Random
 
 /**
  * Registry of drill types with content and their item builders.
  * Both [available] and [items] are Context-free.
  */
 object DrillTables {
+
+    const val ROUND_SIZE = DRILL_ROUND_SIZE
 
     /** Returns all drill types that currently have content. */
     fun available(): List<DrillType> = listOf(
@@ -19,6 +22,54 @@ object DrillTables {
         DrillType.SEPARABLE_VERBS,
         DrillType.ADJECTIVE_ENDINGS,
         DrillType.WORD_ORDER,
+    )
+
+    /** Per-type flag: true if the drill type has only a choice round. */
+    fun isChoiceOnly(type: DrillType): Boolean = type.isChoiceOnly
+
+    /** Per-type flag: true if the drill type keeps a typed round. */
+    fun hasTypedRound(type: DrillType): Boolean = type.hasTypedRound
+
+    /** Returns the round shape for the given [type]. */
+    fun roundShape(type: DrillType): DrillRoundShape = type.roundShape
+
+    /**
+     * Selects up to [limit] shuffled items for a round, or all items if fewer.
+     */
+    fun <T> selectRound(
+        items: List<T>,
+        limit: Int = ROUND_SIZE,
+        random: Random = Random(),
+    ): List<T> {
+        if (items.isEmpty()) return emptyList()
+        val shuffled = items.shuffled(random)
+        return if (shuffled.size <= limit) shuffled else shuffled.take(limit)
+    }
+
+    /** Builds a round of up to [limit] shuffled items for [type] and saved [words]. */
+    fun roundItems(
+        type: DrillType,
+        words: Collection<Word> = emptyList(),
+        genderLookup: ((String) -> String?)? = null,
+        pluralLookup: ((String) -> String?)? = null,
+        presentLookup: ((String) -> String?)? = null,
+        limit: Int = ROUND_SIZE,
+        random: Random = Random(),
+    ): List<DrillItem> = selectRound(
+        items(type, words, genderLookup, pluralLookup, presentLookup),
+        limit = limit,
+        random = random,
+    )
+
+    /** Builds a round of up to [limit] shuffled word-order items for saved [words]. */
+    fun roundWordOrderItems(
+        words: Collection<Word> = emptyList(),
+        limit: Int = ROUND_SIZE,
+        random: Random = Random(),
+    ): List<WordOrderItem> = selectRound(
+        wordOrderItems(words),
+        limit = limit,
+        random = random,
     )
 
     /** Builds the drill items for the given [type] and saved [words]. */

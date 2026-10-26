@@ -235,7 +235,16 @@ class WordOrderQuiz(
             ),
         )
 
+        const val ROUND_SIZE = DRILL_ROUND_SIZE
+
         fun items(words: Collection<Word> = emptyList()): List<WordOrderItem> =
             DrillWordOrder.items(words)
+
+        fun roundItems(
+            words: Collection<Word> = emptyList(),
+            limit: Int = ROUND_SIZE,
+            random: Random = Random(),
+        ): List<WordOrderItem> =
+            DrillTables.roundWordOrderItems(words, limit, random)
     }
 }

@@ -298,4 +298,118 @@ class DrillQuizTest {
         quiz.advance()
         assertTrue(quiz.isFinished)
     }
+
+    @Test
+    fun choiceOnlyQuizFinishesAfterChoiceRoundWithoutTypedRound() {
+        val caseItem1 = DrillItem(
+            id = DrillItemId(DrillType.CASE_ENDINGS, "1"),
+            prompt = "Ich helfe ___ Mann.",
+            answer = "dem",
+            choices = listOf("dem", "den", "der", "das"),
+        )
+        val caseItem2 = DrillItem(
+            id = DrillItemId(DrillType.CASE_ENDINGS, "2"),
+            prompt = "Sie sieht ___ Hund.",
+            answer = "den",
+            choices = listOf("dem", "den", "der", "das"),
+        )
+        val quiz = DrillQuiz(listOf(caseItem1, caseItem2))
+        assertTrue(quiz.isChoiceOnly)
+        assertFalse(quiz.hasTypedRound)
+        assertEquals(DrillRound.CHOICE, quiz.round)
+
+        quiz.answer(caseItem1.answer)
+        quiz.advance()
+        assertFalse(quiz.isFinished)
+        assertEquals(DrillRound.CHOICE, quiz.round)
+
+        quiz.answer(caseItem2.answer)
+        quiz.advance()
+
+        // Choice-only quiz finishes immediately without switching to typed round
+        assertTrue(quiz.isFinished)
+        assertTrue(quiz.isRoundFinished)
+        assertNull(quiz.current)
+        assertEquals(DrillRound.CHOICE, quiz.round)
+        assertEquals(2, quiz.firstTryScore)
+    }
+
+    @Test
+    fun choiceOnlyQuizRequeuesMissesAndFinishesWhenAllCleared() {
+        val caseItem1 = DrillItem(
+            id = DrillItemId(DrillType.CASE_ENDINGS, "1"),
+            prompt = "Ich helfe ___ Mann.",
+            answer = "dem",
+            choices = listOf("dem", "den", "der", "das"),
+        )
+        val caseItem2 = DrillItem(
+            id = DrillItemId(DrillType.CASE_ENDINGS, "2"),
+            prompt = "Sie sieht ___ Hund.",
+            answer = "den",
+            choices = listOf("dem", "den", "der", "das"),
+        )
+        val quiz = DrillQuiz(listOf(caseItem1, caseItem2), isChoiceOnly = true)
+
+        // Fail caseItem1 on first try
+        val wrongAns = quiz.answer("den")
+        assertNotNull(wrongAns)
+        assertFalse(wrongAns!!.correct)
+        quiz.advance()
+
+        // Next is caseItem2; answer correctly
+        assertEquals(caseItem2.id, quiz.current!!.id)
+        val correctAns2 = quiz.answer(caseItem2.answer)
+        assertTrue(correctAns2!!.correct)
+        quiz.advance()
+
+        // caseItem1 comes back!
+        assertFalse(quiz.isFinished)
+        assertEquals(caseItem1.id, quiz.current!!.id)
+        val retryAns = quiz.answer(caseItem1.answer)
+        assertTrue(retryAns!!.correct)
+        quiz.advance()
+
+        // Once cleared, finishes without entering typed round
+        assertTrue(quiz.isFinished)
+        assertEquals(mapOf(caseItem1.id to false, caseItem2.id to true), quiz.firstAttempts())
+        assertEquals(1, quiz.firstTryScore)
+    }
+
+    @Test
+    fun roundOverTenItemsCarriesTheExactTenItemsIntoTypedRound() {
+        val tenItems = (1..10).map { idx ->
+            DrillItem(
+                id = DrillItemId(DrillType.ARTICLES, "item$idx"),
+                prompt = "Prompt $idx",
+                answer = "Das",
+                choices = listOf("Der", "Die", "Das"),
+            )
+        }
+        val quiz = DrillQuiz(tenItems)
+        assertFalse(quiz.isChoiceOnly)
+        assertTrue(quiz.hasTypedRound)
+        assertEquals(10, quiz.total)
+
+        // Answer all 10 in choice round
+        for (item in tenItems) {
+            assertEquals(item.id, quiz.current!!.id)
+            quiz.answer(item.answer)
+            quiz.advance()
+        }
+
+        // Switched to typed round
+        assertEquals(DrillRound.TYPED, quiz.round)
+        assertFalse(quiz.isFinished)
+
+        // Typed round presents the EXACT same 10 items
+        for (item in tenItems) {
+            assertEquals(item.id, quiz.current!!.id)
+            quiz.answerTyped(item.answer)
+            quiz.advance()
+        }
+
+        // Completed
+        assertTrue(quiz.isFinished)
+        assertEquals(10, quiz.firstTryScore)
+    }
 }
