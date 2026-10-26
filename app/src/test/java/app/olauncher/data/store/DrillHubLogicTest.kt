@@ -175,4 +175,61 @@ class DrillHubLogicTest {
         val zeroScores = mapOf(DrillType.CASE_ENDINGS.id to DrillScores.Score(0, 0))
         assertEquals(DrillType.WORD_ORDER, DrillHubLogic.weakestType(types, zeroScores, DrillType.WORD_ORDER.id))
     }
+
+    @Test
+    fun `weakest mix samples the two to three weakest scored types weakest first`() {
+        val scores = mapOf(
+            DrillType.PREPOSITIONS.id to played(10, 9),
+            DrillType.PRONOUNS.id to played(10, 5),
+            DrillType.WORD_ORDER.id to played(10, 7),
+            DrillType.ARTICLES.id to played(10, 3),
+        )
+
+        // Word order never mixes (it has its own round screen), so the next mixable
+        // type takes its place.
+        assertEquals(
+            listOf(DrillType.ARTICLES, DrillType.PRONOUNS, DrillType.PREPOSITIONS),
+            DrillHubLogic.weakestMix(types, scores, DrillType.PREPOSITIONS.id),
+        )
+    }
+
+    @Test
+    fun `weakest mix leaves word order out even when word order is the weakest`() {
+        val scores = mapOf(
+            DrillType.WORD_ORDER.id to played(10, 2),
+            DrillType.PRONOUNS.id to played(10, 5),
+        )
+
+        // The round runs the mixable type only; the button must not name word order.
+        assertEquals(
+            listOf(DrillType.PRONOUNS),
+            DrillHubLogic.weakestMix(types, scores, DrillType.PREPOSITIONS.id),
+        )
+    }
+
+    @Test
+    fun `weakest mix is a word order round when word order is the only scored type`() {
+        val scores = mapOf(
+            DrillType.WORD_ORDER.id to played(10, 2),
+        )
+
+        assertEquals(
+            listOf(DrillType.WORD_ORDER),
+            DrillHubLogic.weakestMix(types, scores, DrillType.PREPOSITIONS.id),
+        )
+    }
+
+    @Test
+    fun `weakest mix falls back to a single type when fewer than two have scores`() {
+        val oneScore = mapOf(DrillType.WORD_ORDER.id to played(10, 7))
+        assertEquals(
+            listOf(DrillType.WORD_ORDER),
+            DrillHubLogic.weakestMix(types, oneScore, DrillType.PREPOSITIONS.id),
+        )
+        // No scores at all: the same single suggestion weakestType makes.
+        assertEquals(
+            listOf(DrillType.ARTICLES),
+            DrillHubLogic.weakestMix(types, emptyMap(), DrillType.ARTICLES.id),
+        )
+    }
 }

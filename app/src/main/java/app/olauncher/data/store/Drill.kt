@@ -9,7 +9,12 @@ enum class DrillRoundShape {
     CHOICE_ONLY,
 }
 
-/** Default number of items in a drill round. */
+/**
+ * Legacy round size from before #639: old stored rounds held 10 items, and the
+ * decayed-counts seeding in [DrillScores] still derives round counts from it.
+ * A round now draws 5-8 items (see [DrillRoundPlanner]); [DrillTables.ROUND_SIZE]
+ * remains the compatibility cap.
+ */
 const val DRILL_ROUND_SIZE = 10
 
 /**

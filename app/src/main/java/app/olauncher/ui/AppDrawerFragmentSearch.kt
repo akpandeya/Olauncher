@@ -46,6 +46,7 @@ import app.olauncher.helper.WordSuggest
 import app.olauncher.helper.WordLookupRows
 import app.olauncher.helper.DictionaryApps
 import app.olauncher.helper.DrawerDrills
+import app.olauncher.data.store.DrillRoundPlanner
 import app.olauncher.data.store.DrillScores
 import app.olauncher.data.store.DrillTables
 import app.olauncher.ui.today.cards.DrillsCardLogic
@@ -196,7 +197,7 @@ internal fun AppDrawerFragment.drillRows(query: String): List<AppModel.Result> {
     val suggestedText = ctx.getString(
         R.string.drills_card_suggested,
         ctx.getString(DrillTables.labelRes(suggested)),
-        DrillTables.ROUND_SIZE,
+        DrillRoundPlanner.MIN_ROUND_SIZE,
     )
     return DrawerDrills.rows(
         query = query,

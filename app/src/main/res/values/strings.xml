@@ -586,14 +586,20 @@
     <string name="drill_type_word_order" tools:ignore="MissingTranslation">Word order</string>
     <string name="drill_round_choice" tools:ignore="MissingTranslation">Multiple choice</string>
     <string name="drill_round_typed" tools:ignore="MissingTranslation">Type the answer</string>
+    <string name="drill_round_true_false" tools:ignore="MissingTranslation">True or false</string>
+    <string name="drill_round_flashcard" tools:ignore="MissingTranslation">Flashcard</string>
     <string name="drill_round_word_order" tools:ignore="MissingTranslation">Word order</string>
     <string name="drill_word_order_empty_hint" tools:ignore="MissingTranslation">Tap words below to arrange</string>
     <string name="drill_progress" tools:ignore="MissingTranslation">%1$s · %2$d of %3$d</string>
     <string name="drill_empty_state" tools:ignore="MissingTranslation">No drill items found</string>
     <string name="drill_near_miss" tools:ignore="MissingTranslation">Very close. Check the spelling and try once more.</string>
     <string name="drill_show_hint" tools:ignore="MissingTranslation">Show hint</string>
+    <string name="drill_true" tools:ignore="MissingTranslation">True</string>
+    <string name="drill_false" tools:ignore="MissingTranslation">False</string>
+    <string name="drill_mixed_title" tools:ignore="MissingTranslation">Mixed drills</string>
     <string name="drill_summary_counts" tools:ignore="MissingTranslation">%1$d right · %2$d almost · %3$d wrong</string>
-    <string name="drill_summary_another" tools:ignore="MissingTranslation">Another 10</string>
+    <string name="drill_summary_another" tools:ignore="MissingTranslation">Another 5</string>
+    <string name="drill_summary_near_miss" tools:ignore="MissingTranslation">near miss, one retry used</string>
     <string name="drill_summary_practise_misses" tools:ignore="MissingTranslation">Practise misses</string>
     <string name="drill_summary_done" tools:ignore="MissingTranslation">Done</string>
     <string name="drill_hub_continue" tools:ignore="MissingTranslation">Continue: %1$s</string>

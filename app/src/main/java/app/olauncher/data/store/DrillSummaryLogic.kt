@@ -47,12 +47,30 @@ object DrillSummaryLogic {
 
     /**
      * Formats prompt text. Appends learner answer in parentheses when wrong or almost.
+     * An almost (near miss) row shows the retried input, the correct answer and, when
+     * [almostNote] is given, the localized note — for example
+     * "prompt (diez → die · near miss, one retry used)".
      */
-    fun formatPrompt(prompt: String, result: DrillResult, learnerAnswer: String?): String {
-        return if ((result == DrillResult.WRONG || result == DrillResult.ALMOST) && !learnerAnswer.isNullOrBlank()) {
-            "$prompt ($learnerAnswer)"
-        } else {
-            prompt
+    fun formatPrompt(
+        prompt: String,
+        result: DrillResult,
+        learnerAnswer: String?,
+        answer: String? = null,
+        almostNote: String? = null,
+    ): String {
+        val trimmedLearner = learnerAnswer?.trim().orEmpty()
+        return when {
+            result == DrillResult.WRONG && trimmedLearner.isNotEmpty() -> "$prompt ($trimmedLearner)"
+            result == DrillResult.ALMOST && trimmedLearner.isNotEmpty() -> {
+                val shownAnswer = answer?.trim().orEmpty()
+                val body = buildString {
+                    append(trimmedLearner)
+                    if (shownAnswer.isNotEmpty()) append(" → $shownAnswer")
+                    if (!almostNote.isNullOrBlank()) append(" · ${almostNote.trim()}")
+                }
+                "$prompt ($body)"
+            }
+            else -> prompt
         }
     }
 

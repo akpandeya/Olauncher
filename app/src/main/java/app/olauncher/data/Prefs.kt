@@ -130,6 +130,7 @@ class Prefs(context: Context) :
         const val DRILL_LAST_TYPE = "DRILL_LAST_TYPE"
         const val DRILL_SCORES = "DRILL_SCORES"
         const val DRILL_LAST_ROUND = "DRILL_LAST_ROUND"
+        const val DRILL_ITEM_HISTORY = "DRILL_ITEM_HISTORY"
         const val BATTERY_MODE = "BATTERY_MODE"
         const val BATTERY_MODE_AUTO = 0
         const val BATTERY_MODE_ALWAYS = 1
@@ -767,6 +768,11 @@ class Prefs(context: Context) :
     var drillLastRound: String
         get() = prefs.getString(DRILL_LAST_ROUND, "") ?: ""
         set(value) = prefs.edit { putString(DRILL_LAST_ROUND, value).apply() }
+
+    /** JSON of per-item drill maturity (rounds answered right); see [app.olauncher.data.store.DrillItemHistory]. */
+    var drillItemHistory: String
+        get() = prefs.getString(DRILL_ITEM_HISTORY, "") ?: ""
+        set(value) = prefs.edit { putString(DRILL_ITEM_HISTORY, value).apply() }
 
     fun registerPreferenceChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
         prefs.registerOnSharedPreferenceChangeListener(listener)

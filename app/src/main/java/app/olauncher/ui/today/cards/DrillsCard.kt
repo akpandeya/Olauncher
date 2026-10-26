@@ -11,6 +11,7 @@ import app.olauncher.R
 import app.olauncher.data.Prefs
 import app.olauncher.data.store.DrillHubLogic
 import app.olauncher.data.store.DrillLastRound
+import app.olauncher.data.store.DrillRoundPlanner
 import app.olauncher.data.store.DrillScores
 import app.olauncher.data.store.DrillTables
 import app.olauncher.data.store.DrillType
@@ -62,14 +63,15 @@ object DrillsCardLogic {
 
     /**
      * The card text for [line]. [suggestedTemplate] takes the type name and round size,
-     * [lastRoundTemplate] takes the type name and the right-of-total counts.
+     * [lastRoundTemplate] takes the type name and the right-of-total counts. The offered
+     * round size is the minimum ([DrillRoundPlanner.MIN_ROUND_SIZE]); a round draws 5-8.
      */
     fun lineText(
         suggestedTemplate: String,
         lastRoundTemplate: String,
         typeName: String,
         line: DrillsCardLine?,
-        roundSize: Int = DrillTables.ROUND_SIZE,
+        roundSize: Int = DrillRoundPlanner.MIN_ROUND_SIZE,
     ): String? = when (line) {
         is DrillsCardLine.Suggested -> String.format(suggestedTemplate, typeName, roundSize)
         is DrillsCardLine.LastRound -> String.format(lastRoundTemplate, typeName, line.right, line.total)

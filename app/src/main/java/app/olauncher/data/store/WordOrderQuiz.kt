@@ -87,7 +87,7 @@ class WordOrderQuestion(
  * Quiz engine for word order drills.
  *
  * Keeps the [DrillQuiz] rules:
- * - A wrong answer puts the item at the end of the queue.
+ * - Nothing is requeued inside a round (#639); misses come back through "Practise misses".
  * - [firstAttempts] holds only the first attempt per item.
  * - There is no typed round.
  */
@@ -162,16 +162,13 @@ class WordOrderQuiz(
 
     /**
      * Advances to the next item.
-     * Requeues the current item at the end if answered incorrectly.
-     * Quiz finishes once all items are cleared.
+     * Nothing is requeued inside a round (#639): a wrong answer is corrected inline and
+     * comes back through "Practise misses", not later in the same round.
+     * The quiz finishes once all items are cleared.
      */
     fun advance() {
-        val q = question ?: return
-        val result = lastAnswerValue ?: return
+        if (question == null || lastAnswerValue == null) return
         queue.removeFirst()
-        if (!result.correct) {
-            queue.addLast(q.item)
-        }
         lastAnswerValue = null
         if (queue.isEmpty()) {
             question = null

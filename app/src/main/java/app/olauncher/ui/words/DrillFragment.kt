@@ -18,23 +18,24 @@ import androidx.navigation.fragment.findNavController
 import app.olauncher.R
 import app.olauncher.data.Prefs
 import app.olauncher.data.store.AUTO_ADVANCE_DELAY_MS
+import app.olauncher.data.store.DrillFormat
 import app.olauncher.data.store.DrillItem
+import app.olauncher.data.store.DrillItemHistory
+import app.olauncher.data.store.DrillItemId
 import app.olauncher.data.store.DrillLastRound
 import app.olauncher.data.store.DrillQuiz
 import app.olauncher.data.store.DrillQuizQuestion
 import app.olauncher.data.store.DrillResult
 import app.olauncher.data.store.DrillReviewFeed
-import app.olauncher.data.store.DrillRound
+import app.olauncher.data.store.DrillRoundPlanner
 import app.olauncher.data.store.DrillScores
 import app.olauncher.data.store.DrillSummaryItem
 import app.olauncher.data.store.DrillSummaryLogic
 import app.olauncher.data.store.DrillTables
 import app.olauncher.data.store.DrillType
-import app.olauncher.data.store.QuizAnswer
 import app.olauncher.data.store.ReviewEventsStore
 import app.olauncher.data.store.ReviewSessionLogic
 import app.olauncher.data.store.SharedOfflineGermanStore
-import app.olauncher.data.store.WordOrderItem
 import app.olauncher.data.store.WordOrderQuiz
 import app.olauncher.data.store.shouldAutoAdvance
 import app.olauncher.databinding.FragmentDrillBinding
@@ -46,17 +47,22 @@ import app.olauncher.helper.showKeyboard
 import app.olauncher.ui.BaseFragment
 import app.olauncher.ui.today.attachPressScale
 import app.olauncher.ui.today.cards.WordsCard
+import java.util.Random
 
 /**
- * Full-screen drill quiz for any [DrillType]: renders multiple-choice round first,
- * followed by a typed round, with green on right, wait on wrong, and first-try score summary.
+ * Full-screen drill quiz for one short round (#639): 5-8 items drawn from one type or a
+ * mix of the weakest types, each question's format taken from the recognition ladder
+ * (flashcard, tap, true-false, typed graduation). Wrong answers are corrected inline on
+ * the same screen and nothing is requeued; the summary offers "Another 5" and
+ * "Practise misses".
  */
 class DrillFragment : BaseFragment() {
 
     private var _binding: FragmentDrillBinding? = null
     private val binding get() = _binding!!
 
-    private var drillType: DrillType = DrillType.PREPOSITIONS
+    /** The round's drill types: one type, or the 2-3 types of a mixed round. */
+    private var drillTypes: List<DrillType> = listOf(DrillType.PREPOSITIONS)
     private var quiz: DrillQuiz? = null
     private var wordOrderQuiz: WordOrderQuiz? = null
     private var selectedChoice: String? = null
@@ -66,11 +72,14 @@ class DrillFragment : BaseFragment() {
     private var recordedQuiz: Any? = null
     private var isPractiseMissesRound = false
     private val sessionGradedWordIds = mutableSetOf<Long>()
+    private val roundRandom = Random()
+
+    private val isWordOrderRound: Boolean get() = drillTypes.singleOrNull() == DrillType.WORD_ORDER
 
     private val autoAdvance = Runnable {
         autoAdvanceScheduled = false
         if (_binding == null) return@Runnable
-        if (drillType == DrillType.WORD_ORDER) {
+        if (isWordOrderRound) {
             val q = wordOrderQuiz ?: return@Runnable
             if (!q.isAnswered) return@Runnable
             q.advance()
@@ -127,6 +136,7 @@ class DrillFragment : BaseFragment() {
             val q = quiz ?: return@setOnClickListener
             val question = q.current ?: return@setOnClickListener
             if (q.isAnswered) return@setOnClickListener
+            if (question.isFlashcard) return@setOnClickListener
             Haptics.tick(it)
             hintRevealedForItemId = question.id.toString()
             render()
@@ -160,41 +170,71 @@ class DrillFragment : BaseFragment() {
         }
 
         val typeStr = arguments?.getString("drillType").orEmpty()
-        drillType = DrillType.fromId(typeStr) ?: DrillType.PREPOSITIONS
-        val appContext = view.context.applicationContext
-        val words = WordsCard.getStore(appContext).all()
+        drillTypes = typeStr.split(',')
+            .mapNotNull { DrillType.fromId(it.trim()) }
+            .distinct()
+            .ifEmpty { listOf(DrillType.PREPOSITIONS) }
 
-        if (drillType == DrillType.WORD_ORDER) {
+        if (isWordOrderRound) {
             if (wordOrderQuiz == null) {
-                val items = DrillTables.roundWordOrderItems(words)
+                val words = WordsCard.getStore(view.context.applicationContext).all()
+                val items = DrillTables.roundWordOrderItems(
+                    words,
+                    limit = DrillRoundPlanner.roundSize(roundRandom),
+                    random = roundRandom,
+                )
                 if (items.isNotEmpty()) {
                     wordOrderQuiz = WordOrderQuiz(items)
                 }
             }
         } else {
             if (quiz == null) {
-                val genderLookup: (String) -> String? = { text ->
-                    if (Prefs(appContext).germanOfflineDictionary) {
-                        SharedOfflineGermanStore.get(appContext).gender(text)
-                    } else null
-                }
-                val pluralLookup: (String) -> String? = { text ->
-                    if (Prefs(appContext).germanOfflineDictionary) {
-                        SharedOfflineGermanStore.get(appContext).plural(text)
-                    } else null
-                }
-                val items = DrillTables.roundItems(drillType, words, genderLookup, pluralLookup)
-                if (items.isNotEmpty()) {
-                    quiz = DrillQuiz(items, isChoiceOnly = drillType.isChoiceOnly)
-                }
+                quiz = buildRound()
             }
         }
 
         render()
     }
 
+    /** The per-item maturity counts (rounds answered right), decoded from prefs. */
+    private fun itemMaturity(): Map<DrillItemId, Int> {
+        val context = context ?: return emptyMap()
+        return DrillItemHistory.maturities(Prefs(context.applicationContext).drillItemHistory)
+    }
+
+    /** Builds a new 5-8 item round over [drillTypes] with ladder formats. */
+    private fun buildRound(): DrillQuiz? {
+        val appContext = context?.applicationContext ?: return null
+        val words = WordsCard.getStore(appContext).all()
+        val genderLookup: (String) -> String? = { text ->
+            if (Prefs(appContext).germanOfflineDictionary) {
+                SharedOfflineGermanStore.get(appContext).gender(text)
+            } else null
+        }
+        val pluralLookup: (String) -> String? = { text ->
+            if (Prefs(appContext).germanOfflineDictionary) {
+                SharedOfflineGermanStore.get(appContext).plural(text)
+            } else null
+        }
+        val pools = drillTypes
+            .filterNot { it == DrillType.WORD_ORDER }
+            .map { it to DrillTables.items(it, words, genderLookup, pluralLookup) }
+            .filter { it.second.isNotEmpty() }
+            .toMap()
+        if (pools.isEmpty()) return null
+        val steps = DrillRoundPlanner.plan(pools, itemMaturity(), roundRandom)
+        return if (steps.isEmpty()) null else DrillQuiz(steps, roundRandom)
+    }
+
+    /** Builds a practise-misses round over exactly the missed items. */
+    private fun buildMissesRound(missed: List<DrillItem>): DrillQuiz? {
+        if (missed.isEmpty()) return null
+        val steps = DrillRoundPlanner.planMisses(missed, itemMaturity(), roundRandom)
+        return if (steps.isEmpty()) null else DrillQuiz(steps, roundRandom)
+    }
+
     private fun onPrimary(view: View) {
-        if (drillType == DrillType.WORD_ORDER) {
+        if (isWordOrderRound) {
             val q = wordOrderQuiz ?: return
             Haptics.tick(view)
             when {
@@ -202,7 +242,11 @@ class DrillFragment : BaseFragment() {
                     isPractiseMissesRound = false
                     val appContext = view.context.applicationContext
                     val words = WordsCard.getStore(appContext).all()
-                    val items = DrillTables.roundWordOrderItems(words)
+                    val items = DrillTables.roundWordOrderItems(
+                        words,
+                        limit = DrillRoundPlanner.roundSize(roundRandom),
+                        random = roundRandom,
+                    )
                     wordOrderQuiz = WordOrderQuiz(items)
                     render()
                 }
@@ -223,35 +267,23 @@ class DrillFragment : BaseFragment() {
         Haptics.tick(view)
         when {
             q.isFinished -> {
-                // Restart quiz
+                // "Another 5": a new shuffled round of the same type or mix.
                 isPractiseMissesRound = false
-                val appContext = view.context.applicationContext
-                val words = WordsCard.getStore(appContext).all()
-                val genderLookup: (String) -> String? = { text ->
-                    if (Prefs(appContext).germanOfflineDictionary) {
-                        SharedOfflineGermanStore.get(appContext).gender(text)
-                    } else null
-                }
-                val pluralLookup: (String) -> String? = { text ->
-                    if (Prefs(appContext).germanOfflineDictionary) {
-                        SharedOfflineGermanStore.get(appContext).plural(text)
-                    } else null
-                }
-                val items = DrillTables.roundItems(drillType, words, genderLookup, pluralLookup)
-                quiz = DrillQuiz(items, isChoiceOnly = drillType.isChoiceOnly)
+                quiz = buildRound()
                 selectedChoice = null
                 lastRenderedItemId = null
                 hintRevealedForItemId = null
                 render()
             }
             q.isAnswered -> {
+                // Continues past a flashcard, an inline correction, or a right answer.
                 q.advance()
                 selectedChoice = null
                 lastRenderedItemId = null
                 hintRevealedForItemId = null
                 render()
             }
-            q.isTyped -> {
+            q.currentFormat == DrillFormat.TYPED -> {
                 val input = binding.etAnswer.text?.toString().orEmpty()
                 val result = q.answerTyped(input) ?: return
                 render()
@@ -263,7 +295,7 @@ class DrillFragment : BaseFragment() {
 
     private fun onPractiseMisses(view: View) {
         Haptics.tick(view)
-        if (drillType == DrillType.WORD_ORDER) {
+        if (isWordOrderRound) {
             val q = wordOrderQuiz ?: return
             val results = q.itemResults()
             val missedItems = q.items.filter { results[it.id]?.isRight == false }
@@ -278,9 +310,9 @@ class DrillFragment : BaseFragment() {
         val q = quiz ?: return
         val results = q.itemResults()
         val missedItems = q.items.filter { results[it.id]?.isRight == false }
-        if (missedItems.isNotEmpty()) {
+        buildMissesRound(missedItems)?.let { misses ->
             isPractiseMissesRound = true
-            quiz = DrillQuiz(missedItems, isChoiceOnly = drillType.isChoiceOnly)
+            quiz = misses
             selectedChoice = null
             lastRenderedItemId = null
             hintRevealedForItemId = null
@@ -292,7 +324,7 @@ class DrillFragment : BaseFragment() {
         val b = _binding ?: return
         val context = context ?: return
 
-        if (drillType == DrillType.WORD_ORDER) {
+        if (isWordOrderRound) {
             val q = wordOrderQuiz
             val empty = q == null || q.total == 0
             val finished = q != null && q.total > 0 && q.isFinished
@@ -334,8 +366,8 @@ class DrillFragment : BaseFragment() {
         b.quizContainer.isVisible = inQuiz
         b.summaryHeader.isVisible = finished
         b.questionCard.isVisible = inQuiz
-        b.choiceScroll.isVisible = inQuiz && !q.isTyped
-        b.typedContainer.isVisible = inQuiz && q.isTyped
+        b.choiceScroll.isVisible = inQuiz && q.current?.correctChoice != null
+        b.typedContainer.isVisible = inQuiz && q.currentFormat == DrillFormat.TYPED
         b.wordOrderView.isVisible = false
         b.quizCard.isVisible = finished
         b.tvEmpty.isVisible = empty
@@ -357,27 +389,56 @@ class DrillFragment : BaseFragment() {
         }
     }
 
+    private fun drillTitleRes(): Int =
+        if (drillTypes.size > 1) R.string.drill_mixed_title else DrillTables.labelRes(drillTypes.first())
+
+    private fun formatLabelRes(format: DrillFormat): Int = when (format) {
+        DrillFormat.FLASHCARD -> R.string.drill_round_flashcard
+        DrillFormat.TRUE_FALSE -> R.string.drill_round_true_false
+        DrillFormat.TYPED -> R.string.drill_round_typed
+        else -> R.string.drill_round_choice
+    }
+
+    /** Localises the neutral true/false tokens; other choices pass through. */
+    private fun formatChoiceToken(token: String?): String? = when (token) {
+        DrillQuizQuestion.TRUE_CHOICE -> getString(R.string.drill_true)
+        DrillQuizQuestion.FALSE_CHOICE -> getString(R.string.drill_false)
+        else -> token
+    }
+
     private fun renderQuestion(q: DrillQuiz) {
         val b = binding
         val context = b.root.context
         val question = q.current ?: return
 
-        b.tvTitle.text = context.getString(DrillTables.labelRes(drillType))
-        val roundLabel = if (q.isTyped) {
-            context.getString(R.string.drill_round_typed)
+        b.tvTitle.text = context.getString(drillTitleRes())
+        val currentIdx = q.currentPosition + 1
+        // A mixed round labels each question with its type (drills-ux.md, Mixed rounds).
+        val formatLabel = getString(formatLabelRes(question.format))
+        val questionLabel = if (drillTypes.size > 1) {
+            getString(DrillTables.labelRes(question.id.type)) + " · " + formatLabel
         } else {
-            context.getString(R.string.drill_round_choice)
+            formatLabel
         }
-        val currentIdx = (q.items.indexOf(question.item).takeIf { it >= 0 } ?: 0) + 1
-        b.tvProgress.text = context.getString(R.string.drill_progress, roundLabel, currentIdx, q.total)
+        b.tvProgress.text = context.getString(
+            R.string.drill_progress,
+            questionLabel,
+            currentIdx,
+            q.total,
+        )
 
         renderSegments(q)
 
+        if (question.isFlashcard) {
+            renderFlashcard(q, question)
+            return
+        }
+
         b.tvPrompt.isVisible = true
-        b.tvPrompt.text = question.prompt
+        b.tvPrompt.text = question.statement ?: question.prompt
         renderHint(q, question)
 
-        if (q.isTyped) {
+        if (question.isTyped) {
             renderTypedQuestion(q, question)
         } else {
             renderChoiceQuestion(q, question)
@@ -385,9 +446,29 @@ class DrillFragment : BaseFragment() {
     }
 
     /**
+     * A flashcard (rung 1): it shows the answer by design — that is its purpose, and it
+     * is not scored. One tap on Continue moves to the next question.
+     */
+    private fun renderFlashcard(q: DrillQuiz, question: DrillQuizQuestion) {
+        val b = binding
+        b.tvPrompt.isVisible = true
+        b.tvPrompt.text = question.prompt
+        b.tvHint.isClickable = false
+        b.tvHint.text = listOfNotNull(question.answer, question.hint).joinToString(" · ")
+        b.tvHint.isVisible = true
+        b.choiceScroll.isVisible = false
+        b.typedContainer.isVisible = false
+        b.tvCorrection.isVisible = false
+        b.btnPrimary.setText(R.string.conjugation_continue)
+        b.btnPrimary.isVisible = true
+        b.btnPrimary.isEnabled = true
+        b.btnPrimary.alpha = 1f
+    }
+
+    /**
      * Binds the hint line for the current question. Before answering the hint is hidden
      * behind a tappable "Show hint" placeholder (explicit reveal); after a wrong answer
-     * it is always shown, in both the choice and the typed round.
+     * the one-line rule is always shown — the inline correction, on the same screen.
      */
     private fun renderHint(q: DrillQuiz, question: DrillQuizQuestion) {
         val b = binding
@@ -418,14 +499,15 @@ class DrillFragment : BaseFragment() {
     private fun renderChoiceQuestion(q: DrillQuiz, question: DrillQuizQuestion) {
         val b = binding
         val answered = q.isAnswered
+        val correctChoice = question.correctChoice
         b.choiceGrid.removeAllViews()
 
         for (choice in question.choices) {
-            val tv = newCell(choice)
+            val tv = newCell(formatChoiceToken(choice) ?: choice)
             tv.gravity = Gravity.CENTER
             tv.minHeight = resources.getDimensionPixelSize(R.dimen.quiz_choice_min_height)
 
-            when (ConjugationCellLook.of(answered, choice, question.answer, selectedChoice)) {
+            when (ConjugationCellLook.of(answered, choice, correctChoice.orEmpty(), selectedChoice)) {
                 ConjugationCellLook.RIGHT -> tv.isActivated = true
                 ConjugationCellLook.WRONG -> tv.setBackgroundResource(R.drawable.quiz_choice_wrong)
                 ConjugationCellLook.NEUTRAL -> Unit
@@ -446,9 +528,21 @@ class DrillFragment : BaseFragment() {
             b.choiceGrid.addView(tv, cellParams(b.choiceGrid))
         }
 
-        val waitingForContinue = answered && !shouldAutoAdvance(QuizAnswer(selectedChoice == question.answer, question.answer))
+        // Wrong answer: inline correction on this screen — the rule under the question and
+        // one tap on Continue. Nothing is requeued.
+        val waitingForContinue = answered && q.lastAnswer?.correct != true
         if (answered && !waitingForContinue) scheduleAutoAdvance()
-        b.btnPrimary.setText(R.string.conjugation_continue)
+        // A wrong true-false verdict only marks the True/False tile; the right word
+        // itself is never on screen, so it is the correction line.
+        if (question.format == DrillFormat.TRUE_FALSE && waitingForContinue) {
+            b.tvCorrection.text = question.answer
+            b.tvCorrection.isVisible = true
+        } else {
+            b.tvCorrection.isVisible = false
+        }
+        b.btnPrimary.setText(
+            if (waitingForContinue) R.string.conjugation_continue else R.string.conjugation_check
+        )
         b.btnPrimary.isVisible = waitingForContinue
         b.btnPrimary.isEnabled = true
         b.btnPrimary.alpha = 1f
@@ -513,16 +607,17 @@ class DrillFragment : BaseFragment() {
         val row = binding.segmentRow
         row.removeAllViews()
         val firstAttempts = q.firstAttempts()
-        val current = q.current ?: return
-        val currentItem = current.item
 
-        for ((index, item) in q.items.withIndex()) {
+        for ((index, step) in q.steps.withIndex()) {
             val seg = View(row.context)
-            val firstTry = firstAttempts[item.id]
+            val firstTry = firstAttempts[step.item.id]
+            // A flashcard is never scored, so its segment stays neutral instead of
+            // taking the first-attempt colour of its tap question.
             val color = when {
+                step.isFlashcard -> attrColor(R.attr.todayChipColor)
                 firstTry == false -> attrColor(R.attr.dangerColor)
                 firstTry == true -> attrColor(R.attr.accentColor)
-                item == currentItem -> attrColor(R.attr.primaryColor)
+                index == q.currentPosition -> attrColor(R.attr.primaryColor)
                 else -> attrColor(R.attr.todayChipColor)
             }
             seg.setBackgroundColor(color)
@@ -538,11 +633,20 @@ class DrillFragment : BaseFragment() {
         val context = b.root.context
         val results = q.itemResults()
         val learnerAnswers = q.learnerAnswers()
+        // A true-false item is judged on its filled statement, not on the gapped prompt:
+        // the summary row must say which statement the learner called false.
+        val statementByItem = q.steps.filterNot { it.isFlashcard }.associateBy { it.id }
         val summaryItems = q.items.mapIndexed { index, item ->
             val res = results[item.id] ?: if (q.firstAttempts()[item.id] == true) DrillResult.RIGHT else DrillResult.WRONG
+            val step = statementByItem[item.id]
+            // A right answer on a FALSE statement judged correctly: the green check must not
+            // read as "this German is correct", so mark the false statement explicitly.
+            val judgedFalse = step != null && step.format == DrillFormat.TRUE_FALSE && !step.isTrue
+            val rowPrompt = (step?.statement ?: item.prompt) +
+                if (res == DrillResult.RIGHT && judgedFalse) " (False)" else ""
             DrillSummaryItem(
                 id = item.id,
-                prompt = item.prompt,
+                prompt = rowPrompt,
                 answer = item.answer,
                 hint = item.hint,
                 result = res,
@@ -553,7 +657,7 @@ class DrillFragment : BaseFragment() {
         val sortedItems = DrillSummaryLogic.sort(summaryItems)
         val counts = DrillSummaryLogic.counts(summaryItems)
 
-        b.tvSummaryTitle.text = context.getString(DrillTables.labelRes(drillType))
+        b.tvSummaryTitle.text = context.getString(drillTitleRes())
         b.tvSummaryCounts.text = context.getString(R.string.drill_summary_counts, counts.right, counts.almost, counts.wrong)
 
         bindSummaryRows(sortedItems)
@@ -578,7 +682,8 @@ class DrillFragment : BaseFragment() {
 
     /**
      * Binds the sorted summary rows shared by the drill and word-order summaries:
-     * mark icon, tint, prompt text, and correction line per result.
+     * mark icon, tint, prompt text, and correction line per result. A near-miss (almost)
+     * row shows the retried input, the answer, and the near-miss note.
      */
     private fun bindSummaryRows(items: List<DrillSummaryItem>) {
         val b = binding
@@ -586,7 +691,14 @@ class DrillFragment : BaseFragment() {
         b.summaryList.removeAllViews()
         for (item in items) {
             val itemBinding = ItemDrillSummaryBinding.inflate(layoutInflater, b.summaryList, false)
-            itemBinding.tvPrompt.text = DrillSummaryLogic.formatPrompt(item.prompt, item.result, item.learnerAnswer)
+            val learnerAnswer = formatChoiceToken(item.learnerAnswer)
+            itemBinding.tvPrompt.text = DrillSummaryLogic.formatPrompt(
+                item.prompt,
+                item.result,
+                learnerAnswer,
+                answer = item.answer,
+                almostNote = context.getString(R.string.drill_summary_near_miss),
+            )
             when (item.result) {
                 DrillResult.RIGHT -> {
                     itemBinding.ivMark.setImageResource(R.drawable.ic_check)
@@ -613,29 +725,53 @@ class DrillFragment : BaseFragment() {
     private fun recordFinishedRound(q: DrillQuiz) {
         if (recordedQuiz === q) return
         recordedQuiz = q
-        val context = context ?: return
-        val appContext = context.applicationContext
+        // A practise-misses round feeds neither the per-type scores nor the per-item
+        // maturity: graduation counts fresh rounds, not repeats of the same misses in
+        // one sitting (docs/design/drills-ux.md, Format ladder rules). Review grades
+        // still record, de-duplicated per word in recordReviewGrades.
         if (!isPractiseMissesRound) {
-            val first = q.firstAttempts()
-            val choiceRight = first.values.count { it }
-            val typed = q.typedResults()
-            recordScoreRound(
-                choiceAnswered = first.size,
-                choiceRight = choiceRight,
-                evidence = DrillScores.roundEvidence(
-                    hasTypedRound = drillType.hasTypedRound,
-                    choiceAnswered = first.size,
-                    choiceRight = choiceRight,
-                    typedAnswered = typed.size,
-                    typedRight = typed.values.count { it == DrillResult.RIGHT },
-                ),
-                roundTotal = q.items.size,
+            recordScores(q, abandoned = false)
+        }
+        recordReviewGrades(q.firstAttempts())
+    }
+
+    /**
+     * Records one finished or abandoned round into the per-type scores: each type
+     * present in the round gets its own evidence (see [DrillScores.roundEvidenceByType]),
+     * so a mixed round scores per type through the review feed unchanged. Also records
+     * the per-item maturity ([DrillItemHistory]) that earns typed graduation later.
+     */
+    private fun recordScores(q: DrillQuiz, abandoned: Boolean) {
+        val context = context ?: return
+        val prefs = Prefs(context.applicationContext)
+        val byType = DrillScores.roundEvidenceByType(q.firstAttempts(), q.typedResults(), abandoned)
+        for ((type, round) in byType) {
+            DrillScores.recordRound(
+                prefs,
+                type.id,
+                asked = round.asked,
+                firstTryRight = round.firstTryRight,
+                askedEvidence = round.evidence.askedDelta,
+                rightEvidence = round.evidence.rightDelta,
             )
+            if (drillTypes.size == 1) {
+                DrillLastRound.from(type.id, round.rightAnswers, q.items.size)?.let { lastRound ->
+                    DrillLastRound.record(prefs, lastRound)
+                }
+            }
         }
 
+        // Per-item maturity: every item answered right this round counts toward graduation.
+        DrillItemHistory.record(prefs, q.itemResults().filterValues { it == DrillResult.RIGHT })
+    }
+
+    /** Feeds the round's first attempts through the review schedule for matching saved words. */
+    private fun recordReviewGrades(firstAttempts: Map<DrillItemId, Boolean>) {
+        val context = context ?: return
+        val appContext = context.applicationContext
         val words = WordsCard.getStore(appContext).all()
         val today = WordsCard.epochDaySupplier()
-        val grades = DrillReviewFeed.grades(q.firstAttempts(), words, today)
+        val grades = DrillReviewFeed.grades(firstAttempts, words, today)
         val store = WordsCard.getStore(appContext)
         val events = ReviewEventsStore(appContext)
         val now = System.currentTimeMillis()
@@ -700,6 +836,7 @@ class DrillFragment : BaseFragment() {
                 b.btnPrimary.isVisible = false
                 scheduleAutoAdvance()
             } else {
+                // Inline correction: the answer and its rule on this screen, one Continue.
                 b.tvCorrection.text = question.item.canonicalAnswer
                 b.tvCorrection.isVisible = true
                 b.btnPrimary.setText(R.string.conjugation_continue)
@@ -785,64 +922,21 @@ class DrillFragment : BaseFragment() {
         if (!isPractiseMissesRound) {
             val first = q.firstAttempts()
             val choiceRight = first.values.count { it }
-            recordScoreRound(
-                choiceAnswered = first.size,
-                choiceRight = choiceRight,
-                evidence = DrillScores.roundEvidence(
-                    hasTypedRound = false,
-                    choiceAnswered = first.size,
-                    choiceRight = choiceRight,
-                ),
-                roundTotal = q.items.size,
+            val prefs = Prefs(appContext)
+            DrillScores.recordRound(
+                prefs,
+                DrillType.WORD_ORDER.id,
+                asked = first.size,
+                firstTryRight = choiceRight,
+                askedEvidence = first.size.toDouble(),
+                rightEvidence = choiceRight.toDouble(),
             )
-        }
-
-        val words = WordsCard.getStore(appContext).all()
-        val today = WordsCard.epochDaySupplier()
-        val grades = DrillReviewFeed.grades(q.firstAttempts(), words, today)
-        val store = WordsCard.getStore(appContext)
-        val events = ReviewEventsStore(appContext)
-        val now = System.currentTimeMillis()
-        for (grade in grades) {
-            if (sessionGradedWordIds.add(grade.word.id)) {
-                val current = store.get(grade.word.id) ?: grade.word
-                ReviewSessionLogic.gradeAndLog(
-                    word = current,
-                    result = grade.result,
-                    today = today,
-                    reviewedAt = now,
-                    saveWord = store::update,
-                    events = events,
-                    source = grade.source,
-                )
+            DrillLastRound.from(DrillType.WORD_ORDER.id, choiceRight, q.items.size)?.let { lastRound ->
+                DrillLastRound.record(prefs, lastRound)
             }
         }
-    }
 
-    /**
-     * Records one round into the per-type score: the decayed counts take the round [evidence]
-     * (typed answers are the main evidence), the raw keys take the first-try counts. The round
-     * also becomes the Drills card's last round, [roundTotal] being the round's item count.
-     */
-    private fun recordScoreRound(
-        choiceAnswered: Int,
-        choiceRight: Int,
-        evidence: DrillScores.RoundEvidence,
-        roundTotal: Int,
-    ) {
-        val context = context ?: return
-        val prefs = Prefs(context.applicationContext)
-        DrillScores.recordRound(
-            prefs,
-            drillType.id,
-            asked = choiceAnswered,
-            firstTryRight = choiceRight,
-            askedEvidence = evidence.askedDelta,
-            rightEvidence = evidence.rightDelta,
-        )
-        DrillLastRound.from(drillType.id, choiceRight, roundTotal)?.let { lastRound ->
-            DrillLastRound.record(prefs, lastRound)
-        }
+        recordReviewGrades(q.firstAttempts())
     }
 
     /**
@@ -852,7 +946,7 @@ class DrillFragment : BaseFragment() {
      */
     private fun recordAbandonedRound() {
         if (isPractiseMissesRound) return
-        if (drillType == DrillType.WORD_ORDER) {
+        if (isWordOrderRound) {
             val q = wordOrderQuiz ?: return
             if (q === recordedQuiz || q.isFinished) return
             val first = q.firstAttempts()
@@ -863,32 +957,21 @@ class DrillFragment : BaseFragment() {
                 choiceRight = choiceRight,
             ) ?: return
             recordedQuiz = q
-            recordScoreRound(
-                choiceAnswered = first.size,
-                choiceRight = choiceRight,
-                evidence = evidence,
-                roundTotal = first.size.coerceAtLeast(1),
+            val context = context ?: return
+            val prefs = Prefs(context.applicationContext)
+            DrillScores.recordRound(
+                prefs,
+                DrillType.WORD_ORDER.id,
+                asked = first.size,
+                firstTryRight = choiceRight,
+                askedEvidence = evidence.askedDelta,
+                rightEvidence = evidence.rightDelta,
             )
         } else {
             val q = quiz ?: return
             if (q === recordedQuiz || q.isFinished) return
-            val first = q.firstAttempts()
-            val choiceRight = first.values.count { it }
-            val typed = q.typedResults()
-            val evidence = DrillScores.abandonedRoundEvidence(
-                hasTypedRound = drillType.hasTypedRound,
-                choiceAnswered = first.size,
-                choiceRight = choiceRight,
-                typedAnswered = typed.size,
-                typedRight = typed.values.count { it == DrillResult.RIGHT },
-            ) ?: return
             recordedQuiz = q
-            recordScoreRound(
-                choiceAnswered = first.size,
-                choiceRight = choiceRight,
-                evidence = evidence,
-                roundTotal = first.size.coerceAtLeast(1),
-            )
+            recordScores(q, abandoned = true)
         }
     }
 

@@ -261,7 +261,7 @@ class WordOrderQuizTest {
     }
 
     @Test
-    fun wrongAnswerPutsItemAtTheEndOfTheQueue() {
+    fun wrongAnswerIsNotRequeuedInsideTheRound() {
         val quiz = WordOrderQuiz(listOf(validItem1, validItem2, validItem3))
 
         // Answer validItem1 wrongly
@@ -285,16 +285,14 @@ class WordOrderQuizTest {
         assertTrue(ans3!!.correct)
         quiz.advance()
 
-        // Now validItem1 must have come back to the end!
-        assertEquals(validItem1.id, quiz.current!!.id)
-        // Retry validItem1 and answer correctly
-        val ans1Retry = quiz.answer(listOf("Ich", "gehe", "gerne", "ins", "Kino"))
-        assertTrue(ans1Retry!!.correct)
-        quiz.advance()
-
-        // All items cleared, quiz is finished: NO TYPED ROUND
+        // Nothing is requeued (#639): the missed item comes back through
+        // "Practise misses", not later in the same round.
         assertTrue(quiz.isFinished)
         assertNull(quiz.current)
+        assertEquals(
+            mapOf(validItem1.id to DrillResult.WRONG, validItem2.id to DrillResult.RIGHT, validItem3.id to DrillResult.RIGHT),
+            quiz.itemResults(),
+        )
     }
 
     @Test
@@ -312,16 +310,15 @@ class WordOrderQuizTest {
         quiz.advance()
         assertEquals(mapOf(validItem1.id to false, validItem2.id to true), quiz.firstAttempts())
         assertEquals(1, quiz.firstTryScore)
+        assertTrue(quiz.isFinished)
 
-        // validItem1 comes back for retry and is answered correctly:
-        // firstAttempts must STAY FALSE!
-        assertEquals(validItem1.id, quiz.current!!.id)
-        quiz.answer(listOf("Ich", "gehe", "gerne", "ins", "Kino"))
-        quiz.advance()
-
+        // A practise-misses retry round is its own session: answering right there
+        // never touches the first round's results.
+        val retry = WordOrderQuiz(listOf(validItem1))
+        retry.answer(listOf("Ich", "gehe", "gerne", "ins", "Kino"))
+        assertEquals(mapOf(validItem1.id to true), retry.firstAttempts())
         assertEquals(mapOf(validItem1.id to false, validItem2.id to true), quiz.firstAttempts())
         assertEquals(1, quiz.firstTryScore)
-        assertTrue(quiz.isFinished)
     }
 
     @Test

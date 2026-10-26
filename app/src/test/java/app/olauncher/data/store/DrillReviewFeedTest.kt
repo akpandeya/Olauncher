@@ -37,28 +37,31 @@ class DrillReviewFeedTest {
     }
 
     @Test
-    fun `wrong then right on retry - still AGAIN`() {
-        // Simulate a DrillQuiz session where the user misses an item first, then retries and answers right.
+    fun `wrong answer is recorded at once - a retry round does not erase it`() {
+        // Nothing is requeued inside a round (#639): a wrong answer is recorded at the
+        // moment of the wrong pick, so an abandoned round already carries the miss.
         val item = DrillItem(
             id = DrillItemId(DrillType.PREPOSITIONS, "10"),
             prompt = "Ich gehe durch ___ Park.",
             answer = "den",
             choices = listOf("den", "dem", "das", "des"),
         )
-        val quiz = DrillQuiz(listOf(item))
-
-        // First attempt: wrong
+        val quiz = DrillQuiz(listOf(DrillQuizQuestion(item, DrillFormat.TAP, item.choices)))
         quiz.answer("dem")
+        assertEquals(mapOf(item.id to false), quiz.firstAttempts())
         quiz.advance()
+        // No requeue: the round is over after the wrong pick.
+        assertTrue(quiz.isFinished)
+        assertEquals(mapOf(item.id to false), quiz.firstAttempts())
 
-        // Quiz switches / retries: second attempt right
-        quiz.answer("den")
-        quiz.advance()
-
-        val attempts = quiz.firstAttempts()
-        assertEquals(mapOf(item.id to false), attempts)
-
-        val grades = DrillReviewFeed.grades(attempts, listOf(word1), today)
+        // A later practise-misses round is its own session; a right answer there
+        // cannot retroactively change the first round's miss.
+        val retryQuiz = DrillQuiz(listOf(DrillQuizQuestion(item, DrillFormat.TAP, item.choices)))
+        retryQuiz.answer("den")
+        retryQuiz.advance()
+        assertEquals(mapOf(item.id to true), retryQuiz.firstAttempts())
+        // The first round's miss stands, so the word is graded AGAIN.
+        val grades = DrillReviewFeed.grades(quiz.firstAttempts(), listOf(word1), today)
         assertEquals(1, grades.size)
         assertEquals(10L, grades[0].word.id)
         assertEquals(ReviewEvent.Result.AGAIN, grades[0].result)
