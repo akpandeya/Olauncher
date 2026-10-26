@@ -19,6 +19,7 @@ import app.olauncher.R
 import app.olauncher.data.Prefs
 import app.olauncher.data.store.AUTO_ADVANCE_DELAY_MS
 import app.olauncher.data.store.DrillItem
+import app.olauncher.data.store.DrillLastRound
 import app.olauncher.data.store.DrillQuiz
 import app.olauncher.data.store.DrillQuizQuestion
 import app.olauncher.data.store.DrillResult
@@ -584,6 +585,7 @@ class DrillFragment : BaseFragment() {
                     typedAnswered = typed.size,
                     typedRight = typed.values.count { it == DrillResult.RIGHT },
                 ),
+                roundTotal = q.items.size,
             )
         }
 
@@ -746,6 +748,7 @@ class DrillFragment : BaseFragment() {
                     choiceAnswered = first.size,
                     choiceRight = choiceRight,
                 ),
+                roundTotal = q.items.size,
             )
         }
 
@@ -773,22 +776,28 @@ class DrillFragment : BaseFragment() {
 
     /**
      * Records one round into the per-type score: the decayed counts take the round [evidence]
-     * (typed answers are the main evidence), the raw keys take the first-try counts.
+     * (typed answers are the main evidence), the raw keys take the first-try counts. The round
+     * also becomes the Drills card's last round, [roundTotal] being the round's item count.
      */
     private fun recordScoreRound(
         choiceAnswered: Int,
         choiceRight: Int,
         evidence: DrillScores.RoundEvidence,
+        roundTotal: Int,
     ) {
         val context = context ?: return
+        val prefs = Prefs(context.applicationContext)
         DrillScores.recordRound(
-            Prefs(context.applicationContext),
+            prefs,
             drillType.id,
             asked = choiceAnswered,
             firstTryRight = choiceRight,
             askedEvidence = evidence.askedDelta,
             rightEvidence = evidence.rightDelta,
         )
+        DrillLastRound.from(drillType.id, choiceRight, roundTotal)?.let { lastRound ->
+            DrillLastRound.record(prefs, lastRound)
+        }
     }
 
     /**
@@ -809,7 +818,12 @@ class DrillFragment : BaseFragment() {
                 choiceRight = choiceRight,
             ) ?: return
             recordedQuiz = q
-            recordScoreRound(choiceAnswered = first.size, choiceRight = choiceRight, evidence = evidence)
+            recordScoreRound(
+                choiceAnswered = first.size,
+                choiceRight = choiceRight,
+                evidence = evidence,
+                roundTotal = first.size.coerceAtLeast(1),
+            )
         } else {
             val q = quiz ?: return
             if (q === recordedQuiz || q.isFinished) return
@@ -824,7 +838,12 @@ class DrillFragment : BaseFragment() {
                 typedRight = typed.values.count { it == DrillResult.RIGHT },
             ) ?: return
             recordedQuiz = q
-            recordScoreRound(choiceAnswered = first.size, choiceRight = choiceRight, evidence = evidence)
+            recordScoreRound(
+                choiceAnswered = first.size,
+                choiceRight = choiceRight,
+                evidence = evidence,
+                roundTotal = first.size.coerceAtLeast(1),
+            )
         }
     }
 
