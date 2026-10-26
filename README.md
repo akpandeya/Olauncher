@@ -80,7 +80,7 @@ See [generation, validation and size details](tools/README.md).
 
 ## Update and backup
 
-Updating: new builds are published as GitHub releases. Every build is the debug variant, signed with the same key, so a new APK installs over the old one and keeps your data. Obtainium can do this for you.
+Updating: new builds are published as GitHub releases, on demand rather than after every commit. Every build is the debug variant, signed with the same key, so a new APK installs over the old one and keeps your data. Obtainium can do this for you.
 
 Backup (Settings, Backup):
 
