@@ -49,6 +49,11 @@ class OfflineGermanDictionary(private val findEntries: (String) -> List<OfflineG
      */
     fun gender(text: String): String? = genderOf(text, findEntries)
 
+    /**
+     * Noun plural for [text], or null.
+     */
+    fun plural(text: String): String? = pluralOf(text, findEntries)
+
     companion object {
         fun genderOf(text: String, findEntries: (String) -> List<OfflineGermanEntry>): String? {
             val normalized = Normalizer.normalize(text.trim(), Normalizer.Form.NFC)
@@ -56,6 +61,17 @@ class OfflineGermanDictionary(private val findEntries: (String) -> List<OfflineG
                 val entries = findEntries(candidate)
                 if (entries.isEmpty()) continue
                 return entries.firstOrNull { it.gender.isNotBlank() }?.gender
+            }
+            return null
+        }
+
+        fun pluralOf(text: String, findEntries: (String) -> List<OfflineGermanEntry>): String? {
+            val normalized = Normalizer.normalize(text.trim(), Normalizer.Form.NFC)
+            for (candidate in WiktionaryParser.candidates(normalized)) {
+                val entries = findEntries(candidate)
+                if (entries.isEmpty()) continue
+                val plural = entries.firstOrNull { it.plural.isNotBlank() }?.plural
+                if (!plural.isNullOrBlank()) return plural
             }
             return null
         }

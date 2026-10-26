@@ -19,6 +19,7 @@ class OfflineGermanStore(context: Context) {
     private var database: SQLiteDatabase? = null
 
     private val genderCache = java.util.concurrent.ConcurrentHashMap<String, String>()
+    private val pluralCache = java.util.concurrent.ConcurrentHashMap<String, String>()
 
     private fun deleteInstalled() {
         File(appContext.noBackupFilesDir, "german-dictionary").listFiles()
@@ -62,6 +63,7 @@ class OfflineGermanStore(context: Context) {
             if (database === opened) database = null
         }
         genderCache.clear()
+        pluralCache.clear()
         try {
             opened.close()
         } catch (_: Exception) {
@@ -122,6 +124,32 @@ class OfflineGermanStore(context: Context) {
         return try {
             val result = OfflineGermanDictionary.genderOf(clean) { candidate -> queryEntries(db, candidate, 8) }
             genderCache[clean] = result.orEmpty()
+            result
+        } catch (e: Exception) {
+            Log.w(TAG, "Offline dictionary unreadable; deleting it so the next lookup reinstalls", e)
+            discard(db)
+            null
+        }
+    }
+
+    /**
+     * Looks up noun plural for [text] (e.g. "Häuser", "Hunde"), or null if unknown.
+     * First query hits the database; subsequent calls for the same word are served from cache.
+     */
+    fun plural(text: String): String? {
+        val clean = text.trim()
+        if (clean.isEmpty()) return null
+        val cached = pluralCache[clean]
+        if (cached != null) return cached.takeIf { it.isNotEmpty() }
+        val db = try {
+            open()
+        } catch (e: Exception) {
+            Log.w(TAG, "Offline dictionary unavailable; using existing fallback", e)
+            return null
+        }
+        return try {
+            val result = OfflineGermanDictionary.pluralOf(clean) { candidate -> queryEntries(db, candidate, 8) }
+            pluralCache[clean] = result.orEmpty()
             result
         } catch (e: Exception) {
             Log.w(TAG, "Offline dictionary unreadable; deleting it so the next lookup reinstalls", e)
