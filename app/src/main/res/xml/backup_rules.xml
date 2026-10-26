@@ -5,5 +5,7 @@
     <include domain="file" path="word_progress.json" />
     <include domain="file" path="words.json" />
     <include domain="file" path="usage_days.json" />
+    <include domain="file" path="intention_history.json" />
+    <include domain="file" path="review_events.json" />
     <exclude domain="file" path="wallpapers/" />
 </full-backup-content>

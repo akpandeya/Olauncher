@@ -1,9 +1,12 @@
 package app.olauncher.data.store
 
+import java.io.File
+import javax.xml.parsers.DocumentBuilderFactory
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.w3c.dom.Element
 
 class BackupCoverageTest {
 
@@ -31,6 +34,35 @@ class BackupCoverageTest {
             ),
             Backup.EXPORTED_FILES.toSet()
         )
+    }
+
+    @Test
+    fun backupRulesIncludeEveryExportedFile() {
+        val backupRulesDoc = parseXml(resolveFile("src/main/res/xml/backup_rules.xml"))
+        val dataExtractionDoc = parseXml(resolveFile("src/main/res/xml/data_extraction_rules.xml"))
+
+        val fullBackupEl = backupRulesDoc.documentElement
+        assertEquals("full-backup-content", fullBackupEl.tagName)
+
+        val cloudBackupEl = dataExtractionDoc.getElementsByTagName("cloud-backup").item(0) as? Element
+            ?: error("cloud-backup section not found in data_extraction_rules.xml")
+        val deviceTransferEl = dataExtractionDoc.getElementsByTagName("device-transfer").item(0) as? Element
+            ?: error("device-transfer section not found in data_extraction_rules.xml")
+
+        val sections = mapOf(
+            "backup_rules.xml <full-backup-content>" to extractIncludedFiles(fullBackupEl),
+            "data_extraction_rules.xml <cloud-backup>" to extractIncludedFiles(cloudBackupEl),
+            "data_extraction_rules.xml <device-transfer>" to extractIncludedFiles(deviceTransferEl),
+        )
+
+        for ((sectionName, includedFiles) in sections) {
+            for (exportedFile in Backup.EXPORTED_FILES) {
+                assertTrue(
+                    "Section '$sectionName' must include '$exportedFile'",
+                    includedFiles.contains(exportedFile)
+                )
+            }
+        }
     }
 
     @Test
@@ -66,4 +98,25 @@ class BackupCoverageTest {
         assertEquals(-1, merged["TODAY_PENDING_WIDGET_ID"])
         assertEquals("dark", merged["THEME"])
     }
+
+    private fun extractIncludedFiles(section: Element): Set<String> {
+        val includes = section.getElementsByTagName("include")
+        val files = mutableSetOf<String>()
+        for (i in 0 until includes.length) {
+            val el = includes.item(i) as Element
+            if (el.getAttribute("domain") == "file") {
+                files.add(el.getAttribute("path"))
+            }
+        }
+        return files
+    }
+
+    private fun resolveFile(relative: String): File {
+        return listOf(
+            File(relative),
+            File("app/$relative"),
+        ).firstOrNull { it.isFile } ?: error("File $relative not found from ${File(".").absolutePath}")
+    }
+
+    private fun parseXml(file: File) = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(file)
 }
