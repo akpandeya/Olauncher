@@ -376,7 +376,7 @@
     <string name="health_tile_exercise">Exercise</string>
     <string name="health_tile_resting_hr">Resting HR</string>
     <string name="health_tile_sleep">Sleep</string>
-    <string name="health_exercise_goal">Goal %1$s min</string>
+    <string name="health_exercise_goal">Goal %1$d min</string>
     <string name="health_exercise_goal_week">Goal %1$d min this week</string>
     <string name="health_unit_bpm">bpm</string>
     <string name="health_dash">—</string>
