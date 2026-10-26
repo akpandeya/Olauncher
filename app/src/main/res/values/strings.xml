@@ -374,12 +374,12 @@
     <string name="health_line_exercise">Exercise %1$s min</string>
     <string name="health_line_heart_rate">Heart rate %1$s</string>
     <string name="health_tile_exercise" tools:ignore="MissingTranslation">Exercise</string>
-    <string name="health_tile_resting_hr">Resting HR</string>
-    <string name="health_tile_sleep">Sleep</string>
-    <string name="health_exercise_goal">Goal %1$d min</string>
-    <string name="health_exercise_goal_week">Goal %1$d min this week</string>
-    <string name="health_unit_bpm">bpm</string>
-    <string name="health_dash">—</string>
+    <string name="health_tile_resting_hr" tools:ignore="MissingTranslation">Resting HR</string>
+    <string name="health_tile_sleep" tools:ignore="MissingTranslation">Sleep</string>
+    <string name="health_exercise_goal" tools:ignore="MissingTranslation">Goal %1$d min</string>
+    <string name="health_exercise_goal_week" tools:ignore="MissingTranslation">Goal %1$d min this week</string>
+    <string name="health_unit_bpm" tools:ignore="MissingTranslation">bpm</string>
+    <string name="health_dash" tools:ignore="MissingTranslation">—</string>
     <string name="wellbeing_water_chip" translatable="false">%d</string>
     <string name="wellbeing_walk_chip" translatable="false">%d</string>
     <string name="wellbeing_distracting_stats">%1$s %2$s · %3$s</string>
