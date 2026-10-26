@@ -107,11 +107,60 @@ class DrillSummaryLogicTest {
 
     @Test
     fun `formatCorrection combines answer and hint without duplication`() {
-        assertEquals("den · durch + Akkusativ", DrillSummaryLogic.formatCorrection("den", "durch + Akkusativ"))
-        assertEquals("Akkusativ", DrillSummaryLogic.formatCorrection("Akkusativ", "Akkusativ"))
-        assertEquals("Akkusativ", DrillSummaryLogic.formatCorrection("Akkusativ", "akkusativ"))
-        assertEquals("den", DrillSummaryLogic.formatCorrection("den", null))
-        assertEquals("den", DrillSummaryLogic.formatCorrection("den", ""))
-        assertEquals("den", DrillSummaryLogic.formatCorrection("den", "   "))
+        // Prompt differs from answer: answer shown, hint appended when distinct.
+        assertEquals("den · durch + Akkusativ", DrillSummaryLogic.formatCorrection("Prompt 0", "den", "durch + Akkusativ"))
+        assertEquals("Akkusativ", DrillSummaryLogic.formatCorrection("Prompt 1", "Akkusativ", "Akkusativ"))
+        assertEquals("Akkusativ", DrillSummaryLogic.formatCorrection("Prompt 2", "Akkusativ", "akkusativ"))
+        assertEquals("den", DrillSummaryLogic.formatCorrection("Prompt 3", "den", null))
+        assertEquals("den", DrillSummaryLogic.formatCorrection("Prompt 4", "den", ""))
+        assertEquals("den", DrillSummaryLogic.formatCorrection("Prompt 5", "den", "   "))
+    }
+
+    @Test
+    fun `formatCorrection omits answer when it repeats the word-order prompt`() {
+        // Word-order rows show the full sentence as the prompt; repeating it as the
+        // correction would be redundant, so only the hint is shown.
+        val sentence = "Er bleibt im Bett weil er krank ist"
+        assertEquals("", DrillSummaryLogic.formatCorrection(sentence, sentence, null))
+        assertEquals("", DrillSummaryLogic.formatCorrection(sentence, sentence, "   "))
+        assertEquals(
+            "Nebensatz: Konjugiertes Verb am Satzende nach weil",
+            DrillSummaryLogic.formatCorrection(
+                "$sentence (Er bleibt weil krank er im Bett ist)",
+                sentence,
+                "Nebensatz: Konjugiertes Verb am Satzende nach weil",
+            ),
+        )
+        // casing differences still count as the same sentence
+        assertEquals("", DrillSummaryLogic.formatCorrection("Ich gehe ins Kino", "ich gehe ins kino", null))
+    }
+
+    @Test
+    fun `counts matches grouped sort output for the summary header`() {
+        val items = listOf(
+            item(0, DrillResult.RIGHT),
+            item(1, DrillResult.WRONG),
+            item(2, DrillResult.ALMOST),
+            item(3, DrillResult.WRONG),
+            item(4, DrillResult.RIGHT),
+            item(5, DrillResult.ALMOST),
+        )
+
+        val expected = DrillSummaryCounts(right = 2, almost = 2, wrong = 2)
+        assertEquals(expected, DrillSummaryLogic.counts(items))
+        val sorted = DrillSummaryLogic.sort(items)
+        assertEquals(
+            expected,
+            DrillSummaryCounts(
+                right = sorted.count { it.result == DrillResult.RIGHT },
+                almost = sorted.count { it.result == DrillResult.ALMOST },
+                wrong = sorted.count { it.result == DrillResult.WRONG },
+            ),
+        )
+    }
+
+    @Test
+    fun `counts handles an empty summary`() {
+        assertEquals(DrillSummaryCounts(right = 0, almost = 0, wrong = 0), DrillSummaryLogic.counts(emptyList()))
     }
 }

@@ -59,14 +59,53 @@ object DrillSummaryLogic {
     /**
      * Formats the correction line under a red (wrong) item:
      * Answer, followed by one-line rule/hint if distinct.
+     *
+     * Returns an empty string when the correction would repeat the prompt text
+     * (word-order rows show the full sentence as the prompt), in which case only
+     * the distinguishing hint is shown.
      */
-    fun formatCorrection(answer: String, hint: String?): String {
+    fun formatCorrection(prompt: String, answer: String, hint: String?): String {
+        val trimmedPrompt = prompt.trim()
+        // Word-order rows append the learner answer in parentheses; strip a trailing
+        // annotation so a prompt that repeats the answer is still recognised as one.
+        val basePrompt = Regex("""\s*\([^()]*\)$""").replace(trimmedPrompt, "").trim()
         val trimmedAnswer = answer.trim()
         val trimmedHint = hint?.trim().orEmpty()
-        return if (trimmedHint.isEmpty() || trimmedHint.equals(trimmedAnswer, ignoreCase = true)) {
-            trimmedAnswer
-        } else {
-            "$trimmedAnswer · $trimmedHint"
+        val promptIsAnswer = trimmedAnswer.equals(basePrompt, ignoreCase = true) ||
+            trimmedAnswer.equals(trimmedPrompt, ignoreCase = true)
+        return when {
+            promptIsAnswer && trimmedHint.isEmpty() -> ""
+            promptIsAnswer -> trimmedHint
+            trimmedHint.isEmpty() || trimmedHint.equals(trimmedAnswer, ignoreCase = true) -> trimmedAnswer
+            else -> "$trimmedAnswer · $trimmedHint"
         }
     }
+
+    /**
+     * Computes the header totals from summary items: right, almost, and wrong counts.
+     * The numbers match the grouped sort output because they are derived from the
+     * same items that are sorted and rendered as rows.
+     */
+    fun counts(items: List<DrillSummaryItem>): DrillSummaryCounts {
+        var right = 0
+        var almost = 0
+        var wrong = 0
+        for (item in items) {
+            when (item.result) {
+                DrillResult.RIGHT -> right++
+                DrillResult.ALMOST -> almost++
+                DrillResult.WRONG -> wrong++
+            }
+        }
+        return DrillSummaryCounts(right = right, almost = almost, wrong = wrong)
+    }
 }
+
+/**
+ * Header totals for a drill round summary, matching the grouped rows shown below them.
+ */
+data class DrillSummaryCounts(
+    val right: Int,
+    val almost: Int,
+    val wrong: Int,
+)

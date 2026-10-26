@@ -492,13 +492,6 @@ class DrillFragment : BaseFragment() {
         val b = binding
         val context = b.root.context
         val results = q.itemResults()
-        val rightCount = results.values.count { it == DrillResult.RIGHT }
-        val almostCount = q.almostScore
-        val wrongCount = results.values.count { it == DrillResult.WRONG }
-
-        b.tvSummaryTitle.text = context.getString(DrillTables.labelRes(drillType))
-        b.tvSummaryCounts.text = context.getString(R.string.drill_summary_counts, rightCount, almostCount, wrongCount)
-
         val learnerAnswers = q.learnerAnswers()
         val summaryItems = q.items.mapIndexed { index, item ->
             val res = results[item.id] ?: if (q.firstAttempts()[item.id] == true) DrillResult.RIGHT else DrillResult.WRONG
@@ -513,6 +506,10 @@ class DrillFragment : BaseFragment() {
             )
         }
         val sortedItems = DrillSummaryLogic.sort(summaryItems)
+        val counts = DrillSummaryLogic.counts(summaryItems)
+
+        b.tvSummaryTitle.text = context.getString(DrillTables.labelRes(drillType))
+        b.tvSummaryCounts.text = context.getString(R.string.drill_summary_counts, counts.right, counts.almost, counts.wrong)
 
         bindSummaryRows(sortedItems)
 
@@ -521,7 +518,7 @@ class DrillFragment : BaseFragment() {
         b.btnPrimary.isEnabled = true
         b.btnPrimary.alpha = 1f
 
-        val hasMisses = wrongCount > 0 || almostCount > 0
+        val hasMisses = counts.wrong > 0 || counts.almost > 0
         b.btnPractiseMisses.setText(R.string.drill_summary_practise_misses)
         b.btnPractiseMisses.isVisible = hasMisses
         b.btnPractiseMisses.isEnabled = hasMisses
@@ -559,7 +556,7 @@ class DrillFragment : BaseFragment() {
                 DrillResult.WRONG -> {
                     itemBinding.ivMark.setImageResource(R.drawable.ic_close)
                     itemBinding.ivMark.setColorFilter(ContextCompat.getColor(context, R.color.accentRose))
-                    val correction = DrillSummaryLogic.formatCorrection(item.answer, item.hint)
+                    val correction = DrillSummaryLogic.formatCorrection(item.prompt, item.answer, item.hint)
                     itemBinding.tvCorrection.text = correction
                     itemBinding.tvCorrection.isVisible = correction.isNotEmpty()
                 }
@@ -682,13 +679,6 @@ class DrillFragment : BaseFragment() {
         val b = binding
         val context = b.root.context
         val results = q.itemResults()
-        val rightCount = q.firstTryScore
-        val almostCount = 0
-        val wrongCount = q.total - q.firstTryScore
-
-        b.tvSummaryTitle.text = context.getString(R.string.drill_type_word_order)
-        b.tvSummaryCounts.text = context.getString(R.string.drill_summary_counts, rightCount, almostCount, wrongCount)
-
         val learnerAnswers = q.learnerAnswers()
         val summaryItems = q.items.mapIndexed { index, item ->
             val res = results[item.id] ?: if (q.firstAttempts()[item.id] == true) DrillResult.RIGHT else DrillResult.WRONG
@@ -703,6 +693,10 @@ class DrillFragment : BaseFragment() {
             )
         }
         val sortedItems = DrillSummaryLogic.sort(summaryItems)
+        val counts = DrillSummaryLogic.counts(summaryItems)
+
+        b.tvSummaryTitle.text = context.getString(R.string.drill_type_word_order)
+        b.tvSummaryCounts.text = context.getString(R.string.drill_summary_counts, counts.right, counts.almost, counts.wrong)
 
         bindSummaryRows(sortedItems)
 
@@ -711,7 +705,7 @@ class DrillFragment : BaseFragment() {
         b.btnPrimary.isEnabled = true
         b.btnPrimary.alpha = 1f
 
-        val hasMisses = wrongCount > 0
+        val hasMisses = counts.wrong > 0 || counts.almost > 0
         b.btnPractiseMisses.setText(R.string.drill_summary_practise_misses)
         b.btnPractiseMisses.isVisible = hasMisses
         b.btnPractiseMisses.isEnabled = hasMisses
