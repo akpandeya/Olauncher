@@ -381,7 +381,13 @@ class DrillFragment : BaseFragment() {
             b.etAnswer.isEnabled = true
             b.etAnswer.isActivated = false
             b.etAnswer.setBackgroundResource(R.drawable.quiz_choice)
-            b.tvCorrection.isVisible = false
+            if (q.isAwaitingRetry) {
+                b.tvCorrection.text = getString(R.string.drill_near_miss)
+                b.tvCorrection.isVisible = true
+                b.etAnswer.setSelection(b.etAnswer.text?.length ?: 0)
+            } else {
+                b.tvCorrection.isVisible = false
+            }
             b.btnPrimary.setText(R.string.conjugation_check)
             b.btnPrimary.isVisible = true
             b.btnPrimary.isEnabled = true

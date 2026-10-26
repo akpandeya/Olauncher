@@ -5,6 +5,17 @@ import java.util.Random
 /** The round phase of a [DrillQuiz]. */
 enum class DrillRound { CHOICE, TYPED }
 
+/** Result of an item attempt in a drill round. */
+enum class DrillResult {
+    WRONG,
+    ALMOST,
+    RIGHT;
+
+    val isRight: Boolean get() = this == RIGHT
+    val isAlmost: Boolean get() = this == ALMOST
+    val isWrong: Boolean get() = this == WRONG
+}
+
 /**
  * The current question displayed to the user: the underlying [item],
  * the list of [choices] (empty in typed mode), and the current [round].
@@ -33,15 +44,20 @@ class DrillQuiz(
     val items: List<DrillItem>,
     private val random: Random = Random(),
     val isChoiceOnly: Boolean = items.firstOrNull()?.id?.type?.isChoiceOnly ?: false,
+    startRound: DrillRound = DrillRound.CHOICE,
 ) {
     val hasTypedRound: Boolean get() = !isChoiceOnly
 
     private val firstAttemptsMap = mutableMapOf<DrillItemId, Boolean>()
+    private val itemResultsMap = mutableMapOf<DrillItemId, DrillResult>()
     private val queue = ArrayDeque<DrillItem>()
     private var question: DrillQuizQuestion? = null
     private var lastAnswerValue: QuizAnswer? = null
 
-    var round: DrillRound = DrillRound.CHOICE
+    private var nearMissOffered = false
+    private var awaitingRetry = false
+
+    var round: DrillRound = startRound
         private set
 
     init {
@@ -67,6 +83,9 @@ class DrillQuiz(
     /** True once the current question has been answered. */
     val isAnswered: Boolean get() = lastAnswerValue != null
 
+    /** True if the current question was a near miss and is awaiting a single retry. */
+    val isAwaitingRetry: Boolean get() = awaitingRetry
+
     /** True when both rounds have finished or there were no items. */
     val isFinished: Boolean get() = question == null
 
@@ -79,8 +98,14 @@ class DrillQuiz(
      */
     fun firstAttempts(): Map<DrillItemId, Boolean> = firstAttemptsMap.toMap()
 
+    /** Map of overall results for each item in the round. */
+    fun itemResults(): Map<DrillItemId, DrillResult> = itemResultsMap.toMap()
+
     /** Number of items answered correctly on the very first try. */
     val firstTryScore: Int get() = firstAttemptsMap.values.count { it }
+
+    /** Number of items marked 'almost' (exact retry after near miss). */
+    val almostScore: Int get() = itemResultsMap.values.count { it == DrillResult.ALMOST }
 
     /** Records a multiple-choice pick. Delegates to [answerTyped] in typed mode. */
     fun answer(choice: String): QuizAnswer? {
@@ -97,14 +122,51 @@ class DrillQuiz(
         return result
     }
 
-    /** Records a typed answer using [checkTypedAnswer]. */
+    /** Records a typed answer using [checkTypedAnswer] and [isNearMiss]. */
     fun answerTyped(input: String): QuizAnswer? {
         val q = question ?: return null
         if (lastAnswerValue != null) return null
-        val isCorrect = checkTypedAnswer(input, q.answer)
-        val result = QuizAnswer(isCorrect, q.answer)
-        recordAttempt(q.item, isCorrect)
+
+        val isExact = checkTypedAnswer(input, q.answer)
+        if (isExact) {
+            val wasNearMiss = nearMissOffered
+            val result = QuizAnswer(
+                correct = true,
+                answer = q.answer,
+                isNearMiss = false,
+                isAlmost = wasNearMiss,
+            )
+            awaitingRetry = false
+            nearMissOffered = false
+            lastAnswerValue = result
+            val drillResult = if (wasNearMiss) DrillResult.ALMOST else DrillResult.RIGHT
+            recordTypedResult(q.item, drillResult)
+            return result
+        }
+
+        // Not an exact match
+        if (!nearMissOffered && isNearMiss(input, q.answer)) {
+            nearMissOffered = true
+            awaitingRetry = true
+            return QuizAnswer(
+                correct = false,
+                answer = q.answer,
+                isNearMiss = true,
+                isAlmost = false,
+            )
+        }
+
+        // Second miss (if nearMissOffered) or far miss (not near miss on first try)
+        awaitingRetry = false
+        nearMissOffered = false
+        val result = QuizAnswer(
+            correct = false,
+            answer = q.answer,
+            isNearMiss = false,
+            isAlmost = false,
+        )
         lastAnswerValue = result
+        recordTypedResult(q.item, DrillResult.WRONG)
         return result
     }
 
@@ -117,6 +179,8 @@ class DrillQuiz(
     fun advance() {
         val q = question ?: return
         val result = lastAnswerValue ?: return
+        awaitingRetry = false
+        nearMissOffered = false
         queue.removeFirst()
         if (!result.correct) {
             queue.addLast(q.item)
@@ -138,10 +202,22 @@ class DrillQuiz(
     private fun recordAttempt(item: DrillItem, isCorrect: Boolean) {
         if (round == DrillRound.CHOICE && item.id !in firstAttemptsMap) {
             firstAttemptsMap[item.id] = isCorrect
+            itemResultsMap[item.id] = if (isCorrect) DrillResult.RIGHT else DrillResult.WRONG
+        }
+    }
+
+    private fun recordTypedResult(item: DrillItem, result: DrillResult) {
+        if (round == DrillRound.TYPED) {
+            itemResultsMap[item.id] = result
+        }
+        if (item.id !in firstAttemptsMap) {
+            firstAttemptsMap[item.id] = result == DrillResult.RIGHT
         }
     }
 
     private fun buildQuestion() {
+        awaitingRetry = false
+        nearMissOffered = false
         val item = queue.firstOrNull()
         if (item == null) {
             question = null

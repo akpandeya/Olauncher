@@ -236,16 +236,21 @@ class DrillQuizTest {
         quiz.answer(umlautItem.answer)
         quiz.advance()
 
-        // In typed round: "waere" must fail (no ae folding)
+        // In typed round: "waere" must fail (no ae folding) and offer near-miss retry
         val folded = quiz.answerTyped("waere")
         assertNotNull(folded)
         assertFalse(folded!!.correct)
-        quiz.advance()
+        assertTrue(folded.isNearMiss)
+        assertTrue(quiz.isAwaitingRetry)
+        assertFalse(quiz.isAnswered)
 
-        // Capitalized first letter accepted: "Wäre"
+        // Capitalized first letter accepted on retry: "Wäre"
         val cap = quiz.answerTyped("Wäre")
         assertNotNull(cap)
         assertTrue(cap!!.correct)
+        assertTrue(cap.isAlmost)
+        assertFalse(cap.isNearMiss)
+        assertTrue(quiz.isAnswered)
         quiz.advance()
 
         assertTrue(quiz.isFinished)
@@ -411,5 +416,125 @@ class DrillQuizTest {
         // Completed
         assertTrue(quiz.isFinished)
         assertEquals(10, quiz.firstTryScore)
+    }
+
+    @Test
+    fun nearMissOneLetterOffShowsRetryAndAnswerNotRevealed() {
+        val quiz = DrillQuiz(listOf(item1), startRound = DrillRound.TYPED)
+        // item1 answer is "mit". User types "mi" (one letter missing)
+        val result = quiz.answerTyped("mi")
+        assertNotNull(result)
+        assertFalse(result!!.correct)
+        assertTrue(result.isNearMiss)
+        assertFalse(result.isAlmost)
+
+        // Item is not marked answered, answer is not revealed, awaiting retry
+        assertTrue(quiz.isAwaitingRetry)
+        assertFalse(quiz.isAnswered)
+        assertNull(quiz.lastAnswer)
+    }
+
+    @Test
+    fun nearMissUmlautEquivalentShowsRetryAndAnswerNotRevealed() {
+        val umlautItem = DrillItem(
+            id = DrillItemId(DrillType.PREPOSITIONS, "ueber"),
+            prompt = "Das Bild hängt ___ dem Sofa.",
+            answer = "über",
+            choices = listOf("über", "unter"),
+        )
+        val quiz = DrillQuiz(listOf(umlautItem), startRound = DrillRound.TYPED)
+        // User types "ueber" for "über" (umlaut equivalent)
+        val result = quiz.answerTyped("ueber")
+        assertNotNull(result)
+        assertFalse(result!!.correct)
+        assertTrue(result.isNearMiss)
+        assertFalse(result.isAlmost)
+
+        assertTrue(quiz.isAwaitingRetry)
+        assertFalse(quiz.isAnswered)
+        assertNull(quiz.lastAnswer)
+    }
+
+    @Test
+    fun exactMatchStaysOnlyWayToBeRight() {
+        val quiz = DrillQuiz(listOf(item1), startRound = DrillRound.TYPED)
+        // One letter wrong is NOT marked right
+        val near = quiz.answerTyped("mot")
+        assertNotNull(near)
+        assertFalse(near!!.correct)
+
+        // Exact match on retry is right
+        val exact = quiz.answerTyped("mit")
+        assertNotNull(exact)
+        assertTrue(exact!!.correct)
+    }
+
+    @Test
+    fun retryThatIsExactCountsAsAlmost() {
+        val quiz = DrillQuiz(listOf(item1), startRound = DrillRound.TYPED)
+        // First try: near miss
+        val near = quiz.answerTyped("mi")
+        assertTrue(near!!.isNearMiss)
+        assertTrue(quiz.isAwaitingRetry)
+
+        // Retry: exact match
+        val retry = quiz.answerTyped("mit")
+        assertNotNull(retry)
+        assertTrue(retry!!.correct)
+        assertTrue(retry.isAlmost)
+        assertFalse(retry.isNearMiss)
+        assertTrue(quiz.isAnswered)
+
+        // Counts as almost, not as firstTryRight
+        assertEquals(DrillResult.ALMOST, quiz.itemResults()[item1.id])
+        assertEquals(1, quiz.almostScore)
+        assertEquals(0, quiz.firstTryScore)
+    }
+
+    @Test
+    fun secondMissAfterNearMissCountsAsMiss() {
+        val quiz = DrillQuiz(listOf(item1), startRound = DrillRound.TYPED)
+        // First try: near miss
+        val near = quiz.answerTyped("mi")
+        assertTrue(near!!.isNearMiss)
+        assertTrue(quiz.isAwaitingRetry)
+
+        // Second try: miss again (even if another near miss)
+        val second = quiz.answerTyped("mis")
+        assertNotNull(second)
+        assertFalse(second!!.correct)
+        assertFalse(second.isNearMiss)
+        assertFalse(second.isAlmost)
+
+        // Now marked wrong, answer is revealed in quizAnswer
+        assertTrue(quiz.isAnswered)
+        assertFalse(quiz.isAwaitingRetry)
+        assertEquals(item1.answer, second.answer)
+        assertEquals(DrillResult.WRONG, quiz.itemResults()[item1.id])
+        assertEquals(0, quiz.firstTryScore)
+        assertEquals(0, quiz.almostScore)
+
+        // Advancing requeues item1
+        quiz.advance()
+        assertFalse(quiz.isFinished)
+        assertEquals(item1.id, quiz.current!!.id)
+    }
+
+    @Test
+    fun farMissCountsAsMissImmediatelyWithoutRetry() {
+        val quiz = DrillQuiz(listOf(item1), startRound = DrillRound.TYPED)
+        // Completely wrong answer (not a near miss)
+        val far = quiz.answerTyped("completely wrong")
+        assertNotNull(far)
+        assertFalse(far!!.correct)
+        assertFalse(far.isNearMiss)
+        assertFalse(far.isAlmost)
+
+        // Immediately marked wrong
+        assertTrue(quiz.isAnswered)
+        assertFalse(quiz.isAwaitingRetry)
+        assertEquals(DrillResult.WRONG, quiz.itemResults()[item1.id])
+        assertEquals(0, quiz.firstTryScore)
+        assertEquals(0, quiz.almostScore)
     }
 }
