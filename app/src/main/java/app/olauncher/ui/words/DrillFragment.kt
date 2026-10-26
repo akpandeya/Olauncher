@@ -496,8 +496,6 @@ class DrillFragment : BaseFragment() {
         renderWordOrderSegments(q)
 
         b.tvPrompt.isVisible = false
-        b.tvHint.isVisible = !question.hint.isNullOrBlank()
-        b.tvHint.text = question.hint.orEmpty()
 
         b.choiceScroll.isVisible = false
         b.typedContainer.isVisible = false
@@ -505,6 +503,10 @@ class DrillFragment : BaseFragment() {
 
         val answered = q.isAnswered
         val lastAnswer = q.lastAnswer
+
+        val isWrongAnswer = answered && lastAnswer?.correct == false
+        b.tvHint.isVisible = isWrongAnswer && !question.hint.isNullOrBlank()
+        b.tvHint.text = question.hint.orEmpty()
 
         b.wordOrderView.render(
             answerTiles = question.answerTiles,

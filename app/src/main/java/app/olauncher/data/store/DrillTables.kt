@@ -18,6 +18,7 @@ object DrillTables {
         DrillType.VERB_PREPOSITIONS,
         DrillType.SEPARABLE_VERBS,
         DrillType.ADJECTIVE_ENDINGS,
+        DrillType.WORD_ORDER,
     )
 
     /** Builds the drill items for the given [type] and saved [words]. */
@@ -39,6 +40,10 @@ object DrillTables {
         else -> emptyList()
     }
 
+    /** Builds the word-order drill items for saved [words]. */
+    fun wordOrderItems(words: Collection<Word> = emptyList()): List<WordOrderItem> =
+        DrillWordOrder.items(words)
+
     /** Returns the string resource for the display label of a [DrillType]. */
     fun labelRes(type: DrillType): Int = when (type) {
         DrillType.PREPOSITIONS -> R.string.drill_type_prepositions
@@ -49,6 +54,7 @@ object DrillTables {
         DrillType.VERB_PREPOSITIONS -> R.string.drill_type_verb_prepositions
         DrillType.SEPARABLE_VERBS -> R.string.drill_type_separable_verbs
         DrillType.ADJECTIVE_ENDINGS -> R.string.drill_type_adjective_endings
+        DrillType.WORD_ORDER -> R.string.drill_type_word_order
         else -> R.string.drills
     }
 }

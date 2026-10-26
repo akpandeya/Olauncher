@@ -32,9 +32,9 @@ data class WordOrderItem(
         if (accepted.isEmpty()) {
             problems += "Accepted orders cannot be empty"
         }
-        val sortedTiles = tiles.sorted()
+        val sortedTiles = tiles.map { it.lowercase() }.sorted()
         for (order in accepted) {
-            if (order.sorted() != sortedTiles) {
+            if (order.map { it.lowercase() }.sorted() != sortedTiles) {
                 problems += "Accepted order is not a permutation of tiles: $order"
             }
         }
@@ -235,19 +235,7 @@ class WordOrderQuiz(
             ),
         )
 
-        fun items(words: Collection<Word> = emptyList()): List<WordOrderItem> {
-            if (words.isEmpty()) return SAMPLE_ITEMS
-            val wordMap = words.associateBy { it.text.trim().lowercase() }
-            return SAMPLE_ITEMS.map { item ->
-                val matchingWord = item.tiles.firstNotNullOfOrNull { tile ->
-                    wordMap[tile.lowercase()]
-                }
-                if (matchingWord != null) {
-                    item.copy(id = DrillItemId(DrillType.WORD_ORDER, "${matchingWord.id}:${item.id.key}"))
-                } else {
-                    item
-                }
-            }
-        }
+        fun items(words: Collection<Word> = emptyList()): List<WordOrderItem> =
+            DrillWordOrder.items(words)
     }
 }
