@@ -78,4 +78,47 @@ class ReviewEventsStoreTest {
         val appended = store.append(wordId = 1, result = ReviewEvent.Result.KNEW, boxBefore = 1, boxAfter = 2, reviewedAt = 5L)
         assertEquals(listOf(appended), store.all())
     }
+
+    @Test
+    fun `old JSON without source decodes with null source`() {
+        val oldJson = """
+            [
+                {"id": 1, "wordId": 10, "reviewedAt": 100, "result": "knew", "boxBefore": 1, "boxAfter": 2},
+                {"id": 2, "wordId": 11, "reviewedAt": 200, "result": "again", "boxBefore": 3, "boxAfter": 1}
+            ]
+        """.trimIndent()
+        val decoded = ReviewEventsCodec.decode(oldJson)
+        assertEquals(2, decoded.size)
+        assertEquals(ReviewEvent(1L, 10L, 100L, "knew", 1, 2, null), decoded[0])
+        assertEquals(ReviewEvent(2L, 11L, 200L, "again", 3, 1, null), decoded[1])
+    }
+
+    @Test
+    fun `new JSON with source round-trips`() {
+        val events = listOf(
+            ReviewEvent(1L, 10L, 100L, "knew", 1, 2, "drill:prepositions"),
+            ReviewEvent(2L, 11L, 200L, "again", 3, 1, "drill:conjugation"),
+            ReviewEvent(3L, 12L, 300L, "almost", 2, 2, null),
+        )
+        val json = ReviewEventsCodec.encode(events)
+        val decoded = ReviewEventsCodec.decode(json)
+        assertEquals(events, decoded)
+    }
+
+    @Test
+    fun `append with source persists and survives reload`() {
+        val event = store.append(
+            wordId = 42,
+            result = ReviewEvent.Result.KNEW,
+            boxBefore = 2,
+            boxAfter = 3,
+            reviewedAt = 500L,
+            source = "drill:pronouns",
+        )
+        assertEquals("drill:pronouns", event.source)
+
+        val reloaded = ReviewEventsStore(tempDir).all()
+        assertEquals(1, reloaded.size)
+        assertEquals(event, reloaded[0])
+    }
 }

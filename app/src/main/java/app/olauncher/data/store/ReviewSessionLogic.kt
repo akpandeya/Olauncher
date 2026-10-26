@@ -29,6 +29,7 @@ object ReviewSessionLogic {
         reviewedAt: Long,
         saveWord: (Word) -> Unit,
         events: ReviewEventsStore,
+        source: String? = null,
     ): ReviewEvent {
         val updated = grade(word, result, today)
         saveWord(updated)
@@ -38,6 +39,7 @@ object ReviewSessionLogic {
             boxBefore = word.box,
             boxAfter = updated.box,
             reviewedAt = reviewedAt,
+            source = source,
         )
     }
 

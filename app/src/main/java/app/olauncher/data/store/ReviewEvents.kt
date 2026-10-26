@@ -20,6 +20,7 @@ data class ReviewEvent(
     val result: String,
     val boxBefore: Int,
     val boxAfter: Int,
+    val source: String? = null,
 ) {
     object Result {
         const val KNEW = "knew"
@@ -33,15 +34,17 @@ object ReviewEventsCodec {
     fun encode(events: List<ReviewEvent>): String {
         val array = JSONArray()
         for (event in events) {
-            array.put(
-                JSONObject()
-                    .put("id", event.id)
-                    .put("wordId", event.wordId)
-                    .put("reviewedAt", event.reviewedAt)
-                    .put("result", event.result)
-                    .put("boxBefore", event.boxBefore)
-                    .put("boxAfter", event.boxAfter)
-            )
+            val obj = JSONObject()
+                .put("id", event.id)
+                .put("wordId", event.wordId)
+                .put("reviewedAt", event.reviewedAt)
+                .put("result", event.result)
+                .put("boxBefore", event.boxBefore)
+                .put("boxAfter", event.boxAfter)
+            if (event.source != null) {
+                obj.put("source", event.source)
+            }
+            array.put(obj)
         }
         return array.toString(2)
     }
@@ -67,8 +70,13 @@ object ReviewEventsCodec {
                 val result = obj.getString("result")
                 val boxBefore = obj.getInt("boxBefore")
                 val boxAfter = obj.getInt("boxAfter")
+                val source = if (obj.has("source") && !obj.isNull("source")) {
+                    obj.getString("source").takeIf { it.isNotBlank() }
+                } else {
+                    null
+                }
                 if (result in setOf(ReviewEvent.Result.KNEW, ReviewEvent.Result.ALMOST, ReviewEvent.Result.AGAIN)) {
-                    events.add(ReviewEvent(id, wordId, reviewedAt, result, boxBefore, boxAfter))
+                    events.add(ReviewEvent(id, wordId, reviewedAt, result, boxBefore, boxAfter, source))
                 }
             } catch (e: Exception) {
                 // Ignore individual corrupt entry
@@ -101,7 +109,14 @@ class ReviewEventsStore(
 
     /** Appends one event and returns the stored copy with its id assigned. */
     @Synchronized
-    fun append(wordId: Long, result: String, boxBefore: Int, boxAfter: Int, reviewedAt: Long): ReviewEvent {
+    fun append(
+        wordId: Long,
+        result: String,
+        boxBefore: Int,
+        boxAfter: Int,
+        reviewedAt: Long,
+        source: String? = null,
+    ): ReviewEvent {
         val events = all()
         val event = ReviewEvent(
             id = generateId(events),
@@ -110,6 +125,7 @@ class ReviewEventsStore(
             result = result,
             boxBefore = boxBefore,
             boxAfter = boxAfter,
+            source = source,
         )
         save(events + event)
         return event

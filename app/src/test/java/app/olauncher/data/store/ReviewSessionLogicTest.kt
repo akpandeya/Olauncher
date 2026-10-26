@@ -49,6 +49,12 @@ class ReviewSessionLogicTest {
             )
             assertEquals(2, events.all().size)
             assertEquals(1, events.all().last().boxAfter)
+
+            val drillEvent = ReviewSessionLogic.gradeAndLog(
+                word, ReviewEvent.Result.KNEW, today, 3_000_000L, { saved = it }, events, source = "drill:prepositions",
+            )
+            assertEquals("drill:prepositions", drillEvent.source)
+            assertEquals("drill:prepositions", events.all().last().source)
         } finally {
             dir.deleteRecursively()
         }

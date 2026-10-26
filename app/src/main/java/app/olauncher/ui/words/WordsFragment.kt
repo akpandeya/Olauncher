@@ -15,6 +15,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.fragment.findNavController
 import app.olauncher.R
 import app.olauncher.data.Prefs
+import app.olauncher.data.store.DrillScores
 import app.olauncher.data.store.DrillTables
 import app.olauncher.data.store.ReviewComebacks
 import app.olauncher.data.store.ReviewEventsStore
@@ -218,10 +219,19 @@ class WordsFragment : BaseFragment() {
         if (available.isEmpty()) return
         val prefs = Prefs(context)
         val lastType = prefs.drillLastType
+        val scores = DrillScores.decode(prefs.drillScores)
         val checkedIndex = available.indexOfFirst { it.id == lastType }.let { if (it >= 0) it else 0 }
         val dialog = context.createChoiceDialog(
             title = R.string.drills,
-            items = available.map { type -> context.getString(DrillTables.labelRes(type)) },
+            items = available.map { type ->
+                val base = context.getString(DrillTables.labelRes(type))
+                val score = scores[type.id]
+                if (score != null && score.asked > 0) {
+                    context.getString(R.string.drill_type_with_percentage, base, score.percentage)
+                } else {
+                    base
+                }
+            },
             checkedIndex = checkedIndex,
             onPick = { index ->
                 val picked = available[index]
