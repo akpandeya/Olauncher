@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drill round mock — recognition ladder (#639)</title>
+<style>
+  /* =========================================================
+     Tokens mirrored from the app (docs/design/drills-ux.md,
+     "Repo design elements used"):
+       todayScrim, todayPanel, todayTile, todayTileStroke,
+       todayChip, inkMuted, accentSage, accentSand, accentRose
+       radiusSmall 12 / radiusMedium 20 / radiusLarge 28 / pill
+       strokeHairline 1 / quiz_choice_min_height 56 / touch 48
+     Light values from values/colors.xml, dark from values-night.
+     System font stack only — no remote assets.
+     ========================================================= */
+  :root {
+    --page: #dfe1e6;
+    --scrim: #f0f1f4;              /* todayScrimLight over a plain wallpaper */
+    --panel: rgba(0, 0, 0, .06);   /* todayPanelLight #0F000000 */
+    --panel-solid: #e6e7eb;
+    --tile: #fafafc;               /* todayTile */
+    --tile-stroke: rgba(0, 0, 0, .08); /* todayTileStroke */
+    --tile-shade: rgba(0, 0, 0, .05);
+    --chip: rgba(0, 0, 0, .12);    /* todayChipLight */
+    --ink: rgba(0, 0, 0, .87);
+    --ink-muted: rgba(0, 0, 0, .7); /* inkMuted */
+    --sage: #4d6653;               /* accentSageLight */
+    --sage-soft: rgba(77, 102, 83, .14);
+    --sand: #765b3b;               /* accentSandLight */
+    --rose: #82444e;               /* accentRoseLight */
+    --rose-soft: rgba(130, 68, 78, .12);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page: #0c0d10;
+      --scrim: #16171a;            /* todayScrimDark over a dark wallpaper */
+      --panel: rgba(255, 255, 255, .07); /* todayPanelDark #12FFFFFF */
+      --panel-solid: #1f2024;
+      --tile: rgba(255, 255, 255, .16); /* todayTile night #28FFFFFF */
+      --tile-stroke: rgba(255, 255, 255, .12); /* todayTileStroke night #1FFFFFFF */
+      --tile-shade: rgba(255, 255, 255, .04);
+      --chip: rgba(255, 255, 255, .14);  /* todayChipDark */
+      --ink: rgba(255, 255, 255, .92);
+      --ink-muted: rgba(255, 255, 255, .70); /* inkMuted night #B3FFFFFF */
+      --sage: #9caf88;             /* accentSageDark */
+      --sage-soft: rgba(156, 175, 136, .18);
+      --sand: #d4c4a8;             /* accentSandDark */
+      --rose: #de9fa7;             /* accentRoseDark */
+      --rose-soft: rgba(222, 159, 167, .14);
+    }
+  }
+  :root[data-theme="dark"] {
+    --page: #0c0d10;
+    --scrim: #16171a;
+    --panel: rgba(255, 255, 255, .07); /* todayPanelDark #12FFFFFF */
+    --panel-solid: #1f2024;
+    --tile: rgba(255, 255, 255, .16); /* todayTile night #28FFFFFF */
+    --tile-stroke: rgba(255, 255, 255, .12); /* todayTileStroke night #1FFFFFFF */
+    --tile-shade: rgba(255, 255, 255, .04);
+    --chip: rgba(255, 255, 255, .14);
+    --ink: rgba(255, 255, 255, .92);
+    --ink-muted: rgba(255, 255, 255, .70); /* inkMuted night #B3FFFFFF */
+    --sage: #9caf88;
+    --sage-soft: rgba(156, 175, 136, .18);
+    --sand: #d4c4a8;
+    --rose: #de9fa7;
+    --rose-soft: rgba(222, 159, 167, .14);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 28px 16px 48px;
+    background: var(--page); color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 430px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+
+  .pagehead h1 { font-size: 17px; font-weight: 700; margin: 0 0 4px; }
+  .pagehead p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--ink-muted); }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .controls .spacer { flex: 1; }
+  button.pill {
+    font: 600 12px/1 system-ui, sans-serif; color: var(--ink-muted);
+    background: var(--panel); border: 1px solid var(--tile-stroke);
+    padding: 8px 12px; border-radius: 999px; cursor: pointer; min-height: 32px;
+  }
+  button.pill.on { background: var(--ink); color: var(--scrim); border-color: var(--ink); }
+  button.pill:hover { color: var(--ink); }
+  button.pill.on:hover { color: var(--scrim); }
+
+  .ladder {
+    font-size: 11px; line-height: 1.6; color: var(--ink-muted);
+    background: var(--panel); border: 1px solid var(--tile-stroke);
+    border-radius: 12px; padding: 10px 12px;
+  }
+  .ladder b { color: var(--ink); font-weight: 600; }
+
+  /* ---------- phone frame ---------- */
+  .phone {
+    width: 390px; max-width: 100%; height: 760px; margin: 0 auto;
+    background: var(--scrim); border-radius: 28px; /* radiusLarge */
+    border: 1px solid var(--tile-stroke);
+    padding: 52px 24px 20px; position: relative; overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .screen { display: none; flex: 1; flex-direction: column; min-height: 0; }
+  .screen.on { display: flex; }
+
+  /* header, as fragment_drill.xml: label + progress, then segment bar */
+  .head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .head .title { font-size: 14px; font-weight: 600; letter-spacing: .02em; } /* TodayCardLabel */
+  .head .prog { font-size: 13px; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+  .format-chip {
+    display: inline-block; margin-top: 8px; font-size: 11px; font-weight: 600;
+    letter-spacing: .05em; text-transform: uppercase; color: var(--ink-muted);
+    background: var(--chip); border-radius: 999px; padding: 4px 10px;
+  }
+  .segments { display: flex; gap: 4px; margin-top: 12px; height: 5px; } /* segmentRow 5dp */
+  .segments i { flex: 1; border-radius: 4px; background: var(--chip); }
+  .segments i.done { background: var(--sage); }
+  .segments i.now { background: var(--ink); }
+
+  .stage { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 10px; min-height: 0; padding: 14px 0; }
+
+  .panel { background: var(--panel); border-radius: 20px; padding: 20px 18px; } /* radiusMedium */
+
+  .prompt-kicker { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-muted); text-align: center; }
+  .prompt { font-size: 30px; font-weight: 700; text-align: center; letter-spacing: -.01em; margin: 8px 0 2px; }
+  .prompt .gap { border-bottom: 2px solid var(--ink-muted); padding: 0 14px; }
+  .sub { font-size: 13px; color: var(--ink-muted); text-align: center; line-height: 1.5; }
+
+  /* choice tiles: quiz_choice, 56dp min height */
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tile {
+    min-height: 56px; display: flex; align-items: center; justify-content: center;
+    background: var(--tile); border: 1px solid var(--tile-stroke);
+    border-radius: 12px; padding: 10px 12px; font-size: 16px; font-weight: 600;
+    text-align: center; cursor: pointer; user-select: none; color: var(--ink);
+  }
+  .tile.small { font-size: 14px; font-weight: 500; min-height: 48px; } /* touch target */
+  .tile.wrong { background: var(--rose-soft); border-color: var(--rose); color: var(--rose); animation: flash .45s ease-out; }
+  .tile.right { background: var(--sage-soft); border-color: var(--sage); color: var(--sage); }
+  .tile.dim { opacity: .45; }
+  .tile.picked { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+  @keyframes flash { 0% { background: var(--rose); color: var(--scrim); } 100% { } }
+
+  /* inline correction: red flash + one-line rule + one tap to continue */
+  .correction {
+    display: none; background: var(--rose-soft); border: 1px solid var(--rose);
+    border-radius: 12px; padding: 12px 14px; gap: 6px;
+  }
+  .correction.show { display: flex; flex-direction: column; }
+  .correction .rule { font-size: 13px; line-height: 1.45; color: var(--rose); font-weight: 500; }
+  .correction .cont {
+    margin-top: 8px; min-height: 48px; border-radius: 999px; border: none; cursor: pointer;
+    background: var(--rose); color: var(--scrim); font: 600 15px system-ui, sans-serif;
+  }
+
+  .btn {
+    min-height: 48px; border-radius: 999px; border: 1px solid var(--tile-stroke);
+    background: var(--tile); color: var(--ink); cursor: pointer;
+    font: 600 15px system-ui, sans-serif; padding: 12px 18px;
+  }
+  .btn.primary { background: var(--ink); color: var(--scrim); border-color: var(--ink); }
+  .btn.quiet { background: transparent; color: var(--ink-muted); border-color: transparent; }
+  .footer { display: flex; flex-direction: column; gap: 8px; }
+
+  /* typed */
+  .typed-field {
+    min-height: 56px; background: var(--tile); border: 1px solid var(--tile-stroke);
+    border-radius: 12px; padding: 14px 16px; font-size: 18px; color: var(--ink);
+    display: flex; align-items: center; gap: 2px;
+  }
+  .typed-field .caret { display: inline-block; width: 2px; height: 22px; background: var(--ink); animation: blink 1.1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .grad-chip {
+    display: inline-flex; align-items: center; gap: 6px; margin: 0 auto;
+    font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase;
+    color: var(--sage); background: var(--sage-soft); border-radius: 999px; padding: 5px 11px;
+  }
+
+  /* listen and tap */
+  .speaker {
+    width: 72px; height: 72px; margin: 0 auto; border-radius: 999px;
+    background: var(--tile); border: 1px solid var(--tile-stroke);
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  .speaker svg { width: 30px; height: 30px; fill: var(--ink); }
+  .bank { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .built {
+    min-height: 56px; border-bottom: 2px solid var(--tile-stroke);
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: center;
+    padding: 8px 4px; font-size: 17px; font-weight: 600;
+  }
+  .built .w { background: var(--tile); border: 1px solid var(--tile-stroke); border-radius: 8px; padding: 4px 10px; }
+
+  /* match the columns */
+  .match { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; }
+  .match .col { display: flex; flex-direction: column; gap: 8px; }
+  .match .tile { min-height: 48px; font-size: 15px; }
+
+  /* summary */
+  .counts { display: flex; gap: 14px; justify-content: center; font-size: 14px; font-weight: 600; }
+  .counts .sage { color: var(--sage); } .counts .sand { color: var(--sand); } .counts .rose { color: var(--rose); }
+  .rows { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; min-height: 0; padding: 2px; }
+  .row {
+    display: flex; gap: 10px; align-items: flex-start; min-height: 48px;
+    background: var(--panel); border-radius: 12px; padding: 10px 12px; font-size: 14px; line-height: 1.45;
+  }
+  .row .mark { flex: none; width: 18px; text-align: center; font-weight: 700; margin-top: 1px; }
+  .row.ok .mark { color: var(--sage); } .row.almost .mark { color: var(--sand); } .row.miss .mark { color: var(--rose); }
+  .row .what { color: var(--ink); }
+  .row .ans { color: var(--ink-muted); }
+  .row .hintline { display: block; margin-top: 3px; font-size: 12.5px; color: var(--rose); }
+
+  .footnote { font-size: 11px; color: var(--ink-muted); text-align: center; padding-top: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="pagehead">
+    <h1>Drill round — recognition ladder (#639)</h1>
+    <p>Mock only, no screen work yet. One round = 5–8 items, ≤ ~12 interactions, 2–3 min.
+       Steps below show the ladder: <b>flashcard → tap → match / true-false / odd-one-out / word-bank / listen-and-tap → typed</b>,
+       with inline corrections and an "Another 5" summary. Listen-and-tap is planned, not live (#532).
+       Tokens mirror the app's light/dark themes.</p>
+  </div>
+
+  <div class="controls" id="nav"><!-- screen pills injected --></div>
+
+  <div class="ladder">
+    <b>Interleaving in this demo round (mixed: Articles · Prepositions · Verb + preposition):</b><br>
+    1 flashcard (Verb + prep · new) → 2 tap (Articles) → 3 true-false (Verb + prep) →
+    4 odd one out (Verb + preposition — a label only; steps 3 and 4 may share a type,
+    the no-repeat rule is about formats) → 5 match (Articles) → 6 word bank (Prepositions) →
+    7 listen-and-tap (Verb + prep · planned #532) → 8 typed (Articles · graduation) → summary.
+    No two consecutive questions share a format, and every step is a different item.
+    Tap a wrong answer on step 2 to see the inline correction. The optional speed finale is not shown.<br>
+    A flashcard item's first tap comes later in the same round or in the next one — step 1's item
+    (sich freuen über) is tapped in the next round, which is why the demo shows no tap for it here.<br>
+    Interactions on the shown path: <b>11</b> — flashcard 1 · tap + correction 2 · true-false 1 ·
+    odd one out 1 · match 3 · word bank 1 · listen 1 · typed 1 — inside the "at most about 12"
+    budget. A whole word-bank or listen-and-tap answer counts as one interaction, and the typed
+    step's close-spelling retry is part of the same interaction (see the doc, Rounds).
+  </div>
+
+  <div class="phone">
+
+    <!-- 1 · FLASHCARD (rung 1, brand-new item) -->
+    <section class="screen" id="s-flash">
+      <div class="head"><span class="title">Mixed drills</span><span class="prog">1 of 8</span></div>
+      <div class="segments"><i class="now"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <span class="format-chip">New · flashcard</span>
+      <div class="stage">
+        <div class="panel">
+          <div class="prompt-kicker">Verb + preposition · new</div>
+          <div class="prompt">sich freuen</div>
+          <p class="sub">…<b>über</b> die Nachricht — to be glad about<br>
+          <span style="opacity:.75">„Ich freue mich über das Geschenk.“</span></p>
+        </div>
+        <p class="sub">Shown once before the first question. Tap Continue when you've seen it.</p>
+      </div>
+      <div class="footer"><button class="btn primary" data-go="s-tap">Continue</button></div>
+    </section>
+
+    <!-- 2 · TAP (rung 2, first exposure) — tap a wrong tile for the inline correction -->
+    <section class="screen" id="s-tap">
+      <div class="head"><span class="title">Mixed drills</span><span class="prog">2 of 8</span></div>
+      <div class="segments"><i class="done"></i><i class="now"></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <span class="format-chip">Articles · tap</span>
+      <div class="stage">
+        <div class="prompt"><span class="gap">___</span> Tisch steht am Fenster.</div>
+        <p class="sub">Tap the article</p>
+        <div class="choices" id="tapChoices">
+          <div class="tile" data-ok="0">der</div>
+          <div class="tile" data-miss="den — accusative">den</div>
+          <div class="tile" data-miss="die — feminine or plural">die</div>
+          <div class="tile" data-miss="das — neuter">das</div>
+        </div>
+        <div class="correction" id="tapCorrection">
+          <span class="rule" id="tapRule"></span>
+          <button class="cont" data-go="s-tf">Continue</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 · TRUE / FALSE -->
+    <section class="screen" id="s-tf">
+      <div class="head"><span class="title">Mixed drills</span><span class="prog">3 of 8</span></div>
+      <div class="segments"><i class="done"></i><i class="done"></i><i class="now"></i><i></i><i></i><i></i><i></i><i></i></div>
+      <span class="format-chip">Verb + preposition · true-false</span>
+      <div class="stage">
+        <div class="panel">
+          <div class="prompt-kicker">True or false?</div>
+          <div class="prompt" style="font-size:21px">„Wir warten <b>auf</b> den Bus.“</div>
+        </div>
+        <div class="choices">
+          <div class="tile" data-go="s-ooo">True</div>
+          <div class="tile" data-go="s-ooo">False</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 · ODD ONE OUT — the rule shows only after a wrong tap (#643) -->
+    <section class="screen" id="s-ooo">
+      <div class="head"><span class="title">Mixed drills</span><span class="prog">4 of 8</span></div>
+      <div class="segments"><i class="done"></i><i class="done"></i><i class="done"></i><i class="now"></i><i></i><i></i><i></i><i></i></div>
+      <span class="format-chip">Verb + preposition · odd one out</span>
+      <div class="stage">
+        <div class="prompt" style="font-size:20px">Which verb does <u>not</u> pair with <b>auf</b>?</div>
+        <div class="choices" id="oooChoices">
+          <div class="tile small" data-miss="hoffen">hoffen</div>
+          <div class="tile small" data-miss="verzichten">verzichten</div>
+          <div class="tile small" data-miss="bestehen">bestehen</div>
+          <div class="tile small" data-go="s-match">denken</div>
+        </div>
+        <div class="correction" id="oooCorrection">
+          <span class="rule" id="oooRule"></span>
+          <button class="cont" data-go="s-match">Continue</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 · MATCH THE COLUMNS -->
+    <section class="screen" id="s-match">
+      <div class="head"><span class="title">Mixed drills</span><span class="prog">5 of 8</span></div>
+      <div class="segments"><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="now"></i><i></i><i></i><i></i></div>
+      <span class="format-chip">Articles · match the columns</span>
+      <div class="stage">
+        <div class="prompt" style="font-size:20px">Tap a noun, then its article</div>
+        <div class="match">
+          <div class="col">
+            <div class="tile picked">Mond</div>
+            <div class="tile">Uhr</div>
+            <div class="tile">Kind</div>
+          </div>
+          <div class="col">
+            <div class="tile">die</div>
+            <div class="tile">der</div>
+            <div class="tile">das</div>
+          </div>
+        </div>
+        <p class="sub">Left tile picked (outlined) — tap the match on the right</p>
+      </div>
+      <div class="footer"><button class="btn primary" data-go="s-wordbank">Continue</button></div>
+    </section>
+
+    <!-- 6 · WORD BANK (rung 3 variety — same tiles as listen-and-tap, without audio) -->
+    <section class="screen" id="s-wordbank">
+      <div class="head"><span class="title">Mixed drills</span><span class="prog">6 of 8</span></div>
+      <div class="segments"><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="now"></i><i></i><i></i></div>
+      <span class="format-chip">Prepositions · word bank</span>
+      <div class="stage">
+        <div class="prompt" style="font-size:20px">Ich schreibe <span class="gap">___</span> <span class="gap">___</span> <span class="gap">___</span>.</div>
+        <div class="built"><span style="color:var(--ink-muted)">|</span></div>
+        <div class="bank">
+          <div class="tile small">einem</div>
+          <div class="tile small">ein</div>
+          <div class="tile small">Stift</div>
+          <div class="tile small">eines</div>
+          <div class="tile small">mit</div>
+        </div>
+        <p class="sub">Shown before any tap — the answer is never pre-placed (#643).
+        Build the missing phrase from the bank; a whole word-bank answer counts as one interaction.
+        The same tile view as listen-and-tap, without the audio.</p>
+      </div>
+      <div class="footer"><button class="btn primary" data-go="s-listen">Continue</button></div>
+    </section>
+
+    <!-- 7 · LISTEN AND TAP (planned rung · #532; not in this stage) -->
+    <section class="screen" id="s-listen">
+      <div class="head"><span class="title">Mixed drills</span><span class="prog">7 of 8</span></div>
+      <div class="segments"><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="now"></i><i></i></div>
+      <span class="format-chip">Verb + preposition · listen and tap · planned #532</span>
+      <div class="stage">
+        <div class="speaker" title="Play (TTS · planned #532)">
+          <svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg>
+        </div>
+        <div class="built"><span class="w">Er</span><span class="w">achtet</span><span style="color:var(--ink-muted)">|</span></div>
+        <div class="bank">
+          <div class="tile small">auf</div>
+          <div class="tile small">seine</div>
+          <div class="tile small">Gesundheit</div>
+          <div class="tile small">an</div>
+          <div class="tile small">für</div>
+        </div>
+        <p class="sub">Tap the words in order to finish the sentence — the tested preposition
+        <b>auf</b> is not pre-placed. A whole listen-and-tap answer counts as one interaction.</p>
+      </div>
+      <div class="footer"><button class="btn primary" data-go="s-typed">Continue</button></div>
+    </section>
+
+    <!-- 8 · TYPED (rung 4: graduation — answered right twice across rounds, max 3 per round) -->
+    <section class="screen" id="s-typed">
+      <div class="head"><span class="title">Mixed drills</span><span class="prog">8 of 8</span></div>
+      <div class="segments"><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="now"></i></div>
+      <span class="format-chip">Articles · typed</span>
+      <div class="stage">
+        <span class="grad-chip">✓ Graduated — right twice across rounds</span>
+        <div class="prompt" style="font-size:24px"><span class="gap">___</span> Sonne ist hell.</div>
+        <p class="sub">Type the article</p>
+        <div class="typed-field">diez<span class="caret"></span></div>
+        <p class="sub">Very close. Check the spelling and try once more.</p>
+        <p class="footnote">Field shown after the first submission, before the retry — the answer is
+        not revealed yet (#622). A retry that lands exact counts as <b>almost</b>, and the retry is
+        part of the same interaction. At most 3 typed per round.</p>
+      </div>
+      <div class="footer"><button class="btn primary" data-go="s-summary">Check</button></div>
+    </section>
+
+    <!-- 9 · SUMMARY: "Another 5" -->
+    <section class="screen" id="s-summary">
+      <div class="head"><span class="title">Round complete</span><span class="prog">7 items · 2 min</span></div>
+      <div class="segments"><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i></div>
+      <div class="stage" style="justify-content:flex-start">
+        <div class="counts"><span class="sage">5 right</span><span class="sand">1 almost</span><span class="rose">1 wrong</span></div>
+        <div class="rows">
+          <div class="row miss"><span class="mark">✕</span><span><span class="what">___ Tisch steht am Fenster</span><span class="ans"> — you: das</span><span class="hintline">der Tisch: masculine, nominative subject</span></span></div>
+          <div class="row almost"><span class="mark">≈</span><span><span class="what">___ Sonne ist hell</span><span class="ans"> — you: diez → die (near miss, one retry used)</span></span></div>
+          <div class="row ok"><span class="mark">✓</span><span class="what">„Wir warten auf den Bus.“ — true</span></div>
+          <div class="row ok"><span class="mark">✓</span><span class="what">Odd one out: denken</span></div>
+          <div class="row ok"><span class="mark">✓</span><span class="what">Match: Mond · Uhr · Kind — der · die · das</span></div>
+          <div class="row ok"><span class="mark">✓</span><span><span class="what">Ich schreibe ___ ___ ___</span><span class="ans"> — you: mit einem Stift</span></span></div>
+          <div class="row ok"><span class="mark">✓</span><span class="what">Er achtet auf seine Gesundheit (tapped in order)</span></div>
+        </div>
+        <div class="footer" style="flex:none">
+          <button class="btn primary">Another 5</button>
+          <button class="btn">Practise misses (2)</button>
+          <button class="btn quiet">Done</button>
+        </div>
+      </div>
+      <div class="footnote">Misses are recorded on the wrong tap — an abandoned round (#624) still counts them,
+      once at least 3 answers were given (per Ranking). The flashcard step is not scored.</div>
+    </section>
+
+  </div>
+
+  <p class="footnote">Static mock · self-contained HTML · colours from values/colors.xml (sage 4D6653/9CAF88, sand 765B3B/D4C4A8, rose 82444E/DE9FA7) · radii 12/20/28 · tiles ≥56dp, buttons ≥48dp</p>
+</div>
+
+<script>
+  // Screen switcher + light/dark override. No dependencies.
+  var ORDER = [
+    ["s-flash", "1 Flashcard"], ["s-tap", "2 Tap"], ["s-tf", "3 True-false"],
+    ["s-ooo", "4 Odd one out"], ["s-match", "5 Match"], ["s-wordbank", "6 Word bank"],
+    ["s-listen", "7 Listen & tap"], ["s-typed", "8 Typed"], ["s-summary", "Summary"]
+  ];
+  var nav = document.getElementById("nav");
+  function show(id) {
+    document.querySelectorAll(".screen").forEach(function (s) { s.classList.toggle("on", s.id === id); });
+    document.querySelectorAll(".pill[data-screen]").forEach(function (p) { p.classList.toggle("on", p.dataset.screen === id); });
+  }
+  ORDER.forEach(function (pair) {
+    var b = document.createElement("button");
+    b.className = "pill"; b.textContent = pair[1]; b.dataset.screen = pair[0];
+    b.addEventListener("click", function () { show(pair[0]); });
+    nav.appendChild(b);
+  });
+  var theme = document.createElement("button");
+  theme.className = "pill spacer"; theme.id = "themeBtn"; theme.textContent = "Theme: auto";
+  theme.addEventListener("click", function () {
+    var r = document.documentElement;
+    var next = theme.textContent.indexOf("auto") > -1 ? "light" : theme.textContent.indexOf("light") > -1 ? "dark" : "auto";
+    if (next === "auto") { r.removeAttribute("data-theme"); } else { r.dataset.theme = next; }
+    theme.textContent = "Theme: " + next;
+  });
+  nav.appendChild(theme);
+
+  // Any element with data-go jumps to that screen; the tap screen also
+  // demonstrates the inline correction on a wrong choice.
+  document.addEventListener("click", function (e) {
+    var t = e.target.closest("[data-go]");
+    if (t) { show(t.dataset.go); return; }
+    var c = e.target.closest("#tapChoices .tile");
+    if (c) {
+      if (c.dataset.ok !== undefined) { show("s-tf"); return; }
+      document.querySelectorAll("#tapChoices .tile").forEach(function (x) { if (x !== c) x.classList.add("dim"); });
+      c.classList.add("wrong");
+      document.getElementById("tapRule").textContent = c.dataset.miss + " — wrong here. " +
+        "der Tisch: masculine, nominative subject.";
+      document.getElementById("tapCorrection").classList.add("show");
+    }
+    var o = e.target.closest("#oooChoices .tile");
+    if (o && !o.dataset.go) {
+      document.querySelectorAll("#oooChoices .tile").forEach(function (x) { if (x !== o) x.classList.add("dim"); });
+      o.classList.add("wrong");
+      document.getElementById("oooRule").textContent = o.dataset.miss + " pairs with auf. " +
+        "Only denken is the odd one: it pairs with an.";
+      document.getElementById("oooCorrection").classList.add("show");
+    }
+  });
+  show("s-tap");
+</script>
+</body>
+</html>
