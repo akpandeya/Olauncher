@@ -338,3 +338,30 @@ Screen work starts only after the mock is approved.
 - Persistent drill rows in the app drawer. Only an optional search command is
   planned: typing "drill" shows one suggested row and an "All drills..." row. It is
   built last, and only if the rest ships.
+
+## Motion on the drill screen (#640)
+
+Playable mock: `docs/design/drills-motion-mock.html` (self-contained, same palette,
+phone frame and content model as `drills-round-mock.html` from #639). It shows the
+slide/fade question transition, the right/wrong feedback micro-animations with inline
+corrections, and the summary entrance. The mock is the review artefact; the screen
+implementation comes after it is approved.
+
+Motion principles for the implementation:
+
+- Question change is a sequential slide/fade, never a hard re-bind: the old card fades
+  out toward the left for 140ms, the new card slides in from the right for 220ms,
+  easing `cubic-bezier(.2, 0, 0, 1)` (decelerate). Only the question card animates —
+  the header, progress and segment bar stay put.
+- Right answer: the tile settles to `accentSage` and a check mark pops for 180ms;
+  auto-advance after about 500ms.
+- Wrong answer: a brief `accentRose` flash plus a 320ms shake on the tapped tile,
+  other tiles dim, then the inline correction (one-line rule, one tap to continue)
+  slides up for 200ms — the same correction language as #639.
+- Near miss (close spelling): none of the wrong-answer motion — no shake, no rose.
+  The input border pulses `accentSand` once and the retry line appears; no mark,
+  no reveal (the Close-spelling rule above).
+- Round summary entrance: the counts pop in, rows rise with a 50ms stagger (misses
+  first), the buttons come last; total under about 700ms.
+- Reduced motion: honour `prefers-reduced-motion` — remove all translation, shake and
+  scale, keep short opacity-only fades. The mock has a Motion pill to preview both.
