@@ -14,6 +14,7 @@ object DrillTables {
         DrillType.PRONOUNS,
         DrillType.ARTICLES,
         DrillType.PLURALS,
+        DrillType.CASE_ENDINGS,
     )
 
     /** Builds the drill items for the given [type] and saved [words]. */
@@ -27,6 +28,7 @@ object DrillTables {
         DrillType.PRONOUNS -> DrillPronouns.items(words)
         DrillType.ARTICLES -> DrillArticles.items(words, genderLookup)
         DrillType.PLURALS -> DrillPlurals.items(words, pluralLookup, genderLookup)
+        DrillType.CASE_ENDINGS -> DrillCaseEndings.items(words, genderLookup)
         else -> emptyList()
     }
 
@@ -36,6 +38,7 @@ object DrillTables {
         DrillType.PRONOUNS -> R.string.drill_type_pronouns
         DrillType.ARTICLES -> R.string.drill_type_articles
         DrillType.PLURALS -> R.string.drill_type_plurals
+        DrillType.CASE_ENDINGS -> R.string.drill_type_case_endings
         else -> R.string.drills
     }
 }
