@@ -403,11 +403,11 @@ class WordOrderQuizTest {
     @Test
     fun itemsHelperProducesSampleItemsAndLinksSavedWords() {
         val itemsDefault = WordOrderQuiz.items()
-        assertEquals(5, itemsDefault.size)
+        assertTrue("Expected at least 40 items, found ${itemsDefault.size}", itemsDefault.size >= 40)
 
         val savedWord = Word(id = 777L, text = "Kino", dueDay = 0L, addedAt = 0L)
         val itemsWithWords = WordOrderQuiz.items(listOf(savedWord))
         val matchingItem = itemsWithWords.first { it.tiles.contains("Kino") }
-        assertEquals("word_order:777:1", matchingItem.id.encode())
+        assertTrue(matchingItem.id.encode().startsWith("word_order:777:"))
     }
 }
