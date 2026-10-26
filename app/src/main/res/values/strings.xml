@@ -373,7 +373,7 @@
     <string name="health_line_resting_hr">Resting HR %1$s</string>
     <string name="health_line_exercise">Exercise %1$s min</string>
     <string name="health_line_heart_rate">Heart rate %1$s</string>
-    <string name="health_tile_exercise">Exercise</string>
+    <string name="health_tile_exercise" tools:ignore="MissingTranslation">Exercise</string>
     <string name="health_tile_resting_hr">Resting HR</string>
     <string name="health_tile_sleep">Sleep</string>
     <string name="health_exercise_goal">Goal %1$d min</string>
