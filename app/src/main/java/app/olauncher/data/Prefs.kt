@@ -127,6 +127,7 @@ class Prefs(context: Context) :
         const val GERMAN_CLOCK_SYSTEM = 0
         const val GERMAN_CLOCK_DEUTSCH = 1
         const val GERMAN_CLOCK_IN_WORTEN = 2
+        const val DRILL_LAST_TYPE = "DRILL_LAST_TYPE"
         const val BATTERY_MODE = "BATTERY_MODE"
         const val BATTERY_MODE_AUTO = 0
         const val BATTERY_MODE_ALWAYS = 1
@@ -751,6 +752,10 @@ class Prefs(context: Context) :
             putLong(NUDGE_SOCIAL_DAY, epochDaySupplier())
             putInt(NUDGE_SOCIAL_LAST_BUCKET, value).apply()
         }
+
+    var drillLastType: String
+        get() = prefs.getString(DRILL_LAST_TYPE, "prepositions") ?: "prepositions"
+        set(value) = prefs.edit { putString(DRILL_LAST_TYPE, value).apply() }
 
     fun registerPreferenceChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
         prefs.registerOnSharedPreferenceChangeListener(listener)

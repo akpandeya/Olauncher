@@ -574,6 +574,13 @@
     </plurals>
     <string name="word_list_empty_state" tools:ignore="MissingTranslation">No words in this list yet</string>
     <string name="words_conjugate" tools:ignore="MissingTranslation">Conjugate</string>
+    <string name="drills" tools:ignore="MissingTranslation">Drills</string>
+    <string name="drill_type_prepositions" tools:ignore="MissingTranslation">Prepositions</string>
+    <string name="drill_round_choice" tools:ignore="MissingTranslation">Multiple choice</string>
+    <string name="drill_round_typed" tools:ignore="MissingTranslation">Type the answer</string>
+    <string name="drill_progress" tools:ignore="MissingTranslation">%1$s · %2$d of %3$d</string>
+    <string name="drill_empty_state" tools:ignore="MissingTranslation">No drill items found</string>
+    <string name="drill_restart" tools:ignore="MissingTranslation">Restart</string>
     <string name="conjugation_not_in_dictionary" tools:ignore="MissingTranslation">“%1$s” isn\'t a verb in the offline dictionary</string>
     <string name="conjugation_progress" tools:ignore="MissingTranslation">%1$s · %2$d of %3$d</string>
     <string name="conjugation_tense_present" tools:ignore="MissingTranslation">Präsens</string>
