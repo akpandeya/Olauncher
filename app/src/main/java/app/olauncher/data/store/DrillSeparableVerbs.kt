@@ -680,6 +680,21 @@ object DrillSeparableVerbs {
             val kind3Key = if (isKeyedByWordId) "${matchingWord!!.id}" else "sep:${entry.infinitive}:2"
 
             val hint = "${entry.infinitive} (${entry.meaning})"
+            // A hint must never contain the item's answer; drop it when it would
+            // (e.g. "bekommen", whose Partizip II is identical to the infinitive).
+            fun safeHint(answer: String): String? =
+                if (DrillHints.revealsAnswer(hint, answer)) null else hint
+
+            // Kind 3 answers the bare prefix, so a hint containing the infinitive
+            // ("anrufen (to call)") would give the answer ("an") away. Use only
+            // the meaning, or a verb-free cue when even the meaning starts with
+            // the prefix (e.g. "übersetzen" for "über").
+            val kind3Hint =
+                if (DrillHints.words(entry.meaning).any { it.startsWith(entry.prefix.lowercase()) }) {
+                    "Präfix am Satzende"
+                } else {
+                    "(${entry.meaning})"
+                }
 
             val itemsForEntry = mutableListOf<DrillItem>()
 
@@ -690,7 +705,7 @@ object DrillSeparableVerbs {
                     prompt = "Das Verb „${entry.infinitive}“ ist ${DrillItem.GAP_MARKER}.",
                     answer = if (entry.isSeparable) "trennbar" else "untrennbar",
                     choices = listOf("trennbar", "untrennbar"),
-                    hint = hint,
+                    hint = safeHint(if (entry.isSeparable) "trennbar" else "untrennbar"),
                 )
             )
 
@@ -702,7 +717,7 @@ object DrillSeparableVerbs {
                     prompt = "Partizip II von „${entry.infinitive}“: ${DrillItem.GAP_MARKER}",
                     answer = entry.participle,
                     choices = pChoices,
-                    hint = hint,
+                    hint = safeHint(entry.participle),
                 )
             )
 
@@ -714,7 +729,7 @@ object DrillSeparableVerbs {
                         prompt = entry.sentence,
                         answer = entry.prefix,
                         choices = entry.prefixChoices,
-                        hint = hint,
+                        hint = if (DrillHints.revealsAnswer(kind3Hint, entry.prefix)) null else kind3Hint,
                     )
                 )
             }
@@ -738,7 +753,12 @@ object DrillSeparableVerbs {
                 val stem = tokens.dropLast(1).joinToString(" ")
 
                 handledWordIds.add(word.id)
-                val hint = "${word.text.trim()} ($present)"
+
+                // The prefix (last word of the present form) is the Kind 3 answer, so no
+                // hint may contain the verb or its present form; each kind gets its own cue.
+                // Kind 1's answer is "trennbar", so its cue must not state separability in
+                // any form (not even "trennbares Verb"); it gets no hint at all.
+                val kind3Hint = "Präfix am Satzende"
 
                 // Kind 1: trennbar
                 extraSavedItems.add(
@@ -747,7 +767,7 @@ object DrillSeparableVerbs {
                         prompt = "Das Verb „${word.text.trim()}“ ist ${DrillItem.GAP_MARKER}.",
                         answer = "trennbar",
                         choices = listOf("trennbar", "untrennbar"),
-                        hint = hint,
+                        hint = null,
                     )
                 )
 
@@ -759,7 +779,7 @@ object DrillSeparableVerbs {
                         prompt = "Er $stem ${DrillItem.GAP_MARKER}.",
                         answer = prefix,
                         choices = prefixOptions,
-                        hint = hint,
+                        hint = kind3Hint,
                     )
                 )
             }

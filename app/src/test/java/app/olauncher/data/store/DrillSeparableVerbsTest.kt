@@ -106,6 +106,28 @@ class DrillSeparableVerbsTest {
     }
 
     @Test
+    fun kind1HintsNeverStateSeparabilityInAnyForm() {
+        // Saved separable verb found through the present-form lookup
+        val savedWords = listOf(
+            Word(id = 101L, text = "anrufen", dueDay = 0L, addedAt = 0L),
+        )
+        val presentLookup: (String) -> String? = { verb ->
+            if (verb == "anrufen") "ruft an" else null
+        }
+
+        val items = DrillSeparableVerbs.items(savedWords, presentLookup) + DrillSeparableVerbs.items()
+        val kind1 = items.filter { it.choices == listOf("trennbar", "untrennbar") }
+        assertTrue("Kind 1 (trennbar/untrennbar) items must be present", kind1.isNotEmpty())
+        for (item in kind1) {
+            val hint = item.hint ?: continue
+            assertFalse(
+                "Kind 1 hint must not state separability in any form: '$hint'",
+                hint.lowercase().contains("trennbar"),
+            )
+        }
+    }
+
+    @Test
     fun phoneCheckAnrufenPrefixAtEndOfClause() {
         // "Ich rufe dich morgen ___." accepts "an"
         val items = DrillSeparableVerbs.items()

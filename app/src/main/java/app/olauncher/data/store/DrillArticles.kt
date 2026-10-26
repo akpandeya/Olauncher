@@ -20,20 +20,22 @@ object DrillArticles {
         val gender: String,
     )
 
+    // Rule hints name the suffix and the gender but never the article itself,
+    // because the article (der / die / das) is the item's answer.
     internal val RULES: List<GenderRule> = listOf(
-        GenderRule("schaft", "die", "-schaft: die"),
-        GenderRule("ismus", "der", "-ismus: der"),
-        GenderRule("keit", "die", "-keit: die"),
-        GenderRule("heit", "die", "-heit: die"),
-        GenderRule("ment", "das", "-ment: das"),
-        GenderRule("chen", "das", "-chen: das"),
-        GenderRule("lein", "das", "-lein: das"),
-        GenderRule("ling", "der", "-ling: der"),
-        GenderRule("tät", "die", "-tät: die"),
-        GenderRule("ung", "die", "-ung: die"),
-        GenderRule("ion", "die", "-ion: die"),
-        GenderRule("ei", "die", "-ei: die"),
-        GenderRule("um", "das", "-um: das"),
+        GenderRule("schaft", "die", "-schaft → feminin"),
+        GenderRule("ismus", "der", "-ismus → maskulin"),
+        GenderRule("keit", "die", "-keit → feminin"),
+        GenderRule("heit", "die", "-heit → feminin"),
+        GenderRule("ment", "das", "-ment → neutral"),
+        GenderRule("chen", "das", "-chen → neutral"),
+        GenderRule("lein", "das", "-lein → neutral"),
+        GenderRule("ling", "der", "-ling → maskulin"),
+        GenderRule("tät", "die", "-tät → feminin"),
+        GenderRule("ung", "die", "-ung → feminin"),
+        GenderRule("ion", "die", "-ion → feminin"),
+        GenderRule("ei", "die", "-ei → feminin"),
+        GenderRule("um", "das", "-um → neutral"),
     ).sortedByDescending { it.suffix.length }
 
     /**

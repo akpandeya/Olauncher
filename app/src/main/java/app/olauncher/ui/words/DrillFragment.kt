@@ -62,6 +62,7 @@ class DrillFragment : BaseFragment() {
     private var selectedChoice: String? = null
     private var lastRenderedItemId: String? = null
     private var autoAdvanceScheduled = false
+    private var hintRevealedForItemId: String? = null
     private var recordedQuiz: Any? = null
     private var isPractiseMissesRound = false
     private val sessionGradedWordIds = mutableSetOf<Long>()
@@ -81,6 +82,7 @@ class DrillFragment : BaseFragment() {
         q.advance()
         selectedChoice = null
         lastRenderedItemId = null
+        hintRevealedForItemId = null
         render()
     }
 
@@ -119,6 +121,15 @@ class DrillFragment : BaseFragment() {
         binding.btnSecondary.setOnClickListener {
             Haptics.tick(it)
             findNavController().popBackStack()
+        }
+
+        binding.tvHint.setOnClickListener {
+            val q = quiz ?: return@setOnClickListener
+            val question = q.current ?: return@setOnClickListener
+            if (q.isAnswered) return@setOnClickListener
+            Haptics.tick(it)
+            hintRevealedForItemId = question.id.toString()
+            render()
         }
 
         binding.etAnswer.setOnEditorActionListener { _, actionId, event ->
@@ -230,12 +241,14 @@ class DrillFragment : BaseFragment() {
                 quiz = DrillQuiz(items, isChoiceOnly = drillType.isChoiceOnly)
                 selectedChoice = null
                 lastRenderedItemId = null
+                hintRevealedForItemId = null
                 render()
             }
             q.isAnswered -> {
                 q.advance()
                 selectedChoice = null
                 lastRenderedItemId = null
+                hintRevealedForItemId = null
                 render()
             }
             q.isTyped -> {
@@ -270,6 +283,7 @@ class DrillFragment : BaseFragment() {
             quiz = DrillQuiz(missedItems, isChoiceOnly = drillType.isChoiceOnly)
             selectedChoice = null
             lastRenderedItemId = null
+            hintRevealedForItemId = null
             render()
         }
     }
@@ -361,14 +375,44 @@ class DrillFragment : BaseFragment() {
 
         b.tvPrompt.isVisible = true
         b.tvPrompt.text = question.prompt
-        b.tvHint.isVisible = !question.hint.isNullOrBlank()
-        b.tvHint.text = question.hint.orEmpty()
+        renderHint(q, question)
 
         if (q.isTyped) {
             renderTypedQuestion(q, question)
         } else {
             renderChoiceQuestion(q, question)
         }
+    }
+
+    /**
+     * Binds the hint line for the current question. Before answering the hint is hidden
+     * behind a tappable "Show hint" placeholder (explicit reveal); after a wrong answer
+     * it is always shown, in both the choice and the typed round.
+     */
+    private fun renderHint(q: DrillQuiz, question: DrillQuizQuestion) {
+        val b = binding
+        val hint = question.hint
+        if (q.isAnswered && q.lastAnswer?.correct == true) {
+            // Answered correctly: no hint needed, not even the placeholder.
+            b.tvHint.isVisible = false
+            b.tvHint.isClickable = false
+            return
+        }
+        if (hint.isNullOrBlank()) {
+            b.tvHint.isVisible = false
+            b.tvHint.isClickable = false
+            return
+        }
+        val answeredWrong = q.isAnswered && q.lastAnswer?.correct == false
+        val revealed = hintRevealedForItemId == question.id.toString()
+        if (answeredWrong || revealed) {
+            b.tvHint.isClickable = false
+            b.tvHint.text = hint
+        } else {
+            b.tvHint.isClickable = true
+            b.tvHint.text = getString(R.string.drill_show_hint)
+        }
+        b.tvHint.isVisible = true
     }
 
     private fun renderChoiceQuestion(q: DrillQuiz, question: DrillQuizQuestion) {
@@ -634,6 +678,7 @@ class DrillFragment : BaseFragment() {
 
         val isWrongAnswer = answered && lastAnswer?.correct == false
         b.tvHint.isVisible = isWrongAnswer && !question.hint.isNullOrBlank()
+        b.tvHint.isClickable = false
         b.tvHint.text = question.hint.orEmpty()
 
         b.wordOrderView.render(
