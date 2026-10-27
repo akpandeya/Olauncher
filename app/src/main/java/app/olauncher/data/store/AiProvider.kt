@@ -88,8 +88,9 @@ object AiProviders {
     const val MELIOUS = "melious"
 
     // Adding a provider = one adapter class + one entry in this map.
-    // "melious" joins here with the OpenAI-compatible adapter (#598, 9.5).
-    private val adapters: Map<String, (AiProviderConfig, KeySource) -> AiProvider> = mapOf()
+    private val adapters: Map<String, (AiProviderConfig, KeySource) -> AiProvider> = mapOf(
+        MELIOUS to ::OpenAiCompatibleProvider,
+    )
 
     /** Returns the adapter for [config], or null when the provider id is unknown. */
     fun create(config: AiProviderConfig, keySource: KeySource): AiProvider? {

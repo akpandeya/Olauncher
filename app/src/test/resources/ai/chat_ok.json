@@ -1,0 +1,20 @@
+{
+  "id": "chatcmpl-test-ok",
+  "object": "chat.completion",
+  "model": "glm-5.3-flash",
+  "choices": [
+    {
+      "index": 0,
+      "finish_reason": "stop",
+      "message": {
+        "role": "assistant",
+        "content": "{\"items\": [{\"word_id\": 1, \"type\": \"cloze\", \"prompt\": \"Ich gehe ___.\", \"answer\": \"heim\", \"choices\": [\"heim\", \"nach Hause\"]}]}"
+      }
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 512,
+    "completion_tokens": 128,
+    "total_tokens": 640
+  }
+}
