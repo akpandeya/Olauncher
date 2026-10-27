@@ -106,7 +106,7 @@ object DrillAdjectiveEndings {
         ),
         AdjectiveEndingTemplate(
             key = "nom_weak_pl_baeume",
-            pattern = "{Art} hoch${DrillItem.GAP_MARKER} Bäume stehen am Fluss.",
+            pattern = "{Art} hoh${DrillItem.GAP_MARKER} Bäume stehen am Fluss.",
             declension = AdjectiveEndings.Declension.WEAK,
             case = ArticleForms.Case.NOMINATIVE,
             gender = ArticleForms.Gender.PLURAL,
@@ -268,7 +268,7 @@ object DrillAdjectiveEndings {
         ),
         AdjectiveEndingTemplate(
             key = "gen_weak_m_waldes",
-            pattern = "Am Rande {art} dunkel${DrillItem.GAP_MARKER} Waldes steht eine Hütte.",
+            pattern = "Am Rande {art} dunkl${DrillItem.GAP_MARKER} Waldes steht eine Hütte.",
             declension = AdjectiveEndings.Declension.WEAK,
             case = ArticleForms.Case.GENITIVE,
             gender = ArticleForms.Gender.MASCULINE,
@@ -390,7 +390,7 @@ object DrillAdjectiveEndings {
         // Nominativ Plural (keine ... -en)
         AdjectiveEndingTemplate(
             key = "nom_mixed_pl_wolken",
-            pattern = "Heute stehen {art} dunkel${DrillItem.GAP_MARKER} Wolken am Himmel.",
+            pattern = "Heute stehen {art} dunkl${DrillItem.GAP_MARKER} Wolken am Himmel.",
             declension = AdjectiveEndings.Declension.MIXED,
             case = ArticleForms.Case.NOMINATIVE,
             gender = ArticleForms.Gender.PLURAL,
