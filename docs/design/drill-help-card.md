@@ -68,6 +68,18 @@ the whole contrast set with equal weight. It never names the form this item need
 and cue lines name no item-specific gender or case. The learner must still decide which case the
 situation calls for, and which gender the noun has.
 
+**What the rule may say, by state.**
+
+- A gender hint such as "most nouns ending in -e are feminine" appears only in the flashcard
+  state and after a miss. Before an answer, the rule uses the plain form: "Every German noun has
+  one fixed gender, and the article must match it. Learn each noun together with its article."
+- A one-case preposition (for example *wegen* takes the genitive, *mit* takes the dative) may name
+  its case before the answer, but only on first exposure (the flashcard and the first tap). On
+  later rungs, and in "Why?" on those rungs, the rule does not name the case. The learner has to
+  recall it.
+- Table captions are learner-facing. They follow the same rules as the rule text, so a caption
+  before an answer may not name the answer.
+
 **The rule after a miss.** The ✗ line names the wrong choice, says why it is wrong, and gives
 the right form. This follows Duolingo's post-answer feedback on the specific mistake.
 
@@ -224,6 +236,8 @@ Miss lines:
 - A "Why?" tap before answering counts toward the score, as a weaker right answer (see §2).
 - Plural is labelled "pl" in ink, with no fourth colour.
 - Three examples (A, B, C) are shown in the mock.
+- The gender hint ("-e nouns are feminine") is shown only in the flashcard and after-a-miss states.
+- A one-case preposition may name its case before an answer on first exposure only; later rungs hide it.
 
 ## Open questions
 
