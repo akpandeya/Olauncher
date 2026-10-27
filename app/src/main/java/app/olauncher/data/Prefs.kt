@@ -32,6 +32,7 @@ class Prefs(context: Context) :
     AppTargetPrefs by AppTargetPrefsStore(context.appPrefs()),
     WeatherPrefs by WeatherPrefsStore(context.appPrefs()),
     GermanPrefs by GermanPrefsStore(context.appPrefs()),
+    AiPracticePrefs by AiPracticePrefsStore(context.appPrefs()),
     PausePrefs by PausePrefsStore(context.appPrefs()),
     WindDownPrefs by WindDownPrefsStore(context.appPrefs()),
     NudgePrefs by NudgePrefsStore(context.appPrefs()),
@@ -127,6 +128,11 @@ class Prefs(context: Context) :
         const val GERMAN_CLOCK_SYSTEM = 0
         const val GERMAN_CLOCK_DEUTSCH = 1
         const val GERMAN_CLOCK_IN_WORTEN = 2
+        const val AI_PROVIDER = "AI_PROVIDER"
+        const val AI_PROVIDER_MELIOUS = "melious"
+        const val AI_BASE_URL = "AI_BASE_URL"
+        const val AI_BASE_URL_DEFAULT = "https://api.melious.ai"
+        const val AI_MODEL = "AI_MODEL"
         const val DRILL_LAST_TYPE = "DRILL_LAST_TYPE"
         const val DRILL_SCORES = "DRILL_SCORES"
         const val DRILL_LAST_ROUND = "DRILL_LAST_ROUND"
