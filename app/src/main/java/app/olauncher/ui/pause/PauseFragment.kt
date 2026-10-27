@@ -21,6 +21,8 @@ import app.olauncher.R
 import app.olauncher.data.AppModel
 import app.olauncher.data.Prefs
 import app.olauncher.data.store.PauseWordPicker
+import app.olauncher.data.store.PracticeItemsStore
+import app.olauncher.data.store.PracticeRotation
 import app.olauncher.data.store.ReviewEvent
 import app.olauncher.data.store.ReviewEventsStore
 import app.olauncher.data.store.ReviewSessionLogic
@@ -540,6 +542,14 @@ class PauseFragment : Fragment() {
             }
         ).also { wordReveal = it }
 
+        // The pause word serves a rotating practice item when one exists (#603);
+        // words without items keep the plain word. Grading is unchanged.
+        val practicePrompt = PracticeRotation.pick(
+            pickedWord,
+            PracticeItemsStore(context).all(),
+            ReviewEventsStore(context).all().filter { it.wordId == pickedWord.id },
+        )?.prompt
+        helper.promptOverride = practicePrompt
         helper.bind(pickedWord)
     }
 
