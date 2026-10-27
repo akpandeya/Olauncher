@@ -302,6 +302,34 @@ rate. Pass thresholds:
 consideration. The result is recorded in `docs/design/ai-model-decision.md`
 and sets the `AI_MODEL` default in the same PR.
 
+### Benchmark results (2026-10-27)
+
+Ran for real (#600) with the harness in
+`app/src/test/java/app/olauncher/data/store/AiBenchmark.kt` — 3 runs per model
+over 20 saved words with context sentences from one real tagesschau article
+([Frontex-Ausbau](https://www.tagesschau.de/ausland/europa/eu-will-fuer-frontex-mehr-befugnisse-und-personal-100.html),
+27.10.2026). Validity and grounding scored by the harness's deterministic
+checkers; correctness by a glm-5.3 proxy judge. Full record and failure
+analysis: [ai-model-decision.md](ai-model-decision.md).
+
+| Model | Validity % | Grounding % | Correctness proxy | €/item | p50/p95 latency | Failures | Verdict |
+|---|---|---|---|---|---|---|---|
+| glm-5.3-flash | 77.2 | 97.8 | 1.98/2 | 0.000240 | 36.8 s / 72.0 s | 0/3 | FAIL |
+| deepseek-v4-flash-0731 | 0.0 | 0.0 | n/a | — | 148.4 s / 152.6 s | 0/3 | FAIL |
+| gemma-4-31b | 66.7 | 99.2 | 1.96/2 | 0.000288 | 126.5 s / 178.0 s | 0/3 | FAIL |
+
+Thresholds (unchanged): validity ≥ 95 %, correctness ≥ 1.8/2, grounding ≥ 90 %.
+**No candidate passes the validity floor, so no `AI_MODEL` default is set.**
+Correctness is close for both working models (1.96–1.98/2, grounding ~98–99 %);
+the miss is contract validity (dropped or malformed items). Best price to
+performance among the near-misses: **glm-5.3-flash** — highest validity,
+fastest, cheapest per valid item (DeepSeek never completes the JSON even at
+16k output tokens).
+
+Final model pick pending owner sign-off (correctness scored by glm-5.3 proxy,
+not a native-speaker reviewer). Recorded benchmark spend: €0.082 for the final
+run (cap €1; ~€0.2 across all three live runs incl. earlier harness shakedown).
+
 ## Out of scope
 
 - The capture front door (#523) — decoupled; the only contract is `Word` +
