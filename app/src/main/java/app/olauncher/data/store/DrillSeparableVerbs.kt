@@ -14,6 +14,9 @@ object DrillSeparableVerbs {
         val sentence: String? = null,
         val prefixChoices: List<String> = emptyList(),
         val meaning: String,
+        // Stem of the saved-progress keys ("sep:<keyStem>:<kind>"). Differs from
+        // infinitive only where a verb was replaced and its old keys must survive.
+        val keyStem: String = infinitive,
     )
 
     internal fun normalizeVerb(text: String): String =
@@ -131,7 +134,7 @@ object DrillSeparableVerbs {
             participle = "ausgemacht",
             participleDistractors = listOf("geausmacht", "ausgemachen", "geausmachen"),
             sentence = "Bitte mache das Licht ${DrillItem.GAP_MARKER}.",
-            prefixChoices = listOf("aus", "ein", "auf", "zu"),
+            prefixChoices = listOf("aus", "ein", "auf", "ab"),
             meaning = "to turn off",
         ),
         SeparableVerbEntry(
@@ -162,7 +165,7 @@ object DrillSeparableVerbs {
             participle = "eingeladen",
             participleDistractors = listOf("geeinladen", "eingeladt", "geeinladt"),
             sentence = "Ich lade dich zu meiner Party ${DrillItem.GAP_MARKER}.",
-            prefixChoices = listOf("ein", "an", "vor", "zu"),
+            prefixChoices = listOf("ein", "an", "ab", "zu"),
             meaning = "to invite",
         ),
         SeparableVerbEntry(
@@ -534,6 +537,7 @@ object DrillSeparableVerbs {
         // über-
         SeparableVerbEntry(
             infinitive = "überkochen",
+            keyStem = "übersetzen",
             prefix = "über",
             isSeparable = true,
             participle = "übergekocht",
@@ -675,9 +679,9 @@ object DrillSeparableVerbs {
                 handledWordIds.add(matchingWord!!.id)
             }
 
-            val kind1Key = if (isKeyedByWordId) "${matchingWord!!.id}" else "sep:${entry.infinitive}:0"
-            val kind2Key = if (isKeyedByWordId) "${matchingWord!!.id}" else "sep:${entry.infinitive}:1"
-            val kind3Key = if (isKeyedByWordId) "${matchingWord!!.id}" else "sep:${entry.infinitive}:2"
+            val kind1Key = if (isKeyedByWordId) "${matchingWord!!.id}" else "sep:${entry.keyStem}:0"
+            val kind2Key = if (isKeyedByWordId) "${matchingWord!!.id}" else "sep:${entry.keyStem}:1"
+            val kind3Key = if (isKeyedByWordId) "${matchingWord!!.id}" else "sep:${entry.keyStem}:2"
 
             val hint = "${entry.infinitive} (${entry.meaning})"
             // A hint must never contain the item's answer; drop it when it would

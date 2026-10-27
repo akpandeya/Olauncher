@@ -433,10 +433,12 @@ for kind 3.
   - übersetzen (ambiguous: translate is untrennbar) is replaced by überkochen (die Milch kocht
     über), which only splits. New items: „Das Verb „überkochen“ ist ___." (trennbar),
     „Partizip II von „überkochen“: ___" (übergekocht), „Pass auf, die Milch kocht gleich ___."
-    (über). The table keys change from `sep:übersetzen:*` to `sep:überkochen:*`.
+    (über). The table keeps its original keys `sep:übersetzen:*` (via `keyStem`) so saved progress survives.
   - wiederholen: the distractor wiedergeholt (a real participle of the separable
     wiederholen, fetch back) is replaced by wiederholte.
   - Kind-3 distractors that gave correct German with another meaning were replaced:
     anziehen aus, vor → ab, mit; aufmachen zu → ein; zumachen auf → ein; ausmachen an → ein;
     aussteigen ein, um → an, vor; einsteigen aus, um, auf → an, vor, mit; zunehmen ab → an;
     fernsehen zu → an; einladen aus → an.
+  - Standard German only: das Licht zumachen (colloquial) → ausmachen's distractor zu is
+    replaced by ab; einladen's distractor vor is replaced by ab (vorladen is a formal summons).
