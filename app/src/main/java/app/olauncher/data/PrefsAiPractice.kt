@@ -10,6 +10,7 @@ import app.olauncher.data.Prefs.Companion.AI_DAILY_WORD_CAP_DEFAULT
 import app.olauncher.data.Prefs.Companion.AI_KEY_REJECTED
 import app.olauncher.data.Prefs.Companion.AI_MODEL
 import app.olauncher.data.Prefs.Companion.AI_PRACTICE_ENABLED
+import app.olauncher.data.Prefs.Companion.AI_PRACTICE_ENABLED_DEFAULT
 import app.olauncher.data.Prefs.Companion.AI_PROVIDER
 import app.olauncher.data.Prefs.Companion.AI_PROVIDER_MELIOUS
 import app.olauncher.data.Prefs.Companion.AI_SENT_COUNT
@@ -66,7 +67,7 @@ internal class AiPracticePrefsStore(private val prefs: SharedPreferences) : AiPr
         set(value) = prefs.edit { putString(AI_MODEL, value).apply() }
 
     override var aiPracticeEnabled: Boolean
-        get() = prefs.getBoolean(AI_PRACTICE_ENABLED, false)
+        get() = prefs.getBoolean(AI_PRACTICE_ENABLED, AI_PRACTICE_ENABLED_DEFAULT)
         set(value) = prefs.edit { putBoolean(AI_PRACTICE_ENABLED, value).apply() }
 
     override var aiDailyWordCap: Int

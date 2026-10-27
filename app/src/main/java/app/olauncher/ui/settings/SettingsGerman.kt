@@ -90,6 +90,16 @@ import app.olauncher.data.Constants
 import app.olauncher.data.FontFamilyResources
 import app.olauncher.data.Prefs
 import app.olauncher.data.SearchEngine
+import app.olauncher.data.store.AiPracticeMessages
+import app.olauncher.data.store.AiResult
+import app.olauncher.data.store.AiTestCall
+import app.olauncher.data.store.KeyVault
+import app.olauncher.data.store.PracticeItemsStore
+import app.olauncher.data.store.PracticeQueue
+import app.olauncher.data.store.WordsStore
+import app.olauncher.helper.AiPracticeToggle
+import app.olauncher.helper.PracticeWorker
+import app.olauncher.helper.PracticeWorkerScheduler
 import app.olauncher.helper.RatesWorker
 import app.olauncher.data.SlotCount
 import app.olauncher.data.ShortcutOffset
@@ -141,6 +151,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.Collator
+import java.time.LocalDate
 
 internal fun SettingsFragment.toggleGerman() {
     if (!prefs.germanEnabled) {
@@ -207,6 +218,226 @@ internal fun SettingsFragment.toggleGermanUi() {
     populateGerman()
 }
 
+internal fun SettingsFragment.toggleAiPractice() {
+    prefs.aiPracticeEnabled = !prefs.aiPracticeEnabled
+    // On = the periodic top-up plus one immediate run; off = everything idle (#602, 9.9).
+    AiPracticeToggle.apply(prefs.aiPracticeEnabled, PracticeWorkerScheduler(requireContext()))
+    populateAiPractice()
+    // Opt-in without a key: open the key dialog right away; the gate keeps every
+    // call off until one is saved (to KeyVault, never to prefs).
+    if (prefs.aiPracticeEnabled && KeyVault(requireContext()).read().isNullOrBlank()) {
+        showAiKeyDialog()
+    }
+}
+
+internal fun SettingsFragment.populateAiPractice() {
+    binding.aiPracticeOnOff.text = getString(if (prefs.aiPracticeEnabled) R.string.on else R.string.off)
+    binding.aiPracticeSubtitle.text = when {
+        prefs.aiBillingBlocked -> getString(R.string.ai_practice_billing_blocked)
+        prefs.aiKeyRejected -> getString(R.string.ai_practice_key_rejected)
+        else -> getString(R.string.ai_practice_subtitle, AiPracticeMessages.providerLabel(prefs.aiProvider))
+    }
+}
+
+internal fun SettingsFragment.showAiPracticeMenu(anchor: View) {
+    val hasKey = !KeyVault(requireContext()).read().isNullOrBlank()
+    anchor.showPopupMenu(
+        configure = { menu ->
+            menu.add(Menu.NONE, 0, 0, R.string.ai_practice_api_key)
+            if (hasKey) menu.add(Menu.NONE, 1, 1, R.string.ai_practice_remove_key)
+            menu.add(Menu.NONE, 2, 2, R.string.ai_practice_generate_now)
+        }
+    ) { item ->
+        when (item.itemId) {
+            0 -> showAiKeyDialog()
+            1 -> {
+                KeyVault(requireContext()).clear()
+                requireContext().showToast(getString(R.string.ai_practice_key_removed))
+                populateAiPractice()
+            }
+            2 -> generateAiPracticeNow()
+        }
+    }
+}
+
+/** "Generate now" (#602, 9.9): one immediate PracticeWorker run, with the queued word count. */
+internal fun SettingsFragment.generateAiPracticeNow() {
+    val context = requireContext()
+    PracticeWorker.runOnce(context)
+    lifecycleScope.launch {
+        val queued = withContext(Dispatchers.IO) {
+            PracticeQueue.next(
+                words = WordsStore(context).all(),
+                items = PracticeItemsStore(context).all(),
+                today = LocalDate.now(),
+                cap = prefs.aiDailyWordCap,
+                random = kotlin.random.Random.Default,
+            )
+        }
+        context.showToast(getString(R.string.ai_practice_generate_queued, queued.size))
+    }
+}
+
+/**
+ * The API key dialog (#602, 9.9): a masked key field, the provider with base URL and
+ * model behind an Advanced toggle, a Test button (one minimal call through the
+ * provider, result in the status line — the key is never shown) and Save, which
+ * writes the key to [KeyVault], never to prefs.
+ */
+internal fun SettingsFragment.showAiKeyDialog() {
+    val context = requireContext()
+    val vault = KeyVault(context)
+    var keyInput: AppCompatEditText? = null
+    var baseUrlInput: AppCompatEditText? = null
+    var modelInput: AppCompatEditText? = null
+    var status: TextView? = null
+    var dialog: OlDialog? = null
+
+    fun showDialogError(message: CharSequence) {
+        status?.text = message
+    }
+
+    fun test() {
+        val statusView = status ?: return
+        val key = keyInput?.text?.toString()?.trim().orEmpty().ifBlank { vault.read().orEmpty() }
+        val baseUrl = baseUrlInput?.text?.toString()?.trim().orEmpty().ifBlank { prefs.aiBaseUrl }
+        val model = modelInput?.text?.toString()?.trim().orEmpty().ifBlank { prefs.aiModel }
+        // The gate guards every network call: off, no key or no model means no Test call.
+        when {
+            !prefs.aiPracticeEnabled -> statusView.text = context.getString(R.string.ai_practice_turned_off)
+            key.isBlank() -> statusView.text = context.getString(R.string.ai_practice_key_required)
+            else -> {
+                statusView.text = context.getString(R.string.ai_practice_testing)
+                lifecycleScope.launch {
+                    val startedAt = System.currentTimeMillis()
+                    val result = withContext(Dispatchers.IO) {
+                        AiTestCall.run(prefs.aiProvider, baseUrl, model, key)
+                    }
+                    val seconds = AiPracticeMessages.secondsText(System.currentTimeMillis() - startedAt)
+                    statusView.text = when (result) {
+                        is AiResult.Ok -> getString(R.string.ai_practice_test_works, model, seconds)
+                        is AiResult.Error -> getString(AiPracticeMessages.labelRes(result.kind))
+                    }
+                }
+            }
+        }
+    }
+
+    fun save() {
+        val key = keyInput?.text?.toString()?.trim().orEmpty()
+        val baseUrl = baseUrlInput?.text?.toString()?.trim().orEmpty()
+        val model = modelInput?.text?.toString()?.trim().orEmpty()
+        if (key.isEmpty()) {
+            showDialogError(context.getString(R.string.ai_practice_key_required))
+            return
+        }
+        vault.save(key)
+        if (baseUrl.startsWith("https://")) prefs.aiBaseUrl = baseUrl
+        if (model.isNotEmpty()) prefs.aiModel = model
+        // A first key while the switch is on: the first top-up can start now.
+        AiPracticeToggle.apply(prefs.aiPracticeEnabled, PracticeWorkerScheduler(context))
+        populateAiPractice()
+        context.showToast(getString(R.string.ai_practice_key_saved))
+        dialog?.dismiss()
+    }
+
+    dialog = context.createDialog(
+        title = R.string.ai_practice_api_key,
+        action = R.string.save,
+        onAction = { save() },
+    ) { container ->
+        val dialogContext = container.context
+
+        val statusView = TextView(dialogContext).apply {
+            setTextColor(dialogContext.getColorFromAttr(R.attr.primaryColor))
+            if (prefs.aiBillingBlocked) setText(R.string.ai_practice_billing_blocked)
+        }
+        status = statusView
+
+        val providerLine = TextView(dialogContext).apply {
+            setTextColor(dialogContext.getColorFromAttr(R.attr.primaryColor))
+            text = getString(R.string.ai_practice_provider, AiPracticeMessages.providerLabel(prefs.aiProvider))
+        }
+
+        val keyField = AppCompatEditText(dialogContext).apply {
+            hint = dialogContext.getString(R.string.ai_practice_key_hint)
+            setSingleLine(true)
+            // Masked: the key is never shown, not even to its owner.
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            setTextColor(dialogContext.getColorFromAttr(R.attr.primaryColor))
+            setHintTextColor(dialogContext.getColorFromAttr(R.attr.primaryColorTrans80))
+            background = null
+        }
+        keyInput = keyField
+
+        val baseUrlField = AppCompatEditText(dialogContext).apply {
+            setHint(R.string.ai_practice_base_url)
+            setText(prefs.aiBaseUrl)
+            setSingleLine(true)
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_URI
+            setTextColor(dialogContext.getColorFromAttr(R.attr.primaryColor))
+            setHintTextColor(dialogContext.getColorFromAttr(R.attr.primaryColorTrans80))
+            background = null
+        }
+        baseUrlInput = baseUrlField
+
+        val modelField = AppCompatEditText(dialogContext).apply {
+            setHint(R.string.ai_practice_model)
+            setText(prefs.aiModel)
+            setSingleLine(true)
+            inputType = InputType.TYPE_CLASS_TEXT
+            setTextColor(dialogContext.getColorFromAttr(R.attr.primaryColor))
+            setHintTextColor(dialogContext.getColorFromAttr(R.attr.primaryColorTrans80))
+            background = null
+        }
+        modelInput = modelField
+
+        val advancedView = LinearLayout(dialogContext).apply {
+            orientation = LinearLayout.VERTICAL
+            visibility = View.GONE
+            addView(baseUrlField)
+            addView(modelField)
+        }
+
+        val advancedToggle = TextView(dialogContext).apply {
+            setText(R.string.ai_practice_advanced)
+            setTextColor(dialogContext.getColorFromAttr(R.attr.primaryColor))
+            background = null
+            setOnClickListener { advancedView.isVisible = !advancedView.isVisible }
+        }
+
+        val testButton = TextView(dialogContext).apply {
+            setText(R.string.ai_practice_test)
+            setTextColor(dialogContext.getColorFromAttr(R.attr.primaryColor))
+            background = null
+            setOnClickListener { test() }
+        }
+
+        LinearLayout(dialogContext).apply {
+            orientation = LinearLayout.VERTICAL
+            layoutParams = ViewGroup.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+            )
+            addView(statusView)
+            addView(providerLine)
+            addView(keyField)
+            addView(advancedToggle)
+            addView(advancedView)
+            addView(testButton)
+        }
+    }
+    dialog.showRespectingStatusBar()
+    keyInput?.apply {
+        setSelection(text?.length ?: 0)
+        post {
+            requestFocus()
+            val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE) as? InputMethodManager
+            imm?.showSoftInput(this, InputMethodManager.SHOW_IMPLICIT)
+        }
+    }
+}
+
 internal fun SettingsFragment.populateGerman() {
     binding.germanOnOff.text = getString(if (prefs.germanEnabled) R.string.on else R.string.off)
     binding.dictionaryAppLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
@@ -231,6 +462,8 @@ internal fun SettingsFragment.populateGerman() {
     binding.germanPauseWordOnOff.text = getString(if (prefs.germanPauseWord) R.string.on else R.string.off)
     binding.germanUiLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
     binding.germanUiOnOff.text = getString(if (prefs.germanUi) R.string.on else R.string.off)
+    binding.aiPracticeLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
+    populateAiPractice()
 }
 
 internal fun SettingsFragment.showDictionaryAppMenu(anchor: View) {

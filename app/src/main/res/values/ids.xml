@@ -9,6 +9,19 @@
     <!-- Settings row and section ids. The rows are built from SettingsCatalog, so these ids are
          declared here (not in a layout) and assigned to the row views when the adapter binds them. -->
     <item name="accent" type="id" />
+    <item name="aiPracticeActionKey" type="id" />
+    <item name="aiPracticeActions" type="id" />
+    <item name="aiPracticeAdvanced" type="id" />
+    <item name="aiPracticeAdvancedFields" type="id" />
+    <item name="aiPracticeBaseUrl" type="id" />
+    <item name="aiPracticeKeyInput" type="id" />
+    <item name="aiPracticeLayout" type="id" />
+    <item name="aiPracticeModel" type="id" />
+    <item name="aiPracticeOnOff" type="id" />
+    <item name="aiPracticeStatus" type="id" />
+    <item name="aiPracticeSubtitle" type="id" />
+    <item name="aiPracticeTest" type="id" />
+    <item name="aiPracticeTitle" type="id" />
     <item name="alignment" type="id" />
     <item name="appThemeText" type="id" />
     <item name="appearanceSection" type="id" />
