@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drill Help Card</title>
+<style>
+  /* Tokens mirror docs/design/drills-round-mock.html (values/colors.xml, values-night).
+     New tokens: genderMasc / genderFem / genderNeut. Plural has no colour (ink, label "pl").
+     Case has no colour: labelled row, and a bold underlined ending once the answer is shown.
+     System fonts only, no remote assets. */
+  :root {
+    --page: #dfe1e6; --scrim: #f0f1f4;
+    --panel: rgba(0,0,0,.06); --card: #fafafc;
+    --tile: #fafafc; --tile-stroke: rgba(0,0,0,.08);
+    --chip: rgba(0,0,0,.12);
+    --ink: rgba(0,0,0,.87); --ink-muted: rgba(0,0,0,.7);
+    --sage: #4d6653; --sage-soft: rgba(77,102,83,.14);
+    --rose: #82444e; --rose-soft: rgba(130,68,78,.12);
+    --g-m: #2f5d8a; --g-f: #a23b3b; --g-n: #2f6b45;
+    --photo: linear-gradient(160deg, #b9c4cf 0%, #d7d2c6 55%, #c3cbbf 100%);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page: #0c0d10; --scrim: #16171a;
+      --panel: rgba(255,255,255,.07); --card: #26272a;
+      --tile: rgba(255,255,255,.16); --tile-stroke: rgba(255,255,255,.12);
+      --chip: rgba(255,255,255,.14);
+      --ink: rgba(255,255,255,.92); --ink-muted: rgba(255,255,255,.70);
+      --sage: #9caf88; --sage-soft: rgba(156,175,136,.18);
+      --rose: #de9fa7; --rose-soft: rgba(222,159,167,.14);
+      --g-m: #8fb3dc; --g-f: #ec948a; --g-n: #8cc79a;
+      --photo: linear-gradient(160deg, #1d2430 0%, #2a2620 55%, #1c241d 100%);
+    }
+  }
+  :root[data-theme="dark"] {
+    --page: #0c0d10; --scrim: #16171a;
+    --panel: rgba(255,255,255,.07); --card: #26272a;
+    --tile: rgba(255,255,255,.16); --tile-stroke: rgba(255,255,255,.12);
+    --chip: rgba(255,255,255,.14);
+    --ink: rgba(255,255,255,.92); --ink-muted: rgba(255,255,255,.70);
+    --sage: #9caf88; --sage-soft: rgba(156,175,136,.18);
+    --rose: #de9fa7; --rose-soft: rgba(222,159,167,.14);
+    --g-m: #8fb3dc; --g-f: #ec948a; --g-n: #8cc79a;
+    --photo: linear-gradient(160deg, #1d2430 0%, #2a2620 55%, #1c241d 100%);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 28px 16px 48px; background: var(--page); color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1250px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+  .pagehead { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: flex-start; justify-content: space-between; }
+  .pagehead div { max-width: 760px; }
+  .pagehead h1 { font-size: 17px; font-weight: 700; margin: 0 0 4px; }
+  .pagehead p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--ink-muted); }
+
+  button.pill {
+    font: 600 12px/1 system-ui, sans-serif; color: var(--ink-muted);
+    background: var(--panel); border: 1px solid var(--tile-stroke);
+    padding: 8px 12px; border-radius: 999px; cursor: pointer; min-height: 32px;
+  }
+  button.pill.on { background: var(--ink); color: var(--scrim); border-color: var(--ink); }
+  button.pill.small { padding: 6px 10px; min-height: 28px; font-size: 11px; }
+
+  .legend {
+    font-size: 12px; line-height: 1.6; color: var(--ink-muted);
+    background: var(--panel); border: 1px solid var(--tile-stroke);
+    border-radius: 12px; padding: 10px 12px;
+  }
+  .legend b { color: var(--ink); font-weight: 600; }
+
+  /* three frames side by side; they wrap and stack on narrow screens */
+  .frames { display: flex; flex-wrap: wrap; justify-content: center; gap: 24px 20px; }
+  .col { width: 390px; max-width: 100%; display: flex; flex-direction: column; gap: 8px; }
+  .colhead h2 { font-size: 14px; font-weight: 700; margin: 0; }
+  .colhead p { font-size: 12px; color: var(--ink-muted); margin: 2px 0 0; line-height: 1.4; }
+  .controls { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 32px; }
+  .controls .lbl { font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-muted); }
+
+  /* phone frame: scrim over a photo wallpaper */
+  .phone {
+    width: 390px; max-width: 100%; height: 780px;
+    background: var(--photo); border-radius: 28px; border: 1px solid var(--tile-stroke);
+    position: relative; overflow: hidden;
+  }
+  .phone::before { content: ""; position: absolute; inset: 0; background: var(--scrim); opacity: .78; }
+  .screen { position: absolute; inset: 0; padding: 52px 24px 20px; display: flex; flex-direction: column; }
+
+  .head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .head .title { font-size: 14px; font-weight: 600; letter-spacing: .02em; }
+  .head .prog { font-size: 13px; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+  .segments { display: flex; gap: 4px; margin-top: 12px; height: 5px; }
+  .segments i { flex: 1; border-radius: 4px; background: var(--chip); }
+  .segments i.done { background: var(--sage); }
+  .segments i.now { background: var(--ink); }
+  .format-chip {
+    align-self: flex-start; margin-top: 10px; font-size: 11px; font-weight: 600;
+    letter-spacing: .05em; text-transform: uppercase; color: var(--ink-muted);
+    background: var(--chip); border-radius: 999px; padding: 4px 10px;
+  }
+
+  /* body: gravity="bottom"; long content still scrolls */
+  .body { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; padding: 12px 0 14px; }
+  .qcard { margin-top: auto; background: var(--card); border-radius: 20px; padding: 16px 16px 18px;
+           display: flex; flex-direction: column; gap: 14px; box-shadow: 0 1px 0 var(--tile-stroke); }
+
+  /* help slot: above the prompt, grows upward, capped at ~40% of the body, scrolls inside */
+  .help { display: flex; flex-direction: column; gap: 10px; background: var(--panel); border-radius: 12px;
+          padding: 12px 14px; max-height: 250px; overflow-y: auto; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { font-size: 11px; font-weight: 600; letter-spacing: .02em; border-radius: 999px; padding: 4px 9px; background: var(--chip); color: var(--ink); }
+  .explain { margin: 0; font-size: 14px; line-height: 1.45; }
+  .example { margin: 0; font-size: 14px; line-height: 1.5; }
+  /* miss line: rose frame and ✗ only; the text, German words included, stays ink */
+  .example .muted { color: var(--ink-muted); font-size: 12px; }
+  .missline { font-size: 13px; line-height: 1.4; color: var(--ink); border-left: 3px solid var(--rose); padding-left: 8px; }
+  .missline .x { color: var(--rose); font-weight: 700; margin-right: 2px; }
+
+  table.forms { border-collapse: separate; border-spacing: 0 2px; width: 100%; font-size: 15px; table-layout: fixed; }
+  .forms col.rh { width: 62px; }
+  .forms thead th { font-size: 11px; font-weight: 600; color: var(--ink-muted); text-align: center; padding: 0 2px 2px; }
+  .forms thead th.m { color: var(--g-m); } .forms thead th.f { color: var(--g-f); } .forms thead th.n { color: var(--g-n); }
+  .forms tbody th { text-align: left; padding: 4px 6px; font-size: 12px; font-weight: 700; line-height: 1.15; }
+  .forms tbody th small { display: block; font-size: 10px; font-weight: 500; color: var(--ink-muted); }
+  .forms td { text-align: center; padding: 6px 2px; font-weight: 400; }
+  .forms tr.active > * { background: var(--chip); }
+  .forms tr.active > :first-child { border-radius: 8px 0 0 8px; }
+  .forms tr.active > :last-child { border-radius: 0 8px 8px 0; }
+  .forms td.activecell { background: var(--chip); border-radius: 8px; }
+  u { text-underline-offset: 3px; text-decoration-thickness: 2px; }
+  u b { font-weight: 800; }
+
+  /* gender colours: German text only, never tile fills or frames; plural stays ink */
+  .m { color: var(--g-m); } .f { color: var(--g-f); } .n { color: var(--g-n); }
+
+  .prompt { font-size: 24px; font-weight: 700; text-align: center; letter-spacing: -.01em; line-height: 1.3; margin: 0; }
+  .prompt .gap { display: inline-block; min-width: 54px; border-bottom: 2px solid var(--ink-muted); }
+  .prompt .gap.filled { border-bottom-color: transparent; min-width: 0; }
+
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .choices.three { grid-template-columns: 1fr 1fr 1fr; }
+  .tile {
+    min-height: 56px; display: flex; align-items: center; justify-content: center; gap: 6px;
+    background: var(--tile); border: 1px solid var(--tile-stroke); border-radius: 12px;
+    font: 600 16px system-ui, sans-serif; cursor: pointer; user-select: none; color: var(--ink);
+  }
+  .tile.wrong { background: var(--rose-soft); border-color: var(--rose); color: var(--rose); }
+  .tile.right { background: var(--sage-soft); border-color: var(--sage); color: var(--sage); }
+  .tile.dim { opacity: .45; }
+
+  .footer { display: flex; flex-direction: column; gap: 8px; }
+  .btn { min-height: 48px; border-radius: 999px; border: 1px solid var(--ink); background: var(--ink); color: var(--scrim); font: 600 15px system-ui, sans-serif; cursor: pointer; }
+  .btn.off { opacity: .35; cursor: default; }
+
+  .note { font-size: 12px; line-height: 1.5; color: var(--ink-muted); margin: 0; min-height: 36px; }
+  .footnote { font-size: 11px; color: var(--ink-muted); text-align: center; }
+  @media (max-width: 420px) { .screen { padding: 48px 16px 16px; } .prompt { font-size: 22px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="pagehead">
+    <div>
+      <h1>Drill help card (#651, merged design)</h1>
+      <p>The question card is anchored above the footer. Help opens in one slot <b>above</b> the
+         prompt, so the prompt and tiles keep their position in every state. Each frame starts
+         in the pre-answer state; switch it to the flashcard or after-a-miss state, or tap a tile.</p>
+    </div>
+    <button class="pill" id="theme">Theme: auto</button>
+  </div>
+
+  <div class="legend">
+    <b>Gender</b> (German text only, by the noun's column): <span class="m">der</span> m ·
+    <span class="f">die</span> f · <span class="n">das</span> n · plural labelled "pl", in ink.
+    <b>Case</b>: labelled row, no colour. The row is highlighted and the changing ending is
+    <u><b>bold and underlined</b></u> only in the flashcard and after-a-miss states; before an
+    answer, all forms are plain. <b>Right / wrong</b>: sage / rose on tiles; rose on the miss
+    line's frame and ✗ only.
+  </div>
+
+  <div class="frames" id="frames"></div>
+
+  <p class="footnote">Self-contained · gender m 2F5D8A/8FB3DC · f A23B3B/EC948A · n 2F6B45/8CC79A · plural ink · tiles ≥ 56dp, buttons ≥ 48dp · help slot capped at ~40% of the body</p>
+</div>
+
+<script>
+  // Content follows design-merged.md §5. Table cells are [before, changing part, after]:
+  // the changing part is bold and underlined only when the answer is shown.
+  var GENDER_COLS = [
+    { label: "m", cls: "m" }, { label: "f", cls: "f" }, { label: "n", cls: "n" }, { label: "pl", cls: "" }
+  ];
+  var EX = {
+    A: {
+      head: "A · Gender-driven: Articles, new item",
+      sub: "The answer depends on the noun's gender. The Akk row gives den a place in the table; the item is a nominative subject, so the Nom row applies.",
+      title: "Articles", pos: 1, kind: "Articles",
+      before: "", after: " Brücke ist alt.", answer: "die",
+      filled: '<span class="f">D<u><b>ie</b></u></span>',
+      choices: ["der", "die", "das", "den"],
+      chips: ["Gender", '<span class="m">der</span> · <span class="f">die</span> · <span class="n">das</span>'],
+      rule: 'Every German noun has one fixed gender, and the article has to match it. Learn the article with the noun. ' +
+            'Most nouns ending in <i>-e</i> are feminine (exceptions such as <i><span class="m">der</span> Junge</i>).',
+      cols: GENDER_COLS,
+      rows: [
+        { label: "Nom", q: "", cells: [["d", "er", ""], ["d", "ie", ""], ["d", "as", ""], ["d", "ie", ""]] },
+        { label: "Akk", q: "", cells: [["de", "n", ""], ["d", "ie", ""], ["d", "as", ""], ["d", "ie", ""]] }
+      ],
+      ans: [0, 1],
+      example: '<span class="f">D<u><b>ie</b></u></span> Brücke ist alt.',
+      miss: {
+        der: "<i>der</i>: masculine. Brücke is feminine, so die.",
+        das: "<i>das</i>: neuter. Brücke is feminine, so die.",
+        den: "<i>den</i>: accusative masculine. Brücke is feminine and the subject is nominative, so die."
+      }
+    },
+    B: {
+      head: "B · Case change with gender: two-way auf",
+      sub: "The case decides the row, the gender decides the column.",
+      title: "Prepositions", pos: 2, kind: "Prepositions",
+      before: "Ich lege das Buch auf ", after: " Tisch.", answer: "den",
+      filled: '<span class="m">de<u><b>n</b></u></span>',
+      choices: ["den", "dem", "der", "das"],
+      chips: ["Wohin? → Akk", "Wo? → Dat"],
+      rule: '<i>auf</i> is a two-way preposition. Movement to a place (Wohin?) takes the accusative. ' +
+            'A fixed position (Wo?) takes the dative. Decide which one the sentence describes.',
+      cols: GENDER_COLS,
+      rows: [
+        { label: "Akk", q: "Wohin?", cells: [["de", "n", ""], ["d", "ie", ""], ["d", "as", ""], ["d", "ie", ""]] },
+        { label: "Dat", q: "Wo?",    cells: [["de", "m", ""], ["d", "er", ""], ["de", "m", ""], ["de", "n", ""]] }
+      ],
+      ans: [0, 0],
+      example: 'Ich lege das Buch auf <span class="m">de<u><b>n</b></u></span> Tisch. <span class="muted">(movement, Wohin?)</span><br>' +
+               'Das Buch liegt auf <span class="m">de<u><b>m</b></u></span> Tisch. <span class="muted">(position, Wo?)</span>',
+      miss: {
+        dem: "<i>dem</i>: the dative is for a fixed position (Wo?). Putting a book down is movement, so Wohin? → accusative.",
+        der: "<i>der</i>: masculine nominative or feminine dative, neither of which fits here. Tisch is masculine and takes the accusative den.",
+        das: "<i>das</i>: neuter. Tisch is masculine, so den."
+      }
+    },
+    C: {
+      head: "C · Preposition without gender: a city",
+      sub: "No article, so no gender colour and no case row.",
+      title: "Prepositions", pos: 3, kind: "Prepositions",
+      before: "Ich fahre morgen ", after: " Berlin.", answer: "nach",
+      filled: '<u><b>nach</b></u>',
+      choices: ["nach", "in", "aus"],
+      chips: ["City · no article", "Wohin? · Wo? · Woher?"],
+      rule: 'Cities and most countries have no article. The preposition shows the direction of the trip: ' +
+            '<i>nach</i> for going there (Wohin?), <i>in</i> for being there (Wo?) and <i>aus</i> for coming from there (Woher?).',
+      cols: [{ label: "Wohin?", cls: "" }, { label: "Wo?", cls: "" }, { label: "Woher?", cls: "" }],
+      rows: [{ label: "", q: "", cells: [["", "nach", " Berlin"], ["", "in", " Berlin"], ["", "aus", " Berlin"]] }],
+      ans: [0, 0],
+      example: 'Ich fahre <u><b>nach</b></u> Berlin. Ich wohne <u><b>in</b></u> Berlin.',
+      miss: {
+        "in": "<i>in</i>: in marks being in a place (Wo?). Going there is nach.",
+        aus:  "<i>aus</i>: aus marks coming from a place (Woher?). Going there is nach."
+      }
+    }
+  };
+
+  var STATES = [["pre", "Pre-answer"], ["flash", "Flashcard"], ["miss", "After a miss"]];
+  var NOTES = {
+    pre:   "Pre-answer (first tap exposure, or Why? tapped): rule and the whole contrast set with equal weight. Forms plain, no row highlighted, no example sentence, nothing names this item's answer. Tap a tile.",
+    flash: "Rung 1 flashcard (reading step): the answer is shown. Row highlighted, changing ending bold and underlined, example sentence shown. No tiles.",
+    miss:  "After a miss: answer row and ending marked, example shown, the ✗ line last, directly above the prompt. Tiles stay put; footer becomes Continue.",
+    right: "Right answer: help unchanged, auto-advance (as #640). Pick a state above to go back."
+  };
+
+  function wrongChoices(e) { return e.choices.filter(function (c) { return c !== e.answer; }); }
+
+  function cellHtml(cell, mark) {
+    return cell[0] + (mark ? "<u><b>" + cell[1] + "</b></u>" : cell[1]) + cell[2];
+  }
+
+  function tableHtml(e, reveal) {
+    var hasRowHead = e.rows.some(function (r) { return r.label; });
+    var h = '<table class="forms"><colgroup>' + (hasRowHead ? '<col class="rh">' : '') +
+            e.cols.map(function () { return "<col>"; }).join("") + '</colgroup><thead><tr>' +
+            (hasRowHead ? '<th></th>' : '') +
+            e.cols.map(function (c) { return '<th' + (c.cls ? ' class="' + c.cls + '"' : '') + '>' + c.label + '</th>'; }).join("") +
+            '</tr></thead><tbody>';
+    e.rows.forEach(function (r, ri) {
+      var activeRow = reveal && hasRowHead && e.ans[0] === ri;
+      h += '<tr' + (activeRow ? ' class="active"' : '') + '>';
+      if (hasRowHead) h += '<th>' + r.label + (r.q ? '<small>' + r.q + '</small>' : '') + '</th>';
+      r.cells.forEach(function (cell, ci) {
+        var isAns = reveal && e.ans[0] === ri && e.ans[1] === ci;
+        var cls = [e.cols[ci].cls];
+        if (isAns && !hasRowHead) cls.push("activecell");
+        cls = cls.join(" ").trim();
+        h += '<td' + (cls ? ' class="' + cls + '"' : '') + '>' + cellHtml(cell, isAns) + '</td>';
+      });
+      h += '</tr>';
+    });
+    return h + '</tbody></table>';
+  }
+
+  function screenHtml(e, s) {
+    var st = s.st;
+    var reveal = st === "flash" || st === "miss";
+    var seg = "";
+    for (var i = 1; i <= 5; i++) seg += '<i class="' + (i < e.pos ? "done" : i === e.pos ? "now" : "") + '"></i>';
+
+    var help = '<div class="help">' +
+      '<div class="chips">' + e.chips.map(function (c) { return '<span class="chip">' + c + '</span>'; }).join("") + '</div>' +
+      '<p class="explain">' + e.rule + '</p>' + tableHtml(e, reveal) +
+      (reveal ? '<p class="example">' + e.example + '</p>' : '') +
+      (st === "miss" ? '<div class="missline"><span class="x">✗</span> ' + e.miss[s.pick] + '</div>' : '') +
+      '</div>';
+
+    var filled = reveal || st === "right";
+    var gap = filled ? '<span class="gap filled">' + (e.before ? e.filled.replace(">D<", ">d<") : e.filled) + '</span>'
+                     : '<span class="gap">&nbsp;</span>';
+    var prompt = '<p class="prompt">' + e.before + gap + e.after + '</p>';
+
+    var tiles = "";
+    if (st !== "flash") {
+      tiles = '<div class="choices' + (e.choices.length === 3 ? ' three' : '') + '">' + e.choices.map(function (c) {
+        var cls = "tile", txt = c;
+        if (st === "miss" || st === "right") {
+          if (c === e.answer) { cls += " right"; txt = c + " ✓"; }
+          else if (st === "miss" && c === s.pick) { cls += " wrong"; txt = c + " ✗"; }
+          else cls += " dim";
+        }
+        return '<div class="' + cls + '" data-tile="' + c + '">' + txt + '</div>';
+      }).join("") + '</div>';
+    }
+
+    var btn = st === "pre" ? '<button class="btn off">Check</button>' : '<button class="btn">Continue</button>';
+
+    return '<div class="head"><span class="title">' + e.title + '</span><span class="prog">' + e.pos + ' of 5</span></div>' +
+      '<div class="segments">' + seg + '</div>' +
+      '<span class="format-chip">' + (st === "flash" ? "New · take a look" : e.kind + " · tap") + '</span>' +
+      '<div class="body"><div class="qcard">' + help + prompt + tiles + '</div></div>' +
+      '<div class="footer">' + btn + '</div>';
+  }
+
+  var frames = document.getElementById("frames");
+  Object.keys(EX).forEach(function (key) {
+    var e = EX[key];
+    var s = { st: "pre", pick: wrongChoices(e)[0] };
+
+    var col = document.createElement("div");
+    col.className = "col";
+    col.innerHTML =
+      '<div class="colhead"><h2>' + e.head + '</h2><p>' + e.sub + '</p></div>' +
+      '<div class="controls" data-role="states"><span class="lbl">State</span></div>' +
+      '<div class="controls" data-role="picks"></div>' +
+      '<div class="phone"><section class="screen"></section></div>' +
+      '<p class="note"></p>';
+    frames.appendChild(col);
+
+    var stNav = col.querySelector('[data-role="states"]');
+    var pickNav = col.querySelector('[data-role="picks"]');
+    var screen = col.querySelector(".screen");
+    var note = col.querySelector(".note");
+
+    STATES.forEach(function (pair) {
+      var b = document.createElement("button");
+      b.className = "pill"; b.textContent = pair[1]; b.dataset.st = pair[0];
+      b.addEventListener("click", function () { s.st = pair[0]; render(); });
+      stNav.appendChild(b);
+    });
+
+    function render() {
+      screen.innerHTML = screenHtml(e, s);
+      note.textContent = NOTES[s.st];
+      stNav.querySelectorAll("[data-st]").forEach(function (b) { b.classList.toggle("on", b.dataset.st === s.st); });
+      pickNav.innerHTML = "";
+      if (s.st === "miss") {
+        var lbl = document.createElement("span");
+        lbl.className = "lbl"; lbl.textContent = "Wrong pick";
+        pickNav.appendChild(lbl);
+        wrongChoices(e).forEach(function (c) {
+          var b = document.createElement("button");
+          b.className = "pill small" + (c === s.pick ? " on" : ""); b.textContent = c;
+          b.addEventListener("click", function () { s.pick = c; render(); });
+          pickNav.appendChild(b);
+        });
+        var help = screen.querySelector(".help");
+        if (help) help.scrollTop = help.scrollHeight; // the miss line is last; keep it in view
+      }
+    }
+
+    screen.addEventListener("click", function (ev) {
+      var t = ev.target.closest("[data-tile]");
+      if (t && s.st === "pre") {
+        var c = t.dataset.tile;
+        if (c === e.answer) { s.st = "right"; } else { s.st = "miss"; s.pick = c; }
+        render(); return;
+      }
+      if (ev.target.closest(".btn:not(.off)")) { s.st = "pre"; render(); }
+    });
+
+    render();
+  });
+
+  var theme = document.getElementById("theme");
+  theme.addEventListener("click", function () {
+    var r = document.documentElement, t = theme.textContent;
+    var next = t.indexOf("auto") > -1 ? "light" : t.indexOf("light") > -1 ? "dark" : "auto";
+    if (next === "auto") r.removeAttribute("data-theme"); else r.dataset.theme = next;
+    theme.textContent = "Theme: " + next;
+  });
+</script>
+</body>
+</html>

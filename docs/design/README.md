@@ -14,5 +14,6 @@ All mock-ups show example data. Real values come from the app.
 | Home weather effects (prototype) | Rain drops without trails, wind, nine weather looks, sun rays | [`weather-effects.html`](weather-effects.html) (standalone page, open in a browser; not a canvas file) |
 | Today weather card (prototype) | Vector weather icons, CSS rain streaks with ripples, readability per look | [`today-weather.html`](today-weather.html) (standalone page, open in a browser; not a canvas file) |
 | Home weather with impact beads (prototype) | Vector icons on Home, glass water kept, impact rings and beads on rain looks | [`home-weather-mock.html`](home-weather-mock.html) (standalone page, open in a browser; not a canvas file) |
+| [drill-help-card.md](drill-help-card.md) | Drill question placement, help card, gender and case colours (#651) | [`drill-help-card-mock.html`](drill-help-card-mock.html) (standalone page, open in a browser; not a canvas file) |
 
 Where text and a mock-up disagree, the text doc wins.
