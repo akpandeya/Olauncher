@@ -194,16 +194,28 @@ internal class WordsCardView(
     init {
         binding.root.setOnClickListener {
             Haptics.tick(it)
-            if (WordsCardLogic.showReview(due)) onReview() else onOpenWords()
+            if (WordsCardLogic.showReview(due)) openReview() else onOpenWords()
         }
         binding.tvOpen.setOnClickListener {
             Haptics.tick(it)
             onOpenWords()
         }
+        // The digest announcement opens the review and clears itself (#604).
+        binding.tvDigest.setOnClickListener {
+            Haptics.tick(it)
+            openReview()
+        }
         binding.root.setOnLongClickListener { view ->
-            showWordsMenu(view.context, due, onReview, onOpenWords, onOpenLists)
+            showWordsMenu(view.context, due, { openReview() }, onOpenWords, onOpenLists)
             true
         }
+    }
+
+    /** Opens the review and disarms the one-shot digest announcement, if any. */
+    private fun openReview() {
+        val context = binding.root.context ?: return
+        Prefs(context).aiDigestNew = 0
+        onReview()
     }
 
     fun render() {
@@ -231,6 +243,11 @@ internal class WordsCardView(
         }
         b.tvLine.visibility = if (lines.showCounts) View.VISIBLE else View.INVISIBLE
         b.tvLine.text = WordsCardLogic.formatCardLine(context, stats.total, stats.learned)
+        val digestNew = Prefs(context).aiDigestNew
+        b.tvDigest.visibility = if (digestNew > 0) View.VISIBLE else View.GONE
+        if (digestNew > 0) {
+            b.tvDigest.text = context.getString(R.string.words_digest_announcement, digestNew)
+        }
     }
 }
 

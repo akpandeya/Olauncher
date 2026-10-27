@@ -80,11 +80,41 @@ class PracticeGenerator(
         today: LocalDate,
     ): PracticeGeneration = generate(words, prefs, today, timeoutMs = null)
 
+    /**
+     * The digest (#604, 9.11): one batched call for the weak-spot [weakWords],
+     * restricted to the [weakTypes] that are actually weak, stored with
+     * `source = digest`. Same gate and daily word cap as the other paths, and
+     * `AI_LAST_DIGEST_AT` ([prefs.aiLastDigestAt] = [nowMs]) updates only on
+     * success — a skip or failure leaves the timestamp, so the digest re-triggers.
+     */
+    suspend fun digest(
+        weakWords: List<Word>,
+        weakTypes: List<DrillType>,
+        prefs: AiPracticePrefs,
+        today: LocalDate,
+        nowMs: Long = System.currentTimeMillis(),
+    ): PracticeGeneration {
+        val outcome = generate(
+            words = weakWords,
+            prefs = prefs,
+            today = today,
+            timeoutMs = null,
+            types = weakTypes.ifEmpty { DrillType.values().toList() },
+            source = PracticeItem.Source.DIGEST,
+        )
+        if (outcome is PracticeGeneration.Generated) {
+            prefs.aiLastDigestAt = nowMs
+        }
+        return outcome
+    }
+
     private suspend fun generate(
         words: List<Word>,
         prefs: AiPracticePrefs,
         today: LocalDate,
         timeoutMs: Long?,
+        types: List<DrillType> = DrillType.values().toList(),
+        source: String = PracticeItem.Source.WORD,
     ): PracticeGeneration {
         // The shared gate (also the settings screen's, #602): off means no call, ever.
         when (AiPracticeGate.block(prefs.aiPracticeEnabled, !keySource.get().isNullOrBlank(), model)) {
@@ -100,7 +130,7 @@ class PracticeGenerator(
         val batch = words.take(remaining.coerceAtLeast(0))
         if (batch.isEmpty()) return PracticeGeneration.Skipped(words, PracticeGeneration.Reason.CAP_REACHED)
 
-        val prompt = PracticeContract.buildPrompt(batch, DrillType.values().toList())
+        val prompt = PracticeContract.buildPrompt(batch, types)
         val request = AiRequest(prompt)
         val result = if (timeoutMs == null) {
             provider.complete(request)
@@ -118,7 +148,7 @@ class PracticeGenerator(
                 prefs.recordAiWordsSent(batch.size, today.toEpochDay())
                 prefs.aiKeyRejected = false
                 prefs.aiBillingBlocked = false
-                val parsed = PracticeContract.parse(result.text, batch, model)
+                val parsed = PracticeContract.parse(result.text, batch, model, source)
                 val stored = store.append(parsed.items + parsed.clozeFallbacks)
                 PracticeGeneration.Generated(batch, stored.size)
             }

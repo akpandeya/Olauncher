@@ -60,6 +60,7 @@ class PracticeGeneratorTest {
         var sentDay = -1L
         var keyRejected = false
         var billingBlocked = false
+        var lastDigestAt = 0L
         override var aiProvider: String = "melious"
         override var aiBaseUrl: String = "https://api.melious.ai"
         override var aiModel: String = "glm-5.3-flash"
@@ -84,6 +85,9 @@ class PracticeGeneratorTest {
             }
             sentCount += count
         }
+        override var aiLastDigestAt: Long
+            get() = lastDigestAt
+            set(value) { lastDigestAt = value }
     }
 
     private fun word(id: Long, context: String = "Die Arbeit ___ auf seiner Unterschrift.") =
