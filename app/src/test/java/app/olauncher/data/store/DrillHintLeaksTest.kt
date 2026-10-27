@@ -101,7 +101,7 @@ class DrillHintLeaksTest {
         val tableItems = DrillTables.items(DrillType.SEPARABLE_VERBS)
         for (entry in DrillSeparableVerbs.TABLE) {
             if (!entry.isSeparable || entry.sentence == null) continue
-            val item = tableItems.first { it.id.key == "sep:${entry.infinitive}:2" }
+            val item = tableItems.first { it.id.key == "sep:${entry.keyStem}:2" }
             assertHintIsSafe(item, entry.prefix, "separable_verbs")
         }
 
