@@ -23,6 +23,17 @@ class DrillTest {
             "word_order" to DrillType.WORD_ORDER,
             "conjugation" to DrillType.CONJUGATION,
             "cloze" to DrillType.CLOZE,
+            "passive" to DrillType.PASSIVE,
+            "konjunktiv_ii" to DrillType.KONJUNKTIV_II,
+            "relative_pronouns" to DrillType.RELATIVE_PRONOUNS,
+            "genitive" to DrillType.GENITIVE,
+            "n_declension" to DrillType.N_DECLENSION,
+            "imperative" to DrillType.IMPERATIVE,
+            "werden" to DrillType.WERDEN,
+            "praeteritum" to DrillType.PRAETERITUM,
+            "infinitiv_zu" to DrillType.INFINITIV_ZU,
+            "modal_verbs" to DrillType.MODAL_VERBS,
+            "konjunktiv_i" to DrillType.KONJUNKTIV_I,
         )
         assertEquals("DrillType entry count changed", expected.size, DrillType.values().size)
         for ((expectedId, expectedType) in expected) {

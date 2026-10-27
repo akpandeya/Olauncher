@@ -1,7 +1,13 @@
 package app.olauncher.ui.words
 
 import android.animation.ObjectAnimator
+import android.graphics.Typeface
 import android.os.Bundle
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.style.ForegroundColorSpan
+import android.text.style.StyleSpan
+import android.text.style.UnderlineSpan
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.KeyEvent
@@ -16,11 +22,13 @@ import android.widget.TextView
 import androidx.annotation.AttrRes
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
+import androidx.core.widget.TextViewCompat
 import androidx.navigation.fragment.findNavController
 import app.olauncher.R
 import app.olauncher.data.Prefs
 import app.olauncher.data.store.DrillFlashcard
 import app.olauncher.data.store.DrillFormat
+import app.olauncher.data.store.DrillHelpCard
 import app.olauncher.data.store.DrillItem
 import app.olauncher.data.store.DrillItemHistory
 import app.olauncher.data.store.DrillItemId
@@ -72,6 +80,8 @@ class DrillFragment : BaseFragment() {
     private var lastRenderedItemId: String? = null
     private var autoAdvanceScheduled = false
     private var hintRevealedForItemId: String? = null
+    /** The item whose help card was opened with "Why?" before answering (#651 design §2). */
+    private var whyRevealedForItemId: String? = null
     /** The flashcard currently revealed by tapping its card (tap-to-reveal, retrieval first). */
     private var flashcardRevealedForItemId: String? = null
     private var recordedQuiz: Any? = null
@@ -115,6 +125,7 @@ class DrillFragment : BaseFragment() {
         selectedChoice = null
         lastRenderedItemId = null
         hintRevealedForItemId = null
+        whyRevealedForItemId = null
         flashcardRevealedForItemId = null
         feedbackAnimatedItemId = null
         nearMissPulsedItemId = null
@@ -172,6 +183,18 @@ class DrillFragment : BaseFragment() {
             render()
         }
 
+        // "Why?" opens the full help card before an answer (design §2); the tap is
+        // recorded so a right answer afterwards lands as a weaker right answer.
+        binding.btnWhy.setOnClickListener {
+            val q = quiz ?: return@setOnClickListener
+            val question = q.current ?: return@setOnClickListener
+            if (q.isAnswered || question.isTeaching) return@setOnClickListener
+            Haptics.tick(it)
+            q.recordWhyTap()
+            whyRevealedForItemId = question.id.toString()
+            render()
+        }
+
         binding.etAnswer.setOnEditorActionListener { _, actionId, event ->
             val isEnter = event?.keyCode == KeyEvent.KEYCODE_ENTER && event.action == KeyEvent.ACTION_DOWN
             if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_GO || isEnter) {
@@ -197,6 +220,12 @@ class DrillFragment : BaseFragment() {
         binding.wordOrderView.onTileUnselected = { tile ->
             wordOrderQuiz?.unselectTile(tile)
             render()
+        }
+
+        // The help slot caps at about 40% of the scroll body's height (design §1);
+        // the body height is known after the first layout pass.
+        binding.drillScrollView.post {
+            _binding?.helpScroll?.bodyHeight = _binding?.drillScrollView?.height ?: 0
         }
 
         val typeStr = arguments?.getString("drillType").orEmpty()
@@ -427,6 +456,9 @@ class DrillFragment : BaseFragment() {
         b.questionCard.setBackgroundResource(R.drawable.today_panel)
         b.questionCard.setOnClickListener(null)
         b.questionCard.isClickable = false
+        // The help slot and the "Why?" button are re-decided by the question renders.
+        b.helpScroll.isVisible = false
+        b.btnWhy.isVisible = false
 
         if (empty) {
             b.btnPrimary.isVisible = false
@@ -507,6 +539,7 @@ class DrillFragment : BaseFragment() {
         b.tvPrompt.isVisible = true
         b.tvPrompt.text = question.statement ?: question.prompt
         renderHint(q, question)
+        renderHelp(q, question)
 
         if (question.isTyped) {
             renderTypedQuestion(q, question)
@@ -554,6 +587,15 @@ class DrillFragment : BaseFragment() {
         b.btnPrimary.isVisible = true
         b.btnPrimary.isEnabled = true
         b.btnPrimary.alpha = 1f
+        // Once revealed, the card opens the full help slot in its flashcard state
+        // (design §2: open, full card, the correct form shown). Before the reveal the
+        // slot stays closed — retrieval comes first.
+        if (revealed) {
+            renderHelp(q, question)
+        } else {
+            b.helpScroll.isVisible = false
+            b.btnWhy.isVisible = false
+        }
     }
 
     /**
@@ -612,6 +654,183 @@ class DrillFragment : BaseFragment() {
             b.tvHint.text = getString(R.string.drill_show_hint)
         }
         b.tvHint.isVisible = true
+    }
+
+    // ---------------------------------------------------------------------
+    // Help card (#651, docs/design/drill-help-card.md): the slot above the
+    // prompt. What it may say per state is decided in DrillHelpCard (Context-
+    // free, JVM tested); this wiring only binds the state to views.
+    // ---------------------------------------------------------------------
+
+    /**
+     * Decides the help slot's state for the current question and binds it. Closed
+     * topics without help content keep the plain hint line; open states (flashcard,
+     * "Why?", after a miss) replace the collapsed cue line entirely.
+     */
+    private fun renderHelp(q: DrillQuiz, question: DrillQuizQuestion) {
+        val b = binding
+        val answeredWrong = q.isAnswered && q.lastAnswer?.correct == false
+        val whyOpen = !q.isAnswered && whyRevealedForItemId == question.id.toString()
+        // A true-false verdict's learner answer is "True"/"False", never a German
+        // word — its miss line would name nothing, so no miss line is built for it.
+        val wrongChoice = if (question.format == DrillFormat.TRUE_FALSE) {
+            null
+        } else {
+            q.learnerAnswers()[question.id]
+        }
+        val state = DrillHelpCard.state(
+            question = question,
+            whyOpen = whyOpen,
+            answeredWrong = answeredWrong,
+            wrongChoice = wrongChoice,
+        )
+        if (state == null) {
+            b.helpScroll.isVisible = false
+            b.btnWhy.isVisible = question.item.ruleId != null && !q.isAnswered && !question.isTeaching
+            b.hintRow.isVisible = b.tvHint.isVisible || b.btnWhy.isVisible
+        } else {
+            bindHelpCard(state, question.answer.takeIf { state.showAnswer })
+            b.helpScroll.isVisible = true
+            b.btnWhy.isVisible = false
+            // The open card replaces the collapsed cue line — except on a flashcard,
+            // where the line is the tap-to-reveal affordance and its revealed hint.
+            b.hintRow.isVisible = question.isFlashcard && b.tvHint.isVisible
+        }
+    }
+
+    /** Binds one help-card state: chips, rule, forms table, example, miss line. */
+    private fun bindHelpCard(state: DrillHelpCard.State, answer: String?) {
+        val b = binding
+        val context = b.root.context
+        val table = state.rule.table
+
+        // Chips: the table's column headers carry the pattern (Wohin?/Wo?, m·f·n·pl),
+        // never this item's answer.
+        b.helpChips.removeAllViews()
+        val chips = table.headers.drop(1).filter { it.isNotBlank() }
+        for (chip in chips) b.helpChips.addView(newHelpChip(chip))
+        b.helpChips.isVisible = chips.isNotEmpty()
+
+        b.tvHelpRule.text = state.rule.rule
+
+        b.helpTable.removeAllViews()
+        b.helpTable.columnCount = table.headers.size
+        for (header in table.headers) {
+            b.helpTable.addView(
+                helpCell(
+                    text = header,
+                    emphasised = true,
+                    color = genderColorFor(header),
+                ),
+            )
+        }
+        for (row in table.rows) {
+            b.helpTable.addView(helpCell(text = row.label, emphasised = true, color = null))
+            row.cells.forEachIndexed { index, cell ->
+                b.helpTable.addView(
+                    helpCell(
+                        text = cell,
+                        emphasised = false,
+                        color = genderColorFor(table.headers.getOrNull(index + 1)),
+                        showAnswer = state.showAnswer && answer != null &&
+                            cell.equals(answer, ignoreCase = true),
+                    ),
+                )
+            }
+        }
+
+        // Example: shown in the flashcard and after-a-miss states, never before a tap
+        // answer (design §3).
+        if (state.example != null) {
+            b.tvHelpExample.text = markedText(state.example)
+            b.tvHelpExample.isVisible = true
+        } else {
+            b.tvHelpExample.isVisible = false
+        }
+
+        // Miss line: rose ✗ mark, then the wrong choice and why it is wrong, in ink.
+        val miss = state.miss
+        if (miss != null) {
+            val line = getString(R.string.drill_help_miss_line, miss.wrong, miss.reason)
+            val span = SpannableString(line)
+            if (line.isNotEmpty()) {
+                span.setSpan(
+                    ForegroundColorSpan(ContextCompat.getColor(context, R.color.accentRose)),
+                    0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+                )
+            }
+            b.tvHelpMiss.text = span
+            b.tvHelpMiss.isVisible = true
+        } else {
+            b.tvHelpMiss.isVisible = false
+        }
+    }
+
+    /** A rule chip (design §3 anatomy 1): TodayChip.Small on the chip background. */
+    private fun newHelpChip(label: String): TextView = TextView(requireContext()).apply {
+        TextViewCompat.setTextAppearance(this, R.style.TodayChip_Small)
+        text = label
+        background = ContextCompat.getDrawable(context, R.drawable.today_chip)
+        val horizontalPadding = resources.getDimensionPixelSize(R.dimen.today_chip_padding_horizontal)
+        setPadding(horizontalPadding, 0, horizontalPadding, 0)
+        gravity = Gravity.CENTER
+    }
+
+    /**
+     * One forms-table cell. Gender columns take their fixed colour ([genderColorFor]);
+     * the answer's cell, shown only in the flashcard and after-a-miss states, is bold
+     * and underlined (design §4).
+     */
+    private fun helpCell(
+        text: String,
+        emphasised: Boolean,
+        color: Int?,
+        showAnswer: Boolean = false,
+    ): TextView {
+        val tv = TextView(requireContext())
+        TextViewCompat.setTextAppearance(tv, R.style.TodayCardBody)
+        tv.text = text
+        tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, resources.getDimension(R.dimen.today_label_size))
+        if (color != null) tv.setTextColor(color)
+        tv.maxWidth = resources.getDimensionPixelSize(R.dimen.help_cell_max_width)
+        val padding = resources.getDimensionPixelSize(R.dimen.help_cell_padding)
+        tv.setPadding(padding, padding / 2, padding, padding / 2)
+        if (showAnswer) {
+            val span = SpannableString(text)
+            span.setSpan(StyleSpan(Typeface.BOLD), 0, text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            span.setSpan(UnderlineSpan(), 0, text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            tv.text = span
+        } else if (emphasised) {
+            tv.paint.isFakeBoldText = true
+        }
+        return tv
+    }
+
+    /**
+     * The fixed gender colour of a table column header (design §4): m blue, f red,
+     * n green; plural and any other label stay ink (null). Case rows carry no colour.
+     */
+    private fun genderColorFor(header: String?): Int? = when (header?.trim()) {
+        "m" -> ContextCompat.getColor(requireContext(), R.color.genderMasc)
+        "f" -> ContextCompat.getColor(requireContext(), R.color.genderFem)
+        "n" -> ContextCompat.getColor(requireContext(), R.color.genderNeut)
+        else -> null
+    }
+
+    /** Renders `**…**` marked help text: marked segments bold and underlined. */
+    private fun markedText(text: String): CharSequence {
+        val segments = DrillHelpCard.markedSegments(text)
+        if (segments.none { it.bold }) return text
+        val span = SpannableString(segments.joinToString("") { it.text })
+        var index = 0
+        for (segment in segments) {
+            if (segment.bold) {
+                span.setSpan(StyleSpan(Typeface.BOLD), index, index + segment.text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+                span.setSpan(UnderlineSpan(), index, index + segment.text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            }
+            index += segment.text.length
+        }
+        return span
     }
 
     private fun renderChoiceQuestion(q: DrillQuiz, question: DrillQuizQuestion) {
@@ -1143,7 +1362,12 @@ class DrillFragment : BaseFragment() {
     private fun recordScores(q: DrillQuiz, abandoned: Boolean) {
         val context = context ?: return
         val prefs = Prefs(context.applicationContext)
-        val byType = DrillScores.roundEvidenceByType(q.firstAttempts(), q.typedResults(), abandoned)
+        val byType = DrillScores.roundEvidenceByType(
+            q.firstAttempts(),
+            q.typedResults(),
+            abandoned,
+            q.whyTappedIds(),
+        )
         for ((type, round) in byType) {
             DrillScores.recordRound(
                 prefs,

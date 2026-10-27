@@ -34,7 +34,21 @@ enum class DrillType(val id: String, val isChoiceOnly: Boolean = false) {
     ADJECTIVE_ENDINGS("adjective_endings", isChoiceOnly = true),
     WORD_ORDER("word_order", isChoiceOnly = true),
     CONJUGATION("conjugation"),
-    CLOZE("cloze");
+    CLOZE("cloze"),
+
+    // Gap topics (#651): item data from docs/design/drill-content/items/. The ids are
+    // stored in persistent data (scores, item history), so they must remain stable.
+    PASSIVE("passive"),
+    KONJUNKTIV_II("konjunktiv_ii"),
+    RELATIVE_PRONOUNS("relative_pronouns"),
+    GENITIVE("genitive"),
+    N_DECLENSION("n_declension"),
+    IMPERATIVE("imperative"),
+    WERDEN("werden"),
+    PRAETERITUM("praeteritum"),
+    INFINITIV_ZU("infinitiv_zu"),
+    MODAL_VERBS("modal_verbs"),
+    KONJUNKTIV_I("konjunktiv_i");
 
     val hasTypedRound: Boolean get() = !isChoiceOnly
 
@@ -82,6 +96,17 @@ data class DrillItem(
     val answer: String,
     val choices: List<String>,
     val hint: String? = null,
+    /**
+     * The help-card rule this item belongs to (#651), as authored in
+     * docs/design/drill-content/ — looked up in [DrillHelpContent]. Null for
+     * items without help-card content (the live topics).
+     */
+    val ruleId: String? = null,
+    /**
+     * Item-specific reason the answer is right, shown in the miss line after a
+     * wrong tap (design §3: the ✗ line names the wrong choice and why it is wrong).
+     */
+    val missReason: String? = null,
 ) {
     fun validate(): DrillItemCheck {
         val problems = mutableListOf<String>()

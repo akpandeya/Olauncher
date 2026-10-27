@@ -25,6 +25,10 @@
     <color name="articleDer">@color/accentSky</color>
     <color name="articleDie">@color/accentRose</color>
     <color name="articleDas">@color/accentSage</color>
+    <!-- Gender roles for the drill help card (#651 design §4), dark values. -->
+    <color name="genderMasc">@color/genderMascDark</color>
+    <color name="genderFem">@color/genderFemDark</color>
+    <color name="genderNeut">@color/genderNeutDark</color>
     <color name="danger">@color/accentRoseDark</color>
     <!--Readable text on photo wallpaper: see ReadableScrim.kt-->
     <color name="readableCard">#B8000000</color>

@@ -39,6 +39,10 @@
     <dimen name="quiz_cell_margin">4dp</dimen>
     <dimen name="quiz_segment_gap">5dp</dimen>
 
+    <!-- Drill help card dimens (#651) -->
+    <dimen name="help_cell_padding">8dp</dimen>
+    <dimen name="help_cell_max_width">140dp</dimen>
+
     <dimen name="dialog_blur_behind_radius">4dp</dimen>
     <dimen name="time_words_size">28sp</dimen>
     <dimen name="drawer_row_padding_horizontal">24dp</dimen>
