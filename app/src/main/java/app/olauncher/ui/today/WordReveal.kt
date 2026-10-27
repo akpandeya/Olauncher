@@ -38,6 +38,12 @@ class WordReveal(
 ) {
     internal var genderResolver: ((String) -> String?)? = null
 
+    /**
+     * When set, shown in place of the word text — the pause word's rotating
+     * practice prompt (#603). Null keeps the plain word; grading is unchanged.
+     */
+    var promptOverride: String? = null
+
     var currentWord: Word? = null
         private set
 
@@ -80,15 +86,20 @@ class WordReveal(
         val keepReveal = startRevealed ?: (currentWord?.id == word.id && isRevealed)
         currentWord = word
         val context = binding.root.context
-        val immediate = NounArticle.extractLeadingArticle(word.text)
-            ?: genderResolver?.invoke(word.text)
-        NounArticle.applyToTextView(binding.tvWord, NounArticle.format(word.text, immediate))
-        if (immediate == null && genderResolver == null && Prefs(context).germanOfflineDictionary) {
-            val appContext = context.applicationContext
-            binding.root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
-                val found = withContext(Dispatchers.IO) { SharedOfflineGermanStore.get(appContext).gender(word.text) }
-                if (found != null && currentWord?.id == word.id) {
-                    NounArticle.applyToTextView(binding.tvWord, NounArticle.format(word.text, found))
+        val prompt = promptOverride
+        if (prompt != null) {
+            binding.tvWord.text = prompt
+        } else {
+            val immediate = NounArticle.extractLeadingArticle(word.text)
+                ?: genderResolver?.invoke(word.text)
+            NounArticle.applyToTextView(binding.tvWord, NounArticle.format(word.text, immediate))
+            if (immediate == null && genderResolver == null && Prefs(context).germanOfflineDictionary) {
+                val appContext = context.applicationContext
+                binding.root.findViewTreeLifecycleOwner()?.lifecycleScope?.launch {
+                    val found = withContext(Dispatchers.IO) { SharedOfflineGermanStore.get(appContext).gender(word.text) }
+                    if (found != null && currentWord?.id == word.id) {
+                        NounArticle.applyToTextView(binding.tvWord, NounArticle.format(word.text, found))
+                    }
                 }
             }
         }

@@ -107,6 +107,19 @@
             android:paddingHorizontal="24dp"
             android:paddingVertical="16dp">
 
+            <!-- Brief on-demand generation state (#601): shown while the thin due
+                 pools are topped up, before the first card renders. -->
+            <TextView
+                android:id="@+id/tvGenerating"
+                style="@style/TextSmall"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:paddingVertical="16dp"
+                android:text="@string/words_review_generating"
+                android:visibility="gone"
+                tools:visibility="visible" />
+
             <!-- The flashcard: question first, answer after the reveal -->
             <LinearLayout
                 android:id="@+id/reviewCard"
@@ -149,6 +162,18 @@
                     android:orientation="vertical"
                     android:visibility="gone"
                     tools:visibility="visible">
+
+                    <!-- The rotating practice item's answer (#603), above the word's meaning -->
+                    <TextView
+                        android:id="@+id/tvItemAnswer"
+                        style="@style/TextMedium"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        android:textColor="?attr/accentColor"
+                        android:visibility="gone"
+                        tools:text="insistiert"
+                        tools:visibility="visible" />
 
                     <TextView
                         style="@style/TextSmallLight"

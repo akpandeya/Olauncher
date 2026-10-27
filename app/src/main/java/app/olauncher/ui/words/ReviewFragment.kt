@@ -15,6 +15,16 @@ import app.olauncher.data.Prefs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import app.olauncher.data.store.AiProviderConfig
+import app.olauncher.data.store.AiProviders
+import app.olauncher.data.store.KeySource
+import app.olauncher.data.store.KeyVault
+import app.olauncher.data.store.PracticeGeneration
+import app.olauncher.data.store.PracticeGenerator
+import app.olauncher.data.store.PracticeItemsStore
+import app.olauncher.data.store.PracticeItem
+import app.olauncher.data.store.PracticeQueue
+import app.olauncher.data.store.PracticeRotation
 import app.olauncher.data.store.SharedOfflineGermanStore
 import app.olauncher.data.store.ReviewComebacks
 import app.olauncher.data.store.ReviewEvent
@@ -56,6 +66,7 @@ class ReviewFragment : BaseFragment() {
     private var lastGradeAt = 0L
     private var sessionStarted = false
     private var progressAnimated = false
+    private var practiceItems: List<PracticeItem> = emptyList()
     internal var genderResolver: ((String) -> String?)? = null
 
     override fun onCreateView(
@@ -134,6 +145,7 @@ class ReviewFragment : BaseFragment() {
         )
         sessionEvents = split.session
         eventsBeforeSession = split.before
+        practiceItems = PracticeItemsStore(context).all()
     }
 
     private fun startSession() {
@@ -145,7 +157,59 @@ class ReviewFragment : BaseFragment() {
         answered = 0
         sessionEvents = emptyList()
         eventsBeforeSession = ReviewEventsStore(context).all()
+        practiceItems = PracticeItemsStore(context).all()
         render()
+        generateOnDemandIfNeeded()
+    }
+
+    /**
+     * The on-demand half of the hybrid generation design (#601): when the session
+     * starts with thin due pools, top them up inline before the first card, off
+     * the UI thread. The generating line shows only when a call can actually go
+     * out — a thin pool with the gate off or nothing queued never shows it — and
+     * on any outcome the round serves whatever the pools now hold.
+     */
+    private fun generateOnDemandIfNeeded() {
+        val context = context ?: return
+        val appContext = context.applicationContext
+        val prefs = Prefs(appContext)
+        if (!prefs.aiPracticeEnabled || prefs.aiModel.isBlank()) return
+        if (PracticeQueue.thinWords(queue, practiceItems).isEmpty()) return
+        _binding?.tvGenerating?.isVisible = true
+        viewLifecycleOwner.lifecycleScope.launch {
+            val generation = withContext(Dispatchers.IO) {
+                val vault = KeyVault(appContext)
+                val keySource = KeySource { vault.read() }
+                if (keySource.get().isNullOrBlank()) {
+                    PracticeGeneration.Skipped(queue, PracticeGeneration.Reason.NO_KEY)
+                } else {
+                    val config = AiProviderConfig(prefs.aiProvider, prefs.aiBaseUrl, prefs.aiModel)
+                    val provider = AiProviders.create(config, keySource)
+                    if (provider == null) {
+                        PracticeGeneration.Skipped(queue, PracticeGeneration.Reason.NO_MODEL)
+                    } else {
+                        PracticeGenerator(
+                            provider = provider,
+                            store = PracticeItemsStore(appContext),
+                            model = prefs.aiModel,
+                            keySource = keySource,
+                        ).onDemand(queue, prefs, LocalDate.now())
+                    }
+                }
+            }
+            val b = _binding ?: return@launch
+            b.tvGenerating.isVisible = false
+            if (generation is PracticeGeneration.Generated) {
+                practiceItems = PracticeItemsStore(appContext).all()
+                render()
+            }
+        }
+    }
+
+    /** The rotating practice item for [word], or null when its pool is empty. */
+    private fun currentPracticeItem(word: Word): PracticeItem? {
+        val reviewCount = (eventsBeforeSession + sessionEvents).count { it.wordId == word.id }
+        return PracticeRotation.pick(word, practiceItems, reviewCount)
     }
 
     private fun grade(word: Word, result: String) {
@@ -309,21 +373,32 @@ class ReviewFragment : BaseFragment() {
         val b = _binding ?: return
         val context = context ?: return
         val today = WordsCard.epochDaySupplier()
-        val immediate = NounArticle.extractLeadingArticle(word.text) ?: genderResolver?.invoke(word.text)
-        NounArticle.applyToTextView(b.tvWord, NounArticle.format(word.text, immediate))
-        if (immediate == null && genderResolver == null && Prefs(context).germanOfflineDictionary) {
-            val appContext = context.applicationContext
-            viewLifecycleOwner.lifecycleScope.launch {
-                val found = withContext(Dispatchers.IO) { SharedOfflineGermanStore.get(appContext).gender(word.text) }
-                val current = _binding
-                if (found != null && current != null && currentWord()?.id == word.id) {
-                    NounArticle.applyToTextView(current.tvWord, NounArticle.format(word.text, found))
+        val item = currentPracticeItem(word)
+        if (item != null) {
+            // The rotating practice item replaces the bare word on the front (#603);
+            // its hint takes the context line, and its answer joins the reveal.
+            b.tvWord.text = item.prompt
+            b.tvQuestionContext.text = item.hint ?: ""
+            b.tvItemAnswer.text = item.answer
+        } else {
+            val immediate = NounArticle.extractLeadingArticle(word.text) ?: genderResolver?.invoke(word.text)
+            NounArticle.applyToTextView(b.tvWord, NounArticle.format(word.text, immediate))
+            if (immediate == null && genderResolver == null && Prefs(context).germanOfflineDictionary) {
+                val appContext = context.applicationContext
+                viewLifecycleOwner.lifecycleScope.launch {
+                    val found = withContext(Dispatchers.IO) { SharedOfflineGermanStore.get(appContext).gender(word.text) }
+                    val current = _binding
+                    if (found != null && current != null && currentWord()?.id == word.id) {
+                        NounArticle.applyToTextView(current.tvWord, NounArticle.format(word.text, found))
+                    }
                 }
             }
+            b.tvQuestionContext.text = word.context
+            b.tvItemAnswer.text = ""
         }
-        b.tvQuestionContext.text = word.context
-        b.tvQuestionContext.isVisible = !revealed && word.context.isNotBlank()
+        b.tvQuestionContext.isVisible = !revealed && b.tvQuestionContext.text.isNotBlank()
         b.answerGroup.isVisible = revealed
+        b.tvItemAnswer.isVisible = revealed && item != null
         b.tvMeaning.text = if (word.meaning.isBlank()) {
             context.getString(R.string.words_review_no_meaning)
         } else {
