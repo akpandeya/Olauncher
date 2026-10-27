@@ -10,6 +10,9 @@ import org.w3c.dom.Element
 
 class BackupCoverageTest {
 
+    /** The stored API key file (issues #599, 9.6): excluded from every backup. */
+    private val AI_KEY_FILE = "no_backup/ai_key.bin"
+
     @Test
     fun everyUserDataFileIsExported() {
         assertEquals(
@@ -75,6 +78,55 @@ class BackupCoverageTest {
     }
 
     @Test
+    fun theAiKeyFileIsExcludedFromEveryBackupSection() {
+        val backupRulesDoc = parseXml(resolveFile("src/main/res/xml/backup_rules.xml"))
+        val dataExtractionDoc = parseXml(resolveFile("src/main/res/xml/data_extraction_rules.xml"))
+
+        val cloudBackupEl = dataExtractionDoc.getElementsByTagName("cloud-backup").item(0) as? Element
+            ?: error("cloud-backup section not found in data_extraction_rules.xml")
+        val deviceTransferEl = dataExtractionDoc.getElementsByTagName("device-transfer").item(0) as? Element
+            ?: error("device-transfer section not found in data_extraction_rules.xml")
+
+        val sections = mapOf(
+            "backup_rules.xml <full-backup-content>" to backupRulesDoc.documentElement,
+            "data_extraction_rules.xml <cloud-backup>" to cloudBackupEl,
+            "data_extraction_rules.xml <device-transfer>" to deviceTransferEl,
+        )
+
+        for ((sectionName, section) in sections) {
+            assertTrue(
+                "Section '$sectionName' must exclude '$AI_KEY_FILE'",
+                extractRootExcludes(section).contains(AI_KEY_FILE),
+            )
+        }
+    }
+
+    @Test
+    fun noIncludeSectionMentionsTheAiKey() {
+        val backupRulesDoc = parseXml(resolveFile("src/main/res/xml/backup_rules.xml"))
+        val dataExtractionDoc = parseXml(resolveFile("src/main/res/xml/data_extraction_rules.xml"))
+
+        listOf(backupRulesDoc.documentElement, dataExtractionDoc.documentElement).forEach { root ->
+            val includes = root.getElementsByTagName("include")
+            for (i in 0 until includes.length) {
+                val path = (includes.item(i) as Element).getAttribute("path")
+                assertFalse(
+                    "No include may mention the key file, found '$path'",
+                    path.contains("ai_key"),
+                )
+            }
+        }
+    }
+
+    @Test
+    fun theAiKeyFileIsNeverExported() {
+        assertTrue(
+            Backup.EXPORTED_FILES.toString(),
+            Backup.EXPORTED_FILES.none { it.contains("ai_key") },
+        )
+    }
+
+    @Test
     fun widgetKeysNeverLeaveTheDevice() {
         // Widget instance IDs and heights are meaningless on another device or after a
         // reinstall: restoring them binds dead IDs ("This widget is unavailable").
@@ -111,6 +163,18 @@ class BackupCoverageTest {
             }
         }
         return files
+    }
+
+    private fun extractRootExcludes(section: Element): Set<String> {
+        val excludes = section.getElementsByTagName("exclude")
+        val paths = mutableSetOf<String>()
+        for (i in 0 until excludes.length) {
+            val el = excludes.item(i) as Element
+            if (el.getAttribute("domain") == "root") {
+                paths.add(el.getAttribute("path"))
+            }
+        }
+        return paths
     }
 
     private fun resolveFile(relative: String): File {
