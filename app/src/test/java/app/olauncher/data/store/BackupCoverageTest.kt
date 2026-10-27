@@ -19,7 +19,8 @@ class BackupCoverageTest {
                 "words.json",
                 "usage_days.json",
                 "intention_history.json",
-                "review_events.json"
+                "review_events.json",
+                "practice_items.json"
             ),
             Backup.EXPORTED_FILES
         )
@@ -30,7 +31,8 @@ class BackupCoverageTest {
                 Backup.FILE_WORDS,
                 Backup.FILE_USAGE_DAYS,
                 Backup.FILE_INTENTION_HISTORY,
-                Backup.FILE_REVIEW_EVENTS
+                Backup.FILE_REVIEW_EVENTS,
+                Backup.FILE_PRACTICE_ITEMS
             ),
             Backup.EXPORTED_FILES.toSet()
         )
