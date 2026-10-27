@@ -159,7 +159,7 @@ object DrillPronouns {
                     grammaticalCase = "Akk",
                 ),
                 ItemTemplate(
-                    prompt = "Der neue Pullover passt ___ wie angegossen.",
+                    prompt = "Paul ist zufrieden, der neue Pullover passt ___ wie angegossen.",
                     answer = "ihm",
                     choices = listOf("ihm", "ihn", "er", "ihr"),
                     hint = "passen + Dativ",
@@ -189,7 +189,7 @@ object DrillPronouns {
                     grammaticalCase = "Akk",
                 ),
                 ItemTemplate(
-                    prompt = "Das schöne Fahrrad gehört ___ ganz allein.",
+                    prompt = "Lisa ist stolz, das schöne Fahrrad gehört ___ ganz allein.",
                     answer = "ihr",
                     choices = listOf("ihr", "sie", "ihm", "ihnen"),
                     hint = "gehören + Dativ",
@@ -233,7 +233,7 @@ object DrillPronouns {
             category = Category.PERSONAL,
             templates = listOf(
                 ItemTemplate(
-                    prompt = "Im Sommer fahren ___ gemeinsam nach Italien.",
+                    prompt = "Meine Frau und ich haben Urlaub. Im Sommer fahren ___ gemeinsam nach Italien.",
                     answer = "wir",
                     choices = listOf("wir", "uns", "ihr", "sie"),
                     hint = "Nominativ (Subjekt)",
@@ -249,7 +249,7 @@ object DrillPronouns {
                     grammaticalCase = "Akk",
                 ),
                 ItemTemplate(
-                    prompt = "Der Reiseleiter zeigt ___ die historische Altstadt.",
+                    prompt = "Wir sind zum ersten Mal in Prag. Der Reiseleiter zeigt ___ die historische Altstadt.",
                     answer = "uns",
                     choices = listOf("uns", "wir", "euch", "ihnen"),
                     hint = "zeigen + Dativ",
@@ -271,7 +271,7 @@ object DrillPronouns {
                     grammaticalCase = "Nom",
                 ),
                 ItemTemplate(
-                    prompt = "Ich habe ___ überall im Park gesucht.",
+                    prompt = "Kinder, wo wart ihr? Ich habe ___ überall im Park gesucht.",
                     answer = "euch",
                     choices = listOf("euch", "ihr", "uns", "sie"),
                     hint = "suchen + Akkusativ",
@@ -279,7 +279,7 @@ object DrillPronouns {
                     grammaticalCase = "Akk",
                 ),
                 ItemTemplate(
-                    prompt = "Oma schenkt ___ ein spannendes Brettspiel.",
+                    prompt = "Kinder, Oma schenkt ___ ein spannendes Brettspiel.",
                     answer = "euch",
                     choices = listOf("euch", "ihr", "uns", "ihnen"),
                     hint = "schenken + Dativ",
@@ -878,7 +878,7 @@ object DrillPronouns {
                     prompt = "Während ___ Urlaubs war das Wetter herrlich.",
                     answer = "meines",
                     choices = listOf("meines", "meinem", "mein", "meiner"),
-                    hint = "Neutrum Genitiv",
+                    hint = "Maskulinum Genitiv",
                     grammaticalCase = "Gen",
                 ),
                 ItemTemplate(
@@ -1052,18 +1052,18 @@ object DrillPronouns {
                     grammaticalCase = "Nom",
                 ),
                 ItemTemplate(
-                    prompt = "Habt ihr ___ neuen Stundenplan schon bekommen?",
-                    answer = "euren",
-                    choices = listOf("euren", "eurem", "euer", "eures"),
-                    hint = "Maskulinum Akkusativ",
-                    grammaticalCase = "Akk",
-                ),
-                ItemTemplate(
-                    prompt = "Passt auf ___ kleinen Bruder auf!",
+                    prompt = "Habt ihr mit ___ neuen Lehrer schon gesprochen?",
                     answer = "eurem",
                     choices = listOf("eurem", "euren", "euer", "eures"),
                     hint = "Maskulinum Dativ",
                     grammaticalCase = "Dat",
+                ),
+                ItemTemplate(
+                    prompt = "Passt auf ___ kleinen Bruder auf!",
+                    answer = "euren",
+                    choices = listOf("euren", "eurem", "euer", "eures"),
+                    hint = "Maskulinum Akkusativ",
+                    grammaticalCase = "Akk",
                 ),
                 ItemTemplate(
                     prompt = "Wie viele Schüler sind in ___ Klasse?",

@@ -416,7 +416,7 @@ object DrillCaseEndings {
             prompt = "Unweit ${DrillItem.GAP_MARKER} Bahnhofs liegt ein kleines Café.",
             trigger = "unweit",
             case = ArticleForms.Case.GENITIVE,
-            gender = ArticleForms.Gender.NEUTER,
+            gender = ArticleForms.Gender.MASCULINE,
         ),
         CaseEndingTemplate(
             key = "gen_n_jenseits_dorfes",

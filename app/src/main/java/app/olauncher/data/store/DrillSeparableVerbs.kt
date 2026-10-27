@@ -59,7 +59,7 @@ object DrillSeparableVerbs {
             participle = "angezogen",
             participleDistractors = listOf("geanzogen", "angezieht", "geanzieht"),
             sentence = "Er zieht eine warme Jacke ${DrillItem.GAP_MARKER}.",
-            prefixChoices = listOf("an", "aus", "um", "vor"),
+            prefixChoices = listOf("an", "ab", "um", "mit"),
             meaning = "to put on / dress",
         ),
         // auf-
@@ -90,7 +90,7 @@ object DrillSeparableVerbs {
             participle = "aufgemacht",
             participleDistractors = listOf("geaufmacht", "aufgemachen", "geaufmachen"),
             sentence = "Er macht das Fenster ${DrillItem.GAP_MARKER}.",
-            prefixChoices = listOf("auf", "zu", "an", "aus"),
+            prefixChoices = listOf("auf", "ein", "an", "aus"),
             meaning = "to open",
         ),
         SeparableVerbEntry(
@@ -111,7 +111,7 @@ object DrillSeparableVerbs {
             participle = "ausgestiegen",
             participleDistractors = listOf("geausstiegen", "ausgesteigt", "geaussteigt"),
             sentence = "Wir steigen an der nächsten Station ${DrillItem.GAP_MARKER}.",
-            prefixChoices = listOf("aus", "ein", "um", "ab"),
+            prefixChoices = listOf("aus", "an", "vor", "ab"),
             meaning = "to get off / exit",
         ),
         SeparableVerbEntry(
@@ -131,7 +131,7 @@ object DrillSeparableVerbs {
             participle = "ausgemacht",
             participleDistractors = listOf("geausmacht", "ausgemachen", "geausmachen"),
             sentence = "Bitte mache das Licht ${DrillItem.GAP_MARKER}.",
-            prefixChoices = listOf("aus", "an", "auf", "zu"),
+            prefixChoices = listOf("aus", "ein", "auf", "zu"),
             meaning = "to turn off",
         ),
         SeparableVerbEntry(
@@ -162,7 +162,7 @@ object DrillSeparableVerbs {
             participle = "eingeladen",
             participleDistractors = listOf("geeinladen", "eingeladt", "geeinladt"),
             sentence = "Ich lade dich zu meiner Party ${DrillItem.GAP_MARKER}.",
-            prefixChoices = listOf("ein", "aus", "vor", "zu"),
+            prefixChoices = listOf("ein", "an", "vor", "zu"),
             meaning = "to invite",
         ),
         SeparableVerbEntry(
@@ -172,7 +172,7 @@ object DrillSeparableVerbs {
             participle = "eingestiegen",
             participleDistractors = listOf("geeinstiegen", "eingesteigt", "geeinsteigt"),
             sentence = "Alle Fahrgäste steigen bitte ${DrillItem.GAP_MARKER}.",
-            prefixChoices = listOf("ein", "aus", "um", "auf"),
+            prefixChoices = listOf("ein", "an", "vor", "mit"),
             meaning = "to board / get in",
         ),
         SeparableVerbEntry(
@@ -275,7 +275,7 @@ object DrillSeparableVerbs {
             participle = "zugemacht",
             participleDistractors = listOf("gezumacht", "zugemachen", "gezumachen"),
             sentence = "Machst du bitte das Fenster ${DrillItem.GAP_MARKER}.",
-            prefixChoices = listOf("zu", "auf", "an", "ab"),
+            prefixChoices = listOf("zu", "ein", "an", "ab"),
             meaning = "to close",
         ),
         SeparableVerbEntry(
@@ -295,7 +295,7 @@ object DrillSeparableVerbs {
             participle = "zugenommen",
             participleDistractors = listOf("gezunommen", "zugenehmt", "gezunehmt"),
             sentence = "Im Winter nimmt er meistens zwei Kilo ${DrillItem.GAP_MARKER}.",
-            prefixChoices = listOf("zu", "ab", "auf", "ein"),
+            prefixChoices = listOf("zu", "an", "auf", "ein"),
             meaning = "to gain weight / increase",
         ),
         SeparableVerbEntry(
@@ -347,7 +347,7 @@ object DrillSeparableVerbs {
             participle = "ferngesehen",
             participleDistractors = listOf("gefernsehen", "ferngeseht", "gefernseht"),
             sentence = "Die Familie sieht am Abend gerne ${DrillItem.GAP_MARKER}.",
-            prefixChoices = listOf("fern", "zu", "mit", "vor"),
+            prefixChoices = listOf("fern", "an", "mit", "vor"),
             meaning = "to watch TV",
         ),
 
@@ -533,14 +533,14 @@ object DrillSeparableVerbs {
         // Meaning is explicitly fixed in the hint for all dual prefix verbs
         // über-
         SeparableVerbEntry(
-            infinitive = "übersetzen",
+            infinitive = "überkochen",
             prefix = "über",
             isSeparable = true,
-            participle = "übergesetzt",
-            participleDistractors = listOf("geübersetzt", "übergesetzen", "übersetzt"),
-            sentence = "Die Fähre setzt ans andere Ufer ${DrillItem.GAP_MARKER}.",
+            participle = "übergekocht",
+            participleDistractors = listOf("geüberkocht", "übergekochen", "überkocht"),
+            sentence = "Pass auf, die Milch kocht gleich ${DrillItem.GAP_MARKER}.",
             prefixChoices = listOf("über", "unter", "durch", "um"),
-            meaning = "ans andere Ufer übersetzen (trennbar)",
+            meaning = "beim Kochen über den Rand laufen (trennbar)",
         ),
         SeparableVerbEntry(
             infinitive = "überprüfen",
@@ -623,7 +623,7 @@ object DrillSeparableVerbs {
             prefix = "wieder",
             isSeparable = false,
             participle = "wiederholt",
-            participleDistractors = listOf("gewiederholt", "wiedergeholt", "wiederholet"),
+            participleDistractors = listOf("gewiederholt", "wiederholte", "wiederholet"),
             meaning = "noch einmal sagen oder tun (untrennbar)",
         ),
     )
