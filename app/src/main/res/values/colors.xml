@@ -62,6 +62,19 @@
     <color name="articleDer">@color/accentSky</color>
     <color name="articleDie">@color/accentRose</color>
     <color name="articleDas">@color/accentSage</color>
+
+    <!-- Gender colours for the drill help card (#651 design §4): fixed hue per gender,
+         applied to the German article and ending text only, never to fills or frames. -->
+    <color name="genderMascLight">#2F5D8A</color>
+    <color name="genderFemLight">#A23B3B</color>
+    <color name="genderNeutLight">#2F6B45</color>
+    <color name="genderMascDark">#8FB3DC</color>
+    <color name="genderFemDark">#EC948A</color>
+    <color name="genderNeutDark">#8CC79A</color>
+    <!-- Gender roles: light values here, dark values in values-night/colors.xml. -->
+    <color name="genderMasc">@color/genderMascLight</color>
+    <color name="genderFem">@color/genderFemLight</color>
+    <color name="genderNeut">@color/genderNeutLight</color>
     <!--Destructive action text (hide, delete, reset)-->
     <color name="danger">@color/accentRoseLight</color>
 

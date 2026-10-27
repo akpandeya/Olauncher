@@ -114,6 +114,7 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="bottom"
             android:orientation="vertical"
             android:paddingHorizontal="24dp"
             android:paddingVertical="8dp">
@@ -139,6 +140,65 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
+                    <!-- Help slot (#651): opens above the prompt, grows upward, capped at
+                         about 40% of the body height — the prompt and the answer tiles
+                         below it never move, whether the slot is open or closed. -->
+                    <app.olauncher.ui.words.DrillHelpCardView
+                        android:id="@+id/helpScroll"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:overScrollMode="never"
+                        android:scrollbars="none"
+                        android:visibility="gone"
+                        tools:visibility="visible">
+
+                        <LinearLayout
+                            android:id="@+id/helpContent"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical">
+
+                            <LinearLayout
+                                android:id="@+id/helpChips"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal" />
+
+                            <TextView
+                                android:id="@+id/tvHelpRule"
+                                style="@style/TodayCardBody"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                tools:text="A relative pronoun points back to a noun." />
+
+                            <GridLayout
+                                android:id="@+id/helpTable"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="10dp" />
+
+                            <TextView
+                                android:id="@+id/tvHelpExample"
+                                style="@style/TodayCardBodyLight"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="10dp"
+                                android:textStyle="italic"
+                                tools:text="Das Kind, das dort spielt, ist fünf Jahre alt." />
+
+                            <TextView
+                                android:id="@+id/tvHelpMiss"
+                                style="@style/TodayCardBody"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="10dp"
+                                tools:text="✗ dem — the dative is for a fixed position (Wo?)." />
+
+                        </LinearLayout>
+
+                    </app.olauncher.ui.words.DrillHelpCardView>
+
                     <TextView
                         android:id="@+id/tvPrompt"
                         style="@style/TodayCardStat"
@@ -146,15 +206,43 @@
                         android:layout_height="wrap_content"
                         tools:text="Ich gehe durch ___ Park." />
 
-                    <TextView
-                        android:id="@+id/tvHint"
-                        style="@style/TodayCardBodyLight"
+                    <LinearLayout
+                        android:id="@+id/hintRow"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:visibility="gone"
-                        tools:text="durch + Akkusativ"
-                        tools:visibility="visible" />
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/tvHint"
+                            style="@style/TodayCardBodyLight"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:visibility="gone"
+                            tools:text="durch + Akkusativ"
+                            tools:visibility="visible" />
+
+                        <!-- The "Why?" button (design §2): opens the full help card before
+                             an answer; the tap counts as a weaker right answer. -->
+                        <TextView
+                            android:id="@+id/btnWhy"
+                            style="@style/TodayChip.Small"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="12dp"
+                            android:background="@drawable/today_chip_selectable"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
+                            android:minHeight="40dp"
+                            android:paddingHorizontal="16dp"
+                            android:text="@string/drill_help_why"
+                            android:visibility="gone"
+                            tools:visibility="visible" />
+
+                    </LinearLayout>
 
                 </LinearLayout>
 

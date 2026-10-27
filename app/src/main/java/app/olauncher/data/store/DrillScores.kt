@@ -62,6 +62,9 @@ object DrillScores {
     /** Evidence one round adds to the decayed counts. */
     data class RoundEvidence(val askedDelta: Double, val rightDelta: Double)
 
+    /** The evidence share of a right answer given after a "Why?" tap (design §2). */
+    const val WHY_WEIGHT = 0.5
+
     /**
      * Evidence of one round for the decayed counts.
      *
@@ -120,6 +123,11 @@ object DrillScores {
      * Typed answers carry the typed weight for their own type, including the types that
      * used to be choice-only: the ladder graduates their items into typed questions too.
      *
+     * [whyTapped] holds the items whose help ("Why?") was opened before answering
+     * (#651 design §2). A right answer on those is a weaker right answer: it still
+     * counts in the raw counts and in [TypeRoundEvidence.rightAnswers], but only half
+     * of it feeds the decayed ranking counts.
+     *
      * An abandoned round is recorded only when at least [MIN_ABANDONED_ANSWERS] answers
      * were given across the whole round — the threshold is checked once for the round
      * (#624), never per type — and each present type then keeps its own evidence.
@@ -128,6 +136,7 @@ object DrillScores {
         first: Map<DrillItemId, Boolean>,
         typed: Map<DrillItemId, DrillResult>,
         abandoned: Boolean,
+        whyTapped: Set<DrillItemId> = emptySet(),
     ): Map<DrillType, TypeRoundEvidence> {
         if (abandoned && first.size < MIN_ABANDONED_ANSWERS) return emptyMap()
         val typedIds = typed.keys
@@ -141,16 +150,27 @@ object DrillScores {
                 val typeChoices = typeFirst.filterKeys { it !in typedIds }
                 val choiceRight = typeChoices.values.count { it }
                 val typedRight = typeTyped.values.count { it == DrillResult.RIGHT }
+                // Weights as in [roundEvidence]: full weight for a choice-only type,
+                // 1/3 choice + 2/3 typed for a type with typed answers.
+                val choiceWeight = if (typeTyped.isEmpty()) 1.0 else 1.0 / 3.0
+                val typedWeight = if (typeTyped.isEmpty()) 0.0 else 2.0 / 3.0
+                // Weaker right answers after a "Why?" tap (#651 design §2): half the
+                // evidence. They keep their full slot in the raw counts and in
+                // rightAnswers; the near-miss ALMOST of a typed answer stays excluded
+                // from the evidence, as before — only the why-tap ALMOST earns half back.
+                val weakerChoices = typeChoices.count { (id, right) -> right && id in whyTapped }
+                val whyTypedAlmost = typeTyped.count { (id, result) ->
+                    id in whyTapped && result == DrillResult.ALMOST
+                }
                 TypeRoundEvidence(
                     asked = typeFirst.size,
                     firstTryRight = typeFirst.values.count { it },
-                    rightAnswers = choiceRight + typedRight,
-                    evidence = roundEvidence(
-                        hasTypedRound = typeTyped.isNotEmpty(),
-                        choiceAnswered = typeChoices.size,
-                        choiceRight = choiceRight,
-                        typedAnswered = typeTyped.size,
-                        typedRight = typedRight,
+                    rightAnswers = choiceRight + typedRight + whyTypedAlmost,
+                    evidence = RoundEvidence(
+                        askedDelta = typeChoices.size * choiceWeight + typeTyped.size * typedWeight,
+                        rightDelta = choiceRight * choiceWeight + typedRight * typedWeight -
+                            WHY_WEIGHT * weakerChoices * choiceWeight +
+                            WHY_WEIGHT * whyTypedAlmost * typedWeight,
                     ),
                 )
             }

@@ -22,6 +22,17 @@ object DrillTables {
         DrillType.SEPARABLE_VERBS,
         DrillType.ADJECTIVE_ENDINGS,
         DrillType.WORD_ORDER,
+        DrillType.PASSIVE,
+        DrillType.KONJUNKTIV_II,
+        DrillType.RELATIVE_PRONOUNS,
+        DrillType.GENITIVE,
+        DrillType.N_DECLENSION,
+        DrillType.IMPERATIVE,
+        DrillType.WERDEN,
+        DrillType.PRAETERITUM,
+        DrillType.INFINITIV_ZU,
+        DrillType.MODAL_VERBS,
+        DrillType.KONJUNKTIV_I,
     )
 
     /** Per-type flag: true if the drill type has only a choice round. */
@@ -90,6 +101,18 @@ object DrillTables {
         DrillType.VERB_PREPOSITIONS -> DrillVerbPrepositions.items(words)
         DrillType.SEPARABLE_VERBS -> DrillSeparableVerbs.items(words, presentLookup)
         DrillType.ADJECTIVE_ENDINGS -> DrillAdjectiveEndings.items(words)
+        DrillType.PASSIVE,
+        DrillType.KONJUNKTIV_II,
+        DrillType.RELATIVE_PRONOUNS,
+        DrillType.GENITIVE,
+        DrillType.N_DECLENSION,
+        DrillType.IMPERATIVE,
+        DrillType.WERDEN,
+        DrillType.PRAETERITUM,
+        DrillType.INFINITIV_ZU,
+        DrillType.MODAL_VERBS,
+        DrillType.KONJUNKTIV_I,
+        -> DrillGapTopics.items(type).orEmpty()
         else -> emptyList()
     }
 
@@ -108,6 +131,17 @@ object DrillTables {
         DrillType.SEPARABLE_VERBS -> R.string.drill_type_separable_verbs
         DrillType.ADJECTIVE_ENDINGS -> R.string.drill_type_adjective_endings
         DrillType.WORD_ORDER -> R.string.drill_type_word_order
+        DrillType.PASSIVE -> R.string.drill_type_passive
+        DrillType.KONJUNKTIV_II -> R.string.drill_type_konjunktiv_ii
+        DrillType.RELATIVE_PRONOUNS -> R.string.drill_type_relative_pronouns
+        DrillType.GENITIVE -> R.string.drill_type_genitive
+        DrillType.N_DECLENSION -> R.string.drill_type_n_declension
+        DrillType.IMPERATIVE -> R.string.drill_type_imperative
+        DrillType.WERDEN -> R.string.drill_type_werden
+        DrillType.PRAETERITUM -> R.string.drill_type_praeteritum
+        DrillType.INFINITIV_ZU -> R.string.drill_type_infinitiv_zu
+        DrillType.MODAL_VERBS -> R.string.drill_type_modal_verbs
+        DrillType.KONJUNKTIV_I -> R.string.drill_type_konjunktiv_i
         else -> R.string.drills
     }
 }

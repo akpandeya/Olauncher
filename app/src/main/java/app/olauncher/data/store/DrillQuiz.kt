@@ -44,6 +44,9 @@ class DrillQuiz(
     private val learnerAnswersMap = mutableMapOf<DrillItemId, String>()
     private val typedMissIds = mutableSetOf<DrillItemId>()
 
+    /** Items whose help ("Why?") was opened before the answer (design §2 scoring). */
+    private val whyTappedIds = mutableSetOf<DrillItemId>()
+
     /** The live plan: wrong answers shrink it and insert recap steps, so it is mutable. */
     private val stepsList = steps.toMutableList()
     private var question: DrillQuizQuestion? = null
@@ -112,6 +115,22 @@ class DrillQuiz(
 
     /** Map of learner answers for items that were wrong or almost. */
     fun learnerAnswers(): Map<DrillItemId, String> = learnerAnswersMap.toMap()
+
+    /**
+     * The items whose help ("Why?") was opened before answering, never after. A right
+     * answer on these is recorded as a weaker right answer (design §2).
+     */
+    fun whyTappedIds(): Set<DrillItemId> = whyTappedIds.toSet()
+
+    /**
+     * Records a "Why?" tap on the current question. Only a tap before the answer
+     * counts; a teaching step (flashcard, recap) is never quizzed, so it never counts.
+     */
+    fun recordWhyTap() {
+        val q = question ?: return
+        if (lastAnswerValue != null || q.isTeaching || q.isReveal) return
+        whyTappedIds.add(q.item.id)
+    }
 
     /** Number of items answered correctly on the very first try. */
     val firstTryScore: Int get() = firstAttemptsMap.values.count { it }
@@ -189,15 +208,30 @@ class DrillQuiz(
     private fun recordAttempt(item: DrillItem, isCorrect: Boolean) {
         if (item.id !in firstAttemptsMap) {
             firstAttemptsMap[item.id] = isCorrect
-            itemResultsMap[item.id] = if (isCorrect) DrillResult.RIGHT else DrillResult.WRONG
+            itemResultsMap[item.id] = resultOf(item, isCorrect)
             if (isCorrect) onHit(item.id.type) else onMissed(item)
         }
+    }
+
+    /**
+     * The round result of a correct answer. A right answer after a "Why?" tap is a
+     * weaker right answer (#651 design §2): shown as ALMOST (sand, not sage) and
+     * halved in the score evidence, but still a right first attempt.
+     */
+    private fun resultOf(item: DrillItem, isCorrect: Boolean): DrillResult = when {
+        !isCorrect -> DrillResult.WRONG
+        item.id in whyTappedIds -> DrillResult.ALMOST
+        else -> DrillResult.RIGHT
     }
 
     private fun recordTypedResult(item: DrillItem, result: DrillResult) {
         if (result == DrillResult.WRONG) typedMissIds.add(item.id)
         // A miss earlier in the typed answer stays a miss, so a later correct retry cannot erase it.
-        val finalResult = if (item.id in typedMissIds) DrillResult.WRONG else result
+        val finalResult = when {
+            item.id in typedMissIds -> DrillResult.WRONG
+            result == DrillResult.RIGHT -> resultOf(item, isCorrect = true)
+            else -> result
+        }
         itemResultsMap[item.id] = finalResult
         typedResultsMap[item.id] = finalResult
         if (item.id !in firstAttemptsMap) {
