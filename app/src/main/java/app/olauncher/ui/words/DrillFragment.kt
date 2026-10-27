@@ -21,6 +21,7 @@ import android.widget.GridLayout
 import android.widget.TextView
 import androidx.annotation.AttrRes
 import androidx.core.content.ContextCompat
+import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.core.widget.TextViewCompat
 import androidx.navigation.fragment.findNavController
@@ -687,14 +688,25 @@ class DrillFragment : BaseFragment() {
         if (state == null) {
             b.helpScroll.isVisible = false
             b.btnWhy.isVisible = question.item.ruleId != null && !q.isAnswered && !question.isTeaching
-            b.hintRow.isVisible = b.tvHint.isVisible || b.btnWhy.isVisible
+            // INVISIBLE, not GONE, everywhere hintRow hides: the row keeps its height,
+            // so the prompt and the answer tiles stay at the same y across consecutive
+            // questions (design §1: the card grows upward, nothing below it moves).
+            b.hintRow.isInvisible = !(b.tvHint.isVisible || b.btnWhy.isVisible)
         } else {
             bindHelpCard(state, question.answer.takeIf { state.showAnswer })
             b.helpScroll.isVisible = true
-            b.btnWhy.isVisible = false
             // The open card replaces the collapsed cue line — except on a flashcard,
             // where the line is the tap-to-reveal affordance and its revealed hint.
-            b.hintRow.isVisible = question.isFlashcard && b.tvHint.isVisible
+            // Off the flashcard the row keeps its height (invisible, not gone — the
+            // hidden Why? chip included), so opening "Why?" or the miss line never
+            // shifts the prompt and the tiles (design §1).
+            if (question.isFlashcard) {
+                b.btnWhy.isVisible = false
+                b.hintRow.isVisible = b.tvHint.isVisible
+            } else {
+                b.btnWhy.isInvisible = true
+                b.hintRow.isInvisible = true
+            }
         }
     }
 

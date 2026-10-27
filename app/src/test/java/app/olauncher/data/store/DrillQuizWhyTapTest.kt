@@ -128,4 +128,50 @@ class DrillQuizWhyTapTest {
         assertEquals(1.0, evidence.evidence.rightDelta, 1e-9)
         assertEquals(DrillResult.RIGHT, quiz.itemResults()[item("1").id])
     }
+
+    /** A typed near miss answered with the exact form on the retry: DrillResult.ALMOST. */
+    private fun typedNearMissQuiz(key: String, whyFirst: Boolean): DrillQuiz {
+        val question = DrillQuizQuestion(item(key), DrillFormat.TYPED)
+        return DrillQuiz(listOf(question)).also { quiz ->
+            if (whyFirst) quiz.recordWhyTap()
+            quiz.answerTyped("wirdx") // near miss, one letter off — one retry offered
+            quiz.answerTyped("wird")
+        }
+    }
+
+    @Test
+    fun whyTappedTypedNearMissIsAWeakerRight() {
+        val withWhy = typedNearMissQuiz(key = "1", whyFirst = true)
+        assertEquals(DrillResult.ALMOST, withWhy.typedResults()[item("1").id])
+
+        val evidence = DrillScores.roundEvidenceByType(
+            withWhy.firstAttempts(),
+            withWhy.typedResults(),
+            abandoned = false,
+            whyTapped = withWhy.whyTappedIds(),
+        )[DrillType.PASSIVE]!!
+        // The why-tap near miss earns its half typed weight back (design §2) and keeps
+        // a slot in the raw right answers.
+        assertEquals(DrillScores.WHY_WEIGHT * 2.0 / 3.0, evidence.evidence.rightDelta, 1e-9)
+        assertEquals(1, evidence.rightAnswers)
+        assertEquals(2.0 / 3.0, evidence.evidence.askedDelta, 1e-9)
+    }
+
+    @Test
+    fun typedNearMissWithoutWhyTapEarnsNoEvidence() {
+        val quiz = typedNearMissQuiz(key = "2", whyFirst = false)
+        assertEquals(DrillResult.ALMOST, quiz.typedResults()[item("2").id])
+
+        val evidence = DrillScores.roundEvidenceByType(
+            quiz.firstAttempts(),
+            quiz.typedResults(),
+            abandoned = false,
+            whyTapped = quiz.whyTappedIds(),
+        )[DrillType.PASSIVE]!!
+        // A near-miss ALMOST without a "Why?" tap stays out of the evidence and the
+        // raw right answers.
+        assertEquals(0.0, evidence.evidence.rightDelta, 1e-9)
+        assertEquals(0, evidence.rightAnswers)
+        assertEquals(2.0 / 3.0, evidence.evidence.askedDelta, 1e-9)
+    }
 }

@@ -76,13 +76,16 @@ object DrillHelpCard {
     }
 
     /**
-     * The miss line's parts after a wrong tap: the wrong choice, then the item's own
-     * reason and the right form. Falls back to the plain answer as the reason when the
-     * item carries none. The screen renders it with the ✗ mark string resource.
+     * The miss line's parts after a wrong tap: the wrong choice, then why that choice
+     * is wrong and which form fits — the item's reason for that exact wrong choice
+     * ([DrillItem.missByChoice]), falling back to the item's general [DrillItem.missReason]
+     * and then to the plain answer. The screen renders it with the ✗ mark string resource.
      */
     fun missParts(question: DrillQuizQuestion, wrongChoice: String?): MissParts? {
         val wrong = wrongChoice?.trim().takeUnless { it.isNullOrEmpty() } ?: return null
-        val reason = question.item.missReason?.takeUnless { it.isBlank() } ?: question.answer
+        val reason = question.item.missByChoice[wrong]?.takeUnless { it.isBlank() }
+            ?: question.item.missReason?.takeUnless { it.isBlank() }
+            ?: question.answer
         return MissParts(wrong = wrong, reason = reason)
     }
 

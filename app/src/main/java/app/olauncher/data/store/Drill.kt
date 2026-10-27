@@ -107,6 +107,13 @@ data class DrillItem(
      * wrong tap (design §3: the ✗ line names the wrong choice and why it is wrong).
      */
     val missReason: String? = null,
+    /**
+     * One miss reason per wrong choice, transcribed from docs/design/drill-content/
+     * (design §3: the ✗ line says why this wrong choice is wrong). Looked up in
+     * [DrillHelpCard.missParts] by the tapped choice; items without an entry for a
+     * choice fall back to [missReason].
+     */
+    val missByChoice: Map<String, String> = emptyMap(),
 ) {
     fun validate(): DrillItemCheck {
         val problems = mutableListOf<String>()

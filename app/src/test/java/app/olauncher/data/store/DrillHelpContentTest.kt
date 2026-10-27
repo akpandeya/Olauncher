@@ -96,9 +96,9 @@ class DrillHelpContentTest {
             .flatMap { (_, items) -> items.mapNotNull { it.ruleId } }
             .toSet()
         for (id in DrillHelpContent.ids()) {
-            assertNotNull(
+            assertTrue(
                 "$id is defined in DrillHelpContent but no item points at it",
-                usedIds.contains(id),
+                id in usedIds,
             )
         }
     }
@@ -153,5 +153,32 @@ class DrillHelpContentTest {
         val bareItem = item.copy(missReason = null)
         val plain = DrillHelpCard.missParts(DrillQuizQuestion(bareItem, DrillFormat.TAP, bareItem.choices), "werde")
         assertEquals("wird", plain!!.reason)
+    }
+
+    @Test
+    fun missPartsLookUpTheReasonForTheWrongChoice() {
+        val item = DrillItem(
+            id = DrillItemId(DrillType.PASSIVE, "gap:test"),
+            prompt = "Das Auto ___ gerade repariert.",
+            answer = "wird",
+            choices = listOf("wird", "werde", "wurde", "wurden"),
+            ruleId = "passiv-aux-form",
+            missReason = "general note",
+            missByChoice = mapOf(
+                "werde" to "the ich form. Das Auto is a third-person subject, so wird.",
+                "wurden" to "the past plural form. Das Auto is one thing, so wird.",
+            ),
+        )
+        val question = DrillQuizQuestion(item, DrillFormat.TAP, item.choices)
+        assertEquals(
+            "the ich form. Das Auto is a third-person subject, so wird.",
+            DrillHelpCard.missParts(question, "werde")!!.reason,
+        )
+        assertEquals(
+            "the past plural form. Das Auto is one thing, so wird.",
+            DrillHelpCard.missParts(question, "wurden")!!.reason,
+        )
+        // A wrong choice without its own reason falls back to the item's note.
+        assertEquals("general note", DrillHelpCard.missParts(question, "werden")!!.reason)
     }
 }

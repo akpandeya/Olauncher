@@ -18,6 +18,8 @@ import org.junit.Test
  *    code; the help card resolves its content through the same id.
  * 4. The collapsed cue (the item's hint) never reveals the answer, and the prompt
  *    never contains it (same whole-word check as [DrillContentAuditTest]).
+ * 5. Every wrong choice of every item carries its own miss reason, transcribed from
+ *    the topic design files, and it reaches the miss line through [DrillHelpCard.missParts].
  */
 class DrillGapTopicsTest {
 
@@ -117,6 +119,49 @@ class DrillGapTopicsTest {
                 }
             }
         }
+    }
+
+    /**
+     * Choices whose content file carries no miss line for them: konjunktiv-i item 2's
+     * third distractor is "müsset" in code, while the design file's third miss line
+     * names "müsstet" (a different form). They fall back to the item's note.
+     */
+    private val choicesWithoutOwnMissReason = mapOf("konjunktiv_i:gap:2" to setOf("müsset"))
+
+    @Test
+    fun everyWrongChoiceHasItsOwnMissReason() {
+        for ((type, items) in DrillGapTopics.allTopics()) {
+            for (item in items) {
+                val question = DrillQuizQuestion(item, DrillFormat.TAP, item.choices)
+                for (wrong in item.choices.filter { it != item.answer }) {
+                    val reason = item.missByChoice[wrong]
+                    val fallbackAllowed =
+                        wrong in choicesWithoutOwnMissReason[item.id.toString()].orEmpty()
+                    assertTrue(
+                        "${type.id} ${item.id}: wrong choice \"$wrong\" needs a miss reason " +
+                            "from its content file",
+                        !reason.isNullOrBlank() || fallbackAllowed,
+                    )
+                    if (reason == null) continue
+                    // The reason reaches the miss line for that exact choice — not the
+                    // item's general note and not the bare answer.
+                    assertEquals(
+                        "${type.id} ${item.id}: missParts must use the per-choice reason of " +
+                            "\"$wrong\"",
+                        reason,
+                        DrillHelpCard.missParts(question, wrong)!!.reason,
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
+    fun wrongChoiceWithoutItsOwnReasonFallsBackToTheNote() {
+        val item = DrillGapTopics.items(DrillType.KONJUNKTIV_I)!!
+            .first { it.id.key == "gap:2" }
+        val question = DrillQuizQuestion(item, DrillFormat.TAP, item.choices)
+        assertEquals(item.missReason, DrillHelpCard.missParts(question, "müsset")!!.reason)
     }
 
     @Test
