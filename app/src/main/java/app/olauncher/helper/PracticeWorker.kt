@@ -16,12 +16,15 @@ import app.olauncher.data.store.AiPracticeGate
 import app.olauncher.data.store.AiProviderConfig
 import app.olauncher.data.store.AiProviders
 import app.olauncher.data.store.AiResult
+import app.olauncher.data.store.DrillScores
 import app.olauncher.data.store.KeySource
 import app.olauncher.data.store.KeyVault
+import app.olauncher.data.store.PracticeDigest
 import app.olauncher.data.store.PracticeGeneration
 import app.olauncher.data.store.PracticeGenerator
 import app.olauncher.data.store.PracticeItemsStore
 import app.olauncher.data.store.PracticeQueue
+import app.olauncher.data.store.ReviewEventsStore
 import app.olauncher.data.store.WordsStore
 import java.time.LocalDate
 import java.util.concurrent.TimeUnit
@@ -71,17 +74,47 @@ class PracticeWorker(
             cap = prefs.aiDailyWordCap,
             random = kotlin.random.Random.Default,
         )
-        when (val outcome = generator.topUp(queue, prefs, LocalDate.now())) {
+        val topUpResult = when (val outcome = generator.topUp(queue, prefs, LocalDate.now())) {
             is PracticeGeneration.Generated -> Result.success()
             is PracticeGeneration.Skipped -> Result.success()
             is PracticeGeneration.Failed -> when (outcome.kind) {
                 // AUTH and BILLING cannot be fixed by retrying; the state is in prefs.
                 AiResult.ErrorKind.AUTH, AiResult.ErrorKind.BILLING -> Result.success()
-                // Ordinary throttling and lost connectivity: WorkManager backs off.
+                // Ordinary throttling and lost connectivity: WorkManager backs off —
+                // the next run covers the digest too.
                 AiResult.ErrorKind.RATE_LIMIT, AiResult.ErrorKind.NETWORK -> Result.retry()
                 // Bad config or a provider outage: the words stay queued for tomorrow.
                 else -> Result.success()
             }
+        }
+        if (topUpResult == Result.retry()) return@withContext topUpResult
+        // The digest (#604, 9.11) rides the same worker run: weekly or when the
+        // weak-spot threshold fires, whichever first. A failed top-up does not
+        // block it; the digest applies the same gate and cap inside the generator.
+        maybeDigest(generator, prefs)
+        return@withContext Result.success()
+    }
+
+    /**
+     * The digest trigger: due per [PracticeDigest.due], and only when there is
+     * something weak to send — weak words from the review event log, restricted
+     * to the weak drill types from `DRILL_SCORES`. The batched call goes through
+     * [PracticeGenerator.digest]; on success the one-shot Words-card announcement
+     * is armed, on anything else `AI_LAST_DIGEST_AT` stays untouched.
+     */
+    private suspend fun maybeDigest(generator: PracticeGenerator, prefs: Prefs) {
+        val now = System.currentTimeMillis()
+        val events = ReviewEventsStore(applicationContext).all()
+        if (!PracticeDigest.due(prefs.aiLastDigestAt, now, events)) return
+        val weak = PracticeDigest.summary(events, DrillScores.decode(prefs.drillScores), now)
+        if (weak.wordIds.isEmpty()) return
+        val words = WordsStore(applicationContext).all()
+        val weakWords = weak.wordIds.mapNotNull { id -> words.firstOrNull { it.id == id } }
+            .filter { it.context.isNotBlank() }
+        if (weakWords.isEmpty()) return
+        val outcome = generator.digest(weakWords, weak.drillTypes, prefs, LocalDate.now(), now)
+        if (outcome is PracticeGeneration.Generated) {
+            prefs.aiDigestNew = weak.wordIds.size + weak.drillTypes.size
         }
     }
 

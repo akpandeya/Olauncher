@@ -64,6 +64,22 @@
                 android:visibility="gone"
                 tools:text="All done" />
 
+            <!-- One-shot digest announcement (#604): "New practice for N weak
+                 spots" after a successful digest, until the review opens. -->
+            <TextView
+                android:id="@+id/tvDigest"
+                style="@style/TodayCardBodyBold"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?android:attr/selectableItemBackground"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="end"
+                android:textColor="?attr/accent"
+                android:visibility="gone"
+                tools:text="New practice for 3 weak spots"
+                tools:visibility="visible" />
+
         </LinearLayout>
 
     </LinearLayout>

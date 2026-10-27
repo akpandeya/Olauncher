@@ -145,6 +145,10 @@ class Prefs(context: Context) :
         const val AI_BILLING_BLOCKED = "AI_BILLING_BLOCKED"
         const val AI_SENT_DAY = "AI_SENT_DAY"
         const val AI_SENT_COUNT = "AI_SENT_COUNT"
+        const val AI_LAST_DIGEST_AT = "AI_LAST_DIGEST_AT"
+
+        /** The "New practice for N weak spots" one-shot announcement (#604); 0 = nothing new. */
+        const val AI_DIGEST_NEW = "AI_DIGEST_NEW"
         const val DRILL_LAST_TYPE = "DRILL_LAST_TYPE"
         const val DRILL_SCORES = "DRILL_SCORES"
         const val DRILL_LAST_ROUND = "DRILL_LAST_ROUND"
@@ -781,6 +785,14 @@ class Prefs(context: Context) :
     var drillScores: String
         get() = prefs.getString(DRILL_SCORES, "") ?: ""
         set(value) = prefs.edit { putString(DRILL_SCORES, value).apply() }
+
+    /**
+     * Weak spots waiting to be announced on the Words card (#604): set to N by a
+     * successful digest, cleared when the card's review entry is tapped.
+     */
+    var aiDigestNew: Int
+        get() = prefs.getInt(AI_DIGEST_NEW, 0)
+        set(value) = prefs.edit { putInt(AI_DIGEST_NEW, value).apply() }
 
     /** JSON of the most recent drill round, shown on the Today Drills card; see [DrillLastRound]. */
     var drillLastRound: String

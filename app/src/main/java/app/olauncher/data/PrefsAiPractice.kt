@@ -8,6 +8,7 @@ import app.olauncher.data.Prefs.Companion.AI_BILLING_BLOCKED
 import app.olauncher.data.Prefs.Companion.AI_DAILY_WORD_CAP
 import app.olauncher.data.Prefs.Companion.AI_DAILY_WORD_CAP_DEFAULT
 import app.olauncher.data.Prefs.Companion.AI_KEY_REJECTED
+import app.olauncher.data.Prefs.Companion.AI_LAST_DIGEST_AT
 import app.olauncher.data.Prefs.Companion.AI_MODEL
 import app.olauncher.data.Prefs.Companion.AI_PRACTICE_ENABLED
 import app.olauncher.data.Prefs.Companion.AI_PRACTICE_ENABLED_DEFAULT
@@ -50,6 +51,13 @@ interface AiPracticePrefs {
 
     /** Adds [count] to today's sent-words counter, starting fresh when the day changed. */
     fun recordAiWordsSent(count: Int, todayEpochDay: Long)
+
+    /**
+     * The wall-clock time of the last successful digest (#604, 9.11); 0 = never.
+     * Updated only on success — a failed or skipped digest leaves it untouched,
+     * so the threshold pattern can re-trigger.
+     */
+    var aiLastDigestAt: Long
 }
 
 internal class AiPracticePrefsStore(private val prefs: SharedPreferences) : AiPracticePrefs {
@@ -95,4 +103,8 @@ internal class AiPracticePrefsStore(private val prefs: SharedPreferences) : AiPr
             putInt(AI_SENT_COUNT, current + count).apply()
         }
     }
+
+    override var aiLastDigestAt: Long
+        get() = prefs.getLong(AI_LAST_DIGEST_AT, 0L)
+        set(value) = prefs.edit { putLong(AI_LAST_DIGEST_AT, value).apply() }
 }
