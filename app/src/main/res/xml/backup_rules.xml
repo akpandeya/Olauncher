@@ -7,5 +7,6 @@
     <include domain="file" path="usage_days.json" />
     <include domain="file" path="intention_history.json" />
     <include domain="file" path="review_events.json" />
+        <include domain="file" path="practice_items.json" />
     <exclude domain="file" path="wallpapers/" />
 </full-backup-content>
