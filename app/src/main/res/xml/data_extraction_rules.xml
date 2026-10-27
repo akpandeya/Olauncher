@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<data-extraction-rules>
+<data-extraction-rules xmlns:tools="http://schemas.android.com/tools">
     <cloud-backup>
         <include domain="sharedpref" path="app.olauncher.xml" />
         <include domain="file" path="saved_items.json" />
@@ -10,6 +10,8 @@
         <include domain="file" path="review_events.json" />
         <include domain="file" path="practice_items.json" />
         <exclude domain="file" path="wallpapers/" />
+        <!-- Belt-and-braces: the OS never backs up noBackupFilesDir (#599). -->
+        <exclude domain="root" path="no_backup/ai_key.bin" tools:ignore="FullBackupContent" />
     </cloud-backup>
     <device-transfer>
         <include domain="sharedpref" path="app.olauncher.xml" />
@@ -21,5 +23,7 @@
         <include domain="file" path="review_events.json" />
         <include domain="file" path="practice_items.json" />
         <exclude domain="file" path="wallpapers/" />
+        <!-- Belt-and-braces: the OS never backs up noBackupFilesDir (#599). -->
+        <exclude domain="root" path="no_backup/ai_key.bin" tools:ignore="FullBackupContent" />
     </device-transfer>
 </data-extraction-rules>
