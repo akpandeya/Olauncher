@@ -7,7 +7,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Round construction for the redesigned drill round (#639): 5-8 steps, ladder formats
+ * Round construction for the redesigned drill round (#639): 3-5 steps, ladder formats
  * driven by per-item maturity, at most 3 typed and 1 flashcard per round, no two
  * consecutive questions of the same format, mixed rounds interleaving their types.
  */
@@ -32,12 +32,12 @@ class DrillRoundPlannerTest {
     // ------------------------------------------------------------------
 
     @Test
-    fun aRoundHasFiveToEightSteps() {
+    fun aRoundHasThreeToFiveSteps() {
         val pools = mapOf(DrillType.PREPOSITIONS to pool(DrillType.PREPOSITIONS, "prep:", 20))
         for (seed in 0 until 100) {
             val steps = DrillRoundPlanner.plan(pools, random = Random(seed.toLong()))
             assertTrue(
-                "seed $seed: round size ${steps.size} outside 5..8",
+                "seed $seed: round size ${steps.size} outside 3..5",
                 steps.size in DrillRoundPlanner.MIN_ROUND_SIZE..DrillRoundPlanner.MAX_ROUND_SIZE,
             )
         }
@@ -142,9 +142,10 @@ class DrillRoundPlannerTest {
             maturity,
             Random(11),
         )
-        // Every such item supports true-false (gap + distractor), so none degrades.
+        // Every such item supports true-false (gap + distractor), so none degrades;
+        // an early item may carry the one flashcard step ahead of its question.
         assertTrue(steps.none { it.isTyped })
-        assertTrue(steps.all { it.format == DrillFormat.TRUE_FALSE })
+        assertTrue(steps.all { it.format == DrillFormat.TRUE_FALSE || it.isFlashcard })
     }
 
     @Test
@@ -157,6 +158,7 @@ class DrillRoundPlannerTest {
             Random(11),
         )
         for (step in steps) {
+            if (step.isFlashcard) continue // the one teaching step carries no statement
             assertNotNull(step.statement)
             assertTrue(!step.statement!!.contains(DrillItem.GAP_MARKER))
             assertEquals(
@@ -189,7 +191,7 @@ class DrillRoundPlannerTest {
             maturity,
             Random(13),
         )
-        assertTrue(steps.all { it.format == DrillFormat.TAP })
+        assertTrue(steps.all { it.format == DrillFormat.TAP || it.isFlashcard })
     }
 
     // ------------------------------------------------------------------
@@ -197,7 +199,7 @@ class DrillRoundPlannerTest {
     // ------------------------------------------------------------------
 
     @Test
-    fun atMostOneFlashcardPerRoundAndItPrecedesItsOwnTap() {
+    fun atMostOneFlashcardPerRoundAndItPrecedesItsOwnQuestion() {
         val fresh = pool(DrillType.PREPOSITIONS, "prep:", 10)
         for (seed in 0 until 100) {
             val steps = DrillRoundPlanner.plan(
@@ -209,23 +211,72 @@ class DrillRoundPlannerTest {
             steps.forEachIndexed { index, step ->
                 if (step.isFlashcard) {
                     val next = steps.getOrNull(index + 1)
-                    assertNotNull("seed $seed: flashcard must be followed by its tap", next)
+                    assertNotNull("seed $seed: flashcard must be followed by its question", next)
                     assertEquals(step.item.id, next!!.item.id)
-                    assertEquals(DrillFormat.TAP, next.format)
+                    assertTrue(
+                        "seed $seed: flashcard followed by ${next.format}",
+                        next.format == DrillFormat.TAP || next.format == DrillFormat.TRUE_FALSE,
+                    )
                 }
             }
         }
     }
 
     @Test
-    fun flashcardsOnlyGoToBrandNewItems() {
+    fun flashcardsGoToMaturityZeroAndOneItemsOnly() {
         val fresh = pool(DrillType.PREPOSITIONS, "prep:", 4)
-        val known = pool(DrillType.PRONOUNS, "pron:", 4)
-        val maturity = known.map { it.id to 2 }.toMap()
-        val pools = mapOf(DrillType.PREPOSITIONS to fresh, DrillType.PRONOUNS to known)
+        val once = pool(DrillType.PRONOUNS, "pron:", 4)
+        val known = pool(DrillType.ARTICLES, "art:", 4)
+        val maturity = once.map { it.id to 1 }.toMap() + known.map { it.id to 2 }.toMap()
+        val pools = mapOf(
+            DrillType.PREPOSITIONS to fresh,
+            DrillType.PRONOUNS to once,
+            DrillType.ARTICLES to known,
+        )
+        var flashcardOnMaturityOne = false
         for (seed in 0 until 100) {
             val steps = DrillRoundPlanner.plan(pools, maturity, Random(seed.toLong()))
-            assertTrue(steps.filter { it.isFlashcard }.all { it.id.type == DrillType.PREPOSITIONS })
+            for (card in steps.filter { it.isFlashcard }) {
+                assertTrue(
+                    "seed $seed: flashcard on graduated item ${card.id}",
+                    (maturity[card.id] ?: 0) <= 1,
+                )
+                flashcardOnMaturityOne = flashcardOnMaturityOne || card.id.type == DrillType.PRONOUNS
+            }
+        }
+        assertTrue("expected some seed to flashcard a maturity-1 item", flashcardOnMaturityOne)
+    }
+
+    @Test
+    fun everyPlannedChoiceQuestionHasAtLeastOneChoice() {
+        // Planner invariant: a TAP or true-false question can never be planned without
+        // choices, so the UI's empty-grid dead end is unreachable by content.
+        val a = pool(DrillType.PREPOSITIONS, "prep:", 10)
+        val b = pool(DrillType.PRONOUNS, "pron:", 10)
+        val c = pool(DrillType.ARTICLES, "art:", 10)
+        val pools = mapOf(
+            DrillType.PREPOSITIONS to a,
+            DrillType.PRONOUNS to b,
+            DrillType.ARTICLES to c,
+        )
+        val maturity = (a.map { it.id to 0 } + b.map { it.id to 1 } + c.map { it.id to 2 }).toMap()
+        for (seed in 0 until 100) {
+            val random = Random(seed.toLong())
+            for (step in DrillRoundPlanner.plan(pools, maturity, random)) {
+                if (step.format != DrillFormat.TAP && step.format != DrillFormat.TRUE_FALSE) continue
+                assertTrue(
+                    "seed $seed: ${step.format} step ${step.id} planned without choices",
+                    step.choices.isNotEmpty(),
+                )
+            }
+            val missed = (a + b + c).take(4)
+            for (step in DrillRoundPlanner.planMisses(missed, maturity, random)) {
+                if (step.format != DrillFormat.TAP && step.format != DrillFormat.TRUE_FALSE) continue
+                assertTrue(
+                    "seed $seed: planned-misses ${step.format} step ${step.id} without choices",
+                    step.choices.isNotEmpty(),
+                )
+            }
         }
     }
 

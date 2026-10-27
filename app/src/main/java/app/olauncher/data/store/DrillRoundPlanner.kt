@@ -7,7 +7,7 @@ import java.util.Random
  *
  * | Rung | Format        | Who gets it                                        |
  * |------|---------------|----------------------------------------------------|
- * | 1    | [FLASHCARD]   | brand-new items, shown before their first tap       |
+ * | 1    | [FLASHCARD]   | early items (maturity 0 and 1), shown before their question |
  * | 2    | [TAP]         | first exposure — always the first question format   |
  * | 3    | [TRUE_FALSE], [ODD_ONE_OUT], [MATCH], [WORD_BANK], listen-and-tap | items answered right once |
  * | 4    | [TYPED]       | graduation: answered right twice, max 3 per round   |
@@ -24,6 +24,9 @@ enum class DrillFormat {
     MATCH,
     WORD_BANK,
     TYPED,
+
+    /** Unscored rule-recap card: the adaptive breather after consecutive misses (#drill-pacing). */
+    RECAP,
 }
 
 /**
@@ -45,7 +48,18 @@ data class DrillQuizQuestion(
     val answer: String get() = item.answer
     val hint: String? get() = item.hint
     val isFlashcard: Boolean get() = format == DrillFormat.FLASHCARD
+    val isRecap: Boolean get() = format == DrillFormat.RECAP
+
+    /** An unscored teaching step (flashcard or rule recap) that advances on Continue. */
+    val isTeaching: Boolean get() = isFlashcard || isRecap
     val isTyped: Boolean get() = format == DrillFormat.TYPED
+
+    /**
+     * Defensive guard for a choice question that somehow lost its choices: it gets a
+     * reveal-style presentation with an enabled Continue and is never graded, so the
+     * screen can never dead-end with an empty grid and a hidden button.
+     */
+    val isReveal: Boolean get() = !isTeaching && !isTyped && choices.isEmpty()
 
     /** The choice a learner must pick to be right, or null when there are no choices. */
     val correctChoice: String?
@@ -65,7 +79,7 @@ data class DrillQuizQuestion(
 /**
  * Context-free round construction for the redesigned drill round (#639):
  *
- * - 5 to 8 items per round ([MIN_ROUND_SIZE]..[MAX_ROUND_SIZE]); a type with fewer
+ * - 3 to 5 items per round ([MIN_ROUND_SIZE]..[MAX_ROUND_SIZE]); a type with fewer
  *   items contributes all of them.
  * - A mixed round interleaves the 2-3 sampled types' items.
  * - Per-item format from the recognition ladder, driven by the per-item maturity
@@ -78,15 +92,20 @@ data class DrillQuizQuestion(
  */
 object DrillRoundPlanner {
 
-    const val MIN_ROUND_SIZE = 5
-    const val MAX_ROUND_SIZE = 8
+    const val MIN_ROUND_SIZE = 3
+    const val MAX_ROUND_SIZE = 5
     const val MAX_TYPED_PER_ROUND = 3
     const val MAX_FLASHCARDS_PER_ROUND = 1
 
     /** An item becomes typeable once it has been answered correctly this many times. */
     const val TYPED_MATURITY = 2
 
-    /** Draws the round's item count: a random size between [MIN_ROUND_SIZE] and [MAX_ROUND_SIZE]. */
+    /**
+     * Draws the round's item count: a random size between [MIN_ROUND_SIZE] and
+     * [MAX_ROUND_SIZE] — capped at 5 so no round bombards the learner; the round
+     * itself shrinks further on wrong answers (see [DrillQuiz]). Deterministic
+     * under a seeded [random].
+     */
     fun roundSize(random: Random = Random()): Int =
         MIN_ROUND_SIZE + random.nextInt(MAX_ROUND_SIZE - MIN_ROUND_SIZE + 1)
 
@@ -94,13 +113,16 @@ object DrillRoundPlanner {
      * Plans one round from the candidate [pools] (items per drill type), using
      * [maturity] (item id -> rounds answered right) for the ladder. A round with no
      * graduated items falls back to tap-only by construction; it never stalls.
+     * The [size] is capped at [MAX_ROUND_SIZE] — practise-misses rounds keep their
+     * exact size via [planMisses].
      */
     fun plan(
         pools: Map<DrillType, List<DrillItem>>,
         maturity: Map<DrillItemId, Int> = emptyMap(),
         random: Random = Random(),
         size: Int = roundSize(random),
-    ): List<DrillQuizQuestion> = planRound(pools, maturity, random, size, allowFlashcard = true)
+    ): List<DrillQuizQuestion> =
+        planRound(pools, maturity, random, size.coerceIn(1, MAX_ROUND_SIZE), allowFlashcard = true)
 
     /**
      * Plans a practise-misses round: exactly the given items, no flashcard steps
@@ -121,7 +143,7 @@ object DrillRoundPlanner {
         size: Int,
         allowFlashcard: Boolean,
     ): List<DrillQuizQuestion> {
-        val sampled = sample(pools, random, size.coerceIn(1, MAX_ROUND_SIZE))
+        val sampled = sample(pools, random, size.coerceAtLeast(1))
         if (sampled.isEmpty()) return emptyList()
 
         var typedCount = 0
@@ -206,10 +228,10 @@ object DrillRoundPlanner {
     }
 
     /**
-     * Shows at most one flashcard: a brand-new item (maturity 0) gets a flashcard step
-     * immediately before its own tap question, so its first tap comes in the same round
-     * after the learner has seen the answer. The flashcard counts toward the round's
-     * 5-8 steps — when the round is already at [MAX_ROUND_SIZE], one other tap question
+     * Shows at most one flashcard: an early item (maturity 0 or 1) gets a flashcard
+     * step immediately before its own question, so the learner sees the answer right
+     * before the first or second quiz on it. The flashcard counts toward the round's
+     * 3-5 steps — when the round is already at [MAX_ROUND_SIZE], one other question
      * is dropped to make room.
      */
     private fun addFlashcards(
@@ -222,8 +244,9 @@ object DrillRoundPlanner {
         val candidates = planned
             .withIndex()
             .filter { (_, step) ->
-                step.format == DrillFormat.TAP && (maturity[step.id] ?: 0) == 0
+                step.format == DrillFormat.TAP || step.format == DrillFormat.TRUE_FALSE
             }
+            .filter { (_, step) -> (maturity[step.id] ?: 0) <= 1 }
         val chosen = if (candidates.isEmpty()) {
             null
         } else {
@@ -233,7 +256,7 @@ object DrillRoundPlanner {
         val flashcard = DrillQuizQuestion(chosen.value.item, DrillFormat.FLASHCARD)
         val withCard = planned.subList(0, chosen.index) + flashcard + planned.subList(chosen.index, planned.size)
         if (withCard.size <= MAX_ROUND_SIZE) return withCard
-        val dropIndex = withCard.indexOfLast { it.format == DrillFormat.TAP && it.id != chosen.value.id }
+        val dropIndex = withCard.indexOfLast { !it.isTeaching && it.id != chosen.value.id }
         return if (dropIndex >= 0) withCard.filterIndexed { index, _ -> index != dropIndex } else withCard
     }
 

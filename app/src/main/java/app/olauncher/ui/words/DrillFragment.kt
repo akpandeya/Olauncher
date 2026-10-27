@@ -19,6 +19,7 @@ import androidx.core.view.isVisible
 import androidx.navigation.fragment.findNavController
 import app.olauncher.R
 import app.olauncher.data.Prefs
+import app.olauncher.data.store.DrillFlashcard
 import app.olauncher.data.store.DrillFormat
 import app.olauncher.data.store.DrillItem
 import app.olauncher.data.store.DrillItemHistory
@@ -52,11 +53,11 @@ import app.olauncher.ui.today.cards.WordsCard
 import java.util.Random
 
 /**
- * Full-screen drill quiz for one short round (#639): 5-8 items drawn from one type or a
+ * Full-screen drill quiz for one short round (#639): 3-5 items drawn from one type or a
  * mix of the weakest types, each question's format taken from the recognition ladder
  * (flashcard, tap, true-false, typed graduation). Wrong answers are corrected inline on
- * the same screen and nothing is requeued; the summary offers "Another 5" and
- * "Practise misses".
+ * the same screen, the round shrinks by one per miss, and nothing is requeued; the
+ * summary offers "Another 5" and "Practise misses".
  */
 class DrillFragment : BaseFragment() {
 
@@ -71,6 +72,8 @@ class DrillFragment : BaseFragment() {
     private var lastRenderedItemId: String? = null
     private var autoAdvanceScheduled = false
     private var hintRevealedForItemId: String? = null
+    /** The flashcard currently revealed by tapping its card (tap-to-reveal, retrieval first). */
+    private var flashcardRevealedForItemId: String? = null
     private var recordedQuiz: Any? = null
     private var isPractiseMissesRound = false
     /** Feedback motion runs once per question, at the moment the answer lands (#640). */
@@ -91,6 +94,7 @@ class DrillFragment : BaseFragment() {
             val q = wordOrderQuiz ?: return@Runnable
             if (!q.isAnswered) return@Runnable
             advanceWithMotion(binding.questionCard) {
+                resetQuestionScroll()
                 q.advance()
                 render()
             }
@@ -99,6 +103,7 @@ class DrillFragment : BaseFragment() {
         val q = quiz ?: return@Runnable
         if (!q.isAnswered) return@Runnable
         advanceWithMotion(binding.questionCard) {
+            resetQuestionScroll()
             q.advance()
             resetQuestionState()
             render()
@@ -110,8 +115,14 @@ class DrillFragment : BaseFragment() {
         selectedChoice = null
         lastRenderedItemId = null
         hintRevealedForItemId = null
+        flashcardRevealedForItemId = null
         feedbackAnimatedItemId = null
         nearMissPulsedItemId = null
+    }
+
+    /** A new question opens at the top: undo any scroll left by the previous long item. */
+    private fun resetQuestionScroll() {
+        _binding?.drillScrollView?.scrollTo(0, 0)
     }
 
     override fun onCreateView(
@@ -222,7 +233,7 @@ class DrillFragment : BaseFragment() {
         return DrillItemHistory.maturities(Prefs(context.applicationContext).drillItemHistory)
     }
 
-    /** Builds a new 5-8 item round over [drillTypes] with ladder formats. */
+    /** Builds a new 3-5 item round over [drillTypes] with ladder formats. */
     private fun buildRound(): DrillQuiz? {
         val appContext = context?.applicationContext ?: return null
         val words = WordsCard.getStore(appContext).all()
@@ -270,10 +281,12 @@ class DrillFragment : BaseFragment() {
                     wordOrderQuiz = WordOrderQuiz(items)
                     resetQuestionState()
                     render()
+                    resetQuestionScroll()
                     animateQuestionEnter(motionSpec())
                 }
                 q.isAnswered -> {
                     advanceWithMotion(binding.questionCard) {
+                        resetQuestionScroll()
                         q.advance()
                         render()
                     }
@@ -296,11 +309,13 @@ class DrillFragment : BaseFragment() {
                 quiz = buildRound()
                 resetQuestionState()
                 render()
+                resetQuestionScroll()
                 animateQuestionEnter(motionSpec())
             }
             q.isAnswered -> {
                 // Continues past a flashcard, an inline correction, or a right answer.
                 advanceWithMotion(binding.questionCard) {
+                    resetQuestionScroll()
                     q.advance()
                     resetQuestionState()
                     render()
@@ -327,6 +342,7 @@ class DrillFragment : BaseFragment() {
                 wordOrderQuiz = WordOrderQuiz(missedItems)
                 resetQuestionState()
                 render()
+                resetQuestionScroll()
                 animateQuestionEnter(motionSpec())
             }
             return
@@ -340,6 +356,7 @@ class DrillFragment : BaseFragment() {
             quiz = misses
             resetQuestionState()
             render()
+            resetQuestionScroll()
             animateQuestionEnter(motionSpec())
         }
     }
@@ -377,6 +394,13 @@ class DrillFragment : BaseFragment() {
             b.btnPractiseMisses.isVisible = false
             if (inQuiz) {
                 renderWordOrderQuestion(q)
+                // Defensive: a correct answer must never leave the screen with neither a
+                // button nor a pending advance (e.g. a lost post after a config change).
+                if (!autoAdvanceScheduled && !transitionInProgress &&
+                    q.isAnswered && q.lastAnswer?.correct == true && !b.btnPrimary.isVisible
+                ) {
+                    scheduleAutoAdvance()
+                }
             }
             return
         }
@@ -390,13 +414,19 @@ class DrillFragment : BaseFragment() {
         b.quizContainer.isVisible = inQuiz
         b.summaryHeader.isVisible = finished
         b.questionCard.isVisible = inQuiz
-        b.choiceScroll.isVisible = inQuiz && q.current?.correctChoice != null
+        b.choiceScroll.isVisible = inQuiz && q.current?.correctChoice != null &&
+            q.current?.choices?.isNotEmpty() == true
         b.typedContainer.isVisible = inQuiz && q.currentFormat == DrillFormat.TYPED
         b.wordOrderView.isVisible = false
         b.quizCard.isVisible = finished
         b.tvEmpty.isVisible = empty
         b.btnPrimary.isVisible = !empty
         b.btnSecondary.isVisible = finished
+
+        // Question cards are plain; the flashcard render overrides both.
+        b.questionCard.setBackgroundResource(R.drawable.today_panel)
+        b.questionCard.setOnClickListener(null)
+        b.questionCard.isClickable = false
 
         if (empty) {
             b.btnPrimary.isVisible = false
@@ -410,6 +440,13 @@ class DrillFragment : BaseFragment() {
         b.btnPractiseMisses.isVisible = false
         if (inQuiz) {
             renderQuestion(q)
+            // Defensive: a correct answer must never leave the screen with neither a
+            // button nor a pending advance (e.g. a lost post after a config change).
+            if (!autoAdvanceScheduled && !transitionInProgress &&
+                q.isAnswered && q.lastAnswer?.correct == true && !b.btnPrimary.isVisible
+            ) {
+                scheduleAutoAdvance()
+            }
         }
     }
 
@@ -418,6 +455,7 @@ class DrillFragment : BaseFragment() {
 
     private fun formatLabelRes(format: DrillFormat): Int = when (format) {
         DrillFormat.FLASHCARD -> R.string.drill_round_flashcard
+        DrillFormat.RECAP -> R.string.drill_round_recap
         DrillFormat.TRUE_FALSE -> R.string.drill_round_true_false
         DrillFormat.TYPED -> R.string.drill_round_typed
         else -> R.string.drill_round_choice
@@ -453,8 +491,16 @@ class DrillFragment : BaseFragment() {
 
         renderSegments(q)
 
+        // Prompt is text only; clearing the listener after setting isClickable would
+        // re-enable it (setOnClickListener always calls setClickable(true)).
+        b.tvPrompt.isClickable = false
+
         if (question.isFlashcard) {
             renderFlashcard(q, question)
+            return
+        }
+        if (question.isRecap) {
+            renderRecap(q, question)
             return
         }
 
@@ -470,16 +516,57 @@ class DrillFragment : BaseFragment() {
     }
 
     /**
-     * A flashcard (rung 1): it shows the answer by design — that is its purpose, and it
-     * is not scored. One tap on Continue moves to the next question.
+     * A flashcard (rung 1): a teaching beat, not a question — distinct label and card
+     * treatment, tap-to-reveal so the learner retrieves before seeing the answer, and
+     * the target in context (the prompt's example sentence, gap filled once revealed).
+     * It is never scored. One tap on Continue moves to the next question.
      */
     private fun renderFlashcard(q: DrillQuiz, question: DrillQuizQuestion) {
         val b = binding
+        val revealed = flashcardRevealedForItemId == question.id.toString()
+        // With a gapped example the answer is in the filled sentence once revealed;
+        // without one the answer line stays the label the card teaches.
+        val revealedHint = DrillFlashcard.revealedHint(question)
+
         b.tvPrompt.isVisible = true
-        b.tvPrompt.text = question.prompt
+        b.tvPrompt.text = DrillFlashcard.prompt(question, revealed)
+        b.tvHint.isVisible = !revealed || !revealedHint.isNullOrBlank()
         b.tvHint.isClickable = false
-        b.tvHint.text = listOfNotNull(question.answer, question.hint).joinToString(" · ")
-        b.tvHint.isVisible = true
+        b.tvHint.text = when {
+            !revealed -> getString(R.string.drill_flashcard_reveal)
+            else -> revealedHint.orEmpty()
+        }
+        // The flashcard keeps its distinct panel once revealed too; only the
+        // tap-to-reveal interaction is unrevealed-only.
+        b.questionCard.setBackgroundResource(R.drawable.flashcard_panel)
+        if (!revealed) {
+            b.questionCard.isClickable = true
+            b.questionCard.setOnClickListener {
+                Haptics.tick(it)
+                flashcardRevealedForItemId = question.id.toString()
+                render()
+            }
+        }
+        b.choiceScroll.isVisible = false
+        b.typedContainer.isVisible = false
+        b.tvCorrection.isVisible = false
+        b.btnPrimary.setText(R.string.conjugation_continue)
+        b.btnPrimary.isVisible = true
+        b.btnPrimary.isEnabled = true
+        b.btnPrimary.alpha = 1f
+    }
+
+    /**
+     * A rule recap (the adaptive breather after consecutive misses): unscored, built
+     * from the missed item's own answer and rule. Quizzing resumes after Continue.
+     */
+    private fun renderRecap(q: DrillQuiz, question: DrillQuizQuestion) {
+        val b = binding
+        b.tvPrompt.isVisible = true
+        b.tvPrompt.text = DrillFlashcard.filledPrompt(question)
+        b.tvHint.isVisible = !question.hint.isNullOrBlank()
+        b.tvHint.isClickable = false
+        b.tvHint.text = question.hint.orEmpty()
         b.choiceScroll.isVisible = false
         b.typedContainer.isVisible = false
         b.tvCorrection.isVisible = false
@@ -508,6 +595,13 @@ class DrillFragment : BaseFragment() {
             b.tvHint.isClickable = false
             return
         }
+        if (q.isAnswered && q.lastAnswer == null) {
+            // Reveal-style step (never answered): the rule is the content, not a hint.
+            b.tvHint.isClickable = false
+            b.tvHint.text = hint
+            b.tvHint.isVisible = true
+            return
+        }
         val answeredWrong = q.isAnswered && q.lastAnswer?.correct == false
         val revealed = hintRevealedForItemId == question.id.toString()
         if (answeredWrong || revealed) {
@@ -522,6 +616,13 @@ class DrillFragment : BaseFragment() {
 
     private fun renderChoiceQuestion(q: DrillQuiz, question: DrillQuizQuestion) {
         val b = binding
+        // Part-B guard: a choice question without choices must never dead-end. Reveal
+        // the answer with an enabled Continue instead of an empty grid; the step is
+        // never graded (see DrillQuizQuestion.isReveal).
+        if (question.choices.isEmpty()) {
+            renderRevealFallback(question)
+            return
+        }
         val answered = q.isAnswered
         val correctChoice = question.correctChoice
         b.choiceGrid.removeAllViews()
@@ -600,6 +701,19 @@ class DrillFragment : BaseFragment() {
                 )
             }
         }
+    }
+
+    /** Reveal-style presentation for a choice question with no choices: answer + enabled Continue. */
+    private fun renderRevealFallback(question: DrillQuizQuestion) {
+        val b = binding
+        b.choiceGrid.removeAllViews()
+        b.choiceScroll.isVisible = false
+        b.tvCorrection.text = question.statement ?: question.answer
+        b.tvCorrection.isVisible = true
+        b.btnPrimary.setText(R.string.conjugation_continue)
+        b.btnPrimary.isVisible = true
+        b.btnPrimary.isEnabled = true
+        b.btnPrimary.alpha = 1f
     }
 
     private fun renderTypedQuestion(q: DrillQuiz, question: DrillQuizQuestion) {
@@ -893,10 +1007,10 @@ class DrillFragment : BaseFragment() {
         for ((index, step) in q.steps.withIndex()) {
             val seg = View(row.context)
             val firstTry = firstAttempts[step.item.id]
-            // A flashcard is never scored, so its segment stays neutral instead of
-            // taking the first-attempt colour of its tap question.
+            // A teaching step (flashcard, recap) is never scored, so its segment stays
+            // neutral instead of taking the first-attempt colour of a question.
             val color = when {
-                step.isFlashcard -> attrColor(R.attr.todayChipColor)
+                step.isTeaching -> attrColor(R.attr.todayChipColor)
                 firstTry == false -> attrColor(R.attr.dangerColor)
                 firstTry == true -> attrColor(R.attr.accentColor)
                 index == q.currentPosition -> attrColor(R.attr.primaryColor)
@@ -916,8 +1030,9 @@ class DrillFragment : BaseFragment() {
         val results = q.itemResults()
         val learnerAnswers = q.learnerAnswers()
         // A true-false item is judged on its filled statement, not on the gapped prompt:
-        // the summary row must say which statement the learner called false.
-        val statementByItem = q.steps.filterNot { it.isFlashcard }.associateBy { it.id }
+        // the summary row must say which statement the learner called false. Reveal
+        // fallback steps are not scored, so they never reach the summary either.
+        val statementByItem = q.steps.filterNot { it.isTeaching || it.isReveal }.associateBy { it.id }
         val summaryItems = q.items.mapIndexed { index, item ->
             val res = results[item.id] ?: if (q.firstAttempts()[item.id] == true) DrillResult.RIGHT else DrillResult.WRONG
             val step = statementByItem[item.id]
