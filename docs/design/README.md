@@ -15,5 +15,6 @@ All mock-ups show example data. Real values come from the app.
 | Today weather card (prototype) | Vector weather icons, CSS rain streaks with ripples, readability per look | [`today-weather.html`](today-weather.html) (standalone page, open in a browser; not a canvas file) |
 | Home weather with impact beads (prototype) | Vector icons on Home, glass water kept, impact rings and beads on rain looks | [`home-weather-mock.html`](home-weather-mock.html) (standalone page, open in a browser; not a canvas file) |
 | [drill-help-card.md](drill-help-card.md) | Drill question placement, help card, gender and case colours (#651) | [`drill-help-card-mock.html`](drill-help-card-mock.html) (standalone page, open in a browser; not a canvas file) |
+| [ai-practice.md](ai-practice.md) | AI-generated practice from saved words: pipeline, AI contract, budgets, provider, key storage, backup, benchmark (#561) | — |
 
 Where text and a mock-up disagree, the text doc wins.
