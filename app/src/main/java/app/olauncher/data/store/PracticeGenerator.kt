@@ -86,10 +86,13 @@ class PracticeGenerator(
         today: LocalDate,
         timeoutMs: Long?,
     ): PracticeGeneration {
-        // The gate the settings screen (#602) also guards with: off means no call, ever.
-        if (!prefs.aiPracticeEnabled) return PracticeGeneration.Skipped(words, PracticeGeneration.Reason.DISABLED)
-        if (keySource.get().isNullOrBlank()) return PracticeGeneration.Skipped(words, PracticeGeneration.Reason.NO_KEY)
-        if (model.isBlank()) return PracticeGeneration.Skipped(words, PracticeGeneration.Reason.NO_MODEL)
+        // The shared gate (also the settings screen's, #602): off means no call, ever.
+        when (AiPracticeGate.block(prefs.aiPracticeEnabled, !keySource.get().isNullOrBlank(), model)) {
+            AiPracticeGate.Block.DISABLED -> return PracticeGeneration.Skipped(words, PracticeGeneration.Reason.DISABLED)
+            AiPracticeGate.Block.NO_KEY -> return PracticeGeneration.Skipped(words, PracticeGeneration.Reason.NO_KEY)
+            AiPracticeGate.Block.NO_MODEL -> return PracticeGeneration.Skipped(words, PracticeGeneration.Reason.NO_MODEL)
+            null -> {}
+        }
 
         // The cap is a behavioral guardrail, never removed: trim the batch to what
         // is left of today's budget; an empty budget blocks the attempt entirely.

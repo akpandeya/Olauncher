@@ -16,6 +16,7 @@ private val LONG_CLICK_IDS = setOf(
     R.id.appThemeText,
     R.id.swipeLeftApp, R.id.swipeRightApp, R.id.swipeRightLayout,
     R.id.toggleLock,
+    R.id.aiPracticeOnOff, R.id.aiPracticeTitle, R.id.aiPracticeSubtitle, R.id.aiPracticeLayout,
 )
 
 internal fun SettingsFragment.setupRowsList() {

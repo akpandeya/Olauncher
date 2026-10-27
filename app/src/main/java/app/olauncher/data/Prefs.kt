@@ -134,6 +134,9 @@ class Prefs(context: Context) :
         const val AI_BASE_URL_DEFAULT = "https://api.melious.ai"
         const val AI_MODEL = "AI_MODEL"
         const val AI_PRACTICE_ENABLED = "AI_PRACTICE_ENABLED"
+
+        /** Opt-in (#602, 9.9): the feature ships off; off works fine. */
+        const val AI_PRACTICE_ENABLED_DEFAULT = false
         const val AI_DAILY_WORD_CAP = "AI_DAILY_WORD_CAP"
 
         /** Owner decision (2026-10-27): raised from 20 to 50 words/day; a guardrail, never removed. */

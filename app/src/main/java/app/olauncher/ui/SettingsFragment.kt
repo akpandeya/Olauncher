@@ -50,6 +50,7 @@ import app.olauncher.ui.settings.askContextLineNotificationAccess
 import app.olauncher.ui.settings.dispatchClick
 import app.olauncher.ui.settings.enableAutoBackup
 import app.olauncher.ui.settings.enableUseMyLocation
+import app.olauncher.ui.settings.showAiPracticeMenu
 import app.olauncher.ui.settings.exportBackup
 import app.olauncher.ui.settings.handleAddedPhotos
 import app.olauncher.ui.settings.handleImportBackup
@@ -341,6 +342,9 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
             R.id.swipeLeftApp -> tickOnChange(view) { toggleSwipeLeft() }
             R.id.swipeRightApp, R.id.swipeRightLayout -> tickOnChange(view) { toggleSwipeRight() }
             R.id.toggleLock -> startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+            R.id.aiPracticeOnOff, R.id.aiPracticeTitle, R.id.aiPracticeSubtitle, R.id.aiPracticeLayout -> {
+                showAiPracticeMenu(view)
+            }
         }
         return true
     }

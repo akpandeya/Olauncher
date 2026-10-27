@@ -257,6 +257,9 @@ object SettingsCatalog {
         primaryId = R.id.germanPauseWordOnOff, layoutId = R.id.germanPauseWordLayout, titleId = R.id.germanPauseWordTitle, valueId = R.id.germanPauseWordOnOff),
     row(key = "germanUiOnOff", sectionKey = SettingsSections.KEY_DEUTSCH, titleRes = R.string.german_ui, type = SettingsRowType.TOGGLE,
         primaryId = R.id.germanUiOnOff, layoutId = R.id.germanUiLayout, titleId = R.id.germanUiTitle, valueId = R.id.germanUiOnOff),
+    row(key = "aiPracticeOnOff", sectionKey = SettingsSections.KEY_DEUTSCH, titleRes = R.string.ai_practice, type = SettingsRowType.TOGGLE, shape = SettingsRowShape.SUBTITLE,
+        primaryId = R.id.aiPracticeOnOff, layoutId = R.id.aiPracticeLayout, titleId = R.id.aiPracticeTitle, valueId = R.id.aiPracticeOnOff, subtitleId = R.id.aiPracticeSubtitle,
+        actionIds = intArrayOf(R.id.aiPracticeActionKey), actionLabelRes = intArrayOf(R.string.ai_practice_api_key), actionsContainerId = R.id.aiPracticeActions),
     )
 
     private val appearance: List<SettingsItem> = listOf(

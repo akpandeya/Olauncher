@@ -12,6 +12,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import app.olauncher.data.Prefs
+import app.olauncher.data.store.AiPracticeGate
 import app.olauncher.data.store.AiProviderConfig
 import app.olauncher.data.store.AiProviders
 import app.olauncher.data.store.AiResult
@@ -47,11 +48,12 @@ class PracticeWorker(
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val prefs = Prefs(applicationContext)
-        // The gate: off, no model or no key means no call, ever.
-        if (!prefs.aiPracticeEnabled || prefs.aiModel.isBlank()) return@withContext Result.success()
+        // The shared gate (#602): off, no model or no key means no call, ever.
         val vault = KeyVault(applicationContext)
         val keySource = KeySource { vault.read() }
-        if (keySource.get().isNullOrBlank()) return@withContext Result.success()
+        if (!AiPracticeGate.canRun(prefs.aiPracticeEnabled, !keySource.get().isNullOrBlank(), prefs.aiModel)) {
+            return@withContext Result.success()
+        }
 
         val config = AiProviderConfig(prefs.aiProvider, prefs.aiBaseUrl, prefs.aiModel)
         val provider = AiProviders.create(config, keySource)
