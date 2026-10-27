@@ -118,6 +118,113 @@
             android:paddingHorizontal="24dp"
             android:paddingVertical="8dp">
 
+            <!-- Question card: lives inside the scroll view so long question content
+                 (an 8-tile word-order bank, larger font scales) can never be clipped;
+                 the header above and the buttons in the footer below stay pinned. -->
+            <LinearLayout
+                android:id="@+id/questionCard"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="14dp"
+                android:background="@drawable/today_panel"
+                android:orientation="vertical"
+                android:paddingHorizontal="20dp"
+                android:paddingVertical="24dp"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <LinearLayout
+                    android:id="@+id/quizCardContent"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/tvPrompt"
+                        style="@style/TodayCardStat"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        tools:text="Ich gehe durch ___ Park." />
+
+                    <TextView
+                        android:id="@+id/tvHint"
+                        style="@style/TodayCardBodyLight"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:visibility="gone"
+                        tools:text="durch + Akkusativ"
+                        tools:visibility="visible" />
+
+                </LinearLayout>
+
+                <!-- Choice round view -->
+                <ScrollView
+                    android:id="@+id/choiceScroll"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:overScrollMode="never"
+                    android:scrollbars="none">
+
+                    <GridLayout
+                        android:id="@+id/choiceGrid"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:columnCount="2" />
+
+                </ScrollView>
+
+                <!-- Typed round view -->
+                <LinearLayout
+                    android:id="@+id/typedContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    tools:visibility="visible">
+
+                    <EditText
+                        android:id="@+id/etAnswer"
+                        style="@style/TodayCardBodyBold"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/quiz_choice"
+                        android:gravity="center"
+                        android:imeOptions="actionDone"
+                        android:importantForAutofill="no"
+                        android:inputType="text|textNoSuggestions"
+                        android:maxLines="1"
+                        android:minHeight="@dimen/quiz_choice_min_height"
+                        android:padding="@dimen/quiz_cell_padding"
+                        android:shadowColor="@android:color/transparent" />
+
+                </LinearLayout>
+
+                <!-- Word order round view -->
+                <app.olauncher.ui.words.WordOrderView
+                    android:id="@+id/wordOrderView"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="18dp"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+
+                <TextView
+                    android:id="@+id/tvCorrection"
+                    style="@style/TodayCardBodyBold"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:gravity="center"
+                    android:textColor="?attr/accentColor"
+                    android:visibility="gone"
+                    tools:text="den"
+                    tools:visibility="visible" />
+
+            </LinearLayout>
+
             <!-- Summary card at end of quiz -->
             <LinearLayout
                 android:id="@+id/quizCard"
@@ -141,7 +248,7 @@
 
     </ScrollView>
 
-    <!-- Pinned footer: question card and buttons stay above keyboard -->
+    <!-- Pinned footer: the primary button stays reachable above the keyboard -->
     <LinearLayout
         android:id="@+id/drillFooter"
         android:layout_width="match_parent"
@@ -149,110 +256,6 @@
         android:orientation="vertical"
         android:paddingHorizontal="24dp"
         android:paddingBottom="48dp">
-
-        <LinearLayout
-            android:id="@+id/questionCard"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="14dp"
-            android:background="@drawable/today_panel"
-            android:orientation="vertical"
-            android:paddingHorizontal="20dp"
-            android:paddingVertical="24dp"
-            android:visibility="gone"
-            tools:visibility="visible">
-
-            <LinearLayout
-                android:id="@+id/quizCardContent"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical">
-
-                <TextView
-                    android:id="@+id/tvPrompt"
-                    style="@style/TodayCardStat"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    tools:text="Ich gehe durch ___ Park." />
-
-                <TextView
-                    android:id="@+id/tvHint"
-                    style="@style/TodayCardBodyLight"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:visibility="gone"
-                    tools:text="durch + Akkusativ"
-                    tools:visibility="visible" />
-
-            </LinearLayout>
-
-            <!-- Choice round view -->
-            <ScrollView
-                android:id="@+id/choiceScroll"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:overScrollMode="never"
-                android:scrollbars="none">
-
-                <GridLayout
-                    android:id="@+id/choiceGrid"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:columnCount="2" />
-
-            </ScrollView>
-
-            <!-- Typed round view -->
-            <LinearLayout
-                android:id="@+id/typedContainer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:orientation="vertical"
-                android:visibility="gone"
-                tools:visibility="visible">
-
-                <EditText
-                    android:id="@+id/etAnswer"
-                    style="@style/TodayCardBodyBold"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:background="@drawable/quiz_choice"
-                    android:gravity="center"
-                    android:imeOptions="actionDone"
-                    android:importantForAutofill="no"
-                    android:inputType="text|textNoSuggestions"
-                    android:maxLines="1"
-                    android:minHeight="@dimen/quiz_choice_min_height"
-                    android:padding="@dimen/quiz_cell_padding"
-                    android:shadowColor="@android:color/transparent" />
-
-            </LinearLayout>
-
-            <!-- Word order round view -->
-            <app.olauncher.ui.words.WordOrderView
-                android:id="@+id/wordOrderView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:visibility="gone"
-                tools:visibility="visible" />
-
-            <TextView
-                android:id="@+id/tvCorrection"
-                style="@style/TodayCardBodyBold"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:gravity="center"
-                android:textColor="?attr/accentColor"
-                android:visibility="gone"
-                tools:text="den"
-                tools:visibility="visible" />
-
-        </LinearLayout>
 
         <TextView
             android:id="@+id/btnPrimary"

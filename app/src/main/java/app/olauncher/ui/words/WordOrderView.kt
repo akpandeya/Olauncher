@@ -1,6 +1,7 @@
 package app.olauncher.ui.words
 
 import android.content.Context
+import android.graphics.Rect
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.Gravity
@@ -67,8 +68,10 @@ internal open class SimpleFlowLayout @JvmOverloads constructor(
     }
 
     override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
-        val widthSize = r - l - paddingRight
-        var curLeft = paddingLeft
+        // Same usable width as onMeasure (both paddings subtracted), tracked
+        // content-relative, so chips can never be laid out past the right edge.
+        val usableWidth = r - l - paddingLeft - paddingRight
+        var curLeft = 0 // content-relative; mirrors onMeasure's lineWidth
         var curTop = paddingTop
         var lineHeight = 0
 
@@ -79,15 +82,20 @@ internal open class SimpleFlowLayout @JvmOverloads constructor(
             val childWidth = child.measuredWidth
             val childHeight = child.measuredHeight
 
-            if (curLeft + childWidth > widthSize && curLeft > paddingLeft) {
-                curLeft = paddingLeft
+            if (curLeft + childWidth > usableWidth && curLeft > 0) {
+                curLeft = 0
                 curTop += lineHeight + verticalSpacing
                 lineHeight = childHeight
             } else {
                 lineHeight = maxOf(lineHeight, childHeight)
             }
 
-            child.layout(curLeft, curTop, curLeft + childWidth, curTop + childHeight)
+            child.layout(
+                paddingLeft + curLeft,
+                curTop,
+                paddingLeft + curLeft + childWidth,
+                curTop + childHeight,
+            )
             curLeft += childWidth + horizontalSpacing
         }
     }
@@ -111,6 +119,9 @@ class WordOrderView @JvmOverloads constructor(
 
     var onTileSelected: ((WordOrderTile) -> Unit)? = null
     var onTileUnselected: ((WordOrderTile) -> Unit)? = null
+
+    /** The tile whose tap triggered the current render; its new row is scrolled into view. */
+    private var pendingRevealTile: WordOrderTile? = null
 
     private val answerFlow = SimpleFlowLayout(context).apply {
         horizontalSpacing = 8.dpToPx()
@@ -153,6 +164,9 @@ class WordOrderView @JvmOverloads constructor(
 
     /**
      * Renders the current state of answer tiles and available pool tiles.
+     *
+     * When a tile was just tapped ([pendingRevealTile]), the row it moved to is
+     * scrolled into view after layout, so the changed row is never out of sight.
      */
     fun render(
         answerTiles: List<WordOrderTile>,
@@ -162,6 +176,7 @@ class WordOrderView @JvmOverloads constructor(
         val answered = answerState != null
         answerFlow.removeAllViews()
         poolFlow.removeAllViews()
+        var revealView: View? = null
 
         if (answerTiles.isEmpty() && !answered) {
             (tvEmptyPlaceholder.parent as? ViewGroup)?.removeView(tvEmptyPlaceholder)
@@ -178,10 +193,12 @@ class WordOrderView @JvmOverloads constructor(
                 } else {
                     tv.setOnClickListener {
                         Haptics.tick(it)
+                        pendingRevealTile = tile
                         onTileUnselected?.invoke(tile)
                     }
                 }
                 answerFlow.addView(tv)
+                if (tile == pendingRevealTile) revealView = tv
             }
         }
 
@@ -190,6 +207,7 @@ class WordOrderView @JvmOverloads constructor(
             if (!answered) {
                 tv.setOnClickListener {
                     Haptics.tick(it)
+                    pendingRevealTile = tile
                     onTileSelected?.invoke(tile)
                 }
             } else {
@@ -197,6 +215,15 @@ class WordOrderView @JvmOverloads constructor(
                 tv.alpha = 0.4f
             }
             poolFlow.addView(tv)
+            if (tile == pendingRevealTile) revealView = tv
+        }
+
+        pendingRevealTile = null
+        revealView?.post {
+            revealView.requestRectangleOnScreen(
+                Rect(0, 0, revealView.width, revealView.height),
+                true,
+            )
         }
     }
 

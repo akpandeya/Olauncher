@@ -587,7 +587,9 @@
     <string name="drill_round_choice" tools:ignore="MissingTranslation">Multiple choice</string>
     <string name="drill_round_typed" tools:ignore="MissingTranslation">Type the answer</string>
     <string name="drill_round_true_false" tools:ignore="MissingTranslation">True or false</string>
-    <string name="drill_round_flashcard" tools:ignore="MissingTranslation">Flashcard</string>
+    <string name="drill_round_flashcard" tools:ignore="MissingTranslation">New · take a look</string>
+    <string name="drill_round_recap" tools:ignore="MissingTranslation">Rule recap</string>
+    <string name="drill_flashcard_reveal" tools:ignore="MissingTranslation">Tap the card to reveal</string>
     <string name="drill_round_word_order" tools:ignore="MissingTranslation">Word order</string>
     <string name="drill_word_order_empty_hint" tools:ignore="MissingTranslation">Tap words below to arrange</string>
     <string name="drill_progress" tools:ignore="MissingTranslation">%1$s · %2$d of %3$d</string>
