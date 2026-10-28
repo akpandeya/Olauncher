@@ -149,6 +149,10 @@ is a weak-spot pattern in the review event log as defined in #604's spec
 (words with repeated AGAIN, drill types below threshold on first try).
 `AI_LAST_DIGEST_AT` semantics are unchanged: it updates only on success.
 
+A partial digest sets the digest timestamp from the covered words, so a weak
+word whose chunk failed is re-digested only after it gets new reviews — an
+accepted trade-off (round-3 review) that avoids duplicate digest items.
+
 ## Provider
 
 **BYOK, opt-in** (owner decision, 2026-10-26). Off by default; off works fine.
