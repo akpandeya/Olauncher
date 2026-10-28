@@ -59,17 +59,29 @@ no companion app, no sync backend, no server of our own.
 
 ## The AI contract
 
-**Request** (#596, 9.3 — `PracticeContract.buildPrompt`): each requested word
-with its saved `context`, plus the app's own drill-section list — the `DrillType`
-ids from `app/src/main/java/app/olauncher/data/store/Drill.kt`
-(`prepositions`, `pronouns`, `articles`, `plurals`, `case_endings`,
-`verb_prepositions`, `separable_verbs`, `adjective_endings`, `word_order`,
-`conjugation`, `cloze`, `passive`, `konjunktiv_ii`, `relative_pronouns`,
-`genitive`, `n_declension`, `imperative`, `werden`, `praeteritum`,
-`infinitiv_zu`, `modal_verbs`, `konjunktiv_i`) — and the JSON schema below.
+**Request** (#596, 9.3 — `PracticeContract.buildPrompt`, prompt v2 of 2026-10-28):
+each requested word with its saved `context` (JSON-quoted, so a `|` or newline
+cannot break the line) and its saved `meaning` (line omitted when blank), plus
+the app's drill-type list — the `DrillType` ids from
+`app/src/main/java/app/olauncher/data/store/Drill.kt` (`prepositions`,
+`pronouns`, `articles`, `plurals`, `case_endings`, `verb_prepositions`,
+`separable_verbs`, `adjective_endings`, `word_order`, `conjugation`, `cloze`,
+`passive`, `konjunktiv_ii`, `relative_pronouns`, `genitive`, `n_declension`,
+`imperative`, `werden`, `praeteritum`, `infinitiv_zu`, `modal_verbs`,
+`konjunktiv_i`) — and the JSON schema below.
 
-**Per word, 3 items** (owner decision, 2026-10-27): one `CLOZE` plus two other
-types from the allowed ids. Completeness is checked independently of the count:
+**Per-word type narrowing** (round 3, 2026-10-28): the word-generation paths do
+not send all 22 ids. `PracticeTypeNarrowing` maps each word to a coarse word
+class — capitalized text → noun (article, plural and case/ending types),
+infinitive-shaped text → verb (conjugation, separable, modal and related
+types) — and the prompt carries the narrowed list on the word's own `types:`
+line. An unknown word class (phrases, adjectives, short words) sends the full
+list as before. The digest keeps its explicit weak-type list unnarrowed.
+
+**Per word, 3 cards** (owner decision, 2026-10-27; relaxed 2026-10-28): one
+`cloze` plus two other types — **when only one other type fits, the third card
+is a second cloze that blanks a different form of the word** (the v2 prompt's
+anti-padding rule). Completeness is checked independently of the count:
 **every requested word id has at least 3 valid items**. A word is never dropped.
 
 **Response** — one JSON object:
@@ -78,25 +90,67 @@ types from the allowed ids. Completeness is checked independently of the count:
 {
   "items": [
     {
-      "word_id": "insistieren",
+      "word_id": 1,
       "type": "cloze",
       "prompt": "Die Arbeit ___ auf seiner Unterschrift.",
       "answer": "insistiert",
       "choices": ["insistiert", "insistieren", "insistiertest"],
+      "full": "Die Arbeit insistiert auf seiner Unterschrift.",
       "hint": "Präsens, 3. Person Singular"
     }
   ]
 }
 ```
 
-Fields: `word_id`, `type`, `prompt`, `answer`, `choices` (choice items),
-optional `hint`. `hint` must not reveal the answer (the drill hint rule, #643).
+Fields: `word_id` (numeric), `type`, `prompt`, `answer`, `choices` (choice
+items), optional `hint`, optional `full` — the prompt with the answer filled
+in. `full` exists for the answer-fits-blank filter and is used at parse time
+only: it is **not stored** in `practice_items.json` (`PracticeItemsCodec` is
+unchanged, so old items keep loading). `hint` must not reveal the answer (the
+drill hint rule, #643).
 
-**Validation and fallback:** an unknown `type` or an item that fails
+**Response format in production** (round 3, 2026-10-28): every generation
+request sends the strict JSON schema derived from the contract
+(`PracticeContract.responseSchemaJson`, shared with the benchmark harness) as
+`response_format: json_schema` — the round-2 winning configuration. On a 400
+`model_not_capable` (or a schema-induced `context_length_exceeded`) the
+generator falls back to `json_object` for the rest of the batch
+(`PracticeSchemaModes`, unit-tested).
+
+**Validation, filters and fallback:** an unknown `type` or an item that fails
 `DrillItem.validate()` becomes a cloze built from the saved `context` with the
 word blanked (#576, 12.1). Truncated or malformed JSON is rejected before any
 item is produced. The count of responses is never treated as proof of
 completeness; the check is per word id.
+
+**Quality filters** (round 3, 2026-10-28 — `PracticeFilters`, run on every item
+before it is stored; a rejected item never reaches the store):
+
+- **word_order** — the prompt's `" / "` tiles, rearranged, must spell out the
+  answer's words exactly (case and punctuation ignored); catches unsolvable
+  order drills and merged/split tiles.
+- **duplicate** — a non-cloze item whose answer equals the word's
+  already-accepted cloze answer is dropped (the conjugation-repeats-the-cloze
+  padding pattern).
+- **answer_fit** — with `full`, `prompt.replace("___", answer)` must equal the
+  full sentence (whitespace-normalized).
+- **leak** — the answer verbatim in the hint, a hint that repeats the prompt's
+  bracketed base form, or a bracket in the prompt that IS the answer
+  (`___ (kurzfristig)` → `kurzfristig`). Very short answers (1–2 chars) are
+  exempt.
+- **separable_space** — a `separable_verbs` answer containing a space (a split
+  prefix form in a main-clause item) is rejected.
+- **capitalization fix** (rejects nothing) — a prompt starting with `___`
+  capitalizes the answer's first letter (and the matching choice), so
+  sentence-initial articles are stored correctly.
+
+**Retry on missing** (round 3, background paths only): after the filters, a
+word with fewer than 3 accepted items gets its missing slots requested once —
+one small follow-up call per chunk covering the thin words, never repeated,
+within the same cap accounting (the slots were already counted when the chunk
+went out). Cloze fallbacks fill whatever is still missing. The on-demand path
+skips the retry: its ~10 s ceiling cannot fit a second call, so fallbacks fill
+there.
 
 ## Budgets
 
@@ -376,6 +430,30 @@ Mistral ran fine on the owner's plan (pay-as-you-go, no billing errors) with
 the best grounding (100 %) but too many invalid items. gpt-oss-120b is not
 usable on Melious (`context_length_exceeded` on every call, both modes).
 Round-2 spend: **€0.224** (cap €2).
+
+### Benchmark round 3 (2026-10-28): prompt v2 + quality filters
+
+The request prompt was rewritten from the 360 round-1/2 failure rows (tile
+rules, separable-verb placement, article ambiguity, unique answers, hint
+rules, JSON-quoted context, `meaning` line) and every response now passes the
+mechanical quality filters (`PracticeFilters`: word-order tiles, duplicates,
+answer-fits-blank via the optional `full` field, leak and separable checks,
+sentence-start capitalization fix) before storage. Each mode of
+glm-5.3-flash ran 3 times on the same fixture with the mode pinned
+(`AI_BENCH_SCHEMA_MODE`); the harness now writes raw + filtered CSVs with
+`choices` and `filter_reject` columns per item.
+
+| Mode | Validity % | Grounding % | Correctness proxy | €/item | p50/p95 latency | Failures | Verdict |
+|---|---|---|---|---|---|---|---|
+| glm-5.3-flash, json_object | **97.2** | 100.0 | 2.00/2 | 0.000382 | 111 s / 127 s | 0/3 | **PASS** |
+| glm-5.3-flash, json_schema | 66.7 | 100.0 | 1.93/2 | 0.000583 | 175 s / 294 s | 0/3 | FAIL |
+
+With the v2 prompt and the filters, glm-5.3-flash **passes in `json_object`
+mode** — the first passing configuration for this model. The strict schema
+made the model verbose and it returned only ~40 of 60 items per call. Full
+record, failure analysis, filter counts and the open production-mode question:
+[ai-model-decision.md](ai-model-decision.md), round 3. Recorded round-3
+spend: **€0.137** (two runs incl. judges).
 
 ## Out of scope
 

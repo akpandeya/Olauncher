@@ -76,7 +76,7 @@ class AiBenchmarkTest {
     // ---- Strict schema mode (round 2) ---------------------------------------
 
     @Test
-    fun `the strict schema covers the practice contract shape`() {
+    fun `the strict schema is the production contract schema with the full field`() {
         val schema = JSONObject(AiBenchLogic.strictSchemaJson())
         assertEquals("object", schema.getString("type"))
         assertFalse(schema.optBoolean("additionalProperties", true))
@@ -86,16 +86,18 @@ class AiBenchmarkTest {
         assertEquals("object", item.getString("type"))
         val required = item.getJSONArray("required")
         assertEquals(
-            listOf("word_id", "type", "prompt", "answer", "choices"),
+            listOf("word_id", "type", "prompt", "answer", "choices", "full"),
             (0 until required.length()).map { required.getString(it) },
         )
         val types = item.getJSONObject("properties").getJSONObject("type").getJSONArray("enum")
         assertEquals(
-            AiBenchLogic.ALLOWED_TYPES.map { it.id },
+            DrillType.values().map { it.id },
             (0 until types.length()).map { types.getString(it) },
         )
         // Strict convention: nested objects also forbid extra keys.
         assertFalse(item.optBoolean("additionalProperties", true))
+        // One source of truth: the harness cannot drift from production.
+        assertEquals(AiBenchLogic.strictSchemaJson(), PracticeContract.responseSchemaJson())
     }
 
     @Test
@@ -330,15 +332,30 @@ class AiBenchmarkTest {
         val row = BenchRow(
             run = 2, judgeId = 9, word = "Reserve", type = "cloze",
             prompt = "Die ständige ___, die sich zusammensetzt, soll anwachsen.", answer = "Reserve",
+            choices = "Reserve; Anwuchs", filterReject = "",
             contractValid = true, grounded = true, groundedOverride = "", correctness = "2",
             tokensIn = 512, tokensOut = 128, costEur = 0.000123, latencyMs = 1_234, errorKind = "",
         )
         val fields = AiBenchLogic.splitCsv(row.csvLine())
         assertEquals("Reserve", fields[2])
-        assertEquals("true", fields[6])
-        assertEquals("2", fields[9])
-        assertEquals("0.000123", fields[12])
-        assertEquals("1234", fields[13])
+        assertEquals("Reserve; Anwuchs", fields[6])
+        assertEquals("", fields[7])
+        assertEquals("true", fields[8])
+        assertEquals("2", fields[11])
+        assertEquals("0.000123", fields[14])
+        assertEquals("1234", fields[15])
+    }
+
+    @Test
+    fun `the csv header carries the choices and filter_reject columns`() {
+        val columns = AiBenchLogic.CSV_HEADER.split(",")
+        assertEquals("choices", columns[6])
+        assertEquals("filter_reject", columns[7])
+        assertEquals(columns.size, BenchRow(
+            run = 1, judgeId = null, word = "w", type = "cloze", prompt = "p", answer = "a",
+            contractValid = true, grounded = true, groundedOverride = "", correctness = "",
+            tokensIn = 0, tokensOut = 0, costEur = 0.0, latencyMs = 0, errorKind = "",
+        ).csvLine().let { AiBenchLogic.splitCsv(it) }.size)
     }
 
     @Test

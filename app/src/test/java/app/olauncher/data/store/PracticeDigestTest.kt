@@ -223,12 +223,15 @@ class PracticeDigestTest {
         )
 
         assertTrue(outcome is PracticeGeneration.Generated)
-        assertEquals(1, provider.prompts.size)
+        // One chunk call plus its retry-on-missing follow-up (both words stayed
+        // thin on one item); the follow-up prompt covers exactly the thin words.
+        assertEquals(2, provider.prompts.size)
         val prompt = provider.prompts[0]
         assertTrue(prompt.contains("Wort3"))
         assertTrue(prompt.contains("Wort5"))
-        assertTrue(prompt.contains("plurals"))
-        assertFalse(prompt.contains("prepositions"))
+        assertTrue(prompt.contains("Pick only types that fit this word: plurals\n"))
+        // The digest keeps its explicit type list: no per-word narrowing lines.
+        assertFalse(prompt.contains("\n  types:"))
         // The stored items carry the digest source and are served by rotation.
         val stored = store.all()
         assertEquals(6, stored.size)

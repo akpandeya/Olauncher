@@ -157,3 +157,72 @@ Failure analysis:
 - Correctness is still a glm-5.3 proxy score pending native-speaker owner
   review; the per-item CSVs keep the blank `correctness` override column.
 - Recorded round-2 spend: **€0.224** (cap €2).
+
+## Round 3 (2026-10-28): prompt v2, quality filters and strict-schema generation
+
+Epic 9's prompt overhaul (#561, Opus's round-3 review): the request prompt was
+rewritten from the failure patterns of the 360 round-1/2 rows (tile rules,
+separable-verb placement, article ambiguity, answer-uniqueness, hint rules,
+grounding rules, JSON-quoted context, `meaning` sent to the model) and every
+response now passes the mechanical quality filters of `PracticeFilters`
+(word_order tiles, duplicates, answer-fits-blank via the new `full` field,
+leak checks, separable-space, sentence-start capitalization fix) before an
+item is stored. Production sends the contract's strict JSON schema
+(`response_format: json_schema`, fallback to `json_object` on
+`model_not_capable`/`context_length_exceeded`), and word generation narrows the
+drill types per word (`PracticeTypeNarrowing`: nouns → article/plural/case
+types, verbs → conjugation/separable/modal types). The harness gained a
+`choices` column, `filter_reject` per raw item, raw + filtered CSVs per model,
+a pinned `AI_BENCH_SCHEMA_MODE` for mode comparisons, and its strict schema now
+delegates to `PracticeContract.responseSchemaJson` (no drift).
+
+Two harness changes the live runs forced:
+
+- **Output headroom 16k → 64k.** The v2 cards plus the `full` field and the
+  flash model's reasoning tokens pushed output past 16k (all three json_schema
+  runs of the first attempt cut off mid-JSON) and past 32k in one more run.
+- **A `full` definition in the prompt.** Without one, the model wrote `full` as
+  the *original context sentence* instead of "the prompt with its gap filled",
+  which made the answer-fit filter reject 27 items and 7 word_order items in
+  the shakedown run; with the definition the same prompt produces 1 mismatch
+  in three runs.
+
+Production change with the same evidence: `MAX_TOKENS_PER_WORD` 600 → 1200 —
+the round-3 runs measured ~375 output tokens per item (with reasoning tokens),
+so the old 600/word budget would truncate the 5-word production chunks the
+same way.
+
+### Results (3 runs × 20 words × 3 items per mode, 2026-10-28)
+
+Same fixture (20 Frontex words, tagesschau article), glm-5.3-flash, the new
+prompt, filters applied before scoring; flags as in rounds 1–2 (validity and
+grounding deterministic, correctness via the glm-5.3 proxy judge).
+
+| Mode | Validity % | Grounding % | Correctness proxy (0–2) | €/item | p50 / p95 latency | Failures | Filter rejects (of raw items) | Verdict |
+|---|---|---|---|---|---|---|---|---|
+| glm-5.3-flash + json_object | **97.2** | 100.0 | 2.00 (175 judged) | 0.000382 | 111 s / 127 s | 0/3 | leak 4, duplicate 1 (180 raw) | **PASS** |
+| glm-5.3-flash + json_schema | 66.7 | 100.0 | 1.93 (120 judged) | 0.000583 | 175 s / 294 s | 0/3 | answer_fit 1 (121 raw) | FAIL |
+
+Round-3 recorded spend: **€0.137** for the two runs above (€0.070 schema +
+€0.067 object, incl. two judge calls); ≈ €0.27 including the shakedown runs
+that found the 16k truncation and the missing `full` definition (cap €0.30).
+
+Findings:
+
+- **With the v2 prompt and filters, glm-5.3-flash passes in `json_object`
+  mode** — the first passing configuration for this model (round 1: 77.2 %,
+  round 2: 92.8 % with json_schema, round 3: 97.2 %). The filters caught 5
+  items (4 hint leaks, 1 cloze-repeat) and the completeness gap of earlier
+  rounds is gone.
+- **Strict `json_schema` hurts this model on the 20-word batch**: validity
+  66.7 %, not from rejections (only 1) but from ~20 of 60 items simply not
+  returned per call, with the highest output verbosity measured so far
+  (~22–30k tokens per call) and slower latency.
+- **Open question for the owner:** production (as specified) sends the strict
+  schema and would only fall back to `json_object` on
+  `model_not_capable`/`context_length_exceeded` — which glm-5.3-flash never
+  returns. Round 3 says the flash model's best configuration is
+  prompt v2 + `json_object`; a per-model mode preference (or json_object
+  default) is the obvious follow-up decision.
+- Correctness is still the glm-5.3 proxy score, pending native-speaker owner
+  review.

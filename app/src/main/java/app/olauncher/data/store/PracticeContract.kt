@@ -5,18 +5,68 @@ import org.json.JSONObject
 
 /**
  * The outcome of [PracticeContract.parse]: the valid AI [items], the locally built
- * [clozeFallbacks] that fill the missing slots, and the [rejected] problems.
+ * [clozeFallbacks] that fill the missing slots, the [rejected] problems, and the
+ * structured [rejections] (every dropped item with the filter that dropped it —
+ * the benchmark harness records the filter per raw item).
  */
 data class PracticeParseResult(
     val items: List<PracticeItem> = emptyList(),
     val clozeFallbacks: List<PracticeItem> = emptyList(),
     val rejected: List<String> = emptyList(),
+    val rejections: List<PracticeRejection> = emptyList(),
+    /** True when the response itself was unusable (invalid JSON or no items array). */
+    val malformed: Boolean = false,
 )
 
 /**
+ * One dropped item, structured: [filter] names what dropped it — a quality filter
+ * id ([PracticeFilters]), or `contract` (failed `DrillItem.validate`),
+ * `unknown_type`, or `word_id` (unknown or missing word id).
+ */
+data class PracticeRejection(
+    val wordId: Long?,
+    val type: DrillType?,
+    val prompt: String,
+    val answer: String,
+    val choices: List<String>,
+    val hint: String?,
+    val filter: String,
+    val reason: String,
+)
+
+/**
+ * Which `response_format` a generation request uses. Production tries strict
+ * `json_schema` first (the round-2 winning configuration, #600) and falls back to
+ * `json_object` only on the provider's capability/limit codes — the same rule the
+ * benchmark harness applies ([AiBenchLogic.SCHEMA_FALLBACK_CODES]).
+ */
+object PracticeSchemaModes {
+
+    const val JSON_SCHEMA = "json_schema"
+    const val JSON_OBJECT = "json_object"
+
+    /**
+     * Error codes that mean "this model cannot honour the strict schema": no
+     * schema support (`model_not_capable`) or a schema payload that busts the
+     * context window (`context_length_exceeded`). Any other failure is real and
+     * must be recorded, not hidden behind a mode switch.
+     */
+    val FALLBACK_ERROR_CODES = setOf("model_not_capable", "context_length_exceeded")
+
+    /**
+     * The mode to retry with after [error], or null when [current] already is
+     * `json_object` or the error is a real failure. Context-free and unit-tested.
+     */
+    fun fallbackMode(current: String, error: AiResult.Error): String? =
+        if (current == JSON_SCHEMA && error.errorCode in FALLBACK_ERROR_CODES) JSON_OBJECT else null
+}
+
+/**
  * The AI contract for practice generation (docs/design/ai-practice.md):
- * [buildPrompt] asks for 3 items per word (one CLOZE + two other drill types),
- * and [parse] validates the response so a bad response never drops a word.
+ * [buildPrompt] asks for 3 items per word (one cloze + two other drill types — a
+ * second cloze is allowed when only one other type fits), and [parse] validates the
+ * response so a bad response never drops a word: schema validation, the quality
+ * filters ([PracticeFilters]), the completeness check and the cloze fallback.
  */
 object PracticeContract {
 
@@ -27,38 +77,120 @@ object PracticeContract {
     private const val MIN_FALLBACK_STEM = 3
 
     /**
-     * The generation prompt: every requested word with its saved [Word.context], the
-     * allowed [DrillType] ids and the JSON schema, asking for [ITEMS_PER_WORD] items
-     * per word (one CLOZE + two other types). Same input gives the same text.
+     * The generation prompt (v2, 2026-10-28): every requested word with its saved
+     * context (JSON-quoted) and meaning, the allowed [DrillType] ids, the type
+     * rules and the JSON schema, asking for [ITEMS_PER_WORD] items per word. Same
+     * input gives the same text. [typesByWord] optionally narrows the allowed
+     * types per word ([PracticeTypeNarrowing]); a word without an entry picks from
+     * the full [types] list.
      */
-    fun buildPrompt(words: List<Word>, types: List<DrillType>): String {
+    fun buildPrompt(
+        words: List<Word>,
+        types: List<DrillType>,
+        typesByWord: Map<Long, List<DrillType>> = emptyMap(),
+    ): String {
         val builder = StringBuilder()
-        builder.append("You create German practice drills from saved words.\n")
+        builder.append(
+            "You write German practice cards from words a learner saved while reading. " +
+                "The learner sees only \"prompt\" and \"hint\", says the answer aloud, then sees " +
+                "\"answer\" and grades themself. Write prompts and hints in German.\n",
+        )
         builder.append("\n")
-        builder.append("For every word below, produce exactly $ITEMS_PER_WORD items: one of type \"cloze\" ")
-        builder.append("and two of the other allowed types. Ground every item in the word's saved context.\n")
+        builder.append("For every word below, write exactly $ITEMS_PER_WORD cards:\n")
+        builder.append("1. One \"cloze\": the word's context sentence with the word, in the form used there, replaced by ___.\n")
+        builder.append("2. Two cards of other types from this list. Pick only types that fit this word: ")
+        builder.append("${types.joinToString(", ") { it.id}}\n")
+        builder.append("   If only one other type fits, make the last card a second \"cloze\" that blanks a different form of the word.\n")
         builder.append("\n")
-        builder.append("Allowed types: ${types.joinToString(", ") { it.id }}\n")
+        builder.append("Rules for every card:\n")
+        builder.append("- The gap tests the saved word itself: one of its forms, or the article, ending or preposition attached to it. Never test another word in the sentence.\n")
+        builder.append("- Reuse the context sentence. You may drop whole clauses, but keep the words around the gap unchanged and invent no facts. Only if a word has no context, write one short, natural sentence.\n")
+        builder.append("- Exactly one ___ per prompt. Putting the answer into ___ must give a correct German sentence with normal capitalisation (\"Die …\" at sentence start).\n")
+        builder.append("- full: the prompt with its ___ replaced by the answer — exactly the sentence the learner reads when the gap is filled, not the original context sentence.\n")
+        builder.append("- The $ITEMS_PER_WORD cards of one word have $ITEMS_PER_WORD different answers.\n")
+        builder.append("- Neither prompt nor hint may contain the answer or spell it out (no \"bei + dem\" for \"beim\"). A base form in brackets, \"___ (anwachsen)\", is allowed only if the answer differs from it.\n")
+        builder.append("- hint: a German synonym or short definition, or tense and person (\"Präsens, 3. Person Singular\"). At most 6 words, no rule explanations.\n")
+        builder.append("- \"type\" names what the gap tests: articles → an article; plurals → a plural noun; conjugation, praeteritum, modal_verbs → a finite verb form; prepositions, verb_prepositions → a preposition; case_endings, adjective_endings, genitive, n_declension → a form whose ending is the point; any other type → its grammar point.\n")
+        builder.append("\n")
+        builder.append("Type rules:\n")
+        builder.append("- Separable verb in a main clause: the gap takes only the finite verb; the prefix stays in the prompt at the clause end. \"Das Personal ___ von 3.000 auf 6.000 an.\" → \"wächst\". After a modal or in a subordinate clause the verb is one word: \"…, weil das Personal ___.\" → \"anwächst\".\n")
+        builder.append("- articles: blank an article only if exactly one article fits (\"___ eigenes Zentrum\" → \"ein\"). If a definite and an indefinite article would both fit, write \"bestimmter Artikel\" or \"unbestimmter Artikel\" as the hint.\n")
+        builder.append("- word_order: take one main clause of 4-8 words from the context. prompt = \"Ordne: \" + its words shuffled, one word per tile, separated by \" / \". answer = exactly those tiles in the right order: same words, same spelling, nothing added, dropped, split or merged, no comma. choices = the answer plus 1-2 wrong orders of the same tiles.\n")
+        builder.append("- All other types: choices = the answer plus 1-3 wrong forms of the same word (e.g. \"weigert\", \"weigern\", \"weigerst\").\n")
         builder.append("\n")
         builder.append("Words:\n")
         for (word in words) {
-            builder.append("- word_id ${word.id}: ${word.text}")
+            builder.append("- word_id ${word.id}: ${word.text}\n")
             if (word.context.isNotBlank()) {
-                builder.append(" | context: ${word.context}")
+                builder.append("  context: ${JSONObject.quote(word.context)}\n")
             }
-            builder.append("\n")
+            if (word.meaning.isNotBlank()) {
+                builder.append("  meaning: ${word.meaning}\n")
+            }
+            val narrowed = typesByWord[word.id]
+            if (narrowed != null && narrowed.isNotEmpty()) {
+                builder.append("  types: ${narrowed.joinToString(", ") { it.id }}\n")
+            }
         }
         builder.append("\n")
         builder.append("Respond with one JSON object and nothing else:\n")
-        builder.append("{\"items\": [{\"word_id\": 1, \"type\": \"cloze\", \"prompt\": \"...\", ")
-        builder.append("\"answer\": \"...\", \"choices\": [\"...\", \"...\", \"...\"], \"hint\": \"optional\"}]}\n")
-        builder.append("\n")
-        builder.append("Rules:\n")
-        builder.append("- cloze prompts use ${DrillItem.GAP_MARKER} for the gap\n")
-        builder.append("- the answer must be one of the choices; use 2-4 distinct choices\n")
-        builder.append("- the hint is optional and must never reveal the answer\n")
-        builder.append("- every word_id from the list above gets its $ITEMS_PER_WORD items\n")
+        builder.append(
+            "{\"items\": [{\"word_id\": 1, \"type\": \"cloze\", \"prompt\": \"...\", \"answer\": \"...\", " +
+                "\"choices\": [\"...\", \"...\"], \"full\": \"...\", \"hint\": \"...\"}]}\n",
+        )
         return builder.toString()
+    }
+
+    /**
+     * The strict response schema for `response_format: json_schema`, derived from
+     * the v2 contract's response shape and shared with the benchmark harness
+     * (single source of truth). `hint` is omitted so it cannot break strictness
+     * (the parser treats it as optional); `full` is required — the answer-fits-blank
+     * filter needs it. All properties required, `additionalProperties` false, per
+     * the strict schema convention.
+     */
+    fun responseSchemaJson(): String {
+        val item = JSONObject()
+            .put("type", "object")
+            .put(
+                "properties",
+                JSONObject()
+                    .put("word_id", JSONObject().put("type", "integer"))
+                    .put(
+                        "type",
+                        JSONObject()
+                            .put("type", "string")
+                            .put("enum", JSONArray(DrillType.values().map { it.id })),
+                    )
+                    .put("prompt", JSONObject().put("type", "string"))
+                    .put("answer", JSONObject().put("type", "string"))
+                    .put(
+                        "choices",
+                        JSONObject()
+                            .put("type", "array")
+                            .put("items", JSONObject().put("type", "string")),
+                    )
+                    .put("full", JSONObject().put("type", "string")),
+            )
+            .put(
+                "required",
+                JSONArray(listOf("word_id", "type", "prompt", "answer", "choices", "full")),
+            )
+            .put("additionalProperties", false)
+        return JSONObject()
+            .put("type", "object")
+            .put(
+                "properties",
+                JSONObject().put(
+                    "items",
+                    JSONObject()
+                        .put("type", "array")
+                        .put("items", item),
+                ),
+            )
+            .put("required", JSONArray(listOf("items")))
+            .put("additionalProperties", false)
+            .toString()
     }
 
     /**
@@ -68,18 +200,26 @@ object PracticeContract {
      * fallbacks built from the saved context, so a word is never dropped. Truncated
      * or malformed JSON is rejected before any item is produced. Extra JSON keys
      * are ignored.
+     *
+     * The quality filters ([PracticeFilters]) run on every item before it is
+     * accepted; a filter-rejected item never reaches the pool. With
+     * [padFallbacks] = false the cloze fallbacks are NOT built (the caller fills
+     * the missing slots itself after a retry — see [PracticeGenerator]); the
+     * completeness gap is then visible as a per-word pool below [ITEMS_PER_WORD].
      */
     fun parse(
         json: String,
         requestedWords: List<Word>,
         model: String = "",
         source: String = PracticeItem.Source.WORD,
+        padFallbacks: Boolean = true,
     ): PracticeParseResult {
         val root = try {
             JSONObject(json)
         } catch (e: Exception) {
             return PracticeParseResult(
                 rejected = listOf("Not valid JSON (truncated or malformed); rejected before any item was produced"),
+                malformed = true,
             )
         }
 
@@ -89,75 +229,136 @@ object PracticeContract {
             pools[id] = mutableListOf()
         }
         val rejected = mutableListOf<String>()
+        val rejections = mutableListOf<PracticeRejection>()
 
         val itemsArray = root.optJSONArray("items")
         if (itemsArray == null) {
             rejected += "Response has no items array; every word falls back to a cloze"
-        } else {
-            for (i in 0 until itemsArray.length()) {
-                val obj = try {
-                    itemsArray.getJSONObject(i)
-                } catch (e: Exception) {
-                    rejected += "Item $i is not a JSON object"
-                    continue
-                }
-                val word = wordIdOf(obj)?.let { requested[it] }
-                if (word == null) {
-                    rejected += "Item $i has an unknown or missing word_id"
-                    continue
-                }
-                val typeRaw = obj.optString("type")
-                val type = DrillType.fromId(typeRaw)
-                val prompt = obj.optString("prompt")
-                val answer = obj.optString("answer")
-                val choices = choicesOf(obj)
-                val hint = optionalString(obj, "hint")
-                val check = DrillItem(
-                    id = DrillItemId(type ?: DrillType.CLOZE, "practice:${word.id}"),
-                    prompt = prompt,
-                    answer = answer,
-                    choices = choices,
-                    hint = hint,
-                ).validate()
-                when {
-                    type == null ->
-                        rejected += "Item $i: unknown type '$typeRaw' — replaced with a cloze fallback"
-                    !check.isValid ->
-                        rejected += "Item $i: ${check.problems.joinToString("; ")} — replaced with a cloze fallback"
-                    else ->
-                        pools.getValue(word.id) += PracticeItem(
-                            wordId = word.id,
-                            type = type,
-                            prompt = prompt,
-                            answer = answer,
-                            choices = choices,
-                            hint = hint,
-                            source = source,
-                            model = model.ifBlank { null },
-                        )
-                }
-            }
+            return finish(pools, requested, rejected, rejections, source, model, padFallbacks, malformed = true)
         }
 
+        for (i in 0 until itemsArray.length()) {
+            val obj = try {
+                itemsArray.getJSONObject(i)
+            } catch (e: Exception) {
+                rejected += "Item $i is not a JSON object"
+                continue
+            }
+            val echoedId = wordIdOf(obj)
+            val word = echoedId?.let { requested[it] }
+            if (word == null) {
+                rejected += "Item $i has an unknown or missing word_id"
+                rejections += PracticeRejection(
+                    wordId = echoedId, type = DrillType.fromId(obj.optString("type")),
+                    prompt = obj.optString("prompt"), answer = obj.optString("answer"),
+                    choices = choicesOf(obj), hint = optionalString(obj, "hint"),
+                    filter = "word_id", reason = "unknown or missing word_id",
+                )
+                continue
+            }
+            val typeRaw = obj.optString("type")
+            val type = DrillType.fromId(typeRaw)
+            val prompt = obj.optString("prompt")
+            val answer = obj.optString("answer")
+            val choices = choicesOf(obj)
+            val hint = optionalString(obj, "hint")
+            val full = optionalString(obj, "full")
+            // Capitalization fix first (a sentence-initial gap capitalizes the
+            // answer); the matching choice is fixed with it, so the validated
+            // and stored item keeps answer ∈ choices.
+            val fixedAnswer = PracticeFilters.fixCapitalization(prompt, answer)
+            val fixedChoices = if (fixedAnswer != answer) choices.map { if (it == answer) fixedAnswer else it } else choices
+            val check = DrillItem(
+                id = DrillItemId(type ?: DrillType.CLOZE, "practice:${word.id}"),
+                prompt = prompt,
+                answer = fixedAnswer,
+                choices = fixedChoices,
+                hint = hint,
+            ).validate()
+            if (type == null) {
+                rejected += "Item $i: unknown type '$typeRaw' — replaced with a cloze fallback"
+                rejections += PracticeRejection(
+                    wordId = word.id, type = null, prompt = prompt, answer = answer,
+                    choices = choices, hint = hint, filter = "unknown_type",
+                    reason = "unknown type '$typeRaw'",
+                )
+                continue
+            }
+            if (!check.isValid) {
+                rejected += "Item $i: ${check.problems.joinToString("; ")} — replaced with a cloze fallback"
+                rejections += PracticeRejection(
+                    wordId = word.id, type = type, prompt = prompt, answer = fixedAnswer,
+                    choices = fixedChoices, hint = hint, filter = "contract",
+                    reason = check.problems.joinToString("; "),
+                )
+                continue
+            }
+            val clozeAnswers = pools.getValue(word.id)
+                .filter { it.type == DrillType.CLOZE }
+                .map { it.answer }
+                .toSet()
+            val verdict = PracticeFilters.check(type, prompt, fixedAnswer, hint, full, clozeAnswers)
+            if (verdict.rejected) {
+                rejected += "Item $i: filter '${verdict.filter}' — ${verdict.reason}"
+                rejections += PracticeRejection(
+                    wordId = word.id, type = type, prompt = prompt, answer = fixedAnswer,
+                    choices = fixedChoices, hint = hint, filter = verdict.filter!!,
+                    reason = verdict.reason ?: "",
+                )
+                continue
+            }
+            pools.getValue(word.id) += PracticeItem(
+                wordId = word.id,
+                type = type,
+                prompt = prompt,
+                answer = fixedAnswer,
+                choices = fixedChoices,
+                hint = hint,
+                source = source,
+                model = model.ifBlank { null },
+            )
+        }
+
+        return finish(pools, requested, rejected, rejections, source, model, padFallbacks, malformed = false)
+    }
+
+    /** Builds the result: fallback padding (unless [padFallbacks]) plus the lists. */
+    private fun finish(
+        pools: LinkedHashMap<Long, MutableList<PracticeItem>>,
+        requested: Map<Long, Word>,
+        rejected: List<String>,
+        rejections: List<PracticeRejection>,
+        source: String,
+        model: String,
+        padFallbacks: Boolean,
+        malformed: Boolean,
+    ): PracticeParseResult {
         val items = mutableListOf<PracticeItem>()
         val fallbacks = mutableListOf<PracticeItem>()
         for ((wordId, pool) in pools) {
             items += pool
             val missing = ITEMS_PER_WORD - pool.size
-            if (missing > 0) {
-                fallbacks += clozeFallbacks(requested.getValue(wordId), missing, source)
+            if (padFallbacks && missing > 0) {
+                fallbacks += fallbacksFor(requested.getValue(wordId), missing, source)
             }
         }
-        return PracticeParseResult(items = items, clozeFallbacks = fallbacks, rejected = rejected)
+        return PracticeParseResult(
+            items = items,
+            clozeFallbacks = fallbacks,
+            rejected = rejected,
+            rejections = rejections,
+            malformed = malformed,
+        )
     }
 
     /**
      * Builds one cloze fallback per missing slot from the saved context, with the
      * word blanked. The choices rotate per slot so the pool does not hold three
      * identical cards. A word with blank text gets a deterministic minimal card —
-     * the word is never dropped (review R1 #9).
+     * the word is never dropped (review R1 #9). Public so the generator can fill
+     * whatever stays missing after its retry-on-missing pass.
      */
-    private fun clozeFallbacks(word: Word, count: Int, source: String): List<PracticeItem> {
+    fun fallbacksFor(word: Word, count: Int, source: String): List<PracticeItem> {
         val base = clozeFallback(word, source)
         return (0 until count).map { slot ->
             if (slot == 0) base
