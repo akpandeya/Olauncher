@@ -5,6 +5,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.json.JSONObject
 
 /**
  * Canned-fixture tests for the deterministic parts of the benchmark harness
@@ -57,6 +58,53 @@ class AiBenchmarkTest {
             assertTrue("price for $model", AiBenchLogic.PRICES.containsKey(model))
         }
         assertTrue(AiBenchLogic.PRICES.containsKey("glm-5.3"))
+    }
+
+    @Test
+    fun `the round-2 matrix carries all seven candidates with the judge priced out of candidates`() {
+        assertEquals(
+            listOf(
+                "glm-5.3-flash", "glm-5.3", "deepseek-v4.1-flash", "deepseek-v4.1-flash-1017",
+                "mistral-small-4-119b-instruct", "gpt-oss-120b", "gemma-4-31b",
+            ),
+            AiBenchLogic.CANDIDATE_MODELS,
+        )
+        // glm-5.3 is both the judge and, since round 2, also a candidate.
+        assertTrue(AiBenchLogic.PRICES.getValue("gpt-oss-120b").outputPerMillion < 1.0)
+    }
+
+    // ---- Strict schema mode (round 2) ---------------------------------------
+
+    @Test
+    fun `the strict schema covers the practice contract shape`() {
+        val schema = JSONObject(AiBenchLogic.strictSchemaJson())
+        assertEquals("object", schema.getString("type"))
+        assertFalse(schema.optBoolean("additionalProperties", true))
+        val items = schema.getJSONObject("properties").getJSONObject("items")
+        assertEquals("array", items.getString("type"))
+        val item = items.getJSONObject("items")
+        assertEquals("object", item.getString("type"))
+        val required = item.getJSONArray("required")
+        assertEquals(
+            listOf("word_id", "type", "prompt", "answer", "choices"),
+            (0 until required.length()).map { required.getString(it) },
+        )
+        val types = item.getJSONObject("properties").getJSONObject("type").getJSONArray("enum")
+        assertEquals(
+            AiBenchLogic.ALLOWED_TYPES.map { it.id },
+            (0 until types.length()).map { types.getString(it) },
+        )
+        // Strict convention: nested objects also forbid extra keys.
+        assertFalse(item.optBoolean("additionalProperties", true))
+    }
+
+    @Test
+    fun `schema fallback fires on capability and context codes only`() {
+        fun error(code: String?) = AiResult.Error(AiResult.ErrorKind.BAD_RESPONSE, "m", errorCode = code)
+        assertTrue(AiBenchLogic.shouldFallBackFromSchema(error("model_not_capable")))
+        assertTrue(AiBenchLogic.shouldFallBackFromSchema(error("context_length_exceeded")))
+        assertFalse("a truncation is a real failure, not a mode problem", AiBenchLogic.shouldFallBackFromSchema(error("truncated")))
+        assertFalse(AiBenchLogic.shouldFallBackFromSchema(error(null)))
     }
 
     @Test
@@ -214,11 +262,41 @@ class AiBenchmarkTest {
     fun `an unscored model fails the correctness threshold rather than passing silently`() {
         val rows = List(60) { row(valid = true, grounded = true, correctness = "") }
         val summary = AiBenchLogic.summarize(
-            model = "m", runsPlanned = 1, totalCalls = 1, failedCalls = 0,
+            model = "m", runsPlanned = 1, totalCalls = 1, failedCalls = 1,
             rows = rows, latenciesMs = listOf(1L), costEur = 0.0, budgetAborted = false,
         )
         assertNull(summary.meanCorrectness)
         assertEquals("FAIL", summary.verdict)
+    }
+
+    @Test
+    fun `a billing-unavailable model is recorded as unavailable not as a quality verdict`() {
+        val summary = AiBenchLogic.summarize(
+            model = "m", runsPlanned = 3, totalCalls = 1, failedCalls = 1,
+            rows = emptyList(), latenciesMs = emptyList(), costEur = 0.0, budgetAborted = false,
+            schemaMode = AiBenchLogic.SCHEMA_JSON_SCHEMA, billingUnavailable = true,
+        )
+        assertEquals("UNAVAILABLE_BILLING", summary.verdict)
+        assertTrue(summary.notes.contains("pay-as-you-go only"))
+        // It can never win the recommendation: cheapestPassing takes PASS rows only.
+        assertNull(AiBenchLogic.cheapestPassing(listOf(summary)))
+    }
+
+    @Test
+    fun `schema mode and notes round-trip through the summary csv`() {
+        val summary = AiBenchLogic.summarize(
+            model = "m", runsPlanned = 3, totalCalls = 3, failedCalls = 0,
+            rows = List(60) { row(valid = true, correctness = "2") }, latenciesMs = listOf(1L),
+            costEur = 0.0, budgetAborted = false,
+            schemaMode = AiBenchLogic.SCHEMA_JSON_SCHEMA,
+        )
+        val parsed = AiBenchLogic.SummaryRow.parse(summary.csvLine)
+        assertEquals(AiBenchLogic.SCHEMA_JSON_SCHEMA, parsed.schemaMode)
+        assertEquals("", parsed.notes)
+        // A fallback note with a comma survives the escape.
+        val fallback = summary.copy(schemaMode = AiBenchLogic.SCHEMA_JSON_OBJECT, notes = "fell back after model_not_capable, run 1")
+        assertEquals(fallback.notes, AiBenchLogic.SummaryRow.parse(fallback.csvLine).notes)
+        assertEquals(AiBenchLogic.SCHEMA_JSON_OBJECT, AiBenchLogic.SummaryRow.parse(fallback.csvLine).schemaMode)
     }
 
     @Test

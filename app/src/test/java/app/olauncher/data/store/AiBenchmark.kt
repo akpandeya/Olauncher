@@ -26,10 +26,19 @@ import kotlin.math.ceil
  * judge model [JUDGE_MODEL] via the same OpenAI-compatible endpoint, pending
  * native-speaker owner review.
  *
+ * Round 2 (owner directive, 2026-10-28): TIME IS NO LONGER A CONSTRAINT —
+ * generation is a background process and quality is the only gate. Latency is
+ * recorded informationally and never affects the verdict. Each candidate tries
+ * strict `response_format: json_schema` first ([AiBenchLogic.strictSchemaJson]);
+ * a 400 `model_not_capable` (or a schema-induced `context_length_exceeded`)
+ * falls back to `json_object` for the whole model and the fallback is recorded.
+ * A billing error (429 `billing_error` / 402) marks the model "not available on
+ * the owner's current plan (pay-as-you-go only)" and the benchmark moves on.
+ *
  * Key handling: read from the environment only (`AI_BENCH_KEY`, falling back to
  * `MELIOUS_API_KEY`) — never printed, logged, committed or written to a file. Budget
  * guard: estimated cost is logged per call before it is made; a model whose running
- * total would exceed the cap (default EUR 1) is aborted mid-run.
+ * total would exceed the cap (default EUR 2) is aborted mid-run.
  */
 class AiBenchmark {
 
@@ -53,11 +62,10 @@ class AiBenchmark {
             ?.split(',')?.map { it.trim() }?.filter { it.isNotBlank() }
             ?: AiBenchLogic.CANDIDATE_MODELS
         val runs = System.getenv("AI_BENCH_RUNS")?.toIntOrNull() ?: 3
-        val capEur = System.getenv("AI_BENCH_CAP_EUR")?.toDoubleOrNull() ?: 1.0
+        val capEur = System.getenv("AI_BENCH_CAP_EUR")?.toDoubleOrNull() ?: DEFAULT_CAP_EUR
         val outDir = outDir().apply { mkdirs() }
 
         var spentEur = 0.0
-        var outOfCredits = false
         val summaries = mutableListOf<String>()
 
         for (model in models) {
@@ -74,6 +82,8 @@ class AiBenchmark {
             var totalCalls = 0
             var modelCostEur = 0.0
             var budgetAborted = false
+            var billingUnavailable = false
+            var schemaMode = AiBenchLogic.SCHEMA_JSON_SCHEMA
             val prompt = AiBenchLogic.buildGenerationPrompt(fixture.words)
 
             run@ for (run in 1..runs) {
@@ -84,12 +94,36 @@ class AiBenchmark {
                     budgetAborted = true
                     break@run
                 }
-                totalCalls++
-                val start = System.nanoTime()
-                val result = runBlocking {
-                    benchProvider(model, key).complete(AiRequest(prompt = prompt, maxTokens = GEN_MAX_TOKENS))
+                // Strict schema first; a model that rejects it (or whose context the
+                // schema payload busts) falls back to json_object for the whole model.
+                var result: AiResult
+                var latencyMs: Long
+                while (true) {
+                    val request = AiRequest(
+                        prompt = prompt,
+                        maxTokens = GEN_MAX_TOKENS,
+                        jsonSchema = if (schemaMode == AiBenchLogic.SCHEMA_JSON_SCHEMA) AiBenchLogic.strictSchemaJson() else null,
+                    )
+                    val start = System.nanoTime()
+                    val attempt = runBlocking {
+                        benchProvider(model, key).complete(request)
+                    }
+                    latencyMs = (System.nanoTime() - start) / 1_000_000
+                    val schemaRejected = attempt is AiResult.Error &&
+                        schemaMode == AiBenchLogic.SCHEMA_JSON_SCHEMA &&
+                        AiBenchLogic.shouldFallBackFromSchema(attempt)
+                    if (schemaRejected && attempt is AiResult.Error) {
+                        println(
+                            "bench: model $model rejected strict json_schema (${attempt.errorCode ?: "unknown"}) — " +
+                                "falling back to json_object for all runs",
+                        )
+                        schemaMode = AiBenchLogic.SCHEMA_JSON_OBJECT
+                        continue
+                    }
+                    result = attempt
+                    break
                 }
-                val latencyMs = (System.nanoTime() - start) / 1_000_000
+                totalCalls++
                 when (result) {
                     is AiResult.Error -> {
                         failedCalls++
@@ -98,10 +132,10 @@ class AiBenchmark {
                             run = run, judgeId = null, word = "RUN_FAILED", type = "", prompt = "", answer = "",
                             contractValid = false, grounded = false, groundedOverride = "", correctness = "",
                             tokensIn = 0, tokensOut = 0, costEur = 0.0, latencyMs = latencyMs,
-                            errorKind = result.kind.name,
+                            errorKind = result.kind.name + (result.errorCode?.let { ":$it" } ?: ""),
                         )
                         if (result.kind == AiResult.ErrorKind.BILLING) {
-                            outOfCredits = true
+                            billingUnavailable = true
                             break@run
                         }
                     }
@@ -124,16 +158,20 @@ class AiBenchmark {
                 }
             }
 
+            if (billingUnavailable) {
+                println("bench: model $model not available on the owner's current plan (pay-as-you-go only) — recorded, moving on")
+            }
+
             val summary = AiBenchLogic.summarize(
                 model = model, runsPlanned = runs, totalCalls = totalCalls, failedCalls = failedCalls,
                 rows = rows, latenciesMs = latencies, costEur = modelCostEur, budgetAborted = budgetAborted,
+                schemaMode = schemaMode, billingUnavailable = billingUnavailable,
             )
             summaries += summary.csvLine
             File(outDir, "$model.csv").writeText(rows.joinToString("\n", prefix = AiBenchLogic.CSV_HEADER + "\n") { it.csvLine() })
             println(summary.report)
-            if (outOfCredits) {
-                println("bench: out of credits (BILLING) — stopping the benchmark early")
-                break
+            if (billingUnavailable) {
+                println("bench: billing-unavailable model skipped — continuing with the remaining candidates")
             }
         }
 
@@ -267,6 +305,8 @@ class AiBenchmark {
         /** 20 words x 3 items overflow the 4k default: the first live run truncated. */
         const val GEN_MAX_TOKENS = 16_384
         const val JUDGE_OUT_TOKENS = 8_192
+        /** Round-2 cap: 7 candidates incl. pricier mid-tier models (owner, 2026-10-28). */
+        const val DEFAULT_CAP_EUR = 2.0
     }
 }
 
@@ -311,17 +351,97 @@ data class BenchRow(
  */
 object AiBenchLogic {
 
-    /** The three 9.7 candidates (owner decision, 2026-10-27), in benchmark order. */
-    val CANDIDATE_MODELS = listOf("glm-5.3-flash", "deepseek-v4-flash-0731", "gemma-4-31b")
+    /**
+     * The round-2 candidate matrix (owner directive, 2026-10-28), in benchmark
+     * order. Time is no longer a constraint — quality is the only gate.
+     */
+    val CANDIDATE_MODELS = listOf(
+        "glm-5.3-flash",
+        "glm-5.3",
+        "deepseek-v4.1-flash",
+        "deepseek-v4.1-flash-1017",
+        "mistral-small-4-119b-instruct",
+        "gpt-oss-120b",
+        "gemma-4-31b",
+    )
 
-    /** Per-million-euro prices from https://melious.ai/hub/models, read 2026-10-27. */
+    /** Per-million-euro prices from https://melious.ai/hub/models; round-1
+     *  candidates kept so their runs stay reproducible via `AI_BENCH_MODELS`. */
     val PRICES = mapOf(
         "glm-5.3-flash" to ModelPrice(0.10, 0.40),
-        "deepseek-v4-flash-0731" to ModelPrice(0.10, 0.25),
-        "gemma-4-31b" to ModelPrice(0.10, 0.30),
-        // The proxy judge is not a candidate; its cost is still part of the budget.
         "glm-5.3" to ModelPrice(1.00, 3.00),
+        "deepseek-v4.1-flash" to ModelPrice(0.20, 1.00),
+        "deepseek-v4.1-flash-1017" to ModelPrice(0.30, 1.20),
+        "mistral-small-4-119b-instruct" to ModelPrice(0.50, 2.10),
+        "gpt-oss-120b" to ModelPrice(0.09, 0.45),
+        "gemma-4-31b" to ModelPrice(0.10, 0.30),
+        // Round-1 candidates (2026-10-27) kept for reproducibility.
+        "deepseek-v4-flash-0731" to ModelPrice(0.10, 0.25),
+        // The proxy judge is not a candidate; its cost is still part of the budget.
     )
+
+    /** Response-format modes, as recorded in the summary's `schema_mode` column. */
+    const val SCHEMA_JSON_SCHEMA = "json_schema"
+    const val SCHEMA_JSON_OBJECT = "json_object"
+
+    /**
+     * Error codes that move a candidate from strict `json_schema` to `json_object`:
+     * `model_not_capable` (no schema support) and `context_length_exceeded` when the
+     * schema payload itself busts the window. Any other failure is real and recorded.
+     */
+    val SCHEMA_FALLBACK_CODES = setOf("model_not_capable", "context_length_exceeded")
+
+    /** Strict `json_schema` for the practice contract: 60 items of known shape.
+     *  All object properties are required and `additionalProperties` is false, per
+     *  the strict schema convention; `hint` is omitted so it cannot break strictness
+     *  (the parser treats it as optional). */
+    fun strictSchemaJson(): String {
+        val item = JSONObject()
+            .put("type", "object")
+            .put(
+                "properties",
+                JSONObject()
+                    .put("word_id", JSONObject().put("type", "integer"))
+                    .put(
+                        "type",
+                        JSONObject()
+                            .put("type", "string")
+                            .put("enum", JSONArray(ALLOWED_TYPES.map { it.id })),
+                    )
+                    .put("prompt", JSONObject().put("type", "string"))
+                    .put("answer", JSONObject().put("type", "string"))
+                    .put(
+                        "choices",
+                        JSONObject()
+                            .put("type", "array")
+                            .put("items", JSONObject().put("type", "string")),
+                    ),
+            )
+            .put("required", JSONArray(listOf("word_id", "type", "prompt", "answer", "choices")))
+            .put("additionalProperties", false)
+        return JSONObject()
+            .put("type", "object")
+            .put(
+                "properties",
+                JSONObject().put(
+                    "items",
+                    JSONObject()
+                        .put("type", "array")
+                        .put("items", item),
+                ),
+            )
+            .put("required", JSONArray(listOf("items")))
+            .put("additionalProperties", false)
+            .toString()
+    }
+
+    /**
+     * A strict-schema error means "fall back to json_object" only for the known
+     * capability/limit codes in [SCHEMA_FALLBACK_CODES]; everything else is a real
+     * failure that must be recorded, not hidden behind a mode switch.
+     */
+    fun shouldFallBackFromSchema(error: AiResult.Error): Boolean =
+        error.errorCode in SCHEMA_FALLBACK_CODES
 
     /** Rubric thresholds (owner, 2026-10-27): cheapest model clearing all three wins. */
     const val THRESHOLD_VALIDITY_PCT = 95.0
@@ -329,7 +449,7 @@ object AiBenchLogic {
     const val THRESHOLD_GROUNDING_PCT = 90.0
 
     const val CSV_HEADER = "run,judge_id,word,type,prompt,answer,contract_valid,grounded,grounded_override,correctness,tokens_in,tokens_out,cost,latency_ms,error_kind"
-    const val SUMMARY_HEADER = "model,runs,calls,failed_calls,failure_rate,validity_pct,grounding_pct,mean_correctness_proxy,cost_per_item_eur,total_cost_eur,p50_latency_ms,p95_latency_ms,verdict"
+    const val SUMMARY_HEADER = "model,runs,calls,failed_calls,failure_rate,validity_pct,grounding_pct,mean_correctness_proxy,cost_per_item_eur,total_cost_eur,p50_latency_ms,p95_latency_ms,verdict,schema_mode,notes"
 
     /** Allowed drill types for generated practice (one CLOZE + two others per word). */
     val ALLOWED_TYPES = listOf(
@@ -486,6 +606,8 @@ object AiBenchLogic {
         val p95LatencyMs: Long,
         val verdict: String,
         val budgetAborted: Boolean,
+        val schemaMode: String = "",
+        val notes: String = "",
     ) {
         val csvLine: String
             get() = listOf(
@@ -497,7 +619,7 @@ object AiBenchLogic {
                 "%.6f".format(costPerItemEur),
                 "%.6f".format(totalCostEur),
                 p50LatencyMs.toString(), p95LatencyMs.toString(),
-                verdict,
+                verdict, schemaMode, notes,
             ).joinToString(",") { csvEscape(it) }
 
         val report: String
@@ -505,10 +627,11 @@ object AiBenchLogic {
                 "grounding ${"%.1f".format(groundingPct)}% (>= $THRESHOLD_GROUNDING_PCT), " +
                 "correctness proxy ${meanCorrectness?.let { "%.2f".format(it) } ?: "n/a"} of 2 (>= $THRESHOLD_CORRECTNESS), " +
                 "EUR/item ${"%.6f".format(costPerItemEur)}, p50 ${p50LatencyMs}ms, p95 ${p95LatencyMs}ms, " +
-                "failures $failedCalls/$calls, verdict $verdict"
+                "failures $failedCalls/$calls, schema $schemaMode, verdict $verdict" +
+                (if (notes.isBlank()) "" else " — $notes")
 
         companion object {
-            /** Inverse of [csvLine], tolerant of the optional correctness column. */
+            /** Inverse of [csvLine], tolerant of the optional trailing columns. */
             fun parse(line: String): SummaryRow {
                 val cols = splitCsv(line)
                 fun col(i: Int) = cols.getOrElse(i) { "" }
@@ -527,6 +650,8 @@ object AiBenchLogic {
                     p95LatencyMs = col(11).toLongOrNull() ?: 0L,
                     verdict = col(12),
                     budgetAborted = false,
+                    schemaMode = col(13),
+                    notes = col(14),
                 )
             }
         }
@@ -541,6 +666,8 @@ object AiBenchLogic {
         latenciesMs: List<Long>,
         costEur: Double,
         budgetAborted: Boolean,
+        schemaMode: String = SCHEMA_JSON_OBJECT,
+        billingUnavailable: Boolean = false,
     ): SummaryRow {
         val expected = totalCalls * WORDS_PER_RUN * PracticeContract.ITEMS_PER_WORD
         val validItems = rows.count { it.contractValid }
@@ -550,6 +677,7 @@ object AiBenchLogic {
         val scored = rows.mapNotNull { it.correctness.toDoubleOrNull() }
         val meanCorrectness = if (scored.isEmpty()) null else scored.average()
         val verdict = when {
+            billingUnavailable -> "UNAVAILABLE_BILLING"
             budgetAborted -> "ABORTED_BUDGET"
             validityPct >= THRESHOLD_VALIDITY_PCT &&
                 groundingPct >= THRESHOLD_GROUNDING_PCT &&
@@ -572,6 +700,8 @@ object AiBenchLogic {
             p95LatencyMs = percentile(sorted, 0.95),
             verdict = verdict,
             budgetAborted = budgetAborted,
+            schemaMode = schemaMode,
+            notes = if (billingUnavailable) "not available on the owner's current plan (pay-as-you-go only)" else "",
         )
     }
 
@@ -679,7 +809,9 @@ private class LongTimeoutConnection(private val real: HttpURLConnection) : HttpU
     override fun usingProxy(): Boolean = real.usingProxy()
 
     companion object {
-        /** 60 items of German practice text can take minutes on slower models. */
-        const val READ_TIMEOUT_MS = 300_000
+        /** Round 2 (owner, 2026-10-28): time is no longer a constraint — one
+         *  60-item generation may take minutes, so the harness waits 10 minutes
+         *  and records latency informationally instead of failing on it. */
+        const val READ_TIMEOUT_MS = 600_000
     }
 }

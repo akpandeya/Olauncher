@@ -1,0 +1,8 @@
+{
+  "error": {
+    "message": "Model does not support response_format json_schema.",
+    "type": "invalid_request_error",
+    "param": null,
+    "code": "model_not_capable"
+  }
+}

@@ -21,6 +21,13 @@ data class AiRequest(
     val prompt: String,
     /** Ask for a JSON object response (the practice contract is JSON). */
     val jsonMode: Boolean = true,
+    /**
+     * Optional strict JSON schema, JSON-encoded. When set, the request asks for
+     * `response_format: json_schema` instead of `json_object`; providers without
+     * the capability reject it with 400 `model_not_capable`, and the caller can
+     * fall back to [jsonMode] (benchmark round 2, #600).
+     */
+    val jsonSchema: String? = null,
     val maxTokens: Int = DEFAULT_MAX_TOKENS,
     /** Socket read timeout in ms; null uses the provider's default. */
     val readTimeoutMs: Int? = null,
@@ -47,12 +54,17 @@ sealed class AiResult {
     /**
      * [ErrorKind.RATE_LIMIT] is ordinary throttling: backing off and retrying can
      * fix it. [ErrorKind.BILLING] means the account's prepaid credits are exhausted
-     * (Melious: 429 with type "billing_error") — retrying cannot fix it, the user
-     * must top up, so it is distinct from [ErrorKind.AUTH].
+     * (Melious: 429 with type "billing_error", or HTTP 402) — retrying cannot fix
+     * it, the user must top up, so it is distinct from [ErrorKind.AUTH].
+     *
+     * [errorCode] carries the provider error envelope's `code` when present (for
+     * example `model_not_capable` on a strict-schema request); it lets callers
+     * react to a specific failure mode without scraping [message] text.
      */
     data class Error(
         val kind: ErrorKind,
         val message: String,
+        val errorCode: String? = null,
     ) : AiResult()
 
     enum class ErrorKind { AUTH, RATE_LIMIT, NETWORK, BAD_RESPONSE, SERVER, BILLING }

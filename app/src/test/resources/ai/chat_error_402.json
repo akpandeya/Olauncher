@@ -1,0 +1,8 @@
+{
+  "error": {
+    "message": "Payment required; top up your account.",
+    "type": "billing_error",
+    "param": null,
+    "code": "billing_insufficient_balance"
+  }
+}
