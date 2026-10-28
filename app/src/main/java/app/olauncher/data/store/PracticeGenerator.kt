@@ -186,16 +186,17 @@ class PracticeGenerator(
 
     /**
      * The chunk loop; the mutex makes the cap check and the sent-counter atomic.
-     * Each request tries strict `json_schema` first ([PracticeSchemaModes],
-     * [PracticeContract.responseSchemaJson] — the round-2 winning configuration)
-     * and falls back to `json_object` on the provider's capability codes. When
-     * [allowRetry], a word that ends up with fewer than [PracticeContract.ITEMS_PER_WORD]
-     * accepted items after the quality filters gets its missing slots requested
-     * once: one small follow-up call per chunk covering the thin words (never
-     * repeated), within the same cap accounting — each thin word's slot was
-     * already counted when the chunk went out, so the follow-up adds calls, not
-     * cap counts, and is bounded by one per word per run. Cloze fallbacks fill
-     * whatever is still missing.
+     * Each request starts at the model's measured-best response format
+     * ([PracticeSchemaModes.initialMode]: glm-5.3-flash in `json_object` — the
+     * round-3 winning configuration — everything else in strict `json_schema`)
+     * and falls back to `json_object` on the provider's capability codes
+     * ([PracticeSchemaModes]). When [allowRetry], a word that ends up with fewer
+     * than [PracticeContract.ITEMS_PER_WORD] accepted items after the quality
+     * filters gets its missing slots requested once: one small follow-up call
+     * per chunk covering the thin words (never repeated), within the same cap
+     * accounting — each thin word's slot was already counted when the chunk went
+     * out, so the follow-up adds calls, not cap counts, and is bounded by one
+     * per word per run. Cloze fallbacks fill whatever is still missing.
      */
     private suspend fun generateLocked(
         words: List<Word>,
@@ -229,11 +230,13 @@ class PracticeGenerator(
         for (chunk in batch.chunked(WORDS_PER_REQUEST)) {
             // The request is billed once its body is written — timeouts and
             // non-OK replies included — so the cap counts the words at send
-            // time, not only on a parsed response (review R1 #2).
+            // time, not only on a parsed response (review R1 #2). The cap
+            // counts WORDS (chunk.size), never tokens.
             prefs.recordAiWordsSent(chunk.size, today.toEpochDay())
-            // Strict schema first; a model that rejects it falls back to
-            // json_object for the rest of the batch ([PracticeSchemaModes]).
-            var schemaMode = PracticeSchemaModes.JSON_SCHEMA
+            // The model's measured-best mode first; a model that rejects the
+            // strict schema falls back to json_object for the rest of the batch
+            // ([PracticeSchemaModes]).
+            var schemaMode = PracticeSchemaModes.initialMode(model)
             val result: AiResult
             while (true) {
                 val request = AiRequest(
@@ -314,6 +317,13 @@ class PracticeGenerator(
      * the missing slots are taken from the follow-up response; a failed or junk
      * follow-up is ignored (the cloze fallbacks fill). Runs only on the
      * background paths ([allowRetry]); the on-demand ~10 s ceiling cannot fit it.
+     *
+     * The retry prompt still asks for the cloze first, so the response's first
+     * item is usually a second copy of the word's existing cloze (round-3 review
+     * condition 3): a word that already has an accepted cloze therefore skips
+     * CLOZE items here, and every candidate is duplicate-checked against the
+     * word's whole accepted pool from the first call — not just within the
+     * retry response, which [PracticeContract.parse] cannot see.
      */
     private suspend fun retryMissingSlots(
         chunk: List<Word>,
@@ -339,10 +349,18 @@ class PracticeGenerator(
         val parsed = PracticeContract.parse(result.text, thin, model, source, padFallbacks = false)
         val fresh = mutableListOf<PracticeItem>()
         for (word in thin) {
-            val have = accepted.count { it.wordId == word.id } + fresh.count { it.wordId == word.id }
-            val missing = PracticeContract.ITEMS_PER_WORD - have
+            val pool = accepted.filter { it.wordId == word.id } + fresh.filter { it.wordId == word.id }
+            val missing = PracticeContract.ITEMS_PER_WORD - pool.size
             if (missing <= 0) continue
-            fresh += parsed.items.filter { it.wordId == word.id }.take(missing)
+            val hasCloze = pool.any { it.type == DrillType.CLOZE }
+            val poolAnswers = pool.map { PracticeFilters.normalize(it.answer) }.toSet()
+            fresh += parsed.items
+                .filter { it.wordId == word.id }
+                // The word already has its cloze: a second copy repeats the card.
+                .filter { !(hasCloze && it.type == DrillType.CLOZE) }
+                // A repeat of any accepted answer adds no new card.
+                .filter { PracticeFilters.normalize(it.answer) !in poolAnswers }
+                .take(missing)
         }
         return fresh
     }
@@ -383,13 +401,15 @@ class PracticeGenerator(
         const val WORDS_PER_REQUEST = 5
 
         /**
-         * Output tokens per word. Round 3 (2026-10-28): raised from 600 — the v2
-         * prompt's longer cards plus the `full` field and the flash model's
-         * reasoning tokens measured ~375 output tokens per item in the round-3
-         * benchmark, so 600 per word (3 items) cut chunks off mid-JSON and a
-         * cut-off chunk is a billed BAD_RESPONSE (review R1 #1).
+         * Output tokens per word. Round-3 final review (2026-10-28): raised from
+         * 1200 — the passing json_object benchmark run measured 34,849–38,434
+         * output tokens for 60 items, about 580–640 per item or 1,750–1,920 per
+         * word, so the old 1,200/word budget cut real chunks off mid-JSON and a
+         * cut-off chunk is a billed BAD_RESPONSE (review condition 2). The
+         * daily word cap is untouched: it counts words ([generateLocked] sends
+         * `chunk.size`), never tokens.
          */
-        const val MAX_TOKENS_PER_WORD = 1200
+        const val MAX_TOKENS_PER_WORD = 2400
 
         /** Serializes every generation call app-wide (both paths, all instances). */
         private val generationMutex = Mutex()

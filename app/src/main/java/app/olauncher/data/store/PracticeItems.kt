@@ -26,6 +26,13 @@ data class PracticeItem(
     val source: String? = null,
     val model: String? = null,
     val createdAt: Long = 0,
+    /**
+     * The model's full sentence (prompt with the gap filled), kept only in memory:
+     * the quality filters consume it at parse time and the benchmark CSV records
+     * it, but [PracticeItemsCodec] never persists it — the stored card stays
+     * prompt + hint + answer + choices.
+     */
+    val full: String? = null,
 ) {
     object Source {
         const val WORD = "word"

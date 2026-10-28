@@ -108,8 +108,8 @@ object PracticeFilters {
      */
     private fun answerFit(prompt: String, answer: String, full: String?): Verdict? {
         if (full.isNullOrBlank() || !prompt.contains(DrillItem.GAP_MARKER)) return null
-        val filled = normalizeWhitespace(prompt.replace(DrillItem.GAP_MARKER, answer))
-        val expected = normalizeWhitespace(full)
+        val filled = normalizeSentence(prompt.replace(DrillItem.GAP_MARKER, answer))
+        val expected = normalizeSentence(full)
         if (filled != expected) {
             return Verdict.reject(ANSWER_FIT, "answer '$answer' in the gap gives '$filled', model's full sentence is '$expected'")
         }
@@ -134,23 +134,43 @@ object PracticeFilters {
         }
         if (hint == null || trimmed.length < MIN_LEAK_ANSWER_LEN) return null
         val hintLower = normalize(hint)
-        if (hintLower.contains(normalize(trimmed))) {
+        // Whole-word matching: a raw substring test fired on compounds ("mit"
+        // matched "Mitgliedsstaat") and cost correct preposition items.
+        if (containsWord(hintLower, normalize(trimmed))) {
             return Verdict.reject(LEAK, "hint contains the answer '$trimmed'")
         }
         val base = brackets.firstOrNull { normalize(it) != normalize(trimmed) }
-        if (base != null && base.length >= MIN_LEAK_ANSWER_LEN && hintLower.contains(normalize(base))) {
+        if (base != null && base.length >= MIN_LEAK_ANSWER_LEN && containsWord(hintLower, normalize(base))) {
             return Verdict.reject(LEAK, "hint contains the prompt's base form '$base' for answer '$trimmed'")
         }
         return null
     }
 
     /** Case-insensitive, punctuation-stripped comparison form. */
-    private fun normalize(text: String): String =
+    internal fun normalize(text: String): String =
         text.lowercase().replace(Regex("[.,;:!?\"'»«()\\[\\]]"), "").trim()
 
-    /** Collapses whitespace runs and trims, so sentence comparison is exact. */
-    private fun normalizeWhitespace(text: String): String =
-        text.replace(Regex("\\s+"), " ").trim()
+    /**
+     * Sentence comparison form for answer-fits-blank: lowercase, punctuation
+     * collapsed to spaces (the model writes ", " where the prompt has " - " and
+     * both mean the same sentence), whitespace collapsed.
+     */
+    private fun normalizeSentence(text: String): String =
+        text.lowercase()
+            .replace(Regex("[.,;:!?\"'»«()\\[\\]„“–—-]"), " ")
+            .replace(Regex("\\s+"), " ")
+            .trim()
+
+    /**
+     * Whole-word containment in the normalized (punctuation-stripped) [text]:
+     * [needle] must be bounded by string edges or non-letter characters, so
+     * "mit" no longer matches inside "mitgliedsstaat".
+     */
+    private fun containsWord(text: String, needle: String): Boolean {
+        if (needle.isBlank()) return false
+        val boundaries = Regex("(^|[^\\p{L}\\p{Nd}])${Regex.escape(needle)}([^\\p{L}\\p{Nd}]|$)")
+        return boundaries.containsMatchIn(text)
+    }
 
     /** Answers shorter than this are exempt from the substring leak check. */
     private const val MIN_LEAK_ANSWER_LEN = 3

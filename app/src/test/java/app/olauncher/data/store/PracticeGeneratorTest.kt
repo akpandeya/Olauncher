@@ -93,7 +93,10 @@ class PracticeGeneratorTest {
         var lastDigestAt = 0L
         override var aiProvider: String = "melious"
         override var aiBaseUrl: String = "https://api.melious.ai"
-        override var aiModel: String = "glm-5.3-flash"
+        // A model without a json_object preference keeps these tests on the
+        // strict-schema default path; glm-5.3-flash's json_object start has its
+        // own test below.
+        override var aiModel: String = "gemma-4-31b"
         override var aiPracticeEnabled: Boolean
             get() = enabled
             set(value) { enabled = value }
@@ -135,6 +138,13 @@ class PracticeGeneratorTest {
         provider = provider,
         store = store,
         model = prefs.aiModel,
+        keySource = KeySource { "sk-test-key" },
+    )
+
+    private fun generatorWithModel(provider: AiProvider, model: String) = PracticeGenerator(
+        provider = provider,
+        store = store,
+        model = model,
         keySource = KeySource { "sk-test-key" },
     )
 
@@ -614,5 +624,134 @@ class PracticeGeneratorTest {
         val digestPrompt = digestProvider.prompts[0]
         assertFalse(digestPrompt.contains("  types:"))
         assertTrue(digestPrompt.contains("Pick only types that fit this word: conjugation"))
+    }
+
+    // ------------------------------------------------------------------
+    // epic 9 final review conditions (2026-10-28)
+    // ------------------------------------------------------------------
+
+    @Test
+    fun `glm 5 3 flash starts in json_object without a capability round-trip`() = runBlocking {
+        // Condition 1: the passing benchmark configuration for this model is
+        // json_object, so the very first request goes out without the strict
+        // schema — no model_not_capable detour that costs a billed call.
+        val provider = FakeProvider(result = AiResult.Ok(okJson(1), AiUsage(10, 20), 5))
+
+        val outcome = generatorWithModel(provider, "glm-5.3-flash").topUp(listOf(word(1)), prefs, today)
+
+        assertTrue(outcome is PracticeGeneration.Generated)
+        // Chunk call plus its retry-on-missing follow-up (word 1 stays thin on
+        // one item) — both in json_object, neither carrying the schema.
+        assertEquals(2, provider.requests.size)
+        assertTrue(provider.requests.all { it.jsonSchema == null })
+    }
+
+    @Test
+    fun `the token budget covers the measured per-word output and the cap still counts words`() = runBlocking {
+        // Condition 2: the passing json_object run measured 34,849–38,434 output
+        // tokens per 60 items — about 1,750–1,920 per word — so 1,200 cut real
+        // chunks off mid-JSON. 2,400 leaves headroom.
+        assertEquals(2400, PracticeGenerator.MAX_TOKENS_PER_WORD)
+        assertTrue(
+            PracticeGenerator.MAX_TOKENS_PER_WORD * PracticeGenerator.WORDS_PER_REQUEST >= 5 * 1920,
+        )
+        // The daily cap is untouched: it counts WORDS at send time, never tokens
+        // — the retry follow-up adds calls, not cap counts.
+        prefs.cap = 50
+        val words = (1L..3L).map { word(it) }
+        val provider = FakeProvider(result = AiResult.Ok(okJson(1), AiUsage(10, 20), 5))
+
+        generator(provider).topUp(words, prefs, today)
+
+        assertEquals(3, prefs.aiWordsSentToday(todayEpochDay))
+    }
+
+    @Test
+    fun `retry skips the duplicate cloze when the word already has one`() = runBlocking {
+        // Condition 3: the retry prompt still asks for the cloze first, so the
+        // response's first item is a second copy of the accepted cloze. It must
+        // not be taken; the two non-cloze items behind it fill the slots.
+        val first = """{"items": [{"word_id": 1, "type": "cloze", "prompt": "Sie ___ auf der Arbeit.",
+            "answer": "insistiert", "choices": ["insistiert", "insistieren"]}]}"""
+        val followUp = """{"items": [
+            {"word_id": 1, "type": "cloze", "prompt": "Sie ___ auf der Arbeit.",
+             "answer": "insistiert", "choices": ["insistiert", "insistieren"], "full": "Sie insistiert auf der Arbeit."},
+            {"word_id": 1, "type": "conjugation", "prompt": "Wir ___ auf der Arbeit.",
+             "answer": "insistieren", "choices": ["insistieren", "insistiert"], "full": "Wir insistieren auf der Arbeit."},
+            {"word_id": 1, "type": "praeteritum", "prompt": "Sie ___ auf der Arbeit.",
+             "answer": "insistierte", "choices": ["insistierte", "insistiert"], "full": "Sie insistierte auf der Arbeit."}]}"""
+        val provider = ScriptedProvider(
+            AiResult.Ok(first, AiUsage(10, 20), 5),
+            AiResult.Ok(followUp, AiUsage(10, 20), 5),
+        )
+
+        val outcome = generator(provider).topUp(listOf(word(1)), prefs, today)
+
+        assertTrue(outcome is PracticeGeneration.Generated)
+        assertEquals(2, provider.requests.size)
+        val stored = store.all()
+        // Three real AI items: the word's one cloze plus the two non-cloze
+        // slots — no duplicate cloze, no locally built fallback.
+        assertEquals(3, stored.size)
+        assertTrue(stored.all { it.model != null })
+        assertEquals(1, stored.count { it.type == DrillType.CLOZE })
+        assertEquals(1, stored.count { it.type == DrillType.CONJUGATION })
+        assertEquals(1, stored.count { it.type == DrillType.PRAETERITUM })
+    }
+
+    @Test
+    fun `retry items repeating an accepted answer are skipped against the whole pool`() = runBlocking {
+        // Condition 3, duplicate check: parse only sees the retry batch, so a
+        // retry item repeating the FIRST call's answer must be dropped here —
+        // case- and punctuation-insensitively — with fallbacks filling the slot.
+        val first = """{"items": [{"word_id": 1, "type": "cloze", "prompt": "Sie ___ auf der Arbeit.",
+            "answer": "insistiert", "choices": ["insistiert", "insistieren"]}]}"""
+        val followUp = """{"items": [{"word_id": 1, "type": "conjugation", "prompt": "Wir ___ auf der Arbeit.",
+             "answer": "Insistiert.", "choices": ["Insistiert.", "insistieren"], "full": "Wir insistiert auf der Arbeit."}]}"""
+        val provider = ScriptedProvider(
+            AiResult.Ok(first, AiUsage(10, 20), 5),
+            AiResult.Ok(followUp, AiUsage(10, 20), 5),
+        )
+
+        val outcome = generator(provider).topUp(listOf(word(1)), prefs, today)
+
+        assertTrue(outcome is PracticeGeneration.Generated)
+        val stored = store.all()
+        assertEquals(3, stored.size)
+        // Only the first call's cloze is a real item; the repeated answer never
+        // stored, the two missing slots are cloze fallbacks as before.
+        assertEquals(1, stored.count { it.model != null })
+        assertEquals(2, stored.count { it.model == null })
+        // The repeated answer never stored as a conjugation.
+        assertEquals(0, stored.count { it.type == DrillType.CONJUGATION })
+        assertEquals(1, stored.count { it.type == DrillType.CLOZE && it.model != null })
+    }
+
+    @Test
+    fun `a retry that returns only clozes falls back as before`() = runBlocking {
+        // Condition 3, fallback path: the word has its cloze, the retry brings
+        // nothing but clozes — the accepted set stays and the cloze fallbacks
+        // fill the two missing slots exactly like the pre-fix behaviour.
+        val first = """{"items": [{"word_id": 1, "type": "cloze", "prompt": "Sie ___ auf der Arbeit.",
+            "answer": "insistiert", "choices": ["insistiert", "insistieren"]}]}"""
+        val followUp = """{"items": [
+            {"word_id": 1, "type": "cloze", "prompt": "Sie ___ auf der Arbeit.",
+             "answer": "insistiert", "choices": ["insistiert", "insistieren"], "full": "Sie insistiert auf der Arbeit."},
+            {"word_id": 1, "type": "cloze", "prompt": "Wir ___ auf der Arbeit.",
+             "answer": "insistieren", "choices": ["insistieren", "insistiert"], "full": "Wir insistieren auf der Arbeit."}]}"""
+        val provider = ScriptedProvider(
+            AiResult.Ok(first, AiUsage(10, 20), 5),
+            AiResult.Ok(followUp, AiUsage(10, 20), 5),
+        )
+
+        val outcome = generator(provider).topUp(listOf(word(1)), prefs, today)
+
+        assertTrue(outcome is PracticeGeneration.Generated)
+        val stored = store.all()
+        assertEquals(3, stored.size)
+        // One AI cloze only; the second retry cloze ("insistieren") is skipped
+        // even though its answer differs — the word already has its cloze.
+        assertEquals(1, stored.count { it.type == DrillType.CLOZE && it.model != null })
+        assertEquals(2, stored.count { it.model == null })
     }
 }

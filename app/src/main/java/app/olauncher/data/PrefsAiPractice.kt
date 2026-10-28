@@ -10,6 +10,7 @@ import app.olauncher.data.Prefs.Companion.AI_DAILY_WORD_CAP_DEFAULT
 import app.olauncher.data.Prefs.Companion.AI_KEY_REJECTED
 import app.olauncher.data.Prefs.Companion.AI_LAST_DIGEST_AT
 import app.olauncher.data.Prefs.Companion.AI_MODEL
+import app.olauncher.data.Prefs.Companion.AI_MODEL_DEFAULT
 import app.olauncher.data.Prefs.Companion.AI_PRACTICE_ENABLED
 import app.olauncher.data.Prefs.Companion.AI_PRACTICE_ENABLED_DEFAULT
 import app.olauncher.data.Prefs.Companion.AI_PROVIDER
@@ -31,7 +32,11 @@ interface AiPracticePrefs {
     /** OpenAI-compatible base URL; must start with https://. */
     var aiBaseUrl: String
 
-    /** Model id; empty until the benchmark (#600, 9.7) picks the default. */
+    /**
+     * Model id; defaults to [Prefs.AI_MODEL_DEFAULT] (glm-5.3-flash, owner flip
+     * 2026-10-28) — a fresh install passes the model gate without setup. The
+     * empty-string path still works: a stored blank blocks generation as before.
+     */
     var aiModel: String
 
     /** Master switch: off means no network call, ever. */
@@ -71,7 +76,7 @@ internal class AiPracticePrefsStore(private val prefs: SharedPreferences) : AiPr
         set(value) = prefs.edit { putString(AI_BASE_URL, value).apply() }
 
     override var aiModel: String
-        get() = prefs.getString(AI_MODEL, "") ?: ""
+        get() = prefs.getString(AI_MODEL, AI_MODEL_DEFAULT) ?: AI_MODEL_DEFAULT
         set(value) = prefs.edit { putString(AI_MODEL, value).apply() }
 
     override var aiPracticeEnabled: Boolean
