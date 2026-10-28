@@ -87,6 +87,9 @@ data class DrillQuizQuestion(
  *   tap, rung-3 variety after one right answer, typed only after two.
  * - At most [MAX_TYPED_PER_ROUND] typed and [MAX_FLASHCARDS_PER_ROUND] flashcard
  *   steps per round, so a round stays inside the ~12-interaction budget.
+ * - AI practice items (#621, Epic 9 #561) join a mixed round as flashcard-only steps,
+ *   capped at [MAX_AI_PER_ROUND] — their own cap, not [MAX_FLASHCARDS_PER_ROUND],
+ *   which stays the cap for built-in flashcard teaching steps.
  * - No two consecutive questions share a format (as long as the assigned formats
  *   allow it).
  */
@@ -96,6 +99,12 @@ object DrillRoundPlanner {
     const val MAX_ROUND_SIZE = 5
     const val MAX_TYPED_PER_ROUND = 3
     const val MAX_FLASHCARDS_PER_ROUND = 1
+
+    /**
+     * The per-round cap for AI practice items (#621) in a mixed round: independent of
+     * [MAX_FLASHCARDS_PER_ROUND], which caps the built-in flashcard teaching steps.
+     */
+    const val MAX_AI_PER_ROUND = 2
 
     /** An item becomes typeable once it has been answered correctly this many times. */
     const val TYPED_MATURITY = 2
@@ -114,19 +123,24 @@ object DrillRoundPlanner {
      * [maturity] (item id -> rounds answered right) for the ladder. A round with no
      * graduated items falls back to tap-only by construction; it never stalls.
      * The [size] is capped at [MAX_ROUND_SIZE] — practise-misses rounds keep their
-     * exact size via [planMisses].
+     * exact size via [planMisses]. [aiItems] are AI practice items (#621) that join
+     * the round as flashcard-only steps, capped at [MAX_AI_PER_ROUND]; an empty list
+     * (fresh install, no stored items) leaves the round exactly as it would be
+     * without the parameter.
      */
     fun plan(
         pools: Map<DrillType, List<DrillItem>>,
         maturity: Map<DrillItemId, Int> = emptyMap(),
         random: Random = Random(),
         size: Int = roundSize(random),
+        aiItems: List<DrillItem> = emptyList(),
     ): List<DrillQuizQuestion> =
-        planRound(pools, maturity, random, size.coerceIn(1, MAX_ROUND_SIZE), allowFlashcard = true)
+        planRound(pools, maturity, random, size.coerceIn(1, MAX_ROUND_SIZE), allowFlashcard = true, aiItems)
 
     /**
      * Plans a practise-misses round: exactly the given items, no flashcard steps
-     * (their first exposure is long past), ladder formats as usual.
+     * (their first exposure is long past), ladder formats as usual. AI practice
+     * items stay out — misses rounds are AI-free (#621).
      */
     fun planMisses(
         missed: List<DrillItem>,
@@ -134,7 +148,14 @@ object DrillRoundPlanner {
         random: Random = Random(),
     ): List<DrillQuizQuestion> =
         // The misses keep their own item ids; the placeholder type only balances sampling.
-        planRound(mapOf(DrillType.PREPOSITIONS to missed), maturity, random, missed.size, allowFlashcard = false)
+        planRound(
+            mapOf(DrillType.PREPOSITIONS to missed),
+            maturity,
+            random,
+            missed.size,
+            allowFlashcard = false,
+            aiItems = emptyList(),
+        )
 
     private fun planRound(
         pools: Map<DrillType, List<DrillItem>>,
@@ -142,8 +163,14 @@ object DrillRoundPlanner {
         random: Random,
         size: Int,
         allowFlashcard: Boolean,
+        aiItems: List<DrillItem>,
     ): List<DrillQuizQuestion> {
-        val sampled = sample(pools, random, size.coerceAtLeast(1))
+        // AI practice items (#621): at most MAX_AI_PER_ROUND, drawn once per round, and
+        // each rendered as a flashcard step. They take question slots, so the built-in
+        // pool fills the rest of the round and the total stays at the planned size.
+        val aiCards = aiItems.shuffled(random).take(MAX_AI_PER_ROUND)
+        val builtInSize = (size - aiCards.size).coerceAtLeast(1)
+        val sampled = sample(pools, random, builtInSize)
         if (sampled.isEmpty()) return emptyList()
 
         var typedCount = 0
@@ -161,8 +188,12 @@ object DrillRoundPlanner {
             question(item, format, random)
         }
 
-        val withFlashcard = addFlashcards(planned, maturity, random, allowFlashcard)
-        return orderWithoutRepeat(withFlashcard, random)
+        // Without AI items the flashcard budget is the round cap as before; with them,
+        // the AI cards' slots come out of it, so the whole round stays at [size].
+        val flashcardCap = if (aiCards.isEmpty()) MAX_ROUND_SIZE else builtInSize
+        val withFlashcard = addFlashcards(planned, maturity, random, allowFlashcard, flashcardCap)
+        val withAi = addAiFlashcards(withFlashcard, aiCards, random)
+        return orderWithoutRepeat(withAi, random)
     }
 
     /**
@@ -231,7 +262,7 @@ object DrillRoundPlanner {
      * Shows at most one flashcard: an early item (maturity 0 or 1) gets a flashcard
      * step immediately before its own question, so the learner sees the answer right
      * before the first or second quiz on it. The flashcard counts toward the round's
-     * 3-5 steps — when the round is already at [MAX_ROUND_SIZE], one other question
+     * 3-5 steps — when the round is already over [cap], one other question
      * is dropped to make room.
      */
     private fun addFlashcards(
@@ -239,6 +270,7 @@ object DrillRoundPlanner {
         maturity: Map<DrillItemId, Int>,
         random: Random,
         allowFlashcard: Boolean,
+        cap: Int = MAX_ROUND_SIZE,
     ): List<DrillQuizQuestion> {
         if (!allowFlashcard || planned.size < 2) return planned
         val candidates = planned
@@ -255,9 +287,32 @@ object DrillRoundPlanner {
 
         val flashcard = DrillQuizQuestion(chosen.value.item, DrillFormat.FLASHCARD)
         val withCard = planned.subList(0, chosen.index) + flashcard + planned.subList(chosen.index, planned.size)
-        if (withCard.size <= MAX_ROUND_SIZE) return withCard
+        if (withCard.size <= cap) return withCard
         val dropIndex = withCard.indexOfLast { !it.isTeaching && it.id != chosen.value.id }
         return if (dropIndex >= 0) withCard.filterIndexed { index, _ -> index != dropIndex } else withCard
+    }
+
+    /**
+     * Adds the AI practice items (#621) as flashcard steps: flashcard-only, never a
+     * question, never graduating to tap or typed — [DrillQuiz] scores teaching steps
+     * not at all, so an AI card changes no type's evidence. Each card is inserted
+     * before a random step (or at the end) so the cards spread through the round;
+     * the no-two-consecutive-same-format rule applies to them best-effort, like to
+     * every step, through [orderWithoutRepeat].
+     */
+    private fun addAiFlashcards(
+        planned: List<DrillQuizQuestion>,
+        aiItems: List<DrillItem>,
+        random: Random,
+    ): List<DrillQuizQuestion> {
+        if (aiItems.isEmpty()) return planned
+        var result = planned
+        for (item in aiItems) {
+            val card = DrillQuizQuestion(item, DrillFormat.FLASHCARD)
+            val index = random.nextInt(result.size + 1)
+            result = result.subList(0, index) + card + result.subList(index, result.size)
+        }
+        return result
     }
 
     /**

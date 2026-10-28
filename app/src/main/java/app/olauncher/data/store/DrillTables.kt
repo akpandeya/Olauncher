@@ -142,6 +142,11 @@ object DrillTables {
         DrillType.INFINITIV_ZU -> R.string.drill_type_infinitiv_zu
         DrillType.MODAL_VERBS -> R.string.drill_type_modal_verbs
         DrillType.KONJUNKTIV_I -> R.string.drill_type_konjunktiv_i
+        // AI practice item types (#621): no built-in items exist for these, but an
+        // AI practice item carries one, and the round labels each question with its
+        // practice type. Additive only — never rename existing entries.
+        DrillType.CLOZE -> R.string.drill_type_cloze
+        DrillType.CONJUGATION -> R.string.drill_type_conjugation
         else -> R.string.drills
     }
 }

@@ -597,6 +597,8 @@
     <string name="drill_type_infinitiv_zu" tools:ignore="MissingTranslation">Infinitive with zu</string>
     <string name="drill_type_modal_verbs" tools:ignore="MissingTranslation">Modal verbs</string>
     <string name="drill_type_konjunktiv_i" tools:ignore="MissingTranslation">Konjunktiv I</string>
+    <string name="drill_type_cloze" tools:ignore="MissingTranslation">Cloze</string>
+    <string name="drill_type_conjugation" tools:ignore="MissingTranslation">Conjugation</string>
     <string name="drill_help_why" tools:ignore="MissingTranslation">Why?</string>
     <string name="drill_help_miss_line" tools:ignore="MissingTranslation">✗ %1$s — %2$s</string>
     <string name="drill_round_choice" tools:ignore="MissingTranslation">Multiple choice</string>
