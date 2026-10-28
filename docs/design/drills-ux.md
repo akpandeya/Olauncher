@@ -239,32 +239,35 @@ score = (right + 3) / (asked + 4)
 ```
 
 - The +3 and +4 pull a new type toward 75%, so one lucky round does not top the list.
-- Typed answers (graduated items) weigh more than tap or variety-rung answers.
-  Flashcards are not scored. The exact weights are for the ranking issue to settle.
+- Typed answers (graduated items) weigh more than tap or variety-rung answers:
+  a typed answer carries 2/3 of its item's evidence, a choice answer 1/3, so a
+  full round still adds exactly its item count to the decayed asked count.
+  Flashcards are not scored. (#624)
 - Show a number only after about 2 rounds. Before that, show "1 round".
 - An abandoned round counts its given answers, but only when at least 3 were given.
   Items not reached are not counted.
 
-Worked example. A learner scores 3.5 of 5 every round (70% raw):
+Worked example. A learner scores 7 of 10 every round (70% raw; round size is
+`DRILL_ROUND_SIZE` = 10):
 
 | Rounds | asked | right | score |
 |--------|-------|-------|-------|
-| 3 | 12.2 | 8.5 | 71% |
-| 10 | 22.3 | 15.6 | 71% |
-| 50 | 25.0 | 17.5 | 71% |
+| 3 | 24.4 | 17.1 | 71% |
+| 10 | 44.6 | 31.2 | 70% |
+| 50 | 50.0 | 35.0 | 70% |
 
-The decayed total tops out at 25 items (5 per round ÷ 0.2), so recent rounds always
-carry the weight. The +3/+4 prior is twice as large against that 25-item cap as it
-was against the old 50-item cap of 10-item rounds, so early scores stay pulled
-toward 75% for longer.
+The decayed total tops out at 50 items (10 per round ÷ 0.2), so recent rounds always
+carry the weight. The +3/+4 prior is half as large against that 50-item cap as it
+was against the old 25-item cap of 5-item rounds, so early scores still stay pulled
+toward 75%.
 
-Same learner, 5 of 5 every round:
+Same learner, 10 of 10 every round:
 
 | Rounds | asked | right | score |
 |--------|-------|-------|-------|
-| 3 | 12.2 | 12.2 | 94% |
-| 10 | 22.3 | 22.3 | 96% |
-| 50 | 25.0 | 25.0 | 97% |
+| 3 | 24.4 | 24.4 | 96% |
+| 10 | 44.6 | 44.6 | 98% |
+| 50 | 50.0 | 50.0 | 98% |
 
 Storage: the new fields live inside the existing `DRILL_SCORES` JSON
 (`DrillScores` in `app/src/main/java/app/olauncher/data/store/DrillScores.kt`).
