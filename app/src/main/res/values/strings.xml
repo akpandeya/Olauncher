@@ -859,6 +859,13 @@
     <string name="word_picker_save_n">Save %1$d</string>
     <string name="reader_title" tools:ignore="MissingTranslation">Lesen</string>
     <string name="reader_close" translatable="false">✕</string>
+    <string name="capture_hint">Tap or circle words</string>
+    <string name="capture_reader_view">Reader view</string>
+    <string name="capture_saved_count">%1$d saved</string>
+    <string name="capture_save_token">Save „%1$s“</string>
+    <string name="capture_saved_token">Saved „%1$s“</string>
+    <string name="capture_menu" translatable="false">⋮</string>
+    <string name="capture_menu_desc">More options</string>
     <string name="privacy_intro" tools:ignore="MissingTranslation">Thumbline does not send your data to any analytics or ads service. Some features fetch data from the internet (weather, dictionary, currency, now-playing artwork), listed below.</string>
     <string name="privacy_state_granted" tools:ignore="MissingTranslation">Granted</string>
     <string name="privacy_state_not_granted" tools:ignore="MissingTranslation">Not granted</string>

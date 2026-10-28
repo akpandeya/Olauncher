@@ -36,6 +36,12 @@ interface GermanPrefs {
      */
     var captureScreenshotOk: Boolean
 
+    /**
+     * True once the user picked something in the Circle-to-Search capture overlay; the
+     * "Tap or circle words" hint stays hidden from then on. Key: [Prefs.CAPTURE_HINT_SEEN].
+     */
+    var captureHintSeen: Boolean
+
     var germanSpellSuggest: Boolean
 
     var germanPauseWord: Boolean
@@ -75,6 +81,10 @@ internal class GermanPrefsStore(private val prefs: SharedPreferences) : GermanPr
     override var captureScreenshotOk: Boolean
         get() = prefs.getBoolean(Prefs.CAPTURE_SCREENSHOT_OK, false)
         set(value) = prefs.edit { putBoolean(Prefs.CAPTURE_SCREENSHOT_OK, value).apply() }
+
+    override var captureHintSeen: Boolean
+        get() = prefs.getBoolean(Prefs.CAPTURE_HINT_SEEN, false)
+        set(value) = prefs.edit { putBoolean(Prefs.CAPTURE_HINT_SEEN, value).apply() }
 
     override var germanSpellSuggest: Boolean
         get() = prefs.getBoolean(GERMAN_SPELL_SUGGEST, false)

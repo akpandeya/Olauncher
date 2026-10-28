@@ -4,6 +4,8 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.graphics.Color
 import android.graphics.Paint
@@ -18,23 +20,32 @@ import android.text.style.ForegroundColorSpan
 import android.text.style.RelativeSizeSpan
 import android.text.style.UnderlineSpan
 import android.util.TypedValue
+import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.lifecycle.lifecycleScope
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import app.olauncher.R
 import app.olauncher.data.Prefs
 import app.olauncher.data.store.Capture
+import app.olauncher.data.store.CapturePaths
 import app.olauncher.data.store.ContextSentence
+import app.olauncher.data.store.MeaningCardPlacement
 import app.olauncher.data.store.ReaderText
+import app.olauncher.data.store.SavedMarks
+import app.olauncher.data.store.ScreenMapping
 import app.olauncher.data.store.WiktionaryApi
 import app.olauncher.data.store.WiktionaryCache
 import app.olauncher.data.store.ScreenNode
 import app.olauncher.data.store.ScreenNodesCodec
 import app.olauncher.data.store.ScreenWord
 import app.olauncher.data.store.ScreenWords
+import app.olauncher.data.store.Selection
 import app.olauncher.data.store.WordCapture
 import app.olauncher.data.store.WordLookup
 import app.olauncher.data.store.Word
@@ -73,7 +84,16 @@ class WordCaptureActivity : AppCompatActivity() {
                 context.packageManager.setComponentEnabledSetting(it, lookupState, PackageManager.DONT_KILL_APP)
             }
         }
+
+        /** Saved in [onSaveInstanceState]: the Reader is the visible mode (rotation keeps it). */
+        private const val STATE_READER_MODE = "app.olauncher.READER_MODE"
     }
+
+    /** Capture files this intent referenced (path → lastModified at open); deleted on close. */
+    private val referencedFiles = LinkedHashMap<String, Long>()
+
+    /** The Reader is the visible UI — remembered across rotation so it is not lost. */
+    private var readerMode = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         val prefs = Prefs(this)
@@ -83,19 +103,40 @@ class WordCaptureActivity : AppCompatActivity() {
         // setTheme must happen there. Theme.WordCapture is built for the bottom sheet
         // floating over the app; the full-screen reader needs an opaque window (#591).
         // Shared text is classified early too: a sentence opens the reader as well.
+        // The activity is exported: path extras are honored only when they name exactly
+        // the capture files the service writes — any other path could make us read or
+        // delete a private file, so it falls back to the Reader path like a missing one.
         val nodesPath = intent?.getStringExtra(WordScreenService.EXTRA_NODES_PATH)
+            ?.takeIf { CapturePaths.isCaptureFile(it, cacheDir, CapturePaths.NODES_FILE) }
+        val framePath = intent?.getStringExtra(WordScreenService.EXTRA_FRAME_PATH)
+            ?.takeIf { CapturePaths.isCaptureFile(it, cacheDir, CapturePaths.FRAME_FILE) }
         val screenLines = intent?.getStringArrayListExtra(WordScreenService.EXTRA_SCREEN_LINES)
         val capture = WordCapture.classify(readIncomingText())
-        if (nodesPath != null || screenLines != null || capture is Capture.Sentence) {
+        val restoredReader = savedInstanceState?.getBoolean(STATE_READER_MODE, false) == true
+        if (nodesPath != null || screenLines != null || capture is Capture.Sentence || restoredReader) {
             setTheme(R.style.Theme_WordCapture_Reader)
         }
         prefs.applyFontOverlay(theme)
         super.onCreate(savedInstanceState)
 
-        // Screen pick with a successful screenshot: the service hands over the node snapshot
-        // (the frame path arrives too but is only used by the Circle-to-Search overlay, #592).
+        // Remember what this intent referenced: only those capture files are deleted on
+        // close, and only while their timestamp is unchanged — the names are fixed, so
+        // in multi-window mode a newer capture may have rewritten them already (N1).
+        referencedFiles.clear()
+        for (path in listOfNotNull(framePath, nodesPath)) {
+            referencedFiles[path] = File(path).lastModified()
+        }
+
+        // Screen pick with a successful screenshot: the frame + node snapshot drive the
+        // Circle-to-Search overlay (#592); every failure on the way falls back to the reader.
+        // After a rotation with the Reader open, the reader is restored instead — the user
+        // did not ask for the overlay again.
         if (nodesPath != null) {
-            openReaderFromSnapshot(nodesPath, prefs)
+            if (framePath != null && !restoredReader) {
+                openOverlayCapture(framePath, nodesPath, prefs)
+            } else {
+                openReaderFromSnapshot(nodesPath, prefs)
+            }
             return
         }
 
@@ -160,6 +201,294 @@ class WordCaptureActivity : AppCompatActivity() {
     }
 
     /**
+     * The Circle-to-Search overlay (#592): decodes the frozen frame and the node snapshot
+     * off the main thread, then verifies that both describe the same picture. A missing
+     * frame, a failed decode, a node set without any boxed words, or a
+     * [ScreenMapping.Mismatch] falls back to the reader — it needs no geometry.
+     */
+    private fun openOverlayCapture(framePath: String, nodesPath: String, prefs: Prefs) {
+        lifecycleScope.launch {
+            val decoded = withContext(Dispatchers.IO) {
+                val encoded = try {
+                    File(nodesPath).readText()
+                } catch (_: Exception) {
+                    ""
+                }
+                val nodes = ScreenNodesCodec.decode(encoded).orEmpty()
+                val bitmap = try {
+                    BitmapFactory.decodeFile(framePath)
+                } catch (_: Exception) {
+                    null
+                }
+                nodes to bitmap
+            }
+            val (nodes, bitmap) = decoded
+            if (isFinishing || isDestroyed) {
+                bitmap?.recycle()
+                return@launch
+            }
+            if (bitmap == null) {
+                openReader(nodes, prefs)
+                return@launch
+            }
+            if (nodes.isEmpty()) {
+                // The reader shows the nothing-to-pick toast for an empty snapshot.
+                bitmap.recycle()
+                openReader(nodes, prefs)
+                return@launch
+            }
+            val screenWords = ScreenWords.build(nodes)
+            // Zero-area boxes (hidden nodes parked at 0,0,0,0) are not real geometry;
+            // ScreenWords already drops them, and only boxed words can drive the overlay.
+            val boxed = screenWords.words.filter { it.box != null }
+            if (boxed.isEmpty()) {
+                // No geometry at all: hit-testing is impossible, the reader still works.
+                bitmap.recycle()
+                openReader(nodes, prefs)
+                return@launch
+            }
+            // The root node's bounds describe the screen the nodes were read from; the
+            // union of every node is the fallback (reduceOrNull — an empty list must not
+            // crash the coroutine) and no bounds at all leaves nothing to verify against.
+            val rootBounds = nodes.firstOrNull { node ->
+                node.parentId == -1 && node.bounds?.let { it.width > 0 && it.height > 0 } == true
+            }?.bounds
+                ?: nodes.mapNotNull { it.bounds }.reduceOrNull { a, b -> a.union(b) }
+            if (rootBounds == null) {
+                bitmap.recycle()
+                openReader(nodes, prefs)
+                return@launch
+            }
+            val anchors = listOfNotNull(boxed.first().box, boxed.last().box)
+            val verified = ScreenMapping.verify(
+                ScreenMapping.Frame(bitmap.width, bitmap.height),
+                rootBounds,
+                anchors,
+            ) as? ScreenMapping.Verified
+            if (verified == null) {
+                // The frame and the nodes drifted apart — boxes would land in the wrong place.
+                bitmap.recycle()
+                openReader(nodes, prefs)
+                return@launch
+            }
+            showOverlay(bitmap, nodes, screenWords, verified, prefs)
+        }
+    }
+
+    /**
+     * The overlay UI: dimmed frame, tap/circle picking, meaning card. Saves go through the
+     * same store as the reader, the live count and saved dots update with every save.
+     */
+    private fun showOverlay(
+        frame: Bitmap,
+        nodes: List<ScreenNode>,
+        screenWords: ScreenWords,
+        mapping: ScreenMapping.Verified,
+        prefs: Prefs,
+    ) {
+        val binding = ActivityWordCaptureBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+        binding.captureSheet.visibility = View.GONE
+        binding.readerRoot.visibility = View.GONE
+        binding.overlayRoot.visibility = View.VISIBLE
+        readerMode = false
+        // Reading the meaning card without touching the screen can outlast the screen
+        // timeout, whose onStop cleanup would close the capture. Screen-off while the
+        // user is actively reading is that side effect, not a leave — keep the screen on
+        // while this window is visible (no permission; the F5 cleanup stays as it is).
+        binding.root.keepScreenOn = true
+
+        // Keep the top bar clear of the status bar; the frame fills the rest. The overlay's
+        // content view is set from a coroutine (after the first insets dispatch), so a
+        // fresh dispatch is requested here — the listener alone would never fire.
+        val overlayTopPad = binding.overlayRoot.paddingTop
+        ViewCompat.setOnApplyWindowInsetsListener(binding.overlayRoot) { v, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            v.setPadding(v.paddingLeft, overlayTopPad + bars.top, v.paddingRight, v.paddingBottom)
+            insets
+        }
+        ViewCompat.requestApplyInsets(binding.overlayRoot)
+
+        val overlay = binding.captureOverlay
+        overlay.accentColor = getColorFromAttr(R.attr.accentColor)
+        overlay.setFrame(frame, screenWords.words, mapping.scaleX, mapping.scaleY)
+
+        val store = WordsStore(this)
+        val savedByText = store.all().associateBy { it.text.lowercase() }.toMutableMap()
+        overlay.setSavedTexts(savedByText.keys)
+        val lookupAllowed = WordLookup.isLookupAllowed(prefs.germanEnabled, prefs.germanLookup)
+        val savedThisSession = HashSet<ScreenWord>()
+
+        binding.overlayClose.typeface = mainTypeface()
+        binding.overlayHint.typeface = mainTypeface()
+        binding.overlayMenu.typeface = mainTypeface()
+        binding.overlaySaveCount.typeface = mainTypeface()
+        binding.overlayCardWord.typeface = mainTypeface()
+        binding.overlayCardMeaning.typeface = mainTypeface()
+        binding.overlayCardSave.typeface = mainTypeface()
+        binding.overlayCardReader.typeface = mainTypeface()
+        // Hint seen: keep the space (INVISIBLE, not GONE) so the ⋮ stays at the trailing edge.
+        if (prefs.captureHintSeen) binding.overlayHint.visibility = View.INVISIBLE
+
+        var selection: Selection? = null
+        var meaningToken: String? = null
+
+        fun refreshSaveCount() {
+            binding.overlaySaveCount.visibility = if (savedThisSession.isEmpty()) View.GONE else View.VISIBLE
+            binding.overlaySaveCount.text = getString(R.string.capture_saved_count, savedThisSession.size)
+            // The Save button stores the head token only, while a circled phrase shows all
+            // its words as the title — label the button with the token actually saved.
+            // Once that head is saved this session, show the saved state instead of a
+            // save invitation whose click would do nothing. The old count label ran only
+            // while the card was hidden — the button lives inside the card, so that path
+            // was unreachable and is gone.
+            val head = selection?.head
+            binding.overlayCardSave.text = when {
+                head == null -> ""
+                head in savedThisSession -> getString(R.string.capture_saved_token, SavedMarks.tokenOf(head))
+                else -> getString(R.string.capture_save_token, SavedMarks.tokenOf(head))
+            }
+        }
+
+        fun hideCard() {
+            binding.overlayCard.visibility = View.GONE
+        }
+
+        fun positionCard(word: ScreenWord) {
+            // Measured height first, then the placement: the card is full-width, only the
+            // top edge comes from [MeaningCardPlacement].
+            binding.overlayCard.post {
+                val box = overlay.viewBoxOf(word) ?: return@post
+                val placement = MeaningCardPlacement.place(
+                    box,
+                    binding.overlayContainer.height,
+                    binding.overlayCard.height,
+                )
+                (binding.overlayCard.layoutParams as FrameLayout.LayoutParams).topMargin = placement.top
+                binding.overlayCard.requestLayout()
+            }
+        }
+
+        fun showCard(picked: Selection) {
+            val head = picked.head
+            val token = SavedMarks.tokenOf(head)
+            // A slow tap resolves the same word twice (long-press runnable, then UP), and
+            // a line extension re-reports the same head token. The first call's look-up is
+            // still in flight (its result is not cached yet), so restarting it would spend
+            // another network request on the same token — only the title and placement
+            // need refreshing when the card is already up for this token.
+            val restart = token != meaningToken || binding.overlayCard.visibility != View.VISIBLE
+            meaningToken = token
+            binding.overlayCardWord.text = picked.words.joinToString(" ") { it.text }
+            if (restart) {
+                val line = binding.overlayCardMeaning
+                val show = { text: String ->
+                    line.text = text
+                    line.visibility = View.VISIBLE
+                }
+                line.visibility = View.GONE
+                resolveMeaning(
+                    token,
+                    savedByText[token.lowercase()],
+                    lookupAllowed,
+                    isCurrent = { meaningToken == token },
+                    show = show,
+                )
+            }
+            binding.overlayCard.visibility = View.VISIBLE
+            positionCard(head)
+        }
+
+        fun openReaderView() {
+            // The overlay is done with the frame; free it before the reader takes over.
+            overlay.releaseFrame()
+            frame.recycle()
+            openReader(nodes, prefs)
+        }
+
+        overlay.onSelection = { picked ->
+            selection = picked
+            overlay.selection = picked
+            if (picked == null) {
+                meaningToken = null
+                hideCard()
+            } else {
+                // First successful pick: the hint has done its job, and only once —
+                // selection changes (line extensions) must not rewrite the pref.
+                if (!prefs.captureHintSeen) prefs.captureHintSeen = true
+                binding.overlayHint.visibility = View.INVISIBLE
+                showCard(picked)
+            }
+            refreshSaveCount()
+        }
+        overlay.onCloseSwipe = { finish() }
+
+        binding.overlayClose.setOnClickListener { finish() }
+        binding.overlayMenu.setOnClickListener {
+            binding.overlayMenu.showPopupMenu(
+                configure = { menu -> menu.add(Menu.NONE, 1, 0, R.string.capture_reader_view) }
+            ) { item ->
+                if (item.itemId == 1) openReaderView()
+            }
+        }
+        binding.overlayCardReader.setOnClickListener { openReaderView() }
+
+        binding.overlayCardSave.setOnClickListener {
+            val picked = selection ?: return@setOnClickListener
+            val head = picked.head
+            if (head in savedThisSession) return@setOnClickListener
+            val token = SavedMarks.tokenOf(head)
+            // The word keeps its sentence: the context is cut from the containing node's
+            // paragraph, exactly like the reader's save.
+            val sentence = ContextSentence.around(
+                screenWords.paragraphOf(head),
+                head.charRange.first,
+                head.charRange.last + 1,
+            )
+            val saved = WordsStore(this).add(token, sentence)
+            WordLookup.enqueue(this, saved.id)
+            savedByText[token.lowercase()] = saved
+            savedThisSession += head
+            overlay.setSavedTexts(savedByText.keys)
+            showToast(getString(R.string.saved_word_de, token))
+            refreshSaveCount()
+        }
+        refreshSaveCount()
+    }
+
+    /**
+     * Leaving the capture (Home, another app) closes it like ✕: the activity is
+     * excludeFromRecents, so the user could never return, and the full-resolution frame
+     * in memory plus its screenshot file on disk must not outlive the session. A
+     * rotation keeps the activity (and the Reader mode, see [onSaveInstanceState]).
+     */
+    override fun onStop() {
+        super.onStop()
+        if (!isChangingConfigurations && !isFinishing) finish()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        // A rotation re-runs onCreate with the same intent; remember a Reader user's
+        // mode so they are not dropped back into the overlay.
+        if (readerMode) outState.putBoolean(STATE_READER_MODE, true)
+    }
+
+    /** Closes the capture: ✕, back and the close swipe all land here via [finish]. */
+    override fun onDestroy() {
+        super.onDestroy()
+        if (isFinishing) {
+            // Only the files this intent referenced — the reader path never touches them.
+            // The service overwrites both on the next press, so this is tidy-up; a file
+            // whose timestamp moved on belongs to a newer capture and stays.
+            for ((path, openedAt) in referencedFiles) {
+                val file = File(path)
+                if (CapturePaths.unchanged(openedAt, file)) file.delete()
+            }
+        }
+    }
+
+    /**
      * The full-screen Reader (#591): the capture's blocks in reading order with tappable
      * words. Tapping a word highlights it and shows its meaning line; Save stores it with
      * the sentence context cut from its node's paragraph. [nodes] may be raw capture
@@ -179,20 +508,27 @@ class WordCaptureActivity : AppCompatActivity() {
         setContentView(binding.root)
         binding.captureSheet.visibility = View.GONE
         binding.readerRoot.visibility = View.VISIBLE
+        readerMode = true
+        // Same screen-timeout reasoning as the overlay: a reader left open on the table
+        // must not lose the capture to the screen turning off.
+        binding.root.keepScreenOn = true
 
-        // Keep the reader clear of the system bars, top and bottom.
+        // Keep the reader clear of the system bars, top and bottom. The reader can be
+        // opened from a coroutine (after the first insets dispatch), so a fresh dispatch
+        // is requested here — the listener alone would never fire.
         val rootTopPad = binding.readerRoot.paddingTop
         val rootBottomPad = binding.readerRoot.paddingBottom
-        binding.readerRoot.setOnApplyWindowInsetsListener { v, insets ->
-            @Suppress("DEPRECATION")
+        ViewCompat.setOnApplyWindowInsetsListener(binding.readerRoot) { v, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(
                 v.paddingLeft,
-                rootTopPad + insets.systemWindowInsetTop,
+                rootTopPad + bars.top,
                 v.paddingRight,
-                rootBottomPad + insets.systemWindowInsetBottom
+                rootBottomPad + bars.bottom,
             )
             insets
         }
+        ViewCompat.requestApplyInsets(binding.readerRoot)
 
         val typeface = mainTypeface()
         val primaryColor = getColorFromAttr(R.attr.primaryColor)
@@ -210,10 +546,6 @@ class WordCaptureActivity : AppCompatActivity() {
         var highlightedView: TextView? = null
         var highlightSpan: CharacterStyle? = null
         var meaningToken: String? = null
-
-        /** The pickable token of a screen word, stripped like the old picker's choices. */
-        fun tokenOf(word: ScreenWord): String =
-            WordCapture.tokenize(word.text).firstOrNull() ?: word.text
 
         fun clearHighlight() {
             val view = highlightedView ?: return
@@ -271,7 +603,7 @@ class WordCaptureActivity : AppCompatActivity() {
         binding.readerSaveButton.setOnClickListener {
             val word = highlighted?.takeIf { it !in savedThisSession } ?: return@setOnClickListener
             val view = highlightedView ?: return@setOnClickListener
-            val token = tokenOf(word)
+            val token = SavedMarks.tokenOf(word)
             val sentence = ContextSentence.around(
                 screenWords.paragraphOf(word),
                 word.charRange.first,
@@ -291,7 +623,7 @@ class WordCaptureActivity : AppCompatActivity() {
             override fun onClick(widget: View) {
                 setHighlight(word, view)
                 refreshSave()
-                showMeaning(tokenOf(word))
+                showMeaning(SavedMarks.tokenOf(word))
             }
 
             // Keep the prose look; the highlight on tap is added by setHighlight.
@@ -324,7 +656,7 @@ class WordCaptureActivity : AppCompatActivity() {
             for (word in wordsByNode[block.nodeId].orEmpty()) {
                 val range = word.charRange
                 // Words already in the store carry the saved underline from the start.
-                if (savedByText.containsKey(tokenOf(word).lowercase())) {
+                if (savedByText.containsKey(SavedMarks.keyOf(word))) {
                     spannable.setSpan(UnderlineSpan(), range.first, range.last + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
                 }
                 spannable.setSpan(wordTapSpan(word, textView), range.first, range.last + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
@@ -410,6 +742,7 @@ class WordCaptureActivity : AppCompatActivity() {
         setContentView(binding.root)
         binding.readerRoot.visibility = View.GONE
         binding.captureSheet.visibility = View.VISIBLE
+        readerMode = false
 
         // Cap the word list so the meaning line and Save button stay on screen.
         val maxListPx = SheetHeight.maxListHeight(resources.displayMetrics.heightPixels, 0.5)

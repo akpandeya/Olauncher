@@ -143,6 +143,9 @@ class ScreenWords private constructor(
             val text = node.text ?: return emptyList()
             // A mismatch between boxes and text would misplace every word — treat as no boxes.
             val charBoxes = node.charBoxes?.takeIf { it.size == text.length }
+            // Hidden nodes park at zero-area bounds (collapsed WebView chrome at 0,0,0,0);
+            // boxes from them would hit-test invisible words at the frame's corner — absent.
+            val positioned = node.bounds?.let { it.width > 0 && it.height > 0 } == true
             val words = ArrayList<ScreenWord>()
             var i = 0
             while (i < text.length) {
@@ -151,7 +154,13 @@ class ScreenWords private constructor(
                 while (i < text.length && !text[i].isWhitespace()) i++
                 val word = text.substring(start, i)
                 if (word.none { it.isLetter() }) continue
-                val box = charBoxes?.let { boxes -> boxes.subList(start, i).reduce(ScreenBox::union) }
+                val box = if (positioned) {
+                    charBoxes?.let { boxes ->
+                        // A zero-area union (invisible word) is no geometry either.
+                        boxes.subList(start, i).reduce(ScreenBox::union)
+                            .takeUnless { it.width <= 0 || it.height <= 0 }
+                    }
+                } else null
                 words += ScreenWord(word, box, node.id, start until i)
             }
             return words

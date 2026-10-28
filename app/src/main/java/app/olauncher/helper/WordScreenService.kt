@@ -17,6 +17,7 @@ import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import app.olauncher.R
 import app.olauncher.data.Prefs
+import app.olauncher.data.store.CapturePaths
 import app.olauncher.data.store.ScreenBox
 import app.olauncher.data.store.ScreenNode
 import app.olauncher.data.store.ScreenNodesCodec
@@ -43,8 +44,6 @@ class WordScreenService : AccessibilityService() {
         /** Path of the node snapshot (cacheDir/capture/nodes.txt, [ScreenNodesCodec] format). */
         const val EXTRA_NODES_PATH = "app.olauncher.NODES_PATH"
 
-        private const val FRAME_FILE = "capture/frame.png"
-        private const val NODES_FILE = "capture/nodes.txt"
         private const val MAX_LINES = 600
         private const val MAX_NODES = 2000
         private val NEWLINE_REGEX = Regex("""[\n\r]+""")
@@ -131,8 +130,10 @@ class WordScreenService : AccessibilityService() {
      * The whole pipeline runs on [captureExecutor]; the button click waits for it.
      */
     private fun captureFrame(nodes: List<ScreenNode>): String? {
-        val frameFile = File(cacheDir, FRAME_FILE)
-        val nodesFile = File(cacheDir, NODES_FILE)
+        // The capture files live under capture/ in the cache; the exported capture
+        // activity accepts only these exact paths ([CapturePaths.isCaptureFile]).
+        val frameFile = CapturePaths.frameFile(cacheDir)
+        val nodesFile = CapturePaths.nodesFile(cacheDir)
         val done = CountDownLatch(1)
         var framePath: String? = null
         captureExecutor.execute {
@@ -211,7 +212,7 @@ class WordScreenService : AccessibilityService() {
         startActivity(
             Intent(applicationContext, WordCaptureActivity::class.java)
                 .putExtra(EXTRA_FRAME_PATH, framePath)
-                .putExtra(EXTRA_NODES_PATH, File(cacheDir, NODES_FILE).absolutePath)
+                .putExtra(EXTRA_NODES_PATH, CapturePaths.nodesFile(cacheDir).absolutePath)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         )
     }
