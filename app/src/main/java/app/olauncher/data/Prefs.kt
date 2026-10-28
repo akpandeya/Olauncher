@@ -121,6 +121,9 @@ class Prefs(context: Context) :
         const val GERMAN_LOOKUP = "GERMAN_LOOKUP"
         const val GERMAN_DICTIONARY_APP = "GERMAN_DICTIONARY_APP"
         const val GERMAN_SCREEN_PICK = "GERMAN_SCREEN_PICK"
+
+        /** Set by [app.olauncher.helper.WordScreenService] right after the first screenshot file was written. */
+        const val CAPTURE_SCREENSHOT_OK = "CAPTURE_SCREENSHOT_OK"
         const val GERMAN_SPELL_SUGGEST = "GERMAN_SPELL_SUGGEST"
         const val GERMAN_PAUSE_WORD = "GERMAN_PAUSE_WORD"
         const val GERMAN_PAUSE_LAST_WORD_ID = "GERMAN_PAUSE_LAST_WORD_ID"

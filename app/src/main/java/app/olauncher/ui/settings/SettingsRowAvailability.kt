@@ -22,6 +22,7 @@ object SettingsRowAvailability {
         R.id.germanClock,
         R.id.germanOfflineDictionaryOnOff,
         R.id.germanLookupOnOff,
+        R.id.germanScreenPickScreenshot,
         R.id.germanSpellSuggestOnOff,
         R.id.germanPauseWordOnOff,
         R.id.germanUiOnOff,

@@ -29,6 +29,7 @@ import android.widget.SeekBar
 import android.widget.Toast
 import android.view.WindowManager
 import android.Manifest
+import android.accessibilityservice.AccessibilityServiceInfo
 import android.content.pm.PackageManager
 import android.text.InputType
 import android.view.inputmethod.EditorInfo
@@ -40,6 +41,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import android.view.WindowInsets
+import android.view.accessibility.AccessibilityManager
 import android.widget.TextView
 import app.olauncher.helper.DrawerScrollHelper
 import app.olauncher.helper.DictionaryApps
@@ -178,13 +180,46 @@ internal fun SettingsFragment.toggleGermanScreenPick() {
             message = R.string.german_screen_pick_message,
             action = R.string.open_settings,
         ) {
-            try {
-                startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-            } catch (_: Exception) {
-                requireContext().showToast(getString(R.string.unable_to_open_app))
-            }
+            openAccessibilitySettings()
         }
     }
+}
+
+/** Opens the system accessibility settings; a failure keeps the app working. */
+internal fun SettingsFragment.openAccessibilitySettings() {
+    try {
+        startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+    } catch (_: Exception) {
+        requireContext().showToast(getString(R.string.unable_to_open_app))
+    }
+}
+
+/**
+ * The running "Thumbline: pick words" service as the system sees it, or null while it
+ * is not enabled. The service's [AccessibilityServiceInfo.capabilities] say whether it
+ * may take screenshots — a capability it only gets when the service was (re)started
+ * after the config gained android:canTakeScreenshot.
+ */
+private fun wordScreenServiceInfo(context: Context): AccessibilityServiceInfo? {
+    val manager = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as? AccessibilityManager ?: return null
+    val serviceClass = WordScreenService::class.java.name
+    return manager.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_GENERIC)
+        .firstOrNull { it.resolveInfo?.serviceInfo?.name == serviceClass }
+}
+
+/**
+ * The re-enable hint (#590): shown next to the screen-pick row while the German feature
+ * is on and the running word service either cannot take screenshots yet or has not
+ * written its first frame. It goes away once a screenshot succeeds
+ * (WordScreenService sets CAPTURE_SCREENSHOT_OK right after the first frame write), so
+ * the line is gated on the pref plus the live capability read from the
+ * AccessibilityManager — the capability alone cannot say whether a frame ever landed.
+ */
+internal fun SettingsFragment.showScreenPickScreenshotHint(): Boolean {
+    if (!prefs.germanEnabled || !prefs.germanScreenPick) return false
+    val info = wordScreenServiceInfo(requireContext()) ?: return false
+    val canScreenshot = info.capabilities and AccessibilityServiceInfo.CAPABILITY_CAN_TAKE_SCREENSHOT != 0
+    return !canScreenshot || !prefs.captureScreenshotOk
 }
 
 internal fun SettingsFragment.toggleGermanSpellSuggest() {
@@ -475,6 +510,7 @@ internal fun SettingsFragment.populateGerman() {
     binding.germanSpellSuggestLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
     binding.germanSpellSuggestOnOff.text = getString(if (prefs.germanSpellSuggest) R.string.on else R.string.off)
     binding.germanScreenPickLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
+    binding.germanScreenPickScreenshotLayout.isVisible = showScreenPickScreenshotHint()
     binding.germanScreenPickOnOff.text = getString(if (prefs.germanScreenPick) R.string.on else R.string.off)
     binding.germanPauseWordLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
     binding.germanPauseWordOnOff.text = getString(if (prefs.germanPauseWord) R.string.on else R.string.off)

@@ -431,6 +431,8 @@
     <string name="german_screen_pick">Pick words from the screen</string>
     <string name="german_screen_pick_subtitle">Uses the accessibility button. Reads the screen only when you press it</string>
     <string name="german_screen_pick_message">Turn on \"Thumbline: pick words\" in accessibility settings. Then press the accessibility button to pick words from any screen.</string>
+    <string name="german_screen_pick_screenshot_hint">Turn the Thumbline word service off and on once to allow screenshots</string>
+    <string name="german_screen_pick_screenshot_title">Screenshots</string>
     <string name="word_screen_service_label">Thumbline: pick words</string>
     <string name="word_screen_service_description">Reads the text on screen only when you press the accessibility button, and shows it so you can save German words. Nothing is stored or sent.</string>
     <string name="nothing_to_pick_here">Nothing to pick here</string>

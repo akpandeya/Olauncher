@@ -188,6 +188,7 @@ private fun SettingsFragment.handleGermanBackupFooterClick(view: View): Boolean 
         R.id.germanLookupOnOff, R.id.germanLookupTitle, R.id.germanLookupSubtitle, R.id.germanLookupLayout -> tickOnChange(view) { toggleGermanLookup() }
         R.id.germanSpellSuggestOnOff, R.id.germanSpellSuggestTitle, R.id.germanSpellSuggestSubtitle, R.id.germanSpellSuggestLayout -> tickOnChange(view) { toggleGermanSpellSuggest() }
         R.id.germanScreenPickOnOff, R.id.germanScreenPickTitle, R.id.germanScreenPickSubtitle, R.id.germanScreenPickLayout -> tickOnChange(view) { toggleGermanScreenPick() }
+        R.id.germanScreenPickScreenshot, R.id.germanScreenPickScreenshotTitle, R.id.germanScreenPickScreenshotSubtitle, R.id.germanScreenPickScreenshotAction, R.id.germanScreenPickScreenshotLayout -> openAccessibilitySettings()
         R.id.germanPauseWordOnOff, R.id.germanPauseWordTitle, R.id.germanPauseWordLayout -> tickOnChange(view) { toggleGermanPauseWord() }
         R.id.germanUiOnOff, R.id.germanUiTitle, R.id.germanUiLayout -> tickOnChange(view) { toggleGermanUi() }
         R.id.aiPracticeOnOff, R.id.aiPracticeTitle, R.id.aiPracticeSubtitle, R.id.aiPracticeLayout -> tickOnChange(view) { toggleAiPractice() }

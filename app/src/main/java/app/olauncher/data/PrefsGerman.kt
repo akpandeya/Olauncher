@@ -29,6 +29,13 @@ interface GermanPrefs {
 
     var germanScreenPick: Boolean
 
+    /**
+     * True once the word service wrote its first screenshot frame. The German settings
+     * keep showing the re-enable hint until this is set (the service must be toggled
+     * off and on once to pick up the screenshot capability). Key: [Prefs.CAPTURE_SCREENSHOT_OK].
+     */
+    var captureScreenshotOk: Boolean
+
     var germanSpellSuggest: Boolean
 
     var germanPauseWord: Boolean
@@ -64,6 +71,10 @@ internal class GermanPrefsStore(private val prefs: SharedPreferences) : GermanPr
     override var germanScreenPick: Boolean
         get() = prefs.getBoolean(GERMAN_SCREEN_PICK, false)
         set(value) = prefs.edit { putBoolean(GERMAN_SCREEN_PICK, value).apply() }
+
+    override var captureScreenshotOk: Boolean
+        get() = prefs.getBoolean(Prefs.CAPTURE_SCREENSHOT_OK, false)
+        set(value) = prefs.edit { putBoolean(Prefs.CAPTURE_SCREENSHOT_OK, value).apply() }
 
     override var germanSpellSuggest: Boolean
         get() = prefs.getBoolean(GERMAN_SPELL_SUGGEST, false)
