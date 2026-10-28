@@ -97,6 +97,12 @@
     <item name="germanPauseWordTitle" type="id" />
     <item name="germanScreenPickLayout" type="id" />
     <item name="germanScreenPickOnOff" type="id" />
+    <item name="germanScreenPickScreenshot" type="id" />
+    <item name="germanScreenPickScreenshotAction" type="id" />
+    <item name="germanScreenPickScreenshotActions" type="id" />
+    <item name="germanScreenPickScreenshotLayout" type="id" />
+    <item name="germanScreenPickScreenshotSubtitle" type="id" />
+    <item name="germanScreenPickScreenshotTitle" type="id" />
     <item name="germanScreenPickSubtitle" type="id" />
     <item name="germanScreenPickTitle" type="id" />
     <item name="germanSpellSuggestLayout" type="id" />

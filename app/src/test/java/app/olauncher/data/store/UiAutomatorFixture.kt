@@ -16,6 +16,12 @@ object UiAutomatorFixture {
 
     fun loadTagesschau(): List<ScreenNode> = load("/capture/tagesschau_article.xml")
 
+    /**
+     * Copy of the tagesschau dump with the root bounds changed to [0,0][1080,1920] —
+     * exists only to exercise ScreenMapping's aspect/scale mismatch path (see #590).
+     */
+    fun loadTagesschauMismatch(): List<ScreenNode> = load("/capture/tagesschau_mismatch.xml")
+
     fun loadTwoColumn(): List<ScreenNode> = load("/capture/two_column.xml")
 
     fun load(path: String): List<ScreenNode> {

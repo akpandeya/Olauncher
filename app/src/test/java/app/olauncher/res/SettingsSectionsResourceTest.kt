@@ -147,7 +147,11 @@ class SettingsSectionsResourceTest {
         assertTrue("Ids that no longer resolve in R.id: $unresolved", unresolved.isEmpty())
 
         val added = (frame + owned) - EXPECTED_MAIN_IDS -
-            setOf("settingsRows", "statusBarFade", "dictionaryApp", "dictionaryAppLayout", "dictionaryAppTitle")
+            setOf("settingsRows", "statusBarFade", "dictionaryApp", "dictionaryAppLayout", "dictionaryAppTitle") -
+            setOf(
+                "germanScreenPickScreenshot", "germanScreenPickScreenshotAction", "germanScreenPickScreenshotActions",
+                "germanScreenPickScreenshotLayout", "germanScreenPickScreenshotSubtitle", "germanScreenPickScreenshotTitle",
+            )
         assertTrue("Ids added to Settings: $added", added.isEmpty())
     }
 

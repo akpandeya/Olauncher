@@ -253,6 +253,11 @@ object SettingsCatalog {
         primaryId = R.id.germanSpellSuggestOnOff, layoutId = R.id.germanSpellSuggestLayout, titleId = R.id.germanSpellSuggestTitle, valueId = R.id.germanSpellSuggestOnOff, subtitleRes = R.string.german_spell_suggest_subtitle, subtitleId = R.id.germanSpellSuggestSubtitle),
     row(key = "germanScreenPickOnOff", sectionKey = SettingsSections.KEY_DEUTSCH, titleRes = R.string.german_screen_pick, type = SettingsRowType.TOGGLE, shape = SettingsRowShape.SUBTITLE,
         primaryId = R.id.germanScreenPickOnOff, layoutId = R.id.germanScreenPickLayout, titleId = R.id.germanScreenPickTitle, valueId = R.id.germanScreenPickOnOff, subtitleRes = R.string.german_screen_pick_subtitle, subtitleId = R.id.germanScreenPickSubtitle),
+    // The re-enable hint (#590): shown while the enabled word service cannot take
+    // screenshots yet or the first frame has not landed. Starts hidden (populateGerman).
+    row(key = "germanScreenPickScreenshot", sectionKey = SettingsSections.KEY_DEUTSCH, titleRes = R.string.german_screen_pick_screenshot_title, type = SettingsRowType.ACTION, shape = SettingsRowShape.SUBTITLE,
+        primaryId = R.id.germanScreenPickScreenshot, layoutId = R.id.germanScreenPickScreenshotLayout, titleId = R.id.germanScreenPickScreenshotTitle, subtitleRes = R.string.german_screen_pick_screenshot_hint, subtitleId = R.id.germanScreenPickScreenshotSubtitle,
+        actionIds = intArrayOf(R.id.germanScreenPickScreenshotAction), actionLabelRes = intArrayOf(R.string.open_settings), actionsContainerId = R.id.germanScreenPickScreenshotActions, searchable = false),
     row(key = "germanPauseWordOnOff", sectionKey = SettingsSections.KEY_DEUTSCH, titleRes = R.string.german_pause_word, type = SettingsRowType.TOGGLE,
         primaryId = R.id.germanPauseWordOnOff, layoutId = R.id.germanPauseWordLayout, titleId = R.id.germanPauseWordTitle, valueId = R.id.germanPauseWordOnOff),
     row(key = "germanUiOnOff", sectionKey = SettingsSections.KEY_DEUTSCH, titleRes = R.string.german_ui, type = SettingsRowType.TOGGLE,
