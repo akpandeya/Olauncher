@@ -11,6 +11,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeoutOrNull
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.json.JSONObject
@@ -40,6 +41,22 @@ class OpenAiCompatibleProviderTest {
     }
 
     @Test
+    fun `encodeRequest sends the strict json schema envelope when a schema is set`() {
+        val provider = OpenAiCompatibleProvider(config, keySource)
+        val schema = AiBenchLogic.strictSchemaJson()
+        val body = JSONObject(provider.encodeRequest(request.copy(jsonSchema = schema)))
+        val envelope = body.getJSONObject("response_format")
+        assertEquals("json_schema", envelope.getString("type"))
+        val strict = envelope.getJSONObject("json_schema")
+        assertEquals(OpenAiCompatibleProvider.JSON_SCHEMA_NAME, strict.getString("name"))
+        assertTrue(strict.getBoolean("strict"))
+        assertEquals("object", strict.getJSONObject("schema").getString("type"))
+        // No schema set but json mode on: plain json_object, not json_schema.
+        val plain = JSONObject(provider.encodeRequest(request))
+        assertEquals("json_object", plain.getJSONObject("response_format").getString("type"))
+    }
+
+    @Test
     fun `decodeResponse ok parses content and usage tokens`() {
         val result = decode(200, null, resource("ai/chat_ok.json"))
         result as AiResult.Ok
@@ -65,11 +82,36 @@ class OpenAiCompatibleProviderTest {
     }
 
     @Test
-    fun `decodeResponse maps the 429 billing error to BILLING`() {
-        val result = decode(429, null, resource("ai/chat_error_429_billing.json"))
+    fun `decodeResponse maps the 429 billing error to BILLING`() {        val result = decode(429, null, resource("ai/chat_error_429_billing.json"))
         result as AiResult.Error
         assertEquals(AiResult.ErrorKind.BILLING, result.kind)
         assertEquals("Insufficient credit balance; top up your account.", result.message)
+    }
+
+    @Test
+    fun `decodeResponse maps 402 to BILLING and carries the error code`() {
+        val result = decode(402, null, resource("ai/chat_error_402.json"))
+        result as AiResult.Error
+        assertEquals(AiResult.ErrorKind.BILLING, result.kind)
+        assertEquals("billing_insufficient_balance", result.errorCode)
+    }
+
+    @Test
+    fun `decodeResponse carries the provider error code for schema fallbacks`() {
+        val result = decode(400, null, resource("ai/chat_error_model_not_capable.json"))
+        result as AiResult.Error
+        assertEquals(AiResult.ErrorKind.BAD_RESPONSE, result.kind)
+        assertEquals("model_not_capable", result.errorCode)
+        assertTrue(AiBenchLogic.shouldFallBackFromSchema(result))
+    }
+
+    @Test
+    fun `decodeResponse has no error code when the envelope omits one`() {
+        val result = decode(503, null, """{"error": {"message": "The server had an error while processing your request."}}""")
+        result as AiResult.Error
+        assertEquals(AiResult.ErrorKind.SERVER, result.kind)
+        assertNull(result.errorCode)
+        assertFalse(AiBenchLogic.shouldFallBackFromSchema(result))
     }
 
     @Test

@@ -344,6 +344,39 @@ Final model pick pending owner sign-off (correctness scored by glm-5.3 proxy,
 not a native-speaker reviewer). Recorded benchmark spend: €0.082 for the final
 run (cap €1; ~€0.2 across all three live runs incl. earlier harness shakedown).
 
+### Benchmark round 2 (2026-10-28): quality-only
+
+Time constraints were **removed by owner decision 2026-10-28** — generation is
+a background process, latency is informational only, and the verdict is
+quality-only on the unchanged thresholds (validity ≥ 95 %, grounding ≥ 90 %,
+correctness ≥ 1.8/2 via the glm-5.3 proxy judge). The matrix grew to seven
+candidates (glm-5.3-flash, glm-5.3, deepseek-v4.1-flash,
+deepseek-v4.1-flash-1017, mistral-small-4-119b-instruct, gpt-oss-120b,
+gemma-4-31b); each tried strict `response_format: json_schema` first with a
+recorded fallback to `json_object`. Full record, failure analysis and budget:
+[ai-model-decision.md](ai-model-decision.md), round 2.
+
+| Model | Schema mode | Validity % | Grounding % | Correctness proxy | €/item | p50/p95 latency | Verdict |
+|---|---|---|---|---|---|---|---|
+| gemma-4-31b | json_schema | 95.0 | 99.4 | 1.91/2 | 0.000205 | 114.1 s / 176.9 s | **PASS** |
+| glm-5.3-flash | json_schema | 92.8 | 98.8 | 1.98/2 | 0.000175 | 16.2 s / 17.6 s | FAIL |
+| glm-5.3 | json_schema | 82.2 | 98.6 | 1.87/2 | 0.000640 | 42.7 s / 58.6 s | FAIL |
+| mistral-small-4-119b-instruct | json_schema | 77.8 | 100.0 | n/a | 0.000295 | 31.6 s / 39.1 s | FAIL |
+| deepseek-v4.1-flash-1017 | json_schema | 33.3 | 98.3 | 2.00/2 | 0.000395 | 27.3 s / 27.3 s | FAIL |
+| deepseek-v4.1-flash | json_schema | 0.0 | 0.0 | n/a | — | — | FAIL |
+| gpt-oss-120b | json_schema → json_object | 0.0 | 0.0 | n/a | — | — | FAIL |
+
+**gemma-4-31b is the first passing model** — exactly at the 95 % validity
+floor, with the strict-schema request shape fixing its round-1 validity
+failure. It is the recommended cheapest passing model and the new `AI_MODEL`
+default *candidate* (final pick pending owner sign-off of the proxy
+correctness): €0.000205/item ≈ **€0.21/month at 50 words/day**. glm-5.3-flash
+closed most of its round-1 validity gap (77.2 → 92.8 %) but still misses.
+Mistral ran fine on the owner's plan (pay-as-you-go, no billing errors) with
+the best grounding (100 %) but too many invalid items. gpt-oss-120b is not
+usable on Melious (`context_length_exceeded` on every call, both modes).
+Round-2 spend: **€0.224** (cap €2).
+
 ## Out of scope
 
 - The capture front door (#523) — decoupled; the only contract is `Word` +

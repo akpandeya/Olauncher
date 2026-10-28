@@ -82,9 +82,11 @@ open class OpenAiCompatibleProvider(
         url.openConnection() as HttpURLConnection
 
     /**
-     * The request body, OpenAI shape. JSON mode is `response_format: json_object`
-     * (widely supported on Melious); strict `json_schema` needs a capable model and
-     * would 400 `model_not_capable` on the rest, so it is not used here.
+     * The request body, OpenAI shape. With [AiRequest.jsonSchema] set the response
+     * format is strict `json_schema`; otherwise JSON mode is `response_format:
+     * json_object` (widely supported on Melious). Strict `json_schema` needs a
+     * capable model — a 400 `model_not_capable` answer carries that `code`, so the
+     * caller can fall back to `json_object`.
      */
     fun encodeRequest(request: AiRequest): String {
         val message = JSONObject()
@@ -94,7 +96,20 @@ open class OpenAiCompatibleProvider(
             .put("model", config.model)
             .put("messages", JSONArray().put(message))
             .put("max_tokens", request.maxTokens)
-        if (request.jsonMode) {
+        if (request.jsonSchema != null) {
+            body.put(
+                "response_format",
+                JSONObject()
+                    .put("type", "json_schema")
+                    .put(
+                        "json_schema",
+                        JSONObject()
+                            .put("name", JSON_SCHEMA_NAME)
+                            .put("strict", true)
+                            .put("schema", JSONObject(request.jsonSchema)),
+                    ),
+            )
+        } else if (request.jsonMode) {
             body.put("response_format", JSONObject().put("type", "json_object"))
         }
         return body.toString()
@@ -104,8 +119,10 @@ open class OpenAiCompatibleProvider(
      * Maps one HTTP exchange to an [AiResult], per the confirmed Melious error table:
      * 401/403 AUTH; 429 RATE_LIMIT (honoring `Retry-After`) unless the error is a
      * `billing_error` (out of credits — `billing_insufficient_balance` or
-     * `insufficient_quota`), which is BILLING and not fixable by retrying; 5xx SERVER;
-     * other 4xx and unparseable or truncated bodies BAD_RESPONSE.
+     * `insufficient_quota`), or HTTP 402, which is BILLING and not fixable by
+     * retrying; 5xx SERVER; other 4xx and unparseable or truncated bodies
+     * BAD_RESPONSE. The envelope's `code`, when present, is carried in
+     * [AiResult.Error.errorCode] (e.g. `model_not_capable`, `context_length_exceeded`).
      */
     fun decodeResponse(httpStatus: Int, retryAfterSeconds: Int?, body: String?, latencyMs: Long = 0): AiResult {
         if (httpStatus in 200..299) {
@@ -116,18 +133,18 @@ open class OpenAiCompatibleProvider(
         val code = error.optString("code")
         val detail = error.optString("message").ifBlank { "HTTP $httpStatus" }
         return when {
-            type == "billing_error" || code in BILLING_CODES ->
-                AiResult.Error(AiResult.ErrorKind.BILLING, detail)
+            type == "billing_error" || code in BILLING_CODES || httpStatus == 402 ->
+                AiResult.Error(AiResult.ErrorKind.BILLING, detail, errorCode = code.ifBlank { null })
             httpStatus == 401 || httpStatus == 403 ->
-                AiResult.Error(AiResult.ErrorKind.AUTH, detail)
+                AiResult.Error(AiResult.ErrorKind.AUTH, detail, errorCode = code.ifBlank { null })
             httpStatus == 429 -> {
                 val wait = retryAfterSeconds?.let { " Retry after ${it}s." } ?: ""
-                AiResult.Error(AiResult.ErrorKind.RATE_LIMIT, "$detail$wait")
+                AiResult.Error(AiResult.ErrorKind.RATE_LIMIT, "$detail$wait", errorCode = code.ifBlank { null })
             }
             httpStatus >= 500 ->
-                AiResult.Error(AiResult.ErrorKind.SERVER, detail)
+                AiResult.Error(AiResult.ErrorKind.SERVER, detail, errorCode = code.ifBlank { null })
             else ->
-                AiResult.Error(AiResult.ErrorKind.BAD_RESPONSE, detail)
+                AiResult.Error(AiResult.ErrorKind.BAD_RESPONSE, detail, errorCode = code.ifBlank { null })
         }
     }
 
@@ -187,6 +204,8 @@ open class OpenAiCompatibleProvider(
     companion object {
         /** The chat path under the base URL, per docs/design/ai-practice.md (9.2). */
         const val CHAT_PATH = "/v1/chat/completions"
+        /** Name of the strict schema envelope sent with `json_schema` mode. */
+        const val JSON_SCHEMA_NAME = "practice_items"
         const val RETRY_AFTER_HEADER = "Retry-After"
         const val CONNECT_TIMEOUT_MS = 15_000
         const val READ_TIMEOUT_MS = 60_000
