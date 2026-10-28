@@ -320,24 +320,16 @@ class ReviewFragment : BaseFragment() {
         b.summaryList.removeAllViews()
         for (item in sortedItems) {
             // The review side's thin adapter over the one shared row layout (#623):
-            // knew green tick, almost amber dot, again red cross — the same marks the
-            // drill summary uses, mapped from the review's own row model.
+            // the result→mark mapping comes from SummaryMarks, the same one the
+            // drill summary uses.
             val rowBinding = ItemSummaryRowBinding.inflate(layoutInflater, b.summaryList, false)
             rowBinding.tvPrimary.text = item.word.text
+            val mark = SummaryMarks.forReviewResult(item.result)
+            rowBinding.ivMark.setImageResource(mark.icon)
+            rowBinding.ivMark.setColorFilter(ContextCompat.getColor(context, mark.tint))
             when (item.result) {
-                ReviewEvent.Result.KNEW -> {
-                    rowBinding.ivMark.setImageResource(R.drawable.ic_check)
-                    rowBinding.ivMark.setColorFilter(ContextCompat.getColor(context, R.color.accentSage))
-                    rowBinding.tvSecondary.isVisible = false
-                }
-                ReviewEvent.Result.ALMOST -> {
-                    rowBinding.ivMark.setImageResource(R.drawable.ic_dot)
-                    rowBinding.ivMark.setColorFilter(ContextCompat.getColor(context, R.color.accentSand))
-                    rowBinding.tvSecondary.isVisible = false
-                }
+                ReviewEvent.Result.KNEW, ReviewEvent.Result.ALMOST -> rowBinding.tvSecondary.isVisible = false
                 ReviewEvent.Result.AGAIN -> {
-                    rowBinding.ivMark.setImageResource(R.drawable.ic_close)
-                    rowBinding.ivMark.setColorFilter(ContextCompat.getColor(context, R.color.accentRose))
                     val correction = ReviewSummaryLogic.formatCorrection(item.word.meaning, item.word.context)
                     rowBinding.tvSecondary.text = correction
                     rowBinding.tvSecondary.isVisible = correction.isNotEmpty()

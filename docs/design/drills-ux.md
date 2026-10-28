@@ -225,8 +225,7 @@ Buttons, in order:
 - "Done": back to the hub (or Today if the round started there).
 
 The review summary (`ReviewFragment`, `summaryContainer`) uses the same list design.
-Today it shows only "Done · N knew · N almost · N again". It gets the same rows and
-marks: knew is green, almost is amber, again is red.
+It gets the same rows and marks: knew is green, almost is amber, again is red.
 
 ## Ranking formula
 
@@ -340,13 +339,19 @@ Everything below is the smallest addition. Nothing here replaces an existing tok
   and a near-miss function next to `checkTypedAnswer` (Context-free Kotlin with unit
   tests). No per-type typed/choice-only flag any more.
 - New: extra keys inside the `DRILL_SCORES` JSON. No new Prefs key is needed.
-- Missing today: a shared list-row style for the summary. Propose one style,
-  `DrillSummaryRow`, with `TodayCardBody` text and a 48dp minimum height.
+- Done (shared skin, #678): one shared list-row style for the summary — `SummaryRow`
+  (`styles.xml`), with `TodayCardBody` and `TodayCardBodyLight` text on the shared
+  `item_summary_row.xml` layout.
 
 ## Open questions
 
 1. Do the drill summary and the review summary share one component, or two that look
    alike? One component is less code but ties two screens together.
+
+   Settled (owner, 2026-10-28): one shared skin, two adapters. The skin is the
+   `SummaryRow` style on the shared `item_summary_row.xml` layout; each screen keeps
+   its own thin adapter (`DrillFragment.bindSummaryRows`, `ReviewFragment`) mapping
+   its row model onto it.
 
 Decided, no longer open: the typed or choice-only mapping (Rounds — superseded in
 #639 by the per-item format ladder), the adaptive summary with misses on top
