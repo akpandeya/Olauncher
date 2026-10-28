@@ -7,7 +7,7 @@ drills are started, run, summarised and ranked. It does not add new drill conten
 
 - A Drills card on Today and a Drills button on Words give a one-tap way in.
 - A full-screen hub lists the 9 drill types, weakest first.
-- A round is 5 to 8 shuffled items, at most about 12 interactions, 2 to 3 minutes.
+- A round is 3 to 5 shuffled items, at most about 12 interactions, 2 to 3 minutes.
 - First exposure is always a tap question. Typing is a graduation, not a second round.
 - Wrong answers are corrected inline: red flash, one-line rule, one tap to continue.
 - A near-miss spelling gets one retry instead of a wrong mark.
@@ -54,7 +54,7 @@ Below, the 9 types ordered weakest first. Types never played go in a group label
 - the count of rounds played,
 - a thin bar for the score.
 
-A row tap always starts a 5 to 8 item round of that single type. Mixed rounds come
+A row tap always starts a 3 to 5 item round of that single type. Mixed rounds come
 only from the suggestion buttons, the Today card and the drawer (see Mixed rounds
 below). No sub-menu.
 
@@ -65,10 +65,12 @@ old shape — a choice round over 10 items followed by a typed round over the sa
 with requeues inside each — grew to 20+ question screens and 50 to 60 interactions.
 That is designed-in give-up risk.
 
-New model: **5 to 8 items per round, at most about 12 interactions, 2 to 3 minutes.**
+New model: **3 to 5 items per round, at most about 12 interactions, 2 to 3 minutes.**
 The summary button says "Another 5". Both halves of the old shape fold into one short
 round: first exposure is always a tap, typing becomes a graduation inside the same
-round, and corrections happen inline instead of in a separate step.
+round, and corrections happen inline instead of in a separate step. (The round was
+redrawn from the original 5–8 after the #647 review deliberately capped it at 5 so no
+round bombards the learner — decided 2026-10-28.)
 
 An interaction is one learner input: a tile tap (a choice or a match pair), a whole
 word-order, word-bank or listen-and-tap answer however many tiles it takes, a typed
@@ -76,16 +78,28 @@ answer submitted (a close-spelling retry is part of the same interaction, not a 
 one), or a Continue tap after a flashcard or an inline correction. A 5-item round with
 one flashcard and one correction lands around 7 interactions.
 
-The ~12 interactions are a soft target, not an enforced cap: an 8-step round answered
-wrong throughout runs about 15 interactions (an answer plus a Continue each), which
-stays acceptable because the round itself is still 8 items long.
+The ~12 interactions are a soft target, not an enforced cap: a 5-step round answered
+wrong throughout runs about 11 interactions (an answer plus a Continue each), and a
+rule-recap breather can push it a little past that, which stays acceptable because the
+round itself is capped at 5 items.
 
 ### Round shape
 
-Every round draws 5 to 8 items — from one type, or from the 2 to 3 weakest types for
+Every round draws 3 to 5 items — from one type, or from the 2 to 3 weakest types for
 a mixed round — and shuffles them. When a type has fewer than 5 items, the round uses
 all of them. Nothing is requeued inside a round; misses come back through
 "Practise misses" in the summary, as today.
+
+AI practice items (#561, Epic 9) join mixed rounds only — the "Practise weakest" mix.
+Up to 2 per round (`DrillRoundPlanner.MAX_AI_PER_ROUND`), each shown as the existing
+self-graded flashcard: prompt, hint, answer on reveal, Continue. An AI item is never
+a tap or typed question and never graduates, and it does not count against the
+one-flashcard cap, which stays the cap for built-in teaching steps. AI items are
+excluded from the per-type scores, the typed evidence and the per-item maturity,
+exactly like built-in flashcards, so they cannot change which types "Practise
+weakest" samples. Words with a blank `context` get no AI items, and a round with no
+stored AI items is planned exactly as before. Single-type rounds, the word-order
+round and practise-misses rounds stay AI-free.
 
 ### Format ladder
 
@@ -107,7 +121,8 @@ Rules:
 - At most 3 typed questions per round.
 - At most 1 flashcard per round (`DrillRoundPlanner.MAX_FLASHCARDS_PER_ROUND`). The
   ladder gives every brand-new item a flashcard, but the cap keeps the round moving:
-  a first round of 8 brand-new items shows 1 flashcard and 7 cold taps.
+  a first round of 5 brand-new items shows 1 flashcard and 4 cold taps. AI practice
+  items (#621) have their own cap of 2 and do not count against this one.
 - No two consecutive questions of the same format. The round shuffles until this holds;
   it is best-effort. Known shortfall: a round where every item is brand new and of one
   type is all tap (plus at most one flashcard), so the rule cannot hold there.
@@ -181,7 +196,7 @@ On a near miss:
 Decided: an adaptive screen. It replaces the single score line. The header keeps the
 counts, for example "4 right · 1 almost · 1 wrong", and stays pinned.
 
-Below it, a list of all items in the round (5 to 8). The misses
+Below it, a list of all items in the round (3 to 5). The misses
 sit at the top, so they are visible without scrolling. When the list is long, the
 whole screen stays readable: the header and the buttons stay in place and the list
 scrolls between them.

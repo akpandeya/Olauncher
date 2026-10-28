@@ -44,6 +44,8 @@ import app.olauncher.data.store.DrillSummaryItem
 import app.olauncher.data.store.DrillSummaryLogic
 import app.olauncher.data.store.DrillTables
 import app.olauncher.data.store.DrillType
+import app.olauncher.data.store.PracticeDrillItems
+import app.olauncher.data.store.PracticeItemsStore
 import app.olauncher.data.store.ReviewEventsStore
 import app.olauncher.data.store.ReviewSessionLogic
 import app.olauncher.data.store.SharedOfflineGermanStore
@@ -283,7 +285,15 @@ class DrillFragment : BaseFragment() {
             .filter { it.second.isNotEmpty() }
             .toMap()
         if (pools.isEmpty()) return null
-        val steps = DrillRoundPlanner.plan(pools, itemMaturity(), roundRandom)
+        // AI practice items (#621, Epic 9 #561) join mixed rounds only: single-type
+        // rounds, the dedicated word-order round and practise-misses rounds stay
+        // AI-free. The planner renders them flashcard-only, capped per round.
+        val aiItems = if (drillTypes.size > 1) {
+            PracticeDrillItems.toDrillItems(PracticeItemsStore(appContext).all())
+        } else {
+            emptyList()
+        }
+        val steps = DrillRoundPlanner.plan(pools, itemMaturity(), roundRandom, aiItems = aiItems)
         return if (steps.isEmpty()) null else DrillQuiz(steps, roundRandom)
     }
 
