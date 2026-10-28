@@ -1006,4 +1006,6 @@
     <string name="ai_practice_advanced">Advanced</string>
     <string name="ai_practice_base_url">Base URL</string>
     <string name="ai_practice_model">Model</string>
+    <string name="ai_practice_model_required">Set a model first</string>
+    <string name="ai_practice_key_save_failed">Could not save the key — try again</string>
 </resources>

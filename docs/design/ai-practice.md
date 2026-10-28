@@ -127,6 +127,13 @@ original tight throttles were relaxed — the cap stays purely as a guardrail.
   practice start — a flash-class model is expected to answer in 1–2 s — with a
   **~10 s timeout**. On failure or timeout: fall back to serving the existing
   bare words as today, and enqueue the words for the background queue.
+  Amendment (2026-10-28, epic review round 1): the 1–2 s assumption was wrong —
+  the benchmark (#600) measured glm-5.3-flash at **p50 36.8 s / p95 72 s** for
+  20 words. Generation is therefore chunked into small per-request batches
+  (~5 words), each with its own token budget, and the ~10 s on-demand ceiling
+  is enforced on the HTTP connection itself (interruptible), not just around
+  the call. The first card waits for the inline generation at most that long;
+  the round then starts once, on whatever the pools hold.
 - **Background top-up.** The WorkManager batched queue (unique periodic work
   `ai_practice`, 24 h, network-constrained) restores all pools to **3 items**
   per word, FIFO oldest-first with jitter.

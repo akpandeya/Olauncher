@@ -71,4 +71,23 @@ object AiPracticeMessages {
         AiProviders.MELIOUS -> "Melious"
         else -> providerId.replaceFirstChar { it.uppercase() }
     }
+
+    /**
+     * The settings subtitle for the feature state (review R1 #7): a standing
+     * billing or key problem names itself, an enabled feature with no model says
+     * so plainly instead of silently doing nothing. Null keeps the default
+     * provider subtitle (which takes the provider label argument).
+     */
+    @StringRes
+    fun subtitleRes(
+        enabled: Boolean,
+        billingBlocked: Boolean,
+        keyRejected: Boolean,
+        model: String,
+    ): Int? = when {
+        billingBlocked -> R.string.ai_practice_billing_blocked
+        keyRejected -> R.string.ai_practice_key_rejected
+        enabled && model.isBlank() -> R.string.ai_practice_model_required
+        else -> null
+    }
 }

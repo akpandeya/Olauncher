@@ -115,8 +115,7 @@ class PracticeItemsStore(
 
     private val file = File(filesDir, "practice_items.json")
 
-    @Synchronized
-    fun all(): List<PracticeItem> {
+    fun all(): List<PracticeItem> = synchronized(LOCK) {
         if (!file.exists()) return emptyList()
         return try {
             PracticeItemsCodec.decode(file.readText())
@@ -126,8 +125,7 @@ class PracticeItemsStore(
     }
 
     /** Stores new items (ids and createdAt assigned here) and returns the stored copies. */
-    @Synchronized
-    fun append(newItems: List<PracticeItem>): List<PracticeItem> {
+    fun append(newItems: List<PracticeItem>): List<PracticeItem> = synchronized(LOCK) {
         if (newItems.isEmpty()) return emptyList()
         val existing = all()
         var nextId = generateId(existing)
@@ -166,5 +164,14 @@ class PracticeItemsStore(
 
     private fun generateId(items: List<PracticeItem>): Long {
         return (items.maxOfOrNull { it.id } ?: 0L) + 1
+    }
+
+    companion object {
+        /**
+         * One lock for every instance: workers and the on-demand path each build
+         * their own store, and the file's read-modify-write must never interleave —
+         * a lost append loses paid-for items (review R1 #3).
+         */
+        private val LOCK = Any()
     }
 }

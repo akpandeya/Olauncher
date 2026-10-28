@@ -543,13 +543,16 @@ class PauseFragment : Fragment() {
         ).also { wordReveal = it }
 
         // The pause word serves a rotating practice item when one exists (#603);
-        // words without items keep the plain word. Grading is unchanged.
-        val practicePrompt = PracticeRotation.pick(
+        // words without items keep the plain word. Grading is unchanged. With an
+        // override active the reveal leads with the item's answer (or the word
+        // itself), so the user can check themselves (review R1 #10).
+        val practiceItem = PracticeRotation.pick(
             pickedWord,
             PracticeItemsStore(context).all(),
             ReviewEventsStore(context).all().filter { it.wordId == pickedWord.id },
-        )?.prompt
-        helper.promptOverride = practicePrompt
+        )
+        helper.promptOverride = practiceItem?.prompt
+        helper.answerOverride = practiceItem?.answer?.ifBlank { pickedWord.text } ?: pickedWord.text
         helper.bind(pickedWord)
     }
 

@@ -154,10 +154,11 @@ object PracticeContract {
     /**
      * Builds one cloze fallback per missing slot from the saved context, with the
      * word blanked. The choices rotate per slot so the pool does not hold three
-     * identical cards.
+     * identical cards. A word with blank text gets a deterministic minimal card —
+     * the word is never dropped (review R1 #9).
      */
     private fun clozeFallbacks(word: Word, count: Int, source: String): List<PracticeItem> {
-        val base = clozeFallback(word, source) ?: return emptyList()
+        val base = clozeFallback(word, source)
         return (0 until count).map { slot ->
             if (slot == 0) base
             else base.copy(choices = base.choices.drop(slot) + base.choices.take(slot))
@@ -168,12 +169,26 @@ object PracticeContract {
      * A cloze built from the saved [Word.context] with the word blanked. When the
      * word appears only in an inflected form, the context token sharing the longest
      * stem with it is blanked instead. Without usable context the card is a bare gap
-     * with the word as the answer — the word is never dropped. There is no hint, so
-     * the fallback can never reveal the answer (#643).
+     * with the word as the answer — the word is never dropped. A word with blank
+     * text gets a deterministic minimal card (the saved meaning, else the word id,
+     * as the answer) so "never dropped" holds for it too (review R1 #9). There is
+     * no hint, so the fallback can never reveal the answer (#643).
      */
-    private fun clozeFallback(word: Word, source: String): PracticeItem? {
+    private fun clozeFallback(word: Word, source: String): PracticeItem {
         val text = word.text.trim()
-        if (text.isEmpty()) return null
+        if (text.isEmpty()) {
+            val answer = word.meaning.trim().ifEmpty { word.id.toString() }
+            return PracticeItem(
+                wordId = word.id,
+                type = DrillType.CLOZE,
+                prompt = DrillItem.GAP_MARKER,
+                answer = answer,
+                choices = listOf(answer, "$answer?"),
+                hint = null,
+                source = source,
+                model = null,
+            )
+        }
         val span = blankSpan(word.context, text)
         val prompt: String
         val answer: String
@@ -226,10 +241,10 @@ object PracticeContract {
         return best
     }
 
-    /** Distinct deterministic choices containing the answer; case variants pad it out. */
+    /** Distinct deterministic choices containing the answer; no case-flip padding. */
     private fun fallbackChoices(answer: String, text: String): List<String> {
         val choices = LinkedHashSet<String>()
-        for (candidate in listOf(answer, text, text.uppercase(), "${text}n")) {
+        for (candidate in listOf(answer, text, "${text}n")) {
             choices.add(candidate)
             if (choices.size >= 3) break
         }

@@ -12,7 +12,6 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import app.olauncher.data.Prefs
-import app.olauncher.data.store.AiPracticeGate
 import app.olauncher.data.store.AiProviderConfig
 import app.olauncher.data.store.AiProviders
 import app.olauncher.data.store.AiResult
@@ -34,15 +33,21 @@ import kotlinx.coroutines.withContext
 /**
  * The background top-up of the hybrid generation design (#601, 9.8; docs/design/
  * ai-practice.md "Budgets"): unique periodic work `ai_practice`, 24 h, network-
- * constrained, that restores every word's pool to 3 items — one batched request,
+ * constrained, that restores every word's pool to 3 items — chunked requests,
  * FIFO oldest-first with jitter, under the daily word cap ([PracticeQueue.next]).
  *
- * AUTH sets `AI_KEY_REJECTED` and stops; BILLING sets `AI_BILLING_BLOCKED` (the
- * user must top up their credits) and stops; RATE_LIMIT and NETWORK retry with
- * WorkManager's jittered exponential backoff; every other outcome waits for the
- * next run — the words stay in the derived queue, so nothing is lost and nothing
- * hot-loops. The API key only ever flows through [KeyVault] and [KeySource]; it
- * is never logged.
+ * The first top-up after switching on is the unique one-shot `ai_practice_now`
+ * work; the periodic run starts a day later, so switching on never runs two
+ * workers that send the same queue at once (review R1 #3).
+ *
+ * AUTH sets `AI_KEY_REJECTED` and stops — later runs are skipped until a new key
+ * is saved, which clears the flag; BILLING sets `AI_BILLING_BLOCKED` (the user
+ * must top up their credits) and stops; both end the run before the digest, which
+ * would otherwise call the provider again in the same run (review R1 #6).
+ * RATE_LIMIT and NETWORK retry with WorkManager's jittered exponential backoff;
+ * every other outcome waits for the next run — the words stay in the derived
+ * queue, so nothing is lost and nothing hot-loops. The API key only ever flows
+ * through [KeyVault] and [KeySource]; it is never logged.
  */
 class PracticeWorker(
     appContext: Context,
@@ -51,10 +56,17 @@ class PracticeWorker(
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val prefs = Prefs(applicationContext)
-        // The shared gate (#602): off, no model or no key means no call, ever.
+        // The shared gate (#602) plus a standing key rejection (review R1 #6):
+        // after AUTH no call goes out until a new key is saved (it clears the flag).
         val vault = KeyVault(applicationContext)
         val keySource = KeySource { vault.read() }
-        if (!AiPracticeGate.canRun(prefs.aiPracticeEnabled, !keySource.get().isNullOrBlank(), prefs.aiModel)) {
+        if (!PracticeWorkerPolicy.mayCall(
+                enabled = prefs.aiPracticeEnabled,
+                hasKey = !keySource.get().isNullOrBlank(),
+                model = prefs.aiModel,
+                keyRejected = prefs.aiKeyRejected,
+            )
+        ) {
             return@withContext Result.success()
         }
 
@@ -74,10 +86,11 @@ class PracticeWorker(
             cap = prefs.aiDailyWordCap,
             random = kotlin.random.Random.Default,
         )
-        val topUpResult = when (val outcome = generator.topUp(queue, prefs, LocalDate.now())) {
+        val topUpOutcome = generator.topUp(queue, prefs, LocalDate.now())
+        val topUpResult = when (topUpOutcome) {
             is PracticeGeneration.Generated -> Result.success()
             is PracticeGeneration.Skipped -> Result.success()
-            is PracticeGeneration.Failed -> when (outcome.kind) {
+            is PracticeGeneration.Failed -> when (topUpOutcome.kind) {
                 // AUTH and BILLING cannot be fixed by retrying; the state is in prefs.
                 AiResult.ErrorKind.AUTH, AiResult.ErrorKind.BILLING -> Result.success()
                 // Ordinary throttling and lost connectivity: WorkManager backs off —
@@ -88,9 +101,13 @@ class PracticeWorker(
             }
         }
         if (topUpResult == Result.retry()) return@withContext topUpResult
-        // The digest (#604, 9.11) rides the same worker run: weekly or when the
-        // weak-spot threshold fires, whichever first. A failed top-up does not
-        // block it; the digest applies the same gate and cap inside the generator.
+        // AUTH and BILLING end the run here: the digest would call the provider
+        // again with a key that was just rejected or an account out of credits
+        // (review R1 #6). A failed top-up of any other kind does not block it;
+        // the digest applies the same gate and cap inside the generator.
+        if (topUpOutcome is PracticeGeneration.Failed && PracticeWorkerPolicy.stopsRun(topUpOutcome.kind)) {
+            return@withContext Result.success()
+        }
         maybeDigest(generator, prefs)
         return@withContext Result.success()
     }
@@ -114,7 +131,10 @@ class PracticeWorker(
         if (weakWords.isEmpty()) return
         val outcome = generator.digest(weakWords, weak.drillTypes, prefs, LocalDate.now(), now)
         if (outcome is PracticeGeneration.Generated) {
-            prefs.aiDigestNew = weak.wordIds.size + weak.drillTypes.size
+            // The announcement counts the words the digest actually covered —
+            // outcome.words — not the whole weak-spot list: blank-context words
+            // are filtered out before the call (review R1 #5).
+            prefs.aiDigestNew = outcome.words.size
         }
     }
 
@@ -128,7 +148,11 @@ class PracticeWorker(
             .build()
 
         fun schedulePeriodic(context: Context) {
+            // The first day's top-up is the one-shot `ai_practice_now` run; the
+            // periodic work starts a day later so switching on never launches two
+            // workers that both send the same queue at once (review R1 #3).
             val request = PeriodicWorkRequestBuilder<PracticeWorker>(1, TimeUnit.DAYS)
+                .setInitialDelay(1, TimeUnit.DAYS)
                 .setConstraints(constraints())
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, BACKOFF_MS, TimeUnit.MILLISECONDS)
                 .build()
@@ -143,8 +167,9 @@ class PracticeWorker(
                 .setConstraints(constraints())
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, BACKOFF_MS, TimeUnit.MILLISECONDS)
                 .build()
+            // KEEP: a run already in flight is never replaced and restarted mid-call.
             WorkManager.getInstance(context).enqueueUniqueWork(
-                WORK_NAME_NOW, ExistingWorkPolicy.REPLACE, request
+                WORK_NAME_NOW, ExistingWorkPolicy.KEEP, request
             )
         }
 

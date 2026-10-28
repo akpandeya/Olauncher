@@ -115,4 +115,22 @@ class PracticeItemsStoreTest {
         val stored = store.append(listOf(item()))
         assertEquals(listOf(stored[0]), store.all())
     }
+
+    @Test
+    fun `concurrent appends from separate instances all survive`() {
+        // Each worker builds its own store; the shared lock keeps the file's
+        // read-modify-write from losing a run's paid items (review R1 #3).
+        val instances = (1..4).map { PracticeItemsStore(tempDir) }
+        val threads = instances.mapIndexed { index, instance ->
+            Thread {
+                instance.append(listOf(item(wordId = index + 1L)))
+            }.also { it.start() }
+        }
+        threads.forEach { it.join() }
+
+        val all = store.all()
+        assertEquals(4, all.size)
+        assertEquals((1L..4L).toSet(), all.map { it.wordId }.toSet())
+        assertEquals((1L..4L).toSet(), all.map { it.id }.toSet())
+    }
 }

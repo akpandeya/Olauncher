@@ -44,6 +44,13 @@ class WordReveal(
      */
     var promptOverride: String? = null
 
+    /**
+     * The practice item's answer (or the word itself), shown in the reveal when
+     * [promptOverride] is active: without it the user sees the meaning and the
+     * context but can never check what the answer was (review R1 #10).
+     */
+    var answerOverride: String? = null
+
     var currentWord: Word? = null
         private set
 
@@ -103,7 +110,11 @@ class WordReveal(
                 }
             }
         }
-        binding.tvMeaning.text = WordsCardLogic.formatMeaning(context, word.meaning, word.meaningSource)
+        binding.tvMeaning.text = if (promptOverride != null) {
+            revealMeaningWithAnswer(answerOverride, WordsCardLogic.formatMeaning(context, word.meaning, word.meaningSource))
+        } else {
+            WordsCardLogic.formatMeaning(context, word.meaning, word.meaningSource)
+        }
         binding.tvContext.text = word.context
         setRevealed(keepReveal)
     }
@@ -176,4 +187,15 @@ class WordReveal(
             onWordDeleted?.invoke(word)
         }
     }
+}
+
+/**
+ * The reveal's meaning line when a practice prompt replaces the word (#603): the
+ * item's answer leads, so the user can check themselves (review R1 #10). Pure
+ * and deterministic so the composition is unit-tested.
+ */
+internal fun revealMeaningWithAnswer(answer: String?, meaning: String): String = when {
+    answer.isNullOrBlank() -> meaning
+    meaning.isBlank() -> answer
+    else -> "$answer · $meaning"
 }

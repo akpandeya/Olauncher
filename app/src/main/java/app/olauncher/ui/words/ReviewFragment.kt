@@ -158,23 +158,30 @@ class ReviewFragment : BaseFragment() {
         sessionEvents = emptyList()
         eventsBeforeSession = ReviewEventsStore(context).all()
         practiceItems = PracticeItemsStore(context).all()
-        render()
         generateOnDemandIfNeeded()
     }
 
     /**
      * The on-demand half of the hybrid generation design (#601): when the session
      * starts with thin due pools, top them up inline before the first card, off
-     * the UI thread. The generating line shows only when a call can actually go
-     * out — a thin pool with the gate off or nothing queued never shows it — and
-     * on any outcome the round serves whatever the pools now hold.
+     * the UI thread. The first render waits behind the result — bounded by the
+     * ~10 s on-demand ceiling, which now actually interrupts the HTTP call — so
+     * the round starts once, on the final pool, and never mutates mid-view
+     * (review R1 #2). A gate that is off, a missing key or nothing queued skips
+     * the call and renders immediately.
      */
     private fun generateOnDemandIfNeeded() {
         val context = context ?: return
         val appContext = context.applicationContext
         val prefs = Prefs(appContext)
-        if (!prefs.aiPracticeEnabled || prefs.aiModel.isBlank()) return
-        if (PracticeQueue.thinWords(queue, practiceItems).isEmpty()) return
+        if (!prefs.aiPracticeEnabled || prefs.aiModel.isBlank()) {
+            render()
+            return
+        }
+        if (PracticeQueue.thinWords(queue, practiceItems).isEmpty()) {
+            render()
+            return
+        }
         _binding?.tvGenerating?.isVisible = true
         viewLifecycleOwner.lifecycleScope.launch {
             val generation = withContext(Dispatchers.IO) {
@@ -201,8 +208,8 @@ class ReviewFragment : BaseFragment() {
             b.tvGenerating.isVisible = false
             if (generation is PracticeGeneration.Generated) {
                 practiceItems = PracticeItemsStore(appContext).all()
-                render()
             }
+            render()
         }
     }
 

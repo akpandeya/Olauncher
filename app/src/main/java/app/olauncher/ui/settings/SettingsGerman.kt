@@ -91,6 +91,7 @@ import app.olauncher.data.FontFamilyResources
 import app.olauncher.data.Prefs
 import app.olauncher.data.SearchEngine
 import app.olauncher.data.store.AiPracticeMessages
+import app.olauncher.data.store.AiPracticeGate
 import app.olauncher.data.store.AiResult
 import app.olauncher.data.store.AiTestCall
 import app.olauncher.data.store.KeyVault
@@ -232,11 +233,11 @@ internal fun SettingsFragment.toggleAiPractice() {
 
 internal fun SettingsFragment.populateAiPractice() {
     binding.aiPracticeOnOff.text = getString(if (prefs.aiPracticeEnabled) R.string.on else R.string.off)
-    binding.aiPracticeSubtitle.text = when {
-        prefs.aiBillingBlocked -> getString(R.string.ai_practice_billing_blocked)
-        prefs.aiKeyRejected -> getString(R.string.ai_practice_key_rejected)
-        else -> getString(R.string.ai_practice_subtitle, AiPracticeMessages.providerLabel(prefs.aiProvider))
-    }
+    val subtitleRes = AiPracticeMessages.subtitleRes(
+        prefs.aiPracticeEnabled, prefs.aiBillingBlocked, prefs.aiKeyRejected, prefs.aiModel,
+    )
+    binding.aiPracticeSubtitle.text = subtitleRes?.let { getString(it) }
+        ?: getString(R.string.ai_practice_subtitle, AiPracticeMessages.providerLabel(prefs.aiProvider))
 }
 
 internal fun SettingsFragment.showAiPracticeMenu(anchor: View) {
@@ -291,6 +292,7 @@ internal fun SettingsFragment.showAiKeyDialog() {
     var baseUrlInput: AppCompatEditText? = null
     var modelInput: AppCompatEditText? = null
     var status: TextView? = null
+    var advancedPanel: LinearLayout? = null
     var dialog: OlDialog? = null
 
     fun showDialogError(message: CharSequence) {
@@ -302,11 +304,17 @@ internal fun SettingsFragment.showAiKeyDialog() {
         val key = keyInput?.text?.toString()?.trim().orEmpty().ifBlank { vault.read().orEmpty() }
         val baseUrl = baseUrlInput?.text?.toString()?.trim().orEmpty().ifBlank { prefs.aiBaseUrl }
         val model = modelInput?.text?.toString()?.trim().orEmpty().ifBlank { prefs.aiModel }
-        // The gate guards every network call: off, no key or no model means no Test call.
-        when {
-            !prefs.aiPracticeEnabled -> statusView.text = context.getString(R.string.ai_practice_turned_off)
-            key.isBlank() -> statusView.text = context.getString(R.string.ai_practice_key_required)
-            else -> {
+        // The gate guards every network call: off, no key or no model means no
+        // Test call — and a missing model is named, with Advanced opened so the
+        // field is right there (review R1 #7; no default model is chosen here).
+        when (AiPracticeGate.block(prefs.aiPracticeEnabled, key.isNotBlank(), model)) {
+            AiPracticeGate.Block.DISABLED -> statusView.text = context.getString(R.string.ai_practice_turned_off)
+            AiPracticeGate.Block.NO_KEY -> statusView.text = context.getString(R.string.ai_practice_key_required)
+            AiPracticeGate.Block.NO_MODEL -> {
+                statusView.text = context.getString(R.string.ai_practice_model_required)
+                advancedPanel?.isVisible = true
+            }
+            null -> {
                 statusView.text = context.getString(R.string.ai_practice_testing)
                 lifecycleScope.launch {
                     val startedAt = System.currentTimeMillis()
@@ -331,7 +339,16 @@ internal fun SettingsFragment.showAiKeyDialog() {
             showDialogError(context.getString(R.string.ai_practice_key_required))
             return
         }
-        vault.save(key)
+        // The Keystore can be temporarily unavailable; a failed save surfaces in
+        // the dialog instead of crashing Settings (review R1 #8).
+        val saved = runCatching { vault.save(key) }
+        if (saved.isFailure) {
+            showDialogError(context.getString(R.string.ai_practice_key_save_failed))
+            return
+        }
+        // A freshly saved key ends a key rejection: the next run may call again
+        // (review R1 #6).
+        prefs.aiKeyRejected = false
         if (baseUrl.startsWith("https://")) prefs.aiBaseUrl = baseUrl
         if (model.isNotEmpty()) prefs.aiModel = model
         // A first key while the switch is on: the first top-up can start now.
@@ -398,6 +415,7 @@ internal fun SettingsFragment.showAiKeyDialog() {
             addView(baseUrlField)
             addView(modelField)
         }
+        advancedPanel = advancedView
 
         val advancedToggle = TextView(dialogContext).apply {
             setText(R.string.ai_practice_advanced)

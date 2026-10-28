@@ -39,4 +39,33 @@ class AiPracticeMessagesTest {
         assertEquals("Melious", AiPracticeMessages.providerLabel("melious"))
         assertEquals("Anthropic", AiPracticeMessages.providerLabel("anthropic"))
     }
+
+    @Test
+    fun `the subtitle names a standing problem, then a missing model`() {
+        assertEquals(
+            R.string.ai_practice_billing_blocked,
+            AiPracticeMessages.subtitleRes(true, billingBlocked = true, keyRejected = false, model = "m"),
+        )
+        assertEquals(
+            R.string.ai_practice_key_rejected,
+            AiPracticeMessages.subtitleRes(true, billingBlocked = false, keyRejected = true, model = "m"),
+        )
+    }
+
+    @Test
+    fun `an enabled feature with no model says to set one`() {
+        assertEquals(
+            R.string.ai_practice_model_required,
+            AiPracticeMessages.subtitleRes(true, billingBlocked = false, keyRejected = false, model = ""),
+        )
+        // Disabled, or a model set: the default provider subtitle stays.
+        assertEquals(
+            null,
+            AiPracticeMessages.subtitleRes(false, billingBlocked = false, keyRejected = false, model = ""),
+        )
+        assertEquals(
+            null,
+            AiPracticeMessages.subtitleRes(true, billingBlocked = false, keyRejected = false, model = "glm-5.3-flash"),
+        )
+    }
 }
