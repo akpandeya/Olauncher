@@ -126,7 +126,9 @@ class PracticeGenerator(
      * `AI_LAST_DIGEST_AT` ([prefs.aiLastDigestAt] = [nowMs]) updates on success
      * and on a partial success — the covered words are done, so re-digesting
      * them would only duplicate `source = digest` items (review R2 B). A skip
-     * or a full failure leaves the timestamp, so the digest re-triggers.
+     * or a full failure leaves the timestamp, so the digest re-triggers. The
+     * digest's type list is the app's weak-spot choice, so per-word type
+     * narrowing is off here.
      */
     suspend fun digest(
         weakWords: List<Word>,
@@ -142,6 +144,7 @@ class PracticeGenerator(
             timeoutMs = null,
             types = weakTypes.ifEmpty { DrillType.values().toList() },
             source = PracticeItem.Source.DIGEST,
+            narrowTypes = false,
         )
         if (outcome is PracticeGeneration.Generated || outcome is PracticeGeneration.Partial) {
             prefs.aiLastDigestAt = nowMs
@@ -156,6 +159,7 @@ class PracticeGenerator(
         timeoutMs: Long?,
         types: List<DrillType> = DrillType.values().toList(),
         source: String = PracticeItem.Source.WORD,
+        narrowTypes: Boolean = true,
     ): PracticeGeneration {
         // The shared gate (also the settings screen's, #602): off means no call, ever.
         when (AiPracticeGate.block(prefs.aiPracticeEnabled, !keySource.get().isNullOrBlank(), model)) {
@@ -167,19 +171,32 @@ class PracticeGenerator(
         // One app-wide mutex: the cap's read-then-write and the queue are only
         // safe when the on-demand path and the worker never generate at once.
         return if (timeoutMs == null) {
-            generationMutex.withLock { generateLocked(words, prefs, today, types, source, BACKGROUND_READ_TIMEOUT_MS) }
+            generationMutex.withLock { generateLocked(words, prefs, today, types, source, BACKGROUND_READ_TIMEOUT_MS, allowRetry = true, narrowTypes = narrowTypes) }
         } else {
             // Timed out: the caller stops waiting — cancellation interrupts the
             // thread, and a socket read already blocked in the kernel ends at
             // the per-request read timeout (review R2 C) — the pool is
-            // untouched, the words stay queued.
+            // untouched, the words stay queued. No retry-on-missing here: the
+            // ~10 s ceiling cannot fit a follow-up call, the cloze fallbacks fill.
             withTimeoutOrNull(timeoutMs) {
-                generationMutex.withLock { generateLocked(words, prefs, today, types, source, timeoutMs.toInt()) }
+                generationMutex.withLock { generateLocked(words, prefs, today, types, source, timeoutMs.toInt(), allowRetry = false, narrowTypes = narrowTypes) }
             } ?: PracticeGeneration.Failed(words, AiResult.ErrorKind.NETWORK, timedOut = true)
         }
     }
 
-    /** The chunk loop; the mutex makes the cap check and the sent-counter atomic. */
+    /**
+     * The chunk loop; the mutex makes the cap check and the sent-counter atomic.
+     * Each request tries strict `json_schema` first ([PracticeSchemaModes],
+     * [PracticeContract.responseSchemaJson] — the round-2 winning configuration)
+     * and falls back to `json_object` on the provider's capability codes. When
+     * [allowRetry], a word that ends up with fewer than [PracticeContract.ITEMS_PER_WORD]
+     * accepted items after the quality filters gets its missing slots requested
+     * once: one small follow-up call per chunk covering the thin words (never
+     * repeated), within the same cap accounting — each thin word's slot was
+     * already counted when the chunk went out, so the follow-up adds calls, not
+     * cap counts, and is bounded by one per word per run. Cloze fallbacks fill
+     * whatever is still missing.
+     */
     private suspend fun generateLocked(
         words: List<Word>,
         prefs: AiPracticePrefs,
@@ -187,12 +204,24 @@ class PracticeGenerator(
         types: List<DrillType>,
         source: String,
         readTimeoutMs: Int,
+        allowRetry: Boolean,
+        narrowTypes: Boolean,
     ): PracticeGeneration {
         // The cap is a behavioral guardrail, never removed: trim the batch to what
         // is left of today's budget; an empty budget blocks the attempt entirely.
         val remaining = prefs.aiDailyWordCap - prefs.aiWordsSentToday(today.toEpochDay())
         val batch = words.take(remaining.coerceAtLeast(0))
         if (batch.isEmpty()) return PracticeGeneration.Skipped(words, PracticeGeneration.Reason.CAP_REACHED)
+
+        // Per-word type narrowing (round 3): only on the word paths that send the
+        // full list anyway — a caller with an explicit type list (the digest)
+        // keeps its own choice.
+        val typesByWord: Map<Long, List<DrillType>> =
+            if (narrowTypes && types == DrillType.values().toList()) {
+                batch.associate { it.id to PracticeTypeNarrowing.narrow(it) }.filterValues { it.isNotEmpty() }
+            } else {
+                emptyMap()
+            }
 
         val covered = mutableListOf<Word>()
         var storedCount = 0
@@ -202,26 +231,52 @@ class PracticeGenerator(
             // non-OK replies included — so the cap counts the words at send
             // time, not only on a parsed response (review R1 #2).
             prefs.recordAiWordsSent(chunk.size, today.toEpochDay())
-            val request = AiRequest(
-                prompt = PracticeContract.buildPrompt(chunk, types),
-                maxTokens = chunk.size * MAX_TOKENS_PER_WORD,
-                readTimeoutMs = readTimeoutMs,
-            )
-            when (val result = provider.complete(request)) {
+            // Strict schema first; a model that rejects it falls back to
+            // json_object for the rest of the batch ([PracticeSchemaModes]).
+            var schemaMode = PracticeSchemaModes.JSON_SCHEMA
+            val result: AiResult
+            while (true) {
+                val request = AiRequest(
+                    prompt = PracticeContract.buildPrompt(chunk, types, typesByWord),
+                    maxTokens = chunk.size * MAX_TOKENS_PER_WORD,
+                    readTimeoutMs = readTimeoutMs,
+                    jsonSchema = if (schemaMode == PracticeSchemaModes.JSON_SCHEMA) PracticeContract.responseSchemaJson() else null,
+                )
+                val attempt = provider.complete(request)
+                val fallback = (attempt as? AiResult.Error)?.let { PracticeSchemaModes.fallbackMode(schemaMode, it) }
+                if (fallback != null) {
+                    schemaMode = fallback
+                    continue
+                }
+                result = attempt
+                break
+            }
+            when (result) {
                 is AiResult.Ok -> {
                     // A billed call clears the error states even before parsing.
                     prefs.aiKeyRejected = false
                     prefs.aiBillingBlocked = false
-                    val parsed = PracticeContract.parse(result.text, chunk, model, source)
-                    if (parsed.items.isEmpty() && parsed.clozeFallbacks.isEmpty()) {
-                        // Truncated or wholly rejected response: nothing was
+                    // No padding yet: the retry pass (below) decides what is
+                    // still missing before the cloze fallbacks fill the rest.
+                    val parsed = PracticeContract.parse(result.text, chunk, model, source, padFallbacks = false)
+                    if (parsed.malformed) {
+                        // Truncated or wholly unusable response: nothing was
                         // stored for this chunk, but earlier chunks already
                         // stored and billed theirs — skip it and keep going
                         // instead of discarding their success (review R2 B).
                         sawBadResponse = true
                         continue
                     }
-                    storedCount += store.append(parsed.items + parsed.clozeFallbacks).size
+                    val accepted = parsed.items.toMutableList()
+                    if (allowRetry) {
+                        accepted += retryMissingSlots(chunk, accepted, types, typesByWord, source, readTimeoutMs, schemaMode)
+                    }
+                    val fallbacks = chunk.flatMap { word ->
+                        val have = accepted.count { it.wordId == word.id }
+                        val missing = PracticeContract.ITEMS_PER_WORD - have
+                        if (missing > 0) PracticeContract.fallbacksFor(word, missing, source) else emptyList()
+                    }
+                    storedCount += store.append(accepted + fallbacks).size
                     covered += chunk
                 }
                 is AiResult.Error -> when (result.kind) {
@@ -250,6 +305,46 @@ class PracticeGenerator(
             return PracticeGeneration.Failed(batch, AiResult.ErrorKind.BAD_RESPONSE)
         }
         return PracticeGeneration.Generated(covered, storedCount)
+    }
+
+    /**
+     * The one retry-on-missing pass for a chunk (round 3): words with fewer than
+     * [PracticeContract.ITEMS_PER_WORD] accepted items after the quality filters
+     * get one small follow-up call covering exactly them — never repeated. Only
+     * the missing slots are taken from the follow-up response; a failed or junk
+     * follow-up is ignored (the cloze fallbacks fill). Runs only on the
+     * background paths ([allowRetry]); the on-demand ~10 s ceiling cannot fit it.
+     */
+    private suspend fun retryMissingSlots(
+        chunk: List<Word>,
+        accepted: List<PracticeItem>,
+        types: List<DrillType>,
+        typesByWord: Map<Long, List<DrillType>>,
+        source: String,
+        readTimeoutMs: Int,
+        schemaMode: String,
+    ): List<PracticeItem> {
+        val thin = chunk.filter { word ->
+            accepted.count { it.wordId == word.id } < PracticeContract.ITEMS_PER_WORD
+        }
+        if (thin.isEmpty()) return emptyList()
+        val request = AiRequest(
+            prompt = PracticeContract.buildPrompt(thin, types, typesByWord),
+            maxTokens = thin.size * MAX_TOKENS_PER_WORD,
+            readTimeoutMs = readTimeoutMs,
+            jsonSchema = if (schemaMode == PracticeSchemaModes.JSON_SCHEMA) PracticeContract.responseSchemaJson() else null,
+        )
+        val result = provider.complete(request)
+        if (result !is AiResult.Ok) return emptyList()
+        val parsed = PracticeContract.parse(result.text, thin, model, source, padFallbacks = false)
+        val fresh = mutableListOf<PracticeItem>()
+        for (word in thin) {
+            val have = accepted.count { it.wordId == word.id } + fresh.count { it.wordId == word.id }
+            val missing = PracticeContract.ITEMS_PER_WORD - have
+            if (missing <= 0) continue
+            fresh += parsed.items.filter { it.wordId == word.id }.take(missing)
+        }
+        return fresh
     }
 
     /**
@@ -287,8 +382,14 @@ class PracticeGenerator(
         /** Words per request: small chunks finish well inside the token budget. */
         const val WORDS_PER_REQUEST = 5
 
-        /** Output tokens per word, sized from the benchmark's items-per-word usage. */
-        const val MAX_TOKENS_PER_WORD = 600
+        /**
+         * Output tokens per word. Round 3 (2026-10-28): raised from 600 — the v2
+         * prompt's longer cards plus the `full` field and the flash model's
+         * reasoning tokens measured ~375 output tokens per item in the round-3
+         * benchmark, so 600 per word (3 items) cut chunks off mid-JSON and a
+         * cut-off chunk is a billed BAD_RESPONSE (review R1 #1).
+         */
+        const val MAX_TOKENS_PER_WORD = 1200
 
         /** Serializes every generation call app-wide (both paths, all instances). */
         private val generationMutex = Mutex()

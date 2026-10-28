@@ -63,7 +63,11 @@ class AiBenchmark {
             ?: AiBenchLogic.CANDIDATE_MODELS
         val runs = System.getenv("AI_BENCH_RUNS")?.toIntOrNull() ?: 3
         val capEur = System.getenv("AI_BENCH_CAP_EUR")?.toDoubleOrNull() ?: DEFAULT_CAP_EUR
-        val outDir = outDir().apply { mkdirs() }
+        val outDir = (System.getenv("AI_BENCH_OUT_DIR")?.let { File(it) } ?: outDir()).apply { mkdirs() }
+        // Round 3: pin the response-format mode to compare strict json_schema
+        // against json_object with the same prompt (default: schema-first with
+        // the recorded fallback, as in round 2).
+        val pinnedMode = System.getenv("AI_BENCH_SCHEMA_MODE")?.takeIf { it.isNotBlank() }
 
         var spentEur = 0.0
         val summaries = mutableListOf<String>()
@@ -77,13 +81,15 @@ class AiBenchmark {
             println("bench: model $model, $runs run(s) planned, price in ${price.inputPerMillion} out ${price.outputPerMillion} EUR/M, budget cap $capEur EUR")
 
             val rows = mutableListOf<BenchRow>()
+            val rawRows = mutableListOf<BenchRow>()
+            val rejectLog = mutableListOf<String>()
             val latencies = mutableListOf<Long>()
             var failedCalls = 0
             var totalCalls = 0
             var modelCostEur = 0.0
             var budgetAborted = false
             var billingUnavailable = false
-            var schemaMode = AiBenchLogic.SCHEMA_JSON_SCHEMA
+            var schemaMode = pinnedMode ?: AiBenchLogic.SCHEMA_JSON_SCHEMA
             val prompt = AiBenchLogic.buildGenerationPrompt(fixture.words)
 
             run@ for (run in 1..runs) {
@@ -96,6 +102,7 @@ class AiBenchmark {
                 }
                 // Strict schema first; a model that rejects it (or whose context the
                 // schema payload busts) falls back to json_object for the whole model.
+                // A pinned mode (AI_BENCH_SCHEMA_MODE) skips the fallback.
                 var result: AiResult
                 var latencyMs: Long
                 while (true) {
@@ -109,7 +116,8 @@ class AiBenchmark {
                         benchProvider(model, key).complete(request)
                     }
                     latencyMs = (System.nanoTime() - start) / 1_000_000
-                    val schemaRejected = attempt is AiResult.Error &&
+                    val schemaRejected = pinnedMode == null &&
+                        attempt is AiResult.Error &&
                         schemaMode == AiBenchLogic.SCHEMA_JSON_SCHEMA &&
                         AiBenchLogic.shouldFallBackFromSchema(attempt)
                     if (schemaRejected && attempt is AiResult.Error) {
@@ -127,13 +135,16 @@ class AiBenchmark {
                 when (result) {
                     is AiResult.Error -> {
                         failedCalls++
-                        println("bench: model $model run $run failed (${result.kind.name}) — recorded, moving on")
-                        rows += BenchRow(
+                        println("bench: model $model run $run failed (${result.kind.name}${result.errorCode?.let { ", code $it" } ?: ""}): ${result.message} — recorded, moving on")
+                        val failedRow = BenchRow(
                             run = run, judgeId = null, word = "RUN_FAILED", type = "", prompt = "", answer = "",
+                            choices = "", filterReject = "",
                             contractValid = false, grounded = false, groundedOverride = "", correctness = "",
                             tokensIn = 0, tokensOut = 0, costEur = 0.0, latencyMs = latencyMs,
                             errorKind = result.kind.name + (result.errorCode?.let { ":$it" } ?: ""),
                         )
+                        rows += failedRow
+                        rawRows += failedRow
                         if (result.kind == AiResult.ErrorKind.BILLING) {
                             billingUnavailable = true
                             break@run
@@ -144,7 +155,12 @@ class AiBenchmark {
                         val cost = AiBenchLogic.costEur(price, result.usage.inputTokens, result.usage.outputTokens)
                         spentEur += cost
                         modelCostEur += cost
-                        rows += scoredRows(fixture, model, run, result, cost)
+                        if (System.getenv("AI_BENCH_DUMP_RESPONSES") != null) {
+                            File(outDir, "$model.run$run.response.json").writeText(result.text)
+                        }
+                        val (filtered, raw) = scoredRows(fixture, model, run, result, cost, rejectLog)
+                        rows += filtered
+                        rawRows += raw
                     }
                 }
             }
@@ -169,6 +185,14 @@ class AiBenchmark {
             )
             summaries += summary.csvLine
             File(outDir, "$model.csv").writeText(rows.joinToString("\n", prefix = AiBenchLogic.CSV_HEADER + "\n") { it.csvLine() })
+            // Round 3: the raw, pre-filter output alongside the filtered CSV —
+            // filter_reject names the filter that dropped each raw item.
+            File(outDir, "$model.raw.csv").writeText(rawRows.joinToString("\n", prefix = AiBenchLogic.CSV_HEADER + "\n") { it.csvLine() })
+            File(outDir, "$model.rejects.txt").writeText(rejectLog.joinToString("\n"))
+            val filterCounts = rawRows.groupingBy { it.filterReject }.eachCount().filterKeys { it.isNotBlank() }
+            if (filterCounts.isNotEmpty()) {
+                println("bench: model $model filter rejects: " + filterCounts.entries.joinToString(", ") { "${it.key}=${it.value}" })
+            }
             println(summary.report)
             if (billingUnavailable) {
                 println("bench: billing-unavailable model skipped — continuing with the remaining candidates")
@@ -181,25 +205,37 @@ class AiBenchmark {
         println("bench: correctness is a glm-5.3 proxy score, pending native-speaker owner review")
     }
 
-    /** Parses one successful generation response and turns it into per-item rows. */
+    /**
+     * Parses one successful generation response and turns it into per-item rows:
+     * the filtered rows (stored survivors, as scored in rounds 1-2) and the raw
+     * rows (every item as returned, pre-filter, with `filter_reject` naming the
+     * filter that dropped it). Only the filtered rows are judge-scored.
+     */
     private fun scoredRows(
         fixture: AiBenchLogic.Fixture,
         model: String,
         run: Int,
         result: AiResult.Ok,
         callCostEur: Double,
-    ): List<BenchRow> {
+        rejectLog: MutableList<String>,
+    ): Pair<List<BenchRow>, List<BenchRow>> {
         val parsed = PracticeContract.parse(
             json = result.text,
             requestedWords = fixture.words,
             model = model,
             source = PRACTICE_SOURCE,
         )
-        val rows = mutableListOf<BenchRow>()
         val perWord = parsed.items.groupBy { it.wordId }
+        // Raw rows: accepted items plus every structured rejection, as returned.
+        val rawByWord = (parsed.items.map { it.wordId to it } + parsed.rejections.map { rejection ->
+            Pair(rejection.wordId, rejection)
+        }).groupBy({ it.first }, { it.second })
         if (parsed.rejected.isNotEmpty()) {
             println("bench: model $model run $run rejected items: " + parsed.rejected.take(5).joinToString(" | "))
+            rejectLog += parsed.rejected.map { "run $run: $it" }
         }
+        val filtered = mutableListOf<BenchRow>()
+        val raw = mutableListOf<BenchRow>()
         var nextJudgeId = (lastJudgeId + 1)
         for (word in fixture.words) {
             // tokens/cost are per call and shared by the 20 words of the run (documented).
@@ -207,13 +243,15 @@ class AiBenchmark {
             val pool = perWord[word.id].orEmpty()
             for (index in 0 until PracticeContract.ITEMS_PER_WORD) {
                 val item = pool.getOrNull(index)
-                rows += BenchRow(
+                filtered += BenchRow(
                     run = run,
                     judgeId = nextJudgeId++,
                     word = word.text,
                     type = item?.type?.id ?: "",
                     prompt = item?.prompt ?: "",
                     answer = item?.answer ?: "",
+                    choices = item?.choices?.joinToString("; ") ?: "",
+                    filterReject = "",
                     contractValid = item != null,
                     grounded = item != null && AiBenchLogic.isGrounded(word, item.prompt, item.answer, item.choices),
                     groundedOverride = "",
@@ -225,9 +263,39 @@ class AiBenchmark {
                     errorKind = if (item == null) "MISSING_OR_INVALID" else "",
                 )
             }
+            // Raw rows keep every item the model returned for this word (judge
+            // ids stay with the filtered set; correctness stays blank on raw).
+            val returned = rawByWord[word.id].orEmpty()
+            for (entry in returned) {
+                val item = entry as? PracticeItem
+                val rejection = entry as? PracticeRejection
+                val prompt = item?.prompt ?: rejection?.prompt ?: ""
+                val answer = item?.answer ?: rejection?.answer ?: ""
+                val choices = item?.choices ?: rejection?.choices ?: emptyList()
+                val type = (item?.type ?: rejection?.type)?.id ?: ""
+                raw += BenchRow(
+                    run = run,
+                    judgeId = null,
+                    word = word.text,
+                    type = type,
+                    prompt = prompt,
+                    answer = answer,
+                    choices = choices.joinToString("; "),
+                    filterReject = rejection?.filter ?: "",
+                    contractValid = item != null,
+                    grounded = item != null && AiBenchLogic.isGrounded(word, item.prompt, item.answer, item.choices),
+                    groundedOverride = "",
+                    correctness = "",
+                    tokensIn = result.usage.inputTokens,
+                    tokensOut = result.usage.outputTokens,
+                    costEur = share,
+                    latencyMs = result.latencyMs,
+                    errorKind = rejection?.let { "FILTER_REJECT" } ?: "",
+                )
+            }
         }
         lastJudgeId = nextJudgeId - 1
-        return rows
+        return filtered to raw
     }
 
     /**
@@ -302,8 +370,15 @@ class AiBenchmark {
         const val BASE_URL = "https://api.melious.ai"
         const val JUDGE_MODEL = "glm-5.3"
         const val PRACTICE_SOURCE = "benchmark"
-        /** 20 words x 3 items overflow the 4k default: the first live run truncated. */
-        const val GEN_MAX_TOKENS = 16_384
+        /**
+         * 20 words x 3 items overflow the 4k default: the first live run truncated.
+         * Round 3: the v2 prompt's longer cards plus the `full` field and the
+         * flash model's reasoning tokens pushed output past 16k (all three
+         * json_schema runs cut off mid-JSON) and past 32k in one more run, so the
+         * harness headroom is now 64k. Harness-only — production stays on the
+         * small per-chunk budget.
+         */
+        const val GEN_MAX_TOKENS = 65_536
         const val JUDGE_OUT_TOKENS = 8_192
         /** Round-2 cap: 7 candidates incl. pricier mid-tier models (owner, 2026-10-28). */
         const val DEFAULT_CAP_EUR = 2.0
@@ -318,6 +393,10 @@ data class BenchRow(
     val type: String,
     val prompt: String,
     val answer: String,
+    /** The item's choices, "; "-joined (round 3: the CSVs never carried them). */
+    val choices: String = "",
+    /** The filter that dropped the raw item; blank on accepted/filtered rows. */
+    val filterReject: String = "",
     val contractValid: Boolean,
     val grounded: Boolean,
     val groundedOverride: String,
@@ -331,7 +410,7 @@ data class BenchRow(
     fun csvLine(): String = listOf(
         run.toString(),
         judgeId?.toString() ?: "",
-        word, type, prompt, answer,
+        word, type, prompt, answer, choices, filterReject,
         contractValid.toString(),
         grounded.toString(),
         groundedOverride,
@@ -391,49 +470,16 @@ object AiBenchLogic {
      */
     val SCHEMA_FALLBACK_CODES = setOf("model_not_capable", "context_length_exceeded")
 
-    /** Strict `json_schema` for the practice contract: 60 items of known shape.
-     *  All object properties are required and `additionalProperties` is false, per
-     *  the strict schema convention; `hint` is omitted so it cannot break strictness
-     *  (the parser treats it as optional). */
-    fun strictSchemaJson(): String {
-        val item = JSONObject()
-            .put("type", "object")
-            .put(
-                "properties",
-                JSONObject()
-                    .put("word_id", JSONObject().put("type", "integer"))
-                    .put(
-                        "type",
-                        JSONObject()
-                            .put("type", "string")
-                            .put("enum", JSONArray(ALLOWED_TYPES.map { it.id })),
-                    )
-                    .put("prompt", JSONObject().put("type", "string"))
-                    .put("answer", JSONObject().put("type", "string"))
-                    .put(
-                        "choices",
-                        JSONObject()
-                            .put("type", "array")
-                            .put("items", JSONObject().put("type", "string")),
-                    ),
-            )
-            .put("required", JSONArray(listOf("word_id", "type", "prompt", "answer", "choices")))
-            .put("additionalProperties", false)
-        return JSONObject()
-            .put("type", "object")
-            .put(
-                "properties",
-                JSONObject().put(
-                    "items",
-                    JSONObject()
-                        .put("type", "array")
-                        .put("items", item),
-                ),
-            )
-            .put("required", JSONArray(listOf("items")))
-            .put("additionalProperties", false)
-            .toString()
-    }
+    /**
+     * Strict `json_schema` for the practice contract: 60 items of known shape.
+     * Round 3: delegates to [PracticeContract.responseSchemaJson] — one source of
+     * truth, so the harness cannot drift from production's schema (the v2 shape
+     * adds the required `full` field for the answer-fits-blank filter). All object
+     * properties are required and `additionalProperties` is false, per the strict
+     * schema convention; `hint` is omitted so it cannot break strictness (the
+     * parser treats it as optional).
+     */
+    fun strictSchemaJson(): String = PracticeContract.responseSchemaJson()
 
     /**
      * A strict-schema error means "fall back to json_object" only for the known
@@ -448,10 +494,14 @@ object AiBenchLogic {
     const val THRESHOLD_CORRECTNESS = 1.8
     const val THRESHOLD_GROUNDING_PCT = 90.0
 
-    const val CSV_HEADER = "run,judge_id,word,type,prompt,answer,contract_valid,grounded,grounded_override,correctness,tokens_in,tokens_out,cost,latency_ms,error_kind"
+    const val CSV_HEADER = "run,judge_id,word,type,prompt,answer,choices,filter_reject,contract_valid,grounded,grounded_override,correctness,tokens_in,tokens_out,cost,latency_ms,error_kind"
     const val SUMMARY_HEADER = "model,runs,calls,failed_calls,failure_rate,validity_pct,grounding_pct,mean_correctness_proxy,cost_per_item_eur,total_cost_eur,p50_latency_ms,p95_latency_ms,verdict,schema_mode,notes"
 
-    /** Allowed drill types for generated practice (one CLOZE + two others per word). */
+    /**
+     * The round-1/2 prompt's short type list, kept for reference. Since round 3
+     * the harness sends the full [DrillType] list with per-word narrowing
+     * ([PracticeTypeNarrowing]), exactly like production's word-generation path.
+     */
     val ALLOWED_TYPES = listOf(
         DrillType.CLOZE, DrillType.ARTICLES, DrillType.PREPOSITIONS, DrillType.PLURALS,
         DrillType.CASE_ENDINGS, DrillType.CONJUGATION, DrillType.WORD_ORDER,
@@ -488,8 +538,18 @@ object AiBenchLogic {
         return Fixture(url = root.getString("url"), date = root.getString("date"), words = words)
     }
 
+    /**
+     * The generation prompt, built exactly as production's word-generation path
+     * builds it ([PracticeContract.buildPrompt] with the full type list and the
+     * per-word type narrowing the generator applies) — verified non-drifting by
+     * test.
+     */
     fun buildGenerationPrompt(words: List<Word>): String =
-        PracticeContract.buildPrompt(words, ALLOWED_TYPES)
+        PracticeContract.buildPrompt(
+            words = words,
+            types = DrillType.values().toList(),
+            typesByWord = words.associate { it.id to PracticeTypeNarrowing.narrow(it) }.filterValues { it.isNotEmpty() },
+        )
 
     fun costEur(price: ModelPrice, tokensIn: Int, tokensOut: Int): Double =
         tokensIn / 1_000_000.0 * price.inputPerMillion + tokensOut / 1_000_000.0 * price.outputPerMillion

@@ -124,10 +124,10 @@ class PracticeGeneratorTest {
         Word(id = id, text = "insistieren", context = context, dueDay = 20_261_027, addedAt = id)
 
     private fun okJson(vararg wordIds: Long): String {
-        val items = wordIds.joinToString(",") { id ->
-            """{"word_id": $id, "type": "cloze", "prompt": "Sie ___ auf der Arbeit.",
-               "answer": "insistiert", "choices": ["insistiert", "insistieren"]}"""
-        }
+        val items = wordIds.mapIndexed { index, id ->
+            """{"word_id": $id, "type": "cloze", "prompt": "Sie ___ auf der Arbeit $index.",
+               "answer": "insistiert$index", "choices": ["insistiert$index", "insistieren"]}"""
+        }.joinToString(",")
         return """{"items": [$items]}"""
     }
 
@@ -224,7 +224,8 @@ class PracticeGeneratorTest {
         val tomorrow = today.plusDays(1)
         val allowed = gen.topUp(listOf(word(1)), prefs, tomorrow)
         assertTrue(allowed is PracticeGeneration.Generated)
-        assertEquals(1, provider.prompts.size)
+        // One chunk call plus its retry-on-missing follow-up (round 3).
+        assertEquals(2, provider.prompts.size)
         assertEquals(1, prefs.aiWordsSentToday(tomorrow.toEpochDay()))
     }
 
@@ -267,8 +268,10 @@ class PracticeGeneratorTest {
         val outcome = generator(provider).topUp(words, prefs, today)
 
         // Several small requests instead of one 50-word call under one 4096 cap.
+        // Every word stays thin on one item, so each chunk also gets its one
+        // retry-on-missing follow-up (same small size, round 3).
         assertTrue(outcome is PracticeGeneration.Generated)
-        assertEquals(10, provider.requests.size)
+        assertEquals(20, provider.requests.size)
         for (request in provider.requests) {
             assertTrue(
                 "max_tokens ${request.maxTokens} exceeds the per-word budget",
@@ -278,9 +281,58 @@ class PracticeGeneratorTest {
             // one example item in the schema).
             assertTrue(request.prompt.split("word_id ").size - 1 <= PracticeGenerator.WORDS_PER_REQUEST + 1)
             assertEquals(PracticeGenerator.BACKGROUND_READ_TIMEOUT_MS, request.readTimeoutMs)
+            // Round 3: every request asks for strict json_schema first.
+            assertTrue(request.prompt.contains("write exactly 3 cards"))
         }
-        // Every word was billed exactly once across the chunks.
+        assertTrue(provider.requests.all { it.jsonSchema != null })
+        // Every word was billed exactly once across the chunks; the follow-up
+        // calls stay inside the same accounting (no extra cap counts).
         assertEquals(50, prefs.aiWordsSentToday(todayEpochDay))
+    }
+
+    @Test
+    fun `requests carry the contract schema and fall back to json_object on model_not_capable`() = runBlocking {
+        val provider = object : AiProvider {
+            val requests = mutableListOf<AiRequest>()
+            var calls = 0
+            override suspend fun complete(request: AiRequest): AiResult {
+                requests += request
+                // The first call (strict json_schema) is rejected as not capable;
+                // the retry must come back with plain json_object.
+                return if (calls++ == 0) {
+                    AiResult.Error(AiResult.ErrorKind.BAD_RESPONSE, "not capable", errorCode = "model_not_capable")
+                } else {
+                    AiResult.Ok(okJson(1), AiUsage(1, 1), 1)
+                }
+            }
+        }
+
+        val outcome = generator(provider).topUp(listOf(word(1)), prefs, today)
+
+        assertTrue(outcome is PracticeGeneration.Generated)
+        assertTrue("first request was strict", provider.requests[0].jsonSchema != null)
+        assertTrue("fallback request dropped the schema", provider.requests[1].jsonSchema == null)
+        // Chunk call + fallback retry + the retry-on-missing follow-up (word 1
+        // stayed thin on one item) — the follow-up also runs in json_object.
+        assertEquals(3, provider.requests.size)
+        assertTrue(provider.requests[2].jsonSchema == null)
+    }
+
+    @Test
+    fun `a real failure on the strict schema does not fall back`() = runBlocking {
+        val provider = object : AiProvider {
+            val requests = mutableListOf<AiRequest>()
+            override suspend fun complete(request: AiRequest): AiResult {
+                requests += request
+                return AiResult.Error(AiResult.ErrorKind.BAD_RESPONSE, "truncated")
+            }
+        }
+
+        val outcome = generator(provider).topUp(listOf(word(1)), prefs, today)
+
+        assertTrue(outcome is PracticeGeneration.Failed)
+        assertEquals(AiResult.ErrorKind.BAD_RESPONSE, (outcome as PracticeGeneration.Failed).kind)
+        assertEquals(1, provider.requests.size)
     }
 
     @Test
@@ -358,18 +410,23 @@ class PracticeGeneratorTest {
 
     @Test
     fun `a bad chunk is skipped and later chunks still run`() = runBlocking {
-        // 11 words → chunks [1–5], [6–10], [11]; the middle reply is junk.
+        // 11 words → chunks [1–5], [6–10], [11]. Calls in order: chunk 1 OK,
+        // its follow-up (retry-on-missing) is junk and ignored, chunk 2 is junk
+        // and skipped, chunk 3 OK, its follow-up tops word 11 up to 2 items.
         val words = (1L..11L).map { word(it) }
         val provider = ScriptedProvider(
             AiResult.Ok(okJson(1, 2, 3, 4, 5), AiUsage(10, 20), 5),
             AiResult.Ok("{\"items\": [{\"word_id\": 6, \"type\": \"clo\"", AiUsage(10, 4096), 5),
+            AiResult.Ok("{\"items\": [{\"word_id\": 6, \"type\": \"clo\"", AiUsage(10, 4096), 5),
+            AiResult.Ok(okJson(11), AiUsage(10, 20), 5),
             AiResult.Ok(okJson(11), AiUsage(10, 20), 5),
         )
 
         val outcome = generator(provider).topUp(words, prefs, today)
 
-        // Chunk 2 was skipped, chunk 3 was still attempted (review R2 B).
-        assertEquals(3, provider.requests.size)
+        // Chunk 2 was skipped, chunk 3 was still attempted (review R2 B); each
+        // good chunk added its one follow-up call (round 3).
+        assertEquals(5, provider.requests.size)
         assertTrue(outcome is PracticeGeneration.Generated)
         assertEquals(listOf(1L, 2L, 3L, 4L, 5L, 11L), (outcome as PracticeGeneration.Generated).words.map { it.id })
         // Chunk 1's and chunk 3's items are in the store (parse pads each word's
@@ -469,5 +526,93 @@ class PracticeGeneratorTest {
         assertEquals(PracticeGeneration.Reason.KEY_REJECTED, (outcome as PracticeGeneration.Skipped).reason)
         assertTrue(provider.prompts.isEmpty())
         assertTrue(store.all().isEmpty())
+    }
+
+    @Test
+    fun `retry-on-missing tops thin words up to three accepted items with one follow-up call`() = runBlocking {
+        // First call: only one item for word 1. The follow-up brings the two
+        // missing slots as real items, so no cloze fallback is needed.
+        val first = """{"items": [{"word_id": 1, "type": "cloze", "prompt": "Sie ___ auf der Arbeit.",
+            "answer": "insistiert", "choices": ["insistiert", "insistieren"]}]}"""
+        val followUp = """{"items": [
+            {"word_id": 1, "type": "conjugation", "prompt": "Wir ___ auf der Arbeit.",
+             "answer": "insistieren", "choices": ["insistieren", "insistiert"], "full": "Wir insistieren auf der Arbeit."},
+            {"word_id": 1, "type": "praeteritum", "prompt": "Sie ___ auf der Arbeit.",
+             "answer": "insistierte", "choices": ["insistierte", "insistiert"], "full": "Sie insistierte auf der Arbeit."}]}"""
+        val provider = ScriptedProvider(
+            AiResult.Ok(first, AiUsage(10, 20), 5),
+            AiResult.Ok(followUp, AiUsage(10, 20), 5),
+        )
+
+        val outcome = generator(provider).topUp(listOf(word(1)), prefs, today)
+
+        assertTrue(outcome is PracticeGeneration.Generated)
+        assertEquals(2, provider.requests.size)
+        // The follow-up prompt carries only the thin word.
+        assertTrue(provider.requests[1].prompt.contains("word_id 1"))
+        // Three accepted AI items, none of them a locally built fallback
+        // (fallbacks carry no model name).
+        val stored = store.all()
+        assertEquals(3, stored.size)
+        assertTrue(stored.all { it.model != null })
+        assertEquals(1, stored.count { it.type == DrillType.CONJUGATION })
+        assertEquals(1, stored.count { it.type == DrillType.PRAETERITUM })
+    }
+
+    @Test
+    fun `a failed follow-up is ignored and cloze fallbacks fill the rest`() = runBlocking {
+        val first = """{"items": [{"word_id": 1, "type": "cloze", "prompt": "Sie ___ auf der Arbeit.",
+            "answer": "insistiert", "choices": ["insistiert", "insistieren"]}]}"""
+        val provider = ScriptedProvider(
+            AiResult.Ok(first, AiUsage(10, 20), 5),
+            AiResult.Error(AiResult.ErrorKind.NETWORK, "dropped"),
+        )
+
+        val outcome = generator(provider).topUp(listOf(word(1)), prefs, today)
+
+        // The follow-up failed once and was NOT repeated (retry-on-missing is
+        // once per run); the word still ends with its 3-item pool.
+        assertTrue(outcome is PracticeGeneration.Generated)
+        assertEquals(2, provider.requests.size)
+        assertEquals(3, store.all().size)
+        assertEquals(2, store.all().count { it.model == null })
+    }
+
+    @Test
+    fun `on-demand never retries missing slots — the ~10 s ceiling cannot fit it`() = runBlocking {
+        val provider = FakeProvider(result = AiResult.Ok(okJson(1), AiUsage(10, 20), 5))
+
+        val outcome = generator(provider).onDemand(listOf(word(1)), prefs, today)
+
+        // One request only; the cloze fallbacks fill the thin pool (round 3).
+        assertTrue(outcome is PracticeGeneration.Generated)
+        assertEquals(1, provider.requests.size)
+        assertEquals(3, store.all().size)
+        assertEquals(2, store.all().count { it.model == null })
+    }
+
+    @Test
+    fun `word generation narrows the types per word`() = runBlocking {
+        val words = listOf(
+            word(1).copy(text = "Unterschrift"),
+            word(2).copy(text = "insistieren"),
+            word(3).copy(text = "schnell"), // unknown class → no types line
+        )
+        val provider = FakeProvider(result = AiResult.Ok(okJson(1), AiUsage(10, 20), 5))
+
+        val outcome = generator(provider).topUp(words, prefs, today)
+
+        assertTrue(outcome is PracticeGeneration.Generated)
+        val prompt = provider.prompts[0]
+        assertTrue(prompt.contains("  types: ${PracticeTypeNarrowing.NOUN_TYPES.joinToString(", ") { it.id }}\n"))
+        assertTrue(prompt.contains("  types: ${PracticeTypeNarrowing.VERB_TYPES.joinToString(", ") { it.id }}\n"))
+        // The digest path keeps its explicit type list without narrowing.
+        val digestProvider = FakeProvider(result = AiResult.Ok(okJson(1), AiUsage(10, 20), 5))
+        generator(digestProvider).digest(
+            words, weakTypes = listOf(DrillType.CONJUGATION), prefs = prefs, today = today,
+        )
+        val digestPrompt = digestProvider.prompts[0]
+        assertFalse(digestPrompt.contains("  types:"))
+        assertTrue(digestPrompt.contains("Pick only types that fit this word: conjugation"))
     }
 }
