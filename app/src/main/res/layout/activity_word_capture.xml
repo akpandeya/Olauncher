@@ -5,6 +5,89 @@
     android:layout_height="match_parent"
     android:background="@color/scrim">
 
+    <!-- Full-screen reader (#591): the default capture UI. -->
+    <LinearLayout
+        android:id="@+id/readerRoot"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="?android:attr/colorBackground"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:id="@+id/readerTopBar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:paddingHorizontal="8dp">
+
+            <TextView
+                android:id="@+id/readerClose"
+                style="@style/TextMedium"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="@string/close"
+                android:gravity="center"
+                android:minHeight="48dp"
+                android:minWidth="48dp"
+                android:text="@string/reader_close"
+                android:textColor="?attr/primaryColor" />
+
+            <TextView
+                android:id="@+id/readerTitle"
+                style="@style/TextLarge"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:gravity="center"
+                android:maxLines="1"
+                android:text="@string/reader_title"
+                android:textColor="?attr/primaryColor" />
+
+            <TextView
+                android:id="@+id/readerSaveButton"
+                style="@style/TextMedium"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackground"
+                android:gravity="center_vertical"
+                android:minHeight="48dp"
+                android:paddingHorizontal="10dp"
+                android:textColor="?attr/primaryColor" />
+        </LinearLayout>
+
+        <ScrollView
+            android:id="@+id/readerScroll"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:overScrollMode="never"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/readerContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="20dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="24dp" />
+        </ScrollView>
+
+        <TextView
+            android:id="@+id/readerMeaningLine"
+            style="@style/TextSmall"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="20dp"
+            android:paddingVertical="8dp"
+            android:textColor="?attr/primaryColor"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <!-- Bottom sheet kept for the list picker (shared text that classifies as a list). -->
     <LinearLayout
         android:id="@+id/captureSheet"
         android:layout_width="match_parent"
@@ -17,7 +100,8 @@
         android:orientation="vertical"
         android:paddingHorizontal="20dp"
         android:paddingTop="20dp"
-        android:paddingBottom="28dp">
+        android:paddingBottom="28dp"
+        android:visibility="gone">
 
         <TextView
             android:id="@+id/selectAll"
