@@ -1340,20 +1340,12 @@ class DrillFragment : BaseFragment() {
                 answer = item.answer,
                 almostNote = context.getString(R.string.drill_summary_near_miss),
             )
+            val mark = SummaryMarks.forDrillResult(item.result)
+            itemBinding.ivMark.setImageResource(mark.icon)
+            itemBinding.ivMark.setColorFilter(ContextCompat.getColor(context, mark.tint))
             when (item.result) {
-                DrillResult.RIGHT -> {
-                    itemBinding.ivMark.setImageResource(R.drawable.ic_check)
-                    itemBinding.ivMark.setColorFilter(ContextCompat.getColor(context, R.color.accentSage))
-                    itemBinding.tvSecondary.isVisible = false
-                }
-                DrillResult.ALMOST -> {
-                    itemBinding.ivMark.setImageResource(R.drawable.ic_dot)
-                    itemBinding.ivMark.setColorFilter(ContextCompat.getColor(context, R.color.accentSand))
-                    itemBinding.tvSecondary.isVisible = false
-                }
+                DrillResult.RIGHT, DrillResult.ALMOST -> itemBinding.tvSecondary.isVisible = false
                 DrillResult.WRONG -> {
-                    itemBinding.ivMark.setImageResource(R.drawable.ic_close)
-                    itemBinding.ivMark.setColorFilter(ContextCompat.getColor(context, R.color.accentRose))
                     val correction = DrillSummaryLogic.formatCorrection(item.prompt, item.answer, item.hint)
                     itemBinding.tvSecondary.text = correction
                     itemBinding.tvSecondary.isVisible = correction.isNotEmpty()
