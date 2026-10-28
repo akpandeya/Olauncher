@@ -175,7 +175,7 @@ class ReviewFragment : BaseFragment() {
         val context = context ?: return
         val appContext = context.applicationContext
         val prefs = Prefs(appContext)
-        if (!prefs.aiPracticeEnabled || prefs.aiModel.isBlank()) {
+        if (!prefs.aiPracticeEnabled || prefs.aiModel.isBlank() || prefs.aiKeyRejected) {
             render()
             return
         }
