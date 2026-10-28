@@ -32,18 +32,38 @@ data class PracticeRejection(
     val hint: String?,
     val filter: String,
     val reason: String,
+    val full: String? = null,
 )
 
 /**
- * Which `response_format` a generation request uses. Production tries strict
- * `json_schema` first (the round-2 winning configuration, #600) and falls back to
- * `json_object` only on the provider's capability/limit codes — the same rule the
- * benchmark harness applies ([AiBenchLogic.SCHEMA_FALLBACK_CODES]).
+ * Which `response_format` a generation request uses. Production starts each model
+ * at its measured-best mode ([initialMode]) and falls back to `json_object` only
+ * on the provider's capability/limit codes — the same rule the benchmark harness
+ * applies ([AiBenchLogic.SCHEMA_FALLBACK_CODES]).
  */
 object PracticeSchemaModes {
 
     const val JSON_SCHEMA = "json_schema"
     const val JSON_OBJECT = "json_object"
+
+    /**
+     * The model whose measured-best mode is `json_object` (round-3 review
+     * condition 1): glm-5.3-flash passed the benchmark in json_object (97.2 %
+     * validity) while its strict-schema runs lost whole batches to runaway
+     * generations — in production a cut-off runaway comes back as BAD_RESPONSE,
+     * which never triggers the json_object fallback, so a billed call would
+     * yield only cloze fallbacks. Context-free mapping; a per-model config
+     * table is deliberately out of scope (owner, 2026-10-28).
+     */
+    const val JSON_OBJECT_MODEL = "glm-5.3-flash"
+
+    /**
+     * The mode a request to [model] starts in: `json_object` for the model with
+     * the measured preference, strict `json_schema` for everything else (the
+     * previous behaviour). Context-free and unit-tested.
+     */
+    fun initialMode(model: String): String =
+        if (model == JSON_OBJECT_MODEL) JSON_OBJECT else JSON_SCHEMA
 
     /**
      * Error codes that mean "this model cannot honour the strict schema": no
@@ -253,6 +273,7 @@ object PracticeContract {
                     prompt = obj.optString("prompt"), answer = obj.optString("answer"),
                     choices = choicesOf(obj), hint = optionalString(obj, "hint"),
                     filter = "word_id", reason = "unknown or missing word_id",
+                    full = optionalString(obj, "full"),
                 )
                 continue
             }
@@ -280,7 +301,7 @@ object PracticeContract {
                 rejections += PracticeRejection(
                     wordId = word.id, type = null, prompt = prompt, answer = answer,
                     choices = choices, hint = hint, filter = "unknown_type",
-                    reason = "unknown type '$typeRaw'",
+                    reason = "unknown type '$typeRaw'", full = full,
                 )
                 continue
             }
@@ -289,7 +310,7 @@ object PracticeContract {
                 rejections += PracticeRejection(
                     wordId = word.id, type = type, prompt = prompt, answer = fixedAnswer,
                     choices = fixedChoices, hint = hint, filter = "contract",
-                    reason = check.problems.joinToString("; "),
+                    reason = check.problems.joinToString("; "), full = full,
                 )
                 continue
             }
@@ -303,7 +324,7 @@ object PracticeContract {
                 rejections += PracticeRejection(
                     wordId = word.id, type = type, prompt = prompt, answer = fixedAnswer,
                     choices = fixedChoices, hint = hint, filter = verdict.filter!!,
-                    reason = verdict.reason ?: "",
+                    reason = verdict.reason ?: "", full = full,
                 )
                 continue
             }
@@ -316,6 +337,7 @@ object PracticeContract {
                 hint = hint,
                 source = source,
                 model = model.ifBlank { null },
+                full = full,
             )
         }
 

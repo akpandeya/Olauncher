@@ -226,3 +226,53 @@ Findings:
   default) is the obvious follow-up decision.
 - Correctness is still the glm-5.3 proxy score, pending native-speaker owner
   review.
+
+### Final review conditions and resolution (Opus review, 2026-10-28)
+
+The round-3 full review (DO-NOT-SHIP verdict) set conditions before flipping
+`AI_MODEL` to glm-5.3-flash; all pre-flip conditions are now implemented and
+unit-tested, and the owner authorized the flip (2026-10-28):
+
+1. **Production mode per model** — resolved. `PracticeSchemaModes.initialMode`
+   maps glm-5.3-flash to `json_object` (the passing configuration: 97.2 %
+   validity) and every other model to the previous strict `json_schema`.
+   `PracticeGenerator` now starts each request at the model's initial mode.
+   The strict-schema run's single runaway (1 item from 54,846 output tokens)
+   would in production come back as a cut-off `BAD_RESPONSE`, which never
+   triggers the json_object fallback — starting in json_object removes that
+   failure mode entirely. No benchmark re-run needed: production now runs the
+   exact configuration that passed.
+2. **Token budget** — resolved. `MAX_TOKENS_PER_WORD` 1200 → 2400: the passing
+   run measured 34,849–38,434 output tokens for 60 items (~580–640 per item,
+   ~1,750–1,920 per word). The daily word cap is untouched — it counts words
+   (`recordAiWordsSent(chunk.size, …)`), never tokens; the retry follow-up
+   still adds calls, not cap counts.
+3. **Retry duplicate bug** — resolved. `retryMissingSlots` took the first
+   `missing` items of the retry response, whose prompt still asks for the
+   cloze first — so the retry typically stored a second copy of the word's
+   existing cloze, and the duplicate check ran only within the retry batch.
+   Now: a word that already has an accepted cloze skips CLOZE items in the
+   retry response, and every retry candidate is duplicate-checked against the
+   word's whole accepted pool from the first call.
+4. **Small fixes** — done.
+   - The hint-leak check matches whole words (`PracticeFilters.containsWord`),
+     so "mit" no longer matches inside "Mitgliedsstaat"; its own word in the
+     hint still leaks.
+   - `answer_fit` normalizes punctuation (not just whitespace), so the
+     confirmed false positive (`,` in the prompt vs ` - ` in `full`) passes;
+     real word mismatches still reject.
+   - The benchmark CSV gained trailing `hint` and `full` columns (raw and
+     filtered; `PracticeItem`/`PracticeRejection` carry `full` in memory, the
+     store format is unchanged), so the next review can judge the full card.
+   - This section records the conditions and their resolution (additive).
+
+## Flip decision (owner-authorized 2026-10-28)
+
+`AI_MODEL` now defaults to **glm-5.3-flash** (`Prefs.AI_MODEL_DEFAULT`,
+add-only change — a stored blank still wins over the default, keeping the
+"Set a model first" path). A fresh install therefore passes the model gate
+without setup. Authorization: owner, 2026-10-28, per the final review —
+conditions 1–3 (the pre-flip requirements) are implemented and unit-tested,
+and production now matches the passing benchmark configuration
+(prompt v2 + quality filters + `json_object` + 2,400 tokens/word). A per-model
+config table remains out of scope.

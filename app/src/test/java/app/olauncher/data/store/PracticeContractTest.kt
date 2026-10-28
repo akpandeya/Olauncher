@@ -182,6 +182,25 @@ class PracticeContractTest {
         assertNull("json_object has nothing to fall back from", PracticeSchemaModes.fallbackMode(PracticeSchemaModes.JSON_OBJECT, error("model_not_capable")))
     }
 
+    @Test
+    fun `the response-format mode is a per-model preference`() {
+        // Round-3 final review condition 1: glm-5.3-flash's passing benchmark
+        // configuration is json_object (97.2 % validity; the schema runs lost
+        // whole batches to runaway generations), so production starts there.
+        assertEquals(PracticeSchemaModes.JSON_OBJECT, PracticeSchemaModes.initialMode("glm-5.3-flash"))
+        // Every other model keeps the previous strict-schema behaviour.
+        assertEquals(PracticeSchemaModes.JSON_SCHEMA, PracticeSchemaModes.initialMode("gemma-4-31b"))
+        assertEquals(PracticeSchemaModes.JSON_SCHEMA, PracticeSchemaModes.initialMode("glm-5.3"))
+        assertEquals(PracticeSchemaModes.JSON_SCHEMA, PracticeSchemaModes.initialMode(""))
+        // From json_object the capability fallback has nothing to fall back to.
+        assertNull(
+            PracticeSchemaModes.fallbackMode(
+                PracticeSchemaModes.initialMode("glm-5.3-flash"),
+                AiResult.Error(AiResult.ErrorKind.BAD_RESPONSE, "m", errorCode = "model_not_capable"),
+            ),
+        )
+    }
+
     // ------------------------------------------------------------------
     // parse
     // ------------------------------------------------------------------
@@ -573,6 +592,68 @@ class PracticeContractTest {
         // "beim" is 4 chars and appears in "bei dem"? No — "bei dem" has no
         // "beim" substring: the item passes.
         assertTrue(PracticeContract.parse(shortAnswer, words, padFallbacks = false).items.size == 1)
+    }
+
+    @Test
+    fun `filter leak matches whole words only — mit no longer hits Mitgliedsstaat`() {
+        val words = listOf(word(1, "mit", context = "Er kommt mit dem Bus."))
+        // A compound containing the answer as a substring is NOT a leak.
+        val compound = response(
+            item(
+                1, "prepositions", prompt = "___ die Mitgliedsstaaten!",
+                answer = "Unterstützt", choices = listOf("Unterstützt", "Unterstütze"), hint = "unter die Mitgliedsstaaten",
+            ),
+        )
+        val accepted = PracticeContract.parse(compound, words, padFallbacks = false)
+        // "Unterstützt" (11 chars) is not in the hint; the compound doesn't leak.
+        assertEquals(1, accepted.items.size)
+        assertTrue(accepted.rejections.isEmpty())
+
+        // The answer as its own word in the hint still leaks.
+        val ownWord = response(
+            item(
+                1, "prepositions", prompt = "Er kommt ___ dem Bus.",
+                answer = "mit", choices = listOf("mit", "ohne"), hint = "zusammen mit",
+            ),
+        )
+        assertEquals(PracticeFilters.LEAK, PracticeContract.parse(ownWord, words, padFallbacks = false).rejections.single().filter)
+
+        // A stem match across word boundary ("nach" inside "danach") is not a leak.
+        val words2 = listOf(word(2, "nach", context = "Nach dem Essen."))
+        val stemInside = response(
+            item(
+                2, "prepositions", prompt = "Er geht ___ Hause.",
+                answer = "nach", choices = listOf("nach", "zu"), hint = "danach",
+            ),
+        )
+        assertTrue(PracticeContract.parse(stemInside, words2, padFallbacks = false).rejections.isEmpty())
+    }
+
+    @Test
+    fun `filter answer_fit normalizes punctuation between prompt and full`() {
+        val words = listOf(word(1, "unterstützen", context = "Es gilt, die Mitgliedsstaaten zu unterstützen."))
+        // The confirmed round-3 false positive: the prompt writes ", " where the
+        // model's full sentence has " - " — the same sentence, so no rejection.
+        val dashVsComma = response(
+            item(
+                1, "conjugation", prompt = "Es gilt, sie zu ___.",
+                answer = "unterstützen", choices = listOf("unterstützen", "unterstützt"),
+                full = "Es gilt - sie zu unterstützen.",
+            ),
+        )
+        val accepted = PracticeContract.parse(dashVsComma, words, padFallbacks = false)
+        assertEquals(1, accepted.items.size)
+        assertTrue(accepted.rejections.isEmpty())
+
+        // A real mismatch (different words) is still rejected.
+        val mismatch = response(
+            item(
+                1, "conjugation", prompt = "Es gilt, sie zu ___.",
+                answer = "unterstützen", choices = listOf("unterstützen", "unterstützt"),
+                full = "Es gilt - sie zu vermeiden.",
+            ),
+        )
+        assertEquals(PracticeFilters.ANSWER_FIT, PracticeContract.parse(mismatch, words, padFallbacks = false).rejections.single().filter)
     }
 
     @Test

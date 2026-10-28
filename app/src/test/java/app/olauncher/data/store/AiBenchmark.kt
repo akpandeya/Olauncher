@@ -261,6 +261,8 @@ class AiBenchmark {
                     costEur = share,
                     latencyMs = result.latencyMs,
                     errorKind = if (item == null) "MISSING_OR_INVALID" else "",
+                    hint = item?.hint ?: "",
+                    full = item?.full ?: "",
                 )
             }
             // Raw rows keep every item the model returned for this word (judge
@@ -291,6 +293,8 @@ class AiBenchmark {
                     costEur = share,
                     latencyMs = result.latencyMs,
                     errorKind = rejection?.let { "FILTER_REJECT" } ?: "",
+                    hint = item?.hint ?: rejection?.hint ?: "",
+                    full = item?.full ?: rejection?.full ?: "",
                 )
             }
         }
@@ -406,6 +410,10 @@ data class BenchRow(
     val costEur: Double,
     val latencyMs: Long,
     val errorKind: String,
+    /** The item's hint (round-3 final review: the hint is half the card). */
+    val hint: String = "",
+    /** The model's full sentence, prompt with the gap filled. */
+    val full: String = "",
 ) {
     fun csvLine(): String = listOf(
         run.toString(),
@@ -420,6 +428,8 @@ data class BenchRow(
         "%.6f".format(costEur),
         latencyMs.toString(),
         errorKind,
+        hint,
+        full,
     ).joinToString(",") { AiBenchLogic.csvEscape(it) }
 }
 
@@ -494,7 +504,9 @@ object AiBenchLogic {
     const val THRESHOLD_CORRECTNESS = 1.8
     const val THRESHOLD_GROUNDING_PCT = 90.0
 
-    const val CSV_HEADER = "run,judge_id,word,type,prompt,answer,choices,filter_reject,contract_valid,grounded,grounded_override,correctness,tokens_in,tokens_out,cost,latency_ms,error_kind"
+    // `hint` and `full` (round-3 final review) trail the round-1 columns so old
+    // column indexes stay valid.
+    const val CSV_HEADER = "run,judge_id,word,type,prompt,answer,choices,filter_reject,contract_valid,grounded,grounded_override,correctness,tokens_in,tokens_out,cost,latency_ms,error_kind,hint,full"
     const val SUMMARY_HEADER = "model,runs,calls,failed_calls,failure_rate,validity_pct,grounding_pct,mean_correctness_proxy,cost_per_item_eur,total_cost_eur,p50_latency_ms,p95_latency_ms,verdict,schema_mode,notes"
 
     /**

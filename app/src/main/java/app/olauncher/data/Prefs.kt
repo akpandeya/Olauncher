@@ -133,6 +133,15 @@ class Prefs(context: Context) :
         const val AI_BASE_URL = "AI_BASE_URL"
         const val AI_BASE_URL_DEFAULT = "https://api.melious.ai"
         const val AI_MODEL = "AI_MODEL"
+
+        /**
+         * Owner-authorized flip (2026-10-28, epic 9 final review): glm-5.3-flash
+         * is the default model — the round-3 benchmark's passing configuration
+         * (json_object, 97.2 % validity) is now production's configuration. A
+         * saved blank still wins over the default, keeping the "no model" path
+         * for anyone who had one stored.
+         */
+        const val AI_MODEL_DEFAULT = "glm-5.3-flash"
         const val AI_PRACTICE_ENABLED = "AI_PRACTICE_ENABLED"
 
         /** Opt-in (#602, 9.9): the feature ships off; off works fine. */

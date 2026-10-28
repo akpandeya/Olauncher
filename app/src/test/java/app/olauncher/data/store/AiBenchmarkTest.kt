@@ -335,6 +335,8 @@ class AiBenchmarkTest {
             choices = "Reserve; Anwuchs", filterReject = "",
             contractValid = true, grounded = true, groundedOverride = "", correctness = "2",
             tokensIn = 512, tokensOut = 128, costEur = 0.000123, latencyMs = 1_234, errorKind = "",
+            hint = "Bestand, die sich zusammensetzt",
+            full = "Die ständige Reserve, die sich zusammensetzt, soll anwachsen.",
         )
         val fields = AiBenchLogic.splitCsv(row.csvLine())
         assertEquals("Reserve", fields[2])
@@ -344,6 +346,8 @@ class AiBenchmarkTest {
         assertEquals("2", fields[11])
         assertEquals("0.000123", fields[14])
         assertEquals("1234", fields[15])
+        assertEquals("Bestand, die sich zusammensetzt", fields[17])
+        assertEquals("Die ständige Reserve, die sich zusammensetzt, soll anwachsen.", fields[18])
     }
 
     @Test
@@ -351,6 +355,10 @@ class AiBenchmarkTest {
         val columns = AiBenchLogic.CSV_HEADER.split(",")
         assertEquals("choices", columns[6])
         assertEquals("filter_reject", columns[7])
+        // Round-3 final review: the hint and the full sentence trail the older
+        // columns so previous column indexes stay valid.
+        assertEquals("hint", columns[17])
+        assertEquals("full", columns[18])
         assertEquals(columns.size, BenchRow(
             run = 1, judgeId = null, word = "w", type = "cloze", prompt = "p", answer = "a",
             contractValid = true, grounded = true, groundedOverride = "", correctness = "",
