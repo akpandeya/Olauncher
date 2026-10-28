@@ -266,4 +266,12 @@
         <item name="android:backgroundDimEnabled">false</item>
     </style>
 
+    <!-- Full-screen Reader (#591): opaque window and theme-aware paper colour, unlike the
+         translucent window the bottom sheet floats in. Applied via setTheme before
+         super.onCreate when the intent opens the reader. -->
+    <style name="Theme.WordCapture.Reader" parent="Theme.WordCapture">
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:windowBackground">?android:attr/colorBackground</item>
+    </style>
+
 </resources>

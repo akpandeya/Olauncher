@@ -857,6 +857,8 @@
     <string name="word_picker_select_all">Select all</string>
     <string name="word_picker_saved_mark">saved</string>
     <string name="word_picker_save_n">Save %1$d</string>
+    <string name="reader_title" tools:ignore="MissingTranslation">Lesen</string>
+    <string name="reader_close" translatable="false">✕</string>
     <string name="privacy_intro" tools:ignore="MissingTranslation">Thumbline does not send your data to any analytics or ads service. Some features fetch data from the internet (weather, dictionary, currency, now-playing artwork), listed below.</string>
     <string name="privacy_state_granted" tools:ignore="MissingTranslation">Granted</string>
     <string name="privacy_state_not_granted" tools:ignore="MissingTranslation">Not granted</string>
