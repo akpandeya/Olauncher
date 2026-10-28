@@ -52,7 +52,7 @@ import app.olauncher.data.store.SharedOfflineGermanStore
 import app.olauncher.data.store.WordOrderQuiz
 import app.olauncher.data.store.shouldAutoAdvance
 import app.olauncher.databinding.FragmentDrillBinding
-import app.olauncher.databinding.ItemDrillSummaryBinding
+import app.olauncher.databinding.ItemSummaryRowBinding
 import app.olauncher.helper.DrawerScrollHelper
 import app.olauncher.helper.Haptics
 import app.olauncher.helper.hideKeyboard
@@ -1321,18 +1321,19 @@ class DrillFragment : BaseFragment() {
     }
 
     /**
-     * Binds the sorted summary rows shared by the drill and word-order summaries:
-     * mark icon, tint, prompt text, and correction line per result. A near-miss (almost)
-     * row shows the retried input, the answer, and the near-miss note.
+     * Binds the sorted summary rows shared by the drill and word-order summaries —
+     * the drill side's thin adapter over the one shared row layout (#623): mark icon,
+     * tint, prompt text, and correction line per result. A near-miss (almost) row
+     * shows the retried input, the answer, and the near-miss note.
      */
     private fun bindSummaryRows(items: List<DrillSummaryItem>) {
         val b = binding
         val context = b.root.context
         b.summaryList.removeAllViews()
         for (item in items) {
-            val itemBinding = ItemDrillSummaryBinding.inflate(layoutInflater, b.summaryList, false)
+            val itemBinding = ItemSummaryRowBinding.inflate(layoutInflater, b.summaryList, false)
             val learnerAnswer = formatChoiceToken(item.learnerAnswer)
-            itemBinding.tvPrompt.text = DrillSummaryLogic.formatPrompt(
+            itemBinding.tvPrimary.text = DrillSummaryLogic.formatPrompt(
                 item.prompt,
                 item.result,
                 learnerAnswer,
@@ -1343,19 +1344,19 @@ class DrillFragment : BaseFragment() {
                 DrillResult.RIGHT -> {
                     itemBinding.ivMark.setImageResource(R.drawable.ic_check)
                     itemBinding.ivMark.setColorFilter(ContextCompat.getColor(context, R.color.accentSage))
-                    itemBinding.tvCorrection.isVisible = false
+                    itemBinding.tvSecondary.isVisible = false
                 }
                 DrillResult.ALMOST -> {
                     itemBinding.ivMark.setImageResource(R.drawable.ic_dot)
                     itemBinding.ivMark.setColorFilter(ContextCompat.getColor(context, R.color.accentSand))
-                    itemBinding.tvCorrection.isVisible = false
+                    itemBinding.tvSecondary.isVisible = false
                 }
                 DrillResult.WRONG -> {
                     itemBinding.ivMark.setImageResource(R.drawable.ic_close)
                     itemBinding.ivMark.setColorFilter(ContextCompat.getColor(context, R.color.accentRose))
                     val correction = DrillSummaryLogic.formatCorrection(item.prompt, item.answer, item.hint)
-                    itemBinding.tvCorrection.text = correction
-                    itemBinding.tvCorrection.isVisible = correction.isNotEmpty()
+                    itemBinding.tvSecondary.text = correction
+                    itemBinding.tvSecondary.isVisible = correction.isNotEmpty()
                 }
             }
             b.summaryList.addView(itemBinding.root)

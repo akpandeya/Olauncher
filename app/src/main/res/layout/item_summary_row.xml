@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- The one shared summary row (#623, owner decision 2026-10-28): both the drill
+     round summary and the review summary inflate this layout — same mark slot,
+     same text styles — and each fragment keeps its own thin adapter that maps
+     its row model onto it. Do not fork per-feature copies of this file. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    style="@style/DrillSummaryRow"
+    style="@style/SummaryRow"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
@@ -25,14 +29,14 @@
         android:orientation="vertical">
 
         <TextView
-            android:id="@+id/tvPrompt"
+            android:id="@+id/tvPrimary"
             style="@style/TodayCardBody"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             tools:text="Ich gehe durch ___ Park. (dem)" />
 
         <TextView
-            android:id="@+id/tvCorrection"
+            android:id="@+id/tvSecondary"
             style="@style/TodayCardBodyLight"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

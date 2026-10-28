@@ -191,7 +191,8 @@
         <item name="android:shadowRadius">0</item>
     </style>
 
-    <style name="DrillSummaryRow">
+    <!-- The shared summary-list row skin (#623): drill and review summaries both use it. -->
+    <style name="SummaryRow">
         <item name="android:minHeight">@dimen/today_touch_min_height</item>
         <item name="android:gravity">center_vertical</item>
     </style>

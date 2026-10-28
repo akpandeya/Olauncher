@@ -35,7 +35,7 @@ import app.olauncher.data.store.ReviewSummaryItem
 import app.olauncher.data.store.ReviewSummaryLogic
 import app.olauncher.data.store.Word
 import app.olauncher.databinding.FragmentReviewBinding
-import app.olauncher.databinding.ItemReviewSummaryBinding
+import app.olauncher.databinding.ItemSummaryRowBinding
 import app.olauncher.helper.Haptics
 import app.olauncher.helper.MotionPolicy
 import app.olauncher.helper.SystemMotion
@@ -319,25 +319,28 @@ class ReviewFragment : BaseFragment() {
 
         b.summaryList.removeAllViews()
         for (item in sortedItems) {
-            val rowBinding = ItemReviewSummaryBinding.inflate(layoutInflater, b.summaryList, false)
-            rowBinding.tvWord.text = item.word.text
+            // The review side's thin adapter over the one shared row layout (#623):
+            // knew green tick, almost amber dot, again red cross — the same marks the
+            // drill summary uses, mapped from the review's own row model.
+            val rowBinding = ItemSummaryRowBinding.inflate(layoutInflater, b.summaryList, false)
+            rowBinding.tvPrimary.text = item.word.text
             when (item.result) {
                 ReviewEvent.Result.KNEW -> {
                     rowBinding.ivMark.setImageResource(R.drawable.ic_check)
                     rowBinding.ivMark.setColorFilter(ContextCompat.getColor(context, R.color.accentSage))
-                    rowBinding.tvMeaning.isVisible = false
+                    rowBinding.tvSecondary.isVisible = false
                 }
                 ReviewEvent.Result.ALMOST -> {
                     rowBinding.ivMark.setImageResource(R.drawable.ic_dot)
                     rowBinding.ivMark.setColorFilter(ContextCompat.getColor(context, R.color.accentSand))
-                    rowBinding.tvMeaning.isVisible = false
+                    rowBinding.tvSecondary.isVisible = false
                 }
                 ReviewEvent.Result.AGAIN -> {
                     rowBinding.ivMark.setImageResource(R.drawable.ic_close)
                     rowBinding.ivMark.setColorFilter(ContextCompat.getColor(context, R.color.accentRose))
                     val correction = ReviewSummaryLogic.formatCorrection(item.word.meaning, item.word.context)
-                    rowBinding.tvMeaning.text = correction
-                    rowBinding.tvMeaning.isVisible = correction.isNotEmpty()
+                    rowBinding.tvSecondary.text = correction
+                    rowBinding.tvSecondary.isVisible = correction.isNotEmpty()
                 }
             }
             b.summaryList.addView(rowBinding.root)
