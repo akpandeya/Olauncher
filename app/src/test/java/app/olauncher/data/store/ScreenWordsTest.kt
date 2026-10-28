@@ -3,7 +3,6 @@ package app.olauncher.data.store
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -155,10 +154,10 @@ class ScreenWordsTest {
     }
 
     @Test
-    fun realDumpZeroHeightNodesSortUnpositionedKeepBoxes() {
+    fun realDumpZeroHeightNodesSortUnpositionedWithoutBoxes() {
         // Chrome parks off-screen content at zero-height bounds. Those nodes survive the
-        // noise filter, sort as unpositioned behind every positioned node, and keep their
-        // (synthetic, zero-height) boxes — nothing crashes and no geometry is invented.
+        // noise filter and sort as unpositioned behind every positioned node — but their
+        // geometry is invisible on screen, so no word box is guessed from it.
         val result = ScreenWords.build(UiAutomatorFixture.loadTagesschau())
         val texts = result.nodes.mapNotNull { it.text }
         val zeroNode = result.nodes.first { it.text!!.startsWith("Nach ihren Angaben hatte sie bereits") }
@@ -171,8 +170,7 @@ class ScreenWordsTest {
         assertEquals(2784, zeroNode.charBoxes!!.first().top)
         assertEquals(2784, zeroNode.charBoxes!!.first().bottom)
         val word = result.words.first { it.nodeId == zeroNode.id }
-        assertNotNull(word.box)
-        assertEquals(0, word.box!!.height)
+        assertNull(word.box)
     }
 
     @Test
@@ -241,6 +239,57 @@ class ScreenWordsTest {
         assertEquals(ScreenBox(60, 1382, 60 + 4 * charWidth, 1694), nach.box)
         val rueckkehr = words.words.first { it.text == "Rückkehr" && it.nodeId == headlineNode.id }
         assertEquals(ScreenBox(60 + 29 * charWidth, 1382, 60 + 37 * charWidth, 1694), rueckkehr.box)
+    }
+
+    @Test
+    fun zeroAreaHiddenNodesYieldNoWordGeometry() {
+        // Probe rows 17/20/26 (tagesschau capture): hidden WebView chrome nodes parked at
+        // 0,0,0,0 with 0,0,0,0 character boxes. Their words must carry no box — otherwise
+        // a tap at the frame's top-left corner selects invisible words.
+        fun hidden(id: Int, text: String) = ScreenNode(
+            id, id - 1, text, ScreenBox(0, 0, 0, 0),
+            List(text.length) { ScreenBox(0, 0, 0, 0) },
+            "android.widget.TextView", null,
+        )
+        val nodes = listOf(
+            hidden(16, "Hauptnavigation"),
+            hidden(19, "Nebennavigation"),
+            hidden(25, "Fußzeile"),
+        )
+        val words = ScreenWords.build(nodes).words
+        assertEquals(listOf("Hauptnavigation", "Nebennavigation", "Fußzeile"), words.map { it.text })
+        assertTrue(words.all { it.box == null })
+    }
+
+    @Test
+    fun degenerateWordBoxesAreDroppedEvenOnPositionedNodes() {
+        // A positioned node whose character boxes all collapsed to zero area: the union
+        // per word is zero-area, so it counts as no geometry either.
+        val text = "Hallo Welt"
+        val node = ScreenNode(
+            0, -1, text, ScreenBox(0, 0, 500, 40),
+            List(text.length) { ScreenBox(0, 0, 0, 0) },
+            "android.widget.TextView", null,
+        )
+        val words = ScreenWords.build(listOf(node)).words
+        assertEquals(listOf("Hallo", "Welt"), words.map { it.text })
+        assertTrue(words.all { it.box == null })
+    }
+
+    @Test
+    fun staleCharBoxesOnHiddenNodeYieldNoGeometry() {
+        // A hidden node parked at 0,0,0,0 whose character boxes are stale but non-zero:
+        // the bounds guard is the only thing that catches this — the union guard alone
+        // would accept the boxes and hit-test invisible words at their stale place.
+        val text = "Hallo Welt"
+        val node = ScreenNode(
+            0, -1, text, ScreenBox(0, 0, 0, 0),
+            List(text.length) { ScreenBox(10, 10, 20, 30) },
+            "android.widget.TextView", null,
+        )
+        val words = ScreenWords.build(listOf(node)).words
+        assertEquals(listOf("Hallo", "Welt"), words.map { it.text })
+        assertTrue(words.all { it.box == null })
     }
 
     @Test

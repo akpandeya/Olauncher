@@ -45,13 +45,14 @@ object WordHitTest {
     /**
      * The word at [point]: the word whose box holds it, else the nearest word whose box is
      * at most [slop] pixels away (distance to a box is 0 when the point is inside it).
-     * Ties resolve to the earlier word in reading order. Words without a box are skipped.
+     * Ties resolve to the earlier word in reading order. Words without a box — or with a
+     * zero-area one (hidden nodes park at 0,0,0,0) — are skipped.
      */
     fun tap(words: List<ScreenWord>, point: Point, slop: Int): ScreenWord? {
         var best: ScreenWord? = null
         var bestDistance = Int.MAX_VALUE
         for (word in words) {
-            val box = word.box ?: continue
+            val box = hittable(word.box) ?: continue
             val distance = distanceTo(box, point)
             if (distance < bestDistance) {
                 bestDistance = distance
@@ -78,7 +79,7 @@ object WordHitTest {
         val polygon = if (closed) points.subList(0, points.size - 1) else emptyList()
 
         val touched = words.filter { word ->
-            val box = word.box ?: return@filter false
+            val box = hittable(word.box) ?: return@filter false
             points.zipWithNext().any { (from, to) -> segmentCrossesBox(from, to, box) } ||
                 (closed && polygonContains(polygon, centerOf(box)))
         }
@@ -98,7 +99,7 @@ object WordHitTest {
      * anchored to geometry and is returned unchanged.
      */
     fun extendByLine(selection: Selection, point: Point, words: List<ScreenWord>): Selection {
-        val headBox = selection.head.box ?: return selection
+        val headBox = hittable(selection.head.box) ?: return selection
         val lines = linesOf(words)
         val headLine = lines.indexOfFirst { line -> line.words.any { it === selection.head } }
         if (headLine < 0) return selection
@@ -120,6 +121,13 @@ object WordHitTest {
     }
 
     // -- geometry helpers ---------------------------------------------------------------
+
+    /**
+     * Zero-area boxes are invisible geometry (hidden nodes park at 0,0,0,0): they would
+     * be tappable at the frame's corner and form a phantom line band at y=0 — not hittable.
+     */
+    private fun hittable(box: ScreenBox?): ScreenBox? =
+        box?.takeUnless { it.width <= 0 || it.height <= 0 }
 
     /** Squared distance from [point] to the nearest point of [box]; 0 when inside. */
     private fun distanceTo(box: ScreenBox, point: Point): Int {
@@ -200,7 +208,7 @@ object WordHitTest {
     private fun linesOf(words: List<ScreenWord>): List<LineBand> {
         val lines = ArrayList<LineBand>()
         for (word in words) {
-            val box = word.box ?: continue
+            val box = hittable(word.box) ?: continue
             var best: LineBand? = null
             var bestOverlap = 0
             for (line in lines) {

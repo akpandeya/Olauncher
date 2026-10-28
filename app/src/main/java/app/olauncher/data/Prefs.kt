@@ -124,6 +124,9 @@ class Prefs(context: Context) :
 
         /** Set by [app.olauncher.helper.WordScreenService] right after the first screenshot file was written. */
         const val CAPTURE_SCREENSHOT_OK = "CAPTURE_SCREENSHOT_OK"
+
+        /** Set after the first successful pick in the capture overlay; hides the "Tap or circle words" hint. */
+        const val CAPTURE_HINT_SEEN = "CAPTURE_HINT_SEEN"
         const val GERMAN_SPELL_SUGGEST = "GERMAN_SPELL_SUGGEST"
         const val GERMAN_PAUSE_WORD = "GERMAN_PAUSE_WORD"
         const val GERMAN_PAUSE_LAST_WORD_ID = "GERMAN_PAUSE_LAST_WORD_ID"

@@ -83,6 +83,20 @@ class WordHitTestTest {
         assertSame(withGhost[1], WordHitTest.tap(withGhost, Point(10, 10), slop = 0))
     }
 
+    @Test
+    fun zeroAreaBoxIsNeverHitAndNeverExtendsSelection() {
+        // Hidden nodes park at 0,0,0,0: their words must not be tappable at the frame's
+        // corner, and their zero-height band at y=0 must not catch the long-press drag.
+        val ghost = ScreenWord("Geist", ScreenBox(0, 0, 0, 0), nodeId = 0, charRange = 0 until 5)
+        val words = listOf(ghost, word("echt", 0, 40, 50, 60))
+        assertNull(WordHitTest.tap(words, Point(0, 0), slop = 20))
+        assertSame(words[1], WordHitTest.tap(words, Point(10, 50), slop = 0))
+
+        // Dragging from "echt" up toward y=0 stays within "echt"'s own line.
+        val selection = WordHitTest.extendByLine(Selection.Single(words[1]), Point(0, 0), words)
+        assertEquals(listOf("echt"), texts(selection))
+    }
+
     // -- stroke --------------------------------------------------------------------------
 
     @Test
