@@ -89,6 +89,13 @@ class PracticeWorker(
         val topUpOutcome = generator.topUp(queue, prefs, LocalDate.now())
         val topUpResult = when (topUpOutcome) {
             is PracticeGeneration.Generated -> Result.success()
+            // Chunks that stored keep their success (review R2 B): the covered
+            // words are done, so only the retryable kinds rerun the worker for
+            // the rest of the queue; the others wait for the next periodic run.
+            is PracticeGeneration.Partial -> when (topUpOutcome.kind) {
+                AiResult.ErrorKind.NETWORK, AiResult.ErrorKind.RATE_LIMIT -> Result.retry()
+                else -> Result.success()
+            }
             is PracticeGeneration.Skipped -> Result.success()
             is PracticeGeneration.Failed -> when (topUpOutcome.kind) {
                 // AUTH and BILLING cannot be fixed by retrying; the state is in prefs.
@@ -103,9 +110,15 @@ class PracticeWorker(
         if (topUpResult == Result.retry()) return@withContext topUpResult
         // AUTH and BILLING end the run here: the digest would call the provider
         // again with a key that was just rejected or an account out of credits
-        // (review R1 #6). A failed top-up of any other kind does not block it;
-        // the digest applies the same gate and cap inside the generator.
-        if (topUpOutcome is PracticeGeneration.Failed && PracticeWorkerPolicy.stopsRun(topUpOutcome.kind)) {
+        // (review R1 #6) — also when earlier chunks stored (a Partial, R2 B). A
+        // failed top-up of any other kind does not block it; the digest applies
+        // the same gate and cap inside the generator.
+        val topUpErrorKind = when (topUpOutcome) {
+            is PracticeGeneration.Failed -> topUpOutcome.kind
+            is PracticeGeneration.Partial -> topUpOutcome.kind
+            else -> null
+        }
+        if (topUpErrorKind != null && PracticeWorkerPolicy.stopsRun(topUpErrorKind)) {
             return@withContext Result.success()
         }
         maybeDigest(generator, prefs)
@@ -130,10 +143,12 @@ class PracticeWorker(
             .filter { it.context.isNotBlank() }
         if (weakWords.isEmpty()) return
         val outcome = generator.digest(weakWords, weak.drillTypes, prefs, LocalDate.now(), now)
-        if (outcome is PracticeGeneration.Generated) {
+        if (outcome is PracticeGeneration.Generated || outcome is PracticeGeneration.Partial) {
             // The announcement counts the words the digest actually covered —
             // outcome.words — not the whole weak-spot list: blank-context words
-            // are filtered out before the call (review R1 #5).
+            // are filtered out before the call (review R1 #5). A partial digest
+            // counts the covered words too, so the timestamp and announcement
+            // reflect what was done (review R2 B).
             prefs.aiDigestNew = outcome.words.size
         }
     }

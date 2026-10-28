@@ -223,9 +223,32 @@ class PracticeContractTest {
         val words = listOf(wordWithContext(1, "Haus"))
         val result = PracticeContract.parse(response(), words)
         val choices = result.clozeFallbacks[0].choices
-        // answer first, then the word and its n-variant — never an uppercase flip.
-        assertEquals(listOf("Haus", "Hausn"), choices)
+        // answer first, then the word, its n-variant and a neutral mark — never
+        // an uppercase flip.
+        assertEquals(listOf("Haus", "Hausn", "Haus?"), choices)
         assertTrue(choices.none { it == "HAUS" })
+    }
+
+    @Test
+    fun `fallback choices fill three distinct slots so the rotation never repeats a card`() {
+        // answer == text: without a third distinct distractor the choices shrink
+        // to two and the three-slot rotation makes slot 2 repeat slot 0 (R2 E).
+        val result = PracticeContract.parse(response(), listOf(wordWithContext(1, "Haus")))
+        val rotations = result.clozeFallbacks.map { it.choices }
+        assertEquals(3, rotations.size)
+        for (choices in rotations) {
+            assertEquals(3, choices.size)
+            assertEquals(choices.size, choices.toSet().size)
+            assertTrue("Haus" in choices)
+        }
+        // The rotated slots differ — no card repeats the previous one.
+        assertTrue(rotations[0] != rotations[1] && rotations[1] != rotations[2])
+
+        // The inflected-form case keeps its three natural choices untouched.
+        val inflected = PracticeContract.parse(
+            response(), listOf(word(2, "insistieren", context = "Die Arbeit insistiert auf seiner Unterschrift.")),
+        )
+        assertEquals(listOf("insistiert", "insistieren", "insistierenn"), inflected.clozeFallbacks[0].choices)
     }
 
     @Test

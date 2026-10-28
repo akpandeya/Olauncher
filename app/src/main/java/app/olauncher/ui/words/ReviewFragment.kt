@@ -165,10 +165,11 @@ class ReviewFragment : BaseFragment() {
      * The on-demand half of the hybrid generation design (#601): when the session
      * starts with thin due pools, top them up inline before the first card, off
      * the UI thread. The first render waits behind the result — bounded by the
-     * ~10 s on-demand ceiling, which now actually interrupts the HTTP call — so
-     * the round starts once, on the final pool, and never mutates mid-view
-     * (review R1 #2). A gate that is off, a missing key or nothing queued skips
-     * the call and renders immediately.
+     * ~10 s on-demand ceiling, which the per-request read timeout enforces on
+     * the connection (connect + read time; see review R2 C) — so the round
+     * starts once, on the final pool, and never mutates mid-view
+     * (review R1 #2). A gate that is off, a rejected key, a missing key or
+     * nothing queued skips the call and renders immediately.
      */
     private fun generateOnDemandIfNeeded() {
         val context = context ?: return
@@ -206,7 +207,9 @@ class ReviewFragment : BaseFragment() {
             }
             val b = _binding ?: return@launch
             b.tvGenerating.isVisible = false
-            if (generation is PracticeGeneration.Generated) {
+            // Generated and Partial both put items in the store (review R2 B):
+            // reload so the round renders on what actually arrived.
+            if (generation is PracticeGeneration.Generated || generation is PracticeGeneration.Partial) {
                 practiceItems = PracticeItemsStore(appContext).all()
             }
             render()

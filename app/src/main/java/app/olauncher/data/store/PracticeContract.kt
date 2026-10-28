@@ -241,10 +241,15 @@ object PracticeContract {
         return best
     }
 
-    /** Distinct deterministic choices containing the answer; no case-flip padding. */
+    /**
+     * Distinct deterministic choices containing the answer; no case-flip padding.
+     * A trailing question mark (the blank-text card's style) fills the third slot
+     * when the word itself adds no distinct form, so the three-slot rotation
+     * never repeats a card (review R2 E).
+     */
     private fun fallbackChoices(answer: String, text: String): List<String> {
         val choices = LinkedHashSet<String>()
-        for (candidate in listOf(answer, text, "${text}n")) {
+        for (candidate in listOf(answer, text, "${text}n", "$answer?")) {
             choices.add(candidate)
             if (choices.size >= 3) break
         }
