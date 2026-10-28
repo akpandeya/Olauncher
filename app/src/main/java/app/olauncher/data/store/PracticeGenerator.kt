@@ -34,7 +34,20 @@ sealed class PracticeGeneration {
         val timedOut: Boolean = false,
     ) : PracticeGeneration()
 
-    enum class Reason { DISABLED, NO_KEY, NO_MODEL, CAP_REACHED, NOTHING_QUEUED }
+    /**
+     * Some chunks stored and billed before an error stopped the batch (review
+     * R2 B): [itemCount] items are in the store for [words], and [kind] is why
+     * the rest stopped. Callers honor what arrived — the digest timestamps the
+     * covered words, Review reloads the store — and the still-thin words stay
+     * in the derived queue for the next run.
+     */
+    data class Partial(
+        override val words: List<Word>,
+        val itemCount: Int,
+        val kind: AiResult.ErrorKind,
+    ) : PracticeGeneration()
+
+    enum class Reason { DISABLED, NO_KEY, NO_MODEL, CAP_REACHED, NOTHING_QUEUED, KEY_REJECTED }
 }
 
 /**
@@ -66,14 +79,17 @@ class PracticeGenerator(
 
     /**
      * On-demand: the thin due words (fewer than [PracticeQueue.ON_DEMAND_MIN_POOL]
-     * items each) are generated inline before the round, under [timeoutMs] — the
-     * whole chunk loop shares the ceiling, and the deadline is enforced on the
-     * HTTP connection itself (via [AiRequest.readTimeoutMs]) plus coroutine
-     * cancellation, so a slow provider actually stops (review R1 #2; the benchmark
-     * measured p50 36.8 s for 20 words, far past any "1–2 s" hope). On failure or
-     * timeout the caller falls back to whatever the pool has; the words stay
-     * under-stocked, so the derived queue hands them to the background top-up.
-     * Never call this on the UI thread.
+     * items each) are generated inline before the round, under [timeoutMs] —
+     * the deadline is bounded by the per-request read timeout on the HTTP
+     * connection (connect time + read timeout; see [AiRequest.readTimeoutMs]),
+     * not by an immediate interrupt of a blocked socket read (review R1 #2, R2 C;
+     * the benchmark measured p50 36.8 s for 20 words, far past any "1–2 s" hope).
+     * Only [ON_DEMAND_MAX_WORDS] words go out — one small chunk fits the ~10 s
+     * ceiling, a full 5-word chunk mostly times out billed (review R2 D). The
+     * path is skipped entirely while [AiPracticePrefs.aiKeyRejected] is set, like
+     * the worker gate. On failure or timeout the caller falls back to whatever
+     * the pool has; the words stay under-stocked, so the derived queue hands
+     * them to the background top-up. Never call this on the UI thread.
      */
     suspend fun onDemand(
         dueWords: List<Word>,
@@ -81,9 +97,16 @@ class PracticeGenerator(
         today: LocalDate,
         timeoutMs: Long = ON_DEMAND_TIMEOUT_MS,
     ): PracticeGeneration {
+        // A standing key rejection pauses every call until a new key is saved
+        // (review R2 D): the on-demand path honours it like the worker gate.
+        if (prefs.aiKeyRejected) {
+            return PracticeGeneration.Skipped(dueWords, PracticeGeneration.Reason.KEY_REJECTED)
+        }
         val thin = PracticeQueue.thinWords(dueWords, store.all())
         if (thin.isEmpty()) return PracticeGeneration.Skipped(dueWords, PracticeGeneration.Reason.NOTHING_QUEUED)
-        return generate(thin, prefs, today, timeoutMs)
+        // Pending owner decision (review R2 D): skip on-demand entirely when the
+        // day's background top-up has already covered these words.
+        return generate(thin.take(ON_DEMAND_MAX_WORDS), prefs, today, timeoutMs)
     }
 
     /**
@@ -100,8 +123,10 @@ class PracticeGenerator(
      * The digest (#604, 9.11): the weak-spot [weakWords] in chunked calls,
      * restricted to the [weakTypes] that are actually weak, stored with
      * `source = digest`. Same gate and daily word cap as the other paths, and
-     * `AI_LAST_DIGEST_AT` ([prefs.aiLastDigestAt] = [nowMs]) updates only on
-     * success — a skip or failure leaves the timestamp, so the digest re-triggers.
+     * `AI_LAST_DIGEST_AT` ([prefs.aiLastDigestAt] = [nowMs]) updates on success
+     * and on a partial success — the covered words are done, so re-digesting
+     * them would only duplicate `source = digest` items (review R2 B). A skip
+     * or a full failure leaves the timestamp, so the digest re-triggers.
      */
     suspend fun digest(
         weakWords: List<Word>,
@@ -118,7 +143,7 @@ class PracticeGenerator(
             types = weakTypes.ifEmpty { DrillType.values().toList() },
             source = PracticeItem.Source.DIGEST,
         )
-        if (outcome is PracticeGeneration.Generated) {
+        if (outcome is PracticeGeneration.Generated || outcome is PracticeGeneration.Partial) {
             prefs.aiLastDigestAt = nowMs
         }
         return outcome
@@ -144,8 +169,10 @@ class PracticeGenerator(
         return if (timeoutMs == null) {
             generationMutex.withLock { generateLocked(words, prefs, today, types, source, BACKGROUND_READ_TIMEOUT_MS) }
         } else {
-            // Timed out: the call is interrupted (the provider releases on
-            // cancellation), the pool is untouched, the words stay queued.
+            // Timed out: the caller stops waiting — cancellation interrupts the
+            // thread, and a socket read already blocked in the kernel ends at
+            // the per-request read timeout (review R2 C) — the pool is
+            // untouched, the words stay queued.
             withTimeoutOrNull(timeoutMs) {
                 generationMutex.withLock { generateLocked(words, prefs, today, types, source, timeoutMs.toInt()) }
             } ?: PracticeGeneration.Failed(words, AiResult.ErrorKind.NETWORK, timedOut = true)
@@ -169,6 +196,7 @@ class PracticeGenerator(
 
         val covered = mutableListOf<Word>()
         var storedCount = 0
+        var sawBadResponse = false
         for (chunk in batch.chunked(WORDS_PER_REQUEST)) {
             // The request is billed once its body is written — timeouts and
             // non-OK replies included — so the cap counts the words at send
@@ -187,35 +215,67 @@ class PracticeGenerator(
                     val parsed = PracticeContract.parse(result.text, chunk, model, source)
                     if (parsed.items.isEmpty() && parsed.clozeFallbacks.isEmpty()) {
                         // Truncated or wholly rejected response: nothing was
-                        // stored, so this is a failure, not a success — the
-                        // digest must not fire off an empty pool (review R1 #5).
-                        return PracticeGeneration.Failed(batch, AiResult.ErrorKind.BAD_RESPONSE)
+                        // stored for this chunk, but earlier chunks already
+                        // stored and billed theirs — skip it and keep going
+                        // instead of discarding their success (review R2 B).
+                        sawBadResponse = true
+                        continue
                     }
                     storedCount += store.append(parsed.items + parsed.clozeFallbacks).size
                     covered += chunk
                 }
-                is AiResult.Error -> return when (result.kind) {
+                is AiResult.Error -> when (result.kind) {
+                    // A junk reply for one chunk (truncated, cut off at
+                    // max_tokens) must not stop the batch: later chunks may
+                    // still succeed (review R2 B).
+                    AiResult.ErrorKind.BAD_RESPONSE -> sawBadResponse = true
                     AiResult.ErrorKind.AUTH -> {
                         prefs.aiKeyRejected = true
-                        PracticeGeneration.Failed(batch, AiResult.ErrorKind.AUTH)
+                        return stoppedAfterStored(result.kind, batch, covered, storedCount)
                     }
                     AiResult.ErrorKind.BILLING -> {
                         // Out of prepaid credits: retrying cannot fix a balance, so
                         // the state is surfaced for the "top up credits" message
                         // and the caller stops instead of hot-looping.
                         prefs.aiBillingBlocked = true
-                        PracticeGeneration.Failed(batch, AiResult.ErrorKind.BILLING)
+                        return stoppedAfterStored(result.kind, batch, covered, storedCount)
                     }
-                    else -> PracticeGeneration.Failed(batch, result.kind)
+                    else -> return stoppedAfterStored(result.kind, batch, covered, storedCount)
                 }
             }
+        }
+        // A batch that never stored anything is a failure, not an empty success
+        // — the digest must not fire off an empty pool (review R1 #5, R2 B).
+        if (sawBadResponse && storedCount == 0) {
+            return PracticeGeneration.Failed(batch, AiResult.ErrorKind.BAD_RESPONSE)
         }
         return PracticeGeneration.Generated(covered, storedCount)
     }
 
+    /**
+     * The outcome when an error stops the chunk loop: chunks that already
+     * stored and billed keep their success as a [PracticeGeneration.Partial]
+     * (review R2 B); with nothing stored the batch fails as before.
+     */
+    private fun stoppedAfterStored(
+        kind: AiResult.ErrorKind,
+        batch: List<Word>,
+        covered: List<Word>,
+        storedCount: Int,
+    ): PracticeGeneration =
+        if (storedCount > 0) PracticeGeneration.Partial(covered, storedCount, kind)
+        else PracticeGeneration.Failed(batch, kind)
+
     companion object {
         /** Owner decision (2026-10-27): on-demand answers within ~10 s; that is the ceiling. */
         const val ON_DEMAND_TIMEOUT_MS = 10_000L
+
+        /**
+         * On-demand sends one small chunk only (review R2 D): the benchmark's p50
+         * puts a 5-word chunk at ~9–10 s — the whole ceiling — so a full chunk
+         * would mostly time out billed on every Review start. 1–2 words fit.
+         */
+        const val ON_DEMAND_MAX_WORDS = 2
 
         /**
          * The background read timeout per chunked request (review R1 #1): the

@@ -32,10 +32,11 @@ open class OpenAiCompatibleProvider(
             ?: return AiResult.Error(AiResult.ErrorKind.AUTH, "No API key set")
         return try {
             // runInterruptible: a cancelled caller (the on-demand ~10 s deadline)
-            // interrupts the blocking socket I/O instead of waiting it out — the
-            // disconnect() in the finally aborts the read at once. Without this a
-            // timeout would only return once the HTTP call ends anyway, discarding
-            // a billed response (review R1 #2).
+            // interrupts the thread at once — but a socket read already blocked
+            // in the kernel only ends at the connection's read timeout, and the
+            // disconnect() in the finally runs after the call returns, not
+            // during it. The real bound is connect time (≤15 s) plus the
+            // per-request read timeout (review R1 #2, R2 C).
             runInterruptible(Dispatchers.IO) { exchange(request, key) }
         } catch (e: CancellationException) {
             throw e

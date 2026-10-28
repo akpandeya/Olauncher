@@ -73,12 +73,14 @@ class KeyVault(private val context: Context) {
             null
         }
         if (key == null) {
-            // No usable key: only a missing alias proves the file stale; an
-            // unreachable store must keep it.
+            // No usable key: only a missing alias proves the file stale. When
+            // the alias lookup itself throws the store is still unreachable —
+            // unknown, not absent — so the file is kept (review R2 A: the
+            // not-ready-after-boot case makes both calls throw).
             val aliasPresent = try {
                 keyStore.containsAlias(KEY_ALIAS)
             } catch (e: Exception) {
-                false
+                null
             }
             return if (KeyVaultReadPolicy.isStale(aliasPresent, decryptError = null)) deleteStale(file) else null
         }
@@ -146,12 +148,14 @@ class KeyVault(private val context: Context) {
  * that the file can never decrypt again — a missing Keystore alias, or an
  * authenticated decryption failure (wrong key: AEADBadTagException; invalidated
  * key) — makes it stale. Any other error is temporary (a Keystore not ready
- * after boot, an IO failure) and must keep the file (review R1 #8). Kept apart
- * from the Android-dependent vault so the decision is unit-testable.
+ * after boot, an IO failure) and must keep the file (review R1 #8). An alias
+ * lookup that itself throws is unknown, never proof of absence (review R2 A):
+ * a valid key file must survive a store that is unreachable twice in a row.
+ * Kept apart from the Android-dependent vault so the decision is unit-testable.
  */
 internal object KeyVaultReadPolicy {
-    fun isStale(aliasPresent: Boolean, decryptError: Exception?): Boolean = when {
-        !aliasPresent -> true
+    fun isStale(aliasPresent: Boolean?, decryptError: Exception?): Boolean = when {
+        aliasPresent == false -> true
         decryptError is AEADBadTagException || decryptError is KeyPermanentlyInvalidatedException -> true
         else -> false
     }

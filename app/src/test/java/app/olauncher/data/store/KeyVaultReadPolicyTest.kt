@@ -32,4 +32,12 @@ class KeyVaultReadPolicyTest {
         assertFalse(KeyVaultReadPolicy.isStale(aliasPresent = true, decryptError = IOException("keystore unavailable")))
         assertFalse(KeyVaultReadPolicy.isStale(aliasPresent = true, decryptError = null))
     }
+
+    @Test
+    fun `an unknown alias state keeps the file`() {
+        // Both getEntry and containsAlias threw — the store is still unreachable
+        // (review R2 A). Unknown is not proof of absence: the valid key file
+        // must survive until a later read can succeed.
+        assertFalse(KeyVaultReadPolicy.isStale(aliasPresent = null, decryptError = null))
+    }
 }

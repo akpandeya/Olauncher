@@ -72,6 +72,17 @@ class PracticeGeneratorTest {
         }
     }
 
+    /** Scripted provider: pops one queued result per call; the last one repeats. */
+    private class ScriptedProvider(vararg results: AiResult) : AiProvider {
+        private val queue = results.toMutableList()
+        val requests = mutableListOf<AiRequest>()
+
+        override suspend fun complete(request: AiRequest): AiResult {
+            requests += request
+            return if (queue.size > 1) queue.removeAt(0) else queue.first()
+        }
+    }
+
     private class FakePrefs : AiPracticePrefs {
         var enabled = true
         var cap = 50
@@ -146,7 +157,6 @@ class PracticeGeneratorTest {
         )
         tempDir.resolve("practice_items.json").writeText(PracticeItemsCodec.encode(items))
         val provider = FakeProvider(result = AiResult.Ok(okJson(5), AiUsage(10, 20), 5))
-        prefs.aiKeyRejected = true // a successful call clears it
 
         val outcome = generator(provider).onDemand(listOf(word(5), word(6)), prefs, today)
 
@@ -158,7 +168,6 @@ class PracticeGeneratorTest {
         // 3 new items for word 5 landed in the store, alongside the untouched 3 old ones.
         assertEquals(6, store.all().size)
         assertEquals(1, prefs.aiWordsSentToday(todayEpochDay))
-        assertFalse(prefs.aiKeyRejected)
     }
 
     @Test
@@ -345,5 +354,120 @@ class PracticeGeneratorTest {
             keySource = KeySource { "sk-test-key" },
         )
         assertTrue(noModel.topUp(listOf(word(1)), prefs, today) is PracticeGeneration.Skipped)
+    }
+
+    @Test
+    fun `a bad chunk is skipped and later chunks still run`() = runBlocking {
+        // 11 words → chunks [1–5], [6–10], [11]; the middle reply is junk.
+        val words = (1L..11L).map { word(it) }
+        val provider = ScriptedProvider(
+            AiResult.Ok(okJson(1, 2, 3, 4, 5), AiUsage(10, 20), 5),
+            AiResult.Ok("{\"items\": [{\"word_id\": 6, \"type\": \"clo\"", AiUsage(10, 4096), 5),
+            AiResult.Ok(okJson(11), AiUsage(10, 20), 5),
+        )
+
+        val outcome = generator(provider).topUp(words, prefs, today)
+
+        // Chunk 2 was skipped, chunk 3 was still attempted (review R2 B).
+        assertEquals(3, provider.requests.size)
+        assertTrue(outcome is PracticeGeneration.Generated)
+        assertEquals(listOf(1L, 2L, 3L, 4L, 5L, 11L), (outcome as PracticeGeneration.Generated).words.map { it.id })
+        // Chunk 1's and chunk 3's items are in the store (parse pads each word's
+        // pool to 3 with cloze fallbacks); chunk 2's stay queued.
+        assertEquals(18, store.all().size)
+        assertEquals(11, prefs.aiWordsSentToday(todayEpochDay))
+    }
+
+    @Test
+    fun `an auth failure after a stored chunk returns a partial outcome`() = runBlocking {
+        val words = (1L..11L).map { word(it) }
+        val provider = ScriptedProvider(
+            AiResult.Ok(okJson(1, 2, 3, 4, 5), AiUsage(10, 20), 5),
+            AiResult.Error(AiResult.ErrorKind.AUTH, "401"),
+        )
+
+        val outcome = generator(provider).topUp(words, prefs, today)
+
+        // The batch stopped (AUTH), but chunk 1's stored and billed success is
+        // honored as a Partial (review R2 B).
+        assertTrue(outcome is PracticeGeneration.Partial)
+        val partial = outcome as PracticeGeneration.Partial
+        assertEquals(AiResult.ErrorKind.AUTH, partial.kind)
+        // The parsed item plus the two cloze fallbacks per word.
+        assertEquals(15, partial.itemCount)
+        assertEquals((1L..5L).toList(), partial.words.map { it.id })
+        assertEquals(15, store.all().size)
+        assertTrue(prefs.aiKeyRejected)
+    }
+
+    @Test
+    fun `a batch where every chunk fails still fails as before`() = runBlocking {
+        val words = (1L..11L).map { word(it) }
+        val provider = ScriptedProvider(
+            AiResult.Error(AiResult.ErrorKind.BAD_RESPONSE, "truncated"),
+            AiResult.Error(AiResult.ErrorKind.BAD_RESPONSE, "truncated"),
+        )
+
+        val outcome = generator(provider).topUp(words, prefs, today)
+
+        // Nothing was ever stored: a failure, not an empty success (R1 #5).
+        assertTrue(outcome is PracticeGeneration.Failed)
+        assertEquals(AiResult.ErrorKind.BAD_RESPONSE, (outcome as PracticeGeneration.Failed).kind)
+        assertTrue(store.all().isEmpty())
+        // Every chunk was attempted and billed; the junk reply did not stop the
+        // loop, the empty store decided the outcome.
+        assertEquals(3, provider.requests.size)
+        assertEquals(11, prefs.aiWordsSentToday(todayEpochDay))
+    }
+
+    @Test
+    fun `a partial digest still timestamps the covered words`() = runBlocking {
+        val weak = (1L..11L).map { word(it) }
+        val provider = ScriptedProvider(
+            AiResult.Ok(okJson(1, 2, 3, 4, 5), AiUsage(10, 20), 5),
+            AiResult.Error(AiResult.ErrorKind.NETWORK, "dropped"),
+        )
+
+        val outcome = generator(provider).digest(weak, emptyList(), prefs, today, nowMs = 1234L)
+
+        assertTrue(outcome is PracticeGeneration.Partial)
+        // The covered words are done — re-digesting them would only duplicate
+        // source=digest items (review R2 B) — so the timestamp is set.
+        assertEquals(1234L, prefs.aiLastDigestAt)
+    }
+
+    @Test
+    fun `on-demand sends one small chunk of at most two words`() = runBlocking {
+        val due = (1L..5L).map { word(it) }
+        val provider = FakeProvider(result = AiResult.Ok(okJson(1, 2), AiUsage(10, 20), 5))
+
+        val outcome = generator(provider).onDemand(due, prefs, today)
+
+        // One 2-word request, not a full 5-word chunk that mostly times out
+        // billed (review R2 D).
+        assertEquals(1, provider.requests.size)
+        assertTrue(provider.prompts[0].contains("word_id 1"))
+        assertTrue(provider.prompts[0].contains("word_id 2"))
+        assertFalse(provider.prompts[0].contains("word_id 3"))
+        assertTrue(outcome is PracticeGeneration.Generated)
+        assertEquals(listOf(1L, 2L), (outcome as PracticeGeneration.Generated).words.map { it.id })
+        // Words 1–2 are now at the full 3-item pool; only words 3–5 stay thin,
+        // so the derived queue hands exactly them to the background top-up.
+        val queue = PracticeQueue.next(due, store.all(), today, cap = 50, Random(1))
+        assertEquals((3L..5L).toSet(), queue.map { it.id }.toSet())
+    }
+
+    @Test
+    fun `on-demand skips entirely while the key is rejected`() = runBlocking {
+        prefs.aiKeyRejected = true
+        val provider = FakeProvider(result = AiResult.Ok(okJson(1), AiUsage(1, 1), 1))
+
+        val outcome = generator(provider).onDemand(listOf(word(1)), prefs, today)
+
+        // Like the worker gate: no call until a new key is saved (review R2 D).
+        assertTrue(outcome is PracticeGeneration.Skipped)
+        assertEquals(PracticeGeneration.Reason.KEY_REJECTED, (outcome as PracticeGeneration.Skipped).reason)
+        assertTrue(provider.prompts.isEmpty())
+        assertTrue(store.all().isEmpty())
     }
 }
