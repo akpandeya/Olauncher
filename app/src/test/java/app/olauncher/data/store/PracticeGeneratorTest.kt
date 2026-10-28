@@ -43,13 +43,32 @@ class PracticeGeneratorTest {
     /** Scripted provider: records every request, returns the queued result or hangs. */
     private class FakeProvider(var result: AiResult? = null, var hangMs: Long = 0) : AiProvider {
         val prompts = mutableListOf<String>()
+        val requests = mutableListOf<AiRequest>()
 
         override suspend fun complete(request: AiRequest): AiResult {
             prompts += request.prompt
+            requests += request
             if (hangMs > 0) {
                 kotlinx.coroutines.delay(hangMs)
             }
             return result ?: AiResult.Error(AiResult.ErrorKind.NETWORK, "no script")
+        }
+    }
+
+    /**
+     * Blocks the thread like the real HttpURLConnection does (no suspension
+     * point): a cancelled caller can only stop it by interrupting the thread —
+     * the suspending delay() fake above could never pin that (review R1 #2).
+     */
+    private class BlockingProvider(private val hangMs: Long) : AiProvider {
+        val requests = mutableListOf<AiRequest>()
+
+        override suspend fun complete(request: AiRequest): AiResult {
+            requests += request
+            return kotlinx.coroutines.runInterruptible(kotlinx.coroutines.Dispatchers.IO) {
+                Thread.sleep(hangMs)
+                AiResult.Error(AiResult.ErrorKind.NETWORK, "unreachable")
+            }
         }
     }
 
@@ -143,18 +162,25 @@ class PracticeGeneratorTest {
     }
 
     @Test
-    fun `on-demand timeout falls back and the word stays queued`() = runBlocking {
-        val provider = FakeProvider(hangMs = 200)
+    fun `on-demand timeout interrupts the call and still counts the words as sent`() = runBlocking {
+        // Blocks the thread for far longer than the deadline: only a real
+        // interruption returns in time — the old suspending fake never pinned it.
+        val provider = BlockingProvider(hangMs = 20_000)
         val due = listOf(word(7))
 
-        val outcome = generator(provider).onDemand(due, prefs, today, timeoutMs = 20)
+        val startedAt = System.currentTimeMillis()
+        val outcome = generator(provider).onDemand(due, prefs, today, timeoutMs = 50)
+        val elapsed = System.currentTimeMillis() - startedAt
 
+        assertTrue("timeout returned after ${elapsed} ms — the blocking call was not interrupted", elapsed < 10_000)
         assertTrue(outcome is PracticeGeneration.Failed)
         assertTrue((outcome as PracticeGeneration.Failed).timedOut)
         assertEquals(AiResult.ErrorKind.NETWORK, outcome.kind)
-        // Nothing was generated and nothing was billed.
-        assertTrue(store.all().isEmpty())
-        assertEquals(0, prefs.aiWordsSentToday(todayEpochDay))
+        // The request went out and was billed, so the cap counts it even on a
+        // timeout (review R1 #2).
+        assertEquals(1, prefs.aiWordsSentToday(todayEpochDay))
+        // The deadline lives on the connection too, not only around the call.
+        assertEquals(50, provider.requests.single().readTimeoutMs)
         // The word is still pool-thin, so the derived queue picks it up: "enqueued".
         val queue = PracticeQueue.next(listOf(word(7)), store.all(), today, cap = 50, Random(1))
         assertEquals(listOf(7L), queue.map { it.id })
@@ -218,7 +244,48 @@ class PracticeGeneratorTest {
         assertTrue(outcome is PracticeGeneration.Failed)
         assertTrue(prefs.aiKeyRejected)
         assertFalse(prefs.aiBillingBlocked)
-        assertEquals(0, prefs.aiWordsSentToday(todayEpochDay))
+        // The request went out, so the cap counts the word even though the
+        // provider rejected it (review R1 #2).
+        assertEquals(1, prefs.aiWordsSentToday(todayEpochDay))
+    }
+
+    @Test
+    fun `a 50-word queue is chunked into small requests each under the token budget`() = runBlocking {
+        prefs.cap = 50
+        val words = (1L..50L).map { word(it) }
+        val provider = FakeProvider(result = AiResult.Ok(okJson(1), AiUsage(10, 20), 5))
+
+        val outcome = generator(provider).topUp(words, prefs, today)
+
+        // Several small requests instead of one 50-word call under one 4096 cap.
+        assertTrue(outcome is PracticeGeneration.Generated)
+        assertEquals(10, provider.requests.size)
+        for (request in provider.requests) {
+            assertTrue(
+                "max_tokens ${request.maxTokens} exceeds the per-word budget",
+                request.maxTokens <= PracticeGenerator.WORDS_PER_REQUEST * PracticeGenerator.MAX_TOKENS_PER_WORD,
+            )
+            // Each request's prompt carries at most the chunk's words (plus the
+            // one example item in the schema).
+            assertTrue(request.prompt.split("word_id ").size - 1 <= PracticeGenerator.WORDS_PER_REQUEST + 1)
+            assertEquals(PracticeGenerator.BACKGROUND_READ_TIMEOUT_MS, request.readTimeoutMs)
+        }
+        // Every word was billed exactly once across the chunks.
+        assertEquals(50, prefs.aiWordsSentToday(todayEpochDay))
+    }
+
+    @Test
+    fun `a truncated response fails as BAD_RESPONSE with nothing stored`() = runBlocking {
+        // HTTP 200 with a body cut off mid-JSON: parse rejects everything.
+        val provider = FakeProvider(result = AiResult.Ok("{\"items\": [{\"word_id\": 1, \"type\": \"clo\"", AiUsage(10, 4096), 5))
+
+        val outcome = generator(provider).topUp(listOf(word(1)), prefs, today)
+
+        assertTrue(outcome is PracticeGeneration.Failed)
+        assertEquals(AiResult.ErrorKind.BAD_RESPONSE, (outcome as PracticeGeneration.Failed).kind)
+        assertTrue(store.all().isEmpty())
+        // The words were still sent and billed, so the cap counted them.
+        assertEquals(1, prefs.aiWordsSentToday(todayEpochDay))
     }
 
     @Test

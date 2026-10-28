@@ -26,11 +26,15 @@ object PracticeDigest {
      * Whether a digest should run now: the weekly cadence elapsed (`AI_LAST_DIGEST_AT`
      * of 0 means never digested), or the weak-spot threshold in the review events
      * fires earlier — a word with at least [MIN_AGAIN_FOR_WEAK_WORD] AGAIN within
-     * [WINDOW_MS] of [now]. Whichever comes first.
+     * [WINDOW_MS] of [now]. Whichever comes first. The threshold counts only AGAIN
+     * events newer than [lastDigestAt]: the same AGAINs that fired the previous
+     * digest stay in the 14-day window and must not re-fire it every day
+     * (review R1 #4).
      */
     fun due(lastDigestAt: Long, now: Long, reviewEvents: List<ReviewEvent>): Boolean {
         if (lastDigestAt <= 0L || now - lastDigestAt >= CADENCE_MS) return true
-        return weakWordIds(reviewEvents, now).isNotEmpty()
+        val sinceLastDigest = reviewEvents.filter { it.reviewedAt > lastDigestAt }
+        return weakWordIds(sinceLastDigest, now).isNotEmpty()
     }
 
     /**

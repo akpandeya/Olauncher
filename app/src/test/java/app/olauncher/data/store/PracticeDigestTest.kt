@@ -130,7 +130,11 @@ class PracticeDigestTest {
     @Test
     fun `two AGAIN on one word fire the threshold before 7 days`() {
         val lastDigestAt = now - dayMs
-        val events = listOf(again(wordId = 3, id = 1), again(wordId = 3, id = 2))
+        // Both AGAINs are newer than the digest, so they are a fresh pattern.
+        val events = listOf(
+            again(wordId = 3, id = 1, ageDays = 0),
+            again(wordId = 3, id = 2, ageDays = 0),
+        )
         assertTrue(PracticeDigest.due(lastDigestAt, now, events))
     }
 
@@ -152,6 +156,27 @@ class PracticeDigestTest {
         val lastDigestAt = now - dayMs
         val events = listOf(again(wordId = 3, id = 1), again(wordId = 4, id = 2))
         assertFalse(PracticeDigest.due(lastDigestAt, now, events))
+    }
+
+    @Test
+    fun `AGAINs from before the last digest do not re-fire the threshold`() {
+        val lastDigestAt = now - dayMs
+        // The same two AGAINs that fired the previous digest: they stay inside the
+        // 14-day window but are older than the digest — the threshold must not
+        // re-fire every day for them (review R1 #4).
+        val digested = listOf(
+            again(wordId = 3, id = 1, ageDays = 2),
+            again(wordId = 3, id = 2, ageDays = 3),
+        )
+        assertFalse(PracticeDigest.due(lastDigestAt, now, digested))
+
+        // A single new AGAIN after the digest is still below the threshold…
+        val oneNew = digested + again(wordId = 3, id = 3, ageDays = 0)
+        assertFalse(PracticeDigest.due(lastDigestAt, now, oneNew))
+
+        // …two new AGAINs on the word fire it again.
+        val twoNew = oneNew + again(wordId = 3, id = 4, ageDays = 0)
+        assertTrue(PracticeDigest.due(lastDigestAt, now, twoNew))
     }
 
     // --- summary: the weak spots ---
@@ -249,5 +274,21 @@ class PracticeDigestTest {
         assertEquals(PracticeGeneration.Reason.CAP_REACHED, (outcome as PracticeGeneration.Skipped).reason)
         assertTrue(provider.prompts.isEmpty())
         assertEquals(0L, prefs.aiLastDigestAt)
+    }
+
+    @Test
+    fun `a truncated digest response stores nothing and leaves AI_LAST_DIGEST_AT`() = runBlocking {
+        // HTTP 200, body cut off mid-JSON: parse rejects everything, so the
+        // digest must count as failed — no timestamp, no announcement (review R1 #5).
+        val provider = FakeProvider(result = AiResult.Ok("{\"items\": [{\"word_id\": 3, \"type\": \"clo\"", AiUsage(10, 4096), 5))
+
+        val outcome = generator(provider).digest(listOf(word(3)), listOf(DrillType.PLURALS), prefs, today, nowMs = now)
+
+        assertTrue(outcome is PracticeGeneration.Failed)
+        assertEquals(AiResult.ErrorKind.BAD_RESPONSE, (outcome as PracticeGeneration.Failed).kind)
+        assertTrue(store.all().isEmpty())
+        assertEquals(0L, prefs.aiLastDigestAt)
+        // The words still went out and were billed: the cap counted them.
+        assertEquals(1, prefs.aiWordsSentToday(today.toEpochDay()))
     }
 }

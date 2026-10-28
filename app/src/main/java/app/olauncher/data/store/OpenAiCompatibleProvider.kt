@@ -3,8 +3,9 @@ package app.olauncher.data.store
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URL
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.runInterruptible
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -26,16 +27,34 @@ open class OpenAiCompatibleProvider(
     private val keySource: KeySource,
 ) : AiProvider {
 
-    override suspend fun complete(request: AiRequest): AiResult = withContext(Dispatchers.IO) {
+    override suspend fun complete(request: AiRequest): AiResult {
         val key = keySource.get()
-            ?: return@withContext AiResult.Error(AiResult.ErrorKind.AUTH, "No API key set")
+            ?: return AiResult.Error(AiResult.ErrorKind.AUTH, "No API key set")
+        return try {
+            // runInterruptible: a cancelled caller (the on-demand ~10 s deadline)
+            // interrupts the blocking socket I/O instead of waiting it out — the
+            // disconnect() in the finally aborts the read at once. Without this a
+            // timeout would only return once the HTTP call ends anyway, discarding
+            // a billed response (review R1 #2).
+            runInterruptible(Dispatchers.IO) { exchange(request, key) }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            AiResult.Error(AiResult.ErrorKind.NETWORK, "Request failed (${e.javaClass.simpleName})")
+        }
+    }
+
+    /** The one blocking HTTP exchange; runs on the IO dispatcher via [complete]. */
+    private fun exchange(request: AiRequest, key: String): AiResult {
         var connection: HttpURLConnection? = null
         try {
             val url = URL(config.baseUrl.trimEnd('/') + CHAT_PATH)
             connection = openConnection(url)
             connection.requestMethod = "POST"
             connection.connectTimeout = CONNECT_TIMEOUT_MS
-            connection.readTimeout = READ_TIMEOUT_MS
+            // The deadline lives on the connection itself so a slow provider gives
+            // up here, not only when a caller cancels.
+            connection.readTimeout = request.readTimeoutMs ?: READ_TIMEOUT_MS
             connection.doOutput = true
             connection.setRequestProperty("Authorization", "Bearer $key")
             connection.setRequestProperty("Content-Type", "application/json")
@@ -46,12 +65,12 @@ open class OpenAiCompatibleProvider(
             val retryAfter = connection.getHeaderField(RETRY_AFTER_HEADER)?.trim()?.toIntOrNull()
             val body = readBody(connection)
             val result = decodeResponse(status, retryAfter, body)
-            if (result is AiResult.Error) sanitize(result, key) else result
+            return if (result is AiResult.Error) sanitize(result, key) else result
         } catch (e: IOException) {
             // Exception text can embed connection details; report the type only.
-            AiResult.Error(AiResult.ErrorKind.NETWORK, "Could not reach the provider (${e.javaClass.simpleName})")
+            return AiResult.Error(AiResult.ErrorKind.NETWORK, "Could not reach the provider (${e.javaClass.simpleName})")
         } catch (e: Exception) {
-            AiResult.Error(AiResult.ErrorKind.NETWORK, "Request failed (${e.javaClass.simpleName})")
+            return AiResult.Error(AiResult.ErrorKind.NETWORK, "Request failed (${e.javaClass.simpleName})")
         } finally {
             connection?.disconnect()
         }
@@ -120,10 +139,16 @@ open class OpenAiCompatibleProvider(
         } catch (e: JSONException) {
             return AiResult.Error(AiResult.ErrorKind.BAD_RESPONSE, "Response is not valid JSON (truncated?)")
         }
-        val text = root.optJSONArray("choices")?.optJSONObject(0)
-            ?.optJSONObject("message")?.optString("content")
+        val choice = root.optJSONArray("choices")?.optJSONObject(0)
+        val text = choice?.optJSONObject("message")?.optString("content")
         if (text.isNullOrBlank()) {
             return AiResult.Error(AiResult.ErrorKind.BAD_RESPONSE, "Response has no message content")
+        }
+        // A reply cut off at max_tokens is still HTTP 200 with valid JSON, but the
+        // content is truncated — surface it as BAD_RESPONSE, not as parseable text
+        // (review R1 #1).
+        if (choice.optString("finish_reason") == "length") {
+            return AiResult.Error(AiResult.ErrorKind.BAD_RESPONSE, "Response was cut off at max_tokens")
         }
         val usage = root.optJSONObject("usage")
         val parsed = AiUsage(

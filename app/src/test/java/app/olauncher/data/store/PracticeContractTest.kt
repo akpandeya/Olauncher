@@ -217,4 +217,35 @@ class PracticeContractTest {
         assertEquals("insistiert", result.clozeFallbacks[0].answer)
         assertTrue(result.clozeFallbacks[0].answer in result.clozeFallbacks[0].choices)
     }
+
+    @Test
+    fun `fallback choices carry no case-flip distractor`() {
+        val words = listOf(wordWithContext(1, "Haus"))
+        val result = PracticeContract.parse(response(), words)
+        val choices = result.clozeFallbacks[0].choices
+        // answer first, then the word and its n-variant — never an uppercase flip.
+        assertEquals(listOf("Haus", "Hausn"), choices)
+        assertTrue(choices.none { it == "HAUS" })
+    }
+
+    @Test
+    fun `a blank-text word gets a deterministic minimal fallback instead of nothing`() {
+        val withMeaning = word(4, text = "  ", context = "Etwas Kontext.").copy(meaning = "die Wiederholung")
+        val result = PracticeContract.parse(response(), listOf(withMeaning))
+        // "Never dropped" holds even without usable word text (review R1 #9).
+        assertEquals(3, result.clozeFallbacks.size)
+        val first = result.clozeFallbacks[0]
+        assertEquals("___", first.prompt)
+        assertEquals("die Wiederholung", first.answer)
+        assertTrue(first.answer in first.choices)
+        assertTrue(first.choices.toSet().size == first.choices.size)
+        // Deterministic: the same word always builds the same card.
+        val again = PracticeContract.parse(response(), listOf(withMeaning))
+        assertEquals(result.clozeFallbacks, again.clozeFallbacks)
+
+        // Without a meaning either, the word id stands in as the answer.
+        val bare = PracticeContract.parse(response(), listOf(word(5, text = "", context = "")))
+        assertEquals(3, bare.clozeFallbacks.size)
+        assertEquals("5", bare.clozeFallbacks[0].answer)
+    }
 }

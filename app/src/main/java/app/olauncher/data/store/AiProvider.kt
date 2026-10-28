@@ -12,12 +12,18 @@ interface AiProvider {
 /**
  * One generation request. The prompt comes from [PracticeContract.buildPrompt];
  * the model, base URL and key live in the provider config and [KeySource], not here.
+ *
+ * [maxTokens] and [readTimeoutMs] are sized per request by the caller: a small
+ * chunk of words needs a small budget (review R1 #1 — one request can never
+ * carry the whole queue under the default cap).
  */
 data class AiRequest(
     val prompt: String,
     /** Ask for a JSON object response (the practice contract is JSON). */
     val jsonMode: Boolean = true,
     val maxTokens: Int = DEFAULT_MAX_TOKENS,
+    /** Socket read timeout in ms; null uses the provider's default. */
+    val readTimeoutMs: Int? = null,
 ) {
     companion object {
         const val DEFAULT_MAX_TOKENS = 4096
