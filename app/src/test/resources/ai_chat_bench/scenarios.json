@@ -1,0 +1,117 @@
+{
+  "scenarios": [
+    {
+      "id": "first-turn-miss-two-way",
+      "kind": "first-turn-miss",
+      "groundings": [
+        {
+          "kind": "miss",
+          "prompt": "Ich hänge das Bild an ___ Wand.",
+          "picked": "dem",
+          "answer": "der",
+          "ruleId": "prep-two-way",
+          "chips": ["Wechselpräposition", "Akkusativ bei Bewegung"]
+        }
+      ],
+      "messages": [
+        { "role": "user", "text": "Ich habe 'an dem Wand' geschrieben und es war falsch. Warum ist es hier 'an der Wand'?" }
+      ]
+    },
+    {
+      "id": "fresh-word-or-rule",
+      "kind": "subject-proposal",
+      "groundings": [
+        {
+          "kind": "word",
+          "text": "die Straße",
+          "meaning": "the road; the street",
+          "context": "Sie wohnt in einer ruhigen Straße im Norden der Stadt."
+        },
+        {
+          "kind": "miss",
+          "prompt": "___ Straße ist sehr alt.",
+          "picked": "Den",
+          "answer": "Die",
+          "ruleId": "nouns-ending-e",
+          "chips": ["Artikel", "Femininum"]
+        }
+      ],
+      "messages": [
+        { "role": "user", "text": "Soll ich hier eher das Wort 'Straße' lernen oder die Grammatikregel dahinter?" }
+      ]
+    },
+    {
+      "id": "follow-up-reuses-earlier-turn",
+      "kind": "follow-up",
+      "groundings": [
+        {
+          "kind": "miss",
+          "prompt": "Ich fahre ___ Berlin.",
+          "picked": "in Berlin",
+          "answer": "nach Berlin",
+          "ruleId": "",
+          "chips": ["Präpositionen"]
+        }
+      ],
+      "messages": [
+        { "role": "user", "text": "Was ist der Unterschied zwischen 'in' und 'nach' bei Städten?" },
+        { "role": "assistant", "text": "'in' benutzt man mit Artikel und Dativ (in Berlin, in der Stadt), 'nach' ohne Artikel für Städte und Länder (nach Berlin, nach Deutschland)." },
+        { "role": "user", "text": "Und wann sagt man 'zu'?" },
+        { "role": "assistant", "text": "'zu' geht zu Personen und zu Einrichtungen ohne Artikel: zum Arzt, zu Maria, zur Schule." },
+        { "role": "user", "text": "Und bei Personen war das nochmal wie? Ich vergesse das immer." }
+      ],
+      "expectedTokens": ["arzt", "maria", "zum"]
+    },
+    {
+      "id": "resumed-summary-only",
+      "kind": "resumed-summary",
+      "summary": "Der Learner fragte zuerst, warum 'Ich warte auf den Bus' den Akkusativ braucht. Die Antwort erklärte feste Verb-Verbindungen: 'warten auf + Akkusativ', 'sich freuen auf + Akkusativ' und 'denken an + Akkusativ'; der Kasus kommt von der Präposition, nicht von Bewegung. Danach wollte der Learner wissen, ob 'warten auf' je nach Bedeutung auch Dativ nimmt, und die Antwort korrigierte: diese Verbindung ist immer mit Akkusativ.",
+      "groundings": [
+        {
+          "kind": "miss",
+          "prompt": "Ich warte auf ___ Bus.",
+          "picked": "dem",
+          "answer": "den",
+          "ruleId": "verb-prepositions",
+          "chips": ["feste Verbindung"]
+        },
+        {
+          "kind": "word",
+          "text": "der Bus",
+          "meaning": "the bus",
+          "context": "Der Bus fährt alle zehn Minuten."
+        },
+        {
+          "kind": "practice",
+          "prompt": "Ich denke ___ die Ferien.",
+          "answer": "an"
+        }
+      ],
+      "messages": [
+        { "role": "user", "text": "Welche Präposition gehörte nochmal zu 'sich freuen'?" }
+      ],
+      "expectedTokens": ["freuen", "auf"]
+    },
+    {
+      "id": "failed-turn-canary",
+      "kind": "failed-turn",
+      "canary": "KAPIERSELBST-7Q4Z",
+      "groundings": [
+        {
+          "kind": "miss",
+          "prompt": "Ich wohne ___ zwei Jahren in Berlin.",
+          "picked": "vor",
+          "answer": "seit",
+          "ruleId": "seit-vs-vor",
+          "chips": ["Dativ", "Zeitpunkt"]
+        }
+      ],
+      "messages": [
+        { "role": "user", "text": "Wann sagt man 'seit' und wann 'vor'?" },
+        { "role": "assistant", "text": "'seit' benutzt man für einen Zeitpunkt, der bis jetzt andauert (seit 2020, seit drei Jahren, immer mit Dativ). 'vor' sieht zurück: vor drei Jahren begann es — die Handlung ist abgeschlossen." },
+        { "role": "user", "text": "Und bei 'vor drei Jahren' war das nochmal was anderes, oder? KAPIERSELBST-7Q4Z", "failed": true },
+        { "role": "user", "text": "Nochmal langsam: warum 'seit zwei Jahren' und nicht 'vor zwei Jahren'?" }
+      ]
+    }
+  ]
+}

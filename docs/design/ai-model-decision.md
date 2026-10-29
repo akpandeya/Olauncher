@@ -276,3 +276,107 @@ conditions 1–3 (the pre-flip requirements) are implemented and unit-tested,
 and production now matches the passing benchmark configuration
 (prompt v2 + quality filters + `json_object` + 2,400 tokens/word). A per-model
 config table remains out of scope.
+
+## Chat transport (#699)
+
+`AiProvider.complete(AiRequest)` takes one flattened `prompt` string, while a chat
+thread is naturally a list of turns. This spike measures whether a native
+`messages[]` request is worth the production interface change; task-03 implements
+whichever transport the verdict below picks. Harness:
+`app/src/test/java/app/olauncher/data/store/AiChatBenchmark.kt` (test source set
+only, skipped without a key; the live run is an execution of that test, not a
+unit test). Production code is untouched. Prose chat, so neither variant sends
+`response_format`; variant A passes `jsonMode = false` explicitly.
+
+**What is compared** — the same instructions, groundings, summary and transcript,
+two transports:
+
+- **Variant A (flattened prompt):** instructions + grounding block + summary +
+  transcript as labelled lines in ONE `prompt` string, through the existing
+  `OpenAiCompatibleProvider` with `AiRequest(jsonMode = false)`.
+- **Variant B (native `messages[]`):** one `system` message carrying the
+  instructions + groundings + summary, then alternating `user`/`assistant`
+  turns ending on the new `user` turn, sent by a test-only client (the
+  adapter's `encodeRequest` is final and single-prompt) that POSTs its own
+  OpenAI-shaped body to `OpenAiCompatibleProvider.CHAT_PATH` and decodes with
+  the public `OpenAiCompatibleProvider.decodeResponse`, so error mapping is
+  identical. Failed turns are excluded from both variants' requests by
+  construction (ask-ai-chat.md §Reliability).
+
+The provisional chat instructions (tutor role, answer in English about German,
+the `SUBJECT:` first-line instruction used only when a thread has both a word
+and a rule candidate) live in one test-side object, `AiChatBenchPrompt`;
+**task-03 ports this text into production** if the verdict picks a transport.
+
+**Fixtures:** 5 synthetic German scenarios
+(`app/src/test/resources/ai_chat_bench/scenarios.json`, no personal data):
+
+1. first-turn miss on two-way prepositions (one miss grounding, one question);
+2. fresh thread with both a word and a rule candidate — the reply must start
+   with `SUBJECT: word|rule` (ask-ai-chat.md §Threads);
+3. 4–5-turn follow-up whose last question only makes sense with an earlier
+   turn (the fixture lists the tokens the reply must reuse);
+4. resumed thread with a summary block + 3 groundings + a question that only
+   the summary can answer;
+5. a thread containing a failed user turn with a unique canary phrase that
+   must not reach the request or the reply.
+
+The loader rejects incomplete or unsupported scenarios BEFORE any request is
+built: unknown scenario/grounding kind, a message role other than
+`user`/`assistant`, and per-kind required fields (e.g. a follow-up without its
+expected-token list, a failed-turn scenario without its canary) — each checked
+present and non-blank, independent of counts.
+
+**Metrics:** SUBJECT compliance (first non-empty line, trimmed, emphasis
+markers stripped, case-insensitive; the space in `SUBJECT: word` is required —
+`subject:rule` fails), follow-up reuse of an earlier turn (at least one
+expected token, lowercased, NFC, umlaut-folded like `AiBenchLogic.isGrounded`),
+failed-turn canary leaks, per-turn input/output tokens (output recorded so
+task-03/04 can size `maxTokens`; `finish_reason: length` maps to BAD_RESPONSE),
+€ per turn, p50/p95 latency, and a glm-5.3 proxy judge score (0–2) for
+correctness + grounding of each reply — pending native-speaker owner review,
+same as #600.
+
+**How to run** (owner; the agent runs nothing):
+
+```
+AI_BENCH_KEY=<owner key> AI_BENCH_CAP_EUR=0.30 AI_BENCH_RUNS=3 \
+  JAVA_HOME=$(/usr/libexec/java_home -v 17) \
+  ./gradlew testDebugUnitTest --tests 'app.olauncher.data.store.AiChatBenchmark' --no-daemon
+```
+
+Default model: `Prefs.AI_MODEL_DEFAULT` (`glm-5.3-flash`), 3 runs per variant;
+overridable with `AI_BENCH_MODELS` / `AI_BENCH_RUNS`. Budget cap
+`AI_BENCH_CAP_EUR` (default €0.30 — 2 variants × 5 scenarios × 3 runs plus one
+small judge call each; worst-case estimates stay around €0.10). The estimated
+cost is logged before every call and the run stops before a call that would
+exceed the cap. The key is read from the environment only and is never
+printed, logged or committed. Output: per-run CSVs + `summary.csv` under
+`app/build/ai-chat-bench/` (build artifacts, not committed). With no key set
+the live test reports skipped and the key-free logic tests
+(`AiChatBenchmarkTest`) still run.
+
+### Results
+
+3 runs × 5 scenarios × 2 variants, glm-5.3-flash, judge glm-5.3 (proxy):
+
+| Variant | Subject % (n = 1 scenario × runs) | Follow-up % (n = 2 scenarios × runs) | Canary leaks (1 scenario × runs) | Judge 0–2 | Tokens in/turn | Tokens out/turn | €/turn | p50 / p95 latency | Failures |
+|---|---|---|---|---|---|---|---|---|---|
+| A — flattened prompt | 100% (3/3) | 100% (6/6) | 0 / 15 | 1.67 | 287 | 125 | €0.000079 | 1277 / 2399 ms | 0 / 15 |
+| B — native messages[] | 100% (3/3) | 100% (6/6) | 0 / 15 | 1.53 | 260 | 254 | €0.000127 | 1638 / 10877 ms | 0 / 15 |
+
+### Proposed decision rule (owner confirms before the live run)
+
+Keep **A** (flattened prompt, no production interface change) unless B is
+better by **≥ 10 percentage points** on SUBJECT compliance or follow-up use,
+**or** A leaks a failed-turn canary and B does not — in either case the proxy
+judge score of the switching variant must not be lower by more than **0.1**.
+If neither condition holds, A stays and `AiProvider` keeps its single-prompt
+interface; task-03 then implements chat on top of it.
+
+**Verdict: A — keep the flattened prompt** (task-03 reads this line). Live run
+2026-10-29, 3 runs × 5 scenarios, total spend about €0.003: both variants tie on
+SUBJECT compliance and follow-up use, neither leaked the canary, and B's judge
+score is lower (1.53 vs 1.67) with higher output tokens and p95 latency. The
+decision rule above was applied as proposed; the owner has not yet confirmed it,
+so revisit this line if the owner changes the rule.
