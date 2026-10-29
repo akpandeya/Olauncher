@@ -34,6 +34,11 @@ data class DrillHelpTable(
 data class DrillHelpRule(
     /** Stable rule id, as authored in docs/design/drill-content/. */
     val id: String,
+    /**
+     * Short English name of the pattern (at most about 40 characters, sentence case).
+     * It names the pattern, never an item's answer; it labels the ask-ai rule thread (#699).
+     */
+    val title: String,
     /** 1–2 plain English sentences (pre-answer), at most about 170 characters. */
     val rule: String,
     /**
@@ -53,25 +58,40 @@ data class DrillHelpRule(
 )
 
 /**
- * Registry of the #651 gap-topic help content: rule id → rule. Shared rules appear
- * once (for example `passiv-aux-form`, used by both the passive and werden topics).
+ * Registry of the help-card rules: rule id → rule. The gap-topic rules (#651) and
+ * the live drill-type rules (#699) share it; common rules appear once (for example
+ * `passiv-aux-form`, used by both the passive and werden topics).
  */
 object DrillHelpContent {
 
     private val rules: Map<String, DrillHelpRule> by lazy { allRules().associateBy { it.id } }
 
-    /** The help content for [ruleId], or null when the item has none (live topics). */
+    /** The help content for [ruleId], or null when the item carries none. */
     fun rule(ruleId: String?): DrillHelpRule? = ruleId?.let { rules[it] }
 
     /** Every rule id in the content files that items point to. */
     fun ids(): Set<String> = rules.keys
 
-    private fun allRules(): List<DrillHelpRule> = listOf(
+    /** Every authored rule, gap topics and live topics together, in authored order. */
+    internal fun allRules(): List<DrillHelpRule> =
+        gapTopicRules() + DrillHelpContentLive.rules
+
+    /**
+     * Checks [ruleId] and passes it through. Item builders call it so a typo'd id
+     * fails at build time instead of silently dropping the help card.
+     */
+    internal fun requireValidRuleId(ruleId: String, context: String): String {
+        require(ruleId in rules) { "Unknown help rule id $ruleId for $context" }
+        return ruleId
+    }
+
+    private fun gapTopicRules(): List<DrillHelpRule> = listOf(
         // -----------------------------------------------------------------
         // passive.md (family passiv) — also serves werden items 6-9
         // -----------------------------------------------------------------
         DrillHelpRule(
             id = "passiv-aux-form",
+            title = "The passive: the helper verb",
             rule = "A passive says the action happens to the subject. Its helper matches the subject " +
                 "in number and carries the tense. sein with a participle only describes a state.",
             table = DrillHelpTable(
@@ -86,6 +106,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "passiv-perfekt-sein",
+            title = "The perfect passive",
             rule = "The perfect passive is built with a form of sein, never haben, plus Partizip II " +
                 "and worden. The sein form matches its subject: one thing or several.",
             table = DrillHelpTable(
@@ -100,6 +121,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "passiv-perfekt-partizip",
+            title = "The participle in the perfect passive",
             rule = "In the perfect passive the helper verb has its own special participle. The " +
                 "participle it uses as an ordinary full verb is a different word. The table shows both.",
             table = DrillHelpTable(
@@ -113,6 +135,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "passiv-agent",
+            title = "Passive: doer, means and tool",
             rule = "A passive can tell who did the action and how. The doer, the means or cause and " +
                 "the tool each take their own preposition. Match each noun to its role.",
             table = DrillHelpTable(
@@ -124,6 +147,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "prep-fixed-dat",
+            title = "Prepositions with the dative",
             rule = "This preposition is one of those that always take the same case, whatever the " +
                 "sentence says. Learn which one it takes.",
             firstExposureRule = "aus, bei, mit, nach, seit, von, zu and gegenüber always take the dative.",
@@ -140,6 +164,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "passiv-partizip-ii",
+            title = "The action word in the passive",
             rule = "The helper of a passive carries the person and the tense. The action word after " +
                 "it never conjugates: it stands as the Partizip II, the form the perfect also uses.",
             table = DrillHelpTable(
@@ -158,6 +183,7 @@ object DrillHelpContent {
         // -----------------------------------------------------------------
         DrillHelpRule(
             id = "werden-conjugation",
+            title = "The verb werden in the present",
             rule = "The verb werden means \"to become\". Like other German verbs, its present ending " +
                 "changes to match the person of the subject.",
             table = DrillHelpTable(
@@ -172,6 +198,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "futur-helper-form",
+            title = "The future tense",
             rule = "To talk about the future, German pairs a subject-matched form of werden with the " +
                 "infinitive at the end of the sentence.",
             table = DrillHelpTable(
@@ -186,6 +213,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "werden-subjunctive-ii",
+            title = "Real or imagined situations",
             rule = "German uses one werden form for what would happen in an imagined situation, and " +
                 "another for a real plan. The sentence decides which fits.",
             table = DrillHelpTable(
@@ -203,6 +231,7 @@ object DrillHelpContent {
         // -----------------------------------------------------------------
         DrillHelpRule(
             id = "konj2-wenn-unreal",
+            title = "Unreal wenn-clauses",
             rule = "Wenn can open an unreal condition: something imagined, not real. The normal " +
                 "present and past state facts, so German uses its Konjunktiv II forms here instead.",
             table = DrillHelpTable(
@@ -216,6 +245,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "konj2-subject-agreement",
+            title = "The unreal form matches the subject",
             rule = "An unreal form still has to match its subject, like every German verb form. Find " +
                 "the subject — ich, du, ihr — and take that person's form.",
             table = DrillHelpTable(
@@ -230,6 +260,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "konj2-helper-infinitive",
+            title = "The two-word unreal form",
             rule = "For verbs besides haben and sein, German builds the unreal form from two words: " +
                 "helper plus dictionary form — no ending, no past, no participle.",
             table = DrillHelpTable(
@@ -243,6 +274,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "konj2-past-wish",
+            title = "Wishes about the past",
             rule = "An unreal form plus a participle wishes the past had gone differently — something " +
                 "that did not happen. The real past and present forms do not fit.",
             table = DrillHelpTable(
@@ -258,6 +290,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "konj2-single-form",
+            title = "Verbs with their own unreal form",
             rule = "Many common verbs have their own single unreal form besides the two-word form. " +
                 "With gern, it makes a wish sound soft and polite.",
             table = DrillHelpTable(
@@ -273,6 +306,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "konj2-polite-request",
+            title = "Polite requests",
             rule = "To order or ask for something politely, German phrases it as a wish: the unreal " +
                 "form plus gern. The real present or past states a fact instead.",
             table = DrillHelpTable(
@@ -292,6 +326,7 @@ object DrillHelpContent {
         // -----------------------------------------------------------------
         DrillHelpRule(
             id = "rel-agreement",
+            title = "Relative pronouns: agreement",
             rule = "A relative pronoun points back to a noun. Its gender and number copy that noun, " +
                 "but its case is set by its own role inside the relative clause.",
             table = DrillHelpTable(
@@ -307,6 +342,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "rel-after-prep",
+            title = "Relative pronouns after a preposition",
             rule = "A preposition in front of the gap decides the pronoun's case, exactly as with " +
                 "articles. Gender and number still copy the noun it refers to.",
             firstExposureRule = "mit and von always take the dative, so the relative pronoun after " +
@@ -324,6 +360,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "rel-genitive",
+            title = "Possessive relative pronouns",
             rule = "When a noun sits right after the gap, the clause shows possession (his car, her " +
                 "son). The pronoun then takes a special possessive form, matching the noun it refers to.",
             table = DrillHelpTable(
@@ -341,6 +378,7 @@ object DrillHelpContent {
         // -----------------------------------------------------------------
         DrillHelpRule(
             id = "gen-article",
+            title = "The owner's article",
             rule = "For possession, the owner's article takes a special form that depends on the " +
                 "owner's gender. The owner noun often adds an ending too.",
             table = DrillHelpTable(
@@ -354,6 +392,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "gen-noun-s",
+            title = "Owner nouns ending in -s",
             rule = "After des, the owner noun adds -s or -es. Many one-syllable nouns take -es " +
                 "(des Mannes); longer nouns take plain -s (des Lehrers).",
             table = DrillHelpTable(
@@ -367,6 +406,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "gen-noun-weak",
+            title = "Weak nouns in the genitive",
             rule = "Some nouns never take the -s owner ending. These \"weak\" nouns — many are words " +
                 "for people or animals — add -n or -en instead after des.",
             table = DrillHelpTable(
@@ -380,6 +420,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "gen-time-phrase",
+            title = "Fixed time phrases",
             rule = "Some time phrases stand in a fixed case without any preposition. Learn each one " +
                 "as a whole phrase, article form included.",
             table = DrillHelpTable(
@@ -394,6 +435,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "gen-question-whose",
+            title = "The question word for 'whose'",
             rule = "German has a separate question word for \"whose\". The other who-words ask who " +
                 "(wer), whom (wen) and to whom (wem); the whose-word asks for the owner.",
             table = DrillHelpTable(
@@ -407,6 +449,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "gen-kinship-s",
+            title = "Kinship nouns as owners",
             rule = "Kinship nouns and names can mark the owner the short way: no article, just an " +
                 "added -s — like an English apostrophe-s. The rest of the noun stays as is.",
             table = DrillHelpTable(
@@ -420,6 +463,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "gen-noun-zero",
+            title = "Owner noun endings",
             rule = "After the owner article, a noun's ending depends on its group: many add -(e)s, " +
                 "weak ones add -n or -en, and plural nouns stay unchanged.",
             table = DrillHelpTable(
@@ -437,6 +481,7 @@ object DrillHelpContent {
         // -----------------------------------------------------------------
         DrillHelpRule(
             id = "ndecl-weak-en",
+            title = "Weak nouns",
             rule = "Some German nouns, called weak, add -(e)n in every form except the bare singular " +
                 "used for the sentence's subject. Learn these nouns with their endings.",
             table = DrillHelpTable(
@@ -455,6 +500,7 @@ object DrillHelpContent {
         // -----------------------------------------------------------------
         DrillHelpRule(
             id = "imp-person",
+            title = "Imperatives: du, ihr, Sie",
             rule = "German has one imperative per way of addressing: du drops the -st and keeps the " +
                 "stem, ihr takes stem + t, Sie uses the infinitive. Decide whom it addresses.",
             table = DrillHelpTable(
@@ -469,6 +515,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "imp-du-vowel-change",
+            title = "The du imperative changes the vowel",
             rule = "Imperatives match the person you address. In the du imperative, many strong verbs " +
                 "change the stem vowel (e → i or ie); ihr and Sie keep the normal stem.",
             table = DrillHelpTable(
@@ -483,6 +530,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "imp-sein",
+            title = "The imperative of sein",
             rule = "The verb sein has its own imperative forms, one for each way of addressing. " +
                 "Decide whom the sentence addresses.",
             table = DrillHelpTable(
@@ -497,6 +545,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "imp-sie-infinitive",
+            title = "The formal Sie imperative",
             rule = "German has an imperative form for each person addressed: du, ihr, or formal Sie. " +
                 "This sentence addresses Sie formally, so recall the form that goes with it.",
             firstExposureRule = "The formal Sie imperative is the infinitive, the dictionary form of " +
@@ -517,6 +566,7 @@ object DrillHelpContent {
         // -----------------------------------------------------------------
         DrillHelpRule(
             id = "praet-sein",
+            title = "The simple past of sein",
             rule = "The verb sein has its own simple past forms, not the regular -te pattern. Each " +
                 "person has its own form — pick the one that matches the subject.",
             table = DrillHelpTable(
@@ -531,6 +581,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "praet-haben",
+            title = "The simple past of haben",
             rule = "The verb haben has its own simple past forms, one per person. It does not attach " +
                 "the regular -te to its present stem.",
             table = DrillHelpTable(
@@ -545,6 +596,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "praet-modal",
+            title = "Modal verbs in the simple past",
             rule = "Modal verbs build the simple past the regular way, with -te, and any umlaut " +
                 "drops. The ending still matches the subject's person.",
             table = DrillHelpTable(
@@ -560,6 +612,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "praet-strong-vowel",
+            title = "Strong verbs in the simple past",
             rule = "Strong verbs change their stem vowel in the simple past instead of taking the " +
                 "regular -te. The ending still matches the subject's person.",
             table = DrillHelpTable(
@@ -579,6 +632,7 @@ object DrillHelpContent {
         // -----------------------------------------------------------------
         DrillHelpRule(
             id = "infzu-bare-vs-linked",
+            title = "Bare or linked infinitive",
             rule = "A second verb joins its trigger in one fixed way: some triggers keep the bare " +
                 "infinitive, others add a linking word right before it. Learn each trigger's way.",
             table = DrillHelpTable(
@@ -592,6 +646,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "infzu-separable-split",
+            title = "Separable verbs: where zu goes",
             rule = "Separable verbs split: the prefix comes off the front. When zu joins their " +
                 "infinitive, it slides in between the prefix and the stem: auf·zu·hören.",
             table = DrillHelpTable(
@@ -605,6 +660,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "infzu-clause-meaning",
+            title = "Purpose and what did not happen",
             rule = "A second clause can be built with ... zu and a leading word. um ... zu names the " +
                 "goal; ohne ... zu says it did not happen. Pick what the sentence means.",
             table = DrillHelpTable(
@@ -622,6 +678,7 @@ object DrillHelpContent {
         // -----------------------------------------------------------------
         DrillHelpRule(
             id = "modal-meaning",
+            title = "What the modals mean",
             rule = "Each modal adds its own meaning: allowed, able, has to, or likes. Read what the " +
                 "sentence means to pick the modal, then match its form to the subject.",
             table = DrillHelpTable(
@@ -645,6 +702,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "modal-person-form",
+            title = "Modals: one ending per person",
             rule = "Modal verbs are irregular in the singular: ich and er share one short form with " +
                 "no ending, and du adds -st. ihr adds -t, and wir and Sie use the infinitive.",
             table = DrillHelpTable(
@@ -664,6 +722,7 @@ object DrillHelpContent {
         // -----------------------------------------------------------------
         DrillHelpRule(
             id = "konj1-present",
+            title = "Konjunktiv I in reported speech",
             rule = "In formal reported speech after sagt or meint, the verb shifts from the normal " +
                 "present into Konjunktiv I: most verbs take stem + -e; sein has its own form.",
             table = DrillHelpTable(
@@ -679,6 +738,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "konj1-switch",
+            title = "When Konjunktiv I looks like the present",
             rule = "In reported speech, if the Konjunktiv I form would look exactly like the normal " +
                 "present, German uses Konjunktiv II instead, so the reported form stays distinct.",
             table = DrillHelpTable(
@@ -693,6 +753,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "konj1-perfect",
+            title = "Konjunktiv I in the perfect",
             rule = "A reported past event keeps the perfect with its participle, but the helper " +
                 "shifts into Konjunktiv I, built like any verb: stem + -e.",
             table = DrillHelpTable(
@@ -706,6 +767,7 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "konj1-future",
+            title = "Konjunktiv I in the future",
             rule = "A reported future keeps the infinitive at the end, but its helper shifts into " +
                 "Konjunktiv I, built like any verb: stem + -e.",
             table = DrillHelpTable(

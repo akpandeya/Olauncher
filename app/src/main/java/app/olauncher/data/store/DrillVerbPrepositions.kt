@@ -560,7 +560,8 @@ object DrillVerbPrepositions {
      *
      * If a saved word matches the table verb (trimmed, case-insensitively, leading "sich " ignored),
      * the item key is the saved word's ID. Otherwise, it uses the stable table key
-     * `verbprep:<verb>:<preposition>:<index>`.
+     * `verbprep:<verb>:<preposition>:<index>`. Saved-word items match no authored help item,
+     * so they carry no rule id (the help card stays hidden for them).
      */
     fun items(words: Collection<Word> = emptyList()): List<DrillItem> {
         val wordMapByExact = words.associateBy { it.text.trim().lowercase() }
@@ -569,11 +570,19 @@ object DrillVerbPrepositions {
         return PAIRS.flatMap { pair ->
             val matchingWord = wordMapByExact[pair.verb.trim().lowercase()]
                 ?: wordMapByNormalized[normalizeVerb(pair.verb)]
+            val hasSavedWord = matchingWord != null
 
             val gapKey = matchingWord?.let { "${it.id}" }
                 ?: "verbprep:${pair.verb}:${pair.preposition}:0"
             val caseKey = matchingWord?.let { "${it.id}" }
                 ?: "verbprep:${pair.verb}:${pair.preposition}:1"
+
+            val content = VERB_PREP_RULE_CONTENT["${pair.verb} ${pair.preposition}"]
+                ?: error("Missing verb + preposition rule content for ${pair.verb} ${pair.preposition}")
+            val gapRuleId = content.gapRuleId
+                .let { DrillHelpContent.requireValidRuleId(it, "verb prepositions item $gapKey") }
+            val caseRuleId = content.caseRuleId
+                .let { DrillHelpContent.requireValidRuleId(it, "verb prepositions item $caseKey") }
 
             // Gap hint names the verb and its case but never the preposition (the gap answer).
             // The case item's answer IS the case name, so it carries no hint at all.
@@ -586,12 +595,16 @@ object DrillVerbPrepositions {
                     answer = pair.preposition,
                     choices = pair.choices,
                     hint = gapHint,
+                    ruleId = if (hasSavedWord) null else gapRuleId,
+                    missByChoice = if (hasSavedWord) emptyMap() else content.gapMiss,
                 ),
                 DrillItem(
                     id = DrillItemId(DrillType.VERB_PREPOSITIONS, caseKey),
                     prompt = "Welcher Fall folgt auf „${pair.verb} ${pair.preposition}“?",
                     answer = pair.case,
                     choices = CASE_CHOICES,
+                    ruleId = if (hasSavedWord) null else caseRuleId,
+                    missByChoice = if (hasSavedWord) emptyMap() else content.caseMiss,
                 ),
             )
         }

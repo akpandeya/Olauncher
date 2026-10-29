@@ -492,6 +492,8 @@ object DrillPrepositions {
      *
      * If a saved word equals a table preposition (case-insensitively), its items
      * use the word ID as their key; otherwise they use the stable table key `prep:<preposition>:<n>`.
+     * Saved-word items match no authored help item, so they carry no rule id
+     * (the help card stays hidden for them).
      */
     fun items(words: Collection<Word> = emptyList()): List<DrillItem> {
         val wordMap = words.associateBy { it.text.trim().lowercase() }
@@ -499,12 +501,17 @@ object DrillPrepositions {
             val matchingWord = wordMap[entry.preposition.lowercase()]
             entry.templates.mapIndexed { index, template ->
                 val key = matchingWord?.let { "${it.id}" } ?: "prep:${entry.preposition}:$index"
+                val content = if (matchingWord == null) PREPOSITION_RULE_CONTENT[key] else null
+                val ruleId = content?.ruleId
+                    ?.let { DrillHelpContent.requireValidRuleId(it, "prepositions item $key") }
                 DrillItem(
                     id = DrillItemId(DrillType.PREPOSITIONS, key),
                     prompt = template.prompt,
                     answer = template.answer,
                     choices = template.choices,
                     hint = template.hint,
+                    ruleId = ruleId,
+                    missByChoice = content?.missByChoice ?: emptyMap(),
                 )
             }
         }

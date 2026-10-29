@@ -145,4 +145,33 @@ class DrillPrepositionsTest {
         // Unsupported types return empty list
         assertTrue(DrillTables.items(DrillType.CONJUGATION).isEmpty())
     }
+
+    @Test
+    fun builtInItemsCarryTheirAuthoredHelpRule() {
+        val items = DrillPrepositions.items().associateBy { it.id.key }
+        // Which-case items: the answer is the case name, so the miss line names the case.
+        assertEquals("prep-which-fixed", items["prep:bis:0"]!!.ruleId)
+        assertEquals(
+            setOf("Dativ", "Genitiv"),
+            items["prep:bis:0"]!!.missByChoice.keys,
+        )
+        assertEquals(
+            "this preposition never takes the Dativ; it always takes the Akkusativ.",
+            items["prep:bis:0"]!!.missByChoice["Dativ"],
+        )
+        // Gap items: two-way, fixed accusative, fixed genitive.
+        assertEquals("prep-two-way", items["prep:an:0"]!!.ruleId)
+        assertEquals(
+            "the movement (Wohin?) form. hängen describes a fixed position (Wo?), so der.",
+            items["prep:an:0"]!!.missByChoice["die"],
+        )
+        assertEquals("prep-fixed-acc", items["prep:für:1"]!!.ruleId)
+        assertEquals(
+            "feminine dative or masculine nominative. The noun is masculine, so den.",
+            items["prep:für:1"]!!.missByChoice["der"],
+        )
+        assertEquals("prep-fixed-dat", items["prep:von:1"]!!.ruleId)
+        assertEquals("prep-fixed-gen", items["prep:während:1"]!!.ruleId)
+    }
+
 }

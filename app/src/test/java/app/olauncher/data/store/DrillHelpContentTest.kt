@@ -2,6 +2,7 @@ package app.olauncher.data.store
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -21,8 +22,15 @@ class DrillHelpContentTest {
 
     private data class ItemRule(val item: DrillItem, val rule: DrillHelpRule)
 
+    /** The live (words-driven) topics whose items carry help rules since #699. */
+    private fun liveItems(): List<Pair<DrillType, List<DrillItem>>> = listOf(
+        DrillType.PREPOSITIONS to DrillPrepositions.items(),
+        DrillType.CASE_ENDINGS to DrillCaseEndings.items(),
+        DrillType.VERB_PREPOSITIONS to DrillVerbPrepositions.items(),
+    )
+
     private fun itemRules(): List<ItemRule> =
-        DrillGapTopics.allTopics().flatMap { (_, items) ->
+        (DrillGapTopics.allTopics() + liveItems()).flatMap { (_, items) ->
             items.mapNotNull { item ->
                 item.ruleId?.let { id ->
                     DrillHelpContent.rule(id)?.let { ItemRule(item, it) }
@@ -35,6 +43,7 @@ class DrillHelpContentTest {
         for (id in DrillHelpContent.ids()) {
             val rule = DrillHelpContent.rule(id)!!
             assertTrue("$id: rule text must not be blank", rule.rule.isNotBlank())
+            assertTrue("$id: rule <= 170 chars", rule.rule.length <= 170)
             assertTrue("$id: cue must not be blank", rule.cue.isNotBlank())
             assertTrue("$id: example must not be blank", rule.example.isNotBlank())
             assertTrue("$id: table needs a header column for the row labels", rule.table.headers.isNotEmpty())
@@ -57,6 +66,124 @@ class DrillHelpContentTest {
     }
 
     @Test
+    fun everyRuleCarriesShortTitleNamingThePattern() {
+        for (id in DrillHelpContent.ids()) {
+            val rule = DrillHelpContent.rule(id)!!
+            assertTrue("$id: title must not be blank", rule.title.isNotBlank())
+            assertTrue(
+                "$id: title must stay short (found ${rule.title.length} chars)",
+                rule.title.length <= 40,
+            )
+            assertTrue(
+                "$id: title must be sentence case",
+                rule.title[0].isUpperCase(),
+            )
+        }
+    }
+
+    @Test
+    fun ruleIdsAreUnique() {
+        // The id → rule map would silently collapse duplicates; the authored list must not.
+        val all = DrillHelpContent.allRules()
+        assertEquals(all.size, all.map { it.id }.distinct().size)
+        assertEquals(all.size, DrillHelpContent.ids().size)
+    }
+
+    @Test
+    fun everyBuiltInLiveItemCarriesItsHelpRule() {
+        for ((type, items) in liveItems()) {
+            for (item in items) {
+                assertTrue(
+                    "$type item ${item.id} must carry a help rule",
+                    item.ruleId != null,
+                )
+                assertNotNull(
+                    "$type item ${item.id}: rule id ${item.ruleId} is not in the registry",
+                    DrillHelpContent.rule(item.ruleId),
+                )
+                assertEquals(
+                    "$type item ${item.id}: miss lines must cover exactly the wrong choices",
+                    (item.choices - item.answer).toSet(),
+                    item.missByChoice.keys,
+                )
+                assertTrue(
+                    "$type item ${item.id}: every miss line must be filled in to explain its wrong choice",
+                    item.missByChoice.values.all { it.isNotBlank() },
+                )
+            }
+        }
+    }
+
+    @Test
+    fun authoredRuleContentCoversExactlyTheBuiltInItems() {
+        // Authored assignments from docs/design/drill-content/: prepositions and case
+        // endings are keyed by item key, verb prepositions by pair → 2 items each.
+        val authored: Map<String, String> =
+            PREPOSITION_RULE_CONTENT.mapValues { it.value.ruleId } +
+                CASE_ENDING_RULE_CONTENT.entries.associate { "case:${it.key}" to it.value.ruleId } +
+                VERB_PREP_RULE_CONTENT.entries.flatMap { (pairKey, content) ->
+                    val pairs = DrillVerbPrepositions.PAIRS.filter {
+                        "${it.verb} ${it.preposition}" == pairKey
+                    }
+                    assertEquals("Pair $pairKey must exist once", 1, pairs.size)
+                    val pair = pairs.single()
+                    listOf(
+                        "verbprep:${pair.verb}:${pair.preposition}:0" to content.gapRuleId,
+                        "verbprep:${pair.verb}:${pair.preposition}:1" to content.caseRuleId,
+                    )
+                }.toMap()
+        val built: Map<String, String> = liveItems().flatMap { (_, items) ->
+            items.map { it.id.key to it.ruleId!! }
+        }.toMap()
+        // Both directions: an authored item that matches no built-in item or a built-in
+        // item with no authored content must fail — a count match alone proves nothing.
+        assertEquals(
+            "Authored items must match the built-in items exactly",
+            built.keys,
+            authored.keys,
+        )
+        for (key in built.keys) {
+            assertEquals(
+                "Item $key: built-in rule id must be the authored one",
+                authored[key],
+                built[key],
+            )
+        }
+    }
+
+    @Test
+    fun savedWordItemsKeepNoRuleId() {
+        // Items rebuilt from saved words replace the stable key; they match no authored
+        // help item and must stay without a rule id.
+        val savedPrepositions = DrillPrepositions.items(
+            listOf(Word(id = 101L, text = "durch", dueDay = 0L, addedAt = 0L)),
+        )
+        val wordKeyedPrep = savedPrepositions.filter { it.id.key == "101" }
+        assertTrue("Expected saved-word items for durch", wordKeyedPrep.isNotEmpty())
+        for (item in wordKeyedPrep) {
+            assertNull("Saved-word item ${item.id} must carry no rule id", item.ruleId)
+        }
+
+        val savedCaseEndings = DrillCaseEndings.items(
+            listOf(Word(id = 202L, text = "sehen", dueDay = 0L, addedAt = 0L)),
+        )
+        val wordKeyedCase = savedCaseEndings.filter { it.id.key == "202:akk_m_sehen_hund" }
+        assertTrue("Expected saved-word item for sehen", wordKeyedCase.isNotEmpty())
+        for (item in wordKeyedCase) {
+            assertNull("Saved-word item ${item.id} must carry no rule id", item.ruleId)
+        }
+
+        val savedVerbPreps = DrillVerbPrepositions.items(
+            listOf(Word(id = 303L, text = "warten", dueDay = 0L, addedAt = 0L)),
+        )
+        val wordKeyedVerbPrep = savedVerbPreps.filter { it.id.key == "303" }
+        assertTrue("Expected saved-word items for warten", wordKeyedVerbPrep.isNotEmpty())
+        for (item in wordKeyedVerbPrep) {
+            assertNull("Saved-word item ${item.id} must carry no rule id", item.ruleId)
+        }
+    }
+
+    @Test
     fun preAnswerProseNamesNoItemSpecificAnswer() {
         for ((item, rule) in itemRules()) {
             // Words the rule already shows in its forms table are part of the shown
@@ -65,6 +192,7 @@ class DrillHelpContentTest {
             for (answerWord in DrillHints.words(item.answer)) {
                 if (answerWord in contrastWords) continue
                 for ((label, prose) in listOf(
+                    "title" to rule.title,
                     "rule" to rule.rule,
                     "first exposure" to rule.firstExposureRule,
                     "cue" to rule.cue,
@@ -82,9 +210,14 @@ class DrillHelpContentTest {
 
     @Test
     fun firstExposureRuleIsOnlyWhereTheDesignAllowsIt() {
-        // Design §2: a first-exposure rule exists only where a one-case preposition (or
-        // the Sie imperative pattern) may name its case before an answer.
-        val expected = setOf("prep-fixed-dat", "rel-after-prep", "imp-sie-infinitive")
+        // Design §2: a first-exposure rule exists only where the design author allows a
+        // case name before an answer: one-case prepositions, the two-way prepositions
+        // (their items answer with the article, not the case) and the Sie imperative
+        // pattern.
+        val expected = setOf(
+            "prep-fixed-acc", "prep-fixed-dat", "prep-fixed-gen", "prep-two-way",
+            "rel-after-prep", "imp-sie-infinitive",
+        )
         assertEquals(expected, DrillHelpContent.ids().filter {
             DrillHelpContent.rule(it)?.firstExposureRule != null
         }.toSet())
@@ -92,7 +225,7 @@ class DrillHelpContentTest {
 
     @Test
     fun everyRuleIdInContentIsUsedByAnItem() {
-        val usedIds = DrillGapTopics.allTopics()
+        val usedIds = (DrillGapTopics.allTopics() + liveItems())
             .flatMap { (_, items) -> items.mapNotNull { it.ruleId } }
             .toSet()
         for (id in DrillHelpContent.ids()) {
