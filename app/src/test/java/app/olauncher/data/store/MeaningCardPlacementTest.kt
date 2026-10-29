@@ -61,4 +61,73 @@ class MeaningCardPlacementTest {
         // Top placement (the preferred side on a tie): the smaller overlap, deterministically.
         assertEquals(MeaningCardPlacement.MARGIN_PX, card.top)
     }
+
+    @Test
+    fun placementRespectsBottomSystemInset() {
+        val word = ScreenBox(100, 100, 200, 140)
+        val bottomInset = 64
+        val cardHeight = 200
+        val card = MeaningCardPlacement.place(word, screenHeight, cardHeight, bottomInset = bottomInset)
+        val expectedBottom = screenHeight - bottomInset - MeaningCardPlacement.MARGIN_PX
+        val expectedTop = expectedBottom - cardHeight
+        assertEquals(expectedTop, card.top)
+        assertEquals(expectedBottom, card.bottom)
+    }
+
+    @Test
+    fun grownHeightRepositionsCardToStayAboveBottomInset() {
+        // Pins the grown-height case with distinguishing values: small initial height (110)
+        // vs large final height (310) with a non-zero bottom inset (48).
+        val word = ScreenBox(100, 150, 200, 190)
+        val bottomInset = 48
+        val smallInitialHeight = 110
+        val largeFinalHeight = 310
+
+        val initialCard = MeaningCardPlacement.place(
+            word, screenHeight, cardHeight = smallInitialHeight, bottomInset = bottomInset
+        )
+        val grownCard = MeaningCardPlacement.place(
+            word, screenHeight, cardHeight = largeFinalHeight, bottomInset = bottomInset
+        )
+
+        val usableBottom = screenHeight - bottomInset - MeaningCardPlacement.MARGIN_PX
+        assertEquals(usableBottom, initialCard.bottom)
+        assertEquals(usableBottom, grownCard.bottom)
+
+        // Distinguishing tops:
+        assertEquals(usableBottom - smallInitialHeight, initialCard.top)
+        assertEquals(usableBottom - largeFinalHeight, grownCard.top)
+        assertTrue(grownCard.top < initialCard.top)
+
+        // Verifies the defect: without repositioning on growth, the card bottom would
+        // extend past usableBottom and past screenHeight into gesture navigation:
+        val unadjustedBottom = initialCard.top + largeFinalHeight
+        assertTrue(unadjustedBottom > usableBottom)
+        assertTrue(unadjustedBottom > screenHeight)
+    }
+
+    @Test
+    fun grownHeightFlipsToTopWhenBottomWouldOverlapWord() {
+        // Word center is at 480 (top half of 1000px screen), so preferred side is bottom.
+        val word = ScreenBox(100, 460, 200, 500)
+        val bottomInset = 60
+        val usableBottom = screenHeight - bottomInset - MeaningCardPlacement.MARGIN_PX // 932
+
+        val smallInitialHeight = 120
+        // Initial: bottom placement is 932 - 120 = 812 to 932. No overlap with word (460..500).
+        val initialCard = MeaningCardPlacement.place(
+            word, screenHeight, cardHeight = smallInitialHeight, bottomInset = bottomInset
+        )
+        assertEquals(usableBottom - smallInitialHeight, initialCard.top)
+        assertEquals(usableBottom, initialCard.bottom)
+
+        // Grown: large height = 460.
+        // Bottom overlap: [472, 500] = 28px. Top overlap: [460, 468] = 8px.
+        // Top placement wins because it has smaller overlap.
+        val grownCard = MeaningCardPlacement.place(
+            word, screenHeight, cardHeight = 460, bottomInset = bottomInset
+        )
+        assertEquals(MeaningCardPlacement.MARGIN_PX, grownCard.top)
+        assertEquals(MeaningCardPlacement.MARGIN_PX + 460, grownCard.bottom)
+    }
 }

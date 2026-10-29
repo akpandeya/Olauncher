@@ -16,18 +16,25 @@ object MeaningCardPlacement {
 
     /**
      * The card's placement box for [wordBox] on a screen [screenHeight] px tall with a
-     * [cardHeight] px tall card. Bottom-aligned with [MARGIN_PX] to the screen edge unless
-     * the word box's center is in the bottom half of the screen, then top-aligned. When
-     * the preferred placement would cover the word box, the other side is used; when both
-     * would (a card taller than the free space on either side), the placement with the
-     * smaller vertical overlap with the word box wins.
+     * [cardHeight] px tall card, leaving [bottomInset] px for system bars at the bottom.
+     * Bottom-aligned with [MARGIN_PX] above [bottomInset] unless the word box's center
+     * is in the bottom half of the screen, then top-aligned. When the preferred placement
+     * would cover the word box, the other side is used; when both would (a card taller
+     * than the free space on either side), the placement with the smaller vertical overlap
+     * with the word box wins.
      */
-    fun place(wordBox: ScreenBox, screenHeight: Int, cardHeight: Int): ScreenBox {
+    fun place(
+        wordBox: ScreenBox,
+        screenHeight: Int,
+        cardHeight: Int,
+        bottomInset: Int = 0,
+    ): ScreenBox {
+        val bottomMargin = MARGIN_PX + maxOf(0, bottomInset)
         val bottom = ScreenBox(
             wordBox.left,
-            screenHeight - MARGIN_PX - cardHeight,
+            screenHeight - bottomMargin - cardHeight,
             wordBox.right,
-            screenHeight - MARGIN_PX,
+            screenHeight - bottomMargin,
         )
         val top = ScreenBox(wordBox.left, MARGIN_PX, wordBox.right, MARGIN_PX + cardHeight)
         // Exactly on the midline counts as the bottom half — the card moves out of the way.
