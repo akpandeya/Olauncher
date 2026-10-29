@@ -2,6 +2,10 @@
 
 Issue #699 · Mock: `ask-ai-chat-mock.html` (6 screens) · Follows `TEMPLATE.md`.
 
+Decision history — the dated owner decisions and the recorded objections — lives
+in #699 and its comments. This doc states the current design only; when the two
+disagree, the issue decides why and this file says what.
+
 ## Problem
 
 When a drill marks an answer wrong, the correction is one line — "das · Wohin? →
@@ -28,15 +32,21 @@ network or empty account can't be known in advance; those are runtime errors
 
 | Surface | Entry | Subject it opens |
 |---|---|---|
-| Drill summary, wrong row | Chip under the correction line: "Ask AI" (no history) or "Chat · n" (n = delivered turns). Chip long-press → thread sheet | Routed (below) |
+| Drill summary, wrong row | Chip under the correction line: "Ask AI" (no delivered turns) or "Chat · n". Chip long-press → thread sheet | Routed (below) |
 | Drill summary, almost row | Same chip, same behaviour | Routed |
 | Review summary, again/almost row | Same chip | The reviewed word |
-| Word card, revealed | "Ask AI · n" row under the review buttons; same action in the long-press popup | The word |
-| Word card hidden, or practice prompt pre-reveal | Nothing — chat could leak the answer | — |
+| Word card, revealed | Full-width row under the review buttons: "Ask AI about this word", with "n turns" when history exists. Same action in the long-press popup | The word |
+| Word card, practice prompt — pre-reveal | Nothing — the item's answer has not been shown yet, and chat would leak it | — |
+| Word card, practice prompt — revealed | Same row as the revealed card. The grounding additionally carries the practice prompt and its answer; subject is the item's `wordId` (one candidate, no proposal) | The word |
+| Word long-press popup, hidden card | Nothing — Edit/Delete only. The popup *is* reachable pre-reveal today, so this is a **deliberate suppression**; the card-row rule does not cover the popup | — |
 | Right / knew rows | Nothing | — |
 
 One long-press grammar everywhere: chip long-press → thread sheet. No
 row-level long-press.
+
+**Counts, one shape per surface.** A chip reads "Ask AI" or "Chat · n"; a
+full-width row reads "Ask AI about this word" and appends "n turns". There is no
+"Ask AI · n" form. n is always delivered turns.
 
 ### Chat screen
 
@@ -50,10 +60,10 @@ row-level long-press.
  composer (pinned)    [Ask a follow-up…        ] [Send]
 ```
 
-- **Grounding card**: the miss (prompt, wrong pick, correct answer, rule chips)
-  and/or the word (word, meaning, saved context) — shown to the learner so they
-  always see what the AI sees. Expanded on a fresh thread or a resume carrying a
-  new miss; collapsed otherwise.
+- **Grounding card**: the miss (prompt, wrong pick, correct answer, rule chips),
+  the word (word, meaning, saved context) and/or a practice prompt with its
+  answer — shown to the learner so they always see what the AI sees. Expanded on
+  a fresh thread or a resume carrying a new miss; collapsed otherwise.
 - **New conversation** starts a fresh thread for the same subject; the old one
   stays in the sheet.
 - **Cancel** on the in-flight "Thinking…" placeholder removes the tile and
@@ -89,6 +99,11 @@ row-level long-press.
   so every chat request passes `jsonMode = false` explicitly. Malformed or
   missing → rule fallback. Once both threads exist, the deterministic router
   decides; the proposal never runs again.
+- **A failed first reply is still the first reply.** If the first send fails
+  before any reply arrives, the retry's reply is parsed for `SUBJECT:` as usual —
+  it is still the thread's first assistant message, and the thread is still
+  provisional until it lands. A thread that never gets a reply falls back to the
+  rule thread on the next send.
 - **Thread existence starts at first send.** "Ask AI" on a first-ever miss opens
   an empty, unpersisted chat; a thread is created only when something is sent.
 - **Multiple threads per subject**: the latest opens by default; the sheet lists
@@ -117,9 +132,12 @@ row-level long-press.
 - **Fallback when compaction cannot run:** the oldest prose turns leave the
   request and "earlier turns omitted" appears in the visible history. Truncation
   is the degraded path, not the plan.
-- **Groundings are re-injected as a leading block on every request** (the newest
-  2–3; older ones stay in the store), so neither compaction nor truncation can
-  drop the miss a thread is about.
+- **Groundings are bounded too.** The newest 2–3 groundings are re-injected as a
+  leading block on every request; older ones stay in the store and remain visible
+  on the card. One per miss would otherwise grow without bound — groundings
+  accumulate where prose at least gets summarised — and could take the whole
+  budget, leaving prose no room. Bounded request, unbounded store, same rule as
+  everywhere else.
 - **Counts never regress:** the chip's n, the usage line and the sheet's turn
   count all count delivered turns, summarised ones included. A count that drops
   would read as deleted history.
@@ -133,9 +151,15 @@ row-level long-press.
 | failed | Inline rose line per error kind below; the turn is persisted as failed **before the request fires**, stays visible as "Not sent · Retry", and is excluded from AI context and chip counts until a retry succeeds |
 | cancelled | Tile removed, draft restored; first-turn cancel deletes the thread |
 
-| Error | Message shape | Recovery |
+Each error kind has its own string. These are the copy for `strings.xml`, and the
+mock uses the same wording — no slash-joined variants.
+
+| Error | Message | Recovery |
 |---|---|---|
-| RATE_LIMIT / NETWORK / SERVER / BAD_RESPONSE | "The AI is busy / unreachable / had a problem / sent something unreadable. Try again." | Retry |
+| RATE_LIMIT | "The AI is busy. Try again in a moment." | Retry |
+| NETWORK | "Couldn't reach the AI. Check your connection." | Retry |
+| SERVER | "The AI service had a problem. Try again." | Retry |
+| BAD_RESPONSE | "The AI sent something unreadable. Try again." | Retry |
 | AUTH | "Your AI key was rejected. Check your AI settings." | "Open AI settings" (primary) + Retry |
 | BILLING | "The AI account is out of credits. Top up to continue." | Retry after top-up |
 
@@ -169,9 +193,11 @@ threads[{
 }]
 ```
 
-- `payload` is typed per kind — `word`: text/meaning/context; `miss`:
-  prompt/picked/answer/ruleId/chips — with a round-trip decode test, because an
-  unshapeable payload in a hand-rolled codec silently decodes to a blank card.
+- `payload` is typed per kind, each with a round-trip decode test — an
+  unshapeable payload in a hand-rolled codec silently decodes to a blank card:
+  - `word`: text, meaning, context
+  - `miss`: prompt, picked, answer, ruleId, chips
+  - `practice`: prompt, answer (+ the item's `wordId` as the subject)
 - `groundingId` sits on the user turn that introduced the grounding.
 - `coversUpTo` is the message index/ts boundary, so the request split is
   reconstructable and the expander knows which original turns to show under the
@@ -229,6 +255,8 @@ None for the design stage. Watch items (check in device testing):
   turn into the new draft.
 - Is the 10k trigger comfortable on real threads? It is deliberately
   conservative, and it is a cost threshold, not a model limit.
+- Are 2–3 re-injected groundings enough context on a long-lived rule thread, or
+  does the card need to say which older misses are no longer sent?
 - Does a summary ever contradict the turns it covers? A poisoned summary is the
   first suspect when answers drift; the exit path is the manual trigger (one
   paragraph away, same marker) plus re-summarising from originals.
@@ -260,7 +288,7 @@ None for the design stage. Watch items (check in device testing):
  [Send] ─► user tile + Thinking…
            │ RATE_LIMIT
            ▼
- user tile (kept) + "The AI is busy." (Retry)
+ user tile (kept) + "The AI is busy. Try again in a moment." (Retry)
  turn persisted as failed — excluded from context & counts,
  survives process death
      │ Retry
