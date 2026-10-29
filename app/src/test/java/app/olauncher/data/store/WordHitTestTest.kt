@@ -128,6 +128,16 @@ class WordHitTestTest {
     }
 
     @Test
+    fun strokeOverTwoWordsReturnsBothForAddAll() {
+        // The overlay feeds every reported word into ReaderSelection.addAll, so a stroke
+        // over two words must report both — not only the head.
+        val selection = WordHitTest.stroke(page, listOf(Point(30, 10), Point(90, 10)))
+        assertTrue(selection is Selection.Phrase)
+        assertEquals(listOf("eins", "zwei"), texts(selection))
+        assertSame(page[0], selection!!.head)
+    }
+
+    @Test
     fun strokeSkipsNullBoxWordBetweenTouchedWords() {
         val words = listOf(
             word("eins", 0, 0, 50, 20),

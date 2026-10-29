@@ -62,6 +62,27 @@ class ReaderSelection<T : Any>(
         return true
     }
 
+    /**
+     * Adds every item in [items] that is neither saved nor already pending, add-only: an
+     * existing entry is never toggled off, so a stroke or circle over an already-picked
+     * word keeps the pending set growing. New entries keep the given order; an item whose
+     * key is already pending keeps its earlier position and occurrence. [lastTapped] is set
+     * to the first given item, matching the meaning card following the gesture's head.
+     * Returns how many items were added.
+     */
+    fun addAll(items: List<T>): Int {
+        items.firstOrNull()?.let { lastTapped = it }
+        var added = 0
+        for (item in items) {
+            if (isSaved(item)) continue
+            val key = keyOf(item)
+            if (pendingByKey.containsKey(key)) continue
+            pendingByKey[key] = item
+            added++
+        }
+        return added
+    }
+
     /** Clears all pending items (e.g. after saving). */
     fun clear() {
         pendingByKey.clear()

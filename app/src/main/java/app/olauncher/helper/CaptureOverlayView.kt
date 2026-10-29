@@ -38,8 +38,18 @@ class CaptureOverlayView @JvmOverloads constructor(
     attrs: AttributeSet? = null,
 ) : View(context, attrs) {
 
-    /** The current selection, set back by the owner after [onSelection] to have it drawn. */
-    var selection: Selection? = null
+    /**
+     * The pending words the owner has picked: drawn as a translucent fill with an outline.
+     * Set by the owner from its shared pending set, so the overlay shows every pending pick.
+     */
+    var pendingWords: Set<ScreenWord> = emptySet()
+        set(value) {
+            field = value
+            invalidate()
+        }
+
+    /** The word the meaning card is showing; its outline is drawn thicker than the rest. */
+    var focusedWord: ScreenWord? = null
         set(value) {
             field = value
             invalidate()
@@ -52,11 +62,17 @@ class CaptureOverlayView @JvmOverloads constructor(
             invalidate()
         }
 
-    /** Fired with the resolved selection; null means the gesture picked nothing. */
-    var onSelection: ((Selection?) -> Unit)? = null
+    /** Fired on a tap: the word under the finger, or null when empty space was tapped. */
+    var onTap: ((ScreenWord?) -> Unit)? = null
+
+    /** Fired with the words a stroke/circle or a long-press drag covers (add-only semantics). */
+    var onAddSelection: ((Selection) -> Unit)? = null
 
     /** Fired on a fast downward swipe: the owner closes the capture. */
     var onCloseSwipe: (() -> Unit)? = null
+
+    /** The in-progress long-press line drag, drawn as a transient highlight until committed. */
+    private var dragSelection: Selection? = null
 
     private var frame: Bitmap? = null
     private var words: List<ScreenWord> = emptyList()
@@ -75,7 +91,7 @@ class CaptureOverlayView @JvmOverloads constructor(
     private val scrimPaint = Paint().apply { color = SCRIM_COLOR }
     private val highlightPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
-        strokeWidth = 3 * density
+        strokeWidth = STROKE_WIDTH * density
     }
     private val highlightFillPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val dotPaint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -97,9 +113,8 @@ class CaptureOverlayView @JvmOverloads constructor(
         val word = WordHitTest.tap(words, toScreenPoint(downX, downY), screenSlop())
         if (word != null) {
             longPress = true
-            val anchored = Selection.Single(word)
-            selection = anchored
-            onSelection?.invoke(anchored)
+            dragSelection = Selection.Single(word)
+            invalidate()
         }
     }
 
@@ -117,7 +132,7 @@ class CaptureOverlayView @JvmOverloads constructor(
     fun releaseFrame() {
         frame = null
         words = emptyList()
-        selection = null
+        dragSelection = null
         invalidate()
     }
 
@@ -156,18 +171,37 @@ class CaptureOverlayView @JvmOverloads constructor(
             canvas.drawCircle(rect.right, rect.bottom, radius, dotPaint)
         }
 
-        val picked = selection ?: return
         highlightPaint.color = accentColor
         highlightFillPaint.color = accentColor
-        for (word in picked.words) {
-            val box = word.box ?: continue
-            val rect = toViewRect(box, t)
-            val pad = 2 * density
-            rect.inset(-pad, -pad)
-            highlightFillPaint.alpha = HIGHLIGHT_FILL_ALPHA
-            canvas.drawRoundRect(rect, 6 * density, 6 * density, highlightFillPaint)
-            canvas.drawRoundRect(rect, 6 * density, 6 * density, highlightPaint)
+        highlightFillPaint.alpha = HIGHLIGHT_FILL_ALPHA
+        // Pending picks keep the filled+outlined look; the transient long-press drag is
+        // drawn the same way but only until the owner commits it on finger-up.
+        for (word in words) {
+            if (word !in pendingWords) continue
+            drawPendingFill(canvas, t, word)
         }
+        dragSelection?.words?.forEach { drawPendingFill(canvas, t, it) }
+        // The focused word (the meaning card's word) gets a thicker outline on top.
+        focusedWord?.let { word ->
+            val rect = highlightRect(t, word) ?: return@let
+            highlightPaint.strokeWidth = FOCUS_STROKE * density
+            canvas.drawRoundRect(rect, 6 * density, 6 * density, highlightPaint)
+            highlightPaint.strokeWidth = STROKE_WIDTH * density
+        }
+    }
+
+    private fun drawPendingFill(canvas: Canvas, t: OverlayTransform, word: ScreenWord) {
+        val rect = highlightRect(t, word) ?: return
+        canvas.drawRoundRect(rect, 6 * density, 6 * density, highlightFillPaint)
+        canvas.drawRoundRect(rect, 6 * density, 6 * density, highlightPaint)
+    }
+
+    private fun highlightRect(t: OverlayTransform, word: ScreenWord): RectF? {
+        val box = word.box ?: return null
+        val rect = toViewRect(box, t)
+        val pad = 2 * density
+        rect.inset(-pad, -pad)
+        return rect
     }
 
     private fun updateTransform() {
@@ -188,12 +222,12 @@ class CaptureOverlayView @JvmOverloads constructor(
     /**
      * Down/move/up tracking; on up a still finger is a tap ([WordHitTest.tap]) — fast or
      * held past the long-press timeout alike — and a dragged finger a stroke
-     * ([WordHitTest.stroke]). A long-press drag extends the selection by whole lines as
-     * the finger moves, anchored on the word under the press. An empty-space tap or an
-     * empty stroke reports a null selection — the owner deselects. Text without word
-     * boxes cannot be hit at all, so such a tap is indistinguishable from empty space and
-     * deselects too (a node set with no boxed words never reaches this view; the activity
-     * opens the reader instead).
+     * ([WordHitTest.stroke]) reported to [onAddSelection]. A long-press drag extends the
+     * selection by whole lines as the finger moves, anchored on the word under the press,
+     * and commits it on finger-up. A tap is reported to [onTap] — null for empty space —
+     * and a stroke that touches nothing reports nothing. Text without word boxes cannot be
+     * hit at all, so such a tap is indistinguishable from empty space (a node set with no
+     * boxed words never reaches this view; the activity opens the reader instead).
      */
     override fun onTouchEvent(event: MotionEvent): Boolean {
         when (event.actionMasked) {
@@ -220,7 +254,10 @@ class CaptureOverlayView @JvmOverloads constructor(
                 removeCallbacks(longPressRunnable)
                 if (longPress && moved) {
                     // Long-press drag: line extensions were fed continuously during the
-                    // drag; nothing to finalize.
+                    // drag and drawn as a transient highlight; commit them once on
+                    // finger-up (add-only) and drop the transient.
+                    dragSelection?.let { onAddSelection?.invoke(it) }
+                    dragSelection = null
                     strokePoints.clear()
                     return true
                 }
@@ -231,6 +268,7 @@ class CaptureOverlayView @JvmOverloads constructor(
             }
             MotionEvent.ACTION_CANCEL -> {
                 removeCallbacks(longPressRunnable)
+                dragSelection = null
                 strokePoints.clear()
             }
         }
@@ -252,23 +290,23 @@ class CaptureOverlayView @JvmOverloads constructor(
         }
         if (!moved) {
             val word = WordHitTest.tap(words, toScreenPoint(event.x, event.y), screenSlop())
-            onSelection?.invoke(word?.let { Selection.Single(it) })
+            onTap?.invoke(word)
         } else {
             // The up point completes a short stroke that never sampled a second point.
             val last = strokePoints.lastOrNull()
             val up = toScreenPoint(event.x, event.y)
             if (last != up) strokePoints += up
-            onSelection?.invoke(WordHitTest.stroke(words, strokePoints))
+            WordHitTest.stroke(words, strokePoints)?.let { onAddSelection?.invoke(it) }
         }
         strokePoints.clear()
     }
 
     private fun extendSelectionByLine(event: MotionEvent) {
-        val current = selection ?: return
+        val current = dragSelection ?: return
         val extended = WordHitTest.extendByLine(current, toScreenPoint(event.x, event.y), words)
         if (extended != current) {
-            selection = extended
-            onSelection?.invoke(extended)
+            dragSelection = extended
+            invalidate()
         }
     }
 
@@ -309,5 +347,8 @@ class CaptureOverlayView @JvmOverloads constructor(
         /** ~40 % black scrim over the frozen frame. */
         private const val SCRIM_COLOR = 0x66000000.toInt()
         private const val HIGHLIGHT_FILL_ALPHA = 60
+        /** Outline width in dp for a pending word and for the focused (card) word. */
+        private const val STROKE_WIDTH = 3f
+        private const val FOCUS_STROKE = 5f
     }
 }
