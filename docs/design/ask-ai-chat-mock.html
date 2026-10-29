@@ -301,7 +301,7 @@
             <span class="what">Er stellt sich neben ___ Fenster. <span class="ans">(den)</span>
               <span class="hintline">das · Wohin? → movement</span></span>
           </div>
-          <span class="chat-chip" onclick="show('chat')"><span class="bubble"></span>Chat · 4</span>
+          <span class="chat-chip" onclick="show('chat')"><span class="bubble"></span>Chat · 2</span>
         </div>
         <div class="row almost rowmiss">
           <div class="topline">
@@ -343,6 +343,7 @@
       </div>
 
       <div class="msgs">
+        <div class="msg me">Why accusative with <b>stellen</b> but dative with <b>stehen</b>?</div>
         <div class="msg ai">The sentence isn’t about standing — it’s about <i>putting yourself</i> there.
           <span class="de">Er stellt sich</span> = he positions himself: he walks over and plants
           himself next to the window. Movement into a place with a two-way preposition takes the
@@ -352,7 +353,7 @@
           “be standing” verb, a fixed position: <span class="de">Wo? → Dativ</span>, so <span class="de">dem</span>.
           The pair is <span class="de">stellen</span> (put — Akk) vs <span class="de">stehen</span> (be — Dat).
           Same pattern: <span class="de">legen / liegen</span>, <span class="de">setzen / sitzen</span>.</div>
-        <div class="usage">≈ 1.8k tokens · 4 turns · tap for detail</div>
+        <div class="usage">≈ 1.8k tokens · 2 turns · tap for detail</div>
         <div class="msg me">And “Ich hänge das Bild an die Wand” — why accusative there?</div>
         <div class="msg thinking">Thinking…</div>
       </div>
@@ -422,19 +423,20 @@
       </div>
 
       <div class="msgs">
+        <div class="msg me">Why accusative with <b>stellen</b> but dative with <b>stehen</b>?</div>
         <div class="msg ai">The sentence isn’t about standing — it’s about <i>putting yourself</i> there.
           <span class="de">Er stellt sich</span> = he positions himself. Movement into a place with a
           two-way preposition takes the accusative.</div>
-        <div class="usage">≈ 1.2k tokens · 2 turns · tap for detail</div>
+        <div class="usage">≈ 1.2k tokens · 1 turn · tap for detail</div>
         <div class="msg me">And “Ich hänge das Bild an die Wand” — why accusative there?</div>
-        <div class="msg thinking">Thinking… <button class="cancel" onclick="alert('Cancel: placeholder removed, draft restored, nothing persisted')">Cancel</button></div>
+        <div class="msg thinking">Thinking… <button class="cancel" onclick="alert('Cancel: placeholder removed, stored turn deleted, draft restored')">Cancel</button></div>
       </div>
 
       <div class="composer">
         <div class="field" style="opacity:.6">Ask a follow-up…</div>
         <button class="send" style="opacity:.4">↑</button>
       </div>
-      <div class="footnote">Send disabled while one request is in flight (single outbox); the draft is kept. Cancel removes the placeholder and restores the draft — nothing persisted. Request scope is viewModelScope, so rotation never fakes a “Not sent”.</div>
+      <div class="footnote">Send disabled while one request is in flight (single outbox); the draft is kept. Cancel removes the placeholder, deletes the turn that was stored when Send fired, and restores the draft — nothing of it remains. Request scope is viewModelScope, so rotation never fakes a “Not sent”.</div>
     </div>
 
     <!-- ============ 5 · failed turn ============ -->
@@ -456,6 +458,7 @@
       </div>
 
       <div class="msgs" style="padding-top:14px">
+        <div class="msg me">Why accusative with <b>stellen</b> but dative with <b>stehen</b>?</div>
         <div class="msg ai">The sentence isn’t about standing — it’s about <i>putting yourself</i> there.
           Movement with a two-way preposition takes the accusative.</div>
         <div class="usage">≈ 0.9k tokens · 1 turn · tap for detail</div>
@@ -475,7 +478,7 @@
       <div class="chead">
         <div class="subject">
           <div class="k" style="font-style:italic; opacity:.7">New conversation · subject not filed yet</div>
-          <div class="t">die Brücke · two-way prepositions?</div>
+          <div class="t">die Straße · nouns ending in -e?</div>
         </div>
         <button class="x" onclick="show('summary')">✕</button>
       </div>
@@ -485,20 +488,20 @@
           <span class="lab">What the AI sees · word + rule, both shown</span><span class="chev">▾</span>
         </div>
         <div class="gbody">
-          <div class="chips"><span class="gchip">Word · die Brücke (bridge)</span><span class="gchip">Rule · two-way prepositions</span></div>
-          <div class="missline">✗ You picked <b>dem</b>. „Ich fahre über ___ Brücke.“ — movement, Wohin? → Akk.</div>
+          <div class="chips"><span class="gchip">Word · die Straße (street)</span><span class="gchip">Rule · nouns ending in -e</span></div>
+          <div class="missline">✗ You picked <b>der</b>. „___ Straße“ — most nouns ending in -e are feminine, so die.</div>
         </div>
       </div>
 
       <div class="msgs">
-        <div class="msg thinking" style="padding-top:14px">Thinking… <button class="cancel" onclick="alert('Cancel: placeholder removed, draft restored, nothing persisted')">Cancel</button></div>
+        <div class="msg thinking" style="padding-top:14px">Thinking… <button class="cancel" onclick="alert('Cancel: placeholder removed, stored turn deleted, draft restored')">Cancel</button></div>
       </div>
 
       <div class="composer">
         <div class="field" style="opacity:.6">Ask a follow-up…</div>
         <button class="send" style="opacity:.4">↑</button>
       </div>
-      <div class="footnote">Provisional subject: noun saved (“die Brücke”) AND a rule apply, so both blocks show. The first reply’s first line — SUBJECT: word or SUBJECT: rule — files the thread (stripped before render); malformed or missing → rule fallback. On resume with both threads present, the deterministic router decides. If this first send fails, the retry’s reply is still the first reply and is still parsed.</div>
+      <div class="footnote">Provisional subject: noun saved (“die Straße”) AND a rule apply, so both blocks show. The first reply’s first line — SUBJECT: word or SUBJECT: rule — files the thread (stripped before render); malformed or missing → rule fallback. On resume with both threads present, the deterministic router decides. If this first send fails, the retry’s reply is still the first reply and is still parsed.</div>
     </div>
 
     <!-- ============ 7 · thread sheet ============ -->
@@ -515,7 +518,7 @@
             <span class="mark">✗</span>
             <span class="what">Er stellt sich neben ___ Fenster. <span class="ans">(den)</span></span>
           </div>
-          <span class="chat-chip"><span class="bubble"></span>Chat · 4</span>
+          <span class="chat-chip"><span class="bubble"></span>Chat · 2</span>
         </div>
       </div>
 
@@ -525,7 +528,7 @@
           <div class="stitle">Two-way prepositions · 2 conversations</div>
           <div class="srow first">
             <span class="snip">“Why accusative with <b>stellen</b> but dative with <b>stehen</b>?”</span>
-            <span class="meta">4 turns · today</span>
+            <span class="meta">2 turns · today</span>
           </div>
           <div class="srow">
             <span class="snip">“auf vs über — is it always movement?”</span>
@@ -579,12 +582,12 @@
 
         <div class="cbody" id="cbody" style="display:none">
           <h4>What the AI was given</h4>
-          Turns 1–13, summarised from the stored originals: the learner asked about
+          Turns 1–14, summarised from the stored originals: the learner asked about
           <b>stellen vs stehen</b>, <b>legen vs liegen</b> and <b>setzen vs sitzen</b>, and the
           replies established that Wohin? takes the accusative and Wo? the dative, with
           <i>Fenster</i> staying <i>das</i> in the accusative.
           <div class="orig">
-            <div class="ol"><b>Show the 13 original turns</b> ›</div>
+            <div class="ol"><b>Show the 14 original turns</b> ›</div>
             <div class="ol" style="opacity:.8">You said: “So would ‘Er steht neben dem Fenster’ also be right?”</div>
             <div class="ol" style="opacity:.8">AI replied: “Yes — but it means something different…”</div>
           </div>
@@ -607,13 +610,13 @@
         <button id="v-expanded" onclick="compactOpen(true)">Expanded</button>
       </div>
 
-      <div class="footnote">Automatic at 10k input tokens: older turns are summarised <b>after the answer lands</b>, never on send, and the marker appears at that moment — not only on the next open. Tap expands to the summary plus the original turns, read-only. Nothing is deleted: the transcript keeps every turn, the chip still reads “15 turns” (counts never regress), and the newest 3 groundings are always in the request. If compaction fails, the same send goes out minus the oldest prose and the marker reads “Earlier turns omitted” instead.</div>
+      <div class="footnote">Automatic at 10k input tokens: older turns are summarised <b>after the answer lands</b>, never on send, and the marker appears at that moment — not only on the next open. Tap expands to the summary plus the original turns, read-only. Nothing is deleted: the transcript keeps every turn, the chip still reads “Chat · 15” (counts never regress), and the newest 3 groundings are always in the request. If compaction fails, the same send goes out minus the oldest prose and the marker reads “Earlier turns omitted” instead.</div>
     </div>
 
   </div>
 
   <div class="note">
-    <b>Flow:</b> summary miss row “Chat · 4” → chat filed to the <b>rule thread</b> “Two-way
+    <b>Flow:</b> summary miss row “Chat · 2” → chat filed to the <b>rule thread</b> “Two-way
     prepositions” (when a saved word is also plausible, the first reply’s SUBJECT: line files
     it — screen 6). The word card resumes the word’s latest thread; chip long-press on any
     entry point lists older threads (screen 7). No per-item threads — history is per concept,

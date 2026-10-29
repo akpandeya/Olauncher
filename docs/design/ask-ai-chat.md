@@ -42,7 +42,8 @@ row) → thread sheet. Nothing else uses long-press.
 
 **Counts, one shape per surface.** A chip reads "Ask AI" or "Chat · n"; a
 full-width row reads "Ask AI about this word" and appends "n turns". There is no
-"Ask AI · n" form. n is always delivered turns.
+"Ask AI · n" form. n is always delivered turns. A **turn** is one user question
+plus the reply that answered it; a failed or in-flight question is not a turn.
 
 ### Chat screen
 
@@ -56,6 +57,10 @@ full-width row reads "Ask AI about this word" and appends "n turns". There is no
  composer (pinned)    [Ask a follow-up…        ] [Send]
 ```
 
+- **Header**: word → the saved word as written; rule → the rule's `title`
+  ("Two-way prepositions"); topic → the drill type's label; a provisional
+  both-candidates thread → "New conversation" until the first reply names the
+  subject.
 - **Grounding card**: the miss (prompt, wrong pick, correct answer, rule chips),
   the word (word, meaning, saved context) and/or a practice prompt with its
   answer — shown to the learner so they always see what the AI sees. Expanded on
@@ -63,7 +68,9 @@ full-width row reads "Ask AI about this word" and appends "n turns". There is no
 - **New conversation** starts a fresh thread for the same subject; the old one
   stays in the sheet.
 - **Cancel** on the in-flight "Thinking…" placeholder removes the tile and
-  restores the draft. If the cancelled turn was the thread's first, the thread is
+  restores the draft. The question was persisted when Send fired (see
+  Reliability), so Cancel also deletes that stored turn — nothing of a cancelled
+  turn remains. If the cancelled turn was the thread's first, the thread is
   deleted.
 - Chat is **post-answer only** — it never appears while a question is on screen,
   never scores, advances or mutates a round, and back returns the summary exactly
@@ -76,19 +83,35 @@ full-width row reads "Ask AI about this word" and appends "n turns". There is no
     Deleting a word leaves its threads as an inert archive; re-saving the same
     noun re-links them. Two saved words sharing a citation form (`Bank`, `See`)
     share one thread — accepted trade-off.
-  - **rule** — the help-card rule id (#651), e.g. "two-way prepositions". A miss
+  - **rule** — the help-card rule id (#651, `DrillHelpContent`), e.g.
+    `prep-two-way`, shown by the rule's `title` ("Two-way prepositions"). A miss
     on *neben* today and on *auf* next week join one conversation.
   - **topic** — the drill type, for items without help-card content (null
-    `ruleId`), so every wrong row still gets a chip.
+    `ruleId`: conjugation, cloze, AI practice items), so every wrong row still
+    gets a chip.
+- **Prerequisite: every authored rule is wired.** Today only the gap topics set
+  `ruleId`. The live topics (prepositions, case endings, articles, plurals,
+  adjective endings, pronouns, verb prepositions, separable verbs, word order)
+  already have authored help content in `docs/design/drill-content/`, but their
+  items carry no rule id, so their misses would land in a topic thread. Wiring
+  that content (items → rule ids, `DrillHelpContent` entries) comes before chat,
+  and it also switches on those topics' pre-answer "Why?" card as #651 intended.
+  `DrillHelpRule` gains a short `title` for every rule, gap and live.
 - **Routing** (deterministic, in order):
-  1. Word-linked by construction: case-endings items embed the matched word;
-     AI practice items carry `wordId`; review misses are the word itself.
-  2. Noun types (articles, plurals, n-declension, adjective-endings,
-     case-endings) whose citation-form noun exactly matches a saved word —
-     exact match only, noun taken from item content, never the inflected prompt
-     token.
+  1. Word-linked by construction, read from the item id (`DrillItem` has no
+     `wordId` field): AI practice items `ai:<wordId>:<itemId>`; case- and
+     adjective-ending items built from a saved word `<wordId>:<key>`; articles
+     and plurals built from a saved word use the bare word id; review misses
+     are the word itself.
+  2. Built-in items that carry the noun's citation form in their id — articles
+     `art:<noun>` and plurals `plur:<noun>` — whose noun exactly matches a saved
+     word. Exact match only, never the inflected prompt token. Other types carry
+     only inflected forms and skip this step.
   3. Otherwise: the rule thread, or the topic thread when there is no rule.
-- **When a fresh thread could be word or rule** (both candidates plausible): the
+- **When a fresh thread could be word or rule** (both candidates plausible —
+  the item matched a saved word by its citation noun (routing step 2) and has a `ruleId`; **fresh** means neither the word
+  thread nor the rule thread exists yet; if exactly one exists it opens, and if
+  both exist the word thread opens): the
   grounding card shows both blocks and the AI's first reply names the subject —
   first non-empty line `SUBJECT: word` or `SUBJECT: rule`, trimmed, emphasis
   markers stripped, case-insensitive, then removed before render. Chat is prose,
@@ -189,6 +212,7 @@ mock uses the same wording — no slash-joined variants.
 
 ```
 threads[{
+  id                                          // stable random id; sheet and resume open by it
   subject {kind: word|rule|topic, ref}
   createdAt, updatedAt
   groundings [{id, kind, payload}]            // newest 3 re-injected per request
@@ -305,14 +329,14 @@ None for the design stage. Watch items (check in device testing):
 **Both candidates on a fresh thread**
 
 ```
- ✗ Ich fahre über ___ Brücke.  (dem → die)   "die Brücke" is saved
+ ✗ ___ Straße  (der → die)   articles item art:straße; "die Straße" is saved
  └─ ( Ask AI ) ─► empty thread, header "New conversation"
      grounding: [word block] [rule block] + ✗ miss line
          │ Send
          ▼
  first reply, first non-empty line:
-   SUBJECT: word  → word thread   (header: die Brücke)
-   SUBJECT: rule  → rule thread   (header: Two-way prepositions)
+   SUBJECT: word  → word thread   (header: die Straße)
+   SUBJECT: rule  → rule thread   (header: Nouns ending in -e)
    missing/broken → rule fallback (reply still renders normally)
 ```
 
