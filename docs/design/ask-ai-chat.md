@@ -1,6 +1,6 @@
 # Ask AI chat threads (design)
 
-Issue #699 · Mock: `ask-ai-chat-mock.html` (6 screens) · Follows `TEMPLATE.md`.
+Issue #699 · Mock: `ask-ai-chat-mock.html` (8 screens) · Follows `TEMPLATE.md`.
 
 Decision history — the dated owner decisions and the recorded objections — lives
 in #699 and its comments. This doc states the current design only; when the two
