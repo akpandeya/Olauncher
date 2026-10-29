@@ -159,6 +159,36 @@ class OfflineGermanStore(context: Context) {
     }
 
     /**
+     * Verb lemmas a lowercased split surface form ("nehme auf") maps to (#523). The lookup
+     * index already holds these multi-word forms; only verbs are returned so a same-spelled
+     * noun cannot leak in. An empty list means no split verb (including "ist auf", which is
+     * not indexed). Call on Dispatchers.IO.
+     */
+    fun splitVerbLemmas(form: String): List<String> {
+        val db = try {
+            open()
+        } catch (e: Exception) {
+            Log.w(TAG, "Offline dictionary unavailable; no split-verb lemmas", e)
+            return emptyList()
+        }
+        return try {
+            db.rawQuery(
+                """SELECT DISTINCT e.lemma FROM lookup l JOIN entries e ON e.id = l.entry_id
+                   WHERE l.form = ? AND e.pos = 'verb' AND l.form LIKE '% %'""",
+                arrayOf(form)
+            ).use { cursor ->
+                buildList {
+                    while (cursor.moveToNext()) add(cursor.getString(0))
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Offline dictionary unreadable; deleting it so the next lookup reinstalls", e)
+            discard(db)
+            emptyList()
+        }
+    }
+
+    /**
      * The present-tense paradigm the verb entries for [text] merge into, or
      * null when no candidate maps to a verb (or none has present cells), which
      * drives the drill's graceful state. Only verb entries with the same lemma

@@ -99,6 +99,25 @@ class OfflineGermanAssetTest {
         }
     }
 
+    @Test
+    fun splitVerbFormsMapToTheirLemmaCaseSensitively() = withInstalledDatabase { db ->
+        fun lemmas(form: String): List<String> {
+            val query = """SELECT DISTINCT e.lemma FROM lookup l JOIN entries e ON e.id=l.entry_id
+                           WHERE l.form=? AND e.pos='verb' AND l.form LIKE '% %'"""
+            db.rawQuery(query, arrayOf(form)).use { cursor ->
+                val result = ArrayList<String>()
+                while (cursor.moveToNext()) result.add(cursor.getString(0))
+                return result
+            }
+        }
+        assertEquals(listOf("aufnehmen"), lemmas("nehme auf"))
+        assertEquals(listOf("anrufen"), lemmas("rufe an"))
+        assertEquals(listOf("aufstehen"), lemmas("steht auf"))
+        // A free combination is not a split verb, and the index is case-sensitive.
+        assertTrue(lemmas("ist auf").isEmpty())
+        assertTrue(lemmas("Nehme auf").isEmpty())
+    }
+
     private fun withInstalledDatabase(block: (SQLiteDatabase) -> Unit) {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         val file = File(instrumentation.targetContext.filesDir, "dictionary-test-${UUID.randomUUID()}.sqlite")

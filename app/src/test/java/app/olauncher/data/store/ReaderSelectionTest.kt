@@ -260,4 +260,79 @@ class ReaderSelectionTest {
         assertEquals(listOf(first), selection.pending.toList())
         assertEquals(other, selection.lastTapped)
     }
+
+    // -- join (split verb replaces its verb and particle words) ----------------------------
+
+    private fun splitComponents() = Triple(
+        ScreenWord("nehme", ScreenBox(0, 0, 50, 20), nodeId = 3, charRange = 4 until 9),
+        ScreenWord("auf.", ScreenBox(200, 0, 240, 20), nodeId = 3, charRange = 28 until 32),
+        CapturePick.SplitVerb(
+            ScreenWord("nehme", ScreenBox(0, 0, 50, 20), nodeId = 3, charRange = 4 until 9),
+            ScreenWord("auf.", ScreenBox(200, 0, 240, 20), nodeId = 3, charRange = 28 until 32),
+            "aufnehmen",
+        ),
+    )
+
+    @Test
+    fun joinReplacesBothComponentKeysWithTheLemmaKey() {
+        val (verb, particle, pick) = splitComponents()
+        val selection = ReaderSelection<CapturePick>(keyOf = { SavedMarks.keyOf(it) })
+        selection.tap(CapturePick.Word(verb))
+        selection.tap(CapturePick.Word(particle))
+        assertEquals(2, selection.count)
+
+        val joined = selection.join(pick, listOf(CapturePick.Word(verb), CapturePick.Word(particle)))
+
+        assertTrue(joined)
+        assertEquals(1, selection.count)
+        assertEquals(listOf(pick), selection.pending.toList())
+        assertEquals(pick, selection.lastTapped)
+        assertEquals("aufnehmen", SavedMarks.keyOf(selection.lastTapped!!))
+        assertFalse(selection.isPending(CapturePick.Word(verb)))
+        assertFalse(selection.isPending(CapturePick.Word(particle)))
+    }
+
+    @Test
+    fun joinOnASavedPickIsRefusedAndKeepsExistingPending() {
+        val (verb, particle, pick) = splitComponents()
+        val selection = ReaderSelection<CapturePick>(
+            isSaved = { SavedMarks.keyOf(it) == "aufnehmen" },
+            keyOf = { SavedMarks.keyOf(it) },
+        )
+        selection.tap(CapturePick.Word(verb))
+
+        val joined = selection.join(pick, listOf(CapturePick.Word(verb), CapturePick.Word(particle)))
+
+        assertFalse(joined)
+        assertEquals(1, selection.count)
+        assertTrue(selection.isPending(CapturePick.Word(verb)))
+        assertEquals(pick, selection.lastTapped)
+    }
+
+    @Test
+    fun joinSetsLastTappedAndReplacesByKey() {
+        val selection = ReaderSelection<String>()
+        selection.tap("auf")
+
+        val joined = selection.join("aufnehmen", listOf("auf", "nehme"))
+
+        assertTrue(joined)
+        assertEquals(1, selection.count)
+        assertEquals(listOf("aufnehmen"), selection.pending.toList())
+        assertEquals("aufnehmen", selection.lastTapped)
+        assertFalse(selection.isPending("auf"))
+    }
+
+    @Test
+    fun reTappingAJoinedPickDeselectsIt() {
+        val (verb, particle, pick) = splitComponents()
+        val selection = ReaderSelection<CapturePick>(keyOf = { SavedMarks.keyOf(it) })
+        assertTrue(selection.join(pick, listOf(CapturePick.Word(verb), CapturePick.Word(particle))))
+        assertEquals(1, selection.count)
+
+        // Data-class equality: the same joined pick toggles off like any other item.
+        assertFalse(selection.tap(pick))
+        assertEquals(0, selection.count)
+        assertEquals(pick, selection.lastTapped)
+    }
 }

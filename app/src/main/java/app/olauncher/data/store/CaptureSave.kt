@@ -11,10 +11,11 @@ object CaptureSave {
     data class SaveItem(val text: String, val context: String, val words: List<ScreenWord>)
 
     /**
-     * One item per pending pick, in [pending] order. The token is the pick's first word
-     * stripped like the store does ("Regierung." → "Regierung"); the context is
-     * [ContextSentence.around] over the pick's whole first..last word span of the
-     * paragraph [paragraphOf] returns for the first word.
+     * One item per pending pick, in [pending] order. The stored text is the pick's token
+     * ([SavedMarks.tokenOf]: a word stripped like the store does, "Regierung." → "Regierung",
+     * or a split verb's joined lemma, "aufnehmen"); the context is [ContextSentence.around]
+     * over the pick's whole first..last word span of the paragraph [paragraphOf] returns for
+     * the first word.
      */
     fun plan(pending: List<CapturePick>, paragraphOf: (ScreenWord) -> String): List<SaveItem> =
         pending.map { pick ->
@@ -22,7 +23,7 @@ object CaptureSave {
             val first = words.first()
             val last = words.last()
             SaveItem(
-                text = SavedMarks.tokenOf(first),
+                text = SavedMarks.tokenOf(pick),
                 context = ContextSentence.around(
                     paragraphOf(first),
                     first.charRange.first,

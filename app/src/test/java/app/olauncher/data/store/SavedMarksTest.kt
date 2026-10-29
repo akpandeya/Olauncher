@@ -28,4 +28,18 @@ class SavedMarksTest {
         // tokenize drops tokens without letters or digits — nothing to strip here.
         assertEquals("—", SavedMarks.keyOf(word("—")))
     }
+
+    @Test
+    fun `a plain word pick keys like its screen word`() {
+        val pick = CapturePick.Word(word("Regierung."))
+        assertEquals("regierung", SavedMarks.keyOf(pick))
+        assertEquals("Regierung", SavedMarks.tokenOf(pick))
+    }
+
+    @Test
+    fun `a split verb keys to its lowercased lemma`() {
+        val pick = CapturePick.SplitVerb(word("nehme"), word("auf."), "Aufnehmen")
+        assertEquals("aufnehmen", SavedMarks.keyOf(pick))
+        assertEquals("Aufnehmen", SavedMarks.tokenOf(pick))
+    }
 }
