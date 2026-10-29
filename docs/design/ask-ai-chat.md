@@ -24,22 +24,26 @@ want (#699).
 
 ## 1. Visibility rule and surfaces
 
-**The one visibility rule:** an entry point is **visible** iff the `AiProviders`
-prefs are present **and** `AiProviderConfig.validate()` returns null. Health is
-checked only at request time: a missing/revoked key, dead network or exhausted
-credits are runtime errors (§5), not visibility states — `KeySource` supplies the
-key at call time, so the UI cannot know statically whether a key exists. Invalid
-config (blank provider id, non-https base URL) is indistinguishable from no config:
-hidden. Hidden, never disabled or greyed.
+**The one visibility rule (rev 2, review A1):** an entry point is visible iff
+`AiPracticeGate.canRun(aiPracticeEnabled, hasKey, model)` returns true — the same
+gate in front of every AI practice network call (`AiPracticeGate`'s contract: "the
+one guard in front of every AI practice network call … with the switch off no call
+is made, ever"). `DISABLED`, `NO_KEY` and `NO_MODEL` are **statically knowable**
+(`SettingsGerman` already computes `hasKey` for the settings subtitle), so they are
+visibility states, not runtime errors: hidden, never disabled or greyed. Only
+invalid config (`validate() != null`) joins them in hidden. What remains
+runtime-only: revoked key, dead network, exhausted credits — inline errors per §5.
+Without this gate, chat would be a second AI path that bypasses the guard the code
+declares universal.
 
 | # | Surface | State | Entry? | Form | Subject |
 |---|---------|-------|--------|------|---------|
-| A1 | Drill summary row | wrong (✗) | Yes | Quiet chip under the correction line: "Ask AI" (no delivered messages) / "Chat · n" (n = delivered messages of the subject's latest thread). Long-press on the chip → thread sheet. | Router §4 |
-| A2 | Drill summary row | almost (amber) | No chip | **Long-press on the row** opens chat (power-user path; near-miss is usually a spelling slip). | Router §4 |
+| A1 | Drill summary row | wrong (✗) | Yes | Quiet chip under the correction line: "Ask AI" (no delivered turns) / "Chat · n" (n = delivered **turns** of the subject's latest thread). Long-press on the chip → thread sheet. | Router §4 |
+| A2 | Drill summary row | almost (amber) | Yes | Same-shaped chip as A1 (rev 2, review D: a long-press-only entry is a feature nobody discovers; the spelling-slip rationale does not justify an invisible path). | Router §4 |
 | A3 | Drill summary row | almost → second miss | Yes | Close-spelling rule counts it wrong; same as A1. | Router §4 |
 | A4 | Drill summary row | right (✓) | No | Nothing. | — |
 | A5 | Review summary row | again (✗) | Yes | Same chip as A1. Review misses are **word-shaped**: subject = the reviewed word, grounding = the word's saved context. No matching, no proposal. | Word |
-| A6 | Review summary row | almost | No chip | Long-press on row → chat. | Word |
+| A6 | Review summary row | almost | Yes | Same chip as A2. | Word |
 | A7 | Review summary row | knew (✓) | No | Nothing. | — |
 | A8 | Word card (`WordReveal`) | revealed | Yes | Quiet row under the review buttons, hairline divider: "Ask AI" / "Ask AI · n". Long-press → thread sheet. | Word |
 | A9 | Word card | hidden (meaning not shown) | No | Nothing — post-answer only; chat would leak the meaning. | — |
@@ -48,6 +52,9 @@ hidden. Hidden, never disabled or greyed.
 | A12 | Today word card, two-button variant | revealed | Yes | Same row as A8; independent of button count. Chat never grades. | Word |
 | A13 | Word long-press popup | revealed card | Yes | Third item "Ask AI" after Edit/Delete; same subject and thread as A8. | Word |
 | A14 | Word long-press popup | hidden card | No | Edit/Delete only — A9's rule suppresses the item (the popup *is* reachable pre-reveal today; this is a deliberate suppression). | — |
+
+One long-press grammar everywhere (rev 2, review D): **chip long-press → thread
+sheet**, on wrong and almost rows alike; there is no row-level long-press.
 
 ## 2. The chat screen
 
@@ -91,10 +98,16 @@ hidden. Hidden, never disabled or greyed.
 
 ## 4. Thread model and routing
 
-- **Subjects are words and rules, not items.** The help-card content model (#651 §3)
-  assigns every drill item a rule id (`two-way-auf`, `noun-e-feminine`); word refs
-  are the word's **citation text** (case-insensitive — see Decided). A miss on
-  *neben* today and on *auf* next week share one "two-way prepositions" thread.
+- **Subjects are words, rules and topics — not items.** The help-card content model
+  (#651 §3) assigns every drill item a rule id (`two-way-auf`, `noun-e-feminine`);
+  word refs are the word's **citation text**, normalized (trim + lowercase + NFC) in
+  one place, original kept for display. A miss on *neben* today and on *auf* next
+  week share one "two-way prepositions" thread.
+- **Live topics (rev 2, review B1).** `DrillItem.ruleId` is nullable — items without
+  help-card content (the live topics) have no rule to thread to, and even the "Why?"
+  button is hidden for them today. They get a third subject kind **`topic`** (ref =
+  the `DrillType` id, title = the type's label), so the "every wrong row gets a
+  chip" decision survives: a conjugation miss opens the "Conjugation" topic thread.
 - **Deterministic router, in order:**
   1. Word-linked by construction: case-endings items embed the matched word in their
      key (`DrillCaseEndings.items()`); AI practice items carry `wordId`; review
@@ -102,13 +115,25 @@ hidden. Hidden, never disabled or greyed.
   2. Noun types (articles, plurals, n-declension, adjective-endings, case-endings)
      whose citation-form noun **exactly matches** a saved word (case-insensitive,
      noun from item content data — never the inflected prompt token).
-  3. Everything else — all pattern types, relative pronouns in v1, unmatched nouns —
-     routes to the rule's thread.
+  3. Items with a `ruleId` → the rule's thread; items without → the drill type's
+     `topic` thread.
 - **AI proposes the subject only when a *new* thread has both candidates** (§6). A
   proposal's only job is to name a thread that doesn't exist yet; when both threads
   already exist, the deterministic router picks (Decided).
-- **Thread-state matrix for a miss** (delivered messages = turns that entered
-  history; failed turns excluded):
+- **Context budget (rev 2, reviews B3 + E2).** "Unbounded" applies to what the user
+  may *say*, not to what is resent: each thread has a per-thread token budget. When
+  a send would exceed it, the oldest delivered turns are dropped from the request
+  and a muted "earlier turns omitted" marker is inserted at the top of the visible
+  history. The full transcript stays stored; only the request window shrinks. This
+  is also the eviction policy (§9): every thread is kept, nothing is deleted.
+- **Retry ordering (rev 2, review B2).** Only the **newest** failed turn is
+  retryable. Once a newer turn is delivered, an older failed turn converts to
+  "Ask again" — a new turn quoting the original question — never a retry, so
+  history never orders `Q2, A2, Q1, A1`.
+- **Thread-state matrix for a miss** (delivered turns = exchanges that entered
+  history; failed turns excluded — one delivered turn = user message + assistant
+  reply, the unit for chip counts, the usage line and TalkBack alike; rev 2, review
+  C2):
 
 | State | Chip | Tap opens | Grounding | On send |
 |---|---|---|---|---|
@@ -118,7 +143,7 @@ hidden. Hidden, never disabled or greyed.
 | Word thread exists (noun saved) | "Chat · n" | Word's latest thread | Re-expanded: word block + miss line, rule rides along | Appended to word thread |
 | Both threads exist | "Chat · n" | The thread the deterministic router picks (word-by-construction > word-exact > rule); no re-proposal | Both blocks, resumed thread's block first | Appended to the opened thread; the other subject's thread is reachable from its own surface |
 | Latest thread stale (weeks old) | "Chat · n" | Latest thread, unchanged | Re-expanded with the new miss line | Appended; `updatedAt` moves it to the sheet front; sheet dates show staleness; no nag |
-| Thread with pending failed turn | "Chat · n" (failed not counted) | Latest thread; failed turn visible at tail: muted tile + "Not sent · Retry" | Re-expanded with the new miss line | **Retry** re-sends with current full context; a new message may also be sent normally — the failed turn stays until a Retry succeeds |
+| Thread with pending failed turn | "Chat · n" (failed not counted) | Latest thread; failed turn visible at tail: muted tile + "Not sent · Retry" | Re-expanded with the new miss line | **Retry** (newest failed turn only) re-sends with current full context; a new message may also be sent normally — once a newer turn is delivered, the older failed turn converts to "Ask again" (§4) |
 
 - Repeated misses of the same item land in the same subject thread; the chip count
   grows and never regresses to "Ask AI" once delivered messages exist.
@@ -128,8 +153,8 @@ hidden. Hidden, never disabled or greyed.
 | State | What the user sees | Composer | Exit |
 |---|---|---|---|
 | idle | Messages, grounding card, usage line | Empty, enabled | → composing |
-| composing | Draft in field (survives rotation via ViewModel) | Enabled; Send enabled when non-blank | → waiting on Send |
-| waiting | User tile appended; "Thinking…" placeholder; usage unchanged | **Send disabled** (single outbox — a second request would race subject filing on fresh threads); draft kept | → success or error |
+| composing | Draft in field (survives rotation — request scope is `viewModelScope`, never an Activity; rev 2, review D) | Enabled; Send enabled when non-blank | → waiting on Send |
+| waiting | User tile appended; "Thinking…" placeholder; usage unchanged. A quiet **Cancel** control on the placeholder (rev 2, review E1: most of streaming's value, none of its interface work — the user-triggered twin of cancel-on-destroy) | **Send disabled** (single outbox — a second request would race subject filing on fresh threads); draft kept | → success, error, or cancelled (placeholder removed, draft restored, nothing persisted) |
 | success | Placeholder replaced by reply; usage updates; thread persisted | Cleared, enabled | → idle |
 
 Errors render as an inline `accentRose` line under the user tile (replacing the
@@ -148,20 +173,36 @@ nothing is lost, and the model never sees an unanswered question).
 | BILLING | "The AI account is out of credits. Top up to continue." | Retry (after top-up); no settings detour — config is fine, the account is empty |
 
 - **First-message error:** the thread persists on first send with the failed turn, so
-  process death loses nothing. The chip still reads "Ask AI" (no delivered messages);
+  process death loses nothing. The chip still reads "Ask AI" (no delivered turns);
   the next entry resumes this thread with the "Not sent · Retry" tail (no emptiness
-  special-casing; watch item below).
+  special-casing). Watch item (rev 2, review C1 — narrowed): if device testing finds
+  this confusing, the fix is *not* excluding failed-only threads from latest-thread
+  resolution — that would strand the typed question unretryable behind a new empty
+  chat. The correct fix is carrying the orphaned failed turn into the new draft.
+- **Storage full (rev 2, review B4):** a write failure shows an inline muted line
+  "Couldn't save this conversation" — a visible message must never be silently lost,
+  and a failed first write must not silently produce a fresh empty chat on the next
+  entry.
 - **Process death while waiting:** the turn is already persisted as failed; waiting
   is memory-only, so no phantom "Thinking…" survives a restart.
-- **Corrupt `ai_chats.json`:** codec pattern — decode failure → empty store, atomic
-  temp-file rename prevents the common corruption case. Crash loses at most the last
-  completed turn.
+- **Corrupt `ai_chats.json` (rev 2, review D):** decode failure renames the file to
+  `ai_chats.json.bak` and starts an empty store — the codec pattern's fresh-start
+  behaviour, kept, but this store is rewritten on every message and grows without
+  bound, so the archive is preserved at the cost of one rename.
 
 ## 6. Subject-proposal flow (word | rule)
 
-Requested once, on the first send of a fresh both-candidate thread: the prompt asks
-the first reply to carry `subject: {kind: "word"|"rule"}`. Later turns never carry
-or act on one (parsing scoped to the thread's first assistant message).
+Requested once, on the first send of a fresh both-candidate thread. Later turns
+never carry or act on one (parsing scoped to the thread's first assistant message).
+
+**Wire format (rev 2, review A2).** Chat is prose — every chat request passes
+`jsonMode = false` explicitly (`AiRequest.jsonMode` defaults to `true` for the
+practice contract, so the default is wrong for chat). With JSON off, a JSON object
+would arrive fenced or phrased unpredictably, so the proposal is a plain sentinel:
+the reply's **first line** is exactly `SUBJECT: word` or `SUBJECT: rule`, parsed on
+a literal prefix, case-sensitive. The sentinel line is **stripped before render** —
+the learner never sees scaffolding. No proposal on the line → treated as missing →
+rule fallback.
 
 | Case | Filed to | Header | Grounding |
 |---|---|---|---|
@@ -179,10 +220,10 @@ or act on one (parsing scoped to the thread's first assistant message).
 | Thread sheet, empty | "No conversations yet" (defensive; a visible chip implies ≥1) |
 | Thread sheet, 1 / many | One / newest-first rows (snippet, date, count) + "New conversation" action in the sheet |
 | "New conversation", back before sending | Never persisted — a thread exists only from its first send; next entry resumes the previous latest |
-| Word deleted with threads | Threads kept as an inert archive (chat never writes `WordsStore`, word deletion never writes the chat store). **Ref = citation text**, so re-saving the same noun re-links the threads automatically (ids would orphan them permanently) |
+| Word deleted with threads | Threads kept as an inert archive (chat never writes `WordsStore`, word deletion never writes the chat store). **Ref = normalized citation text**, so re-saving the same noun re-links the threads automatically. Known trade-off (rev 2, review D, written down): two saved words sharing a citation form (`Bank`, `See`, `Band`) share one thread, and delete-then-save of a *different* word with the same form resurrects an unrelated archive — accepted for v1 |
 | Storage full | Write fails, session stays usable; last successful write wins (same as every prefs-backed store) |
 | Rotation while composing / waiting | Draft survives (ViewModel); waiting cancels on destroy — the persisted failed turn shows "Not sent · Retry" on return |
-| TalkBack | Chip descriptions: "Ask AI about this mistake" / "Chat, 4 messages"; sheet rows read as one unit; assistant/user messages announce "AI replied:" / "You said:"; Thinking and error lines are `liveRegion="polite"`; 48dp targets from `today_touch_min_height` |
+| TalkBack | Chip descriptions: "Ask AI about this mistake" / "Chat, 4 turns"; sheet rows read as one unit; assistant/user messages announce "AI replied:" / "You said:"; Thinking, Cancel and error lines are `liveRegion="polite"`; 48dp targets from `today_touch_min_height` |
 | No-network device | Entries stay visible (config exists); no pre-send offline check — sending fails NETWORK with Retry |
 
 ## 8. Flows
@@ -209,7 +250,7 @@ or act on one (parsing scoped to the thread's first assistant message).
  └──────────────────────────────────────┘
               │ Send
  thread created on send ──► Thinking… ──► reply filed
-              │                           (chip now "Chat · 2")
+              │                           (chip now "Chat · 1")
               ▼
         back → summary, state intact
 ```
@@ -233,7 +274,7 @@ or act on one (parsing scoped to the thread's first assistant message).
  │ previous turns below, scrolled to end│
  └──────────────────────────────────────┘
               │ Send
- appended to same thread ──► count grows ("Chat · 6")
+ appended to same thread ──► count grows ("Chat · 5" — one new turn)
 ```
 
 **(3) No provider configured**
@@ -273,7 +314,8 @@ or act on one (parsing scoped to the thread's first assistant message).
  Thinking… ──► Ok ──► reply filed, usage line updates
               │        failed flag cleared — turn enters history
               ▼
-        chip count now includes both messages
+        chip count now includes the delivered turn
+        (Cancel is available on any in-flight Thinking…)
 ```
 
 **(5) AI proposal flow, both candidates**
@@ -306,13 +348,23 @@ or act on one (parsing scoped to the thread's first assistant message).
 ## 9. Store and config
 
 - `AiChatStore` (`filesDir/ai_chats.json`, codec pattern of `WordsStore`, atomic
-  temp-file rename): `threads[{ subject{kind: word|rule, ref}, createdAt, updatedAt,
-  messages[{role, text, ts, usage, failed?}] }]`. Multiple threads per subject,
-  ordered by `updatedAt`. Word `ref` is citation text, not id.
+  temp-file rename): `threads[{ subject{kind: word|rule|topic, ref}, createdAt,
+  updatedAt, groundings[{id, kind, payload}], messages[{role, text, ts, usage,
+  failed?, groundingId?}] }]`.
+  - **Grounding is persisted (rev 2, review A3).** One `grounding` record per miss
+    (or word block), referenced by the turn that introduced it. Without it, a
+    resumed thread's "history + new miss grounding" request loses miss #2 from the
+    *following* turn's context, and the grounding card could not re-render from
+    stored data when a thread is reopened from the sheet days later.
+  - **Topic is a third subject kind** (§4, review B1): live-topic items without a
+    `ruleId` thread per drill type.
 - Generation rides the existing `AiProvider` config (`AI_PROVIDER`, `AI_BASE_URL`,
   `AI_MODEL` prefs). No hardcoded model anywhere.
-- Store eviction: open in #699 — with the thread sheet, an LRU cap is viable without
-  orphaning history.
+- **Eviction (rev 2, review E2): decided — keep every thread, cap the request, not
+  the store.** Thread count is naturally one per word/rule the learner has asked
+  about, so an LRU cap loses exactly the archive §7 wants to keep. The per-thread
+  token budget with the "earlier turns omitted" marker (§4) does the real work and
+  doubles as the context-window policy.
 
 ## 10. Repo design elements used
 
@@ -350,15 +402,48 @@ Scenario pass (owner, 2026-10-29):
 - **Review summary misses route to the word thread** by construction; no matching,
   no proposal.
 
+Review round (rev 2, owner review on #699, applied 2026-10-29 — supersedes where
+noted):
+- **Visibility is `AiPracticeGate.canRun`**, not raw prefs + `validate()` — chat
+  respects the AI-practice switch; `DISABLED`/`NO_KEY`/`NO_MODEL` are hidden states
+  (supersedes the scenario-pass visibility rule).
+- **Chip on wrong *and* almost rows**, same shape, sheet on chip long-press only
+  (supersedes "wrong rows only / long-press on almost rows" — an invisible path is
+  a feature nobody discovers).
+- **Subject proposal wire format**: first line `SUBJECT: word|rule`, literal-prefix
+  parse, stripped before render; every chat request passes `jsonMode = false`
+  explicitly.
+- **Grounding is persisted** per miss and referenced by its turn; request context
+  reconstruction and card re-render depend on it.
+- **Live topics get a third subject kind `topic`** (per `DrillType`) when `ruleId`
+  is null — every wrong row still gets a chip.
+- **Retry ordering**: only the newest failed turn is retryable; older failed turns
+  convert to "Ask again".
+- **Per-thread token budget**: oldest turns drop out of the *request* with a muted
+  "earlier turns omitted" marker; the transcript stays complete. This is also the
+  eviction policy: **every thread is kept** (supersedes "LRU cap or keep everything"
+  as an open question — decided: keep everything).
+- **Streaming: decided no for v1**; a Cancel control on the in-flight turn instead
+  (supersedes the streaming open question).
+- **Storage-full shows an inline "Couldn't save this conversation" line.**
+- **Corrupt store → `ai_chats.json.bak`, then fresh** (archive preserved).
+- **Request scope is `viewModelScope`** — rotation must not manufacture a fake
+  "Not sent".
+- **Turns everywhere**: chip counts, usage line and TalkBack all count turns
+  (user + assistant), not messages.
+- **Ref normalization in one place** (trim + lowercase + NFC); duplicate citation
+  forms (`Bank`, `See`, `Band`) sharing a thread is a written-down v1 trade-off.
+
 ## Open questions
 
-1. Streaming (`AiProvider.complete` is one-shot) — acceptable for v1, or new
-   provider-interface infrastructure worth it for chat UX? (#699)
-2. Store eviction with multiple threads per subject: LRU cap or keep everything? (#699)
-3. Watch items: (a) does the AI's subject proposal misroute in practice? If yes, the
-   fallback flips to the deterministic router. (b) Does resuming a failed-only
-   thread ("Not sent" tail on arrival) feel like a bug in device testing? If yes,
-   exclude failed-only threads from latest-thread resolution (one-line filter).
+None left for the design stage. Watch items only:
+
+1. Does the AI's `SUBJECT:` proposal misroute in practice? If yes, the fallback
+   flips to the deterministic router.
+2. Does resuming a failed-only thread ("Not sent" tail on arrival) feel like a bug
+   in device testing? If yes, the fix is carrying the orphaned failed turn into the
+   new draft — *not* excluding failed-only threads from latest-thread resolution,
+   which would strand the typed question unretryable (review C1).
 
 ## HTML mock
 

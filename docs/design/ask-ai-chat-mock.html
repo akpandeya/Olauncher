@@ -174,7 +174,11 @@
   .msg.ai { background: var(--panel); border-radius: 16px 16px 16px 6px; padding: 12px 14px; max-width: 92%; }
   .msg.ai .de { font-weight: 600; }
   .msg.me { align-self: flex-end; background: var(--tile); border: 1px solid var(--tile-stroke); border-radius: 16px 16px 6px 16px; padding: 10px 14px; max-width: 80%; color: var(--ink); }
-  .msg.thinking { color: var(--ink-muted); font-style: italic; background: transparent; padding: 4px 14px; }
+  .msg.thinking { color: var(--ink-muted); font-style: italic; background: transparent; padding: 4px 14px; display: flex; align-items: center; gap: 10px; }
+  .msg.thinking .cancel {
+    font: 600 11px system-ui; color: var(--ink-muted); background: none;
+    border: 1px solid var(--tile-stroke); border-radius: 999px; padding: 4px 10px; cursor: pointer;
+  }
   .msg.err { color: var(--rose); background: var(--rose-soft); border-radius: 12px; padding: 10px 14px; font-size: 13px; }
   .msg.err button { margin-left: 8px; font: 600 12px system-ui; color: var(--rose); background: none; border: 1px solid var(--rose); border-radius: 999px; padding: 4px 10px; cursor: pointer; }
 
@@ -219,16 +223,21 @@
   <div class="pagehead">
     <h1>Ask AI chat threads (#699)</h1>
     <p>Mock only, no screen work yet. One chat screen, two entry points: a miss row in the
-       drill summary and the revealed word card. Threads belong to a <b>word or a grammar
-       rule</b> (never a single drill item); the latest thread opens by default, older ones
-       behind a long-press. Chat is post-answer only — the pre-answer <b>Why?</b> stays
-       the static help card (#651).</p>
+       drill summary and the revealed word card. Threads belong to a <b>word, rule or
+       topic</b> (never a single drill item); the latest thread opens by default, older ones
+       behind a chip long-press. Chat is post-answer only — the pre-answer <b>Why?</b> stays
+       the static help card (#651). Screens 4–6 cover the runtime states the review required
+       before approval: waiting, failed turn + retry, and the provisional both-candidates
+       subject.</p>
   </div>
 
   <div class="controls">
     <button class="pill on" id="p-summary" onclick="show('summary')">1 · Summary</button>
     <button class="pill" id="p-chat" onclick="show('chat')">2 · Chat</button>
     <button class="pill" id="p-word" onclick="show('word')">3 · Word card</button>
+    <button class="pill" id="p-wait" onclick="show('wait')">4 · Waiting</button>
+    <button class="pill" id="p-error" onclick="show('error')">5 · Failed turn</button>
+    <button class="pill" id="p-both" onclick="show('both')">6 · Both candidates</button>
     <span class="spacer"></span>
     <button class="pill" id="p-theme" onclick="toggleTheme()">Dark</button>
   </div>
@@ -243,7 +252,7 @@
       </div>
       <div class="segments"><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i></div>
 
-      <div class="counts"><span class="sage">2 right</span><span class="sand">0 almost</span><span class="rose">1 wrong</span></div>
+      <div class="counts"><span class="sage">1 right</span><span class="sand">1 almost</span><span class="rose">1 wrong</span></div>
 
       <div class="rows">
         <div class="row miss rowmiss">
@@ -254,7 +263,14 @@
           </div>
           <span class="chat-chip" onclick="show('chat')"><span class="bubble"></span>Chat · 4</span>
         </div>
-        <div class="row ok"><span class="mark">✓</span><span class="what">Ich hänge das Bild an ___ Wand.</span></div>
+        <div class="row almost rowmiss">
+          <div class="topline">
+            <span class="mark">◦</span>
+            <span class="what">Ich hänge das Bild an ___ Wand. <span class="ans">(die, retried as de)</span>
+              <span class="hintline" style="color:var(--sand)">Very close. die · Wohin? → movement</span></span>
+          </div>
+          <span class="chat-chip" onclick="show('chat')"><span class="bubble"></span>Ask AI</span>
+        </div>
         <div class="row ok"><span class="mark">✓</span><span class="what">Die Katze schläft unter ___ Bett.</span></div>
       </div>
 
@@ -263,7 +279,7 @@
         <button class="btn">Practise misses</button>
         <button class="btn quiet">Done</button>
       </div>
-      <div class="footnote">Wrong rows carry the chat chip; long-press on an almost row opens the same chat. First miss shows “Ask AI”, a revisited subject shows “Chat · n”. Long-press on the chip lists the subject’s older threads.</div>
+      <div class="footnote">Wrong and almost rows both carry the chip — “Ask AI” for no delivered turns, “Chat · n” for n turns of the subject’s latest thread. Chip long-press lists the subject’s older threads.</div>
     </div>
 
     <!-- ============ 2 · chat over the miss ============ -->
@@ -332,7 +348,7 @@
           <div class="ask-row" onclick="show('chat')">
             <span class="bubble"></span>
             <span class="lab">Ask AI about this word</span>
-            <span class="n">4 messages</span>
+            <span class="n">4 turns</span>
             <span class="chev">›</span>
           </div>
           <div class="ask-row" style="border-top:none; margin-top:0; padding-top:8px;">
@@ -342,16 +358,109 @@
         </div>
       </div>
 
-      <div class="footnote">Word card entry resumes the word’s thread. Hidden entirely when no AI provider is configured (BYOK).</div>
+      <div class="footnote">Word card entry resumes the word’s latest thread; chip long-press lists older threads. Hidden entirely when AI practice is off or no key/model is set — the same <b>AiPracticeGate</b> that guards every AI call (rev 2).</div>
+    </div>
+
+    <!-- ============ 4 · waiting ============ -->
+    <div class="screen" id="s-wait">
+      <div class="chead">
+        <div class="subject">
+          <div class="k">Rule thread · Two-way prepositions</div>
+          <div class="t">neben · auf · über + Wohin?/Wo?</div>
+        </div>
+        <button class="x" onclick="show('summary')">✕</button>
+      </div>
+
+      <div class="ground collapsed" id="ground2">
+        <div class="ghead" onclick="document.getElementById('ground2').classList.toggle('collapsed')">
+          <span class="lab">What the AI sees</span><span class="chev">▾</span>
+        </div>
+        <div class="gbody">
+          <div class="chips"><span class="gchip">Wohin? → Akk</span><span class="gchip">das · neuter</span></div>
+          <div class="missline">✗ You picked <b>den</b>. den is masculine accusative; Fenster is neuter, so das.</div>
+        </div>
+      </div>
+
+      <div class="msgs">
+        <div class="msg ai">The sentence isn’t about standing — it’s about <i>putting yourself</i> there.
+          <span class="de">Er stellt sich</span> = he positions himself. Movement into a place with a
+          two-way preposition takes the accusative.</div>
+        <div class="usage">≈ 1.2k tokens · 2 turns · tap for detail</div>
+        <div class="msg me">And “Ich hänge das Bild an die Wand” — why accusative there?</div>
+        <div class="msg thinking">Thinking… <button class="cancel" onclick="alert('Cancel: placeholder removed, draft restored, nothing persisted')">Cancel</button></div>
+      </div>
+
+      <div class="composer">
+        <div class="field" style="opacity:.6">Ask a follow-up…</div>
+        <button class="send" style="opacity:.4">↑</button>
+      </div>
+      <div class="footnote">Send disabled while one request is in flight (single outbox); the draft is kept. Cancel removes the placeholder and restores the draft — nothing persisted. Request scope is viewModelScope, so rotation never fakes a “Not sent”.</div>
+    </div>
+
+    <!-- ============ 5 · failed turn ============ -->
+    <div class="screen" id="s-error">
+      <div class="chead">
+        <div class="subject">
+          <div class="k">Rule thread · Two-way prepositions</div>
+          <div class="t">neben · auf · über + Wohin?/Wo?</div>
+        </div>
+        <button class="x" onclick="show('summary')">✕</button>
+      </div>
+
+      <div class="msgs" style="padding-top:14px">
+        <div class="msg ai">The sentence isn’t about standing — it’s about <i>putting yourself</i> there.
+          Movement with a two-way preposition takes the accusative.</div>
+        <div class="usage">≈ 0.9k tokens · 1 turn · tap for detail</div>
+        <div class="msg me" style="opacity:.55">And “Ich hänge das Bild an die Wand” — why accusative there?</div>
+        <div class="msg err">Not sent · The AI is busy. Try again in a moment. <button>Retry</button></div>
+      </div>
+
+      <div class="composer">
+        <div class="field">Ask a follow-up…</div>
+        <button class="send">↑</button>
+      </div>
+      <div class="footnote">Failed turn persisted before the request fired — it survives app death, is excluded from AI context and chip counts, and shows Retry. Only the newest failed turn retries; sending a new message converts older ones to “Ask again”. AUTH shows “Open AI settings” instead; BILLING points at the account.</div>
+    </div>
+
+    <!-- ============ 6 · both candidates ============ -->
+    <div class="screen" id="s-both">
+      <div class="chead">
+        <div class="subject">
+          <div class="k" style="font-style:italic; opacity:.7">New conversation · subject not filed yet</div>
+          <div class="t">die Brücke · two-way prepositions?</div>
+        </div>
+        <button class="x" onclick="show('summary')">✕</button>
+      </div>
+
+      <div class="ground" id="ground3">
+        <div class="ghead" onclick="document.getElementById('ground3').classList.toggle('collapsed')">
+          <span class="lab">What the AI sees · word + rule, both shown</span><span class="chev">▾</span>
+        </div>
+        <div class="gbody">
+          <div class="chips"><span class="gchip">Word · die Brücke (bridge)</span><span class="gchip">Rule · two-way prepositions</span></div>
+          <div class="missline">✗ You picked <b>dem</b>. „Ich fahre über ___ Brücke.“ — movement, Wohin? → Akk.</div>
+        </div>
+      </div>
+
+      <div class="msgs">
+        <div class="msg thinking" style="padding-top:14px">Thinking… <button class="cancel" onclick="alert('Cancel: placeholder removed, draft restored, nothing persisted')">Cancel</button></div>
+      </div>
+
+      <div class="composer">
+        <div class="field" style="opacity:.6">Ask a follow-up…</div>
+        <button class="send" style="opacity:.4">↑</button>
+      </div>
+      <div class="footnote">Provisional subject: noun saved (“die Brücke”) AND a rule apply, so both blocks show. The first reply’s first line — SUBJECT: word or SUBJECT: rule — files the thread (stripped before render); malformed or missing → rule fallback. On resume with both threads present, the deterministic router decides.</div>
     </div>
 
   </div>
 
   <div class="note">
     <b>Flow:</b> summary miss row “Chat · 4” → chat filed to the <b>rule thread</b> “Two-way
-    prepositions” (when a saved word is also plausible, the AI proposes word vs rule and the
-    proposal is accepted). The word card resumes the word’s latest thread; long-press on any
-    entry point lists older threads. No per-item threads — history is per concept, all revisitable.
+    prepositions” (when a saved word is also plausible, the first reply’s SUBJECT: line files
+    it — screen 6). The word card resumes the word’s latest thread; chip long-press on any
+    entry point lists older threads. No per-item threads — history is per concept, all
+    revisitable. Runtime states: screen 4 (waiting, Cancel), screen 5 (failed turn, Retry).
     German in chat prose carries no gender colour; colour stays a help-card rule (#651).
   </div>
 </div>
@@ -360,7 +469,7 @@
   function show(name) {
     document.querySelectorAll('.screen').forEach(function (s) { s.classList.remove('on'); });
     document.getElementById('s-' + name).classList.add('on');
-    ['summary', 'chat', 'word'].forEach(function (n) {
+    ['summary', 'chat', 'word', 'wait', 'error', 'both'].forEach(function (n) {
       document.getElementById('p-' + n).classList.toggle('on', n === name);
     });
   }
