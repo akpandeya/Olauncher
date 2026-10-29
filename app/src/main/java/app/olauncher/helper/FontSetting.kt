@@ -6,6 +6,7 @@ import android.graphics.Typeface
 import android.util.TypedValue
 import androidx.core.content.res.ResourcesCompat
 import app.olauncher.R
+import app.olauncher.data.Accent
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
 
@@ -18,6 +19,25 @@ fun Prefs.applyFontOverlay(theme: Resources.Theme) {
             theme.applyStyle(if (boldFont) R.style.FontPlexBoldOverlay else R.style.FontPlexOverlay, true)
         else -> if (boldFont) theme.applyStyle(R.style.BoldFontOverlay, true)
     }
+}
+
+/**
+ * Applies the accent setting to [theme] as a theme overlay. Off and wallpaper accents add
+ * no style: the base theme keeps `accentColor = ?attr/primaryColor` for off, and the
+ * wallpaper colour is resolved from the prefs in [getColorFromAttr] instead.
+ */
+fun Prefs.applyAccentOverlay(theme: Resources.Theme) {
+    val accentOverlay = Accent.resolve(Accent.fromId(accent), 0) {
+        when (it) {
+            Accent.SYSTEM -> R.style.AccentSystemOverlay
+            Accent.WALLPAPER -> 0
+            Accent.SAGE -> R.style.AccentSageOverlay
+            Accent.SAND -> R.style.AccentSandOverlay
+            Accent.SKY -> R.style.AccentSkyOverlay
+            else -> R.style.AccentRoseOverlay
+        }
+    }
+    if (accentOverlay != 0) theme.applyStyle(accentOverlay, true)
 }
 
 /** The typeface the font setting resolves to (the mainFontFamily theme attribute). */

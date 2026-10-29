@@ -32,7 +32,6 @@ import androidx.work.WorkManager
 import app.olauncher.data.store.WordLookup
 import app.olauncher.quiet.QuietAccess
 import app.olauncher.quiet.ReleaseWorker
-import app.olauncher.data.Accent
 import app.olauncher.data.AppModel
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
@@ -63,6 +62,7 @@ import app.olauncher.helper.MotionPolicy
 import app.olauncher.helper.WordCaptureActivity
 import app.olauncher.helper.WordScreenService
 import app.olauncher.helper.applyFontOverlay
+import app.olauncher.helper.applyAccentOverlay
 import app.olauncher.helper.getColorFromAttr
 import app.olauncher.helper.hasBeenDays
 import app.olauncher.helper.hasBeenHours
@@ -180,17 +180,7 @@ class MainActivity : AppCompatActivity() {
         AppCompatDelegate.setDefaultNightMode(prefs.appTheme)
         super.onCreate(savedInstanceState)
         prefs.applyFontOverlay(theme)
-        val accentOverlay = Accent.resolve(Accent.fromId(prefs.accent), 0) {
-            when (it) {
-                Accent.SYSTEM -> R.style.AccentSystemOverlay
-                Accent.WALLPAPER -> 0
-                Accent.SAGE -> R.style.AccentSageOverlay
-                Accent.SAND -> R.style.AccentSandOverlay
-                Accent.SKY -> R.style.AccentSkyOverlay
-                else -> R.style.AccentRoseOverlay
-            }
-        }
-        if (accentOverlay != 0) theme.applyStyle(accentOverlay, true)
+        prefs.applyAccentOverlay(theme)
         if (isEinkDisplay() || isSystemAnimationsDisabled()) theme.applyStyle(R.style.NoAnimationOverlay, true)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
