@@ -2,10 +2,6 @@
 
 Issue #699 · Mock: `ask-ai-chat-mock.html` (8 screens) · Follows `TEMPLATE.md`.
 
-Decision history — the dated owner decisions and the recorded objections — lives
-in #699 and its comments. This doc states the current design only; when the two
-disagree, the issue decides why and this file says what.
-
 ## Problem
 
 When a drill marks an answer wrong, the correction is one line — "das · Wohin? →
@@ -25,10 +21,10 @@ tokens — no new colours). AI calls ride the existing provider config
 ### Entry points
 
 An entry is **visible** iff `AiPracticeGate.canRun(aiPracticeEnabled, hasKey,
-model)` — the same gate in front of every AI call. `DISABLED`, `NO_KEY`,
-`NO_MODEL` and invalid config mean hidden, never greyed. A revoked key, dead
-network or empty account can't be known in advance; those are runtime errors
-(see Reliability).
+model)` — the same gate in front of every AI call — **and** the provider config
+is valid (`validate()` returns null). `DISABLED`, `NO_KEY`, `NO_MODEL` and
+invalid config mean hidden, never greyed. A revoked key, dead network or empty
+account can't be known in advance; those are runtime errors (see Reliability).
 
 | Surface | Entry | Subject it opens |
 |---|---|---|
@@ -37,12 +33,12 @@ network or empty account can't be known in advance; those are runtime errors
 | Review summary, again/almost row | Same chip | The reviewed word |
 | Word card, revealed | Full-width row under the review buttons: "Ask AI about this word", with "n turns" when history exists. Same action in the long-press popup | The word |
 | Word card, practice prompt — pre-reveal | Nothing — the item's answer has not been shown yet, and chat would leak it | — |
-| Word card, practice prompt — revealed | Same row as the revealed card. The grounding additionally carries the practice prompt and its answer; subject is the item's `wordId` (one candidate, no proposal) | The word |
+| Word card, practice prompt — revealed | Same row as the revealed card. The grounding additionally carries the practice prompt and its answer; subject is the practice item's word — the item's `wordId` resolves to the word's normalized citation text (one candidate, no proposal) | The word |
 | Word long-press popup, hidden card | Nothing — Edit/Delete only. The popup *is* reachable pre-reveal today, so this is a **deliberate suppression**; the card-row rule does not cover the popup | — |
 | Right / knew rows | Nothing | — |
 
-One long-press grammar everywhere: chip long-press → thread sheet. No
-row-level long-press.
+One long-press grammar everywhere: long-press on the entry (chip or word-card
+row) → thread sheet. Nothing else uses long-press.
 
 **Counts, one shape per surface.** A chip reads "Ask AI" or "Chat · n"; a
 full-width row reads "Ask AI about this word" and appends "n turns". There is no
@@ -56,7 +52,7 @@ full-width row reads "Ask AI about this word" and appends "n turns". There is no
  └────────────────┘
  messages (scroll)    assistant panels · user tiles right
  ─────────────────
- usage line           "· 1.8k tokens · 4 turns" (muted, tap for detail)
+ usage line           "≈ 1.8k tokens · 4 turns" (muted, tap for detail)
  composer (pinned)    [Ask a follow-up…        ] [Send]
 ```
 
@@ -111,33 +107,41 @@ full-width row reads "Ask AI about this word" and appends "n turns". There is no
   lives where the subject lives.
 - **Context budget: 10k input tokens.** A named **cost** threshold, not a model
   limit: BYOK models vary, the provider carries no context-size metadata, and
-  every turn re-bills the history it resends. Crossing it starts a
-  **compaction** (automatic — owner decision 2026-10-29): older turns are
-  summarised into one block, and the next request carries that summary instead of
-  them. Compaction runs **after the answer lands**, never on the critical path of
-  a send, and its own tokens count in the usage line. A send is never blocked: if
-  compaction is unavailable or fails, the request goes out with the fallback
-  below.
+  every turn re-bills the history it resends. Crossing it starts an automatic
+  **compaction**: older turns are summarised into one block, and the next request
+  carries that summary instead of them. Compaction runs **after the answer
+  lands**, never on the critical path of a send; its token cost shows in the
+  usage line (the line always reports the latest request). A send is never
+  blocked: if compaction is unavailable or fails, the request goes out with the
+  fallback below.
 - **Compaction is lossy for the model, lossless for the user.** The full
   transcript is always stored; the summary replaces old turns *in the request*
   only. In the transcript the summary sits where its turns were, as the muted
   marker "Earlier turns summarised · see what it kept"; the marker also appears
   at the moment the compaction happens, not only on the next open. Tapping
   expands the summary and the original turns beneath it, read-only. It is the
-  same marker shape as "earlier turns omitted" — one pattern, two meanings: not
-  sent, still stored / summarised, still stored.
+  same marker shape as "Earlier turns omitted" — one pattern, two meanings: not
+  sent, still stored / summarised, still stored. A later successful compaction
+  replaces an earlier "Earlier turns omitted" marker.
+- **How much is summarised:** the oldest turns, up to the point where the
+  projected next request (summary + remaining turns + groundings) fits under
+  7k — headroom below the 10k trigger, so compaction doesn't fire again
+  immediately.
 - **Re-summarise from the stored originals, never from the previous summary**, so
-  drift is capped at one pass however long a thread lives. Failed turns are never
-  summarised — they were never in the context to begin with.
+  drift is capped at one pass however long a thread lives. Only the newest
+  summary is active — an older summary whose turns it covered are re-summarised
+  into the new one. Failed turns are never summarised — they were never in the
+  context to begin with.
 - **Fallback when compaction cannot run:** the oldest prose turns leave the
-  request and "earlier turns omitted" appears in the visible history. Truncation
+  request and "Earlier turns omitted" appears in the visible history. Truncation
   is the degraded path, not the plan.
-- **Groundings are bounded too.** The newest 2–3 groundings are re-injected as a
-  leading block on every request; older ones stay in the store and remain visible
-  on the card. One per miss would otherwise grow without bound — groundings
-  accumulate where prose at least gets summarised — and could take the whole
-  budget, leaving prose no room. Bounded request, unbounded store, same rule as
-  everywhere else.
+- **Groundings are bounded too.** The newest **3** groundings are re-injected as
+  a leading block on every request; older ones stay in the store and remain
+  visible on the card, but the model is not told about them — a dropped
+  grounding silently leaves its miss context. One per miss would otherwise grow
+  without bound — groundings accumulate where prose at least gets summarised —
+  and could take the whole budget, leaving prose no room. Bounded request,
+  unbounded store, same rule as everywhere else.
 - **Counts never regress:** the chip's n, the usage line and the sheet's turn
   count all count delivered turns, summarised ones included. A count that drops
   would read as deleted history.
@@ -187,7 +191,7 @@ mock uses the same wording — no slash-joined variants.
 threads[{
   subject {kind: word|rule|topic, ref}
   createdAt, updatedAt
-  groundings [{id, kind, payload}]            // newest 2–3 re-injected per request
+  groundings [{id, kind, payload}]            // newest 3 re-injected per request
   summaries  [{text, coversUpTo, createdAt}]  // newest replaces the turns it covers
   messages   [{role, text, ts, usage, failed?, groundingId?}]
 }]
@@ -197,11 +201,13 @@ threads[{
   unshapeable payload in a hand-rolled codec silently decodes to a blank card:
   - `word`: text, meaning, context
   - `miss`: prompt, picked, answer, ruleId, chips
-  - `practice`: prompt, answer (+ the item's `wordId` as the subject)
+  - `practice`: prompt, answer (+ the practice item's `wordId`, resolved to the
+    word's citation text as the thread subject)
 - `groundingId` sits on the user turn that introduced the grounding.
-- `coversUpTo` is the message index/ts boundary, so the request split is
-  reconstructable and the expander knows which original turns to show under the
-  summary.
+- `coversUpTo` is the **index of the last message the summary covers**, so the
+  request split is reconstructable and the expander knows which original turns
+  to show under the summary. Only the newest summary is active; older entries
+  stay in the store for the audit trail.
 
 ## Rejected ideas
 
@@ -255,11 +261,11 @@ None for the design stage. Watch items (check in device testing):
   turn into the new draft.
 - Is the 10k trigger comfortable on real threads? It is deliberately
   conservative, and it is a cost threshold, not a model limit.
-- Are 2–3 re-injected groundings enough context on a long-lived rule thread, or
+- Are 3 re-injected groundings enough context on a long-lived rule thread, or
   does the card need to say which older misses are no longer sent?
 - Does a summary ever contradict the turns it covers? A poisoned summary is the
-  first suspect when answers drift; the exit path is the manual trigger (one
-  paragraph away, same marker) plus re-summarising from originals.
+  first suspect when answers drift; re-summarising always runs from the stored
+  originals, so the recovery is delete the summary and let compaction redo it.
 - Do learners notice and understand the "Earlier turns summarised" marker, or
   does it read as lost history?
 
@@ -316,16 +322,17 @@ None for the design stage. Watch items (check in device testing):
  turn #21 send: request would exceed 10k input tokens
      │ reply lands (never delayed by compaction)
      ▼
- compaction runs on turns #1…#14, from the STORED originals
-     │
+ compaction summarises turns #1…#14 — enough that the projected
+ next request (summary + turns #15…#21 + groundings) fits under 7k
+     │ (from the STORED originals, one pass)
      ▼
  transcript: "Earlier turns summarised · see what it kept"   ← appears now
- turn #22 request: summary block + turns #15…#21 + newest groundings
- chip still "Chat · 21"  (counts never regress)
+ turn #22 request: summary block + turns #15…#21 + newest 3 groundings
+ chip still "Chat · 21"  (counts never regress); usage = turn #22's request
      │ tap the marker
      ▼
  summary text + the 14 original turns, read-only
      │ compaction failed instead?
      ▼
- same send goes out minus the oldest prose, "earlier turns omitted"
+ same send goes out minus the oldest prose, "Earlier turns omitted"
 ```

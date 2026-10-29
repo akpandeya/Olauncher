@@ -258,12 +258,13 @@
 
   <div class="pagehead">
     <h1>Ask AI chat threads (#699)</h1>
-    <p>Mock only, no screen work yet. One chat screen, two entry points: a miss row in the
-       drill summary and the revealed word card. Threads belong to a <b>word, rule or
+    <p>Mock only, no screen work yet. One chat screen, entry points on the drill summary
+       (chip), the review summary (chip) and the revealed word card (full-width row).
+       Threads belong to a <b>word, rule or
        topic</b> (never a single drill item); the latest thread opens by default, older ones
-       behind a chip long-press. Chat is post-answer only — the pre-answer <b>Why?</b> stays
-       the static help card (#651). Screens 4–6 cover the runtime states the review required
-       before approval: waiting, failed turn + retry, and the provisional both-candidates
+       behind a long-press on the entry. Chat is post-answer only — the pre-answer <b>Why?</b> stays
+       the static help card (#651). Screens 4–6 cover the runtime states:
+       waiting, failed turn + retry, and the provisional both-candidates
        subject. Screens 7–8 cover the two remaining pinned surfaces: the thread sheet
        (populated and empty) and the automatic-compaction marker (collapsed and expanded).</p>
   </div>
@@ -397,7 +398,7 @@
         </div>
       </div>
 
-      <div class="footnote">Word card entry resumes the word’s latest thread; chip long-press lists older threads. Hidden entirely when AI practice is off or no key/model is set — the same <b>AiPracticeGate</b> that guards every AI call (rev 2). Hidden again pre-reveal, including the long-press popup item: the popup is reachable before the meaning shows, so “Ask AI” there is suppressed deliberately.</div>
+      <div class="footnote">Word card entry resumes the word’s latest thread; long-press on the row lists older threads. Hidden entirely when AI practice is off or no key/model is set — the same <b>AiPracticeGate</b> that guards every AI call. Hidden again pre-reveal, including the long-press popup item: the popup is reachable before the meaning shows, so “Ask AI” there is suppressed deliberately.</div>
     </div>
 
     <!-- ============ 4 · waiting ============ -->
@@ -578,12 +579,12 @@
 
         <div class="cbody" id="cbody" style="display:none">
           <h4>What the AI was given</h4>
-          Turns 1–14, summarised from the stored originals: the learner asked about
+          Turns 1–13, summarised from the stored originals: the learner asked about
           <b>stellen vs stehen</b>, <b>legen vs liegen</b> and <b>setzen vs sitzen</b>, and the
           replies established that Wohin? takes the accusative and Wo? the dative, with
           <i>Fenster</i> staying <i>das</i> in the accusative.
           <div class="orig">
-            <div class="ol"><b>Show the 14 original turns</b> ›</div>
+            <div class="ol"><b>Show the 13 original turns</b> ›</div>
             <div class="ol" style="opacity:.8">You said: “So would ‘Er steht neben dem Fenster’ also be right?”</div>
             <div class="ol" style="opacity:.8">AI replied: “Yes — but it means something different…”</div>
           </div>
@@ -606,7 +607,7 @@
         <button id="v-expanded" onclick="compactOpen(true)">Expanded</button>
       </div>
 
-      <div class="footnote">Automatic at 10k input tokens: older turns are summarised <b>after the answer lands</b>, never on send, and the marker appears at that moment — not only on the next open. Tap expands to the summary plus the original turns, read-only. Nothing is deleted: the transcript keeps every turn, the chip still reads “15 turns” (counts never regress), and the newest groundings are always in the request. If compaction fails, the same send goes out minus the oldest prose and the marker reads “Earlier turns omitted” instead.</div>
+      <div class="footnote">Automatic at 10k input tokens: older turns are summarised <b>after the answer lands</b>, never on send, and the marker appears at that moment — not only on the next open. Tap expands to the summary plus the original turns, read-only. Nothing is deleted: the transcript keeps every turn, the chip still reads “15 turns” (counts never regress), and the newest 3 groundings are always in the request. If compaction fails, the same send goes out minus the oldest prose and the marker reads “Earlier turns omitted” instead.</div>
     </div>
 
   </div>
