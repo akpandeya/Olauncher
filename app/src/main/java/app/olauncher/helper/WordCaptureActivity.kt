@@ -9,6 +9,7 @@ import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Typeface
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.Spanned
@@ -18,6 +19,7 @@ import android.text.style.CharacterStyle
 import android.text.style.ClickableSpan
 import android.text.style.ForegroundColorSpan
 import android.text.style.RelativeSizeSpan
+import android.text.style.StyleSpan
 import android.text.style.UnderlineSpan
 import android.util.TypedValue
 import android.view.Menu
@@ -36,6 +38,7 @@ import app.olauncher.data.store.Capture
 import app.olauncher.data.store.CapturePaths
 import app.olauncher.data.store.ContextSentence
 import app.olauncher.data.store.MeaningCardPlacement
+import app.olauncher.data.store.ReaderSelection
 import app.olauncher.data.store.ReaderText
 import app.olauncher.data.store.SavedMarks
 import app.olauncher.data.store.ScreenMapping
@@ -300,14 +303,12 @@ class WordCaptureActivity : AppCompatActivity() {
 
         // Keep the top bar clear of the status bar; the frame fills the rest. The overlay's
         // content view is set from a coroutine (after the first insets dispatch), so a
-        // fresh dispatch is requested here — the listener alone would never fire.
+        // fresh dispatch is requested below, after the listener is installed — the
+        // listener alone would never fire.
+        var bottomInset = ViewCompat.getRootWindowInsets(binding.overlayRoot)
+            ?.getInsets(WindowInsetsCompat.Type.systemBars())
+            ?.bottom ?: 0
         val overlayTopPad = binding.overlayRoot.paddingTop
-        ViewCompat.setOnApplyWindowInsetsListener(binding.overlayRoot) { v, insets ->
-            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(v.paddingLeft, overlayTopPad + bars.top, v.paddingRight, v.paddingBottom)
-            insets
-        }
-        ViewCompat.requestApplyInsets(binding.overlayRoot)
 
         val overlay = binding.captureOverlay
         overlay.accentColor = getColorFromAttr(R.attr.accentColor)
@@ -359,10 +360,31 @@ class WordCaptureActivity : AppCompatActivity() {
             // top edge comes from [MeaningCardPlacement].
             binding.overlayCard.post {
                 val box = overlay.viewBoxOf(word) ?: return@post
+                if (binding.overlayContainer.height <= 0) return@post
+                val width = if (binding.overlayCard.width > 0) {
+                    binding.overlayCard.width
+                } else {
+                    val marginPx = (24 * resources.displayMetrics.density).toInt()
+                    (binding.overlayContainer.width - marginPx).coerceAtLeast(0)
+                }
+                if (width > 0) {
+                    val widthSpec = View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY)
+                    val heightSpec = View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+                    binding.overlayCard.measure(widthSpec, heightSpec)
+                }
+                // After the explicit measure, measuredHeight is fresh; height can still
+                // hold the previous layout's larger value when the card shrank (a new
+                // pick hides the meaning line) and placement would sit it too high.
+                val cardHeight = if (width > 0) {
+                    binding.overlayCard.measuredHeight
+                } else {
+                    binding.overlayCard.height
+                }
                 val placement = MeaningCardPlacement.place(
                     box,
                     binding.overlayContainer.height,
-                    binding.overlayCard.height,
+                    cardHeight,
+                    bottomInset,
                 )
                 (binding.overlayCard.layoutParams as FrameLayout.LayoutParams).topMargin = placement.top
                 binding.overlayCard.requestLayout()
@@ -385,6 +407,7 @@ class WordCaptureActivity : AppCompatActivity() {
                 val show = { text: String ->
                     line.text = text
                     line.visibility = View.VISIBLE
+                    positionCard(selection?.head ?: head)
                 }
                 line.visibility = View.GONE
                 resolveMeaning(
@@ -398,6 +421,15 @@ class WordCaptureActivity : AppCompatActivity() {
             binding.overlayCard.visibility = View.VISIBLE
             positionCard(head)
         }
+
+        ViewCompat.setOnApplyWindowInsetsListener(binding.overlayRoot) { v, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            bottomInset = bars.bottom
+            v.setPadding(v.paddingLeft, overlayTopPad + bars.top, v.paddingRight, v.paddingBottom)
+            selection?.head?.let { positionCard(it) }
+            insets
+        }
+        ViewCompat.requestApplyInsets(binding.overlayRoot)
 
         fun openReaderView() {
             // The overlay is done with the frame; free it before the reader takes over.
@@ -542,30 +574,18 @@ class WordCaptureActivity : AppCompatActivity() {
         val lookupAllowed = WordLookup.isLookupAllowed(prefs.germanEnabled, prefs.germanLookup)
         val savedThisSession = HashSet<ScreenWord>()
 
-        var highlighted: ScreenWord? = null
-        var highlightedView: TextView? = null
-        var highlightSpan: CharacterStyle? = null
+        fun isWordSaved(word: ScreenWord): Boolean =
+            word in savedThisSession || savedByText.containsKey(SavedMarks.keyOf(word))
+
+        // Pending items are keyed by token (SavedMarks.keyOf), not by ScreenWord: the
+        // store dedupes case-insensitively, so two occurrences of the same word
+        // ("Regierung" / "Regierung.") are one selection, one save and one toast.
+        val selection = ReaderSelection<ScreenWord>(isSaved = ::isWordSaved, keyOf = SavedMarks::keyOf)
+        val pendingViews = HashMap<String, TextView>()
+        val pendingSpans = HashMap<String, CharacterStyle>()
+
+        val viewsByNode = HashMap<Int, TextView>()
         var meaningToken: String? = null
-
-        fun clearHighlight() {
-            val view = highlightedView ?: return
-            val span = highlightSpan ?: return
-            (view.text as Spannable).removeSpan(span)
-            highlighted = null
-            highlightedView = null
-            highlightSpan = null
-        }
-
-        fun setHighlight(word: ScreenWord, view: TextView) {
-            clearHighlight()
-            highlighted = word
-            highlightedView = view
-            val span = if (hasAccent) ForegroundColorSpan(accentColor) else UnderlineSpan()
-            (view.text as Spannable).setSpan(
-                span, word.charRange.first, word.charRange.last + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-            )
-            highlightSpan = span
-        }
 
         /** The persistent saved mark: the word keeps its underline after saving. */
         fun markSaved(word: ScreenWord, view: TextView) {
@@ -575,11 +595,7 @@ class WordCaptureActivity : AppCompatActivity() {
         }
 
         fun refreshSave() {
-            // Always visible: the count is what saves this session, plus the highlighted
-            // word still unsaved — so the button never reads "Save 0" without reason.
-            val pending = highlighted?.takeIf { it !in savedThisSession }
-            val n = savedThisSession.size + if (pending != null) 1 else 0
-            binding.readerSaveButton.text = getString(R.string.word_picker_save_n, n)
+            binding.readerSaveButton.text = getString(R.string.word_picker_save_n, selection.count)
         }
 
         fun showMeaning(token: String) {
@@ -601,29 +617,84 @@ class WordCaptureActivity : AppCompatActivity() {
 
         binding.readerClose.setOnClickListener { finish() }
         binding.readerSaveButton.setOnClickListener {
-            val word = highlighted?.takeIf { it !in savedThisSession } ?: return@setOnClickListener
-            val view = highlightedView ?: return@setOnClickListener
-            val token = SavedMarks.tokenOf(word)
-            val sentence = ContextSentence.around(
-                screenWords.paragraphOf(word),
-                word.charRange.first,
-                word.charRange.last + 1,
-            )
-            val saved = WordsStore(this).add(token, sentence)
-            WordLookup.enqueue(this, saved.id)
-            savedByText[token.lowercase()] = saved
-            savedThisSession += word
-            markSaved(word, view)
-            showToast(getString(R.string.saved_word_de, token))
+            if (selection.isEmpty) return@setOnClickListener
+            val wordsToSave = selection.pending.toList()
+            for (word in wordsToSave) {
+                val key = SavedMarks.keyOf(word)
+                val token = SavedMarks.tokenOf(word)
+                val sentence = ContextSentence.around(
+                    screenWords.paragraphOf(word),
+                    word.charRange.first,
+                    word.charRange.last + 1,
+                )
+                val saved = WordsStore(this).add(token, sentence)
+                WordLookup.enqueue(this, saved.id)
+                savedByText[token.lowercase()] = saved
+                savedThisSession += word
+
+                val view = pendingViews.remove(key)
+                val span = pendingSpans.remove(key)
+                if (view != null && span != null) {
+                    (view.text as Spannable).removeSpan(span)
+                }
+                if (view != null) {
+                    markSaved(word, view)
+                }
+            }
+            for ((nodeId, nodeWords) in wordsByNode) {
+                val view = viewsByNode[nodeId] ?: continue
+                for (nw in nodeWords) {
+                    if (savedByText.containsKey(SavedMarks.keyOf(nw))) {
+                        markSaved(nw, view)
+                    }
+                }
+            }
+            selection.clear()
+            val message = if (wordsToSave.size == 1) {
+                getString(R.string.saved_word_de, SavedMarks.tokenOf(wordsToSave[0]))
+            } else {
+                getString(R.string.words_saved_de, wordsToSave.size)
+            }
+            showToast(message)
             refreshSave()
         }
         refreshSave()
 
         fun wordTapSpan(word: ScreenWord, view: TextView) = object : ClickableSpan() {
             override fun onClick(widget: View) {
-                setHighlight(word, view)
+                val key = SavedMarks.keyOf(word)
+                val added = selection.tap(word)
+                if (added) {
+                    // The pending entry may come from another occurrence of the same
+                    // token: move the highlight off that copy before marking this one,
+                    // so exactly one occurrence of the token stays highlighted.
+                    val previousSpan = pendingSpans.remove(key)
+                    val previousView = pendingViews.remove(key)
+                    if (previousSpan != null && previousView != null) {
+                        (previousView.text as Spannable).removeSpan(previousSpan)
+                    }
+                    // Without an accent colour the pending mark must still differ from
+                    // the saved underline: pending means "selected, not saved yet", so
+                    // it is bolded instead of underlined.
+                    val span = if (hasAccent) ForegroundColorSpan(accentColor) else StyleSpan(Typeface.BOLD)
+                    (view.text as Spannable).setSpan(
+                        span, word.charRange.first, word.charRange.last + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+                    )
+                    pendingViews[key] = view
+                    pendingSpans[key] = span
+                } else if (!isWordSaved(word)) {
+                    // The tapped occurrence is the highlighted copy for its key — this
+                    // view loses the highlight and the pending entry is gone.
+                    val span = pendingSpans.remove(key)
+                    val pendingView = pendingViews.remove(key)
+                    if (span != null && pendingView != null) {
+                        (pendingView.text as Spannable).removeSpan(span)
+                    }
+                }
                 refreshSave()
-                showMeaning(SavedMarks.tokenOf(word))
+                // The meaning line follows the most recently tapped word — the
+                // selection's view of "last tap", not this span's word.
+                selection.lastTapped?.let { showMeaning(SavedMarks.tokenOf(it)) }
             }
 
             // Keep the prose look; the highlight on tap is added by setHighlight.
@@ -653,6 +724,7 @@ class WordCaptureActivity : AppCompatActivity() {
                 highlightColor = Color.TRANSPARENT
             }
             val spannable = textView.text as Spannable
+            viewsByNode[block.nodeId] = textView
             for (word in wordsByNode[block.nodeId].orEmpty()) {
                 val range = word.charRange
                 // Words already in the store carry the saved underline from the start.
