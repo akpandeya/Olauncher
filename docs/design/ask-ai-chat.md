@@ -94,12 +94,35 @@ row-level long-press.
 - **Multiple threads per subject**: the latest opens by default; the sheet lists
   all (first-question snippet, date, turn count). No global thread list — history
   lives where the subject lives.
-- **Context budget: 6k input tokens**, a named conservative constant (BYOK models
-  vary and the provider carries no context-size metadata). All of a thread's
-  groundings are re-injected as a leading block on **every** request, so
-  truncation only ever drops prose: when a send would exceed the budget, the
-  oldest prose turns leave the request and a muted "earlier turns omitted"
-  marker appears in the visible history. The full transcript is always stored.
+- **Context budget: 10k input tokens.** A named **cost** threshold, not a model
+  limit: BYOK models vary, the provider carries no context-size metadata, and
+  every turn re-bills the history it resends. Crossing it starts a
+  **compaction** (automatic — owner decision 2026-10-29): older turns are
+  summarised into one block, and the next request carries that summary instead of
+  them. Compaction runs **after the answer lands**, never on the critical path of
+  a send, and its own tokens count in the usage line. A send is never blocked: if
+  compaction is unavailable or fails, the request goes out with the fallback
+  below.
+- **Compaction is lossy for the model, lossless for the user.** The full
+  transcript is always stored; the summary replaces old turns *in the request*
+  only. In the transcript the summary sits where its turns were, as the muted
+  marker "Earlier turns summarised · see what it kept"; the marker also appears
+  at the moment the compaction happens, not only on the next open. Tapping
+  expands the summary and the original turns beneath it, read-only. It is the
+  same marker shape as "earlier turns omitted" — one pattern, two meanings: not
+  sent, still stored / summarised, still stored.
+- **Re-summarise from the stored originals, never from the previous summary**, so
+  drift is capped at one pass however long a thread lives. Failed turns are never
+  summarised — they were never in the context to begin with.
+- **Fallback when compaction cannot run:** the oldest prose turns leave the
+  request and "earlier turns omitted" appears in the visible history. Truncation
+  is the degraded path, not the plan.
+- **Groundings are re-injected as a leading block on every request** (the newest
+  2–3; older ones stay in the store), so neither compaction nor truncation can
+  drop the miss a thread is about.
+- **Counts never regress:** the chip's n, the usage line and the sheet's turn
+  count all count delivered turns, summarised ones included. A count that drops
+  would read as deleted history.
 
 ### Reliability
 
@@ -126,6 +149,8 @@ row-level long-press.
 - Storage failure shows an inline "Couldn't save this conversation" — a visible
   message is never silently lost. A corrupt store is renamed `ai_chats.json.bak`
   and chat starts fresh.
+- Compaction failure is not a user-facing error: the send proceeds with the
+  truncation fallback and the marker says which of the two happened.
 - Accessibility: 48dp targets; chips and sheet rows announce their content
   ("Chat, 4 turns"); Thinking/error lines are `liveRegion="polite"`.
 
@@ -138,8 +163,9 @@ row-level long-press.
 threads[{
   subject {kind: word|rule|topic, ref}
   createdAt, updatedAt
-  groundings [{id, kind, payload}]   // re-injected on every request
-  messages  [{role, text, ts, usage, failed?, groundingId?}]
+  groundings [{id, kind, payload}]            // newest 2–3 re-injected per request
+  summaries  [{text, coversUpTo, createdAt}]  // newest replaces the turns it covers
+  messages   [{role, text, ts, usage, failed?, groundingId?}]
 }]
 ```
 
@@ -147,6 +173,9 @@ threads[{
   prompt/picked/answer/ruleId/chips — with a round-trip decode test, because an
   unshapeable payload in a hand-rolled codec silently decodes to a blank card.
 - `groundingId` sits on the user turn that introduced the grounding.
+- `coversUpTo` is the message index/ts boundary, so the request split is
+  reconstructable and the expander knows which original turns to show under the
+  summary.
 
 ## Rejected ideas
 
@@ -163,6 +192,14 @@ threads[{
   threads; the proposal only names a *new* thread, the router handles resumes.
 - **LRU eviction of old threads** — deletes exactly the archive revisiting wants;
   every thread is kept and the request is budgeted instead.
+- **Dropping summarised turns from the store** — the model may forget them, the
+  learner must not; the transcript keeps every turn and expands under the marker.
+- **Summarising the previous summary** — drift compounds every pass; compaction
+  always re-summarises the stored originals.
+- **A manual "Summarise earlier turns" button** — the learner should not have to
+  manage tokens, and the marker keeps the result visible; automatic keeps the
+  request bounded without a control nobody presses. *Revisit* if summaries start
+  poisoning answers, or if learners are surprised by a line they did not trigger.
 - **Stem/inflection matching for saved words** — a wrong match silently misroutes
   into an unrelated conversation; exact citation-form match under-matches
   gracefully to a rule or topic thread.
@@ -190,7 +227,13 @@ None for the design stage. Watch items (check in device testing):
   to the deterministic router.
 - Does resuming a failed-only thread feel like a bug? If yes, carry the orphaned
   turn into the new draft.
-- Is the 6k budget comfortable on real threads? It is deliberately conservative.
+- Is the 10k trigger comfortable on real threads? It is deliberately
+  conservative, and it is a cost threshold, not a model limit.
+- Does a summary ever contradict the turns it covers? A poisoned summary is the
+  first suspect when answers drift; the exit path is the manual trigger (one
+  paragraph away, same marker) plus re-summarising from originals.
+- Do learners notice and understand the "Earlier turns summarised" marker, or
+  does it read as lost history?
 
 ## Flows
 
@@ -237,4 +280,24 @@ None for the design stage. Watch items (check in device testing):
    SUBJECT: word  → word thread   (header: die Brücke)
    SUBJECT: rule  → rule thread   (header: Two-way prepositions)
    missing/broken → rule fallback (reply still renders normally)
+```
+
+**Thread crosses 10k → automatic compaction**
+
+```
+ turn #21 send: request would exceed 10k input tokens
+     │ reply lands (never delayed by compaction)
+     ▼
+ compaction runs on turns #1…#14, from the STORED originals
+     │
+     ▼
+ transcript: "Earlier turns summarised · see what it kept"   ← appears now
+ turn #22 request: summary block + turns #15…#21 + newest groundings
+ chip still "Chat · 21"  (counts never regress)
+     │ tap the marker
+     ▼
+ summary text + the 14 original turns, read-only
+     │ compaction failed instead?
+     ▼
+ same send goes out minus the oldest prose, "earlier turns omitted"
 ```
