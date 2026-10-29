@@ -32,17 +32,27 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import app.olauncher.R
 import app.olauncher.data.Prefs
+import app.olauncher.data.store.AiPracticeGate
+import app.olauncher.data.store.AiProvider
+import app.olauncher.data.store.AiProviderConfig
+import app.olauncher.data.store.AiProviders
+import app.olauncher.data.store.AiRequest
+import app.olauncher.data.store.AiResult
 import app.olauncher.data.store.Capture
 import app.olauncher.data.store.CaptureMarks
 import app.olauncher.data.store.CapturePaths
 import app.olauncher.data.store.CapturePick
 import app.olauncher.data.store.CaptureSave
+import app.olauncher.data.store.KeySource
+import app.olauncher.data.store.KeyVault
 import app.olauncher.data.store.MeaningCardPlacement
+import app.olauncher.data.store.PracticeSchemaModes
 import app.olauncher.data.store.ReaderSelection
 import app.olauncher.data.store.ReaderText
 import app.olauncher.data.store.SavedMarks
 import app.olauncher.data.store.ScreenMapping
 import app.olauncher.data.store.SharedOfflineGermanStore
+import app.olauncher.data.store.SplitVerbAi
 import app.olauncher.data.store.SplitVerbs
 import app.olauncher.data.store.WiktionaryApi
 import app.olauncher.data.store.WiktionaryCache
@@ -59,6 +69,8 @@ import java.io.File
 import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 class WordCaptureActivity : AppCompatActivity() {
@@ -92,10 +104,31 @@ class WordCaptureActivity : AppCompatActivity() {
 
         /** Saved in [onSaveInstanceState]: the Reader is the visible mode (rotation keeps it). */
         private const val STATE_READER_MODE = "app.olauncher.READER_MODE"
+
+        /** Saved in [onSaveInstanceState]: AI split-verb suggestions issued this capture. */
+        private const val STATE_AI_JOIN_USED = "app.olauncher.AI_JOIN_USED"
+
+        /**
+         * Tier-3 AI split-verb suggestions per capture (#523): a capture is minutes long,
+         * so the cap bounds the cost of the fallback while still covering a few unknowns.
+         */
+        private const val AI_JOIN_SESSION_CAP = 3
     }
 
     /** Capture files this intent referenced (path → lastModified at open); deleted on close. */
     private val referencedFiles = LinkedHashMap<String, Long>()
+
+    /**
+     * AI split-verb suggestions issued this capture session (#523 tier 3). Counted when a
+     * request goes out, not when it succeeds, so retries cannot exceed [AI_JOIN_SESSION_CAP].
+     * Check-then-increment happens under [aiJoinMutex]: overlapping tap coroutines on IO must
+     * not both read below the cap and issue together. Carried through rotation via
+     * [STATE_AI_JOIN_USED], because rotation recreates the activity mid-capture.
+     */
+    private var aiJoinSuggestionsUsed = 0
+
+    /** Serializes the cap check-then-increment of [aiJoinSuggestionsUsed]. */
+    private val aiJoinMutex = Mutex()
 
     /** The Reader is the visible UI — remembered across rotation so it is not lost. */
     private var readerMode = false
@@ -124,6 +157,9 @@ class WordCaptureActivity : AppCompatActivity() {
         val screenLines = intent?.getStringArrayListExtra(WordScreenService.EXTRA_SCREEN_LINES)
         val capture = WordCapture.classify(readIncomingText())
         val restoredReader = savedInstanceState?.getBoolean(STATE_READER_MODE, false) == true
+        // Rotation mid-capture restores the issued-suggestions count with the reader mode,
+        // so the per-capture AI budget is not refilled by turning the device.
+        aiJoinSuggestionsUsed = savedInstanceState?.getInt(STATE_AI_JOIN_USED, 0) ?: 0
         if (nodesPath != null || screenLines != null || capture is Capture.Sentence || restoredReader) {
             setTheme(R.style.Theme_WordCapture_Reader)
         }
@@ -432,13 +468,14 @@ class WordCaptureActivity : AppCompatActivity() {
             focusedWord?.let { positionCard(it) }
         }
 
-        /** Runs the split-verb detector for [word] off the main thread; only the newest tap wins. */
+        /** Runs the split-verb cascade for [word] off the main thread; only the newest tap wins. */
         fun detectSplitVerb(word: ScreenWord) {
             val requestId = ++overlayJoinRequestId
             hideJoinChip()
             val nodeWords = screenWords.words.filter { it.nodeId == word.nodeId }
+            val paragraph = screenWords.paragraphOf(word)
             lifecycleScope.launch {
-                val match = resolveSplitVerb(nodeWords, word, prefs.germanOfflineDictionary, lookupAllowed)
+                val match = resolveSplitVerb(nodeWords, word, paragraph, prefs.germanOfflineDictionary, lookupAllowed)
                 if (overlayJoinRequestId != requestId) return@launch
                 if (match != null) showJoinChip(match)
             }
@@ -613,6 +650,9 @@ class WordCaptureActivity : AppCompatActivity() {
         // A rotation re-runs onCreate with the same intent; remember a Reader user's
         // mode so they are not dropped back into the overlay.
         if (readerMode) outState.putBoolean(STATE_READER_MODE, true)
+        // The AI suggestion cap counts a whole capture session: a rotation mid-capture
+        // must not grant a fresh budget (the activity is recreated, not finished).
+        outState.putInt(STATE_AI_JOIN_USED, aiJoinSuggestionsUsed)
     }
 
     /** Closes the capture: ✕, back and the close swipe all land here via [finish]. */
@@ -747,13 +787,14 @@ class WordCaptureActivity : AppCompatActivity() {
             binding.readerJoinChip.visibility = View.VISIBLE
         }
 
-        /** Runs the split-verb detector for [word] off the main thread; only the newest tap wins. */
+        /** Runs the split-verb cascade for [word] off the main thread; only the newest tap wins. */
         fun detectSplitVerb(word: ScreenWord) {
             val requestId = ++joinRequestId
             hideJoinChip()
             val nodeWords = wordsByNode[word.nodeId].orEmpty()
+            val paragraph = screenWords.paragraphOf(word)
             lifecycleScope.launch {
-                val match = resolveSplitVerb(nodeWords, word, prefs.germanOfflineDictionary, lookupAllowed)
+                val match = resolveSplitVerb(nodeWords, word, paragraph, prefs.germanOfflineDictionary, lookupAllowed)
                 if (joinRequestId != requestId) return@launch
                 if (match != null) showJoinChip(match)
             }
@@ -986,21 +1027,133 @@ class WordCaptureActivity : AppCompatActivity() {
      * Resolves the split verb behind [tapped] (#523). Tier 1 queries the bundled dictionary
      * ([SplitVerbs.find], only when the offline dictionary is on); on a miss, and only when
      * online look-ups are allowed, tier 2 composes "<particle><verb lemma>" online and
-     * verifies it exists before offering it. Runs on Dispatchers.IO, never on the tap thread.
+     * verifies it exists before offering it. When both find nothing, tier 3 asks the AI for
+     * a lemma from [paragraph] and verifies it before it may show ([aiSplitVerb]). Runs on
+     * Dispatchers.IO, never on the tap thread.
      */
     private suspend fun resolveSplitVerb(
         nodeWords: List<ScreenWord>,
         tapped: ScreenWord,
+        paragraph: String,
         offlineAllowed: Boolean,
         onlineAllowed: Boolean,
     ): SplitVerbs.Match? = withContext(Dispatchers.IO) {
+        val pair = SplitVerbs.pairs(nodeWords, tapped).firstOrNull()
         if (offlineAllowed) {
             val store = SharedOfflineGermanStore.get(applicationContext)
             SplitVerbs.find(nodeWords, tapped) { store.splitVerbLemmas(it) }?.let { return@withContext it }
         }
-        if (!onlineAllowed) return@withContext null
-        val pair = SplitVerbs.pairs(nodeWords, tapped).firstOrNull() ?: return@withContext null
-        onlineSplitVerb(pair.first, pair.second)
+        if (onlineAllowed && pair != null) {
+            onlineSplitVerb(pair.first, pair.second)?.let { return@withContext it }
+        }
+        // Tier 3: only when both dictionary tiers found nothing. The AI proposes, the
+        // dictionary verifies — a proposal alone never becomes a chip.
+        if (pair != null) aiSplitVerb(pair, tapped, paragraph, offlineAllowed)?.let { return@withContext it }
+        null
+    }
+
+    /**
+     * Tier 3 of the join cascade (#523): both dictionary tiers found nothing, so the AI is
+     * asked about [tapped] and its [paragraph]. The answer is only a proposal — the lemma is
+     * verified against the dictionary ([SharedOfflineGermanStore.isVerbLemma], or a Wiktionary
+     * existence check when the bundled dictionary is off) before the chip may show, and the
+     * chip then joins and saves through the same path as tiers 1-2 (never a direct save).
+     *
+     * Gated by the AI-practice switch, key and model ([AiPracticeGate]), like the practice
+     * paths; at most [AI_JOIN_SESSION_CAP] requests per capture, counted when a request is
+     * issued. Any error, timeout or invalid answer yields null, silently. The caller runs this
+     * on Dispatchers.IO; the tap path never waits on it.
+     */
+    private suspend fun aiSplitVerb(
+        pair: Pair<ScreenWord, ScreenWord>,
+        tapped: ScreenWord,
+        paragraph: String,
+        offlineAllowed: Boolean,
+    ): SplitVerbs.Match? {
+        if (aiJoinSuggestionsUsed >= AI_JOIN_SESSION_CAP) return null
+        val aiPrefs = Prefs(applicationContext)
+        // Same key source as the practice feature: KeyVault through a KeySource, never logged.
+        val vault = KeyVault(applicationContext)
+        val keySource = KeySource { vault.read() }
+        if (!AiPracticeGate.canRun(aiPrefs.aiPracticeEnabled, !keySource.get().isNullOrBlank(), aiPrefs.aiModel)) {
+            return null
+        }
+        val provider = AiProviders.create(
+            AiProviderConfig(aiPrefs.aiProvider, aiPrefs.aiBaseUrl, aiPrefs.aiModel),
+            keySource,
+        ) ?: return null
+        // One suggestion is counted as soon as its first request goes out: retries and
+        // failed verifications still count, so the cap can never be exceeded. The lock
+        // makes the check-then-increment atomic: overlapping tap coroutines on IO can
+        // otherwise both read below the cap and issue together.
+        aiJoinMutex.withLock {
+            if (aiJoinSuggestionsUsed >= AI_JOIN_SESSION_CAP) return null
+            aiJoinSuggestionsUsed++
+        }
+        val result = requestSplitVerb(
+            provider,
+            paragraph,
+            SavedMarks.tokenOf(tapped),
+            PracticeSchemaModes.initialMode(aiPrefs.aiModel),
+        )
+        val answer = (result as? AiResult.Ok)?.let { SplitVerbAi.parseResponse(it.text) } ?: return null
+        if (!answer.isSplitVerb) return null
+        val lemma = answer.lemma ?: return null
+        return if (verifyVerbLemma(lemma, offlineAllowed)) {
+            SplitVerbs.Match(pair.first, pair.second, lemma)
+        } else {
+            null
+        }
+    }
+
+    /**
+     * One AI request for the split-verb answer. The first mode comes from
+     * [PracticeSchemaModes.initialMode] — the same starting point the practice generation uses,
+     * because some models (e.g. glm-5.3-flash) reject strict `json_schema` and would otherwise
+     * burn every attempt on a mode they cannot answer. Retried once with `json_object` on the
+     * provider's capability code ([PracticeSchemaModes]). Never throws; failures come back as
+     * [AiResult.Error].
+     */
+    private suspend fun requestSplitVerb(
+        provider: AiProvider,
+        paragraph: String,
+        tapped: String,
+        initialMode: String,
+    ): AiResult {
+        val prompt = SplitVerbAi.buildPrompt(paragraph, tapped)
+        val strict = provider.complete(
+            AiRequest(
+                prompt = prompt,
+                jsonMode = true,
+                jsonSchema = if (initialMode == PracticeSchemaModes.JSON_SCHEMA) SplitVerbAi.schema() else null,
+                maxTokens = SplitVerbAi.MAX_TOKENS,
+                readTimeoutMs = SplitVerbAi.READ_TIMEOUT_MS,
+            )
+        )
+        val error = strict as? AiResult.Error ?: return strict
+        if (PracticeSchemaModes.fallbackMode(initialMode, error) == null) return strict
+        return provider.complete(
+            AiRequest(
+                prompt = prompt,
+                jsonMode = true,
+                jsonSchema = null,
+                maxTokens = SplitVerbAi.MAX_TOKENS,
+                readTimeoutMs = SplitVerbAi.READ_TIMEOUT_MS,
+            )
+        )
+    }
+
+    /**
+     * The mandatory verification before an AI lemma may be offered (#523 tier 3): a known verb
+     * lemma in the bundled dictionary, or a Wiktionary existence check when that dictionary is
+     * off. A failed verification shows nothing. Runs on Dispatchers.IO (the caller).
+     */
+    private suspend fun verifyVerbLemma(lemma: String, offlineAllowed: Boolean): Boolean = withContext(Dispatchers.IO) {
+        if (offlineAllowed) {
+            SharedOfflineGermanStore.get(applicationContext).isVerbLemma(lemma)
+        } else {
+            WiktionaryApi.lookup(lemma) is WiktionaryApi.LookupResult.Found
+        }
     }
 
     /**
