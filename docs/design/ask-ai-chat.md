@@ -120,12 +120,20 @@ sheet**, on wrong and almost rows alike; there is no row-level long-press.
 - **AI proposes the subject only when a *new* thread has both candidates** (§6). A
   proposal's only job is to name a thread that doesn't exist yet; when both threads
   already exist, the deterministic router picks (Decided).
-- **Context budget (rev 2, reviews B3 + E2).** "Unbounded" applies to what the user
-  may *say*, not to what is resent: each thread has a per-thread token budget. When
-  a send would exceed it, the oldest delivered turns are dropped from the request
-  and a muted "earlier turns omitted" marker is inserted at the top of the visible
-  history. The full transcript stays stored; only the request window shrinks. This
-  is also the eviction policy (§9): every thread is kept, nothing is deleted.
+- **Context budget (rev 3, PR #700 review 1).** "Unbounded" applies to what the user
+  may *say*, not to what is resent. Two rules keep requests finite:
+  1. **Grounding is re-injected on every request.** All of the thread's grounding
+     records are sent as a leading block each time — truncation therefore only ever
+     drops prose, and the miss context can never silently fall out of the request
+     while the card still shows it (the A3 × B3 collision).
+  2. **Budget = a conservative constant: 6k input tokens.** `AiProvider` carries no
+     context-size metadata and the model is BYOK-configurable, so the budget is a
+     named constant, deliberately conservative because the model may change
+     underneath. When a send would exceed it, the oldest delivered prose turns are
+     dropped from the request and a muted "earlier turns omitted" marker is inserted
+     at the top of the visible history. The full transcript stays stored; only the
+     request window shrinks. This is also the eviction policy (§9): every thread is
+     kept, nothing is deleted.
 - **Retry ordering (rev 2, review B2).** Only the **newest** failed turn is
   retryable. Once a newer turn is delivered, an older failed turn converts to
   "Ask again" — a new turn quoting the original question — never a retry, so
@@ -146,7 +154,7 @@ sheet**, on wrong and almost rows alike; there is no row-level long-press.
 | Thread with pending failed turn | "Chat · n" (failed not counted) | Latest thread; failed turn visible at tail: muted tile + "Not sent · Retry" | Re-expanded with the new miss line | **Retry** (newest failed turn only) re-sends with current full context; a new message may also be sent normally — once a newer turn is delivered, the older failed turn converts to "Ask again" (§4) |
 
 - Repeated misses of the same item land in the same subject thread; the chip count
-  grows and never regresses to "Ask AI" once delivered messages exist.
+  grows and never regresses to "Ask AI" once delivered turns exist.
 
 ## 5. In-chat state machine and errors
 
@@ -154,8 +162,9 @@ sheet**, on wrong and almost rows alike; there is no row-level long-press.
 |---|---|---|---|
 | idle | Messages, grounding card, usage line | Empty, enabled | → composing |
 | composing | Draft in field (survives rotation — request scope is `viewModelScope`, never an Activity; rev 2, review D) | Enabled; Send enabled when non-blank | → waiting on Send |
-| waiting | User tile appended; "Thinking…" placeholder; usage unchanged. A quiet **Cancel** control on the placeholder (rev 2, review E1: most of streaming's value, none of its interface work — the user-triggered twin of cancel-on-destroy) | **Send disabled** (single outbox — a second request would race subject filing on fresh threads); draft kept | → success, error, or cancelled (placeholder removed, draft restored, nothing persisted) |
+| waiting | User tile appended; "Thinking…" placeholder; usage unchanged. A quiet **Cancel** control on the placeholder (rev 2, review E1: most of streaming's value, none of its interface work) | **Send disabled** (single outbox — a second request would race subject filing on fresh threads); draft kept | → success, error, or cancelled (see below; the cancelled semantics live in their own row) |
 | success | Placeholder replaced by reply; usage updates; thread persisted | Cleared, enabled | → idle |
+| cancelled | Placeholder removed; **the user tile is removed and its text returns to the composer**; if the cancelled turn was the thread's first, **the thread is deleted** (nothing delivered, nothing kept). On a resumed thread, prior history is untouched (rev 3, PR #700 review 4) | Draft restored, enabled | → composing |
 
 Errors render as an inline `accentRose` line under the user tile (replacing the
 placeholder); the turn persists with a `failed` flag **before the request fires**;
@@ -195,14 +204,16 @@ nothing is lost, and the model never sees an unanswered question).
 Requested once, on the first send of a fresh both-candidate thread. Later turns
 never carry or act on one (parsing scoped to the thread's first assistant message).
 
-**Wire format (rev 2, review A2).** Chat is prose — every chat request passes
-`jsonMode = false` explicitly (`AiRequest.jsonMode` defaults to `true` for the
-practice contract, so the default is wrong for chat). With JSON off, a JSON object
-would arrive fenced or phrased unpredictably, so the proposal is a plain sentinel:
-the reply's **first line** is exactly `SUBJECT: word` or `SUBJECT: rule`, parsed on
-a literal prefix, case-sensitive. The sentinel line is **stripped before render** —
-the learner never sees scaffolding. No proposal on the line → treated as missing →
-rule fallback.
+**Wire format (rev 3, PR #700 review 2 — hardened).** Chat is prose — every chat
+request passes `jsonMode = false` explicitly (`AiRequest.jsonMode` defaults to
+`true` for the practice contract, so the default is wrong for chat). The proposal
+is a plain sentinel: the **first non-empty line** of the reply, **trimmed**,
+surrounding `*` / `` ` `` markers stripped, compared **case-insensitively** against
+`subject: word` / `subject: rule`. Strict "first line exactly, case-sensitive"
+would miss `**SUBJECT: word**`, a leading blank line or a trailing space — and each
+miss becomes a silent rule fallback that watch item 1 would then get blamed for.
+The sentinel line is **stripped before render** — the learner never sees
+scaffolding. No parseable proposal → treated as missing → rule fallback.
 
 | Case | Filed to | Header | Grounding |
 |---|---|---|---|
@@ -221,10 +232,10 @@ rule fallback.
 | Thread sheet, 1 / many | One / newest-first rows (snippet, date, count) + "New conversation" action in the sheet |
 | "New conversation", back before sending | Never persisted — a thread exists only from its first send; next entry resumes the previous latest |
 | Word deleted with threads | Threads kept as an inert archive (chat never writes `WordsStore`, word deletion never writes the chat store). **Ref = normalized citation text**, so re-saving the same noun re-links the threads automatically. Known trade-off (rev 2, review D, written down): two saved words sharing a citation form (`Bank`, `See`, `Band`) share one thread, and delete-then-save of a *different* word with the same form resurrects an unrelated archive — accepted for v1 |
-| Storage full | Write fails, session stays usable; last successful write wins (same as every prefs-backed store) |
-| Rotation while composing / waiting | Draft survives (ViewModel); waiting cancels on destroy — the persisted failed turn shows "Not sent · Retry" on return |
+| Storage full | Write fails, session stays usable; an inline muted "Couldn't save this conversation" line shows (§5) — a visible message is never silently lost; last successful write wins |
+| Rotation while composing / waiting | Request scope is `viewModelScope` (§5): rotation cancels **nothing** — the request continues, the answer lands, no fake "Not sent". The persisted failed turn shows "Not sent · Retry" only after a genuine failure or process death (rev 3: §7 synced with the §5/§D decision) |
 | TalkBack | Chip descriptions: "Ask AI about this mistake" / "Chat, 4 turns"; sheet rows read as one unit; assistant/user messages announce "AI replied:" / "You said:"; Thinking, Cancel and error lines are `liveRegion="polite"`; 48dp targets from `today_touch_min_height` |
-| No-network device | Entries stay visible (config exists); no pre-send offline check — sending fails NETWORK with Retry |
+| No-network device | Entries follow the §1 gate (`AiPracticeGate`); no pre-send offline check — sending fails NETWORK with Retry |
 
 ## 8. Flows
 
@@ -351,11 +362,16 @@ rule fallback.
   temp-file rename): `threads[{ subject{kind: word|rule|topic, ref}, createdAt,
   updatedAt, groundings[{id, kind, payload}], messages[{role, text, ts, usage,
   failed?, groundingId?}] }]`.
-  - **Grounding is persisted (rev 2, review A3).** One `grounding` record per miss
-    (or word block), referenced by the turn that introduced it. Without it, a
-    resumed thread's "history + new miss grounding" request loses miss #2 from the
-    *following* turn's context, and the grounding card could not re-render from
-    stored data when a thread is reopened from the sheet days later.
+  - **`groundingId` lives on the user turn that introduced the grounding** (rev 3,
+    PR #700 review 3) — one grounding per miss or word block, carried by the turn
+    that created it, re-injected as a leading block on every request (§4).
+  - **`payload` is typed per `kind`** (rev 3 — an unshapeable payload in a
+    hand-rolled codec means schema drift silently decodes to a blank card):
+    - `word`: `{ text, meaning, context }`
+    - `miss`: `{ prompt, picked, answer, ruleId, chips[] }`
+    - `topic` groundings reuse the `miss` shape with `ruleId` null.
+    A decode test asserts each kind survives a round-trip and that unknown fields
+    are dropped, not fatal — matching the codec pattern.
   - **Topic is a third subject kind** (§4, review B1): live-topic items without a
     `ruleId` thread per drill type.
 - Generation rides the existing `AiProvider` config (`AI_PROVIDER`, `AI_BASE_URL`,
@@ -433,6 +449,22 @@ noted):
   (user + assistant), not messages.
 - **Ref normalization in one place** (trim + lowercase + NFC); duplicate citation
   forms (`Bank`, `See`, `Band`) sharing a thread is a written-down v1 trade-off.
+
+PR review round (rev 3, applied 2026-10-29):
+- **Grounding re-injected as a leading block on every request**; truncation only
+  drops prose — the budget can never silently remove the miss context.
+- **Budget = 6k input tokens, a named conservative constant** (BYOK models vary; no
+  context-size metadata exists on `AiProvider`).
+- **`SUBJECT:` parsing hardened**: first non-empty line, trimmed, emphasis markers
+  stripped, case-insensitive.
+- **`payload` typed per kind** (`word`: text/meaning/context; `miss`:
+  prompt/picked/answer/ruleId/chips) + round-trip decode test; `groundingId` stated
+  to live on the user turn that introduced the grounding.
+- **Cancel fully specified**: tile removed, draft restored; a first-turn cancel
+  deletes the thread.
+- §7 rows re-synced (rotation = `viewModelScope`, gate wording, storage-full line);
+  last "messages" wording converted to turns; mock screen 5 gained the collapsed
+  grounding card.
 
 ## Open questions
 
