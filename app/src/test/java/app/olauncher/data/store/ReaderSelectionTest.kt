@@ -188,4 +188,76 @@ class ReaderSelectionTest {
         assertEquals(setOf("apfel"), snapshot)
         assertEquals(setOf("apfel", "birne"), selection.pending)
     }
+
+    // -- addAll (stroke / circle / committed long-press drag) ------------------------------
+
+    @Test
+    fun addAllAddsOnlyUnsavedAndNonPendingItemsKeepingOrder() {
+        val savedWords = setOf("dattel")
+        val selection = ReaderSelection<String>(isSaved = { it in savedWords })
+
+        val added = selection.addAll(listOf("apfel", "dattel", "birne", "apfel"))
+
+        assertEquals(2, added)
+        assertEquals(listOf("apfel", "birne"), selection.pending.toList())
+        // The meaning line follows the gesture's first word, not the last added.
+        assertEquals("apfel", selection.lastTapped)
+        assertTrue(selection.isPending("apfel"))
+        assertFalse(selection.isPending("dattel"))
+    }
+
+    @Test
+    fun addAllNeverRemovesAnExistingPendingItem() {
+        val selection = ReaderSelection<String>()
+        selection.tap("apfel")
+
+        val added = selection.addAll(listOf("apfel", "birne"))
+
+        assertEquals(1, added)
+        assertEquals(listOf("apfel", "birne"), selection.pending.toList())
+        assertEquals(2, selection.count)
+        assertEquals("apfel", selection.lastTapped)
+    }
+
+    @Test
+    fun addAllSetsLastTappedToTheFirstGivenItemEvenWhenNothingIsAdded() {
+        val selection = ReaderSelection<String>()
+        selection.tap("apfel")
+        selection.tap("birne")
+
+        selection.addAll(listOf("citrone", "dattel"))
+
+        assertEquals("citrone", selection.lastTapped)
+        assertEquals(listOf("apfel", "birne", "citrone", "dattel"), selection.pending.toList())
+    }
+
+    @Test
+    fun addAllOfEmptyListLeavesSelectionUnchanged() {
+        val selection = ReaderSelection<String>()
+        selection.tap("apfel")
+
+        val added = selection.addAll(emptyList())
+
+        assertEquals(0, added)
+        assertEquals("apfel", selection.lastTapped)
+        assertEquals(listOf("apfel"), selection.pending.toList())
+    }
+
+    @Test
+    fun addAllWithSharedKeyKeepsOneEntryAndTheEarlierOccurrence() {
+        // Re-adding an already-pending key through a different occurrence must not create a
+        // second entry or move the stored occurrence (unlike tap).
+        val first = ScreenWord("Regierung", ScreenBox(0, 0, 90, 30), nodeId = 1, charRange = 0..8)
+        val other = ScreenWord("Regierung.", ScreenBox(300, 420, 400, 450), nodeId = 2, charRange = 40..49)
+        assertEquals(SavedMarks.keyOf(first), SavedMarks.keyOf(other))
+        val selection = ReaderSelection<ScreenWord>(keyOf = SavedMarks::keyOf)
+
+        selection.tap(first)
+        val added = selection.addAll(listOf(other))
+
+        assertEquals(0, added)
+        assertEquals(1, selection.count)
+        assertEquals(listOf(first), selection.pending.toList())
+        assertEquals(other, selection.lastTapped)
+    }
 }

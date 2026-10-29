@@ -141,6 +141,17 @@
                 android:visibility="gone" />
 
             <TextView
+                android:id="@+id/overlaySaveButton"
+                style="@style/TextMedium"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?attr/selectableItemBackground"
+                android:gravity="center_vertical"
+                android:minHeight="48dp"
+                android:paddingHorizontal="10dp"
+                android:textColor="?attr/primaryColor" />
+
+            <TextView
                 android:id="@+id/overlayMenu"
                 style="@style/TextMedium"
                 android:layout_width="wrap_content"
@@ -209,17 +220,6 @@
                         android:minHeight="48dp"
                         android:paddingHorizontal="10dp"
                         android:text="@string/capture_reader_view"
-                        android:textColor="?attr/primaryColor" />
-
-                    <TextView
-                        android:id="@+id/overlayCardSave"
-                        style="@style/TextMedium"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:background="?attr/selectableItemBackground"
-                        android:gravity="center_vertical"
-                        android:minHeight="48dp"
-                        android:paddingHorizontal="10dp"
                         android:textColor="?attr/primaryColor" />
                 </LinearLayout>
             </LinearLayout>
