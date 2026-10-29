@@ -7,6 +7,7 @@ import app.olauncher.R
 import org.json.JSONObject
 import java.io.File
 import java.text.Normalizer
+import java.util.Locale
 
 private const val TAG = "OfflineGermanStore"
 
@@ -185,6 +186,33 @@ class OfflineGermanStore(context: Context) {
             Log.w(TAG, "Offline dictionary unreadable; deleting it so the next lookup reinstalls", e)
             discard(db)
             emptyList()
+        }
+    }
+
+    /**
+     * True when [lemma] is a known verb lemma in the bundled dictionary (#523 tier 3):
+     * the verification before an AI-proposed split-verb lemma may be offered. The index
+     * holds lowercased lemmas, so the input is lowercased first; only pos 'verb' counts,
+     * so a same-spelled noun cannot verify. Call on Dispatchers.IO.
+     */
+    fun isVerbLemma(lemma: String): Boolean {
+        val clean = lemma.trim().lowercase(Locale.GERMAN)
+        if (clean.isEmpty()) return false
+        val db = try {
+            open()
+        } catch (e: Exception) {
+            Log.w(TAG, "Offline dictionary unavailable; treating lemma as unknown", e)
+            return false
+        }
+        return try {
+            db.rawQuery(
+                "SELECT 1 FROM entries WHERE lemma = ? AND pos = 'verb' LIMIT 1",
+                arrayOf(clean)
+            ).use { it.moveToFirst() }
+        } catch (e: Exception) {
+            Log.w(TAG, "Offline dictionary unreadable; deleting it so the next lookup reinstalls", e)
+            discard(db)
+            false
         }
     }
 
