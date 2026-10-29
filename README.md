@@ -89,6 +89,17 @@ Backup (Settings, Backup):
 - Nightly backup saves a backup every night to a folder you pick. It keeps the last 7.
 - Not included: photo wallpapers, weather and rate caches, and held notifications.
 
+## Build from source
+
+Build the release APK the same way the release pipeline does:
+
+```
+scripts/build-release.sh            # builds thumbline.apk and runs the unit tests
+scripts/build-release.sh --publish  # also creates a build-<n> GitHub release
+```
+
+The Gradle JVM heap is capped at 3 GB in `gradle.properties` (`org.gradle.jvmargs=-Xmx3g`). On machines with 8 GB of RAM a larger heap can push the build past what the OS will give it, and the Gradle process gets killed (`Killed: 9`, exit 137) during the test/lint stage. If you raise it, make sure your machine has the headroom. Build and release configuration details are in `CLAUDE.md`.
+
 ## License
 
 [GNU GPLv3](https://www.gnu.org/licenses/gpl-3.0.en.html)
