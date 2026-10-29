@@ -54,4 +54,23 @@ class CaptureSaveTest {
     fun planOfNoPicksIsEmpty() {
         assertEquals(emptyList<CaptureSave.SaveItem>(), CaptureSave.plan(emptyList(), paragraphOf))
     }
+
+    @Test
+    fun splitVerbPickGivesOneItemSpanningVerbToParticle() {
+        val paragraph = "Ich nehme das Paket morgen auf."
+        val verbStart = paragraph.indexOf("nehme")
+        val verb = ScreenWord("nehme", null, 33, verbStart until verbStart + "nehme".length)
+        val particleStart = paragraph.indexOf("auf.")
+        val particle = ScreenWord("auf.", null, 33, particleStart until particleStart + "auf.".length)
+
+        val plan = CaptureSave.plan(
+            listOf(CapturePick.SplitVerb(verb, particle, "aufnehmen")),
+            { paragraph },
+        )
+
+        assertEquals(1, plan.size)
+        assertEquals("aufnehmen", plan[0].text)
+        assertEquals("Ich nehme das Paket morgen auf.", plan[0].context)
+        assertEquals(listOf(verb, particle), plan[0].words)
+    }
 }

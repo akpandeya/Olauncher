@@ -23,3 +23,6 @@ google-services.json
 # Offline dictionary source and local generation/test workspace (never shipped).
 /.dictionary-work/
 __pycache__/
+
+# Kotlin build sessions (created by Gradle runs, never shipped).
+.kotlin/

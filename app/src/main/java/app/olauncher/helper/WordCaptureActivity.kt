@@ -42,6 +42,8 @@ import app.olauncher.data.store.ReaderSelection
 import app.olauncher.data.store.ReaderText
 import app.olauncher.data.store.SavedMarks
 import app.olauncher.data.store.ScreenMapping
+import app.olauncher.data.store.SharedOfflineGermanStore
+import app.olauncher.data.store.SplitVerbs
 import app.olauncher.data.store.WiktionaryApi
 import app.olauncher.data.store.WiktionaryCache
 import app.olauncher.data.store.ScreenNode
@@ -54,6 +56,7 @@ import app.olauncher.data.store.Word
 import app.olauncher.data.store.WordsStore
 import app.olauncher.databinding.ActivityWordCaptureBinding
 import java.io.File
+import java.util.Locale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -329,9 +332,10 @@ class WordCaptureActivity : AppCompatActivity() {
 
         // One pending set, shared with the reader opened from here: a tap toggles exactly
         // like the reader, a stroke/circle or a long-press drag adds every touched word.
+        // Keys come from SavedMarks.keyOf(pick), so a joined split verb keys by its lemma.
         val selection = ReaderSelection<CapturePick>(
-            isSaved = { captureSavedByText.containsKey(SavedMarks.keyOf(it.words.first())) },
-            keyOf = { SavedMarks.keyOf(it.words.first()) },
+            isSaved = { captureSavedByText.containsKey(SavedMarks.keyOf(it)) },
+            keyOf = { SavedMarks.keyOf(it) },
         )
         captureSelection = selection
 
@@ -342,6 +346,7 @@ class WordCaptureActivity : AppCompatActivity() {
         binding.overlaySaveCount.typeface = mainTypeface()
         binding.overlayCardWord.typeface = mainTypeface()
         binding.overlayCardMeaning.typeface = mainTypeface()
+        binding.overlayCardJoin.typeface = mainTypeface()
         binding.overlayCardReader.typeface = mainTypeface()
         // Hint seen: keep the space (INVISIBLE, not GONE) so the ⋮ stays at the trailing edge.
         if (prefs.captureHintSeen) binding.overlayHint.visibility = View.INVISIBLE
@@ -349,6 +354,10 @@ class WordCaptureActivity : AppCompatActivity() {
         /** The word the meaning card is showing — drawn with the thicker outline. */
         var focusedWord: ScreenWord? = null
         var meaningToken: String? = null
+
+        /** The split-verb join the card is offering, if any; the id drops stale detections. */
+        var overlayJoinMatch: SplitVerbs.Match? = null
+        var overlayJoinRequestId = 0
 
         fun refreshPending() {
             overlay.pendingWords = selection.pending.flatMap { it.words }.toSet()
@@ -400,6 +409,38 @@ class WordCaptureActivity : AppCompatActivity() {
                 )
                 (binding.overlayCard.layoutParams as FrameLayout.LayoutParams).topMargin = placement.top
                 binding.overlayCard.requestLayout()
+            }
+        }
+
+        fun hideJoinChip() {
+            overlayJoinMatch = null
+            binding.overlayCardJoin.visibility = View.GONE
+        }
+
+        fun showJoinChip(match: SplitVerbs.Match) {
+            overlayJoinMatch = match
+            binding.overlayCardJoin.text = getString(
+                R.string.capture_join_split,
+                SavedMarks.tokenOf(match.verb),
+                SavedMarks.tokenOf(match.particle),
+                match.lemma,
+            )
+            // The static contentDescription is only the XML fallback; announce the
+            // actual suggestion so screen readers read the real verbs and lemma.
+            binding.overlayCardJoin.contentDescription = binding.overlayCardJoin.text
+            binding.overlayCardJoin.visibility = View.VISIBLE
+            focusedWord?.let { positionCard(it) }
+        }
+
+        /** Runs the split-verb detector for [word] off the main thread; only the newest tap wins. */
+        fun detectSplitVerb(word: ScreenWord) {
+            val requestId = ++overlayJoinRequestId
+            hideJoinChip()
+            val nodeWords = screenWords.words.filter { it.nodeId == word.nodeId }
+            lifecycleScope.launch {
+                val match = resolveSplitVerb(nodeWords, word, prefs.germanOfflineDictionary, lookupAllowed)
+                if (overlayJoinRequestId != requestId) return@launch
+                if (match != null) showJoinChip(match)
             }
         }
 
@@ -463,12 +504,15 @@ class WordCaptureActivity : AppCompatActivity() {
         overlay.onTap = { word ->
             if (word == null) {
                 meaningToken = null
+                overlayJoinRequestId++
+                hideJoinChip()
                 hideCard()
             } else {
                 markHintSeen()
                 selection.tap(CapturePick.Word(word))
                 val focused = selection.lastTapped?.words?.firstOrNull() ?: word
                 showCard(focused)
+                detectSplitVerb(word)
             }
             refreshSaveCount()
         }
@@ -476,6 +520,8 @@ class WordCaptureActivity : AppCompatActivity() {
         // A stroke, circle or committed long-press drag adds every touched word (add-only).
         overlay.onAddSelection = { picked ->
             markHintSeen()
+            overlayJoinRequestId++
+            hideJoinChip()
             selection.addAll(picked.words.map { CapturePick.Word(it) })
             showCard(picked.head)
             refreshSaveCount()
@@ -492,14 +538,46 @@ class WordCaptureActivity : AppCompatActivity() {
         }
         binding.overlayCardReader.setOnClickListener { openReaderView() }
 
+        binding.overlayCardJoin.setOnClickListener {
+            val match = overlayJoinMatch ?: return@setOnClickListener
+            selection.join(
+                CapturePick.SplitVerb(match.verb, match.particle, match.lemma),
+                listOf(CapturePick.Word(match.verb), CapturePick.Word(match.particle)),
+            )
+            hideJoinChip()
+            refreshPending()
+            refreshSaveCount()
+            // The card now explains the joined verb, not the tapped component word —
+            // the reader's chip handler shows the lemma's meaning the same way.
+            meaningToken = match.lemma
+            val line = binding.overlayCardMeaning
+            val show: (String) -> Unit = { text ->
+                line.text = text
+                line.visibility = View.VISIBLE
+                focusedWord?.let { positionCard(it) }
+            }
+            line.visibility = View.GONE
+            binding.overlayCardWord.text = match.lemma
+            resolveMeaning(
+                match.lemma,
+                captureSavedByText[match.lemma.lowercase()],
+                lookupAllowed,
+                isCurrent = { meaningToken == match.lemma },
+                show = show,
+            )
+        }
+
         binding.overlaySaveButton.setOnClickListener {
             if (selection.isEmpty) return@setOnClickListener
-            val plan = CaptureSave.plan(selection.pending.toList(), screenWords::paragraphOf)
-            for (item in plan) {
+            val picks = selection.pending.toList()
+            val plan = CaptureSave.plan(picks, screenWords::paragraphOf)
+            for ((pick, item) in picks.zip(plan)) {
                 val saved = store.add(item.text, item.context)
                 WordLookup.enqueue(this, saved.id)
                 captureSavedByText[item.text.lowercase()] = saved
-                savedThisSession += item.words
+                // A joined split verb must not lock its component tokens as saved: "auf"
+                // would otherwise stop being pickable for the rest of the session.
+                if (pick is CapturePick.Word) savedThisSession += item.words
             }
             overlay.setSavedTexts(captureSavedByText.keys)
             selection.clear()
@@ -510,6 +588,8 @@ class WordCaptureActivity : AppCompatActivity() {
             }
             showToast(message)
             meaningToken = null
+            overlayJoinRequestId++
+            hideJoinChip()
             hideCard()
             refreshSaveCount()
         }
@@ -613,19 +693,71 @@ class WordCaptureActivity : AppCompatActivity() {
         fun isWordSaved(word: ScreenWord): Boolean =
             word in savedThisSession || captureSavedByText.containsKey(SavedMarks.keyOf(word))
 
-        // Pending picks are keyed by token (SavedMarks.keyOf), not by ScreenWord: the store
-        // dedupes case-insensitively, so two occurrences of the same word ("Regierung" /
-        // "Regierung.") are one selection, one save and one toast. A selection handed in
-        // from the overlay is reused, so picks made there stay pending here.
+        // Pending picks are keyed by SavedMarks.keyOf(pick): a word by its token, a joined
+        // split verb by its lemma. The store dedupes case-insensitively, so two occurrences
+        // of the same word ("Regierung" / "Regierung.") are one selection, one save and one
+        // toast. A selection handed in from the overlay is reused, so picks made there stay
+        // pending here.
         val selection = sharedSelection ?: ReaderSelection<CapturePick>(
-            isSaved = { isWordSaved(it.words.first()) },
-            keyOf = { SavedMarks.keyOf(it.words.first()) },
+            isSaved = { captureSavedByText.containsKey(SavedMarks.keyOf(it)) },
+            keyOf = { SavedMarks.keyOf(it) },
         )
-        val pendingViews = HashMap<String, TextView>()
-        val pendingSpans = HashMap<String, CharacterStyle>()
+        // One key can hold several pending marks: a joined split verb fills both its ranges.
+        val pendingSpans = HashMap<String, MutableList<Pair<TextView, CharacterStyle>>>()
 
         val viewsByNode = HashMap<Int, TextView>()
         var meaningToken: String? = null
+
+        /** The split-verb join the chip is offering, if any; the id drops stale detections. */
+        var joinMatch: SplitVerbs.Match? = null
+        var joinRequestId = 0
+
+        /** Drops every pending fill under [key] (a word's one mark, or a split verb's two). */
+        fun clearPending(key: String) {
+            pendingSpans.remove(key)?.forEach { (view, span) ->
+                (view.text as Spannable).removeSpan(span)
+            }
+        }
+
+        /** Adds one pending fill for [word] in [view], under the pick's [key]. */
+        fun addPending(key: String, view: TextView, word: ScreenWord) {
+            val span = BackgroundColorSpan(CaptureMarks.pendingFill(if (hasAccent) accentColor else primaryColor))
+            (view.text as Spannable).setSpan(
+                span, word.charRange.first, word.charRange.last + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+            )
+            pendingSpans.getOrPut(key) { ArrayList() }.add(view to span)
+        }
+
+        fun hideJoinChip() {
+            joinMatch = null
+            binding.readerJoinChip.visibility = View.GONE
+        }
+
+        fun showJoinChip(match: SplitVerbs.Match) {
+            joinMatch = match
+            binding.readerJoinChip.text = getString(
+                R.string.capture_join_split,
+                SavedMarks.tokenOf(match.verb),
+                SavedMarks.tokenOf(match.particle),
+                match.lemma,
+            )
+            // The static contentDescription is only the XML fallback; announce the
+            // actual suggestion so screen readers read the real verbs and lemma.
+            binding.readerJoinChip.contentDescription = binding.readerJoinChip.text
+            binding.readerJoinChip.visibility = View.VISIBLE
+        }
+
+        /** Runs the split-verb detector for [word] off the main thread; only the newest tap wins. */
+        fun detectSplitVerb(word: ScreenWord) {
+            val requestId = ++joinRequestId
+            hideJoinChip()
+            val nodeWords = wordsByNode[word.nodeId].orEmpty()
+            lifecycleScope.launch {
+                val match = resolveSplitVerb(nodeWords, word, prefs.germanOfflineDictionary, lookupAllowed)
+                if (joinRequestId != requestId) return@launch
+                if (match != null) showJoinChip(match)
+            }
+        }
 
         /** The persistent saved mark: the word keeps its underline after saving. */
         fun markSaved(word: ScreenWord, view: TextView) {
@@ -655,24 +787,50 @@ class WordCaptureActivity : AppCompatActivity() {
             )
         }
 
+        binding.readerJoinChip.typeface = typeface
+        binding.readerJoinChip.setOnClickListener {
+            val match = joinMatch ?: return@setOnClickListener
+            val pick = CapturePick.SplitVerb(match.verb, match.particle, match.lemma)
+            val joined = selection.join(
+                pick,
+                listOf(CapturePick.Word(match.verb), CapturePick.Word(match.particle)),
+            )
+            if (!joined) {
+                // The lemma is already saved (earlier session): stop offering the join,
+                // like the overlay's handler, instead of leaving a dead chip on screen.
+                hideJoinChip()
+                return@setOnClickListener
+            }
+            // The component picks are gone; the joined lemma carries both ranges as one mark.
+            clearPending(SavedMarks.keyOf(pick))
+            clearPending(SavedMarks.keyOf(CapturePick.Word(match.verb)))
+            clearPending(SavedMarks.keyOf(CapturePick.Word(match.particle)))
+            val key = SavedMarks.keyOf(pick)
+            viewsByNode[match.verb.nodeId]?.let { addPending(key, it, match.verb) }
+            viewsByNode[match.particle.nodeId]?.let { addPending(key, it, match.particle) }
+            hideJoinChip()
+            refreshSave()
+            // The meaning line follows the joined lemma, so "aufnehmen" shows its gloss.
+            showMeaning(match.lemma)
+        }
+
         binding.readerClose.setOnClickListener { finish() }
         binding.readerSaveButton.setOnClickListener {
             if (selection.isEmpty) return@setOnClickListener
-            val plan = CaptureSave.plan(selection.pending.toList(), screenWords::paragraphOf)
-            for (item in plan) {
+            val picks = selection.pending.toList()
+            val plan = CaptureSave.plan(picks, screenWords::paragraphOf)
+            for ((pick, item) in picks.zip(plan)) {
                 val saved = store.add(item.text, item.context)
                 WordLookup.enqueue(this, saved.id)
                 captureSavedByText[item.text.lowercase()] = saved
-                savedThisSession += item.words
+                // A joined split verb must not lock its component tokens as saved: "auf"
+                // would otherwise stop being pickable for the rest of the session.
+                if (pick is CapturePick.Word) savedThisSession += item.words
 
-                val key = item.text.lowercase()
-                val view = pendingViews.remove(key)
-                val span = pendingSpans.remove(key)
-                if (view != null && span != null) {
-                    (view.text as Spannable).removeSpan(span)
-                }
-                if (view != null) {
-                    markSaved(item.words.first(), view)
+                // Drop the pending fill(s) and underline every saved range from its own node.
+                clearPending(item.text.lowercase())
+                for (word in item.words) {
+                    viewsByNode[word.nodeId]?.let { markSaved(word, it) }
                 }
             }
             for ((nodeId, nodeWords) in wordsByNode) {
@@ -684,6 +842,8 @@ class WordCaptureActivity : AppCompatActivity() {
                 }
             }
             selection.clear()
+            joinRequestId++
+            hideJoinChip()
             val message = if (plan.size == 1) {
                 getString(R.string.saved_word_de, plan[0].text)
             } else {
@@ -702,34 +862,22 @@ class WordCaptureActivity : AppCompatActivity() {
                     // The pending entry may come from another occurrence of the same
                     // token: move the highlight off that copy before marking this one,
                     // so exactly one occurrence of the token stays highlighted.
-                    val previousSpan = pendingSpans.remove(key)
-                    val previousView = pendingViews.remove(key)
-                    if (previousSpan != null && previousView != null) {
-                        (previousView.text as Spannable).removeSpan(previousSpan)
-                    }
+                    clearPending(key)
                     // Pending means "selected, not saved yet": a translucent background
                     // fill, which stays visible whatever the font setting resolves to.
                     // Bold would be invisible under the bold-font setting (#P3) and the
                     // saved underline is a different mark, so neither replaces the fill.
-                    val span = BackgroundColorSpan(CaptureMarks.pendingFill(if (hasAccent) accentColor else primaryColor))
-                    (view.text as Spannable).setSpan(
-                        span, word.charRange.first, word.charRange.last + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
-                    )
-                    pendingViews[key] = view
-                    pendingSpans[key] = span
+                    addPending(key, view, word)
                 } else if (!isWordSaved(word)) {
                     // The tapped occurrence is the highlighted copy for its key — this
                     // view loses the highlight and the pending entry is gone.
-                    val span = pendingSpans.remove(key)
-                    val pendingView = pendingViews.remove(key)
-                    if (span != null && pendingView != null) {
-                        (pendingView.text as Spannable).removeSpan(span)
-                    }
+                    clearPending(key)
                 }
                 refreshSave()
                 // The meaning line follows the most recently tapped word — the
                 // selection's view of "last tap", not this span's word.
                 selection.lastTapped?.words?.firstOrNull()?.let { showMeaning(SavedMarks.tokenOf(it)) }
+                detectSplitVerb(word)
             }
 
             // Keep the prose look; the highlight on tap is added by setHighlight.
@@ -767,16 +915,11 @@ class WordCaptureActivity : AppCompatActivity() {
                     spannable.setSpan(UnderlineSpan(), range.first, range.last + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
                 }
                 // Picks carried in from the overlay are pending here too: a translucent fill
-                // on the very occurrence that was picked, next to the saved underline.
-                val pickedIn = selection.pending.any { it.words.contains(word) }
-                if (pickedIn) {
-                    val key = SavedMarks.keyOf(word)
-                    val span = BackgroundColorSpan(
-                        CaptureMarks.pendingFill(if (hasAccent) accentColor else primaryColor)
-                    )
-                    spannable.setSpan(span, range.first, range.last + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-                    pendingViews[key] = textView
-                    pendingSpans[key] = span
+                // on the very occurrence that was picked, next to the saved underline. A
+                // joined split verb fills both of its ranges under its one lemma key.
+                val pick = selection.pending.firstOrNull { it.words.contains(word) }
+                if (pick != null) {
+                    addPending(SavedMarks.keyOf(pick), textView, word)
                 }
                 spannable.setSpan(wordTapSpan(word, textView), range.first, range.last + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
             }
@@ -803,8 +946,6 @@ class WordCaptureActivity : AppCompatActivity() {
         }
         lifecycleScope.launch {
             val appContext = applicationContext
-            val cached = withContext(Dispatchers.IO) { WiktionaryCache(appContext).get(choice) }
-            if (!isCurrent()) return@launch
             fun render(result: WiktionaryApi.LookupResult) {
                 show(
                     when (result) {
@@ -815,8 +956,20 @@ class WordCaptureActivity : AppCompatActivity() {
                     }
                 )
             }
-            if (cached != null) {
-                render(cached)
+            // Offline-first, like the drawer search: the bundled dictionary answers a joined
+            // "aufnehmen" with its gloss without any network (#523).
+            val offline = withContext(Dispatchers.IO) {
+                if (Prefs(appContext).germanOfflineDictionary) {
+                    SharedOfflineGermanStore.get(appContext).lookup(choice)
+                } else {
+                    null
+                }
+            }
+            if (!isCurrent()) return@launch
+            val direct = offline ?: withContext(Dispatchers.IO) { WiktionaryCache(appContext).get(choice) }
+            if (!isCurrent()) return@launch
+            if (direct != null) {
+                render(direct)
                 return@launch
             }
             if (!lookupAllowed) return@launch
@@ -827,6 +980,43 @@ class WordCaptureActivity : AppCompatActivity() {
             }
             if (isCurrent()) render(result)
         }
+    }
+
+    /**
+     * Resolves the split verb behind [tapped] (#523). Tier 1 queries the bundled dictionary
+     * ([SplitVerbs.find], only when the offline dictionary is on); on a miss, and only when
+     * online look-ups are allowed, tier 2 composes "<particle><verb lemma>" online and
+     * verifies it exists before offering it. Runs on Dispatchers.IO, never on the tap thread.
+     */
+    private suspend fun resolveSplitVerb(
+        nodeWords: List<ScreenWord>,
+        tapped: ScreenWord,
+        offlineAllowed: Boolean,
+        onlineAllowed: Boolean,
+    ): SplitVerbs.Match? = withContext(Dispatchers.IO) {
+        if (offlineAllowed) {
+            val store = SharedOfflineGermanStore.get(applicationContext)
+            SplitVerbs.find(nodeWords, tapped) { store.splitVerbLemmas(it) }?.let { return@withContext it }
+        }
+        if (!onlineAllowed) return@withContext null
+        val pair = SplitVerbs.pairs(nodeWords, tapped).firstOrNull() ?: return@withContext null
+        onlineSplitVerb(pair.first, pair.second)
+    }
+
+    /**
+     * The online fallback for one split pair: the verb's Wiktionary lemma ("nehme" →
+     * "nehmen"), composed with the particle ("aufnehmen") and verified with one more
+     * lookup. Two look-ups (up to three requests) and a failed verification yields null —
+     * nothing is offered or saved without a confirmed word.
+     */
+    private fun onlineSplitVerb(verb: ScreenWord, particle: ScreenWord): SplitVerbs.Match? {
+        val verbResult = WiktionaryApi.lookup(SavedMarks.tokenOf(verb))
+        if (verbResult !is WiktionaryApi.LookupResult.Found) return null
+        val lemma = verbResult.baseForm ?: verbResult.candidate
+        if (lemma.isBlank()) return null
+        val composed = (SavedMarks.tokenOf(particle) + lemma).lowercase(Locale.GERMAN)
+        if (WiktionaryApi.lookup(composed) !is WiktionaryApi.LookupResult.Found) return null
+        return SplitVerbs.Match(verb, particle, composed)
     }
 
     private fun saveWord(text: String, context: String) {

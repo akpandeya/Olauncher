@@ -861,6 +861,8 @@
     <string name="reader_close" translatable="false">✕</string>
     <string name="capture_hint">Tap or circle words</string>
     <string name="capture_reader_view">Reader view</string>
+    <string name="capture_join_split">%1$s … %2$s → %3$s</string>
+    <string name="capture_join_split_desc">Show the joined form of this split verb</string>
     <string name="capture_saved_count">%1$d saved</string>
     <string name="capture_save_token">Save „%1$s“</string>
     <string name="capture_saved_token">Saved „%1$s“</string>

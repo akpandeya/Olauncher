@@ -83,6 +83,20 @@ class ReaderSelection<T : Any>(
         return added
     }
 
+    /**
+     * Joins [item] into the pending set, replacing every item in [replacing] by key first
+     * (a split verb replaces its verb and particle words). [lastTapped] is set to [item].
+     * A saved [item] is refused: nothing is replaced, the pending set is left as it is and
+     * false is returned. Returns true when [item] is pending after this call.
+     */
+    fun join(item: T, replacing: Collection<T>): Boolean {
+        lastTapped = item
+        if (isSaved(item)) return false
+        for (replaced in replacing) pendingByKey.remove(keyOf(replaced))
+        pendingByKey[keyOf(item)] = item
+        return true
+    }
+
     /** Clears all pending items (e.g. after saving). */
     fun clear() {
         pendingByKey.clear()
