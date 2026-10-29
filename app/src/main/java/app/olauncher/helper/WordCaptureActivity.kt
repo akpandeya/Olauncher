@@ -9,17 +9,15 @@ import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.Typeface
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.TextPaint
 import android.text.method.LinkMovementMethod
+import android.text.style.BackgroundColorSpan
 import android.text.style.CharacterStyle
 import android.text.style.ClickableSpan
-import android.text.style.ForegroundColorSpan
 import android.text.style.RelativeSizeSpan
-import android.text.style.StyleSpan
 import android.text.style.UnderlineSpan
 import android.util.TypedValue
 import android.view.Menu
@@ -35,6 +33,7 @@ import androidx.core.view.WindowInsetsCompat
 import app.olauncher.R
 import app.olauncher.data.Prefs
 import app.olauncher.data.store.Capture
+import app.olauncher.data.store.CaptureMarks
 import app.olauncher.data.store.CapturePaths
 import app.olauncher.data.store.ContextSentence
 import app.olauncher.data.store.MeaningCardPlacement
@@ -120,6 +119,7 @@ class WordCaptureActivity : AppCompatActivity() {
             setTheme(R.style.Theme_WordCapture_Reader)
         }
         prefs.applyFontOverlay(theme)
+        prefs.applyAccentOverlay(theme)
         super.onCreate(savedInstanceState)
 
         // Remember what this intent referenced: only those capture files are deleted on
@@ -673,10 +673,11 @@ class WordCaptureActivity : AppCompatActivity() {
                     if (previousSpan != null && previousView != null) {
                         (previousView.text as Spannable).removeSpan(previousSpan)
                     }
-                    // Without an accent colour the pending mark must still differ from
-                    // the saved underline: pending means "selected, not saved yet", so
-                    // it is bolded instead of underlined.
-                    val span = if (hasAccent) ForegroundColorSpan(accentColor) else StyleSpan(Typeface.BOLD)
+                    // Pending means "selected, not saved yet": a translucent background
+                    // fill, which stays visible whatever the font setting resolves to.
+                    // Bold would be invisible under the bold-font setting (#P3) and the
+                    // saved underline is a different mark, so neither replaces the fill.
+                    val span = BackgroundColorSpan(CaptureMarks.pendingFill(if (hasAccent) accentColor else primaryColor))
                     (view.text as Spannable).setSpan(
                         span, word.charRange.first, word.charRange.last + 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
                     )
