@@ -190,4 +190,24 @@ class DrillVerbPrepositionsTest {
             assertEquals(directItems[i].hint, tableItems[i].hint)
         }
     }
+
+    @Test
+    fun builtInItemsCarryTheirAuthoredHelpRule() {
+        val items = DrillVerbPrepositions.items().associateBy { it.id.key }
+        // One-pair verbs: the gap item uses the fixed-pair rule, the case item the
+        // verb-decides rule (auf is two-way on its own).
+        assertEquals("verb-prep-gap-fixed", items["verbprep:warten:auf:0"]!!.ruleId)
+        assertEquals("verb-prep-case-pair", items["verbprep:warten:auf:1"]!!.ruleId)
+        assertEquals(
+            "with warten, auf is fixed as accusative. The same auf is dative with other " +
+                "verbs (bestehen auf), so learn the case with the pair.",
+            items["verbprep:warten:auf:1"]!!.missByChoice["Dativ"],
+        )
+        // Two-pair verbs: the gap item teaches the meaning rule.
+        assertEquals("verb-prep-gap-meaning", items["verbprep:sich freuen:auf:0"]!!.ruleId)
+        // Fixed-case prepositions: the which-case item reuses the shared prepositions rule.
+        assertEquals("prep-which-fixed", items["verbprep:danken:für:1"]!!.ruleId)
+        assertEquals("prep-which-fixed", items["verbprep:bestehen:aus:1"]!!.ruleId)
+    }
+
 }

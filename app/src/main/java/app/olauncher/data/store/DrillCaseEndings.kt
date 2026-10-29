@@ -454,7 +454,8 @@ object DrillCaseEndings {
      * Builds the drill items for German case endings.
      *
      * If saved [words] match any trigger word or noun, the item ID incorporates
-     * the word ID to link with user vocabulary.
+     * the word ID to link with user vocabulary. Saved-word items match no authored
+     * help item, so they carry no rule id (the help card stays hidden for them).
      */
     fun items(
         words: Collection<Word> = emptyList(),
@@ -481,12 +482,18 @@ object DrillCaseEndings {
                 "case:${template.key}"
             }
 
+            val content = if (matchingWord == null) CASE_ENDING_RULE_CONTENT[template.key] else null
+            val ruleId = content?.ruleId
+                ?.let { DrillHelpContent.requireValidRuleId(it, "case endings item ${template.key}") }
+
             DrillItem(
                 id = DrillItemId(DrillType.CASE_ENDINGS, idKey),
                 prompt = template.prompt,
                 answer = answer,
                 choices = choices,
                 hint = hint,
+                ruleId = ruleId,
+                missByChoice = content?.missByChoice ?: emptyMap(),
             )
         }
     }

@@ -118,4 +118,26 @@ class DrillCaseEndingsTest {
         val matched = items.firstOrNull { it.id.key.startsWith("99:") }
         assertNotNull("Matching trigger word should incorporate word id into item key", matched)
     }
+
+    @Test
+    fun builtInItemsCarryTheirAuthoredHelpRule() {
+        val items = DrillCaseEndings.items().associateBy { it.id.key }
+        assertEquals("case-subject-nom", items["case:nom_m_lehrer"]!!.ruleId)
+        assertEquals("case-sein-nom", items["case:nom_f_loesung"]!!.ruleId)
+        // Same dative trigger word, different rules: fixed preposition vs dative verb.
+        assertEquals("prep-fixed-dat", items["case:dat_m_mit_bus"]!!.ruleId)
+        assertEquals("case-verb-dat", items["case:dat_m_helfen_mann"]!!.ruleId)
+        val trotz = items["case:gen_m_trotz_regens"]!!
+        assertEquals("prep-fixed-gen", trotz.ruleId)
+        assertEquals(
+            "den is the accusative masculine (or dative plural) form. These prepositions " +
+                "take the genitive, so des.",
+            trotz.missByChoice["den"],
+        )
+        assertEquals(
+            setOf("der", "dem"),
+            trotz.missByChoice.keys - "den",
+        )
+    }
+
 }
