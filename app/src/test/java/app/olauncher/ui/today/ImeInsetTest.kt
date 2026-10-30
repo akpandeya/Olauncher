@@ -14,4 +14,22 @@ class ImeInsetTest {
         assertEquals(0, ImeInset.bottomPadding(false, 742))
         assertEquals(0, ImeInset.bottomPadding(true, -5))
     }
+
+    @Test
+    fun `pinned composer rides the keyboard while it shows`() {
+        assertEquals(742, ImeInset.pinnedBottomPadding(imeVisible = true, imeBottomPx = 742, basePx = 132))
+    }
+
+    @Test
+    fun `pinned composer returns to its base padding when the keyboard hides`() {
+        assertEquals(132, ImeInset.pinnedBottomPadding(imeVisible = false, imeBottomPx = 742, basePx = 132))
+    }
+
+    @Test
+    fun `pinned composer never takes a negative inset and never stacks on its base`() {
+        assertEquals(0, ImeInset.pinnedBottomPadding(imeVisible = true, imeBottomPx = -5, basePx = 132))
+        // A keyboard shorter than the base still wins: the base clears the nav bar,
+        // which the keyboard already covers.
+        assertEquals(40, ImeInset.pinnedBottomPadding(imeVisible = true, imeBottomPx = 40, basePx = 132))
+    }
 }
