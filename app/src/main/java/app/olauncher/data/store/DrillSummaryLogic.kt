@@ -11,6 +11,12 @@ data class DrillSummaryItem(
     val result: DrillResult,
     val learnerAnswer: String? = null,
     val roundIndex: Int = 0,
+    /**
+     * The item's help-card rule id (#651), carried so the Ask-AI chip can route
+     * the miss to a rule or topic thread (docs/design/ask-ai-chat.md §Threads).
+     * Null for items without help-card content.
+     */
+    val ruleId: String? = null,
 )
 
 /**

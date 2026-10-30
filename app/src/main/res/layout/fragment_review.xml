@@ -404,6 +404,24 @@
 
         </LinearLayout>
 
+        <!-- The Ask-AI row (docs/design/ask-ai-chat.md §Entry points): full-width
+             under the review buttons, revealed cards only — a pre-reveal prompt
+             would leak the answer. Hidden entirely when AI is unavailable. -->
+        <TextView
+            android:id="@+id/askAiRow"
+            style="@style/TextSmallBold"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/words_grade_button"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:minHeight="48dp"
+            android:text="@string/ask_ai_word_row"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
         <!-- Footer -->
         <LinearLayout
             android:layout_width="match_parent"

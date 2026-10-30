@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Ask-AI thread sheet (docs/design/ask-ai-chat.md §Entry points, mock
+     screen 7): the subject's conversations, newest first — first-question
+     snippet, turn count, date — one tap resumes that thread, and "New
+     conversation" starts a fresh one. Shown over the surface that opened it,
+     which keeps its exact state behind. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/today_panel"
+    android:orientation="vertical"
+    android:paddingHorizontal="20dp"
+    android:paddingTop="16dp"
+    android:paddingBottom="20dp">
+
+    <TextView
+        android:id="@+id/tvSheetTitle"
+        style="@style/TodayCardBodyBold"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:text="Two-way prepositions · 2 conversations" />
+
+    <TextView
+        android:id="@+id/tvSheetEmpty"
+        style="@style/TodayCardBodyLight"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="@string/ask_ai_sheet_empty"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
+    <LinearLayout
+        android:id="@+id/llSheetRows"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:orientation="vertical" />
+
+    <TextView
+        android:id="@+id/btnNewConversation"
+        style="@style/TodayCardBodyBold"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?android:attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:minHeight="48dp"
+        android:paddingVertical="8dp"
+        android:text="@string/ask_ai_sheet_new"
+        android:textColor="?attr/accentColor" />
+
+</LinearLayout>

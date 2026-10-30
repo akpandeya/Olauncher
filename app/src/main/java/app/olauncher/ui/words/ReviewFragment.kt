@@ -6,6 +6,7 @@ import android.view.Menu
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.navigation.fragment.findNavController
@@ -17,6 +18,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import app.olauncher.data.store.AiProviderConfig
 import app.olauncher.data.store.AiProviders
+import app.olauncher.data.store.AiChatGrounding
+import app.olauncher.data.store.AiChatRouter
+import app.olauncher.data.store.AiChatSubject
 import app.olauncher.data.store.KeySource
 import app.olauncher.data.store.KeyVault
 import app.olauncher.data.store.PracticeGeneration
@@ -44,6 +48,7 @@ import app.olauncher.ui.BaseFragment
 import app.olauncher.ui.today.attachPressScale
 import app.olauncher.ui.today.cards.WordsCard
 import app.olauncher.ui.today.cards.WordsCardLogic
+import android.content.Context
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -67,6 +72,14 @@ class ReviewFragment : BaseFragment() {
     private var sessionStarted = false
     private var progressAnimated = false
     private var practiceItems: List<PracticeItem> = emptyList()
+
+    /**
+     * One render pass's Ask-AI entry state (docs/design/ask-ai-chat.md §Entry
+     * points): whether any entry shows and the per-subject turn counts. Loaded
+     * once per render — a key-vault read per row would decrypt the keystore over
+     * and over — and asked by the summary chips and the revealed card's row.
+     */
+    private var askAi = AskAiEntryPoints.Environment.hidden()
     internal var genderResolver: ((String) -> String?)? = null
 
     override fun onCreateView(
@@ -247,6 +260,7 @@ class ReviewFragment : BaseFragment() {
     private fun render() {
         val b = _binding ?: return
         val context = context ?: return
+        askAi = AskAiEntryPoints.environment(context)
         val store = WordsCard.getStore(context)
         val remaining = queue.size - answered
         val finished = remaining == 0
@@ -292,6 +306,7 @@ class ReviewFragment : BaseFragment() {
         }
         b.btnShowAnswer.isVisible = false
         b.gradeRow.isVisible = false
+        b.askAiRow.isVisible = false
 
         if (sessionEvents.isEmpty()) return
         val summary = ReviewSessionLogic.summarize(sessionEvents)
@@ -335,7 +350,43 @@ class ReviewFragment : BaseFragment() {
                     rowBinding.tvSecondary.isVisible = correction.isNotEmpty()
                 }
             }
+            bindSummaryAskAiChip(rowBinding.tvAskAi, context, item.word, item.result)
             b.summaryList.addView(rowBinding.root)
+        }
+    }
+
+    /**
+     * Binds one review-summary row's Ask-AI chip (docs/design/ask-ai-chat.md
+     * §Entry points): again and almost rows only, visible iff the AI gate is
+     * open and the provider config valid — hidden, never greyed. The subject is
+     * the reviewed word; the grounding carries the word as the AI sees it. Tap
+     * opens the latest thread; long-press opens the thread sheet.
+     */
+    private fun bindSummaryAskAiChip(chip: TextView, context: Context, word: Word, result: String) {
+        if (result == ReviewEvent.Result.KNEW || !askAi.visible) {
+            chip.isVisible = false
+            return
+        }
+        val subject = AiChatSubject(AiChatSubject.Kind.WORD, AiChatRouter.normalizeCitation(word.text))
+        val groundings = listOf(AskAiEntryPoints.wordGrounding(word))
+        chip.text = AskAiEntryPoints.chipText(context, askAi.turns(subject))
+        chip.contentDescription = AskAiEntryPoints.chipAnnouncement(context, askAi.turns(subject))
+        chip.isVisible = true
+        chip.setOnClickListener { view ->
+            Haptics.tick(view)
+            AskAiEntryPoints.openChat(this, R.id.reviewFragment, subject, groundings = groundings)
+        }
+        chip.setOnLongClickListener { view ->
+            Haptics.tick(view)
+            AskAiThreadSheet.show(
+                this,
+                subject,
+                AskAiEntryPoints.subjectTitle(context, WordsCard.getStore(context).all(), subject),
+                groundings,
+            ) { threadId ->
+                AskAiEntryPoints.open(this, R.id.reviewFragment, subject, threadId, groundings = groundings)
+            }
+            true
         }
     }
 
@@ -419,7 +470,65 @@ class ReviewFragment : BaseFragment() {
             b.tvAlmostInterval.text = intervalText(context, ReviewPreview.interval(word, ReviewEvent.Result.ALMOST, today))
             b.tvKnewInterval.text = intervalText(context, ReviewPreview.interval(word, ReviewEvent.Result.KNEW, today))
         }
+        bindAskAiRow(b, context, word, item)
     }
+
+    /**
+     * Binds the Ask-AI row under the review buttons (docs/design/ask-ai-chat.md
+     * §Entry points): revealed cards only — the pre-reveal practice prompt would
+     * leak its answer — and hidden entirely when AI is unavailable, never greyed.
+     * On a practice prompt the subject is the item's word resolved to its
+     * citation text, and the grounding additionally carries the prompt and its
+     * answer. Tap opens the latest thread; long-press opens the thread sheet.
+     */
+    private fun bindAskAiRow(b: FragmentReviewBinding, context: Context, word: Word, practiceItem: PracticeItem?) {
+        val target = askAiTarget(context, word, practiceItem)
+        if (target == null) {
+            b.askAiRow.isVisible = false
+            b.askAiRow.setOnClickListener(null)
+            b.askAiRow.setOnLongClickListener(null)
+            return
+        }
+        b.askAiRow.text = AskAiEntryPoints.wordRowText(context, askAi.turns(target.subject))
+        b.askAiRow.isVisible = true
+        b.askAiRow.setOnClickListener { view ->
+            Haptics.tick(view)
+            AskAiEntryPoints.openChat(this, R.id.reviewFragment, target.subject, groundings = target.groundings)
+        }
+        b.askAiRow.setOnLongClickListener { view ->
+            Haptics.tick(view)
+            AskAiThreadSheet.show(
+                this,
+                target.subject,
+                AskAiEntryPoints.subjectTitle(context, WordsCard.getStore(context).all(), target.subject),
+                target.groundings,
+            ) { threadId ->
+                AskAiEntryPoints.open(this, R.id.reviewFragment, target.subject, threadId, groundings = target.groundings)
+            }
+            true
+        }
+    }
+
+    /** The revealed card's Ask-AI action: subject and groundings, or null when hidden. */
+    private fun askAiTarget(context: Context, word: Word, practiceItem: PracticeItem?): AiChatTarget? {
+        if (!revealed || !askAi.visible) return null
+        // A practice item's wordId resolves to the word whose citation text is the
+        // subject (design §Entry points); its pool is the word's own items, so the
+        // bare card and the practice prompt open the same conversation.
+        val subjectWord = practiceItem?.let { WordsCard.getStore(context).get(it.wordId) } ?: word
+        val subject = AiChatSubject(AiChatSubject.Kind.WORD, AiChatRouter.normalizeCitation(subjectWord.text))
+        val groundings = buildList {
+            add(AskAiEntryPoints.wordGrounding(subjectWord))
+            practiceItem?.let { add(AskAiEntryPoints.practiceGrounding(it.prompt, it.answer, it.wordId)) }
+        }
+        return AiChatTarget(subject, groundings)
+    }
+
+    /** One Ask-AI entry's navigation payload: where the chat opens and what it carries. */
+    private data class AiChatTarget(
+        val subject: AiChatSubject,
+        val groundings: List<AiChatGrounding>,
+    )
 
     private fun intervalText(context: android.content.Context, interval: ReviewPreview.Interval): String = when (interval) {
         ReviewPreview.Interval.AgainTomorrow -> context.getString(R.string.words_interval_again)
@@ -435,14 +544,23 @@ class ReviewFragment : BaseFragment() {
 
     private fun showWordPopup(anchor: View, word: Word) {
         val context = anchor.context
+        // "Ask AI about this word" joins the popup only on a revealed card: the
+        // popup is reachable pre-reveal, and a pre-reveal entry would leak the
+        // answer (design §Entry points, the deliberate suppression).
+        val ai = askAiTarget(context, word, currentPracticeItem(word))
         anchor.showPopupMenu(
             configure = { menu ->
                 menu.add(Menu.NONE, 1, Menu.NONE, R.string.words_edit)
+                if (ai != null) menu.add(Menu.NONE, 3, Menu.NONE, R.string.ask_ai_word_row)
                 menu.add(Menu.NONE, 2, Menu.NONE, R.string.words_delete)
             }
         ) { item ->
             when (item.itemId) {
                 1 -> WordDialogs.showEditDialog(context, word, { viewLifecycleOwnerOrNull() }) { refreshQueueFromStore() }
+                3 -> ai?.let {
+                    Haptics.tick(anchor)
+                    AskAiEntryPoints.openChat(this, R.id.reviewFragment, it.subject, groundings = it.groundings)
+                }
                 2 -> WordDialogs.showDeleteDialog(context, word) { refreshQueueFromStore() }
             }
         }

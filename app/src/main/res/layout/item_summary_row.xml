@@ -45,6 +45,26 @@
             tools:text="den · durch + Akkusativ"
             tools:visibility="visible" />
 
+        <!-- The Ask-AI chip (docs/design/ask-ai-chat.md §Entry points): wrong and
+             almost rows only, hidden when AI is unavailable — never greyed. Tap
+             opens the subject's latest thread; long-press opens the thread sheet.
+             Bound per row by each fragment's thin adapter. -->
+        <TextView
+            android:id="@+id/tvAskAi"
+            style="@style/TodayChip.Small"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:background="@drawable/today_chip_selectable"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:minHeight="48dp"
+            android:paddingHorizontal="16dp"
+            android:text="@string/ask_ai_chip"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
     </LinearLayout>
 
 </LinearLayout>
