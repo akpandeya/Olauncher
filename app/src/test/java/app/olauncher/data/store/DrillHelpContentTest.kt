@@ -37,6 +37,10 @@ class DrillHelpContentTest {
 
     private fun wordOrderItems(): List<WordOrderItem> = DrillWordOrder.items()
 
+    /** The words of a sentence, without the `**` marks and the sentence punctuation. */
+    private fun sentenceWords(sentence: String): List<String> =
+        sentence.replace("**", "").replace(Regex("[.,?!]"), "").split(' ').filter { it.isNotEmpty() }
+
     private fun itemRules(): List<ItemRule> =
         (DrillGapTopics.allTopics() + liveItems()).flatMap { (_, items) ->
             items.mapNotNull { item ->
@@ -508,12 +512,12 @@ class DrillHelpContentTest {
     @Test
     fun perItemExamplesCoverExactlyTheItemsWithoutAGapInTheirPrompt() {
         // Items whose prompt carries the gap render their own filled prompt as the
-        // example; the which-case items (no gap) need an authored per-item example,
-        // and only they may have one.
+        // example; the which-case items and the word-order items (no gap) need an
+        // authored per-item example, and only they may have one.
         val keysWithoutGap = liveItems().flatMap { (_, items) -> items }
             .filter { !it.prompt.contains(DrillItem.GAP_MARKER) }
             .map { it.id.key }
-            .toSet()
+            .toSet() + wordOrderItems().filter { it.ruleId != null }.map { it.id.key }.toSet()
         assertEquals(keysWithoutGap, ITEM_HELP_EXAMPLES.keys)
     }
 
@@ -539,6 +543,47 @@ class DrillHelpContentTest {
                 pairs.map { it.second }.distinct().size,
             )
         }
+    }
+
+    @Test
+    fun everyWordOrderItemWithARuleHasItsOwnExample() {
+        // Word-order prompts have no gap, so the rule's example would repeat across its
+        // items. Each ruled item needs its own entry; a missing entry fails here.
+        for (item in wordOrderItems().filter { it.ruleId != null }) {
+            val example = DrillHelpCard.wordOrderExample(item)
+            assertNotNull("${item.id}: no per-item word-order example", example)
+            assertEquals(
+                "${item.id}: the example must spell the item's first accepted order",
+                item.canonicalAnswer.split(' '),
+                sentenceWords(example!!),
+            )
+        }
+    }
+
+    @Test
+    fun wordOrderExamplesDifferAcrossItemsOfOneRule() {
+        val ruledItems = wordOrderItems().filter { it.ruleId != null }
+        for ((ruleId, items) in ruledItems.groupBy { it.ruleId!! }) {
+            assertEquals(
+                "$ruleId: every distinct word order of the rule must show its own example",
+                items.map { it.canonicalAnswer }.distinct().size,
+                items.mapNotNull { DrillHelpCard.wordOrderExample(it) }.distinct().size,
+            )
+        }
+    }
+
+    @Test
+    fun wordOrderHelpCardOpensWithRuleBeforeAnswerAndExampleAfterAMiss() {
+        val item = wordOrderItems().single { it.id.key == "v2_kino" }
+        val whyOpen = DrillHelpCard.wordOrderState(item, whyOpen = true, answeredWrong = false)
+        assertNotNull(whyOpen)
+        assertEquals("wo-verb-second", whyOpen!!.rule.id)
+        assertNull("before an answer the card names no example", whyOpen.example)
+        assertNull(DrillHelpCard.wordOrderState(item, whyOpen = false, answeredWrong = false))
+        val afterMiss = DrillHelpCard.wordOrderState(item, whyOpen = false, answeredWrong = true)
+        assertNotNull(afterMiss)
+        assertTrue(afterMiss!!.showAnswer)
+        assertEquals("Ich **gehe** morgen ins Kino.", afterMiss.example)
     }
 
     @Test

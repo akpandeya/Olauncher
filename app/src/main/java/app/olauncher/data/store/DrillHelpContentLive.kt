@@ -4,10 +4,9 @@ package app.olauncher.data.store
  * Help-card rules of the live (words-driven) drill types (#699), transcribed from
  * docs/design/drill-content/prepositions.md, case-endings.md, verb-prepositions.md,
  * adjective-endings.md, articles.md, plurals.md, pronouns.md, separable-verbs.md and
- * word-order.md. They share the registry with the
- * gap-topic rules in [DrillHelpContent]; only `prep-fixed-dat` is authored there,
- * because a gap-topic item (the passive's von + dative) also points at it, and it
- * is not repeated here.
+ * word-order.md. They share the registry with the gap-topic rules in
+ * [DrillHelpContent]; only `prep-fixed-dat` is authored there, because a gap-topic item
+ * (the passive's von + dative) also points at it, and it is not repeated here.
  *
  * Same leak rules as the gap topics (docs/design/drill-help-card.md §3): the
  * pre-answer prose — rule, first-exposure rule, cue and title — names no item's

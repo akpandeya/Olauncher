@@ -49,6 +49,7 @@ import app.olauncher.data.store.PracticeItemsStore
 import app.olauncher.data.store.ReviewEventsStore
 import app.olauncher.data.store.ReviewSessionLogic
 import app.olauncher.data.store.SharedOfflineGermanStore
+import app.olauncher.data.store.WordOrderQuestion
 import app.olauncher.data.store.WordOrderQuiz
 import app.olauncher.data.store.shouldAutoAdvance
 import app.olauncher.databinding.FragmentDrillBinding
@@ -109,6 +110,7 @@ class DrillFragment : BaseFragment() {
             advanceWithMotion(binding.questionCard) {
                 resetQuestionScroll()
                 q.advance()
+                resetQuestionState()
                 render()
             }
             return@Runnable
@@ -189,6 +191,15 @@ class DrillFragment : BaseFragment() {
         // "Why?" opens the full help card before an answer (design §2); the tap is
         // recorded so a right answer afterwards lands as a weaker right answer.
         binding.btnWhy.setOnClickListener {
+            if (isWordOrderRound) {
+                val wordOrder = wordOrderQuiz ?: return@setOnClickListener
+                val question = wordOrder.current ?: return@setOnClickListener
+                if (wordOrder.isAnswered) return@setOnClickListener
+                Haptics.tick(it)
+                whyRevealedForItemId = question.id.toString()
+                render()
+                return@setOnClickListener
+            }
             val q = quiz ?: return@setOnClickListener
             val question = q.current ?: return@setOnClickListener
             if (q.isAnswered || question.isTeaching) return@setOnClickListener
@@ -328,6 +339,7 @@ class DrillFragment : BaseFragment() {
                     advanceWithMotion(binding.questionCard) {
                         resetQuestionScroll()
                         q.advance()
+                        resetQuestionState()
                         render()
                     }
                 }
@@ -421,6 +433,10 @@ class DrillFragment : BaseFragment() {
             b.tvEmpty.isVisible = empty
             b.btnPrimary.isVisible = !empty
             b.btnSecondary.isVisible = finished
+            if (!inQuiz) {
+                b.helpScroll.isVisible = false
+                b.btnWhy.isVisible = false
+            }
 
             if (empty) {
                 b.btnPrimary.isVisible = false
@@ -1467,6 +1483,7 @@ class DrillFragment : BaseFragment() {
         b.tvHint.isVisible = isWrongAnswer && !question.hint.isNullOrBlank()
         b.tvHint.isClickable = false
         b.tvHint.text = question.hint.orEmpty()
+        renderWordOrderHelp(q, question)
 
         b.wordOrderView.render(
             answerTiles = question.answerTiles,
@@ -1503,6 +1520,33 @@ class DrillFragment : BaseFragment() {
                     animateCorrectionRise(motionSpec(), *revealedCorrectionViews(feedbackKey).toTypedArray())
                 }
             }
+        }
+    }
+
+    /**
+     * Binds the word-order help slot (#699): "Why?" before an answer opens the rule, and
+     * a wrong order opens the card with the item's own example. Same slot and states as
+     * the other drill types (renderHelp); word order has no flashcard and no miss line.
+     */
+    private fun renderWordOrderHelp(q: WordOrderQuiz, question: WordOrderQuestion) {
+        val b = binding
+        val answeredWrong = q.isAnswered && q.lastAnswer?.correct == false
+        val whyOpen = !q.isAnswered && whyRevealedForItemId == question.id.toString()
+        val state = DrillHelpCard.wordOrderState(
+            item = question.item,
+            whyOpen = whyOpen,
+            answeredWrong = answeredWrong,
+        )
+        if (state == null) {
+            b.helpScroll.isVisible = false
+            b.btnWhy.isVisible = question.item.ruleId != null && !q.isAnswered
+            b.hintRow.isInvisible = !(b.tvHint.isVisible || b.btnWhy.isVisible)
+        } else {
+            // The answer cell is not highlighted: a word order has no single answer cell.
+            bindHelpCard(state, answer = null)
+            b.helpScroll.isVisible = true
+            b.btnWhy.isInvisible = true
+            b.hintRow.isInvisible = !b.tvHint.isVisible
         }
     }
 
