@@ -36,4 +36,5 @@ Thumbline is a minimalist Android launcher forked from Olauncher (licensed under
 - Runtime permissions are requested only when the feature is first switched on, with a one-line explanation. A denial must leave the app working.
 - New user-facing strings go in `app/src/main/res/values/strings.xml` only (other locales fall back to English).
 - Put logic in Context-free Kotlin where possible and cover it with JUnit tests in `app/src/test/java/app/olauncher/`.
+- **Tests never reach a real AI provider or the network.** No unit test may read an API key (`MELIOUS_API_KEY`, `AI_BENCH_KEY`, any `System.getenv` or system-property credential) or open a real connection. Use a fake `URL`/`HttpURLConnection` or a fake provider, as `OpenAiCompatibleProviderTest` and `PracticeGeneratorTest` do. A paid or live benchmark is not a test: do not put it in `app/src/test`, and do not add one that runs from `testDebugUnitTest`. The full unit suite must stay under about 3 minutes; if it does not, find the slow test before adding more.
 - Match the surrounding code style (Kotlin, ViewBinding, `Prefs` property pattern, `showMessageDialog` for dialogs).

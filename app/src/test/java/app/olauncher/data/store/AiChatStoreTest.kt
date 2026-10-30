@@ -230,6 +230,26 @@ class AiChatStoreTest {
     }
 
     @Test
+    fun `a save that fails after the tmp file was written cleans up the tmp file`() {
+        // A non-empty directory at ai_chats.json cannot be renamed onto, moved
+        // over or copied to, so every fallback in save() fails after the .tmp
+        // file has been written. upsert()/delete() cannot reach that path
+        // (mutationBase refuses first), so the test calls save() directly.
+        val blocker = File(tempDir, AiChatStore.FILE_NAME)
+        assertTrue(blocker.mkdirs())
+        File(blocker, "occupied.txt").writeText("in the way")
+
+        val result = store.save(listOf(thread("t1", wordSubject, 1)))
+
+        assertTrue("expected AiChatWrite.Failed, was $result", result is AiChatWrite.Failed)
+        assertTrue("the failed write must not leave the .tmp file behind",
+            !File(tempDir, "ai_chats.json.tmp").exists())
+        // The blocked target itself was not destroyed.
+        assertTrue(blocker.isDirectory)
+        assertEquals("in the way", File(blocker, "occupied.txt").readText())
+    }
+
+    @Test
     fun `store only touches its own file`() {
         store.upsert(thread("t1", wordSubject, 1))
         val names = tempDir.list().orEmpty().toList()

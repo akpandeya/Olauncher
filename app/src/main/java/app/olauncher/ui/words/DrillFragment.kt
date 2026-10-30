@@ -771,15 +771,28 @@ class DrillFragment : BaseFragment() {
         }
 
         // Miss line: rose ✗ mark, then the wrong choice and why it is wrong, in ink.
+        // The reason's `*…*` marked pairs render italic (DrillHelpCard.italicSegments);
+        // the data keeps the marks, the screen strips them from the shown text.
         val miss = state.miss
         if (miss != null) {
             val line = getString(R.string.drill_help_miss_line, miss.wrong, miss.reason)
-            val span = SpannableString(line)
-            if (line.isNotEmpty()) {
+            val segments = DrillHelpCard.italicSegments(line)
+            val span = SpannableString(segments.joinToString("") { it.text })
+            if (span.isNotEmpty()) {
                 span.setSpan(
                     ForegroundColorSpan(ContextCompat.getColor(context, R.color.accentRose)),
                     0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
                 )
+            }
+            var index = 0
+            for (segment in segments) {
+                if (segment.italic) {
+                    span.setSpan(
+                        StyleSpan(Typeface.ITALIC),
+                        index, index + segment.text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
+                    )
+                }
+                index += segment.text.length
             }
             b.tvHelpMiss.text = span
             b.tvHelpMiss.isVisible = true

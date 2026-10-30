@@ -63,10 +63,14 @@ object DrillHelpCard {
 
     /**
      * The item's own example: the prompt with its gap filled by the answer, the answer
-     * wrapped in `**…**` for bold+underline. Falls back to the rule's example when the
-     * prompt has no gap marker.
+     * wrapped in `**…**` for bold+underline. Items whose prompt has no gap marker —
+     * the which-case prepositions and the verb + preposition case questions — carry
+     * their own per-item example in [ITEM_HELP_EXAMPLES] (docs/design/drill-content/
+     * prepositions.md and verb-prepositions.md author the example per item); the rule's
+     * example stays as the fallback.
      */
     fun filledExample(question: DrillQuizQuestion): String {
+        ITEM_HELP_EXAMPLES[question.id.key]?.let { return it }
         val prompt = question.prompt
         return if (prompt.contains(DrillItem.GAP_MARKER)) {
             prompt.replaceFirst(DrillItem.GAP_MARKER, "**${question.answer}**")
@@ -116,5 +120,32 @@ object DrillHelpCard {
         return segments.filter { it.text.isNotEmpty() }
     }
 
-    data class Segment(val text: String, val bold: Boolean)
+    /**
+     * Splits `*…*` marked text into segments; [Segment.italic] marks the emphasized
+     * span (italic when rendered). The verb + preposition miss lines mark their
+     * preposition pairs this way; without this split the marks would show as literal
+     * asterisks on the drill screen. An unmatched `*` stays literal.
+     */
+    fun italicSegments(text: String): List<Segment> {
+        val segments = mutableListOf<Segment>()
+        var index = 0
+        while (index < text.length) {
+            val start = text.indexOf('*', index)
+            if (start < 0) {
+                segments += Segment(text.substring(index), bold = false)
+                break
+            }
+            if (start > index) segments += Segment(text.substring(index, start), bold = false)
+            val end = text.indexOf('*', start + 1)
+            if (end < 0) {
+                segments += Segment(text.substring(start), bold = false)
+                break
+            }
+            segments += Segment(text.substring(start + 1, end), bold = false, italic = true)
+            index = end + 1
+        }
+        return segments.filter { it.text.isNotEmpty() }
+    }
+
+    data class Segment(val text: String, val bold: Boolean, val italic: Boolean = false)
 }

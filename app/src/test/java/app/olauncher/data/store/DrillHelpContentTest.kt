@@ -1,6 +1,7 @@
 package app.olauncher.data.store
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -290,6 +291,36 @@ class DrillHelpContentTest {
     }
 
     @Test
+    fun italicSegmentsSplitItalicAndPlain() {
+        // The verb + preposition miss lines mark their pairs with *…*; the split
+        // must yield the marked span, so the screen can render it italic instead
+        // of showing the literal asterisks.
+        val segments = DrillHelpCard.italicSegments("an belongs to pairs like *denken an*. Waiting.")
+        assertEquals(3, segments.size)
+        assertEquals("an belongs to pairs like ", segments[0].text)
+        assertEquals(false, segments[0].italic)
+        assertEquals("denken an", segments[1].text)
+        assertEquals(true, segments[1].italic)
+        assertEquals(". Waiting.", segments[2].text)
+        assertEquals(false, segments[2].italic)
+    }
+
+    @Test
+    fun italicSegmentsDropTheMarksAndKeepUnmatchedOnesLiteral() {
+        val marked = "über belongs to *sprechen über*. *warten* pairs with *auf*."
+        val rendered = DrillHelpCard.italicSegments(marked).joinToString("") { it.text }
+        assertEquals("über belongs to sprechen über. warten pairs with auf.", rendered)
+        assertEquals(
+            listOf("sprechen über", "warten", "auf"),
+            DrillHelpCard.italicSegments(marked).filter { it.italic }.map { it.text },
+        )
+        // A single asterisk with no partner stays in the text as it is.
+        val literal = DrillHelpCard.italicSegments("a * b")
+        assertEquals("a * b", literal.joinToString("") { it.text })
+        assertTrue(literal.none { it.italic })
+    }
+
+    @Test
     fun filledExampleFillsTheGapWithTheMarkedAnswer() {
         val item = DrillItem(
             id = DrillItemId(DrillType.PASSIVE, "gap:test"),
@@ -354,5 +385,103 @@ class DrillHelpContentTest {
         )
         // A wrong choice without its own reason falls back to the item's note.
         assertEquals("general note", DrillHelpCard.missParts(question, "werden")!!.reason)
+    }
+
+    @Test
+    fun liveRuleTitlesAreUniquePerSubject() {
+        // A repeated title names no pattern, so every live rule's title must be unique
+        // within its subject (adjective endings, articles and plurals repeated theirs).
+        val bySubject = DrillHelpContentLive.rules.groupBy { rule ->
+            when {
+                rule.id.startsWith("prep-") -> "prepositions"
+                rule.id.startsWith("case-") -> "case endings"
+                rule.id.startsWith("verb-prep") -> "verb prepositions"
+                rule.id.startsWith("adj-") -> "adjective endings"
+                rule.id.startsWith("art-") -> "articles"
+                rule.id.startsWith("plural") -> "plurals"
+                else -> throw AssertionError("Unclassified live rule id: ${rule.id}")
+            }
+        }
+        assertEquals(DrillHelpContentLive.rules.size, bySubject.values.sumOf { it.size })
+        for ((subject, rules) in bySubject) {
+            assertEquals(
+                "$subject: rule titles must be unique per subject",
+                rules.size,
+                rules.map { it.title }.distinct().size,
+            )
+        }
+    }
+
+    @Test
+    fun liveRuleTitleNamesNoItemAnswer() {
+        for ((type, items) in liveItems()) {
+            for (item in items) {
+                val rule = DrillHelpContent.rule(item.ruleId)!!
+                assertFalse(
+                    "$type item ${item.id}: title \"${rule.title}\" reveals the answer " +
+                        "\"${item.answer}\"",
+                    DrillHints.revealsAnswer(rule.title, item.answer),
+                )
+            }
+        }
+    }
+
+    @Test
+    fun perItemExamplesCoverExactlyTheItemsWithoutAGapInTheirPrompt() {
+        // Items whose prompt carries the gap render their own filled prompt as the
+        // example; the which-case items (no gap) need an authored per-item example,
+        // and only they may have one.
+        val keysWithoutGap = liveItems().flatMap { (_, items) -> items }
+            .filter { !it.prompt.contains(DrillItem.GAP_MARKER) }
+            .map { it.id.key }
+            .toSet()
+        assertEquals(keysWithoutGap, ITEM_HELP_EXAMPLES.keys)
+    }
+
+    @Test
+    fun perItemExamplesDifferAcrossItemsOfOneRule() {
+        // A shared rule must never show a different item's example sentence: the
+        // example the card would show in the flashcard state differs per item.
+        // Two items of one rule can carry the very same sentence and answer (the
+        // prepositions file and the case-endings file both author "Das Geschenk ist
+        // für den Vater."); that is one example for one sentence, not a shared one.
+        val examplesByRule = liveItems().flatMap { (_, items) ->
+            items.mapNotNull { item ->
+                item.ruleId?.let { ruleId ->
+                    val question = DrillQuizQuestion(item, DrillFormat.FLASHCARD)
+                    ruleId to Pair("${question.prompt}|${question.answer}", DrillHelpCard.filledExample(question))
+                }
+            }
+        }.groupBy({ it.first }, { it.second })
+        for ((ruleId, pairs) in examplesByRule) {
+            assertEquals(
+                "$ruleId: every distinct item of the rule must show its own example",
+                pairs.map { it.first }.distinct().size,
+                pairs.map { it.second }.distinct().size,
+            )
+        }
+    }
+
+    @Test
+    fun whichCaseItemsShowTheirOwnExampleSentence() {
+        // Distinguishing check for prep-which-fixed: the durch item must no longer
+        // show the rule's mit-Bus example, but its own durch sentence.
+        val durch = DrillPrepositions.items().single { it.id.key == "prep:durch:0" }
+        assertEquals(
+            "Ich gehe durch **den** Park.",
+            DrillHelpCard.filledExample(DrillQuizQuestion(durch, DrillFormat.FLASHCARD)),
+        )
+        val mit = DrillPrepositions.items().single { it.id.key == "prep:mit:0" }
+        assertEquals(
+            "Ich fahre mit **dem** Bus.",
+            DrillHelpCard.filledExample(DrillQuizQuestion(mit, DrillFormat.FLASHCARD)),
+        )
+        // The verb + preposition case question renders its pair's own sentence with
+        // the preposition bold.
+        val bittenUm = DrillVerbPrepositions.items().single { it.id.key == "verbprep:bitten:um:1" }
+        assertEquals(
+            "Darf ich dich **um** Hilfe bitten?",
+            DrillHelpCard.filledExample(DrillQuizQuestion(bittenUm, DrillFormat.FLASHCARD)),
+        )
     }
 }

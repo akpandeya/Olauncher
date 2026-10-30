@@ -38,8 +38,7 @@ data class PracticeRejection(
 /**
  * Which `response_format` a generation request uses. Production starts each model
  * at its measured-best mode ([initialMode]) and falls back to `json_object` only
- * on the provider's capability/limit codes — the same rule the benchmark harness
- * applies ([AiBenchLogic.SCHEMA_FALLBACK_CODES]).
+ * on the provider's capability/limit codes ([FALLBACK_ERROR_CODES]).
  */
 object PracticeSchemaModes {
 

@@ -43,7 +43,7 @@ class OpenAiCompatibleProviderTest {
     @Test
     fun `encodeRequest sends the strict json schema envelope when a schema is set`() {
         val provider = OpenAiCompatibleProvider(config, keySource)
-        val schema = AiBenchLogic.strictSchemaJson()
+        val schema = PracticeContract.responseSchemaJson()
         val body = JSONObject(provider.encodeRequest(request.copy(jsonSchema = schema)))
         val envelope = body.getJSONObject("response_format")
         assertEquals("json_schema", envelope.getString("type"))
@@ -102,7 +102,7 @@ class OpenAiCompatibleProviderTest {
         result as AiResult.Error
         assertEquals(AiResult.ErrorKind.BAD_RESPONSE, result.kind)
         assertEquals("model_not_capable", result.errorCode)
-        assertTrue(AiBenchLogic.shouldFallBackFromSchema(result))
+        assertEquals(PracticeSchemaModes.JSON_OBJECT, PracticeSchemaModes.fallbackMode(PracticeSchemaModes.JSON_SCHEMA, result))
     }
 
     @Test
@@ -111,7 +111,7 @@ class OpenAiCompatibleProviderTest {
         result as AiResult.Error
         assertEquals(AiResult.ErrorKind.SERVER, result.kind)
         assertNull(result.errorCode)
-        assertFalse(AiBenchLogic.shouldFallBackFromSchema(result))
+        assertNull(PracticeSchemaModes.fallbackMode(PracticeSchemaModes.JSON_SCHEMA, result))
     }
 
     @Test

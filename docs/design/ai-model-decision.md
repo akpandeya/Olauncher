@@ -1,5 +1,7 @@
 # AI model decision (9.7, #600)
 
+> **Harness removed (2026-10-30).** The benchmark harness named below (`AiBenchmark.kt`, `AiChatBenchmark.kt`, their logic tests and fixtures) was deleted because a live run spent real money and hung `testDebugUnitTest` for over an hour whenever an API key was in the environment. The results here stay as the record; the code is in git history (`git show a6fde895:app/src/test/java/app/olauncher/data/store/AiBenchmark.kt`).
+
 Benchmarked 2026-10-27/28 with the harness in
 `app/src/test/java/app/olauncher/data/store/AiBenchmark.kt` (test source set only,
 skipped without a key; the live run is an execution of that test, not a unit test).
@@ -337,7 +339,7 @@ task-03/04 can size `maxTokens`; `finish_reason: length` maps to BAD_RESPONSE),
 correctness + grounding of each reply — pending native-speaker owner review,
 same as #600.
 
-**How to run** (owner; the agent runs nothing):
+**How it was run (historical).** The harness is removed (see the note at the top of this file); the command below no longer works. To repeat the measurement, restore the files from git history first and run it by hand, outside `testDebugUnitTest`.
 
 ```
 AI_BENCH_KEY=<owner key> AI_BENCH_CAP_EUR=0.30 AI_BENCH_RUNS=3 \
@@ -345,16 +347,7 @@ AI_BENCH_KEY=<owner key> AI_BENCH_CAP_EUR=0.30 AI_BENCH_RUNS=3 \
   ./gradlew testDebugUnitTest --tests 'app.olauncher.data.store.AiChatBenchmark' --no-daemon
 ```
 
-Default model: `Prefs.AI_MODEL_DEFAULT` (`glm-5.3-flash`), 3 runs per variant;
-overridable with `AI_BENCH_MODELS` / `AI_BENCH_RUNS`. Budget cap
-`AI_BENCH_CAP_EUR` (default €0.30 — 2 variants × 5 scenarios × 3 runs plus one
-small judge call each; worst-case estimates stay around €0.10). The estimated
-cost is logged before every call and the run stops before a call that would
-exceed the cap. The key is read from the environment only and is never
-printed, logged or committed. Output: per-run CSVs + `summary.csv` under
-`app/build/ai-chat-bench/` (build artifacts, not committed). With no key set
-the live test reports skipped and the key-free logic tests
-(`AiChatBenchmarkTest`) still run.
+Settings it used: default model `Prefs.AI_MODEL_DEFAULT` (`glm-5.3-flash`), 3 runs per variant, budget cap `AI_BENCH_CAP_EUR` €0.30 (2 variants × 5 scenarios × 3 runs plus one small judge call each; worst-case estimates stayed around €0.10). The estimated cost was logged before every call and the run stopped before a call that would exceed the cap. Output went to per-run CSVs plus `summary.csv` under `app/build/ai-chat-bench/` (build artifacts, not committed).
 
 ### Results
 

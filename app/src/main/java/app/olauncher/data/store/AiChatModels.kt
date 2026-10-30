@@ -193,7 +193,11 @@ object AiChatCodec {
      * schema exactly is rejected: not JSON, missing `threads`, a thread missing
      * `id`/`subject`/`createdAt`, an unknown subject kind, an unknown grounding
      * kind, a payload missing a required field for its kind, an unknown role,
-     * a `coversUpTo` outside the message bounds, or an optional field
+     * a `coversUpTo` outside the message bounds, a numeric field (`ts`,
+     * `coversUpTo`, `createdAt`, `updatedAt`, `wordId`, `inputTokens`,
+     * `outputTokens`) that is present but not a real JSON number (a numeric
+     * string like `"123"` is rejected, not coerced), a `usage` present but not
+     * an object, or an optional field
      * (`messages`, `groundings`, `summaries`, `failed`, `groundingId`, `ruleId`)
      * present with the wrong type. Optional fields that are absent or JSON null
      * decode to their defaults.
@@ -326,8 +330,8 @@ object AiChatCodec {
         val ref = subjectObj.opt("ref") as? String
         if (ref.isNullOrBlank()) throw CorruptFile("$label: subject missing ref")
         if (!obj.has("createdAt")) throw CorruptFile("$label: missing createdAt")
-        val createdAt = obj.getLong("createdAt")
-        val updatedAt = if (obj.has("updatedAt")) obj.getLong("updatedAt") else createdAt
+        val createdAt = obj.requireLong("createdAt", label)
+        val updatedAt = if (obj.has("updatedAt")) obj.requireLong("updatedAt", label) else createdAt
         val messages = decodeMessages(obj, label)
         val groundings = decodeGroundings(obj, label)
         val summaries = decodeSummaries(obj, label, messages)
@@ -354,9 +358,17 @@ object AiChatCodec {
                 ?: throw CorruptFile("$label message $i: unknown role '$roleRaw'")
             val text = m.opt("text") as? String
                 ?: throw CorruptFile("$label message $i: missing text")
-            val ts = m.getLong("ts")
-            val usage = m.optJSONObject("usage")?.let { u ->
-                AiUsage(inputTokens = u.getInt("inputTokens"), outputTokens = u.getInt("outputTokens"))
+            val ts = m.requireLong("ts", "$label message $i")
+            // `usage` is either an object with real numeric token counts or
+            // absent/null: any other present value rejects the file instead of
+            // decoding silently to null usage.
+            val usage = when (val u = m.opt("usage")) {
+                null, JSONObject.NULL -> null
+                is JSONObject -> AiUsage(
+                    inputTokens = u.requireInt("inputTokens", "$label message $i usage"),
+                    outputTokens = u.requireInt("outputTokens", "$label message $i usage"),
+                )
+                else -> throw CorruptFile("$label message $i: 'usage' is not an object")
             }
             messages.add(
                 AiChatMessage(
@@ -410,7 +422,7 @@ object AiChatCodec {
             AiChatGroundingPayload.KIND_PRACTICE -> AiChatGroundingPayload.Practice(
                 prompt = payload.requireString("prompt", label),
                 answer = payload.requireString("answer", label),
-                wordId = payload.getLong("wordId")
+                wordId = payload.requireLong("wordId", label)
             )
             else -> throw CorruptFile("$label: unknown grounding kind '$kind'")
         }
@@ -428,7 +440,7 @@ object AiChatCodec {
                 ?: throw CorruptFile("$label summary $i is not an object")
             val text = s.opt("text") as? String
                 ?: throw CorruptFile("$label summary $i: missing text")
-            val coversUpTo = s.getInt("coversUpTo")
+            val coversUpTo = s.requireInt("coversUpTo", label)
             if (coversUpTo !in messages.indices) {
                 throw CorruptFile(
                     "$label summary $i: coversUpTo $coversUpTo outside messages bounds (0..<${messages.size})"
@@ -438,11 +450,29 @@ object AiChatCodec {
                 AiChatSummary(
                     text = text,
                     coversUpTo = coversUpTo,
-                    createdAt = s.getLong("createdAt")
+                    createdAt = s.requireLong("createdAt", label)
                 )
             )
         }
         return summaries
+    }
+
+    /**
+     * Required number field: a real JSON number only. `getLong`/`getInt` would
+     * coerce a numeric string like `"123"`, so the value must pass `as? Number`
+     * — anything else rejects the file.
+     */
+    private fun JSONObject.requireLong(key: String, label: String): Long {
+        val value = opt(key) ?: throw CorruptFile("$label: missing '$key'")
+        val number = value as? Number ?: throw CorruptFile("$label: '$key' is not a number")
+        return number.toLong()
+    }
+
+    /** As [requireLong], for the Int fields (`coversUpTo`, usage token counts). */
+    private fun JSONObject.requireInt(key: String, label: String): Int {
+        val value = opt(key) ?: throw CorruptFile("$label: missing '$key'")
+        val number = value as? Number ?: throw CorruptFile("$label: '$key' is not a number")
+        return number.toInt()
     }
 
     /** Required string field; a missing or wrong-typed field rejects the file. */
