@@ -306,6 +306,7 @@ class ReviewFragment : BaseFragment() {
         }
         b.btnShowAnswer.isVisible = false
         b.gradeRow.isVisible = false
+        b.askAiRow.isVisible = false
 
         if (sessionEvents.isEmpty()) return
         val summary = ReviewSessionLogic.summarize(sessionEvents)
