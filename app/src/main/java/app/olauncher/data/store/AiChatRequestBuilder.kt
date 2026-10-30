@@ -141,7 +141,14 @@ object AiChatRequestBuilder {
     private fun groundingLine(payload: AiChatGroundingPayload): String = when (payload) {
         is AiChatGroundingPayload.Miss -> buildString {
             append("- Miss: prompt \"${payload.prompt}\" | learner picked: ${payload.picked} | correct: ${payload.answer}")
-            if (payload.ruleId != null) append(" | rule: ${payload.ruleId}")
+            payload.ruleId?.let { id ->
+                // The rule by what it means, then by its id: the model is held to the
+                // facts in this conversation, so the raw key alone would leave it a
+                // rule it is forbidden to state and cannot explain (#721).
+                val rule = DrillHelpContent.rule(id)
+                append(" | rule: ${rule?.title ?: id} ($id)")
+                rule?.let { append(" | rule text: ${it.rule}") }
+            }
             if (payload.chips.isNotEmpty()) append(" | chips: ${payload.chips.joinToString(", ")}")
         }
         is AiChatGroundingPayload.Word ->
