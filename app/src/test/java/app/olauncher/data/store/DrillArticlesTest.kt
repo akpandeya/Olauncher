@@ -235,4 +235,93 @@ class DrillArticlesTest {
             assertEquals(directItems[i].hint, tableItems[i].hint)
         }
     }
+
+    @Test
+    fun builtInItemsMatchTheAuthoredRuleAssignment() {
+        val built = DrillArticles.items().associate { it.id.key to it.ruleId!! }
+        val authored = ARTICLE_GENDER_RULE_CONTENT_BY_NOUN.entries.associate { (noun, content) ->
+            "art:${noun.lowercase()}" to content.ruleId
+        }
+        // Both directions: every table noun carries the rule its content file assigns,
+        // and every authored noun is a built-in one (no partial mapping).
+        assertEquals(authored, built)
+    }
+
+    @Test
+    fun authoredArticleNounsNeverCollideAcrossRules() {
+        // The by-noun map is built with toMap(), which silently drops duplicate
+        // keys, so a repeated noun would lose its rule instead of failing loudly.
+        assertEquals(
+            "Every authored article noun must land in ARTICLE_GENDER_RULE_CONTENT_BY_NOUN;" +
+                " a duplicate noun would be silently dropped",
+            ARTICLE_GENDER_RULE_CONTENT.sumOf { it.nouns.size },
+            ARTICLE_GENDER_RULE_CONTENT_BY_NOUN.size,
+        )
+    }
+
+    @Test
+    fun missLinesExplainEveryWrongChoice() {
+        for (item in DrillArticles.items()) {
+            assertEquals(
+                "Item ${item.id}: miss lines must cover exactly the wrong choices",
+                (item.choices - item.answer).toSet(),
+                item.missByChoice.keys,
+            )
+            assertTrue(
+                "Item ${item.id}: every miss line must be filled in",
+                item.missByChoice.values.all { it.isNotBlank() },
+            )
+        }
+    }
+
+    @Test
+    fun missLinesFollowTheAuthoredPerRuleWording() {
+        val items = DrillArticles.items().associateBy { it.id.key }
+
+        // A suffix rule: the wrong article's gender, the suffix's gender, the right one.
+        val zeitung = items.getValue("art:zeitung")
+        assertEquals("art-gender-suffix-ung", zeitung.ruleId)
+        assertEquals(
+            "masculine. Nouns ending in -ung are feminine, so die.",
+            zeitung.missByChoice.getValue("der"),
+        )
+
+        // A fixed-gender noun: its wording names the noun itself.
+        val tisch = items.getValue("art:tisch")
+        assertEquals("art-gender-fixed", tisch.ruleId)
+        assertEquals("feminine. Tisch is masculine, so der.", tisch.missByChoice.getValue("die"))
+        assertEquals("neuter. Tisch is masculine, so der.", tisch.missByChoice.getValue("das"))
+
+        // People nouns: one pattern for male, one for female nouns.
+        val mann = items.getValue("art:mann")
+        assertEquals("art-gender-natural", mann.ruleId)
+        assertEquals(
+            "feminine. A male person usually takes the masculine article, so der.",
+            mann.missByChoice.getValue("die"),
+        )
+        val mutter = items.getValue("art:mutter")
+        assertEquals(
+            "masculine. A female person usually takes the feminine article, so die.",
+            mutter.missByChoice.getValue("der"),
+        )
+
+        // The misleading-endings rule: the misleading line names the item's own ending.
+        val baum = items.getValue("art:baum")
+        assertEquals("art-gender-suffix-exception", baum.ruleId)
+        assertEquals(
+            "neuter. Nouns ending in -um usually are, but Baum is masculine, so der.",
+            baum.missByChoice.getValue("das"),
+        )
+    }
+
+    @Test
+    fun savedWordItemsCarryNoRuleId() {
+        val savedWords = listOf(
+            Word(id = 42L, text = "der Tisch", dueDay = 1L, addedAt = 1000L),
+        )
+        val items = DrillArticles.items(savedWords)
+        val tisch = items.first { it.id.key == "42" }
+        assertNull("Saved-word item must carry no rule id", tisch.ruleId)
+        assertTrue("Saved-word item must carry no miss lines", tisch.missByChoice.isEmpty())
+    }
 }

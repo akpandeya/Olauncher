@@ -173,12 +173,18 @@ object DrillArticles {
         val tableItems = TABLE_ENTRIES
             .filter { it.noun.lowercase() !in seenNouns }
             .map { entry ->
+                val content = ARTICLE_GENDER_RULE_CONTENT_BY_NOUN.getValue(entry.noun)
                 DrillItem(
                     id = DrillItemId(DrillType.ARTICLES, "art:${entry.noun.lowercase()}"),
                     prompt = "${DrillItem.GAP_MARKER} ${entry.noun}",
                     answer = entry.gender,
                     choices = CHOICES,
                     hint = ruleHintFor(entry.noun, entry.gender),
+                    ruleId = DrillHelpContent.requireValidRuleId(
+                        content.ruleId,
+                        "articles item art:${entry.noun.lowercase()}",
+                    ),
+                    missByChoice = content.missByChoiceFor(entry.noun, entry.gender),
                 )
             }
 

@@ -27,6 +27,9 @@ class DrillHelpContentTest {
         DrillType.PREPOSITIONS to DrillPrepositions.items(),
         DrillType.CASE_ENDINGS to DrillCaseEndings.items(),
         DrillType.VERB_PREPOSITIONS to DrillVerbPrepositions.items(),
+        DrillType.ADJECTIVE_ENDINGS to DrillAdjectiveEndings.items(),
+        DrillType.ARTICLES to DrillArticles.items(),
+        DrillType.PLURALS to DrillPlurals.items(),
     )
 
     private fun itemRules(): List<ItemRule> =
@@ -117,7 +120,8 @@ class DrillHelpContentTest {
     @Test
     fun authoredRuleContentCoversExactlyTheBuiltInItems() {
         // Authored assignments from docs/design/drill-content/: prepositions and case
-        // endings are keyed by item key, verb prepositions by pair → 2 items each.
+        // endings are keyed by item key, verb prepositions by pair → 2 items each,
+        // adjective endings by template key, articles and plurals by table noun.
         val authored: Map<String, String> =
             PREPOSITION_RULE_CONTENT.mapValues { it.value.ruleId } +
                 CASE_ENDING_RULE_CONTENT.entries.associate { "case:${it.key}" to it.value.ruleId } +
@@ -131,7 +135,16 @@ class DrillHelpContentTest {
                         "verbprep:${pair.verb}:${pair.preposition}:0" to content.gapRuleId,
                         "verbprep:${pair.verb}:${pair.preposition}:1" to content.caseRuleId,
                     )
-                }.toMap()
+                }.toMap() +
+                ADJECTIVE_ENDING_RULE_ITEMS.entries.associate { (key, ruleId) ->
+                    "adj:$key" to ruleId
+                } +
+                ARTICLE_GENDER_RULE_CONTENT_BY_NOUN.entries.associate { (noun, content) ->
+                    "art:${noun.lowercase()}" to content.ruleId
+                } +
+                PLURAL_RULE_CONTENT_BY_NOUN.entries.associate { (noun, content) ->
+                    "plur:${noun.lowercase()}" to content.ruleId
+                }
         val built: Map<String, String> = liveItems().flatMap { (_, items) ->
             items.map { it.id.key to it.ruleId!! }
         }.toMap()
@@ -179,6 +192,34 @@ class DrillHelpContentTest {
         val wordKeyedVerbPrep = savedVerbPreps.filter { it.id.key == "303" }
         assertTrue("Expected saved-word items for warten", wordKeyedVerbPrep.isNotEmpty())
         for (item in wordKeyedVerbPrep) {
+            assertNull("Saved-word item ${item.id} must carry no rule id", item.ruleId)
+        }
+
+        val savedAdjectiveEndings = DrillAdjectiveEndings.items(
+            listOf(Word(id = 404L, text = "mit", dueDay = 0L, addedAt = 0L)),
+        )
+        val wordKeyedAdjective = savedAdjectiveEndings.filter { it.id.key.startsWith("404:") }
+        assertTrue("Expected saved-word items for mit", wordKeyedAdjective.isNotEmpty())
+        for (item in wordKeyedAdjective) {
+            assertNull("Saved-word item ${item.id} must carry no rule id", item.ruleId)
+        }
+
+        val savedArticles = DrillArticles.items(
+            listOf(Word(id = 505L, text = "der Tisch", dueDay = 0L, addedAt = 0L)),
+        )
+        val wordKeyedArticles = savedArticles.filter { it.id.key == "505" }
+        assertTrue("Expected saved-word item for der Tisch", wordKeyedArticles.isNotEmpty())
+        for (item in wordKeyedArticles) {
+            assertNull("Saved-word item ${item.id} must carry no rule id", item.ruleId)
+        }
+
+        val savedPlurals = DrillPlurals.items(
+            listOf(Word(id = 606L, text = "das Haus", dueDay = 0L, addedAt = 0L)),
+            pluralLookup = { if (it == "Haus") "Häuser" else null },
+        )
+        val wordKeyedPlurals = savedPlurals.filter { it.id.key == "606" }
+        assertTrue("Expected saved-word item for das Haus", wordKeyedPlurals.isNotEmpty())
+        for (item in wordKeyedPlurals) {
             assertNull("Saved-word item ${item.id} must carry no rule id", item.ruleId)
         }
     }

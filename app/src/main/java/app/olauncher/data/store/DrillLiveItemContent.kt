@@ -1877,3 +1877,583 @@ internal val VERB_PREP_RULE_CONTENT: Map<String, VerbPrepRuleContent> = mapOf(
         ),
     ),
 )
+
+// -----------------------------------------------------------------------
+// adjective-endings.md
+// -----------------------------------------------------------------------
+
+/**
+ * The rule and per-wrong-choice miss lines of one adjective-endings group,
+ * keyed by rule id. The answer tiles are the endings; an item's own miss lines
+ * are its group's lines minus the line of the item's own answer ending.
+ */
+internal data class AdjectiveEndingRuleContent(
+    val ruleId: String,
+    /** Miss line per ending choice ("e", "en", ...); each item uses all but its own answer's line. */
+    val missByEnding: Map<String, String>,
+) {
+    /** The miss lines of one item: the group's lines for its wrong choices, minus its answer's line. */
+    fun missByChoiceFor(answer: String, choices: List<String>): Map<String, String> =
+        missByEnding.filterKeys { it != answer && it in choices }
+}
+
+internal val ADJECTIVE_ENDING_RULE_CONTENT: Map<String, AdjectiveEndingRuleContent> = mapOf(
+    "adj-weak-nom" to AdjectiveEndingRuleContent(
+        "adj-weak-nom",
+        mapOf(
+            "e" to "-e is the singular ending after der, die and das. The noun here is plural, so -en.",
+            "en" to "-en follows plural die (and accusative den). Your noun here is singular, so the ending is -e.",
+            "er" to "-er follows ein-words; it never follows der, die or das. Singular takes -e, plural die takes -en.",
+            "es" to "-es follows neuter ein. After der, die and das the singular ending is -e.",
+            "em" to "-em is a dative ending on the article itself (dem, einem), never on an adjective " +
+                    "after der, die or das. Plural die takes -en.",
+        ),
+    ),
+    "adj-weak-akk" to AdjectiveEndingRuleContent(
+        "adj-weak-akk",
+        mapOf(
+            "e" to "-e follows die and das when the noun is singular. den and plural die take -en.",
+            "en" to "-en follows den and plural die. Singular die and das take -e.",
+            "er" to "-er only follows ein. den and plural die take -en; singular die and das take -e.",
+            "es" to "-es follows neuter ein. Singular die and das take -e.",
+            "em" to "-em is a dative ending (einem). den and plural die take -en.",
+        ),
+    ),
+    "adj-weak-dat" to AdjectiveEndingRuleContent(
+        "adj-weak-dat",
+        mapOf(
+            "e" to "-e follows the subject articles der, die and das. dem, der and den here signal " +
+                    "the dative, so the ending is -en.",
+            "er" to "-er follows ein; the definite article never takes it. After dem, der and den the " +
+                    "adjective ending is -en.",
+            "em" to "-em belongs to the article itself (dem, einem). The adjective after it takes -en.",
+        ),
+    ),
+    "adj-weak-gen" to AdjectiveEndingRuleContent(
+        "adj-weak-gen",
+        mapOf(
+            "e" to "-e follows the subject articles der, die and das. des and der here signal the " +
+                    "genitive, so the ending is -en.",
+            "er" to "-er follows ein; the definite article never takes it. After des and der the " +
+                    "genitive adjective is -en.",
+            "em" to "-em is dative (dem, einem). des signals the genitive, and the adjective takes -en.",
+        ),
+    ),
+    "adj-mixed-nom" to AdjectiveEndingRuleContent(
+        "adj-mixed-nom",
+        mapOf(
+            "e" to "-e follows eine. ein takes -er or -es; plural keine takes -en.",
+            "en" to "-en follows plural keine. ein takes -er or -es, and eine takes -e.",
+            "er" to "-er follows masculine ein. eine takes -e, neuter ein takes -es, keine takes -en.",
+            "es" to "-es follows neuter ein. Masculine ein takes -er, eine takes -e, plural keine takes -en.",
+            "em" to "-em is dative (einem). Plural keine takes -en.",
+        ),
+    ),
+    "adj-mixed-akk" to AdjectiveEndingRuleContent(
+        "adj-mixed-akk",
+        mapOf(
+            "e" to "-e follows eine. einen and plural keine take -en; neuter ein takes -es.",
+            "en" to "-en follows einen and keine. eine takes -e; neuter ein takes -es.",
+            "er" to "-er is the subject ending of masculine ein. eine takes -e, neuter ein takes -es, " +
+                    "keine takes -en.",
+            "es" to "-es follows neuter ein. eine is feminine, so the ending is -e.",
+            "em" to "-em is dative (einem). einen and keine take -en.",
+        ),
+    ),
+    "adj-mixed-dat" to AdjectiveEndingRuleContent(
+        "adj-mixed-dat",
+        mapOf(
+            "e" to "-e follows eine and the nominative or accusative die. einem, einer and keinen here " +
+                    "show the dative, so the adjective takes -en.",
+            "er" to "-er follows masculine ein as a subject. After einem, einer and keinen the " +
+                    "adjective takes -en.",
+            "em" to "-em is the ending of the article itself (einem). The adjective after it takes -en.",
+        ),
+    ),
+    "adj-mixed-gen" to AdjectiveEndingRuleContent(
+        "adj-mixed-gen",
+        mapOf(
+            "e" to "-e follows eine and the nominative or accusative die. eines, einer and keiner here " +
+                    "show the genitive, so the adjective takes -en.",
+            "er" to "-er follows masculine ein as a subject. After the genitive eines, einer and keiner " +
+                    "the adjective takes -en.",
+            "em" to "-em is dative (einem). The genitive eines and keiner take the adjective -en.",
+        ),
+    ),
+)
+
+/**
+ * The authored assignment of every adjective-endings template key to its rule,
+ * exactly as the item lists in adjective-endings.md assign them.
+ */
+internal val ADJECTIVE_ENDING_RULE_ITEMS: Map<String, String> = mapOf(
+    // adj-weak-nom
+    "nom_weak_m_mann" to "adj-weak-nom",
+    "nom_weak_m_hund" to "adj-weak-nom",
+    "nom_weak_f_frau" to "adj-weak-nom",
+    "nom_weak_f_katze" to "adj-weak-nom",
+    "nom_weak_n_kind" to "adj-weak-nom",
+    "nom_weak_n_haus" to "adj-weak-nom",
+    "nom_weak_pl_kinder" to "adj-weak-nom",
+    "nom_weak_pl_baeume" to "adj-weak-nom",
+    // adj-weak-akk
+    "akk_weak_m_lehrer" to "adj-weak-akk",
+    "akk_weak_m_kuchen" to "adj-weak-akk",
+    "akk_weak_f_stadt" to "adj-weak-akk",
+    "akk_weak_f_blume" to "adj-weak-akk",
+    "akk_weak_n_buch" to "adj-weak-akk",
+    "akk_weak_n_auto" to "adj-weak-akk",
+    "akk_weak_pl_briefe" to "adj-weak-akk",
+    "akk_weak_pl_gaeste" to "adj-weak-akk",
+    // adj-weak-dat
+    "dat_weak_m_bruder" to "adj-weak-dat",
+    "dat_weak_m_tisch" to "adj-weak-dat",
+    "dat_weak_f_mutter" to "adj-weak-dat",
+    "dat_weak_f_strasse" to "adj-weak-dat",
+    "dat_weak_n_kind" to "adj-weak-dat",
+    "dat_weak_n_dorf" to "adj-weak-dat",
+    "dat_weak_pl_studenten" to "adj-weak-dat",
+    "dat_weak_pl_haeusern" to "adj-weak-dat",
+    // adj-weak-gen
+    "gen_weak_m_vaters" to "adj-weak-gen",
+    "gen_weak_m_waldes" to "adj-weak-gen",
+    "gen_weak_f_freundin" to "adj-weak-gen",
+    "gen_weak_f_schuelerin" to "adj-weak-gen",
+    "gen_weak_n_hauses" to "adj-weak-gen",
+    "gen_weak_n_maedchens" to "adj-weak-gen",
+    "gen_weak_pl_eltern" to "adj-weak-gen",
+    "gen_weak_pl_kinder" to "adj-weak-gen",
+    // adj-mixed-nom
+    "nom_mixed_m_hund" to "adj-mixed-nom",
+    "nom_mixed_m_apfel" to "adj-mixed-nom",
+    "nom_mixed_f_katze" to "adj-mixed-nom",
+    "nom_mixed_f_uhr" to "adj-mixed-nom",
+    "nom_mixed_n_buch" to "adj-mixed-nom",
+    "nom_mixed_n_kind" to "adj-mixed-nom",
+    "nom_mixed_pl_wolken" to "adj-mixed-nom",
+    "nom_mixed_pl_fehler" to "adj-mixed-nom",
+    // adj-mixed-akk
+    "akk_mixed_m_freund" to "adj-mixed-akk",
+    "akk_mixed_m_tee" to "adj-mixed-akk",
+    "akk_mixed_f_suppe" to "adj-mixed-akk",
+    "akk_mixed_f_frage" to "adj-mixed-akk",
+    "akk_mixed_n_auto" to "adj-mixed-akk",
+    "akk_mixed_n_kleid" to "adj-mixed-akk",
+    "akk_mixed_pl_probleme" to "adj-mixed-akk",
+    "akk_mixed_pl_briefe" to "adj-mixed-akk",
+    // adj-mixed-dat
+    "dat_mixed_m_hund" to "adj-mixed-dat",
+    "dat_mixed_m_freund" to "adj-mixed-dat",
+    "dat_mixed_f_tasse" to "adj-mixed-dat",
+    "dat_mixed_f_freundin" to "adj-mixed-dat",
+    "dat_mixed_n_dorf" to "adj-mixed-dat",
+    "dat_mixed_n_hotel" to "adj-mixed-dat",
+    "dat_mixed_pl_leuten" to "adj-mixed-dat",
+    "dat_mixed_pl_tieren" to "adj-mixed-dat",
+    // adj-mixed-gen
+    "gen_mixed_m_tages" to "adj-mixed-gen",
+    "gen_mixed_m_lehrers" to "adj-mixed-gen",
+    "gen_mixed_f_blume" to "adj-mixed-gen",
+    "gen_mixed_f_woche" to "adj-mixed-gen",
+    "gen_mixed_n_hauses" to "adj-mixed-gen",
+    "gen_mixed_n_kindes" to "adj-mixed-gen",
+    "gen_mixed_pl_zeugen" to "adj-mixed-gen",
+    "gen_mixed_pl_vorkenntnisse" to "adj-mixed-gen",
+)
+
+// -----------------------------------------------------------------------
+// articles.md (all 72 built-in article items; one rule per noun)
+// -----------------------------------------------------------------------
+
+/**
+ * One articles gender rule: its id, its nouns and the miss line per wrong article.
+ * Nouns whose reasoning names the noun itself use the "{Noun}" placeholder in the
+ * fixed-gender wording; the misleading-endings rule carries per-noun overrides
+ * instead, exactly as authored.
+ */
+internal data class ArticleGenderRuleContent(
+    val ruleId: String,
+    /** The nouns of this rule, exactly as authored in articles.md. */
+    val nouns: List<String>,
+    /**
+     * Miss line per wrong article keyed by the item's article answer ("der"/"die"/"das")
+     * and then by the wrong choice. A rule whose items share one gender has one entry.
+     */
+    val missByAnswerAndChoice: Map<String, Map<String, String>> = emptyMap(),
+    /** Per-noun miss lines for the rule with per-item wording, overriding the shared lines. */
+    val missByNounAndChoice: Map<String, Map<String, String>> = emptyMap(),
+) {
+    /** The miss lines of one item: one per wrong article of its three choices. */
+    fun missByChoiceFor(noun: String, answer: String): Map<String, String> {
+        val lines = missByNounAndChoice[noun] ?: missByAnswerAndChoice.getValue(answer)
+        return lines.mapValues { (_, text) -> text.replace("{Noun}", noun) }
+    }
+}
+
+internal val ARTICLE_GENDER_RULE_CONTENT: List<ArticleGenderRuleContent> = listOf(
+    ArticleGenderRuleContent(
+        "art-gender-suffix-ung",
+        listOf("Zeitung", "Wohnung", "Hoffnung"),
+        missByAnswerAndChoice = mapOf(
+            "die" to mapOf(
+                "der" to "masculine. Nouns ending in -ung are feminine, so die.",
+                "das" to "neuter. Nouns ending in -ung are feminine, so die.",
+            ),
+        ),
+    ),
+    ArticleGenderRuleContent(
+        "art-gender-suffix-heit",
+        listOf("Freiheit", "Gesundheit"),
+        missByAnswerAndChoice = mapOf(
+            "die" to mapOf(
+                "der" to "masculine. Nouns ending in -heit are feminine, so die.",
+                "das" to "neuter. Nouns ending in -heit are feminine, so die.",
+            ),
+        ),
+    ),
+    ArticleGenderRuleContent(
+        "art-gender-suffix-keit",
+        listOf("Möglichkeit", "Schnelligkeit"),
+        missByAnswerAndChoice = mapOf(
+            "die" to mapOf(
+                "der" to "masculine. Nouns ending in -keit are feminine, so die.",
+                "das" to "neuter. Nouns ending in -keit are feminine, so die.",
+            ),
+        ),
+    ),
+    ArticleGenderRuleContent(
+        "art-gender-suffix-schaft",
+        listOf("Freundschaft", "Landschaft"),
+        missByAnswerAndChoice = mapOf(
+            "die" to mapOf(
+                "der" to "masculine. Nouns ending in -schaft are feminine, so die.",
+                "das" to "neuter. Nouns ending in -schaft are feminine, so die.",
+            ),
+        ),
+    ),
+    ArticleGenderRuleContent(
+        "art-gender-suffix-ion",
+        listOf("Station", "Situation"),
+        missByAnswerAndChoice = mapOf(
+            "die" to mapOf(
+                "der" to "masculine. Nouns ending in -ion are feminine, so die.",
+                "das" to "neuter. Nouns ending in -ion are feminine, so die.",
+            ),
+        ),
+    ),
+    ArticleGenderRuleContent(
+        "art-gender-suffix-taet",
+        listOf("Universität"),
+        missByAnswerAndChoice = mapOf(
+            "die" to mapOf(
+                "der" to "masculine. Nouns ending in -tät are feminine, so die.",
+                "das" to "neuter. Nouns ending in -tät are feminine, so die.",
+            ),
+        ),
+    ),
+    ArticleGenderRuleContent(
+        "art-gender-suffix-ei",
+        listOf("Bäckerei"),
+        missByAnswerAndChoice = mapOf(
+            "die" to mapOf(
+                "der" to "masculine. Nouns ending in -ei are feminine, so die.",
+                "das" to "neuter. Nouns ending in -ei are feminine, so die.",
+            ),
+        ),
+    ),
+    ArticleGenderRuleContent(
+        "art-gender-suffix-e",
+        listOf("Sonne", "Straße", "Katze", "Schule", "Frage", "Reise"),
+        missByAnswerAndChoice = mapOf(
+            "die" to mapOf(
+                "der" to "masculine. Most nouns ending in -e are feminine (der Junge is an exception), so die.",
+                "das" to "neuter. Most nouns ending in -e are feminine, so die.",
+            ),
+        ),
+    ),
+    ArticleGenderRuleContent(
+        "art-gender-suffix-ismus",
+        listOf("Optimismus", "Tourismus"),
+        missByAnswerAndChoice = mapOf(
+            "der" to mapOf(
+                "die" to "feminine. Nouns ending in -ismus are masculine, so der.",
+                "das" to "neuter. Nouns ending in -ismus are masculine, so der.",
+            ),
+        ),
+    ),
+    ArticleGenderRuleContent(
+        "art-gender-suffix-ling",
+        listOf("Schmetterling", "Frühling"),
+        missByAnswerAndChoice = mapOf(
+            "der" to mapOf(
+                "die" to "feminine. Nouns ending in -ling are masculine, so der.",
+                "das" to "neuter. Nouns ending in -ling are masculine, so der.",
+            ),
+        ),
+    ),
+    ArticleGenderRuleContent(
+        "art-gender-suffix-ment",
+        listOf("Dokument", "Instrument"),
+        missByAnswerAndChoice = mapOf(
+            "das" to mapOf(
+                "der" to "masculine. Most loan nouns ending in -ment are neuter, so das.",
+                "die" to "feminine. Most loan nouns ending in -ment are neuter, so das.",
+            ),
+        ),
+    ),
+    ArticleGenderRuleContent(
+        "art-gender-suffix-chen",
+        listOf("Mädchen", "Brötchen"),
+        missByAnswerAndChoice = mapOf(
+            "das" to mapOf(
+                "der" to "masculine. Diminutive nouns ending in -chen are neuter, so das.",
+                "die" to "feminine. Diminutive nouns ending in -chen are neuter, so das.",
+            ),
+        ),
+    ),
+    ArticleGenderRuleContent(
+        "art-gender-suffix-lein",
+        listOf("Fräulein"),
+        missByAnswerAndChoice = mapOf(
+            "das" to mapOf(
+                "der" to "masculine. Diminutive nouns ending in -lein are neuter, so das.",
+                "die" to "feminine. Diminutive nouns ending in -lein are neuter, so das.",
+            ),
+        ),
+    ),
+    ArticleGenderRuleContent(
+        "art-gender-suffix-um",
+        listOf("Museum", "Zentrum"),
+        missByAnswerAndChoice = mapOf(
+            "das" to mapOf(
+                "der" to "masculine. Latin loan nouns ending in -um are neuter, so das.",
+                "die" to "feminine. Latin loan nouns ending in -um are neuter, so das.",
+            ),
+        ),
+    ),
+    ArticleGenderRuleContent(
+        "art-gender-suffix-exception",
+        listOf("Baum", "Sprung", "Moment"),
+        missByNounAndChoice = mapOf(
+            "Baum" to mapOf(
+                "das" to "neuter. Nouns ending in -um usually are, but Baum is masculine, so der.",
+                "die" to "feminine. Baum is masculine, so der.",
+            ),
+            "Sprung" to mapOf(
+                "die" to "feminine. Nouns ending in -ung usually are, but Sprung is masculine, so der.",
+                "das" to "neuter. Sprung is masculine, so der.",
+            ),
+            "Moment" to mapOf(
+                "das" to "neuter. Nouns ending in -ment usually are, but Moment is masculine, so der.",
+                "die" to "feminine. Moment is masculine, so der.",
+            ),
+        ),
+    ),
+    ArticleGenderRuleContent(
+        "art-gender-natural",
+        listOf("Mann", "Vater", "Bruder", "Freund", "Frau", "Mutter", "Schwester"),
+        missByAnswerAndChoice = mapOf(
+            "der" to mapOf(
+                "die" to "feminine. A male person usually takes the masculine article, so der.",
+                "das" to "neuter. A male person usually takes the masculine article, so der.",
+            ),
+            "die" to mapOf(
+                "der" to "masculine. A female person usually takes the feminine article, so die.",
+                "das" to "neuter. A female person usually takes the feminine article, so die.",
+            ),
+        ),
+    ),
+    ArticleGenderRuleContent(
+        "art-gender-fixed",
+        listOf(
+            "Tisch", "Hund", "Stuhl", "Wagen", "Garten", "Apfel", "Schlüssel", "Wald",
+            "Bahnhof", "Platz", "Nacht", "Stadt", "Hand", "Zeit", "Kind", "Haus",
+            "Auto", "Buch", "Bild", "Fenster", "Wasser", "Zimmer", "Jahr", "Geld",
+            "Bett", "Brot", "Kleid", "Spiel", "Tag", "Monat", "Kaffee", "Tee",
+        ),
+        missByAnswerAndChoice = mapOf(
+            "der" to mapOf(
+                "die" to "feminine. {Noun} is masculine, so der.",
+                "das" to "neuter. {Noun} is masculine, so der.",
+            ),
+            "die" to mapOf(
+                "der" to "masculine. {Noun} is feminine, so die.",
+                "das" to "neuter. {Noun} is feminine, so die.",
+            ),
+            "das" to mapOf(
+                "der" to "masculine. {Noun} is neuter, so das.",
+                "die" to "feminine. {Noun} is neuter, so das.",
+            ),
+        ),
+    ),
+)
+
+/**
+ * The authored rule of every article table noun, keyed by the noun as in the
+ * table. Two nouns never collide; the noun-count test pins this.
+ */
+internal val ARTICLE_GENDER_RULE_CONTENT_BY_NOUN: Map<String, ArticleGenderRuleContent> =
+    ARTICLE_GENDER_RULE_CONTENT.flatMap { content ->
+        content.nouns.map { it to content }
+    }.toMap()
+
+// -----------------------------------------------------------------------
+// plurals.md
+// -----------------------------------------------------------------------
+
+/**
+ * One plurals pattern rule: its id, its table nouns and the miss line per
+ * wrong-choice pattern. The table's pattern tag groups the nouns, exactly as
+ * authored in plurals.md; saved-word items carry no pattern tag and never match.
+ */
+internal data class PluralRuleContent(
+    val ruleId: String,
+    /** The table nouns of this rule, exactly as authored in plurals.md. */
+    val nouns: List<String>,
+    /**
+     * Miss line per wrong-choice pattern slot of DrillPlurals.candidatePatternForms
+     * ("-e", "umlaut-e", "-er", "umlaut-er", "-n", "-en", "-s", "no-change",
+     * "umlaut"); the "{plural}" placeholder becomes the item's plural answer, and
+     * "{vowel}"/"{umlaut}" become the drilled noun's umlaut pair (a→ä, o→ö, u→ü,
+     * au→äu), so an umlaut rule names the vowel that noun changes.
+     */
+    val missByPattern: Map<String, String>,
+) {
+    /**
+     * The miss lines of one item: one per wrong choice its choices carry — the
+     * first three wrong choices the choice builder selects, keyed by the
+     * generated form. Every generated wrong choice must have an authored line.
+     */
+    fun missByChoiceFor(noun: String, answer: String): Map<String, String> {
+        val wrong = DrillPlurals.candidatePatternForms(noun)
+            .filter { it.first != answer }
+            .take(DrillPlurals.WRONG_CHOICE_COUNT)
+        return wrong.associate { (form, slot) ->
+            form to renderMissLine(missByPattern.getValue(slot), noun, answer)
+        }
+    }
+}
+
+/**
+ * Fills an authored miss line's placeholders for one noun: "{plural}" becomes
+ * the answer, and "{vowel}"/"{umlaut}" become the noun's umlautable vowel pair,
+ * so an umlaut rule names the vowel the drilled noun changes, not the wording's
+ * illustration noun's.
+ */
+private fun renderMissLine(line: String, noun: String, answer: String): String {
+    var rendered = line.replace("{plural}", answer)
+    if ("{vowel}" in rendered) {
+        val (vowel, umlaut) = umlautVowelPair(noun)
+            ?: error("Miss line \"$line\" needs an umlaut pair, but \"$noun\" has no umlautable vowel.")
+        rendered = rendered.replace("{vowel}", vowel).replace("{umlaut}", umlaut)
+    }
+    return rendered
+}
+
+/**
+ * The noun's last umlautable vowel and its umlaut (a→ä, o→ö, u→ü, au→äu),
+ * derived from DrillPlurals.applyUmlaut, which preserves length; null when the
+ * noun has no umlautable vowel.
+ */
+private fun umlautVowelPair(noun: String): Pair<String, String>? {
+    val umlauted = DrillPlurals.applyUmlaut(noun) ?: return null
+    val index = noun.indices.firstOrNull { noun[it] != umlauted[it] } ?: return null
+    return if (noun[index].equals('a', ignoreCase = true) &&
+        noun.getOrNull(index + 1)?.equals('u', ignoreCase = true) == true
+    ) {
+        noun.substring(index, index + 2) to umlauted.substring(index, index + 2)
+    } else {
+        noun[index].toString() to umlauted[index].toString()
+    }
+}
+
+internal val PLURAL_RULE_CONTENT: List<PluralRuleContent> = listOf(
+    PluralRuleContent(
+        "plural-e",
+        listOf("Tag", "Hund", "Tisch", "Monat", "Freund", "Jahr", "Schuh", "Boot"),
+        missByPattern = mapOf(
+            "umlaut-e" to "this noun keeps its vowel and adds plain -e: die {plural}.",
+            "-er" to "the added ending is -e here, not -er: die {plural}.",
+            "umlaut-er" to "no -er and no vowel change, just -e: die {plural}.",
+            "-n" to "-n goes on nouns that already end in -e; this noun adds -e: die {plural}.",
+            "-en" to "-en belongs to other noun groups; this noun adds -e: die {plural}.",
+        ),
+    ),
+    PluralRuleContent(
+        "plural-umlaut-e",
+        listOf("Hand", "Stadt", "Nacht", "Stuhl", "Baum", "Ball", "Wand", "Zug"),
+        missByPattern = mapOf(
+            "-e" to "the vowel changes too, {vowel} becomes {umlaut}: die {plural}.",
+            "-er" to "the ending is -e, and the vowel changes: die {plural}.",
+            "umlaut-er" to "no -er, just the vowel change plus -e: die {plural}.",
+        ),
+    ),
+    PluralRuleContent(
+        "plural-er",
+        listOf("Kind", "Bild", "Kleid", "Licht", "Ei", "Feld", "Lied"),
+        missByPattern = mapOf(
+            "-e" to "this noun takes the fuller ending -er: die {plural}.",
+            "-n" to "-n goes on nouns that already end in -e; this noun takes -er: die {plural}.",
+            "-en" to "-en belongs to other noun groups; this noun takes -er: die {plural}.",
+        ),
+    ),
+    PluralRuleContent(
+        "plural-umlaut-er",
+        listOf("Haus", "Buch", "Mann", "Rad", "Wald", "Glas", "Dorf", "Blatt"),
+        missByPattern = mapOf(
+            "-e" to "this noun takes -er, and the vowel changes: die {plural}.",
+            "umlaut-e" to "the ending is -er, not -e: die {plural}.",
+            "-er" to "the vowel changes too, {vowel} becomes {umlaut}: die {plural}.",
+        ),
+    ),
+    PluralRuleContent(
+        "plural-n",
+        listOf("Katze", "Straße", "Schule", "Frage", "Reise", "Lampe", "Tasche", "Auge"),
+        missByPattern = mapOf(
+            "no-change" to "nouns ending in -e add -n in the plural: die {plural}.",
+            "umlaut-e" to "the vowel stays as it is; -n is added: die {plural}.",
+            "-er" to "not -er; nouns ending in -e add -n: die {plural}.",
+            "-s" to "-s is mostly for borrowed words; nouns ending in -e add -n: die {plural}.",
+        ),
+    ),
+    PluralRuleContent(
+        "plural-en",
+        listOf("Frau", "Zeit", "Zeitung", "Wohnung", "Bett", "Hemd", "Ohr", "Mensch"),
+        missByPattern = mapOf(
+            "-e" to "this noun adds -en: die {plural}.",
+            "-n" to "-n goes on nouns that already end in -e; this noun adds -en: die {plural}.",
+            "-er" to "the ending is -en, not -er: die {plural}.",
+            "umlaut-e" to "the vowel stays; the ending is -en: die {plural}.",
+        ),
+    ),
+    PluralRuleContent(
+        "plural-s",
+        listOf("Auto", "Foto", "Radio", "Sofa", "Chef", "Hotel", "Park", "Kino"),
+        missByPattern = mapOf(
+            "-e" to "borrowed words add -s: die {plural}.",
+            "umlaut-e" to "no vowel change, just -s: die {plural}.",
+            "-er" to "this group adds -s, not -er: die {plural}.",
+            "-n" to "-n goes on nouns that already end in -e; borrowed words add -s: die {plural}.",
+        ),
+    ),
+    PluralRuleContent(
+        "plural-no-change",
+        listOf("Fenster", "Zimmer", "Mädchen", "Brötchen", "Wagen", "Schlüssel", "Gebäude", "Lehrer"),
+        missByPattern = mapOf(
+            "-e" to "this noun adds no ending: die {plural}.",
+            "-er" to "no -er; the plural matches the singular: die {plural}.",
+            "-n" to "-n goes on nouns that end in -e; this noun does not change: die {plural}.",
+            "umlaut-e" to "no vowel change and no ending: die {plural}.",
+            "umlaut-er" to "no vowel change and no ending: die {plural}.",
+        ),
+    ),
+)
+
+/**
+ * The authored rule of every plural table noun, keyed by the noun as in the
+ * table entries. Two nouns never collide; the noun-count test pins this.
+ */
+internal val PLURAL_RULE_CONTENT_BY_NOUN: Map<String, PluralRuleContent> =
+    PLURAL_RULE_CONTENT.flatMap { content ->
+        content.nouns.map { it.lowercase() to content }
+    }.toMap()
