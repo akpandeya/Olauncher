@@ -115,7 +115,17 @@ object AskAiEntryPoints {
         val navController = fragment.findNavController()
         if (navController.currentDestination?.id != currentDestinationId) return
         val args = if (threadId != null) {
-            AiChatFragment.bundle(subject, threadId = threadId)
+            // A resume carries only its NEW miss (design §Chat screen: expanded
+            // on "a resume carrying a new miss"; §Threads: one per miss,
+            // groundings accumulate) — the fragment takes the last grounding as
+            // the one joining its next send. The word/practice blocks already
+            // sit in the resumed thread, so re-carrying them would duplicate
+            // them; review/word entries carry no miss and resume empty.
+            AiChatFragment.bundle(
+                subject,
+                threadId = threadId,
+                groundings = groundings.filter { it.payload is AiChatGroundingPayload.Miss },
+            )
         } else {
             AiChatFragment.bundle(subject, proposal = proposal, groundings = groundings)
         }
