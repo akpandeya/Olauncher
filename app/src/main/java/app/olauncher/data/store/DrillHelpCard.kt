@@ -8,11 +8,23 @@ package app.olauncher.data.store
  */
 object DrillHelpCard {
 
+    /**
+     * One cell of a rule's forms table by position: the row's label and the data
+     * column's header, as authored in the table (for example Cell("Gen", "n")).
+     */
+    data class Cell(val row: String, val column: String)
+
     /** One help-slot rendering, ready to bind. Null means the slot stays hidden. */
     data class State(
         val rule: DrillHelpRule,
         /** True in the flashcard and after-a-miss states: highlight and bold the answer's cell. */
         val showAnswer: Boolean,
+        /**
+         * The item's own cell in the rule's table, when the item's position is known
+         * ([DrillItem.helpCell]). Null keeps the text-match fallback of
+         * [answerCellPosition].
+         */
+        val answerCell: Cell? = null,
         /**
          * The example sentence with the changing form wrapped in `**…**`. Shown only in
          * the flashcard and after-a-miss states, never before a tap answer (design §3).
@@ -47,12 +59,14 @@ object DrillHelpCard {
             question.isFlashcard -> State(
                 rule = rule,
                 showAnswer = true,
+                answerCell = question.item.helpCell,
                 example = filledExample(question),
                 miss = null,
             )
             answeredWrong -> State(
                 rule = rule,
                 showAnswer = true,
+                answerCell = question.item.helpCell,
                 example = filledExample(question),
                 miss = missParts(question, wrongChoice),
             )
@@ -123,6 +137,39 @@ object DrillHelpCard {
     }
 
     data class MissParts(val wrong: String, val reason: String)
+
+    /**
+     * The table position to bold+underline for the item's answer, as `(row, data
+     * column)` indexes into [table], or null for no cell.
+     *
+     * The item's own [cell] wins when the item carries one ([DrillItem.helpCell]):
+     * the position is the fact the design authors (docs/design/drill-content/:
+     * "highlight the row and the column of the item's noun, and bold its article"),
+     * and a repeated form in another column is a different noun's form.
+     *
+     * Without an authored cell the answer's text decides — but only when exactly one
+     * cell in the whole table equals it. When several do (the genitive *des* covers
+     * masculine and neuter), no single cell is this item's own and nothing is
+     * highlighted: lighting them all answers "where does this form appear?" instead
+     * of "this noun's form", and quietly approves the answer for either column.
+     */
+    fun answerCellPosition(table: DrillHelpTable, answer: String?, cell: Cell?): Pair<Int, Int>? {
+        if (answer.isNullOrBlank()) return null
+        cell?.let { authored ->
+            val row = table.rows.indexOfFirst {
+                it.label.trim().equals(authored.row.trim(), ignoreCase = true)
+            }
+            val column = table.headers.drop(1).indexOfFirst {
+                it.trim().equals(authored.column.trim(), ignoreCase = true)
+            }
+            if (row >= 0 && column >= 0) return row to column
+        }
+        return table.rows.flatMapIndexed { row, candidate ->
+            candidate.cells.mapIndexedNotNull { column, text ->
+                if (text.trim().equals(answer.trim(), ignoreCase = true)) row to column else null
+            }
+        }.singleOrNull()
+    }
 
     /**
      * Splits `**…**` marked text into segments; [Segment.bold] marks the changing form

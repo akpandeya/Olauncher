@@ -666,4 +666,46 @@ class DrillHelpContentTest {
         }.toSet()
         assertEquals(setOf(DrillType.CONJUGATION, DrillType.CLOZE), withoutRule)
     }
+
+    @Test
+    fun caseEndingAndPrepositionItemsHighlightTheirOwnCellNotEveryTextMatch() {
+        // #723: the card highlighted every cell whose text equals the answer, so the
+        // genitive des lit both the masculine and the neuter column. The item's cell
+        // is a position, authored or derived from its case and gender; where an item
+        // carries none, its answer must be unique in the table so the text fallback
+        // cannot light a different noun's form.
+        val audited = setOf(DrillType.CASE_ENDINGS, DrillType.PREPOSITIONS)
+        for ((type, items) in liveItems()) {
+            if (type !in audited) continue
+            for (item in items) {
+                val ruleId = item.ruleId ?: continue
+                val table = DrillHelpContent.rule(ruleId)?.table ?: continue
+                val matches = table.rows.sumOf { row ->
+                    row.cells.count { it.trim().equals(item.answer.trim(), ignoreCase = true) }
+                }
+                if (matches > 1) {
+                    assertNotNull(
+                        "$type ${item.id}: the answer repeats in $matches cells of " +
+                            "$ruleId; the item needs an authored help cell",
+                        item.helpCell,
+                    )
+                }
+                item.helpCell?.let { cell ->
+                    val position = DrillHelpCard.answerCellPosition(table, item.answer, cell)
+                    assertNotNull(
+                        "$type ${item.id}: help cell $cell must resolve in the table of $ruleId",
+                        position,
+                    )
+                    val (row, column) = position!!
+                    val cellText = table.rows[row].cells[column]
+                    val cellWords = cellText.split(Regex("[^A-Za-zÄÖÜäöüß]+")).filter { it.isNotEmpty() }
+                    assertTrue(
+                        "$type ${item.id}: cell \"$cellText\" at $cell must hold the answer " +
+                            "\"${item.answer}\"",
+                        item.answer.trim().lowercase() in cellWords.map { it.lowercase() },
+                    )
+                }
+            }
+        }
+    }
 }

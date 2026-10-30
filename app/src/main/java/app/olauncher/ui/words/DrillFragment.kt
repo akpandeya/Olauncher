@@ -755,6 +755,10 @@ class DrillFragment : BaseFragment() {
 
         b.tvHelpRule.text = state.rule.rule
 
+        // The item's own cell: by position when the item carries it, else the unique
+        // text match (DrillHelpCard.answerCellPosition). Null lights no cell.
+        val answerPosition = DrillHelpCard.answerCellPosition(table, answer, state.answerCell)
+
         b.helpTable.removeAllViews()
         b.helpTable.columnCount = table.headers.size
         for (header in table.headers) {
@@ -766,7 +770,7 @@ class DrillFragment : BaseFragment() {
                 ),
             )
         }
-        for (row in table.rows) {
+        table.rows.forEachIndexed { rowIndex, row ->
             b.helpTable.addView(helpCell(text = row.label, emphasised = true, color = null))
             row.cells.forEachIndexed { index, cell ->
                 b.helpTable.addView(
@@ -774,8 +778,7 @@ class DrillFragment : BaseFragment() {
                         text = cell,
                         emphasised = false,
                         color = genderColorFor(table.headers.getOrNull(index + 1)),
-                        showAnswer = state.showAnswer && answer != null &&
-                            cell.equals(answer, ignoreCase = true),
+                        showAnswer = state.showAnswer && answerPosition == (rowIndex to index),
                     ),
                 )
             }

@@ -512,6 +512,7 @@ object DrillPrepositions {
                     hint = template.hint,
                     ruleId = ruleId,
                     missByChoice = content?.missByChoice ?: emptyMap(),
+                    helpCell = helpCell(ruleId, content?.case, content?.gender),
                 )
             }
         }

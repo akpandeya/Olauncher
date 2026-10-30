@@ -114,6 +114,15 @@ data class DrillItem(
      * choice fall back to [missReason].
      */
     val missByChoice: Map<String, String> = emptyMap(),
+    /**
+     * The item's own cell in its help rule's forms table, when the item's position is
+     * known where it is built (the case-endings and prepositions items carry the
+     * noun's case and gender). The card highlights this cell by position instead of
+     * comparing text, so a form repeated in another column (the genitive des of
+     * masculine and neuter) never lights up for this item. Null keeps the card's
+     * unique-text fallback ([DrillHelpCard.answerCellPosition]).
+     */
+    val helpCell: DrillHelpCard.Cell? = null,
 ) {
     fun validate(): DrillItemCheck {
         val problems = mutableListOf<String>()

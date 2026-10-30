@@ -494,6 +494,7 @@ object DrillCaseEndings {
                 hint = hint,
                 ruleId = ruleId,
                 missByChoice = content?.missByChoice ?: emptyMap(),
+                helpCell = helpCell(ruleId, template.case, template.gender),
             )
         }
     }
