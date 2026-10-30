@@ -702,6 +702,10 @@ object DrillSeparableVerbs {
 
             val itemsForEntry = mutableListOf<DrillItem>()
 
+            val k1Content = if (!isKeyedByWordId) SEPARABLE_VERB_RULE_CONTENT[kind1Key] else null
+            val k1RuleId = k1Content?.ruleId
+                ?.let { DrillHelpContent.requireValidRuleId(it, "separable verbs item $kind1Key") }
+
             // Kind 1: trennbar or untrennbar
             itemsForEntry.add(
                 DrillItem(
@@ -710,8 +714,14 @@ object DrillSeparableVerbs {
                     answer = if (entry.isSeparable) "trennbar" else "untrennbar",
                     choices = listOf("trennbar", "untrennbar"),
                     hint = safeHint(if (entry.isSeparable) "trennbar" else "untrennbar"),
+                    ruleId = k1RuleId,
+                    missByChoice = k1Content?.missByChoice ?: emptyMap(),
                 )
             )
+
+            val k2Content = if (!isKeyedByWordId) SEPARABLE_VERB_RULE_CONTENT[kind2Key] else null
+            val k2RuleId = k2Content?.ruleId
+                ?.let { DrillHelpContent.requireValidRuleId(it, "separable verbs item $kind2Key") }
 
             // Kind 2: Partizip II
             val pChoices = (listOf(entry.participle) + entry.participleDistractors).distinct()
@@ -722,11 +732,17 @@ object DrillSeparableVerbs {
                     answer = entry.participle,
                     choices = pChoices,
                     hint = safeHint(entry.participle),
+                    ruleId = k2RuleId,
+                    missByChoice = k2Content?.missByChoice ?: emptyMap(),
                 )
             )
 
             // Kind 3: prefix at the end of a main clause (separable only)
             if (entry.isSeparable && entry.sentence != null) {
+                val k3Content = if (!isKeyedByWordId) SEPARABLE_VERB_RULE_CONTENT[kind3Key] else null
+                val k3RuleId = k3Content?.ruleId
+                    ?.let { DrillHelpContent.requireValidRuleId(it, "separable verbs item $kind3Key") }
+
                 itemsForEntry.add(
                     DrillItem(
                         id = DrillItemId(DrillType.SEPARABLE_VERBS, kind3Key),
@@ -734,6 +750,8 @@ object DrillSeparableVerbs {
                         answer = entry.prefix,
                         choices = entry.prefixChoices,
                         hint = if (DrillHints.revealsAnswer(kind3Hint, entry.prefix)) null else kind3Hint,
+                        ruleId = k3RuleId,
+                        missByChoice = k3Content?.missByChoice ?: emptyMap(),
                     )
                 )
             }

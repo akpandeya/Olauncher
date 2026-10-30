@@ -1,7 +1,9 @@
 package app.olauncher.data.store
 
 // Per-item help content of the live (words-driven) drill types (#699), transcribed from
-// docs/design/drill-content/prepositions.md, case-endings.md and verb-prepositions.md:
+// docs/design/drill-content/prepositions.md, case-endings.md, verb-prepositions.md,
+// adjective-endings.md, articles.md, plurals.md, pronouns.md, separable-verbs.md and
+// word-order.md:
 // which rule each built-in item carries and the miss line per wrong choice. Saved-word
 // items never match these keys, so they stay without a rule. The file also carries the
 // per-item help-card examples ([ITEM_HELP_EXAMPLES]) for the items whose prompt has no
@@ -2499,9 +2501,2094 @@ internal val ITEM_HELP_EXAMPLES: Map<String, String> = mapOf(
     "prep:trotz:0" to "Trotz **des** Regens geht sie raus.",
     "prep:während:0" to "Während **der** Fahrt lesen wir.",
     "prep:statt:0" to "Statt **des** Kaffees trinkt er Tee.",
+    // word-order.md: each item's first accepted order, with the position-defining verb
+    // parts bold (the same bold as the rule's example). Word-order prompts have no gap,
+    // so the rule's example would repeat across items.
+    "v2_kino" to "Ich **gehe** morgen ins Kino.",
+    "v2_kaffee" to "Wir **trinken** heute einen Kaffee.",
+    "v2_buch" to "Er **kauft** am Nachmittag ein Buch.",
+    "v2_garten" to "Sie **spielen** jetzt im Garten.",
+    "v2_deutsch" to "Ich **lerne** am Wochenende Deutsch.",
+    "v2_hause" to "Wir **fahren** bald nach Hause.",
+    "sub_weil_krank" to "Er bleibt im Bett, weil er krank **ist**.",
+    "sub_weil_bus" to "Ich komme später, weil der Bus Verspätung **hat**.",
+    "sub_weil_regen" to "Wir bleiben drinnen, weil es heute **regnet**.",
+    "sub_dass_kommen" to "Ich weiß, dass du heute **kommst**.",
+    "sub_dass_zeit" to "Er sagt, dass er keine Zeit **hat**.",
+    "sub_dass_wetter" to "Wir hoffen, dass das Wetter morgen schön **wird**.",
+    "sub_wenn_sonne" to "Wir fahren an den See, wenn die Sonne **scheint**.",
+    "sub_wenn_anrufen" to "Ich rufe dich an, wenn ich fertig **bin**.",
+    "sub_wenn_hilfe" to "Du kannst mich fragen, wenn du Hilfe **brauchst**.",
+    "sub_ob_kommen" to "Ich weiß nicht, ob er heute **kommt**.",
+    "sub_ob_zeit" to "Sie fragt, ob wir morgen Zeit **haben**.",
+    "sub_ob_tuer" to "Er prüft, ob die Tür geschlossen **ist**.",
+    "sep_aufstehen" to "Ich **stehe** jeden Morgen um sieben Uhr **auf**.",
+    "sep_anfangen" to "Der Film **fängt** um zwanzig Uhr **an**.",
+    "sep_einkaufen" to "Wir **kaufen** am Samstag im Supermarkt **ein**.",
+    "sep_anrufen" to "Er **ruft** seine Mutter heute Abend **an**.",
+    "sep_abfahren" to "Der Zug **fährt** pünktlich in München **ab**.",
+    "sep_einschalten" to "Sie **schaltet** am Abend den Fernseher **ein**.",
+    "mod_sprechen" to "Ich **kann** sehr gut Deutsch **sprechen**.",
+    "mod_lernen" to "Wir **müssen** heute für die Prüfung **lernen**.",
+    "mod_fotografieren" to "Du **darfst** hier im Museum nicht **fotografieren**.",
+    "mod_besuchen" to "Er **will** morgen seine Großeltern **besuchen**.",
+    "mod_nehmen" to "Sie **soll** dreimal täglich diese Medizin **nehmen**.",
+    "mod_ausflug" to "Wir **möchten** am Wochenende einen Ausflug **machen**.",
+    "perf_buch" to "Ich **habe** gestern ein spannendes Buch **gelesen**.",
+    "perf_zug" to "Wir **sind** gestern mit dem Zug **gefahren**.",
+    "perf_aufgaben" to "Er **hat** seine Hausaufgaben schon fertig **gemacht**.",
+    "perf_aufgestanden" to "Sie **ist** heute Morgen sehr früh **aufgestanden**.",
+    "perf_gearbeitet" to "Ich **habe** den ganzen Tag fleißig **gearbeitet**.",
+    "perf_wohnung" to "Wir **haben** letzte Woche eine neue Wohnung **gefunden**.",
+    "tekamolo_fahrrad" to "Ich fahre **morgen** mit dem Fahrrad **zur Arbeit**.",
+    "tekamolo_hause" to "Er fährt **heute** freiwillig **nach Hause**.",
+    "tekamolo_restaurant" to "Wir gehen **am Abend** gerne **ins Restaurant**.",
+    "tekamolo_italien" to "Sie reist **im Sommer** mit dem Zug **nach Italien**.",
+    "tekamolo_berlin" to "Ich fliege **nächste Woche** geschäftlich **nach Berlin**.",
+    "tekamolo_park" to "Er joggt **jeden Morgen** schnell **durch den Park**.",
+    "q_party" to "**Kommst** du heute Abend zur Party?",
+    "q_hausaufgaben" to "**Hast** du deine Hausaufgaben schon gemacht?",
+    "q_kino" to "**Gehen** wir morgen zusammen ins Kino?",
+    "q_helfen" to "**Kannst** du mir bitte helfen?",
+    "q_kaffee" to "**Trinkst** du morgens gerne Kaffee?",
+    "q_hamburg" to "**Fährst** du am Wochenende nach Hamburg?",
     // verb-prepositions.md which-case items: each pair's own sentence (DrillVerbPrepositions.PAIRS),
     // rendered with its preposition bold.
 ) + DrillVerbPrepositions.PAIRS.associate { pair ->
     "verbprep:${pair.verb}:${pair.preposition}:1" to
         pair.sentence.replaceFirst(DrillItem.GAP_MARKER, "**${pair.preposition}**")
 }
+
+/** Rule id and per-wrong-choice miss lines of one pronouns item, keyed by `pron:<tag>:<n>`. */
+internal data class PronounRuleContent(
+    val ruleId: String,
+    val missByChoice: Map<String, String>,
+)
+
+internal val PRONOUN_RULE_CONTENT: Map<String, PronounRuleContent> = mapOf(
+    "pron:ich:0" to PronounRuleContent(
+        ruleId = "pron-first-second",
+        missByChoice = mapOf(
+            "mich" to "the accusative form of ich — the pronoun is the doer (nominative), so ich.",
+            "mir" to "the dative form of ich — again the doer, not the receiver, so ich.",
+            "du" to "a different person — „habe\" with no ending goes with ich.",
+        ),
+    ),
+    "pron:ich:1" to PronounRuleContent(
+        ruleId = "pron-first-second",
+        missByChoice = mapOf(
+            "mir" to "the dative form — besuchen acts directly on someone (Wen?), so mich.",
+            "ich" to "the doer form — the doer is mein bester Freund; the one visited is mich.",
+            "dich" to "the du form — the sentence is about me, so mich.",
+        ),
+    ),
+    "pron:ich:2" to PronounRuleContent(
+        ruleId = "pron-first-second",
+        missByChoice = mapOf(
+            "mich" to "the accusative form — helfen gives help TO someone (Wem?), so mir.",
+            "ich" to "the doer form — the doer is du; the pronoun receives the help, so mir.",
+            "dir" to "the dative form of du — the help comes to me, so mir.",
+        ),
+    ),
+    "pron:du:0" to PronounRuleContent(
+        ruleId = "pron-first-second",
+        missByChoice = mapOf(
+            "dich" to "the accusative form of du — the pronoun does the verb (kommst), so du.",
+            "dir" to "the dative form of du — still the doer, so du.",
+            "ihr" to "you-all — „kommst\" is the du form, so du.",
+        ),
+    ),
+    "pron:du:1" to PronounRuleContent(
+        ruleId = "pron-first-second",
+        missByChoice = mapOf(
+            "dir" to "the dative form — sehen acts directly on someone, so dich.",
+            "du" to "the doer form — the doer is ich; the person seen is dich.",
+            "mich" to "the accusative form of ich — you were seen, not me, so dich.",
+        ),
+    ),
+    "pron:du:2" to PronounRuleContent(
+        ruleId = "pron-first-second",
+        missByChoice = mapOf(
+            "dich" to "the accusative form — schmecken tells how food tastes TO someone (Wem?), so dir.",
+            "du" to "the doer form — the food does the tasting (schmeckt); you receive, so dir.",
+            "mir" to "the dative form of ich — the question is about you, so dir.",
+        ),
+    ),
+    "pron:wir:0" to PronounRuleContent(
+        ruleId = "pron-first-second",
+        missByChoice = mapOf(
+            "uns" to "the object form of wir — the pronoun does the verb (fahren), so wir.",
+            "ihr" to "you-all — ihr takes fahrt, not fahren, so wir.",
+            "sie" to "they — the travellers are meine Frau und ich, a group that includes the speaker, so wir.",
+        ),
+    ),
+    "pron:wir:1" to PronounRuleContent(
+        ruleId = "pron-first-second",
+        missByChoice = mapOf(
+            "wir" to "the doer form — the teacher is the doer; we are praised, so uns.",
+            "euch" to "the object form of ihr — „unsere\" says the group includes the speaker, so uns.",
+            "sie" to "the object form of they — unsere points to wir, so uns.",
+        ),
+    ),
+    "pron:wir:2" to PronounRuleContent(
+        ruleId = "pron-first-second",
+        missByChoice = mapOf(
+            "wir" to "the doer form — the guide is the doer; the showing goes to us, so uns.",
+            "euch" to "to you-all — the visitors are wir (Wir sind in Prag), so uns.",
+            "ihnen" to "to them — the visitors are wir, so the receiver form uns.",
+        ),
+    ),
+    "pron:ihr:0" to PronounRuleContent(
+        ruleId = "pron-first-second",
+        missByChoice = mapOf(
+            "euch" to "the object form of ihr — the children do the verb (macht), so ihr.",
+            "wir" to "we — the children are addressed, so ihr.",
+            "sie" to "they — „macht\" goes with ihr (ihr macht), so ihr.",
+        ),
+    ),
+    "pron:ihr:1" to PronounRuleContent(
+        ruleId = "pron-first-second",
+        missByChoice = mapOf(
+            "ihr" to "the doer form of you-all — the doer is ich; the ones sought are euch.",
+            "uns" to "us — the speaker addresses the children (wo wart ihr?), so euch.",
+            "sie" to "them — the children are addressed as ihr, so euch.",
+        ),
+    ),
+    "pron:ihr:2" to PronounRuleContent(
+        ruleId = "pron-first-second",
+        missByChoice = mapOf(
+            "ihr" to "the doer form of you-all — Oma is the doer; the gift goes to euch.",
+            "uns" to "to us — Kinder addresses the children, so the gift goes to euch.",
+            "ihnen" to "to them — the children are addressed directly, so euch.",
+        ),
+    ),
+    "pron:er:0" to PronounRuleContent(
+        ruleId = "pron-third",
+        missByChoice = mapOf(
+            "ihn" to "the accusative form — Thomas does the sleeping (nominative), so er.",
+            "ihm" to "the dative form — still the doer, so er.",
+            "sie" to "she/they — Thomas is one man, so er.",
+        ),
+    ),
+    "pron:er:1" to PronounRuleContent(
+        ruleId = "pron-third",
+        missByChoice = mapOf(
+            "ihm" to "the dative form — anrufen acts directly on someone, so ihn.",
+            "er" to "the doer form — the doer is wir; the one called is ihn.",
+            "sie" to "her/they — Herr Weber is masculine, so ihn.",
+        ),
+    ),
+    "pron:er:2" to PronounRuleContent(
+        ruleId = "pron-third",
+        missByChoice = mapOf(
+            "ihn" to "the accusative form — passen tells how something fits someone (Wem?), so ihm.",
+            "er" to "the doer form — the pullover does the fitting; the wearer receives, so ihm.",
+            "ihr" to "to her — the wearer is Paul, a man, so ihm.",
+        ),
+    ),
+    "pron:sie_sg:0" to PronounRuleContent(
+        ruleId = "pron-third",
+        missByChoice = mapOf(
+            "ihr" to "the dative form — Maria does the wanting (nominative), so sie.",
+            "ihnen" to "to them — Maria is one person, so sie.",
+            "er" to "he — Maria is feminine, so sie.",
+        ),
+    ),
+    "pron:sie_sg:1" to PronounRuleContent(
+        ruleId = "pron-third",
+        missByChoice = mapOf(
+            "ihr" to "the dative form — besuchen acts directly on someone, so sie.",
+            "ihnen" to "to them — Anna is one person, so sie.",
+            "ihn" to "the masculine object form — Anna is feminine, so sie.",
+        ),
+    ),
+    "pron:sie_sg:2" to PronounRuleContent(
+        ruleId = "pron-third",
+        missByChoice = mapOf(
+            "sie" to "the doer / direct-object form — gehören says something belongs TO someone (Wem?), so ihr.",
+            "ihm" to "to him — the owner is Lisa, a woman, so ihr.",
+            "ihnen" to "to them — Lisa is one person, so ihr.",
+        ),
+    ),
+    "pron:es:0" to PronounRuleContent(
+        ruleId = "pron-third",
+        missByChoice = mapOf(
+            "Er" to "masculine — das Buch is neuter, so es.",
+            "Sie" to "feminine/plural — das Buch is neuter, so es.",
+            "Ihm" to "the dative form — the book does the verb (liegt), so the doer form es.",
+        ),
+    ),
+    "pron:es:1" to PronounRuleContent(
+        ruleId = "pron-third",
+        missByChoice = mapOf(
+            "ihn" to "the masculine object form — das Bild is neuter, so es.",
+            "ihm" to "the dative form — kaufen acts directly on it, so es.",
+            "sie" to "the feminine/plural object form — das Bild is neuter, so es.",
+        ),
+    ),
+    "pron:es:2" to PronounRuleContent(
+        ruleId = "pron-third",
+        missByChoice = mapOf(
+            "es" to "the doer form — the pronoun receives the blanket (Wem?), so ihm.",
+            "ihn" to "the accusative form — the blanket is the direct object; the baby receives, so ihm.",
+            "ihr" to "to her — das Baby is neuter, so ihm.",
+        ),
+    ),
+    "pron:sie_pl:0" to PronounRuleContent(
+        ruleId = "pron-third",
+        missByChoice = mapOf(
+            "ihnen" to "the dative form — the neighbours do the helping (nominative), so sie.",
+            "ihr" to "to her — the neighbours are many, so sie.",
+            "wir" to "we — the speakers are the receivers (uns); the helpers are the neighbours, so sie.",
+        ),
+    ),
+    "pron:sie_pl:1" to PronounRuleContent(
+        ruleId = "pron-third",
+        missByChoice = mapOf(
+            "ihnen" to "the dative form — einladen acts directly on someone, so sie.",
+            "ihn" to "him — die Kollegen are plural, so sie.",
+            "ihr" to "to her — plural is meant, so sie.",
+        ),
+    ),
+    "pron:sie_pl:2" to PronounRuleContent(
+        ruleId = "pron-third",
+        missByChoice = mapOf(
+            "sie" to "the doer / direct-object form — anbieten gives coffee TO the guests (Wem?), so ihnen.",
+            "ihm" to "to him — the guests are plural, so ihnen.",
+            "ihr" to "to her — plural is meant, so ihnen.",
+        ),
+    ),
+    "pron:Sie_formal:0" to PronounRuleContent(
+        ruleId = "pron-formal",
+        missByChoice = mapOf(
+            "Ihnen" to "the dative form — the person asked does the coming (nominative), so Sie.",
+            "du" to "the informal word — Frau Müller is addressed formally, so Sie.",
+            "ihr" to "you-all — ihr takes kommt, not kommen, and Frau Müller is addressed formally, so Sie.",
+        ),
+    ),
+    "pron:Sie_formal:1" to PronounRuleContent(
+        ruleId = "pron-formal",
+        missByChoice = mapOf(
+            "Ihnen" to "the dative form — suchen acts directly on someone, so Sie.",
+            "ihn" to "the masculine object form — the formal pronoun stays Sie.",
+            "dich" to "the informal object form — formal address uses Sie.",
+        ),
+    ),
+    "pron:Sie_formal:2" to PronounRuleContent(
+        ruleId = "pron-formal",
+        missByChoice = mapOf(
+            "Sie" to "the doer form — behilflich sein helps TO someone (Wem?), so Ihnen.",
+            "ihm" to "to him — the formal receiver form is Ihnen.",
+            "dir" to "the informal receiver form — formal address uses Ihnen.",
+        ),
+    ),
+    "pron:waschen:0" to PronounRuleContent(
+        ruleId = "pron-reflex-shift",
+        missByChoice = mapOf(
+            "mir" to "the dative form — nothing else is affected, the washing lands on me directly, so mich.",
+            "dich" to "the du form — the doer is ich, so mich.",
+            "sich" to "the third-person form — ich takes mich.",
+        ),
+    ),
+    "pron:waschen:1" to PronounRuleContent(
+        ruleId = "pron-reflex-shift",
+        missByChoice = mapOf(
+            "mich" to "the accusative form — die Hände already fill that role, so the pronoun shifts to the dative mir.",
+            "dir" to "the du form — the doer is ich, so mir.",
+            "sich" to "the third-person form — ich takes mir.",
+        ),
+    ),
+    "pron:waschen:2" to PronounRuleContent(
+        ruleId = "pron-reflex-shift",
+        missByChoice = mapOf(
+            "dir" to "the dative form — nothing else is affected here, so dich.",
+            "mich" to "the ich form — the doer is du, so dich.",
+            "sich" to "the third-person form — du takes dich.",
+        ),
+    ),
+    "pron:waschen:3" to PronounRuleContent(
+        ruleId = "pron-reflex-shift",
+        missByChoice = mapOf(
+            "dich" to "the accusative form — das Gesicht already fills that role, so dir.",
+            "mir" to "the ich form — the doer is du, so dir.",
+            "sich" to "the third-person form — du takes dir.",
+        ),
+    ),
+    "pron:kämmen:0" to PronounRuleContent(
+        ruleId = "pron-reflex-shift",
+        missByChoice = mapOf(
+            "mir" to "the dative form — nothing else is affected, so mich.",
+            "dich" to "the du form — the doer is ich, so mich.",
+            "sich" to "the third-person form — ich takes mich.",
+        ),
+    ),
+    "pron:kämmen:1" to PronounRuleContent(
+        ruleId = "pron-reflex-shift",
+        missByChoice = mapOf(
+            "mich" to "the accusative form — die Haare already fill that role, so mir.",
+            "dir" to "the du form — the doer is ich, so mir.",
+            "sich" to "the third-person form — ich takes mir.",
+        ),
+    ),
+    "pron:anziehen:0" to PronounRuleContent(
+        ruleId = "pron-reflex-shift",
+        missByChoice = mapOf(
+            "dir" to "the dative form — nothing else is affected, so dich.",
+            "mich" to "the ich form — the doer is du, so dich.",
+            "sich" to "the third-person form — du takes dich.",
+        ),
+    ),
+    "pron:anziehen:1" to PronounRuleContent(
+        ruleId = "pron-reflex-shift",
+        missByChoice = mapOf(
+            "dich" to "the accusative form — eine Jacke already fills that role, so dir.",
+            "mir" to "the ich form — the doer is du, so dir.",
+            "sich" to "the third-person form — du takes dir.",
+        ),
+    ),
+    "pron:putzen:0" to PronounRuleContent(
+        ruleId = "pron-reflex-shift",
+        missByChoice = mapOf(
+            "mir" to "the dative form — nothing else is affected, so mich.",
+            "dich" to "the du form — the doer is ich, so mich.",
+            "sich" to "the third-person form — ich takes mich.",
+        ),
+    ),
+    "pron:putzen:1" to PronounRuleContent(
+        ruleId = "pron-reflex-shift",
+        missByChoice = mapOf(
+            "mich" to "the accusative form — die Zähne already fill that role, so mir.",
+            "dir" to "the du form — the doer is ich, so mir.",
+            "sich" to "the third-person form — ich takes mir.",
+        ),
+    ),
+    "pron:sich freuen:0" to PronounRuleContent(
+        ruleId = "pron-reflex-shift",
+        missByChoice = mapOf(
+            "mir" to "the dative form — freuen acts directly back onto the doer, so mich.",
+            "dich" to "the du form — the doer is ich, so mich.",
+            "sich" to "the third-person form — ich takes mich.",
+        ),
+    ),
+    "pron:sich vorstellen:0" to PronounRuleContent(
+        ruleId = "pron-reflex-shift",
+        missByChoice = mapOf(
+            "dich" to "the accusative form — the imagined thing already fills that role, so dir.",
+            "mir" to "the ich form — the doer is du, so dir.",
+            "sich" to "the third-person form — du takes dir.",
+        ),
+    ),
+    "pron:sich vorstellen:1" to PronounRuleContent(
+        ruleId = "pron-reflex-shift",
+        missByChoice = mapOf(
+            "mir" to "the dative form — nothing else is affected, I present myself directly, so mich.",
+            "dich" to "the du form — the doer is ich, so mich.",
+            "sich" to "the third-person form — ich takes mich.",
+        ),
+    ),
+    "pron:sich Sorgen machen:0" to PronounRuleContent(
+        ruleId = "pron-reflex-shift",
+        missByChoice = mapOf(
+            "mich" to "the accusative form — die Sorgen already fill that role, so mir.",
+            "dir" to "the du form — the doer is ich, so mir.",
+            "sich" to "the third-person form — ich takes mir.",
+        ),
+    ),
+    "pron:sich Sorgen machen:1" to PronounRuleContent(
+        ruleId = "pron-reflex-shift",
+        missByChoice = mapOf(
+            "dich" to "the accusative form — keine Sorgen already fill that role, so dir.",
+            "mir" to "the ich form — the doer is du, so dir.",
+            "sich" to "the third-person form — du takes dir.",
+        ),
+    ),
+    "pron:sich fühlen:0" to PronounRuleContent(
+        ruleId = "pron-reflex-shift",
+        missByChoice = mapOf(
+            "dir" to "the dative form — nothing else is affected, so dich.",
+            "mich" to "the ich form — the doer is du, so dich.",
+            "sich" to "the third-person form — du takes dich.",
+        ),
+    ),
+    "pron:sich erkälten:0" to PronounRuleContent(
+        ruleId = "pron-reflex-shift",
+        missByChoice = mapOf(
+            "dir" to "the dative form — nothing else is affected, so dich.",
+            "mich" to "the ich form — the doer is du, so dich.",
+            "sich" to "the third-person form — du takes dich.",
+        ),
+    ),
+    "pron:sich konzentrieren auf:0" to PronounRuleContent(
+        ruleId = "pron-reflex-shift",
+        missByChoice = mapOf(
+            "mir" to "the dative form — nothing else is affected, so mich.",
+            "dich" to "the du form — the doer is ich, so mich.",
+            "sich" to "the third-person form — ich takes mich.",
+        ),
+    ),
+    "pron:sich ausruhen:0" to PronounRuleContent(
+        ruleId = "pron-reflex-shift",
+        missByChoice = mapOf(
+            "mir" to "the dative form — ausruhen acts directly back onto the doer, so mich.",
+            "dich" to "the du form — the doer is ich, so mich.",
+            "sich" to "the third-person form — ich takes mich.",
+        ),
+    ),
+    "pron:sich wünschen:0" to PronounRuleContent(
+        ruleId = "pron-reflex-shift",
+        missByChoice = mapOf(
+            "dich" to "the accusative form — the wished-for thing already fills that role, so dir.",
+            "mir" to "the ich form — the doer is du, so dir.",
+            "sich" to "the third-person form — du takes dir.",
+        ),
+    ),
+    "pron:sich merken:0" to PronounRuleContent(
+        ruleId = "pron-reflex-shift",
+        missByChoice = mapOf(
+            "mich" to "the accusative form — die PIN already fills that role, so mir.",
+            "dir" to "the du form — the doer is ich, so mir.",
+            "sich" to "the third-person form — ich takes mir.",
+        ),
+    ),
+    "pron:sich erinnern an:0" to PronounRuleContent(
+        ruleId = "pron-reflex-person",
+        missByChoice = mapOf(
+            "mich" to "me — the doer is er, so the reflexive sich.",
+            "dich" to "you — the doer is er, so sich.",
+            "uns" to "us — the doer is er, so sich.",
+        ),
+    ),
+    "pron:sich beeilen:0" to PronounRuleContent(
+        ruleId = "pron-reflex-person",
+        missByChoice = mapOf(
+            "euch" to "you-all — the doer is wir (müssen wir), so uns.",
+            "sich" to "the third-person form — the doer is wir, so uns.",
+            "mich" to "me — the doer is wir, so uns.",
+        ),
+    ),
+    "pron:sich interessieren für:0" to PronounRuleContent(
+        ruleId = "pron-reflex-person",
+        missByChoice = mapOf(
+            "mich" to "me — the doer is Lisa (sie), so sich.",
+            "dich" to "you — the doer is sie, so sich.",
+            "uns" to "us — the doer is sie, so sich.",
+        ),
+    ),
+    "pron:sich setzen:0" to PronounRuleContent(
+        ruleId = "pron-reflex-person",
+        missByChoice = mapOf(
+            "uns" to "us — the doer is ihr (eure Plätze), so euch.",
+            "sich" to "the third-person form — the doer is ihr, so euch.",
+            "dich" to "the du form — the doer is ihr, so euch.",
+        ),
+    ),
+    "pron:sich ärgern über:0" to PronounRuleContent(
+        ruleId = "pron-reflex-person",
+        missByChoice = mapOf(
+            "mich" to "me — the doer is der Kollege (er), so sich.",
+            "uns" to "us — the doer is er, so sich.",
+            "euch" to "you-all — the doer is er, so sich.",
+        ),
+    ),
+    "pron:sich entscheiden für:0" to PronounRuleContent(
+        ruleId = "pron-reflex-person",
+        missByChoice = mapOf(
+            "euch" to "you-all — the doer is wir, so uns.",
+            "sich" to "the third-person form — the doer is wir, so uns.",
+            "mich" to "me — the doer is wir, so uns.",
+        ),
+    ),
+    "pron:sich treffen mit:0" to PronounRuleContent(
+        ruleId = "pron-reflex-person",
+        missByChoice = mapOf(
+            "uns" to "us — the doer is ihr (trefft ihr), so euch.",
+            "sich" to "the third-person form — the doer is ihr, so euch.",
+            "dich" to "the du form — the doer is ihr, so euch.",
+        ),
+    ),
+    "pron:sich bedanken bei:0" to PronounRuleContent(
+        ruleId = "pron-reflex-person",
+        missByChoice = mapOf(
+            "euch" to "you-all — the doer is wir, so uns.",
+            "sich" to "the third-person form — the doer is wir, so uns.",
+            "mich" to "me — the doer is wir, so uns.",
+        ),
+    ),
+    "pron:sich langweilen:0" to PronounRuleContent(
+        ruleId = "pron-reflex-person",
+        missByChoice = mapOf(
+            "mich" to "me — the doer is die Kinder (sie), so sich.",
+            "uns" to "us — the doer is sie, so sich.",
+            "euch" to "you-all — the doer is sie, so sich.",
+        ),
+    ),
+    "pron:sich verletzen:0" to PronounRuleContent(
+        ruleId = "pron-reflex-person",
+        missByChoice = mapOf(
+            "mich" to "me — the doer is er, so sich.",
+            "dich" to "you — the doer is er, so sich.",
+            "uns" to "us — the doer is er, so sich.",
+        ),
+    ),
+    "pron:sich gewöhnen an:0" to PronounRuleContent(
+        ruleId = "pron-reflex-person",
+        missByChoice = mapOf(
+            "euch" to "you-all — the doer is wir, so uns.",
+            "sich" to "the third-person form — the doer is wir, so uns.",
+            "mich" to "me — the doer is wir, so uns.",
+        ),
+    ),
+    "pron:mein:0" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "meinen" to "the accusative form — Kollege is the doer (nominative masculine), so mein.",
+            "meinem" to "the dative form — no giving-to role here, so mein.",
+            "meines" to "the genitive form — no owner role here, so mein.",
+        ),
+    ),
+    "pron:mein:1" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "meinem" to "the dative form — suchen acts directly on the bundle, so meinen.",
+            "mein" to "the doer form — the doer is ich, the bundle is acted on, so meinen.",
+            "meines" to "the genitive form — no owner role, so meinen.",
+        ),
+    ),
+    "pron:mein:2" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "meinen" to "the accusative form — helfen gives help TO someone (dative), so meinem.",
+            "mein" to "the doer form — the father receives the help, so meinem.",
+            "meines" to "the genitive form — helping takes the to-form, so meinem.",
+        ),
+    ),
+    "pron:mein:3" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "meinem" to "the dative form — Bruders already shows the owner (genitive), so meines.",
+            "meinen" to "the accusative form — ownership needs the genitive, so meines.",
+            "mein" to "the doer form — the brother owns the bike, so meines.",
+        ),
+    ),
+    "pron:dein:0" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "deinen" to "the accusative form — Koffer is the doer (nominative masculine), so dein.",
+            "deinem" to "the dative form — no giving-to role, so dein.",
+            "deines" to "the genitive form — no owner role, so dein.",
+        ),
+    ),
+    "pron:dein:1" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "deinem" to "the dative form — vergessen acts directly on the umbrella, so deinen.",
+            "dein" to "the doer form — the doer is du; the umbrella is acted on, so deinen.",
+            "deines" to "the genitive form — no owner role, so deinen.",
+        ),
+    ),
+    "pron:dein:2" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "deinen" to "the accusative form — mit always takes the dative, so deinem.",
+            "dein" to "the doer form — the chef follows the preposition, so deinem.",
+            "deines" to "the genitive form — mit takes the to-form, so deinem.",
+        ),
+    ),
+    "pron:sein:1" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "seinem" to "the dative form — suchen acts directly on the card, so seinen.",
+            "sein" to "the doer form — the doer is Paul; the card is acted on, so seinen.",
+            "seines" to "the genitive form — no owner role, so seinen.",
+        ),
+    ),
+    "pron:ihr_poss:0" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "ihren" to "the accusative form — mit takes the dative, so ihrem.",
+            "ihr" to "the doer form — the dog follows the preposition, so ihrem.",
+            "ihres" to "the genitive form — mit takes the to-form, so ihrem.",
+        ),
+    ),
+    "pron:unser:0" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "unsere" to "the feminine/plural form — Deutschlehrer is masculine and the doer, so unser.",
+            "unserem" to "the dative form — no giving-to role, so unser.",
+            "unseren" to "the accusative form — the teacher is the doer, so unser.",
+        ),
+    ),
+    "pron:unser:2" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "unserem" to "the dative form — verkaufen acts directly on the car, so unseren.",
+            "unser" to "the doer form — the doer is wir; the car is acted on, so unseren.",
+            "unseres" to "the genitive form — no owner role, so unseren.",
+        ),
+    ),
+    "pron:unser:5" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "unserem" to "the dative form — wegen takes the genitive, so unseres.",
+            "unseren" to "the accusative form — the neighbour is the owner of the move, so unseres.",
+            "unser" to "the doer form — ownership needs the genitive, so unseres.",
+        ),
+    ),
+    "pron:Ihr_poss:0" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "Ihren" to "the accusative form — Koffer is the doer (nominative masculine), so Ihr.",
+            "Ihrem" to "the dative form — no giving-to role, so Ihr.",
+            "Ihres" to "the genitive form — no owner role, so Ihr.",
+        ),
+    ),
+    "pron:Ihr_poss:2" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "Ihrem" to "the dative form — dabei haben carries the pass directly, so Ihren.",
+            "Ihr" to "the doer form — the doer is Sie; the pass is carried, so Ihren.",
+            "Ihres" to "the genitive form — no owner role, so Ihren.",
+        ),
+    ),
+    "pron:mein:4" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "meiner" to "the dative/genitive form — Tante is the doer (feminine nominative), so meine.",
+            "mein" to "the masculine/neuter form — Tante is feminine, so meine.",
+            "meinen" to "the masculine accusative / plural dative form — feminine takes -e, so meine.",
+        ),
+    ),
+    "pron:mein:5" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "meiner" to "the dative/genitive form — besuchen acts directly on her (Wen?), so meine.",
+            "mein" to "the masculine/neuter form — Schwester is feminine, so meine.",
+            "meinen" to "the masculine accusative form — feminine takes -e, so meine.",
+        ),
+    ),
+    "pron:mein:6" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "meine" to "the nominative/accusative form — schenken gives TO the mother (dative), so meiner.",
+            "meinem" to "the masculine/neuter dative form — Mutter is feminine, so meiner.",
+            "meinen" to "the masculine accusative form — the bouquet is the direct object, the mother receives, so meiner.",
+        ),
+    ),
+    "pron:mein:7" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "meine" to "the nominative/accusative form — wegen takes the genitive, so meiner.",
+            "meines" to "the masculine/neuter genitive form — Oma is feminine, so meiner.",
+            "meinem" to "the dative form — ownership needs the genitive, so meiner.",
+        ),
+    ),
+    "pron:dein:3" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "deine" to "the nominative/accusative form — von takes the dative, so deiner.",
+            "deinem" to "the masculine/neuter dative form — Urlaubsreise is feminine, so deiner.",
+            "deinen" to "the masculine accusative form — feminine takes -er in the dative, so deiner.",
+        ),
+    ),
+    "pron:ihr_poss:1" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "ihre" to "the nominative/accusative form — mit takes the dative, so ihrer.",
+            "ihrem" to "the masculine/neuter dative form — Freundin is feminine, so ihrer.",
+            "ihren" to "the masculine accusative form — feminine takes -er in the dative, so ihrer.",
+        ),
+    ),
+    "pron:unser:1" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "unserer" to "the dative/genitive form — Wohnung is the doer (nominative), so unsere.",
+            "unser" to "the masculine/neuter form — Wohnung is feminine, so unsere.",
+            "unserem" to "the dative form — no giving-to role here, so unsere.",
+        ),
+    ),
+    "pron:unser:4" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "unsere" to "the nominative/accusative form — a fixed position takes the dative, so unserer.",
+            "unserem" to "the masculine/neuter dative form — Stadt is feminine, so unserer.",
+            "unseren" to "the masculine accusative / plural dative form — feminine takes -er, so unserer.",
+        ),
+    ),
+    "pron:Ihr_poss:1" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "Ihrer" to "the dative/genitive form — Adresse is the doer (nominative), so Ihre.",
+            "Ihr" to "the masculine/neuter form — Adresse is feminine, so Ihre.",
+            "Ihrem" to "the dative form — no giving-to role here, so Ihre.",
+        ),
+    ),
+    "pron:mein:8" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "meine" to "the feminine/plural form — Fahrrad is neuter and the doer, so mein.",
+            "meinem" to "the dative form — no giving-to role here, so mein.",
+            "meines" to "the genitive form — no owner role here, so mein.",
+        ),
+    ),
+    "pron:mein:9" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "meine" to "the feminine/plural form — Auto is neuter; waschen acts on it directly, so mein.",
+            "meinem" to "the dative form — the car is the direct object, so mein.",
+            "meines" to "the genitive form — no owner role, so mein.",
+        ),
+    ),
+    "pron:mein:10" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "meinen" to "the masculine accusative / plural dative form — a fixed position takes the dative, so meinem.",
+            "mein" to "the doer form — in for a position (Wo?) takes the dative, so meinem.",
+            "meines" to "the genitive form — no owner role, so meinem.",
+        ),
+    ),
+    "pron:mein:11" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "meinem" to "the dative form — während takes the genitive, so meines.",
+            "mein" to "the doer form — während takes the genitive, so meines.",
+            "meiner" to "the feminine genitive form — Urlaub is masculine (der Urlaub), and the masculine genitive is meines.",
+        ),
+    ),
+    "pron:sein:0" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "seine" to "the feminine/plural form — Smartphone is neuter; zeigt acts on it directly, so sein.",
+            "seinem" to "the dative form — the phone is the direct object, so sein.",
+            "seines" to "the genitive form — no owner role, so sein.",
+        ),
+    ),
+    "pron:unser:3" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "unseren" to "the masculine accusative / plural dative form — a fixed position takes the dative, so unserem.",
+            "unser" to "the doer form — in for a position (Wo?) takes the dative, so unserem.",
+            "unseres" to "the genitive form — no owner role, so unserem.",
+        ),
+    ),
+    "pron:Ihr_poss:3" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "Ihren" to "the masculine accusative form — a fixed position takes the dative, so Ihrem.",
+            "Ihr" to "the doer form — in for a position (Wo?) takes the dative, so Ihrem.",
+            "Ihres" to "the genitive form — no owner role, so Ihrem.",
+        ),
+    ),
+    "pron:mein:12" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "meinen" to "the masculine accusative / plural dative form — the friends are plural and the doers, so meine.",
+            "meiner" to "the feminine dative/genitive form — plural takes -e here, so meine.",
+            "mein" to "the masculine/neuter doer form — plural takes -e, so meine.",
+        ),
+    ),
+    "pron:mein:13" to PronounRuleContent(
+        ruleId = "pron-poss-ending",
+        missByChoice = mapOf(
+            "meinem" to "the masculine/neuter dative form — Eltern are plural, so meinen.",
+            "meine" to "the nominative/accusative form — danken thanks TO someone (dative plural), so meinen.",
+            "meiner" to "the feminine dative / genitive form — plural dative is meinen, so meinen.",
+        ),
+    ),
+    "pron:euer:0" to PronounRuleContent(
+        ruleId = "pron-poss-edrop",
+        missByChoice = mapOf(
+            "eure" to "the feminine/plural form — Wagen is masculine and the doer, and no ending belongs there, so euer.",
+            "eurem" to "the dative form — no giving-to role here, so euer.",
+            "euren" to "the accusative form — the car is the doer, so euer.",
+        ),
+    ),
+    "pron:euer:1" to PronounRuleContent(
+        ruleId = "pron-poss-edrop",
+        missByChoice = mapOf(
+            "euer" to "the masculine/neuter form — Mutter is feminine and the doer, so eure.",
+            "eurer" to "the dative/genitive form — the doer question takes -e, so eure.",
+            "eurem" to "the masculine/neuter dative form — Mutter is feminine, so eure.",
+        ),
+    ),
+    "pron:euer:2" to PronounRuleContent(
+        ruleId = "pron-poss-edrop",
+        missByChoice = mapOf(
+            "euer" to "the masculine/neuter form — Einladung is feminine, so eure.",
+            "eurer" to "the dative/genitive form — erhalten acts directly on it (Wen?), so eure.",
+            "eurem" to "the masculine/neuter dative form — Einladung is feminine, so eure.",
+        ),
+    ),
+    "pron:euer:3" to PronounRuleContent(
+        ruleId = "pron-poss-edrop",
+        missByChoice = mapOf(
+            "euer" to "the masculine/neuter form — plural takes -e, so eure.",
+            "euren" to "the masculine accusative / plural dative form — the bikes are the doers, so eure.",
+            "eurer" to "the feminine dative / genitive form — plural nominative is eure, so eure.",
+        ),
+    ),
+    "pron:euer:4" to PronounRuleContent(
+        ruleId = "pron-poss-edrop",
+        missByChoice = mapOf(
+            "euren" to "the masculine accusative form — mit always takes the dative, so eurem.",
+            "euer" to "the no-ending form — a masculine dative needs the ending -em, so eurem.",
+            "eures" to "the genitive form — mit takes the dative, so eurem.",
+        ),
+    ),
+    "pron:euer:5" to PronounRuleContent(
+        ruleId = "pron-poss-edrop",
+        missByChoice = mapOf(
+            "eurem" to "the dative form — aufpassen auf takes the accusative (Wen?), so euren.",
+            "euer" to "the no-ending form — a masculine accusative needs the ending -en, so euren.",
+            "eures" to "the genitive form — no owner role, so euren.",
+        ),
+    ),
+    "pron:euer:6" to PronounRuleContent(
+        ruleId = "pron-poss-edrop",
+        missByChoice = mapOf(
+            "eure" to "the nominative/accusative form — a fixed position takes the dative, so eurer.",
+            "eurem" to "the masculine/neuter dative form — Klasse is feminine, so eurer.",
+            "euren" to "the masculine accusative / plural dative form — feminine dative is eurer, so eurer.",
+        ),
+    ),
+)
+
+
+/** Rule id and per-wrong-choice miss lines of one separable verbs item, keyed by `sep:<keyStem>:<kind>`. */
+internal data class SeparableVerbRuleContent(
+    val ruleId: String,
+    val missByChoice: Map<String, String>,
+)
+
+internal val SEPARABLE_VERB_RULE_CONTENT: Map<String, SeparableVerbRuleContent> = mapOf(
+    "sep:anrufen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:anrufen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "geanrufen" to "ge- belongs between the prefix and the stem, never in front, so angerufen.",
+            "angeruft" to "this verb is strong or irregular, so its participle ends in -en or has its own stem: angerufen.",
+            "geanruft" to "ge- belongs between the prefix and the stem, never in front, so angerufen.",
+        ),
+    ),
+    "sep:anrufen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "auf" to "with auf the verb would be a different verb, or no verb at all. This sentence means to call, which is anrufen, so an.",
+            "aus" to "with aus the verb would be a different verb, or no verb at all. This sentence means to call, which is anrufen, so an.",
+            "mit" to "with mit the verb would be a different verb, or no verb at all. This sentence means to call, which is anrufen, so an.",
+        ),
+    ),
+    "sep:ankommen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:ankommen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "geankommen" to "ge- belongs between the prefix and the stem, never in front, so angekommen.",
+            "angekommt" to "this verb is strong or irregular, so its participle ends in -en or has its own stem: angekommen.",
+            "geankommt" to "ge- belongs between the prefix and the stem, never in front, so angekommen.",
+        ),
+    ),
+    "sep:ankommen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "ab" to "with ab the verb would be a different verb, or no verb at all. This sentence means to arrive, which is ankommen, so an.",
+            "aus" to "with aus the verb would be a different verb, or no verb at all. This sentence means to arrive, which is ankommen, so an.",
+            "nach" to "with nach the verb would be a different verb, or no verb at all. This sentence means to arrive, which is ankommen, so an.",
+        ),
+    ),
+    "sep:anfangen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:anfangen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "geanfangen" to "ge- belongs between the prefix and the stem, never in front, so angefangen.",
+            "angefangt" to "this verb is strong or irregular, so its participle ends in -en or has its own stem: angefangen.",
+            "geanfangt" to "ge- belongs between the prefix and the stem, never in front, so angefangen.",
+        ),
+    ),
+    "sep:anfangen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "auf" to "with auf the verb would be a different verb, or no verb at all. This sentence means to begin, which is anfangen, so an.",
+            "ein" to "with ein the verb would be a different verb, or no verb at all. This sentence means to begin, which is anfangen, so an.",
+            "vor" to "with vor the verb would be a different verb, or no verb at all. This sentence means to begin, which is anfangen, so an.",
+        ),
+    ),
+    "sep:anziehen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:anziehen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "geanzogen" to "ge- belongs between the prefix and the stem, never in front, so angezogen.",
+            "angezieht" to "this verb is strong or irregular, so its participle ends in -en or has its own stem: angezogen.",
+            "geanzieht" to "ge- belongs between the prefix and the stem, never in front, so angezogen.",
+        ),
+    ),
+    "sep:anziehen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "ab" to "with ab the verb would be a different verb, or no verb at all. This sentence means to put on / dress, which is anziehen, so an.",
+            "um" to "with um the verb would be a different verb, or no verb at all. This sentence means to put on / dress, which is anziehen, so an.",
+            "mit" to "with mit the verb would be a different verb, or no verb at all. This sentence means to put on / dress, which is anziehen, so an.",
+        ),
+    ),
+    "sep:aufstehen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:aufstehen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "geaufstanden" to "ge- belongs between the prefix and the stem, never in front, so aufgestanden.",
+            "aufgesteht" to "this verb is strong or irregular, so its participle ends in -en or has its own stem: aufgestanden.",
+            "geaufsteht" to "ge- belongs between the prefix and the stem, never in front, so aufgestanden.",
+        ),
+    ),
+    "sep:aufstehen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "aus" to "with aus the verb would be a different verb, or no verb at all. This sentence means to get up, which is aufstehen, so auf.",
+            "an" to "with an the verb would be a different verb, or no verb at all. This sentence means to get up, which is aufstehen, so auf.",
+            "ein" to "with ein the verb would be a different verb, or no verb at all. This sentence means to get up, which is aufstehen, so auf.",
+        ),
+    ),
+    "sep:aufhören:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:aufhören:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "geaufhört" to "ge- belongs between the prefix and the stem, never in front, so aufgehört.",
+            "aufgehoren" to "hören is a weak verb; it keeps its stem and takes -t: aufgehört.",
+            "geaufhoren" to "hören is a weak verb; it keeps its stem and takes -t: aufgehört.",
+        ),
+    ),
+    "sep:aufhören:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "an" to "with an the verb would be a different verb, or no verb at all. This sentence means to stop / cease, which is aufhören, so auf.",
+            "aus" to "with aus the verb would be a different verb, or no verb at all. This sentence means to stop / cease, which is aufhören, so auf.",
+            "zu" to "with zu the verb would be a different verb, or no verb at all. This sentence means to stop / cease, which is aufhören, so auf.",
+        ),
+    ),
+    "sep:aufmachen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:aufmachen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "geaufmacht" to "ge- belongs between the prefix and the stem, never in front, so aufgemacht.",
+            "aufgemachen" to "this verb is weak, so its participle ends in -t: aufgemacht.",
+            "geaufmachen" to "ge- belongs between the prefix and the stem, never in front, so aufgemacht.",
+        ),
+    ),
+    "sep:aufmachen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "ein" to "with ein the verb would be a different verb, or no verb at all. This sentence means to open, which is aufmachen, so auf.",
+            "an" to "with an the verb would be a different verb, or no verb at all. This sentence means to open, which is aufmachen, so auf.",
+            "aus" to "with aus the verb would be a different verb, or no verb at all. This sentence means to open, which is aufmachen, so auf.",
+        ),
+    ),
+    "sep:aufräumen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:aufräumen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "geaufräumt" to "ge- belongs between the prefix and the stem, never in front, so aufgeräumt.",
+            "aufgeräumen" to "this verb is weak, so its participle ends in -t: aufgeräumt.",
+            "geaufräumen" to "ge- belongs between the prefix and the stem, never in front, so aufgeräumt.",
+        ),
+    ),
+    "sep:aufräumen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "aus" to "with aus the verb would be a different verb, or no verb at all. This sentence means to tidy up, which is aufräumen, so auf.",
+            "ein" to "with ein the verb would be a different verb, or no verb at all. This sentence means to tidy up, which is aufräumen, so auf.",
+            "ab" to "with ab the verb would be a different verb, or no verb at all. This sentence means to tidy up, which is aufräumen, so auf.",
+        ),
+    ),
+    "sep:aussteigen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:aussteigen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "geausstiegen" to "ge- belongs between the prefix and the stem, never in front, so ausgestiegen.",
+            "ausgesteigt" to "this verb is strong or irregular, so its participle ends in -en or has its own stem: ausgestiegen.",
+            "geaussteigt" to "ge- belongs between the prefix and the stem, never in front, so ausgestiegen.",
+        ),
+    ),
+    "sep:aussteigen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "an" to "with an the verb would be a different verb, or no verb at all. This sentence means to get off / exit, which is aussteigen, so aus.",
+            "vor" to "with vor the verb would be a different verb, or no verb at all. This sentence means to get off / exit, which is aussteigen, so aus.",
+            "ab" to "with ab the verb would be a different verb, or no verb at all. This sentence means to get off / exit, which is aussteigen, so aus.",
+        ),
+    ),
+    "sep:aussehen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:aussehen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "geaussehen" to "ge- belongs between the prefix and the stem, never in front, so ausgesehen.",
+            "ausgeseht" to "this verb is strong or irregular, so its participle ends in -en or has its own stem: ausgesehen.",
+            "geausseht" to "ge- belongs between the prefix and the stem, never in front, so ausgesehen.",
+        ),
+    ),
+    "sep:aussehen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "an" to "with an the verb would be a different verb, or no verb at all. This sentence means to look / appear, which is aussehen, so aus.",
+            "auf" to "with auf the verb would be a different verb, or no verb at all. This sentence means to look / appear, which is aussehen, so aus.",
+            "vor" to "with vor the verb would be a different verb, or no verb at all. This sentence means to look / appear, which is aussehen, so aus.",
+        ),
+    ),
+    "sep:ausmachen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:ausmachen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "geausmacht" to "ge- belongs between the prefix and the stem, never in front, so ausgemacht.",
+            "ausgemachen" to "this verb is weak, so its participle ends in -t: ausgemacht.",
+            "geausmachen" to "ge- belongs between the prefix and the stem, never in front, so ausgemacht.",
+        ),
+    ),
+    "sep:ausmachen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "ein" to "with ein the verb would be a different verb, or no verb at all. This sentence means to turn off, which is ausmachen, so aus.",
+            "auf" to "with auf the verb would be a different verb, or no verb at all. This sentence means to turn off, which is ausmachen, so aus.",
+            "ab" to "with ab the verb would be a different verb, or no verb at all. This sentence means to turn off, which is ausmachen, so aus.",
+        ),
+    ),
+    "sep:ausfüllen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:ausfüllen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "geausfüllt" to "ge- belongs between the prefix and the stem, never in front, so ausgefüllt.",
+            "ausgefüllen" to "this verb is weak, so its participle ends in -t: ausgefüllt.",
+            "geausfüllen" to "ge- belongs between the prefix and the stem, never in front, so ausgefüllt.",
+        ),
+    ),
+    "sep:ausfüllen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "ein" to "with ein the verb would be a different verb, or no verb at all. This sentence means to fill out, which is ausfüllen, so aus.",
+            "an" to "with an the verb would be a different verb, or no verb at all. This sentence means to fill out, which is ausfüllen, so aus.",
+            "auf" to "with auf the verb would be a different verb, or no verb at all. This sentence means to fill out, which is ausfüllen, so aus.",
+        ),
+    ),
+    "sep:einkaufen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:einkaufen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "geeinkauft" to "ge- belongs between the prefix and the stem, never in front, so eingekauft.",
+            "eingekaufen" to "this verb is weak, so its participle ends in -t: eingekauft.",
+            "geeinkaufen" to "ge- belongs between the prefix and the stem, never in front, so eingekauft.",
+        ),
+    ),
+    "sep:einkaufen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "aus" to "with aus the verb would be a different verb, or no verb at all. This sentence means to shop, which is einkaufen, so ein.",
+            "auf" to "with auf the verb would be a different verb, or no verb at all. This sentence means to shop, which is einkaufen, so ein.",
+            "mit" to "with mit the verb would be a different verb, or no verb at all. This sentence means to shop, which is einkaufen, so ein.",
+        ),
+    ),
+    "sep:einladen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:einladen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "geeinladen" to "ge- belongs between the prefix and the stem, never in front, so eingeladen.",
+            "eingeladt" to "this verb is strong or irregular, so its participle ends in -en or has its own stem: eingeladen.",
+            "geeinladt" to "ge- belongs between the prefix and the stem, never in front, so eingeladen.",
+        ),
+    ),
+    "sep:einladen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "an" to "with an the verb would be a different verb, or no verb at all. This sentence means to invite, which is einladen, so ein.",
+            "ab" to "with ab the verb would be a different verb, or no verb at all. This sentence means to invite, which is einladen, so ein.",
+            "zu" to "with zu the verb would be a different verb, or no verb at all. This sentence means to invite, which is einladen, so ein.",
+        ),
+    ),
+    "sep:einsteigen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:einsteigen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "geeinstiegen" to "ge- belongs between the prefix and the stem, never in front, so eingestiegen.",
+            "eingesteigt" to "this verb is strong or irregular, so its participle ends in -en or has its own stem: eingestiegen.",
+            "geeinsteigt" to "ge- belongs between the prefix and the stem, never in front, so eingestiegen.",
+        ),
+    ),
+    "sep:einsteigen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "an" to "with an the verb would be a different verb, or no verb at all. This sentence means to board / get in, which is einsteigen, so ein.",
+            "vor" to "with vor the verb would be a different verb, or no verb at all. This sentence means to board / get in, which is einsteigen, so ein.",
+            "mit" to "with mit the verb would be a different verb, or no verb at all. This sentence means to board / get in, which is einsteigen, so ein.",
+        ),
+    ),
+    "sep:einschlafen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:einschlafen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "geeinschlafen" to "ge- belongs between the prefix and the stem, never in front, so eingeschlafen.",
+            "eingeschlaft" to "this verb is strong or irregular, so its participle ends in -en or has its own stem: eingeschlafen.",
+            "geeinschlaft" to "ge- belongs between the prefix and the stem, never in front, so eingeschlafen.",
+        ),
+    ),
+    "sep:einschlafen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "aus" to "with aus the verb would be a different verb, or no verb at all. This sentence means to fall asleep, which is einschlafen, so ein.",
+            "auf" to "with auf the verb would be a different verb, or no verb at all. This sentence means to fall asleep, which is einschlafen, so ein.",
+            "durch" to "with durch the verb would be a different verb, or no verb at all. This sentence means to fall asleep, which is einschlafen, so ein.",
+        ),
+    ),
+    "sep:mitkommen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:mitkommen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "gemitkommen" to "ge- belongs between the prefix and the stem, never in front, so mitgekommen.",
+            "mitgekommt" to "this verb is strong or irregular, so its participle ends in -en or has its own stem: mitgekommen.",
+            "gemitkommt" to "ge- belongs between the prefix and the stem, never in front, so mitgekommen.",
+        ),
+    ),
+    "sep:mitkommen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "an" to "with an the verb would be a different verb, or no verb at all. This sentence means to come along, which is mitkommen, so mit.",
+            "aus" to "with aus the verb would be a different verb, or no verb at all. This sentence means to come along, which is mitkommen, so mit.",
+            "nach" to "with nach the verb would be a different verb, or no verb at all. This sentence means to come along, which is mitkommen, so mit.",
+        ),
+    ),
+    "sep:mitbringen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:mitbringen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "gemitbracht" to "ge- belongs between the prefix and the stem, never in front, so mitgebracht.",
+            "mitgebringt" to "this verb is strong or irregular, so its participle ends in -en or has its own stem: mitgebracht.",
+            "gemitbringt" to "ge- belongs between the prefix and the stem, never in front, so mitgebracht.",
+        ),
+    ),
+    "sep:mitbringen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "vor" to "with vor the verb would be a different verb, or no verb at all. This sentence means to bring along, which is mitbringen, so mit.",
+            "nach" to "with nach the verb would be a different verb, or no verb at all. This sentence means to bring along, which is mitbringen, so mit.",
+            "bei" to "with bei the verb would be a different verb, or no verb at all. This sentence means to bring along, which is mitbringen, so mit.",
+        ),
+    ),
+    "sep:mitnehmen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:mitnehmen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "gemitnommen" to "ge- belongs between the prefix and the stem, never in front, so mitgenommen.",
+            "mitgenehmt" to "this verb is strong or irregular, so its participle ends in -en or has its own stem: mitgenommen.",
+            "gemitnehmt" to "ge- belongs between the prefix and the stem, never in front, so mitgenommen.",
+        ),
+    ),
+    "sep:mitnehmen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "ab" to "with ab the verb would be a different verb, or no verb at all. This sentence means to take along, which is mitnehmen, so mit.",
+            "auf" to "with auf the verb would be a different verb, or no verb at all. This sentence means to take along, which is mitnehmen, so mit.",
+            "vor" to "with vor the verb would be a different verb, or no verb at all. This sentence means to take along, which is mitnehmen, so mit.",
+        ),
+    ),
+    "sep:mitmachen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:mitmachen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "gemitmacht" to "ge- belongs between the prefix and the stem, never in front, so mitgemacht.",
+            "mitgemachen" to "this verb is weak, so its participle ends in -t: mitgemacht.",
+            "gemitmachen" to "ge- belongs between the prefix and the stem, never in front, so mitgemacht.",
+        ),
+    ),
+    "sep:mitmachen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "an" to "with an the verb would be a different verb, or no verb at all. This sentence means to participate, which is mitmachen, so mit.",
+            "auf" to "with auf the verb would be a different verb, or no verb at all. This sentence means to participate, which is mitmachen, so mit.",
+            "aus" to "with aus the verb would be a different verb, or no verb at all. This sentence means to participate, which is mitmachen, so mit.",
+        ),
+    ),
+    "sep:vorstellen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:vorstellen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "gevorstellt" to "ge- belongs between the prefix and the stem, never in front, so vorgestellt.",
+            "vorgestellen" to "this verb is weak, so its participle ends in -t: vorgestellt.",
+            "gevorstellen" to "ge- belongs between the prefix and the stem, never in front, so vorgestellt.",
+        ),
+    ),
+    "sep:vorstellen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "an" to "with an the verb would be a different verb, or no verb at all. This sentence means to introduce, which is vorstellen, so vor.",
+            "aus" to "with aus the verb would be a different verb, or no verb at all. This sentence means to introduce, which is vorstellen, so vor.",
+            "ein" to "with ein the verb would be a different verb, or no verb at all. This sentence means to introduce, which is vorstellen, so vor.",
+        ),
+    ),
+    "sep:vorlesen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:vorlesen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "gevorlesen" to "ge- belongs between the prefix and the stem, never in front, so vorgelesen.",
+            "vorgelest" to "this verb is strong or irregular, so its participle ends in -en or has its own stem: vorgelesen.",
+            "gevorlest" to "ge- belongs between the prefix and the stem, never in front, so vorgelesen.",
+        ),
+    ),
+    "sep:vorlesen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "mit" to "with mit the verb would be a different verb, or no verb at all. This sentence means to read aloud, which is vorlesen, so vor.",
+            "aus" to "with aus the verb would be a different verb, or no verb at all. This sentence means to read aloud, which is vorlesen, so vor.",
+            "durch" to "with durch the verb would be a different verb, or no verb at all. This sentence means to read aloud, which is vorlesen, so vor.",
+        ),
+    ),
+    "sep:vorbereiten:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:vorbereiten:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "gevorbereitet" to "bereiten already has the inseparable prefix be-, so no ge- appears anywhere: vorbereitet. This is the one item where the separable prefix is not followed by ge-.",
+            "vorbereiten" to "that is the infinitive, not the participle: vorbereitet.",
+            "gevorbereiten" to "bereiten already has the inseparable prefix be-, so no ge- appears anywhere: vorbereitet. This is the one item where the separable prefix is not followed by ge-.",
+        ),
+    ),
+    "sep:vorbereiten:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "auf" to "with auf the verb would be a different verb, or no verb at all. This sentence means to prepare, which is vorbereiten, so vor.",
+            "zu" to "with zu the verb would be a different verb, or no verb at all. This sentence means to prepare, which is vorbereiten, so vor.",
+            "aus" to "with aus the verb would be a different verb, or no verb at all. This sentence means to prepare, which is vorbereiten, so vor.",
+        ),
+    ),
+    "sep:vorschlagen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:vorschlagen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "gevorschlagen" to "ge- belongs between the prefix and the stem, never in front, so vorgeschlagen.",
+            "vorgeschlagt" to "this verb is strong or irregular, so its participle ends in -en or has its own stem: vorgeschlagen.",
+            "gevorschlagt" to "ge- belongs between the prefix and the stem, never in front, so vorgeschlagen.",
+        ),
+    ),
+    "sep:vorschlagen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "nach" to "with nach the verb would be a different verb, or no verb at all. This sentence means to suggest, which is vorschlagen, so vor.",
+            "auf" to "with auf the verb would be a different verb, or no verb at all. This sentence means to suggest, which is vorschlagen, so vor.",
+            "ein" to "with ein the verb would be a different verb, or no verb at all. This sentence means to suggest, which is vorschlagen, so vor.",
+        ),
+    ),
+    "sep:zumachen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:zumachen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "gezumacht" to "ge- belongs between the prefix and the stem, never in front, so zugemacht.",
+            "zugemachen" to "this verb is weak, so its participle ends in -t: zugemacht.",
+            "gezumachen" to "ge- belongs between the prefix and the stem, never in front, so zugemacht.",
+        ),
+    ),
+    "sep:zumachen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "ein" to "with ein the verb would be a different verb, or no verb at all. This sentence means to close, which is zumachen, so zu.",
+            "an" to "with an the verb would be a different verb, or no verb at all. This sentence means to close, which is zumachen, so zu.",
+            "ab" to "with ab the verb would be a different verb, or no verb at all. This sentence means to close, which is zumachen, so zu.",
+        ),
+    ),
+    "sep:zuhören:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:zuhören:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "gezuhört" to "ge- belongs between the prefix and the stem, never in front, so zugehört.",
+            "zugehoren" to "hören is a weak verb; it keeps its stem and takes -t: zugehört.",
+            "gezuhoren" to "hören is a weak verb; it keeps its stem and takes -t: zugehört.",
+        ),
+    ),
+    "sep:zuhören:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "auf" to "with auf the verb would be a different verb, or no verb at all. This sentence means to listen to, which is zuhören, so zu.",
+            "an" to "with an the verb would be a different verb, or no verb at all. This sentence means to listen to, which is zuhören, so zu.",
+            "mit" to "with mit the verb would be a different verb, or no verb at all. This sentence means to listen to, which is zuhören, so zu.",
+        ),
+    ),
+    "sep:zunehmen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:zunehmen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "gezunommen" to "ge- belongs between the prefix and the stem, never in front, so zugenommen.",
+            "zugenehmt" to "this verb is strong or irregular, so its participle ends in -en or has its own stem: zugenommen.",
+            "gezunehmt" to "ge- belongs between the prefix and the stem, never in front, so zugenommen.",
+        ),
+    ),
+    "sep:zunehmen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "an" to "with an the verb would be a different verb, or no verb at all. This sentence means to gain weight / increase, which is zunehmen, so zu.",
+            "auf" to "with auf the verb would be a different verb, or no verb at all. This sentence means to gain weight / increase, which is zunehmen, so zu.",
+            "ein" to "with ein the verb would be a different verb, or no verb at all. This sentence means to gain weight / increase, which is zunehmen, so zu.",
+        ),
+    ),
+    "sep:zugreifen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:zugreifen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "gezugriffen" to "ge- belongs between the prefix and the stem, never in front, so zugegriffen.",
+            "zugegreift" to "this verb is strong or irregular, so its participle ends in -en or has its own stem: zugegriffen.",
+            "gezugreift" to "ge- belongs between the prefix and the stem, never in front, so zugegriffen.",
+        ),
+    ),
+    "sep:zugreifen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "an" to "with an the verb would be a different verb, or no verb at all. This sentence means to help oneself, which is zugreifen, so zu.",
+            "auf" to "with auf the verb would be a different verb, or no verb at all. This sentence means to help oneself, which is zugreifen, so zu.",
+            "ein" to "with ein the verb would be a different verb, or no verb at all. This sentence means to help oneself, which is zugreifen, so zu.",
+        ),
+    ),
+    "sep:zurückkommen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:zurückkommen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "gezurückgekommen" to "ge- belongs between the prefix and the stem, never in front, so zurückgekommen.",
+            "zurückgekommt" to "this verb is strong or irregular, so its participle ends in -en or has its own stem: zurückgekommen.",
+            "zurückkommen" to "that is the infinitive, not the participle: zurückgekommen.",
+        ),
+    ),
+    "sep:zurückkommen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "wieder" to "these words can also stand at the clause end, but they do not give to come back. The verb is zurückkommen, so zurück.",
+            "vor" to "with vor the verb would be a different verb, or no verb at all. This sentence means to come back, which is zurückkommen, so zurück.",
+            "nach" to "with nach the verb would be a different verb, or no verb at all. This sentence means to come back, which is zurückkommen, so zurück.",
+        ),
+    ),
+    "sep:zurückgeben:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:zurückgeben:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "gezurückgegeben" to "ge- belongs between the prefix and the stem, never in front, so zurückgegeben.",
+            "zurückgegebt" to "this verb is strong or irregular, so its participle ends in -en or has its own stem: zurückgegeben.",
+            "zurückgeben" to "that is the infinitive, not the participle: zurückgegeben.",
+        ),
+    ),
+    "sep:zurückgeben:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "weg" to "these words can also stand at the clause end, but they do not give to give back. The verb is zurückgeben, so zurück.",
+            "her" to "these words can also stand at the clause end, but they do not give to give back. The verb is zurückgeben, so zurück.",
+            "hin" to "these words can also stand at the clause end, but they do not give to give back. The verb is zurückgeben, so zurück.",
+        ),
+    ),
+    "sep:zurückfahren:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:zurückfahren:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "gezurückgefahren" to "ge- belongs between the prefix and the stem, never in front, so zurückgefahren.",
+            "zurückgefahrt" to "this verb is strong or irregular, so its participle ends in -en or has its own stem: zurückgefahren.",
+            "zurückfahren" to "that is the infinitive, not the participle: zurückgefahren.",
+        ),
+    ),
+    "sep:zurückfahren:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "ab" to "with ab the verb would be a different verb, or no verb at all. This sentence means to drive back, which is zurückfahren, so zurück.",
+            "weg" to "these words can also stand at the clause end, but they do not give to drive back. The verb is zurückfahren, so zurück.",
+            "hin" to "these words can also stand at the clause end, but they do not give to drive back. The verb is zurückfahren, so zurück.",
+        ),
+    ),
+    "sep:fernsehen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's prefix detaches in a main clause and drops to the end, so the verb is trennbar.",
+        ),
+    ),
+    "sep:fernsehen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-ge",
+        missByChoice = mapOf(
+            "gefernsehen" to "ge- belongs between the prefix and the stem, never in front, so ferngesehen.",
+            "ferngeseht" to "this verb is strong or irregular, so its participle ends in -en or has its own stem: ferngesehen.",
+            "gefernseht" to "ge- belongs between the prefix and the stem, never in front, so ferngesehen.",
+        ),
+    ),
+    "sep:fernsehen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "an" to "with an the verb would be a different verb, or no verb at all. This sentence means to watch TV, which is fernsehen, so fern.",
+            "mit" to "with mit the verb would be a different verb, or no verb at all. This sentence means to watch TV, which is fernsehen, so fern.",
+            "vor" to "with vor the verb would be a different verb, or no verb at all. This sentence means to watch TV, which is fernsehen, so fern.",
+        ),
+    ),
+    "sep:besuchen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "trennbar" to "this verb's prefix never detaches — it stays attached in every form, so the verb is untrennbar.",
+        ),
+    ),
+    "sep:besuchen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-no-ge",
+        missByChoice = mapOf(
+            "gebesucht" to "these verbs never take ge-; the prefix stands alone, so besucht.",
+            "besuchet" to "the participle takes plain -t, so besucht.",
+            "gebesuchet" to "these verbs never take ge-; the prefix stands alone, so besucht.",
+        ),
+    ),
+    "sep:bezahlen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "trennbar" to "this verb's prefix never detaches — it stays attached in every form, so the verb is untrennbar.",
+        ),
+    ),
+    "sep:bezahlen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-no-ge",
+        missByChoice = mapOf(
+            "gebezahlt" to "these verbs never take ge-; the prefix stands alone, so bezahlt.",
+            "bezahlen" to "a weak verb builds its participle with -t, so bezahlt.",
+            "gebezahlen" to "these verbs never take ge-; the prefix stands alone, so bezahlt.",
+        ),
+    ),
+    "sep:bekommen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "trennbar" to "this verb's prefix never detaches — it stays attached in every form, so the verb is untrennbar.",
+        ),
+    ),
+    "sep:bekommen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-no-ge",
+        missByChoice = mapOf(
+            "gebekommen" to "these verbs never take ge-; the prefix stands alone, so bekommen.",
+            "bekommt" to "that is the present tense, not the participle, so bekommen.",
+            "gebekommt" to "these verbs never take ge-; the prefix stands alone, so bekommen.",
+        ),
+    ),
+    "sep:verstehen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "trennbar" to "this verb's prefix never detaches — it stays attached in every form, so the verb is untrennbar.",
+        ),
+    ),
+    "sep:verstehen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-no-ge",
+        missByChoice = mapOf(
+            "geverstanden" to "these verbs never take ge-; the prefix stands alone, so verstanden.",
+            "versteht" to "that is the present tense, not the participle, so verstanden.",
+            "geversteht" to "these verbs never take ge-; the prefix stands alone, so verstanden.",
+        ),
+    ),
+    "sep:vergessen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "trennbar" to "this verb's prefix never detaches — it stays attached in every form, so the verb is untrennbar.",
+        ),
+    ),
+    "sep:vergessen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-no-ge",
+        missByChoice = mapOf(
+            "gevergesst" to "these verbs never take ge-; the prefix stands alone, so vergessen.",
+            "vergesst" to "that is the present tense, not the participle, so vergessen.",
+            "gevergeßt" to "these verbs never take ge-; the prefix stands alone, so vergessen.",
+        ),
+    ),
+    "sep:verlieren:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "trennbar" to "this verb's prefix never detaches — it stays attached in every form, so the verb is untrennbar.",
+        ),
+    ),
+    "sep:verlieren:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-no-ge",
+        missByChoice = mapOf(
+            "geverloren" to "these verbs never take ge-; the prefix stands alone, so verloren.",
+            "verliert" to "that is the present tense, not the participle, so verloren.",
+            "geverliert" to "these verbs never take ge-; the prefix stands alone, so verloren.",
+        ),
+    ),
+    "sep:erklären:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "trennbar" to "this verb's prefix never detaches — it stays attached in every form, so the verb is untrennbar.",
+        ),
+    ),
+    "sep:erklären:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-no-ge",
+        missByChoice = mapOf(
+            "geerklärt" to "these verbs never take ge-; the prefix stands alone, so erklärt.",
+            "erkläret" to "the participle takes plain -t, so erklärt.",
+            "geerkläret" to "these verbs never take ge-; the prefix stands alone, so erklärt.",
+        ),
+    ),
+    "sep:erzählen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "trennbar" to "this verb's prefix never detaches — it stays attached in every form, so the verb is untrennbar.",
+        ),
+    ),
+    "sep:erzählen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-no-ge",
+        missByChoice = mapOf(
+            "geerzählt" to "these verbs never take ge-; the prefix stands alone, so erzählt.",
+            "erzählet" to "the participle takes plain -t, so erzählt.",
+            "geerzählet" to "these verbs never take ge-; the prefix stands alone, so erzählt.",
+        ),
+    ),
+    "sep:erreichen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "trennbar" to "this verb's prefix never detaches — it stays attached in every form, so the verb is untrennbar.",
+        ),
+    ),
+    "sep:erreichen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-no-ge",
+        missByChoice = mapOf(
+            "geerreicht" to "these verbs never take ge-; the prefix stands alone, so erreicht.",
+            "erreichet" to "the participle takes plain -t, so erreicht.",
+            "geerreichet" to "these verbs never take ge-; the prefix stands alone, so erreicht.",
+        ),
+    ),
+    "sep:entscheiden:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "trennbar" to "this verb's prefix never detaches — it stays attached in every form, so the verb is untrennbar.",
+        ),
+    ),
+    "sep:entscheiden:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-no-ge",
+        missByChoice = mapOf(
+            "geentschieden" to "these verbs never take ge-; the prefix stands alone, so entschieden.",
+            "entscheidet" to "the participle takes plain -t, so entschieden.",
+            "geentscheidet" to "these verbs never take ge-; the prefix stands alone, so entschieden.",
+        ),
+    ),
+    "sep:entdecken:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "trennbar" to "this verb's prefix never detaches — it stays attached in every form, so the verb is untrennbar.",
+        ),
+    ),
+    "sep:entdecken:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-no-ge",
+        missByChoice = mapOf(
+            "geentdeckt" to "these verbs never take ge-; the prefix stands alone, so entdeckt.",
+            "entdecket" to "the participle takes plain -t, so entdeckt.",
+            "geentdecket" to "these verbs never take ge-; the prefix stands alone, so entdeckt.",
+        ),
+    ),
+    "sep:entschuldigen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "trennbar" to "this verb's prefix never detaches — it stays attached in every form, so the verb is untrennbar.",
+        ),
+    ),
+    "sep:entschuldigen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-no-ge",
+        missByChoice = mapOf(
+            "geentschuldigt" to "these verbs never take ge-; the prefix stands alone, so entschuldigt.",
+            "entschuldiget" to "the participle takes plain -t, so entschuldigt.",
+            "geentschuldiget" to "these verbs never take ge-; the prefix stands alone, so entschuldigt.",
+        ),
+    ),
+    "sep:zerstören:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "trennbar" to "this verb's prefix never detaches — it stays attached in every form, so the verb is untrennbar.",
+        ),
+    ),
+    "sep:zerstören:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-no-ge",
+        missByChoice = mapOf(
+            "gezerstört" to "these verbs never take ge-; the prefix stands alone, so zerstört.",
+            "zerstöret" to "the participle takes plain -t, so zerstört.",
+            "gezerstöret" to "these verbs never take ge-; the prefix stands alone, so zerstört.",
+        ),
+    ),
+    "sep:zerbrechen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "trennbar" to "this verb's prefix never detaches — it stays attached in every form, so the verb is untrennbar.",
+        ),
+    ),
+    "sep:zerbrechen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-no-ge",
+        missByChoice = mapOf(
+            "gezerbrochen" to "these verbs never take ge-; the prefix stands alone, so zerbrochen.",
+            "zerbrecht" to "that is the present tense, not the participle, so zerbrochen.",
+            "gezerbrecht" to "these verbs never take ge-; the prefix stands alone, so zerbrochen.",
+        ),
+    ),
+    "sep:gehören:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "trennbar" to "this verb's prefix never detaches — it stays attached in every form, so the verb is untrennbar.",
+        ),
+    ),
+    "sep:gehören:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-no-ge",
+        missByChoice = mapOf(
+            "gegehört" to "these verbs never take ge-; the prefix stands alone, so gehört.",
+            "gehöret" to "the participle takes plain -t, so gehört.",
+            "gegehöret" to "these verbs never take ge-; the prefix stands alone, so gehört.",
+        ),
+    ),
+    "sep:gefallen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "trennbar" to "this verb's prefix never detaches — it stays attached in every form, so the verb is untrennbar.",
+        ),
+    ),
+    "sep:gefallen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-no-ge",
+        missByChoice = mapOf(
+            "gegefallen" to "these verbs never take ge-; the prefix stands alone, so gefallen.",
+            "gefällt" to "that is the present tense, not the participle, so gefallen.",
+            "gegefällt" to "these verbs never take ge-; the prefix stands alone, so gefallen.",
+        ),
+    ),
+    "sep:gelingen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "trennbar" to "this verb's prefix never detaches — it stays attached in every form, so the verb is untrennbar.",
+        ),
+    ),
+    "sep:gelingen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-no-ge",
+        missByChoice = mapOf(
+            "gegelungen" to "these verbs never take ge-; the prefix stands alone, so gelungen.",
+            "gelingt" to "that is the present tense, not the participle, so gelungen.",
+            "gegelingt" to "these verbs never take ge-; the prefix stands alone, so gelungen.",
+        ),
+    ),
+    "sep:empfehlen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "trennbar" to "this verb's prefix never detaches — it stays attached in every form, so the verb is untrennbar.",
+        ),
+    ),
+    "sep:empfehlen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-no-ge",
+        missByChoice = mapOf(
+            "geempfohlen" to "these verbs never take ge-; the prefix stands alone, so empfohlen.",
+            "empfehlt" to "that is the present tense, not the participle, so empfohlen.",
+            "geempfehlt" to "these verbs never take ge-; the prefix stands alone, so empfohlen.",
+        ),
+    ),
+    "sep:empfangen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "trennbar" to "this verb's prefix never detaches — it stays attached in every form, so the verb is untrennbar.",
+        ),
+    ),
+    "sep:empfangen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-no-ge",
+        missByChoice = mapOf(
+            "geempfangen" to "these verbs never take ge-; the prefix stands alone, so empfangen.",
+            "empfangt" to "that is the present tense, not the participle, so empfangen.",
+            "geempfangt" to "these verbs never take ge-; the prefix stands alone, so empfangen.",
+        ),
+    ),
+    "sep:misstrauen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "trennbar" to "this verb's prefix never detaches — it stays attached in every form, so the verb is untrennbar.",
+        ),
+    ),
+    "sep:misstrauen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-no-ge",
+        missByChoice = mapOf(
+            "gemisstraut" to "these verbs never take ge-; the prefix stands alone, so misstraut.",
+            "misstrauet" to "the participle takes plain -t, so misstraut.",
+            "gemisstrauet" to "these verbs never take ge-; the prefix stands alone, so misstraut.",
+        ),
+    ),
+    "sep:missverstehen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-which",
+        missByChoice = mapOf(
+            "trennbar" to "this verb's prefix never detaches — it stays attached in every form, so the verb is untrennbar.",
+        ),
+    ),
+    "sep:missverstehen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-participle-no-ge",
+        missByChoice = mapOf(
+            "gemissverstanden" to "these verbs never take ge-; the prefix stands alone, so missverstanden.",
+            "missversteht" to "that is the present tense, not the participle, so missverstanden.",
+            "gemissversteht" to "these verbs never take ge-; the prefix stands alone, so missverstanden.",
+        ),
+    ),
+    "sep:übersetzen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-dual",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's meaning puts it in the splitting group — its prefix detaches to the end of a main clause, so trennbar.",
+        ),
+    ),
+    "sep:übersetzen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-dual",
+        missByChoice = mapOf(
+            "geüberkocht" to "ge- never stands before these prefixes. The splitting twin puts it inside (umgezogen); the attached twin takes none (überprüft).",
+            "übergekochen" to "kochen is weak and takes -t; lesen and sehen are strong and take -en: übergekocht.",
+            "überkocht" to "überkochen splits, so ge- goes inside: übergekocht.",
+        ),
+    ),
+    "sep:übersetzen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "unter" to "with unter the verb would be a different verb, or no verb at all. This sentence means beim Kochen über den Rand laufen, which is überkochen, so über.",
+            "durch" to "with durch the verb would be a different verb, or no verb at all. This sentence means beim Kochen über den Rand laufen, which is überkochen, so über.",
+            "um" to "with um the verb would be a different verb, or no verb at all. This sentence means beim Kochen über den Rand laufen, which is überkochen, so über.",
+        ),
+    ),
+    "sep:überprüfen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-dual",
+        missByChoice = mapOf(
+            "trennbar" to "this verb's meaning keeps the prefix attached in every form, so untrennbar.",
+        ),
+    ),
+    "sep:überprüfen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-dual",
+        missByChoice = mapOf(
+            "geüberprüft" to "ge- never stands before these prefixes. The splitting twin puts it inside (umgezogen); the attached twin takes none (überprüft).",
+            "übergeprüft" to "only the splitting twin takes ge- inside; this verb's participle stays plain, so überprüft.",
+            "überprüfet" to "the participle takes plain -t: überprüft, umarmt, untersucht, durchquert, wiederholt.",
+        ),
+    ),
+    "sep:umziehen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-dual",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's meaning puts it in the splitting group — its prefix detaches to the end of a main clause, so trennbar.",
+        ),
+    ),
+    "sep:umziehen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-dual",
+        missByChoice = mapOf(
+            "geumgezogen" to "ge- never stands before these prefixes. The splitting twin puts it inside (umgezogen); the attached twin takes none (überprüft).",
+            "umzieht" to "that is not a participle; build it from the participle stem, so umgezogen.",
+            "umziehen" to "that is not a participle; build it from the participle stem, so umgezogen.",
+        ),
+    ),
+    "sep:umziehen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "ein" to "with ein the verb would be a different verb, or no verb at all. This sentence means Wohnung wechseln, which is umziehen, so um.",
+            "aus" to "with aus the verb would be a different verb, or no verb at all. This sentence means Wohnung wechseln, which is umziehen, so um.",
+            "nach" to "with nach the verb would be a different verb, or no verb at all. This sentence means Wohnung wechseln, which is umziehen, so um.",
+        ),
+    ),
+    "sep:umarmen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-dual",
+        missByChoice = mapOf(
+            "trennbar" to "this verb's meaning keeps the prefix attached in every form, so untrennbar.",
+        ),
+    ),
+    "sep:umarmen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-dual",
+        missByChoice = mapOf(
+            "geumarmt" to "ge- never stands before these prefixes. The splitting twin puts it inside (umgezogen); the attached twin takes none (überprüft).",
+            "umgearmt" to "only the splitting twin takes ge- inside; this verb's participle stays plain, so umarmt.",
+            "umarmet" to "the participle takes plain -t: überprüft, umarmt, untersucht, durchquert, wiederholt.",
+        ),
+    ),
+    "sep:untergehen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-dual",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's meaning puts it in the splitting group — its prefix detaches to the end of a main clause, so trennbar.",
+        ),
+    ),
+    "sep:untergehen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-dual",
+        missByChoice = mapOf(
+            "geuntergangen" to "ge- never stands before these prefixes. The splitting twin puts it inside (umgezogen); the attached twin takes none (überprüft).",
+            "untergeht" to "that is not a participle; build it from the participle stem, so untergegangen.",
+            "untergehen" to "that is not a participle; build it from the participle stem, so untergegangen.",
+        ),
+    ),
+    "sep:untergehen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "über" to "with über the verb would be a different verb, or no verb at all. This sentence means sinken / versinken, which is untergehen, so unter.",
+            "durch" to "with durch the verb would be a different verb, or no verb at all. This sentence means sinken / versinken, which is untergehen, so unter.",
+            "auf" to "with auf the verb would be a different verb, or no verb at all. This sentence means sinken / versinken, which is untergehen, so unter.",
+        ),
+    ),
+    "sep:untersuchen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-dual",
+        missByChoice = mapOf(
+            "trennbar" to "this verb's meaning keeps the prefix attached in every form, so untrennbar.",
+        ),
+    ),
+    "sep:untersuchen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-dual",
+        missByChoice = mapOf(
+            "geuntersucht" to "ge- never stands before these prefixes. The splitting twin puts it inside (umgezogen); the attached twin takes none (überprüft).",
+            "untergesucht" to "only the splitting twin takes ge- inside; this verb's participle stays plain, so untersucht.",
+            "untersuchet" to "the participle takes plain -t: überprüft, umarmt, untersucht, durchquert, wiederholt.",
+        ),
+    ),
+    "sep:durchlesen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-dual",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's meaning puts it in the splitting group — its prefix detaches to the end of a main clause, so trennbar.",
+        ),
+    ),
+    "sep:durchlesen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-dual",
+        missByChoice = mapOf(
+            "gedurchgelesen" to "ge- never stands before these prefixes. The splitting twin puts it inside (umgezogen); the attached twin takes none (überprüft).",
+            "durchgelest" to "kochen is weak and takes -t; lesen and sehen are strong and take -en: durchgelesen.",
+            "durchlesen" to "that is not a participle; build it from the participle stem, so durchgelesen.",
+        ),
+    ),
+    "sep:durchlesen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "vor" to "with vor the verb would be a different verb, or no verb at all. This sentence means von Anfang bis Ende lesen, which is durchlesen, so durch.",
+            "mit" to "with mit the verb would be a different verb, or no verb at all. This sentence means von Anfang bis Ende lesen, which is durchlesen, so durch.",
+            "aus" to "with aus the verb would be a different verb, or no verb at all. This sentence means von Anfang bis Ende lesen, which is durchlesen, so durch.",
+        ),
+    ),
+    "sep:durchqueren:0" to SeparableVerbRuleContent(
+        ruleId = "sep-dual",
+        missByChoice = mapOf(
+            "trennbar" to "this verb's meaning keeps the prefix attached in every form, so untrennbar.",
+        ),
+    ),
+    "sep:durchqueren:1" to SeparableVerbRuleContent(
+        ruleId = "sep-dual",
+        missByChoice = mapOf(
+            "gedurchquert" to "ge- never stands before these prefixes. The splitting twin puts it inside (umgezogen); the attached twin takes none (überprüft).",
+            "durchgequert" to "only the splitting twin takes ge- inside; this verb's participle stays plain, so durchquert.",
+            "durchqueret" to "the participle takes plain -t: überprüft, umarmt, untersucht, durchquert, wiederholt.",
+        ),
+    ),
+    "sep:wiedersehen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-dual",
+        missByChoice = mapOf(
+            "untrennbar" to "this verb's meaning puts it in the splitting group — its prefix detaches to the end of a main clause, so trennbar.",
+        ),
+    ),
+    "sep:wiedersehen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-dual",
+        missByChoice = mapOf(
+            "gewiedersehen" to "ge- never stands before these prefixes. The splitting twin puts it inside (umgezogen); the attached twin takes none (überprüft).",
+            "wiedergeseht" to "kochen is weak and takes -t; lesen and sehen are strong and take -en: wiedergesehen.",
+            "wiedersehen" to "that is not a participle; build it from the participle stem, so wiedergesehen.",
+        ),
+    ),
+    "sep:wiedersehen:2" to SeparableVerbRuleContent(
+        ruleId = "sep-prefix-end",
+        missByChoice = mapOf(
+            "vor" to "with vor the verb would be a different verb, or no verb at all. This sentence means noch einmal treffen, which is wiedersehen, so wieder.",
+            "zu" to "with zu the verb would be a different verb, or no verb at all. This sentence means noch einmal treffen, which is wiedersehen, so wieder.",
+            "fern" to "with fern the verb would be a different verb, or no verb at all. This sentence means noch einmal treffen, which is wiedersehen, so wieder.",
+        ),
+    ),
+    "sep:wiederholen:0" to SeparableVerbRuleContent(
+        ruleId = "sep-dual",
+        missByChoice = mapOf(
+            "trennbar" to "this verb's meaning keeps the prefix attached in every form, so untrennbar.",
+        ),
+    ),
+    "sep:wiederholen:1" to SeparableVerbRuleContent(
+        ruleId = "sep-dual",
+        missByChoice = mapOf(
+            "gewiederholt" to "ge- never stands before these prefixes. The splitting twin puts it inside (umgezogen); the attached twin takes none (überprüft).",
+            "wiederholte" to "that is the past tense, not the participle: wiederholt.",
+            "wiederholet" to "the participle takes plain -t: überprüft, umarmt, untersucht, durchquert, wiederholt.",
+        ),
+    ),
+)
+
+
+/** Authored help rule id for each built-in word order item, keyed by item key. */
+internal val WORD_ORDER_RULE_ITEMS: Map<String, String> = mapOf(
+    "v2_kino" to "wo-verb-second",
+    "v2_kaffee" to "wo-verb-second",
+    "v2_buch" to "wo-verb-second",
+    "v2_garten" to "wo-verb-second",
+    "v2_deutsch" to "wo-verb-second",
+    "v2_hause" to "wo-verb-second",
+    "sub_weil_krank" to "wo-verb-last-sub",
+    "sub_weil_bus" to "wo-verb-last-sub",
+    "sub_weil_regen" to "wo-verb-last-sub",
+    "sub_dass_kommen" to "wo-verb-last-sub",
+    "sub_dass_zeit" to "wo-verb-last-sub",
+    "sub_dass_wetter" to "wo-verb-last-sub",
+    "sub_wenn_sonne" to "wo-verb-last-sub",
+    "sub_wenn_anrufen" to "wo-verb-last-sub",
+    "sub_wenn_hilfe" to "wo-verb-last-sub",
+    "sub_ob_kommen" to "wo-verb-last-sub",
+    "sub_ob_zeit" to "wo-verb-last-sub",
+    "sub_ob_tuer" to "wo-verb-last-sub",
+    "sep_aufstehen" to "wo-separable-end",
+    "sep_anfangen" to "wo-separable-end",
+    "sep_einkaufen" to "wo-separable-end",
+    "sep_anrufen" to "wo-separable-end",
+    "sep_abfahren" to "wo-separable-end",
+    "sep_einschalten" to "wo-separable-end",
+    "mod_sprechen" to "wo-modal-infinitive",
+    "mod_lernen" to "wo-modal-infinitive",
+    "mod_fotografieren" to "wo-modal-infinitive",
+    "mod_besuchen" to "wo-modal-infinitive",
+    "mod_nehmen" to "wo-modal-infinitive",
+    "mod_ausflug" to "wo-modal-infinitive",
+    "perf_buch" to "wo-perfekt-bracket",
+    "perf_zug" to "wo-perfekt-bracket",
+    "perf_aufgaben" to "wo-perfekt-bracket",
+    "perf_aufgestanden" to "wo-perfekt-bracket",
+    "perf_gearbeitet" to "wo-perfekt-bracket",
+    "perf_wohnung" to "wo-perfekt-bracket",
+    "tekamolo_fahrrad" to "wo-tekamolo",
+    "tekamolo_hause" to "wo-tekamolo",
+    "tekamolo_restaurant" to "wo-tekamolo",
+    "tekamolo_italien" to "wo-tekamolo",
+    "tekamolo_berlin" to "wo-tekamolo",
+    "tekamolo_park" to "wo-tekamolo",
+    "q_party" to "wo-verb-first-question",
+    "q_hausaufgaben" to "wo-verb-first-question",
+    "q_kino" to "wo-verb-first-question",
+    "q_helfen" to "wo-verb-first-question",
+    "q_kaffee" to "wo-verb-first-question",
+    "q_hamburg" to "wo-verb-first-question",
+)

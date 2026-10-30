@@ -3,10 +3,10 @@ package app.olauncher.data.store
 /**
  * Help-card rules of the live (words-driven) drill types (#699), transcribed from
  * docs/design/drill-content/prepositions.md, case-endings.md, verb-prepositions.md,
- * adjective-endings.md, articles.md and plurals.md. They share the registry with the
- * gap-topic rules in [DrillHelpContent]; only `prep-fixed-dat` is authored there,
- * because a gap-topic item (the passive's von + dative) also points at it, and it
- * is not repeated here.
+ * adjective-endings.md, articles.md, plurals.md, pronouns.md, separable-verbs.md and
+ * word-order.md. They share the registry with the gap-topic rules in
+ * [DrillHelpContent]; only `prep-fixed-dat` is authored there, because a gap-topic item
+ * (the passive's von + dative) also points at it, and it is not repeated here.
  *
  * Same leak rules as the gap topics (docs/design/drill-help-card.md §3): the
  * pre-answer prose — rule, first-exposure rule, cue and title — names no item's
@@ -681,6 +681,278 @@ internal object DrillHelpContentLive {
             ),
             example = "Im Büro stehen viele Computer.",
             cue = "Recall this noun's plural pattern: the ending, and any vowel change.",
+        ),
+        DrillHelpRule(
+            id = "pron-first-second",
+            title = "First and second person pronouns",
+            rule = "A pronoun's form follows its job: the doer (Wer?) keeps the base form; the person directly affected (Wen?) and the receiver (Wem?) have their own forms.",
+            table = DrillHelpTable(
+                headers = listOf("", "ich", "du", "wir", "ihr"),
+                rows = listOf(
+                    DrillHelpRow("Wer?", listOf("ich", "du", "wir", "ihr")),
+                    DrillHelpRow("Wen?", listOf("mich", "dich", "uns", "euch")),
+                    DrillHelpRow("Wem?", listOf("mir", "dir", "uns", "euch")),
+                ),
+            ),
+            example = "Der Lehrer lobt **uns** für unsere gute Arbeit.",
+            cue = "Find the doer. If the pronoun is not the doer, ask Wen? or Wem? after this verb.",
+        ),
+        DrillHelpRule(
+            id = "pron-third",
+            title = "Third-person pronouns",
+            rule = "A third-person pronoun copies the gender of the noun it replaces; sie also stands for plurals. Its form follows the job: Wer?, Wen? or Wem?",
+            table = DrillHelpTable(
+                headers = listOf("", "m", "f", "n", "pl"),
+                rows = listOf(
+                    DrillHelpRow("Wer?", listOf("er", "sie", "es", "sie")),
+                    DrillHelpRow("Wen?", listOf("ihn", "sie", "es", "sie")),
+                    DrillHelpRow("Wem?", listOf("ihm", "ihr", "ihm", "ihnen")),
+                ),
+            ),
+            example = "Herr Weber ist nicht da, wir rufen **ihn** später an.",
+            cue = "Take the pronoun for the noun's gender, then pick the row for its job.",
+        ),
+        DrillHelpRule(
+            id = "pron-formal",
+            title = "Formal address pronouns",
+            rule = "The formal word for you barely changes: doer and directly affected are the same word; only the receiver form is different. Decide its job first.",
+            table = DrillHelpTable(
+                headers = listOf("", "Wer?", "Wen?", "Wem?"),
+                rows = listOf(
+                    DrillHelpRow("Sie", listOf("Sie", "Sie", "Ihnen")),
+                ),
+            ),
+            example = "Darf ich **Ihnen** behilflich sein, Herr Direktor?",
+            cue = "Two of the three jobs share one word; only the receiver form is different.",
+        ),
+        DrillHelpRule(
+            id = "pron-reflex-shift",
+            title = "Reflexive pronouns: Wen? or Wem?",
+            rule = "A reflexive verb acts back on its doer. If nothing else is affected, the pronoun takes the Wen? form; if a thing is already affected, the Wem? form.",
+            table = DrillHelpTable(
+                headers = listOf("", "Wen?", "Wem?"),
+                rows = listOf(
+                    DrillHelpRow("ich", listOf("mich", "mir")),
+                    DrillHelpRow("du", listOf("dich", "dir")),
+                    DrillHelpRow("er · sie · es", listOf("sich", "sich")),
+                ),
+            ),
+            example = "Vor dem Essen wasche ich **mir** gründlich die Hände.",
+            cue = "Look for a second affected thing: none → Wen? form, one → Wem? form.",
+        ),
+        DrillHelpRule(
+            id = "pron-reflex-person",
+            title = "Reflexive pronouns by person",
+            rule = "Some verbs act back on their doer. The reflexive pronoun matches the subject: it is the doer's own object form. Find the person in the verb ending.",
+            table = DrillHelpTable(
+                headers = listOf("", "ich", "du", "er · sie · es · sie (pl)", "wir · ihr"),
+                rows = listOf(
+                    DrillHelpRow("Wer?", listOf("ich", "du", "er · sie · es · sie", "wir · ihr")),
+                    DrillHelpRow("reflexive", listOf("mich", "dich", "sich", "uns · euch")),
+                ),
+            ),
+            example = "Er erinnert **sich** gern an die Zeit in Wien.",
+            cue = "Find the doer in the verb ending; the reflexive pronoun takes that person's object form.",
+        ),
+        DrillHelpRule(
+            id = "pron-poss-ending",
+            title = "Possessive pronoun endings",
+            rule = "A possessive takes the ending ein or kein would take: the ending marks the noun's gender and its job in the sentence. The stem changes, the endings never do.",
+            table = DrillHelpTable(
+                headers = listOf("", "m", "f", "n", "pl"),
+                rows = listOf(
+                    DrillHelpRow("Wer? · Wen?", listOf("mein · meinen", "meine", "mein", "meine")),
+                    DrillHelpRow("Wem?", listOf("meinem", "meiner", "meinem", "meinen")),
+                    DrillHelpRow("Wessen?", listOf("meines", "meiner", "meines", "meiner")),
+                ),
+            ),
+            example = "Ich habe mein**en** Schlüsselbund überall gesucht.",
+            cue = "Which ending would ein or kein take here? The possessive takes the same one.",
+        ),
+        DrillHelpRule(
+            id = "pron-poss-edrop",
+            title = "Possessive: stem e-drop",
+            rule = "euer drops the e of its stem as soon as an ending is added; the endings follow the ein pattern. Without an ending, the stem stays whole.",
+            table = DrillHelpTable(
+                headers = listOf("", "m", "f", "n", "pl"),
+                rows = listOf(
+                    DrillHelpRow("Wer? · Wen?", listOf("euer · euren", "eure", "euer", "eure")),
+                    DrillHelpRow("Wem?", listOf("eurem", "eurer", "eurem", "euren")),
+                    DrillHelpRow("Wessen?", listOf("eures", "eurer", "eures", "eurer")),
+                ),
+            ),
+            example = "Wo arbeitet **eure** Mutter eigentlich?",
+            cue = "Does an ending belong here? If yes, drop the stem e first, then add it like ein.",
+        ),
+        DrillHelpRule(
+            id = "sep-which",
+            title = "Separable vs inseparable verbs",
+            rule = "Some German verbs carry a prefix that splits off in a main clause and drops to the end of the clause. Others never split. Learn which group each verb belongs to.",
+            table = DrillHelpTable(
+                headers = listOf("", "Infinitiv", "Hauptsatz", "Partizip II"),
+                rows = listOf(
+                    DrillHelpRow("trennbar", listOf("abholen", "Ich hole dich ab.", "abgeholt")),
+                    DrillHelpRow("untrennbar", listOf("beantworten", "Ich beantworte deine Frage.", "beantwortet")),
+                ),
+            ),
+            example = "Ich hole dich am Bahnhof **ab**. Ich **be**antworte deine Frage.",
+            cue = "Does this verb's prefix split off in a main clause, or stay attached?",
+        ),
+        DrillHelpRule(
+            id = "sep-dual",
+            title = "Dual-prefix verbs",
+            rule = "über, um, unter, durch, wieder: the meaning decides. Separable: prefix to the clause end, ge- inside the participle. Inseparable: neither.",
+            table = DrillHelpTable(
+                headers = listOf("", "Infinitiv", "Hauptsatz", "Partizip II"),
+                rows = listOf(
+                    DrillHelpRow("trennbar", listOf("umkehren", "Ich kehre um.", "umgekehrt")),
+                    DrillHelpRow("untrennbar", listOf("überleben", "Ich überlebe.", "überlebt")),
+                ),
+            ),
+            example = "Ich kehre morgen **um**. Ich **über**lebe die Prüfung.",
+            cue = "Which group does this verb's meaning put it in?",
+        ),
+        DrillHelpRule(
+            id = "sep-participle-ge",
+            title = "Participle of separable verbs",
+            rule = "Where ge- goes depends on the prefix: a separable prefix takes ge- after it (abgeholt), an inseparable prefix takes no ge- at all (beantwortet).",
+            table = DrillHelpTable(
+                headers = listOf("", "Infinitiv", "Partizip II"),
+                rows = listOf(
+                    DrillHelpRow("einfaches Verb", listOf("machen", "gemacht")),
+                    DrillHelpRow("trennbares Verb", listOf("abholen", "abgeholt")),
+                    DrillHelpRow("untrennbares Verb", listOf("beantworten", "beantwortet")),
+                ),
+            ),
+            example = "Ich habe dich am Bahnhof ab**ge**holt.",
+            cue = "Does this verb's prefix split off? That decides where ge- goes.",
+        ),
+        DrillHelpRule(
+            id = "sep-participle-no-ge",
+            title = "Participle of inseparable verbs",
+            rule = "Where ge- goes depends on the prefix: a separable prefix takes ge- after it (abgeholt), an inseparable prefix takes no ge- at all (beantwortet).",
+            table = DrillHelpTable(
+                headers = listOf("", "Infinitiv", "Partizip II"),
+                rows = listOf(
+                    DrillHelpRow("einfaches Verb", listOf("machen", "gemacht")),
+                    DrillHelpRow("trennbares Verb", listOf("abholen", "abgeholt")),
+                    DrillHelpRow("untrennbares Verb", listOf("beantworten", "beantwortet")),
+                ),
+            ),
+            example = "Ich habe deine Frage **beantwortet**.",
+            cue = "Does this verb's prefix split off? That decides where ge- goes.",
+        ),
+        DrillHelpRule(
+            id = "sep-prefix-end",
+            title = "Separable prefix at clause end",
+            rule = "In a main clause, a separable verb splits: the conjugated verb stays in second place and its prefix moves to the end of the clause. Inseparable verbs never split.",
+            table = DrillHelpTable(
+                headers = listOf("", "Infinitiv", "Hauptsatz"),
+                rows = listOf(
+                    DrillHelpRow("trennbar", listOf("abholen", "Ich hole dich ab.")),
+                    DrillHelpRow("untrennbar", listOf("beantworten", "Ich beantworte deine Frage.")),
+                ),
+            ),
+            example = "Ich hole dich am Bahnhof **ab**.",
+            cue = "The verb in the sentence has dropped its prefix at the end of the clause.",
+        ),
+        DrillHelpRule(
+            id = "wo-verb-second",
+            title = "Verb second in main clauses",
+            rule = "In a main clause the conjugated verb is always the second element. If a time word or another element opens the clause, the subject slides in behind the verb.",
+            table = DrillHelpTable(
+                headers = listOf("", "Subject first", "Time first"),
+                rows = listOf(
+                    DrillHelpRow("Position 1", listOf("subject", "time word")),
+                    DrillHelpRow("Position 2", listOf("verb", "verb")),
+                    DrillHelpRow("Position 3", listOf("rest", "subject, then rest")),
+                ),
+            ),
+            example = "Morgen **gehe** ich ins Kino.",
+            cue = "Verb second; a fronted time word pushes the subject behind the verb.",
+        ),
+        DrillHelpRule(
+            id = "wo-verb-last-sub",
+            title = "Verb position after subjunctions",
+            rule = "weil, dass, wenn and ob send the conjugated verb to the very end of their clause. The words in between keep normal order.",
+            table = DrillHelpTable(
+                headers = listOf("Clause type", "Verb position"),
+                rows = listOf(
+                    DrillHelpRow("Main clause", listOf("position 2")),
+                    DrillHelpRow("Clause after weil, dass, wenn, ob", listOf("the very end")),
+                ),
+            ),
+            example = "Er bleibt im Bett, weil er krank **ist**.",
+            cue = "After weil, dass, wenn or ob the conjugated verb closes the clause.",
+        ),
+        DrillHelpRule(
+            id = "wo-separable-end",
+            title = "Separable prefix at the clause end",
+            rule = "A separable verb splits in a main clause: the conjugated part takes position 2, the prefix drops to the very end. In the infinitive the verb stays one word.",
+            table = DrillHelpTable(
+                headers = listOf("Infinitive", "Position 2", "End of clause"),
+                rows = listOf(
+                    DrillHelpRow("mitkommen", listOf("kommt …", "mit")),
+                    DrillHelpRow("fernsehen", listOf("sieht …", "fern")),
+                ),
+            ),
+            example = "Ich **stehe** jeden Morgen um sieben Uhr **auf**.",
+            cue = "Conjugated verb part second, separable prefix at the very end.",
+        ),
+        DrillHelpRule(
+            id = "wo-modal-infinitive",
+            title = "Modal verb with infinitive",
+            rule = "With a modal verb, the conjugated modal takes position 2 and the main verb's infinitive goes to the very end. The modal alone carries the ending.",
+            table = DrillHelpTable(
+                headers = listOf("Modal", "Position 2", "End of clause"),
+                rows = listOf(
+                    DrillHelpRow("können", listOf("kann …", "schwimmen")),
+                    DrillHelpRow("müssen", listOf("muss …", "arbeiten")),
+                ),
+            ),
+            example = "Ich **kann** sehr gut Deutsch **sprechen**.",
+            cue = "Modal conjugated in position 2, infinitive at the end.",
+        ),
+        DrillHelpRule(
+            id = "wo-perfekt-bracket",
+            title = "Perfekt sentence bracket",
+            rule = "In the Perfekt the helping verb takes position 2 and the participle closes the clause. The two verb parts form a bracket around the middle (Satzklammer).",
+            table = DrillHelpTable(
+                headers = listOf("Helper", "Position 2", "End of clause"),
+                rows = listOf(
+                    DrillHelpRow("haben", listOf("habe …", "gespielt")),
+                    DrillHelpRow("sein", listOf("bin …", "gekommen")),
+                ),
+            ),
+            example = "Ich **habe** gestern ein spannendes Buch **gelesen**.",
+            cue = "Helping verb in position 2, participle at the end.",
+        ),
+        DrillHelpRule(
+            id = "wo-tekamolo",
+            title = "TeKaMoLo adverbial order",
+            rule = "With several adverbials German prefers the order Te-Ka-Mo-Lo: time first, then cause, then manner, then place. Most sentences use only some of them.",
+            table = DrillHelpTable(
+                headers = listOf("", "Te", "Ka", "Mo", "Lo"),
+                rows = listOf(
+                    DrillHelpRow("asks", listOf("Wann?", "Warum?", "Wie?", "Wo? Wohin?")),
+                ),
+            ),
+            example = "Ich fahre **morgen** mit dem Fahrrad **zur Arbeit**.",
+            cue = "TeKaMoLo: time, cause, manner, place.",
+        ),
+        DrillHelpRule(
+            id = "wo-verb-first-question",
+            title = "Verb first in yes/no questions",
+            rule = "A yes/no question opens with the conjugated verb, followed directly by the subject. The rest of the clause keeps its normal order.",
+            table = DrillHelpTable(
+                headers = listOf("", "Position 1", "Position 2"),
+                rows = listOf(
+                    DrillHelpRow("Statement", listOf("subject", "verb")),
+                    DrillHelpRow("Yes/no question", listOf("verb", "subject")),
+                ),
+            ),
+            example = "**Kommst** du heute Abend zur Party?",
+            cue = "Yes/no question: conjugated verb first, subject right after it.",
         ),
     )
 }

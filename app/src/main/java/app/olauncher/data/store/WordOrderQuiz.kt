@@ -14,6 +14,7 @@ data class WordOrderItem(
     val tiles: List<String>,
     val accepted: List<List<String>>,
     val hint: String? = null,
+    val ruleId: String? = null,
 ) {
     /** The primary accepted sentence, used as the correct answer display when wrong. */
     val canonicalAnswer: String

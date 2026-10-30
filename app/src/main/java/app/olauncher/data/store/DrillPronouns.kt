@@ -1122,13 +1122,19 @@ object DrillPronouns {
             val matchingWord = wordMap[entry.tag.lowercase()]
                 ?: wordMap[entry.tag.removePrefix("sich ").lowercase()]
             entry.templates.mapIndexed { index, template ->
-                val key = matchingWord?.let { "${it.id}" } ?: "pron:${entry.tag}:$index"
+                val builtInKey = "pron:${entry.tag}:$index"
+                val key = matchingWord?.let { "${it.id}" } ?: builtInKey
+                val content = if (matchingWord == null) PRONOUN_RULE_CONTENT[builtInKey] else null
+                val ruleId = content?.ruleId
+                    ?.let { DrillHelpContent.requireValidRuleId(it, "pronouns item $builtInKey") }
                 DrillItem(
                     id = DrillItemId(DrillType.PRONOUNS, key),
                     prompt = template.prompt,
                     answer = template.answer,
                     choices = template.choices,
                     hint = template.hint,
+                    ruleId = ruleId,
+                    missByChoice = content?.missByChoice ?: emptyMap(),
                 )
             }
         }

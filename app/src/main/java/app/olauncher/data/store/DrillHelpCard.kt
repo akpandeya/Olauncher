@@ -62,12 +62,41 @@ object DrillHelpCard {
     }
 
     /**
+     * The help state of a word-order item (#699). A word-order round has no
+     * [DrillQuizQuestion], so this takes the item itself. Before an answer only "Why?"
+     * opens the card, with the rule and no example. After a wrong order the card adds
+     * the item's own example. There is no miss line: the screen's inline correction
+     * already shows the accepted order.
+     */
+    fun wordOrderState(item: WordOrderItem, whyOpen: Boolean, answeredWrong: Boolean): State? {
+        val rule = DrillHelpContent.rule(item.ruleId) ?: return null
+        return when {
+            answeredWrong -> State(
+                rule = rule,
+                showAnswer = true,
+                example = wordOrderExample(item),
+                miss = null,
+            )
+            whyOpen -> State(rule = rule, showAnswer = false, example = null, miss = null)
+            else -> null
+        }
+    }
+
+    /**
+     * The word-order item's own example from [ITEM_HELP_EXAMPLES], or null when none is
+     * authored. Word-order prompts have no gap, so the rule's example is never used here:
+     * it would show the same sentence for every item of the rule.
+     */
+    fun wordOrderExample(item: WordOrderItem): String? = ITEM_HELP_EXAMPLES[item.id.key]
+
+    /**
      * The item's own example: the prompt with its gap filled by the answer, the answer
      * wrapped in `**…**` for bold+underline. Items whose prompt has no gap marker —
-     * the which-case prepositions and the verb + preposition case questions — carry
-     * their own per-item example in [ITEM_HELP_EXAMPLES] (docs/design/drill-content/
-     * prepositions.md and verb-prepositions.md author the example per item); the rule's
-     * example stays as the fallback.
+     * the which-case prepositions, the verb + preposition case questions and the
+     * word-order items — carry their own per-item example in [ITEM_HELP_EXAMPLES]
+     * (prepositions.md, verb-prepositions.md and word-order.md author the example per
+     * item in docs/design/drill-content/); the rule's example stays as the fallback for
+     * any other gapless item.
      */
     fun filledExample(question: DrillQuizQuestion): String {
         ITEM_HELP_EXAMPLES[question.id.key]?.let { return it }

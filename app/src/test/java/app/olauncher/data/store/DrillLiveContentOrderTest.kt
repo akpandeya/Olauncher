@@ -16,7 +16,8 @@ class DrillLiveContentOrderTest {
     fun helpRulesKeepTheAuthoredOrder() {
         // DrillHelpContentLive transcribes the rule order of
         // docs/design/drill-content/prepositions.md, case-endings.md,
-        // verb-prepositions.md, adjective-endings.md, articles.md and plurals.md.
+        // verb-prepositions.md, adjective-endings.md, articles.md, plurals.md, pronouns.md,
+        // separable-verbs.md and word-order.md.
         assertEquals(
             listOf(
                 "prep-which-fixed",
@@ -63,6 +64,25 @@ class DrillLiveContentOrderTest {
                 "plural-en",
                 "plural-s",
                 "plural-no-change",
+                "pron-first-second",
+                "pron-third",
+                "pron-formal",
+                "pron-reflex-shift",
+                "pron-reflex-person",
+                "pron-poss-ending",
+                "pron-poss-edrop",
+                "sep-which",
+                "sep-dual",
+                "sep-participle-ge",
+                "sep-participle-no-ge",
+                "sep-prefix-end",
+                "wo-verb-second",
+                "wo-verb-last-sub",
+                "wo-separable-end",
+                "wo-modal-infinitive",
+                "wo-perfekt-bracket",
+                "wo-tekamolo",
+                "wo-verb-first-question",
             ),
             DrillHelpContentLive.rules.map { it.id },
         )
