@@ -146,7 +146,10 @@ object AiChatRequestBuilder {
                 // facts in this conversation, so the raw key alone would leave it a
                 // rule it is forbidden to state and cannot explain (#721).
                 val rule = DrillHelpContent.rule(id)
-                append(" | rule: ${rule?.title ?: id} ($id)")
+                // The id in parens only when a title resolved: for an unknown id it
+                // would just repeat the raw key ("x (x)").
+                append(" | rule: ")
+                append(rule?.let { "${it.title} ($id)" } ?: id)
                 rule?.let { append(" | rule text: ${it.rule}") }
             }
             if (payload.chips.isNotEmpty()) append(" | chips: ${payload.chips.joinToString(", ")}")
