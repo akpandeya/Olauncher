@@ -422,6 +422,19 @@
             android:visibility="gone"
             tools:visibility="visible" />
 
+        <!-- The muted older-threads hint under the Ask-AI row (mock screen 3):
+             shown only when the subject has two or more threads to list. -->
+        <TextView
+            android:id="@+id/askAiHint"
+            style="@style/TodayCardBodyLight"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:gravity="center"
+            android:textSize="@dimen/text_caption"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
         <!-- Footer -->
         <LinearLayout
             android:layout_width="match_parent"

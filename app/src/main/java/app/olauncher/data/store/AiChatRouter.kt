@@ -29,7 +29,11 @@ import java.text.Normalizer
  *
  * Shape parsing is type-gated because [DrillType.WORD_ORDER] uses synthetic numeric
  * keys (`1`–`5`) that are not word ids; an unrecognised shape under-matches gracefully
- * to a rule or topic thread.
+ * to a rule or topic thread. Word order also builds a `<wordId>:<key>` word-linked
+ * shape ([DrillWordOrder] word-linked items) that deliberately stays out of
+ * [WORD_ID_KEY_TYPES] — a word-order miss under-matches to the topic thread, never
+ * to the word's thread — so a future reader should not "fix" it into the word-linked
+ * types.
  */
 object AiChatRouter {
 
@@ -143,6 +147,10 @@ object AiChatRouter {
         val noun = item.key.removePrefix(prefix)
         if (noun.isBlank()) return null
         val wanted = normalizeCitation(noun)
+        // firstOrNull is order-dependent when two saved words share the citation
+        // noun but differ in full text ("Bank" vs "die Bank"): the first in the
+        // list wins. The list order is deterministic per load, and the design
+        // accepts citation collisions.
         return savedWords.firstOrNull { normalizeCitation(stripLeadingArticle(it.text)) == wanted }
     }
 

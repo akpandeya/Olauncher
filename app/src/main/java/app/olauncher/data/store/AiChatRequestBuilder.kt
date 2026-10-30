@@ -194,8 +194,8 @@ object AiChatRequestBuilder {
 
     /**
      * The first reply's subject and the text to render. [subject] is `word` or
-     * `rule` (design §Threads); `topic` never comes from a parse — it is the
-     * fallback value when the line is malformed or missing, and then
+     * `rule` (design §Threads); `topic` never comes from a parse, and `rule` is
+     * the fallback value when the line is malformed or missing — then
      * [renderText] is the reply unchanged (it still renders normally).
      */
     data class FirstReply(
@@ -243,9 +243,11 @@ object AiChatRequestBuilder {
 
     /**
      * The projected input-token cost of the NEXT request for [thread]: the prompt
-     * [build] would assemble for [newQuestion], estimated block by block (the
-     * per-block ceiling makes the sum a slight over-estimate — the conservative
-     * direction for a compaction decision). [omitTurnsUpTo] matches [build].
+     * [build] would assemble for [newQuestion], estimated block by block. The
+     * projection skips the literal newlines [build] appends between blocks, so it
+     * can land ~1 token below the built prompt — close enough for a compaction
+     * decision, which only compares the estimate against the trigger and target.
+     * [omitTurnsUpTo] matches [build].
      */
     fun projectedRequestTokens(
         thread: AiChatThread,

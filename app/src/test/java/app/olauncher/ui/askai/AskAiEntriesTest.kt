@@ -146,4 +146,12 @@ class AskAiEntriesTest {
         assertFalse(AskAiEntries.sheetTitleShowsCount(1))
         assertTrue(AskAiEntries.sheetTitleShowsCount(2))
     }
+
+    @Test
+    fun `the older-threads hint shows only with two or more threads`() {
+        assertFalse(AskAiEntries.showOlderThreadsHint(0))
+        assertFalse(AskAiEntries.showOlderThreadsHint(1))
+        assertTrue(AskAiEntries.showOlderThreadsHint(2))
+        assertTrue(AskAiEntries.showOlderThreadsHint(5))
+    }
 }

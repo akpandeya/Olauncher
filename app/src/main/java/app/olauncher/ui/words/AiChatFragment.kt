@@ -15,12 +15,14 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
+import androidx.core.widget.TextViewCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import app.olauncher.R
 import app.olauncher.data.Prefs
+import app.olauncher.data.store.AiChatCodec
 import app.olauncher.data.store.AiChatEngine
 import app.olauncher.data.store.AiChatGrounding
 import app.olauncher.data.store.AiChatGroundingPayload
@@ -29,7 +31,6 @@ import app.olauncher.data.store.AiChatOpen
 import app.olauncher.data.store.AiChatState
 import app.olauncher.data.store.AiChatStore
 import app.olauncher.data.store.AiChatSubject
-import app.olauncher.data.store.AiChatCodec
 import app.olauncher.data.store.AiProvider
 import app.olauncher.data.store.AiProviderConfig
 import app.olauncher.data.store.AiProviders
@@ -84,7 +85,11 @@ class AiChatFragment : BaseFragment() {
 
     /** Null until computed; the default is fresh thread or resume with new miss → open. */
     private var groundingExpanded: Boolean? = null
-    private var markerExpanded = false
+
+    // Expanded state is per marker: the summarised and the omitted marker each
+    // toggle independently (they can both exist at different indexes).
+    private var summaryMarkerExpanded = false
+    private var omittedMarkerExpanded = false
     private var announcedTurns = false
     private var lastRenderedRowCount = -1
 
@@ -215,10 +220,15 @@ class AiChatFragment : BaseFragment() {
         refreshSendEnabled(state.pendingQuestion != null)
 
         if (!announcedTurns) {
-            announcedTurns = true
-            binding.messagesScroll.announceForAccessibility(
-                getString(R.string.chat_a11y_announce, AiChatUiLogic.deliveredTurns(state))
-            )
+            val turns = AiChatUiLogic.deliveredTurns(state)
+            // A fresh empty chat has nothing to announce yet; the first delivered
+            // turn is announced when it lands.
+            if (turns > 0) {
+                announcedTurns = true
+                binding.messagesScroll.announceForAccessibility(
+                    resources.getQuantityString(R.plurals.chat_a11y_announce, turns, turns)
+                )
+            }
         }
     }
 
@@ -265,6 +275,14 @@ class AiChatFragment : BaseFragment() {
 
     /** Fresh thread or a resume carrying a new miss → open; otherwise collapsed. */
     private fun defaultGroundingExpanded(resumedWithoutNewMiss: Boolean): Boolean = !resumedWithoutNewMiss
+
+    /** The expanded state of the marker kind ([summarised] or omitted) being rendered. */
+    private fun markerExpanded(summarised: Boolean): Boolean =
+        if (summarised) summaryMarkerExpanded else omittedMarkerExpanded
+
+    private fun setMarkerExpanded(summarised: Boolean, value: Boolean) {
+        if (summarised) summaryMarkerExpanded = value else omittedMarkerExpanded = value
+    }
 
     private fun renderGroundingBody(groundings: List<AiChatGrounding>) {
         val context = binding.root.context
@@ -362,7 +380,7 @@ class AiChatFragment : BaseFragment() {
                     item.tvMarker.text = getString(
                         if (row.summarised) R.string.chat_marker_summarised else R.string.chat_marker_omitted
                     )
-                    item.markerBody.isVisible = markerExpanded
+                    item.markerBody.isVisible = markerExpanded(row.summarised)
                     // The "What the AI was given" heading only fits a summary;
                     // the omitted-variant's turns were not sent to the AI.
                     item.tvSummaryHeading.isVisible = row.summaryText != null
@@ -379,8 +397,8 @@ class AiChatFragment : BaseFragment() {
                     }
                     item.tvMarker.setOnClickListener {
                         Haptics.tick(item.tvMarker)
-                        markerExpanded = !markerExpanded
-                        item.markerBody.isVisible = markerExpanded
+                        setMarkerExpanded(row.summarised, !markerExpanded(row.summarised))
+                        item.markerBody.isVisible = markerExpanded(row.summarised)
                     }
                     binding.messagesList.addView(item.root)
                 }
@@ -415,7 +433,13 @@ class AiChatFragment : BaseFragment() {
         } else {
             getString(R.string.chat_usage_tokens, tokens)
         }
-        binding.tvUsage.text = getString(R.string.chat_usage_line, tokenText, AiChatUiLogic.deliveredTurns(state))
+        val turns = AiChatUiLogic.deliveredTurns(state)
+        binding.tvUsage.text = getString(
+            R.string.chat_usage_line,
+            tokenText,
+            resources.getQuantityString(R.plurals.chat_turns, turns, turns),
+            getString(R.string.chat_usage_hint),
+        )
     }
 
     private fun showUsageDetail() {
@@ -449,7 +473,7 @@ class AiChatFragment : BaseFragment() {
 
     private fun chipView(context: Context, text: String): TextView {
         val chip = TextView(context)
-        chip.setTextAppearance(R.style.TodayChip_Small)
+        TextViewCompat.setTextAppearance(chip, R.style.TodayChip_Small)
         chip.text = text
         chip.background = supportDrawable(context, R.drawable.today_chip)
         chip.setPadding(dp(12), dp(6), dp(12), dp(6))
@@ -459,7 +483,7 @@ class AiChatFragment : BaseFragment() {
 
     private fun bodyView(context: Context, text: String, muted: Boolean, danger: Boolean = false): TextView {
         val body = TextView(context)
-        body.setTextAppearance(if (muted) R.style.TodayCardBodyLight else R.style.TodayCardBody)
+        TextViewCompat.setTextAppearance(body, if (muted) R.style.TodayCardBodyLight else R.style.TodayCardBody)
         body.text = text
         body.setLineSpacing(1f, 1.15f)
         if (danger) body.setTextColor(ContextCompat.getColor(context, dangerColorRes(context)))

@@ -1062,25 +1062,32 @@
     <string name="chat_marker_summary_heading">What the AI was given</string>
     <string name="chat_original_asked">You said: %1$s</string>
     <string name="chat_original_replied">AI replied: %1$s</string>
-    <string name="chat_usage_line">≈ %1$s · %2$d turns</string>
+    <string name="chat_usage_line">≈ %1$s · %2$s · %3$s</string>
+    <plurals name="chat_turns">
+        <item quantity="one">%1$d turn</item>
+        <item quantity="other">%1$d turns</item>
+    </plurals>
+    <string name="chat_usage_hint">tap for detail</string>
     <string name="chat_usage_tokens_thousands">%1$s tokens</string>
     <string name="chat_usage_tokens">%1$d tokens</string>
     <string name="chat_usage_detail_title">Token use</string>
     <string name="chat_usage_detail">Latest request: %1$d input · %2$d output tokens</string>
-    <string name="chat_a11y_announce">Chat, %1$d turns</string>
+    <plurals name="chat_a11y_announce">
+        <item quantity="one">Chat, %1$d turn</item>
+        <item quantity="other">Chat, %1$d turns</item>
+    </plurals>
 
     <!-- Ask-AI entry points (#699, docs/design/ask-ai-chat.md §Entry points):
          one shape per surface — a chip reads "Ask AI" or "Chat · n", a full-width
          row reads "Ask AI about this word" and appends "n turns". -->
     <string name="ask_ai_chip">Ask AI</string>
     <string name="ask_ai_chip_turns">Chat · %1$d</string>
-    <string name="ask_ai_chip_a11y">Chat, %1$d turns</string>
     <string name="ask_ai_word_row">Ask AI about this word</string>
     <string name="ask_ai_word_row_turns">%1$s · %2$d turns</string>
+    <string name="ask_ai_word_row_older_hint">Long-press for older threads (%1$d)</string>
     <string name="ask_ai_sheet_title_count">%1$s · %2$d conversations</string>
     <string name="ask_ai_sheet_empty">No conversations yet</string>
-    <string name="ask_ai_sheet_new">New conversation</string>
+    <string name="ask_ai_sheet_new">＋ New conversation</string>
     <string name="ask_ai_sheet_row_meta">%1$d turns · %2$s</string>
     <string name="ask_ai_sheet_today">today</string>
-    <string name="ask_ai_row_a11y">Chat, %1$d turns</string>
 </resources>

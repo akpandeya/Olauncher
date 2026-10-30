@@ -40,15 +40,19 @@ object AskAiEntryPoints {
         /** False hides every entry, never greys one. */
         val visible: Boolean,
         private val turnsBySubject: Map<AiChatSubject, Int>,
+        private val threadCountsBySubject: Map<AiChatSubject, Int>,
         /** The subjects that already have a thread (the router's existingSubjects). */
         val subjects: Set<AiChatSubject>,
     ) {
         /** The subject's latest-thread delivered turns; 0 when none (fresh "Ask AI"). */
         fun turns(subject: AiChatSubject): Int = turnsBySubject[subject] ?: 0
 
+        /** The subject's thread count (the thread sheet's list length); 0 when none. */
+        fun threadCount(subject: AiChatSubject): Int = threadCountsBySubject[subject] ?: 0
+
         companion object {
             /** The hidden environment: everything invisible, no store read at all. */
-            fun hidden() = Environment(false, emptyMap(), emptySet())
+            fun hidden() = Environment(false, emptyMap(), emptyMap(), emptySet())
 
             /** Loads the visible environment: the store's threads, counted per subject. */
             fun visible(context: Context): Environment {
@@ -58,7 +62,8 @@ object AskAiEntryPoints {
                     // points); older threads are reachable from the thread sheet.
                     AiChatThreads.deliveredTurns(threads.maxByOrNull { it.updatedAt } ?: return@mapValues 0)
                 }
-                return Environment(true, turns, bySubject.keys)
+                val counts = bySubject.mapValues { (_, threads) -> threads.size }
+                return Environment(true, turns, counts, bySubject.keys)
             }
         }
     }
@@ -181,15 +186,19 @@ object AskAiEntryPoints {
     }
 
     /** The chip's label: "Ask AI" with no delivered turns, "Chat · n" with n. */
-    fun chipText(context: Context, turns: Int): String = when (val chip = AskAiEntries.chip(turns)) {
-        is AskAiEntries.Chip.Fresh -> context.getString(R.string.ask_ai_chip)
-        is AskAiEntries.Chip.Resumed -> context.getString(R.string.ask_ai_chip_turns, chip.turns)
+    fun chipText(context: Context, turns: Int): String {
+        val chip = AskAiEntries.chip(turns)
+        return context.getString(AskAiEntries.chipLabelRes(chip), AskAiEntries.chipTurns(chip))
     }
 
     /** The chip's announcement ("Chat, 4 turns"), design §Accessibility. */
     fun chipAnnouncement(context: Context, turns: Int): String = when (val chip = AskAiEntries.chip(turns)) {
-        is AskAiEntries.Chip.Fresh -> context.getString(R.string.ask_ai_chip)
-        is AskAiEntries.Chip.Resumed -> context.getString(R.string.ask_ai_chip_a11y, chip.turns)
+        is AskAiEntries.Chip.Fresh -> context.getString(AskAiEntries.chipLabelRes(chip))
+        is AskAiEntries.Chip.Resumed -> context.resources.getQuantityString(
+            R.plurals.chat_a11y_announce,
+            AskAiEntries.chipTurns(chip),
+            AskAiEntries.chipTurns(chip),
+        )
     }
 
     /**
