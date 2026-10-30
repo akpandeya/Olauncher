@@ -76,10 +76,6 @@ object AiChatUiLogic {
         val thread = state.thread ?: return pendingOnlyRows(state)
         val summary = thread.summaries.lastOrNull()
         val rows = mutableListOf<Row>()
-        val failedIndexes = thread.messages
-            .withIndex()
-            .filter { it.value.role == AiChatMessage.Role.USER && it.value.failed }
-            .map { it.index }
         for (i in thread.messages.indices) {
             val message = thread.messages[i]
             when {
@@ -88,9 +84,11 @@ object AiChatUiLogic {
                     rows.add(
                         Row.ErrorLine(
                             kind = message.errorKind,
-                            // Only the newest failed turn retries (design §Reliability);
-                            // an older one converts to Ask again.
-                            retryable = i == failedIndexes.last(),
+                            // A failed turn retries in place only while it is the
+                            // newest message; once newer turns were delivered the
+                            // engine can no longer retry it in place, so it
+                            // converts to Ask again (design §Reliability).
+                            retryable = i == thread.messages.lastIndex,
                             question = message.text,
                         )
                     )

@@ -93,6 +93,21 @@ class AiChatUiLogicTest {
     }
 
     @Test
+    fun `a failed turn with a newer delivered turn converts to Ask again`() {
+        val thread = AiChatThread(
+            "t", ruleSubject, 1, 2,
+            messages = listOf(
+                user("Q1", 1, failed = true, kind = AiResult.ErrorKind.NETWORK),
+                ai("A1", 2),
+            ),
+        )
+        val rows = AiChatUiLogic.rows(state(thread))
+        // The failed turn is no longer the newest message, so it cannot retry
+        // in place; it asks again with a new quoted turn (design §Reliability).
+        assertEquals(false, (rows[1] as AiChatUiLogic.Row.ErrorLine).retryable)
+    }
+
+    @Test
     fun `thinking and the storage-failure line sit at the end while waiting`() {
         val thread = AiChatThread("t", ruleSubject, 1, 2, messages = listOf(user("Q1", 1)))
         val rows = AiChatUiLogic.rows(

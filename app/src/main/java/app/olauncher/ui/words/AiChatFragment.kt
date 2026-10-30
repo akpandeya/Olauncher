@@ -137,10 +137,12 @@ class AiChatFragment : BaseFragment() {
             // in-flight reply and mark a resumed session's running turn failed
             // (design §Reliability: "Request scope is viewModelScope: rotation
             // cancels nothing").
-            if (threadId != null) {
-                created.open(AiChatOpen.Resumed(threadId))
-            } else {
-                created.open(AiChatOpen.Fresh(subject, openGroundings, provisionalProposal))
+            if (!created.opened) {
+                if (threadId != null) {
+                    created.open(AiChatOpen.Resumed(threadId))
+                } else {
+                    created.open(AiChatOpen.Fresh(subject, openGroundings, provisionalProposal))
+                }
             }
             openingSubject = subject.takeIf { threadId == null }
             viewModel = created
@@ -169,12 +171,6 @@ class AiChatFragment : BaseFragment() {
             applyGrounding()
         }
         binding.tvUsage.setOnClickListener { showUsageDetail() }
-
-        if (threadId != null) {
-            vm.open(AiChatOpen.Resumed(threadId))
-        } else {
-            vm.open(AiChatOpen.Fresh(subject, openGroundings, provisionalProposal))
-        }
 
         viewLifecycleOwner.lifecycleScope.launch {
             vm.state.collect { state -> render(state, threadId != null) }
@@ -367,6 +363,9 @@ class AiChatFragment : BaseFragment() {
                         if (row.summarised) R.string.chat_marker_summarised else R.string.chat_marker_omitted
                     )
                     item.markerBody.isVisible = markerExpanded
+                    // The "What the AI was given" heading only fits a summary;
+                    // the omitted-variant's turns were not sent to the AI.
+                    item.tvSummaryHeading.isVisible = row.summaryText != null
                     item.tvSummaryText.isVisible = row.summaryText != null
                     item.tvSummaryText.text = row.summaryText.orEmpty()
                     item.originalsList.removeAllViews()

@@ -41,8 +41,18 @@ class AiChatViewModel(private val engine: AiChatEngine) : ViewModel() {
      */
     val restoredDrafts: SharedFlow<String> = _restoredDrafts.asSharedFlow()
 
+    /**
+     * Whether [open] has already run for this session. The ViewModel outlives the
+     * fragment across rotation, so a re-created screen must not open again — a
+     * second engine.open() bumps the generation and would discard an in-flight
+     * reply or wipe a resumed transcript (design §Reliability).
+     */
+    var opened = false
+        private set
+
     /** Opens a fresh chat for [open]'s subject, or resumes a stored thread. */
     fun open(open: AiChatOpen) {
+        opened = true
         engine.open(open)
     }
 
