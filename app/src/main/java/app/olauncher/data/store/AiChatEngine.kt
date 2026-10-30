@@ -109,7 +109,9 @@ sealed class AiChatCancel {
  *   FROM THE STORED ORIGINALS (never summary-of-summary) until the projection is
  *   ≤ 7k. A compaction failure is not a user-facing error: the oldest prose
  *   leaves the request and "Earlier turns omitted" marks the gap — the send is
- *   never blocked by compaction either way.
+ *   never blocked by compaction either way. A summarise result is applied only
+ *   while the session still shows the thread it was computed for, and it never
+ *   clears a send that fired meanwhile.
  * - **Counts never regress**: nothing here removes a delivered turn; a summary
  *   replaces its turns in the request only.
  *
@@ -376,11 +378,17 @@ class AiChatEngine(
                     )
                     val summaryText = (result as? AiResult.Ok)?.text?.trim().orEmpty()
                     if (summaryText.isEmpty()) {
-                        applyTruncationFallback()
+                        applyTruncationFallback(plan.thread.id)
                         return
                     }
                     synchronized(lock) {
                         val current = stateFlow.value.thread ?: return
+                        // The plan was computed for [plan.thread]: if the session
+                        // switched threads while the summarise call was in flight
+                        // (up to the read timeout), applying it would splice
+                        // thread A's summary and coverage indexes onto thread B —
+                        // bail instead, the next answer re-plans compaction.
+                        if (current.id != plan.thread.id) return
                         val summary = AiChatSummary(text = summaryText, coversUpTo = plan.coversUpTo, createdAt = time())
                         val merged = current.copy(summaries = current.summaries + summary)
                         // A write failure keeps the summary in memory (a send is
@@ -390,14 +398,17 @@ class AiChatEngine(
                         // turns omitted" marker with the summary's own marker.
                         publish(
                             thread = merged,
-                            pendingQuestion = null,
+                            // A send may have fired while the summarise ran (a
+                            // send is never blocked by compaction): keep its
+                            // waiting state instead of clearing it.
+                            pendingQuestion = stateFlow.value.pendingQuestion,
                             omittedUpTo = null,
                             lastUsage = stateFlow.value.lastUsage,
                         )
                     }
                     passes++
                     if (passes >= MAX_COMPACTION_PASSES) {
-                        applyTruncationFallback()
+                        applyTruncationFallback(plan.thread.id)
                         return
                     }
                 }
@@ -409,10 +420,16 @@ class AiChatEngine(
         }
     }
 
-    /** Compaction could not run: the oldest prose leaves the request ("Earlier turns omitted"). */
-    private fun applyTruncationFallback() {
+    /**
+     * Compaction could not run: the oldest prose leaves the request ("Earlier
+     * turns omitted"). [expectedThreadId], when given, is the thread the failed
+     * summarise plan was computed for — if the session has since moved to
+     * another thread, the omission must not mark the new thread's prose.
+     */
+    private fun applyTruncationFallback(expectedThreadId: String? = null) {
         synchronized(lock) {
             val thread = stateFlow.value.thread ?: return
+            if (expectedThreadId != null && thread.id != expectedThreadId) return
             val omit = AiChatRequestBuilder.truncationOmitUpTo(thread) ?: return
             publish(
                 thread = thread,

@@ -66,11 +66,22 @@ class AiChatEngineTest {
         var onRequest: (AiRequest) -> Unit = {}
         var gate: CompletableDeferred<Unit>? = null
 
+        /**
+         * Hold for summarise requests only (falls back to [gate]), so a test can
+         * keep compaction in flight while chat requests proceed or the session
+         * switches threads.
+         */
+        var summariseGate: CompletableDeferred<Unit>? = null
+
         override suspend fun complete(request: AiRequest): AiResult {
             requests.add(request)
             if (!request.prompt.startsWith(AiChatRequestBuilder.SUMMARISE_INSTRUCTIONS)) chatRequests++
             onRequest(request)
-            gate?.await()
+            if (request.prompt.startsWith(AiChatRequestBuilder.SUMMARISE_INSTRUCTIONS)) {
+                (summariseGate ?: gate)?.await()
+            } else {
+                gate?.await()
+            }
             return script?.invoke(this, request) ?: error("unscripted request")
         }
 
@@ -485,6 +496,93 @@ class AiChatEngineTest {
         assertEquals(7, thread.summaries.last().coversUpTo)
         assertEquals(5, AiChatThreads.deliveredTurns(thread))
     }
+
+    @Test
+    fun `a summary of thread A is never applied after the session switched to thread B`() =
+        runBlocking {
+            val store = FakeStore()
+            val provider = FakeProvider()
+            provider.replyPadding = bigReplyPadding
+            val chat = engine(store, provider)
+            chat.open(AiChatOpen.Fresh(subject))
+            provider.script = { p, request ->
+                if (isSummarise(request)) okReply("Zusammenfassung von A") else p.reply()
+            }
+            for (i in 1..3) chat.send(bigQuestion(i))
+
+            // Hold the summarise call while the session switches to another thread.
+            val summariseHeld = CompletableDeferred<Unit>()
+            provider.onRequest = { request -> if (isSummarise(request)) summariseHeld.complete(Unit) }
+            provider.summariseGate = CompletableDeferred()
+            val job = launch { chat.send(bigQuestion(4)) }
+            summariseHeld.await()
+
+            val otherId = "other-thread"
+            store.threads[otherId] = AiChatThread(
+                id = otherId,
+                subject = subject,
+                createdAt = now,
+                updatedAt = now,
+                messages = listOf(AiChatMessage(role = AiChatMessage.Role.USER, text = "Andere Frage", ts = now)),
+            )
+            chat.open(AiChatOpen.Resumed(otherId))
+            provider.summariseGate!!.complete(Unit)
+            job.join()
+
+            // Thread B is untouched: no summary of A's turns was spliced onto it,
+            // and its early turns stay in every future request.
+            val resumed = chat.state.value.thread!!
+            assertEquals(otherId, resumed.id)
+            assertTrue(resumed.summaries.isEmpty())
+            assertNull(chat.state.value.omittedUpTo)
+            assertTrue(store.threads[otherId]!!.summaries.isEmpty())
+            // Thread A's summary was dropped as well — a coverage index into A
+            // must not outlive the session that computed it.
+            val original = store.threads.values.single { it.id != otherId }
+            assertTrue(original.summaries.isEmpty())
+        }
+
+    @Test
+    fun `a send in flight during compaction keeps its waiting state when the summary lands`() =
+        runBlocking {
+            val store = FakeStore()
+            val provider = FakeProvider()
+            provider.replyPadding = bigReplyPadding
+            val chat = engine(store, provider)
+            chat.open(AiChatOpen.Fresh(subject))
+            provider.script = { p, request ->
+                if (isSummarise(request)) okReply("Kompakt: alles geklaert") else p.reply()
+            }
+            for (i in 1..3) chat.send(bigQuestion(i))
+
+            val summariseHeld = CompletableDeferred<Unit>()
+            provider.onRequest = { request -> if (isSummarise(request)) summariseHeld.complete(Unit) }
+            provider.summariseGate = CompletableDeferred()
+            val compactionJob = launch { chat.send(bigQuestion(4)) }
+            summariseHeld.await()
+
+            // A send is never blocked by compaction: it fires while the
+            // summarise call is still in flight.
+            provider.gate = CompletableDeferred()
+            val sendJob = launch { chat.send("Neue Frage") }
+
+            // The summary lands while the send waits: the send's waiting state
+            // survives (Send must not re-enable mid-flight).
+            provider.summariseGate!!.complete(Unit)
+            compactionJob.join()
+            assertEquals("Neue Frage", chat.state.value.pendingQuestion)
+            assertEquals(1, chat.state.value.thread!!.summaries.size)
+            // The new turn was persisted before its request; the summary's
+            // coverage index still points into the unchanged prefix.
+            assertEquals(9, chat.state.value.thread!!.messages.size)
+            assertEquals(9, store.threads.values.single().messages.size)
+
+            // Then the send's own reply applies normally.
+            provider.gate!!.complete(Unit)
+            sendJob.join()
+            assertNull(chat.state.value.pendingQuestion)
+            assertEquals(10, chat.state.value.thread!!.messages.size)
+        }
 
     // --- resumed session ------------------------------------------------------------------------
 

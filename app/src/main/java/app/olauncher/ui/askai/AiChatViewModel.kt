@@ -2,12 +2,17 @@ package app.olauncher.ui.askai
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.olauncher.data.store.AiChatCancel
 import app.olauncher.data.store.AiChatEngine
 import app.olauncher.data.store.AiChatGrounding
 import app.olauncher.data.store.AiChatOpen
 import app.olauncher.data.store.AiChatState
 import app.olauncher.data.store.AiChatThreads
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 /**
@@ -23,6 +28,18 @@ class AiChatViewModel(private val engine: AiChatEngine) : ViewModel() {
 
     /** The engine's session state; collected by the chat screen. */
     val state: StateFlow<AiChatState> = engine.state
+
+    private val _restoredDrafts = MutableSharedFlow<String>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
+
+    /**
+     * Drafts restored by Cancel (design §Chat screen: "Cancel … restores the
+     * draft"): the screen collects these and puts each text back into the
+     * composer. Nothing is emitted when nothing was in flight.
+     */
+    val restoredDrafts: SharedFlow<String> = _restoredDrafts.asSharedFlow()
 
     /** Opens a fresh chat for [open]'s subject, or resumes a stored thread. */
     fun open(open: AiChatOpen) {
@@ -44,10 +61,17 @@ class AiChatViewModel(private val engine: AiChatEngine) : ViewModel() {
         }
     }
 
-    /** Cancels the in-flight request: stored turn deleted, draft restored. */
+    /**
+     * Cancels the in-flight request: stored turn deleted, draft restored. The
+     * restored draft is published on [restoredDrafts] — cancel runs off the
+     * caller's hands, so the outcome cannot be a return value.
+     */
     fun cancel() {
         viewModelScope.launch {
-            engine.cancel()
+            val outcome = engine.cancel()
+            if (outcome is AiChatCancel.Cancelled) {
+                _restoredDrafts.tryEmit(outcome.restoredDraft)
+            }
         }
     }
 
