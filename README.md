@@ -89,6 +89,14 @@ Backup (Settings, Backup):
 - Nightly backup saves a backup every night to a folder you pick. It keeps the last 7.
 - Not included: photo wallpapers, weather and rate caches, and held notifications.
 
+## Testing
+
+`./gradlew testDebugUnitTest` runs about 3,000 JVM tests and should finish in well under 3 minutes. Rules for anyone adding tests, human or tool:
+
+- Tests must not call a real AI provider or any network service, and must not read API keys from the environment. Use fakes (see `OpenAiCompatibleProviderTest` for a fake `HttpURLConnection`).
+- Do not add live or paid benchmarks to `app/src/test`. A run with an API key in your shell would otherwise bill you and stall the suite (this once took over an hour).
+- If a test run is slow, find the slow class in `app/build/test-results/testDebugUnitTest/` before changing anything else.
+
 ## Build from source
 
 Build the release APK the same way the release pipeline does:

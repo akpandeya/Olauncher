@@ -355,6 +355,85 @@ class AiChatCodecTest {
         assertNull((thread.groundings.single().payload as AiChatGroundingPayload.Miss).ruleId)
     }
 
+    // --- strict numbers and strict usage ----------------------------------------
+
+    @Test
+    fun `a numeric string for ts is corrupt instead of coerced`() {
+        // getLong would coerce "123" to 123; the codec must refuse it.
+        assertCorrupt(
+            """{"threads":[{"id":"t1","subject":{"kind":"word","ref":"haus"},"createdAt":1,
+                "messages":[{"role":"user","text":"hi","ts":"123"}]}]}""",
+            "ts"
+        )
+    }
+
+    @Test
+    fun `numeric strings for the other numeric fields are corrupt`() {
+        val base = """{"id":"t1","subject":{"kind":"word","ref":"haus"},"createdAt":1"""
+        // coversUpTo as a string
+        assertCorrupt(
+            """{"threads":[$base,"messages":[{"role":"user","text":"hi","ts":1}],
+                "summaries":[{"text":"s","coversUpTo":"1","createdAt":2}]}]}""",
+            "coversUpTo"
+        )
+        // wordId as a string
+        assertCorrupt(
+            """{"threads":[$base,"groundings":[{"id":"g1","kind":"practice","payload":
+                {"prompt":"p","answer":"a","wordId":"4242"}}]}]}""",
+            "wordId"
+        )
+        // inputTokens as a string
+        assertCorrupt(
+            """{"threads":[$base,"messages":[{"role":"assistant","text":"hi","ts":1,
+                "usage":{"inputTokens":"12","outputTokens":3}}]}]}""",
+            "inputTokens"
+        )
+    }
+
+    @Test
+    fun `usage that is present but not an object is corrupt`() {
+        assertCorrupt(
+            """{"threads":[{"id":"t1","subject":{"kind":"word","ref":"haus"},"createdAt":1,
+                "messages":[{"role":"assistant","text":"hi","ts":1,"usage":"12/3 tokens"}]}]}""",
+            "usage"
+        )
+        assertCorrupt(
+            """{"threads":[{"id":"t1","subject":{"kind":"word","ref":"haus"},"createdAt":1,
+                "messages":[{"role":"assistant","text":"hi","ts":1,"usage":[1,2]}]}]}""",
+            "usage"
+        )
+    }
+
+    @Test
+    fun `absent and null usage still decode to null`() {
+        val raw = """{"threads":[{"id":"t1","subject":{"kind":"word","ref":"haus"},"createdAt":1,
+            "messages":[{"role":"assistant","text":"hi","ts":1},
+                        {"role":"assistant","text":"ho","ts":2,"usage":null}]}]}"""
+        val decoded = AiChatCodec.decode(raw) as AiChatCodec.AiChatDecoded.Decoded
+        val messages = decoded.threads.single().messages
+        assertNull(messages[0].usage)
+        assertNull(messages[1].usage)
+    }
+
+    @Test
+    fun `real json numbers decode with their exact values`() {
+        val raw = """{"threads":[{"id":"t1","subject":{"kind":"word","ref":"haus"},
+            "createdAt":1700000000000,"updatedAt":1700000005000,
+            "messages":[{"role":"assistant","text":"hi","ts":1700000001000,
+                "usage":{"inputTokens":1234,"outputTokens":567}}],
+            "groundings":[{"id":"g1","kind":"practice","payload":{"prompt":"p","answer":"a","wordId":4242}}],
+            "summaries":[{"text":"s","coversUpTo":0,"createdAt":1700000003000}]}]}"""
+        val decoded = AiChatCodec.decode(raw) as AiChatCodec.AiChatDecoded.Decoded
+        val thread = decoded.threads.single()
+        assertEquals(1700000000000L, thread.createdAt)
+        assertEquals(1700000005000L, thread.updatedAt)
+        assertEquals(1700000001000L, thread.messages.single().ts)
+        assertEquals(AiUsage(1234, 567), thread.messages.single().usage)
+        assertEquals(4242L, (thread.groundings.single().payload as AiChatGroundingPayload.Practice).wordId)
+        assertEquals(0, thread.summaries.single().coversUpTo)
+        assertEquals(1700000003000L, thread.summaries.single().createdAt)
+    }
+
     // --- derived helpers ---
 
     @Test

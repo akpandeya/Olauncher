@@ -3,7 +3,9 @@ package app.olauncher.data.store
 // Per-item help content of the live (words-driven) drill types (#699), transcribed from
 // docs/design/drill-content/prepositions.md, case-endings.md and verb-prepositions.md:
 // which rule each built-in item carries and the miss line per wrong choice. Saved-word
-// items never match these keys, so they stay without a rule.
+// items never match these keys, so they stay without a rule. The file also carries the
+// per-item help-card examples ([ITEM_HELP_EXAMPLES]) for the items whose prompt has no
+// gap marker, so the card never shows a different item's example sentence.
 
 /** Rule id and per-wrong-choice miss lines of one prepositions item, keyed by `prep:<p>:<n>`. */
 internal data class PrepositionRuleContent(
@@ -2457,3 +2459,49 @@ internal val PLURAL_RULE_CONTENT_BY_NOUN: Map<String, PluralRuleContent> =
     PLURAL_RULE_CONTENT.flatMap { content ->
         content.nouns.map { it.lowercase() to content }
     }.toMap()
+
+// -----------------------------------------------------------------------
+// per-item examples
+// -----------------------------------------------------------------------
+
+/**
+ * Per-item help-card example sentences, keyed by the stable item key, for the items
+ * whose prompt carries no gap marker, so [DrillHelpCard.filledExample] cannot fill
+ * the prompt: the which-case prepositions and the verb + preposition case questions
+ * (the pre-answer prose of these items names no case, so the post-answer example is
+ * the only place the case shows in a sentence).
+ *
+ * The text is the item's own content (docs/design/drill-content/prepositions.md and
+ * verb-prepositions.md author the example per item): the prepositions use the
+ * fixed-case sentence of the same preposition with its article bold, and `bis` uses
+ * the authored example (bis has no article form, so the adjective carries the case);
+ * the verb pairs use the pair's own sentence with the preposition bold. The `**…**`
+ * mark renders bold + underline (DrillFragment.markedText).
+ */
+internal val ITEM_HELP_EXAMPLES: Map<String, String> = mapOf(
+    // prep-which-fixed items of prepositions.md
+    "prep:durch:0" to "Ich gehe durch **den** Park.",
+    "prep:für:0" to "Das Geschenk ist für **den** Vater.",
+    "prep:gegen:0" to "Das Auto fährt gegen **den** Baum.",
+    "prep:ohne:0" to "Wir gehen ohne **den** Hund spazieren.",
+    "prep:um:0" to "Die Kinder laufen um **den** Tisch.",
+    "prep:bis:0" to "Wir bleiben bis **nächsten** Montag.",
+    "prep:entlang:0" to "Wir spazieren **den** Fluss entlang.",
+    "prep:aus:0" to "Er kommt aus **dem** Haus.",
+    "prep:bei:0" to "Sie wohnt bei **den** Eltern.",
+    "prep:mit:0" to "Ich fahre mit **dem** Bus.",
+    "prep:nach:0" to "Nach **dem** Unterricht gehen wir essen.",
+    "prep:seit:0" to "Seit **dem** Unfall ist er vorsichtig.",
+    "prep:von:0" to "Das Paket ist von **den** Großeltern.",
+    "prep:zu:0" to "Ich gehe zu **dem** Arzt.",
+    "prep:gegenüber:0" to "Das Hotel liegt gegenüber **dem** Park.",
+    "prep:wegen:0" to "Wegen **des** Wetters bleiben wir hier.",
+    "prep:trotz:0" to "Trotz **des** Regens geht sie raus.",
+    "prep:während:0" to "Während **der** Fahrt lesen wir.",
+    "prep:statt:0" to "Statt **des** Kaffees trinkt er Tee.",
+    // verb-prepositions.md which-case items: each pair's own sentence (DrillVerbPrepositions.PAIRS),
+    // rendered with its preposition bold.
+) + DrillVerbPrepositions.PAIRS.associate { pair ->
+    "verbprep:${pair.verb}:${pair.preposition}:1" to
+        pair.sentence.replaceFirst(DrillItem.GAP_MARKER, "**${pair.preposition}**")
+}

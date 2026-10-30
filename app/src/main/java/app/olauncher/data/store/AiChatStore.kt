@@ -168,7 +168,15 @@ class AiChatStore(
         }
     }
 
-    private fun save(threads: List<AiChatThread>): AiChatWrite {
+    /**
+     * Writes the threads atomically (`.tmp` then rename with fallbacks).
+     * `internal` as a test seam (#708 follow-up): the failure path where the
+     * rename target is blocked cannot be reached through [upsert]/[delete] —
+     * [mutationBase] refuses the mutation first — so AiChatStoreTest calls
+     * this directly with a target that cannot be renamed onto and asserts the
+     * `.tmp` file is cleaned up.
+     */
+    internal fun save(threads: List<AiChatThread>): AiChatWrite {
         val tempFile = File(filesDir, "$FILE_NAME.tmp")
         return try {
             if (!filesDir.exists()) {

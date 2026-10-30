@@ -372,6 +372,8 @@ and sets the `AI_MODEL` default in the same PR.
 
 ### Benchmark results (2026-10-27)
 
+> **Harness removed (2026-10-30).** The benchmark harness named below (`AiBenchmark.kt`, `AiChatBenchmark.kt`, their logic tests and fixtures) was deleted because a live run spent real money and hung `testDebugUnitTest` for over an hour whenever an API key was in the environment. The results here stay as the record; the code is in git history (`git show a6fde895:app/src/test/java/app/olauncher/data/store/AiBenchmark.kt`).
+
 Ran for real (#600) with the harness in
 `app/src/test/java/app/olauncher/data/store/AiBenchmark.kt` — 3 runs per model
 over 20 saved words with context sentences from one real tagesschau article

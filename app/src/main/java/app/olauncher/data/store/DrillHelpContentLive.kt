@@ -11,10 +11,11 @@ package app.olauncher.data.store
  * Same leak rules as the gap topics (docs/design/drill-help-card.md §3): the
  * pre-answer prose — rule, first-exposure rule, cue and title — names no item's
  * answer. For the which-case items the case name is the answer, so none of their
- * fields names a case; the adjective-endings rules name no case for the same
- * reason. The forms tables show the whole contrast set with equal weight. All
- * adjective-endings, articles and plurals rules omit the first-exposure rule,
- * as their content files author it.
+ * fields names a case. The adjective-endings items answer with the ending (their
+ * item hints name the case too), so their titles may name the declension and case —
+ * which keeps them unique per rule. The forms tables show the whole contrast set
+ * with equal weight. All adjective-endings, articles and plurals rules omit the
+ * first-exposure rule, as their content files author it.
  */
 internal object DrillHelpContentLive {
 
@@ -211,7 +212,7 @@ internal object DrillHelpContentLive {
         // -----------------------------------------------------------------
         DrillHelpRule(
             id = "adj-weak-nom",
-            title = "The weak declension",
+            title = "The weak declension: nominative",
             rule = "The definite article already shows case and gender, so the adjective adds " +
                 "only -e or -en, never -er, -es or -em. Find the article in the table.",
             table = DrillHelpTable(
@@ -227,7 +228,7 @@ internal object DrillHelpContentLive {
         ),
         DrillHelpRule(
             id = "adj-weak-akk",
-            title = "The weak declension",
+            title = "The weak declension: accusative",
             rule = "The definite article already shows case and gender, so the adjective adds " +
                 "only -e or -en, never -er, -es or -em. Find the article in the table.",
             table = DrillHelpTable(
@@ -243,7 +244,7 @@ internal object DrillHelpContentLive {
         ),
         DrillHelpRule(
             id = "adj-weak-dat",
-            title = "The weak declension",
+            title = "The weak declension: dative",
             rule = "The definite article already shows case and gender, so the adjective adds " +
                 "only -e or -en, never -er, -es or -em. Find the article in the table.",
             table = DrillHelpTable(
@@ -259,7 +260,7 @@ internal object DrillHelpContentLive {
         ),
         DrillHelpRule(
             id = "adj-weak-gen",
-            title = "The weak declension",
+            title = "The weak declension: genitive",
             rule = "The definite article already shows case and gender, so the adjective adds " +
                 "only -e or -en, never -er, -es or -em. Find the article in the table.",
             table = DrillHelpTable(
@@ -275,7 +276,7 @@ internal object DrillHelpContentLive {
         ),
         DrillHelpRule(
             id = "adj-mixed-nom",
-            title = "The mixed declension",
+            title = "The mixed declension: nominative",
             rule = "ein, eine and keine show the case only partly. Where the article has an " +
                 "ending, the adjective adds -e or -en; where it has none, the adjective carries " +
                 "the signal.",
@@ -292,7 +293,7 @@ internal object DrillHelpContentLive {
         ),
         DrillHelpRule(
             id = "adj-mixed-akk",
-            title = "The mixed declension",
+            title = "The mixed declension: accusative",
             rule = "ein, eine and keine show the case only partly. Where the article has an " +
                 "ending, the adjective adds -e or -en; where it has none, the adjective carries " +
                 "the signal.",
@@ -309,7 +310,7 @@ internal object DrillHelpContentLive {
         ),
         DrillHelpRule(
             id = "adj-mixed-dat",
-            title = "The mixed declension",
+            title = "The mixed declension: dative",
             rule = "ein, eine and keine show the case only partly. Where the article has an " +
                 "ending, the adjective adds -e or -en; where it has none, the adjective carries " +
                 "the signal.",
@@ -326,7 +327,7 @@ internal object DrillHelpContentLive {
         ),
         DrillHelpRule(
             id = "adj-mixed-gen",
-            title = "The mixed declension",
+            title = "The mixed declension: genitive",
             rule = "ein, eine and keine show the case only partly. Where the article has an " +
                 "ending, the adjective adds -e or -en; where it has none, the adjective carries " +
                 "the signal.",
@@ -515,7 +516,7 @@ internal object DrillHelpContentLive {
         ),
         DrillHelpRule(
             id = "art-gender-suffix-exception",
-            title = "When the ending misleads",
+            title = "Endings that break the gender rule",
             rule = "Every German noun has one fixed gender, and the article must match it. " +
                 "Learn each noun together with its article.",
             table = DrillHelpTable(
@@ -555,7 +556,7 @@ internal object DrillHelpContentLive {
         // -----------------------------------------------------------------
         DrillHelpRule(
             id = "plural-e",
-            title = "One noun, one plural",
+            title = "One noun, one plural (pattern 1)",
             rule = "Each noun has one fixed plural: an ending (-e, -er, -(e)n, -s or none), " +
                 "sometimes with a vowel change (¨). Learn the plural with the noun.",
             table = DrillHelpTable(
@@ -571,7 +572,7 @@ internal object DrillHelpContentLive {
         ),
         DrillHelpRule(
             id = "plural-umlaut-e",
-            title = "One noun, one plural",
+            title = "One noun, one plural (pattern 2)",
             rule = "Each noun has one fixed plural: an ending (-e, -er, -(e)n, -s or none), " +
                 "sometimes with a vowel change (¨). Learn the plural with the noun.",
             table = DrillHelpTable(
@@ -587,7 +588,7 @@ internal object DrillHelpContentLive {
         ),
         DrillHelpRule(
             id = "plural-er",
-            title = "One noun, one plural",
+            title = "One noun, one plural (pattern 3)",
             rule = "Each noun has one fixed plural: an ending (-e, -er, -(e)n, -s or none), " +
                 "sometimes with a vowel change (¨). Learn the plural with the noun.",
             table = DrillHelpTable(
@@ -603,7 +604,7 @@ internal object DrillHelpContentLive {
         ),
         DrillHelpRule(
             id = "plural-umlaut-er",
-            title = "One noun, one plural",
+            title = "One noun, one plural (pattern 4)",
             rule = "Each noun has one fixed plural: an ending (-e, -er, -(e)n, -s or none), " +
                 "sometimes with a vowel change (¨). Learn the plural with the noun.",
             table = DrillHelpTable(
@@ -619,7 +620,7 @@ internal object DrillHelpContentLive {
         ),
         DrillHelpRule(
             id = "plural-n",
-            title = "One noun, one plural",
+            title = "One noun, one plural (pattern 5)",
             rule = "Each noun has one fixed plural: an ending (-e, -er, -(e)n, -s or none), " +
                 "sometimes with a vowel change (¨). Learn the plural with the noun.",
             table = DrillHelpTable(
@@ -635,7 +636,7 @@ internal object DrillHelpContentLive {
         ),
         DrillHelpRule(
             id = "plural-en",
-            title = "One noun, one plural",
+            title = "One noun, one plural (pattern 6)",
             rule = "Each noun has one fixed plural: an ending (-e, -er, -(e)n, -s or none), " +
                 "sometimes with a vowel change (¨). Learn the plural with the noun.",
             table = DrillHelpTable(
@@ -651,7 +652,7 @@ internal object DrillHelpContentLive {
         ),
         DrillHelpRule(
             id = "plural-s",
-            title = "One noun, one plural",
+            title = "One noun, one plural (pattern 7)",
             rule = "Each noun has one fixed plural: an ending (-e, -er, -(e)n, -s or none), " +
                 "sometimes with a vowel change (¨). Learn the plural with the noun.",
             table = DrillHelpTable(
@@ -667,7 +668,7 @@ internal object DrillHelpContentLive {
         ),
         DrillHelpRule(
             id = "plural-no-change",
-            title = "One noun, one plural",
+            title = "One noun, one plural (pattern 8)",
             rule = "Each noun has one fixed plural: an ending (-e, -er, -(e)n, -s or none), " +
                 "sometimes with a vowel change (¨). Learn the plural with the noun.",
             table = DrillHelpTable(
