@@ -169,6 +169,25 @@ class AiChatUiLogicTest {
         assertEquals(listOf(AiChatUiLogic.OriginalTurn("Q1", "A1")), marker.originals)
     }
 
+    @Test
+    fun `the omitted marker still marks the gap when a summary exists at another index`() {
+        val thread = AiChatThread(
+            "t", ruleSubject, 1, 2,
+            summaries = listOf(AiChatSummary("s", coversUpTo = 1, createdAt = 5)),
+            messages = listOf(
+                user("Q1", 1), ai("A1", 2), user("Q2", 3), ai("A2", 4), user("Q3", 5), ai("A3", 6),
+            ),
+        )
+        val rows = AiChatUiLogic.rows(state(thread, omittedUpTo = 3))
+        val markers = rows.filterIsInstance<AiChatUiLogic.Row.CompactionMarker>()
+        assertEquals(2, markers.size)
+        assertEquals(true, markers[0].summarised)
+        assertEquals(false, markers[1].summarised)
+        assertNull(markers[1].summaryText)
+        // After index 3's turn; the summary marker before it shifted the position.
+        assertEquals(5, rows.indexOf(markers[1]))
+    }
+
     // --- header -------------------------------------------------------------------------
 
     @Test
@@ -181,6 +200,33 @@ class AiChatUiLogicTest {
         assertEquals(
             AiChatUiLogic.Header.NewConversation,
             AiChatUiLogic.header(state(thread), provisional = true),
+        )
+    }
+
+    @Test
+    fun `a threadless fresh session reads the opening subject's header`() {
+        assertEquals(
+            AiChatUiLogic.Header.Rule("Two-way prepositions"),
+            AiChatUiLogic.header(
+                state(thread = null),
+                provisional = false,
+                openingSubject = ruleSubject,
+            ),
+        )
+        assertEquals(
+            AiChatUiLogic.Header.Word("die Straße"),
+            AiChatUiLogic.header(
+                state(thread = null),
+                provisional = false,
+                openingSubject = wordSubject,
+                openingGroundings = listOf(wordGrounding()),
+            ),
+        )
+        // Without an opening subject (a resume whose thread failed to load)
+        // "New conversation" still applies.
+        assertEquals(
+            AiChatUiLogic.Header.NewConversation,
+            AiChatUiLogic.header(state(thread = null), provisional = false),
         )
     }
 

@@ -70,6 +70,12 @@ class AiChatFragment : BaseFragment() {
     /** A fresh session's opening groundings, shown until the engine holds them. */
     private var openGroundings: List<AiChatGrounding> = emptyList()
 
+    /**
+     * A fresh session's opening subject, shown as the header while the thread
+     * does not exist yet (first-ever miss); null for a resume.
+     */
+    private var openingSubject: AiChatSubject? = null
+
     /** The grounding a resume carries for its next first send (a new miss). */
     private var resumeGrounding: AiChatGrounding? = null
 
@@ -108,17 +114,6 @@ class AiChatFragment : BaseFragment() {
         val argGroundings = AiChatCodec.decodeGroundingsJson(args.getString(ARG_GROUNDINGS_JSON))
         provisionalProposal = proposalFromArgs(args)
 
-        if (viewModel == null) {
-            val provider = chatProvider() ?: run {
-                // The entry gate keeps invalid config out; this is only a guard.
-                findNavController().popBackStack()
-                return
-            }
-            val engine = AiChatEngine(AiChatStore(requireContext().applicationContext), provider)
-            viewModel = ViewModelProvider(this, chatFactory(engine))[AiChatViewModel::class.java]
-        }
-        val vm = viewModel ?: return
-
         if (threadId != null) {
             // A resume keeps the store's transcript; a carried grounding joins the
             // NEXT send (design §Chat screen: expanded on "a resume carrying a new
@@ -128,6 +123,29 @@ class AiChatFragment : BaseFragment() {
         } else {
             openGroundings = argGroundings
         }
+
+        if (viewModel == null) {
+            val provider = chatProvider() ?: run {
+                // The entry gate keeps invalid config out; this is only a guard.
+                findNavController().popBackStack()
+                return
+            }
+            val engine = AiChatEngine(AiChatStore(requireContext().applicationContext), provider)
+            val created = ViewModelProvider(this, chatFactory(engine))[AiChatViewModel::class.java]
+            // Open once per ViewModel: the ViewModel survives view recreation, and
+            // a second engine.open() bumps the generation — it would discard an
+            // in-flight reply and mark a resumed session's running turn failed
+            // (design §Reliability: "Request scope is viewModelScope: rotation
+            // cancels nothing").
+            if (threadId != null) {
+                created.open(AiChatOpen.Resumed(threadId))
+            } else {
+                created.open(AiChatOpen.Fresh(subject, openGroundings, provisionalProposal))
+            }
+            openingSubject = subject.takeIf { threadId == null }
+            viewModel = created
+        }
+        val vm = viewModel ?: return
 
         binding.btnClose.setOnClickListener { findNavController().popBackStack() }
         binding.btnSend.setOnClickListener { sendDraft() }
@@ -209,7 +227,14 @@ class AiChatFragment : BaseFragment() {
     }
 
     private fun renderHeader(state: AiChatState, provisional: Boolean) {
-        binding.tvSubject.text = when (val header = AiChatUiLogic.header(state, provisional)) {
+        binding.tvSubject.text = when (
+            val header = AiChatUiLogic.header(
+                state,
+                provisional,
+                openingSubject = openingSubject,
+                openingGroundings = openGroundings,
+            )
+        ) {
             is AiChatUiLogic.Header.NewConversation -> getString(R.string.chat_new_conversation)
             is AiChatUiLogic.Header.Word -> header.text
             is AiChatUiLogic.Header.Rule -> header.title

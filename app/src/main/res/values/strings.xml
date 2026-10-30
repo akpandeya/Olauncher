@@ -1063,7 +1063,7 @@
     <string name="chat_original_asked">You said: %1$s</string>
     <string name="chat_original_replied">AI replied: %1$s</string>
     <string name="chat_usage_line">≈ %1$s · %2$d turns</string>
-    <string name="chat_usage_tokens_thousands">%1$sk tokens</string>
+    <string name="chat_usage_tokens_thousands">%1$s tokens</string>
     <string name="chat_usage_tokens">%1$d tokens</string>
     <string name="chat_usage_detail_title">Token use</string>
     <string name="chat_usage_detail">Latest request: %1$d input · %2$d output tokens</string>

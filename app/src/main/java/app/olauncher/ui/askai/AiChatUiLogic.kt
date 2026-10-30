@@ -100,8 +100,8 @@ object AiChatUiLogic {
             }
             // The marker sits where its turns were: after the last message the
             // active summary covers, or after the truncation fallback's omission
-            // boundary. A later successful compaction replaces the omission, so
-            // the summary marker wins when both could apply.
+            // boundary. The two sit at different indexes; when a later compaction
+            // made them coincide, the summary marker wins.
             when {
                 summary != null && i == summary.coversUpTo ->
                     rows.add(
@@ -111,7 +111,7 @@ object AiChatUiLogic {
                             originals = originalTurns(thread, summary.coversUpTo),
                         )
                     )
-                summary == null && state.omittedUpTo != null && i == state.omittedUpTo ->
+                state.omittedUpTo != null && i == state.omittedUpTo ->
                     rows.add(
                         Row.CompactionMarker(
                             summarised = false,
@@ -174,12 +174,23 @@ object AiChatUiLogic {
 
     /**
      * The header for [state]'s open session. [provisional] is the screen's
-     * both-candidates state: true until the first reply files the thread.
+     * both-candidates state: true until the first reply files the thread. While
+     * a fresh single-subject chat has no thread yet (§Chat screen: thread
+     * existence starts at first send), [openingSubject] and
+     * [openingGroundings] — the screen's open arguments — render the opening
+     * subject's header instead of "New conversation", which is reserved for
+     * provisional both-candidates threads.
      */
-    fun header(state: AiChatState, provisional: Boolean): Header {
+    fun header(
+        state: AiChatState,
+        provisional: Boolean,
+        openingSubject: AiChatSubject? = null,
+        openingGroundings: List<app.olauncher.data.store.AiChatGrounding> = emptyList(),
+    ): Header {
         if (provisional) return Header.NewConversation
-        val subject = state.thread?.subject ?: return Header.NewConversation
-        return header(subject, state.thread.groundings)
+        val thread = state.thread
+        if (thread != null) return header(thread.subject, thread.groundings)
+        return openingSubject?.let { header(it, openingGroundings) } ?: Header.NewConversation
     }
 
     private fun header(subject: AiChatSubject, groundings: List<app.olauncher.data.store.AiChatGrounding>): Header =
