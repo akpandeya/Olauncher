@@ -13,7 +13,79 @@ package app.olauncher.data.store
 internal data class PrepositionRuleContent(
     val ruleId: String,
     val missByChoice: Map<String, String>,
+    /**
+     * The item's case and the sentence noun's gender, transcribed from
+     * docs/design/drill-content/prepositions.md. They fix the item's answer cell in
+     * the rule's forms table ([helpCell]), so the card highlights the item's own
+     * column instead of every cell whose text equals the answer. Null for the
+     * which-case items: their answer is the case's name, not a table form.
+     */
+    val case: ArticleForms.Case? = null,
+    val gender: ArticleForms.Gender? = null,
 )
+
+/**
+ * The item's answer cell in its rule's forms table, from the item's case and the
+ * noun's gender and the rule's table layout. Three layouts exist in the help content:
+ *
+ * - the `case-*` rules put the cases in the columns ("Wer? → Nom") and the genders in
+ *   the rows ("m · n", where masculine and neuter share one row);
+ * - the shared `prep-fixed-*` rules put the cases in the rows (Akk, Dat, Gen) and the
+ *   genders in the columns (m, f, n, pl);
+ * - `prep-two-way` puts the sentence's question in the rows ("Wohin? → Akk",
+ *   "Wo? → Dat") and the genders in the columns.
+ *
+ * Every other rule (or an item without case or gender) carries no cell; its card falls
+ * back to the unique-text match. The labels must match the authored tables in
+ * [DrillHelpContentLive]; DrillHelpContentTest resolves every built item's cell against
+ * its rule's real table, so a drifted label fails the build.
+ */
+internal fun helpCell(
+    ruleId: String?,
+    case: ArticleForms.Case?,
+    gender: ArticleForms.Gender?,
+): DrillHelpCard.Cell? {
+    if (ruleId == null || case == null || gender == null) return null
+    val genderColumn = when (gender) {
+        ArticleForms.Gender.MASCULINE -> "m"
+        ArticleForms.Gender.FEMININE -> "f"
+        ArticleForms.Gender.NEUTER -> "n"
+        ArticleForms.Gender.PLURAL -> "pl"
+    }
+    return when {
+        ruleId.startsWith("case-") -> DrillHelpCard.Cell(
+            row = when (gender) {
+                ArticleForms.Gender.MASCULINE, ArticleForms.Gender.NEUTER -> "m · n"
+                ArticleForms.Gender.FEMININE -> "f"
+                ArticleForms.Gender.PLURAL -> "pl"
+            },
+            column = when (case) {
+                ArticleForms.Case.NOMINATIVE -> "Wer? → Nom"
+                ArticleForms.Case.ACCUSATIVE -> "Wen? → Akk"
+                ArticleForms.Case.DATIVE -> "Wem? → Dat"
+                ArticleForms.Case.GENITIVE -> "Wessen? → Gen"
+            },
+        )
+        ruleId.startsWith("prep-fixed-") -> DrillHelpCard.Cell(
+            row = when (case) {
+                ArticleForms.Case.ACCUSATIVE -> "Akk"
+                ArticleForms.Case.DATIVE -> "Dat"
+                ArticleForms.Case.GENITIVE -> "Gen"
+                else -> return null
+            },
+            column = genderColumn,
+        )
+        ruleId == "prep-two-way" -> DrillHelpCard.Cell(
+            row = when (case) {
+                ArticleForms.Case.ACCUSATIVE -> "Wohin? → Akk"
+                ArticleForms.Case.DATIVE -> "Wo? → Dat"
+                else -> return null
+            },
+            column = genderColumn,
+        )
+        else -> null
+    }
+}
 
 /** Rule id and per-wrong-choice miss lines of one case-endings template, keyed by template key. */
 internal data class CaseEndingRuleContent(
@@ -46,6 +118,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "das" to "neuter. The noun is masculine, so den.",
             "des" to "genitive. These prepositions take the accusative, so den.",
         ),
+        case = ArticleForms.Case.ACCUSATIVE,
+        gender = ArticleForms.Gender.MASCULINE,
     ),
     "prep:für:0" to PrepositionRuleContent(
         "prep-which-fixed",
@@ -61,6 +135,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "der" to "feminine dative or masculine nominative. The noun is masculine, so den.",
             "des" to "genitive. These prepositions take the accusative, so den.",
         ),
+        case = ArticleForms.Case.ACCUSATIVE,
+        gender = ArticleForms.Gender.MASCULINE,
     ),
     "prep:gegen:0" to PrepositionRuleContent(
         "prep-which-fixed",
@@ -76,6 +152,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "der" to "feminine dative or masculine nominative. The noun is masculine, so den.",
             "des" to "genitive. These prepositions take the accusative, so den.",
         ),
+        case = ArticleForms.Case.ACCUSATIVE,
+        gender = ArticleForms.Gender.MASCULINE,
     ),
     "prep:ohne:0" to PrepositionRuleContent(
         "prep-which-fixed",
@@ -91,6 +169,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "das" to "neuter. The noun is masculine, so den.",
             "des" to "genitive. These prepositions take the accusative, so den.",
         ),
+        case = ArticleForms.Case.ACCUSATIVE,
+        gender = ArticleForms.Gender.MASCULINE,
     ),
     "prep:um:0" to PrepositionRuleContent(
         "prep-which-fixed",
@@ -106,6 +186,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "der" to "feminine dative or masculine nominative. The noun is masculine, so den.",
             "des" to "genitive. These prepositions take the accusative, so den.",
         ),
+        case = ArticleForms.Case.ACCUSATIVE,
+        gender = ArticleForms.Gender.MASCULINE,
     ),
     "prep:bis:0" to PrepositionRuleContent(
         "prep-which-fixed",
@@ -128,6 +210,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "der" to "feminine dative or masculine nominative. The noun is masculine, so den.",
             "des" to "genitive. These prepositions take the accusative, so den.",
         ),
+        case = ArticleForms.Case.ACCUSATIVE,
+        gender = ArticleForms.Gender.MASCULINE,
     ),
     "prep:aus:0" to PrepositionRuleContent(
         "prep-which-fixed",
@@ -143,6 +227,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "das" to "nominative or accusative. These prepositions take the dative, so dem.",
             "des" to "genitive. aus takes the dative, so dem.",
         ),
+        case = ArticleForms.Case.DATIVE,
+        gender = ArticleForms.Gender.NEUTER,
     ),
     "prep:bei:0" to PrepositionRuleContent(
         "prep-which-fixed",
@@ -158,6 +244,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "der" to "singular dative feminine. The noun is plural, so den.",
             "die" to "nominative or accusative plural. bei takes the dative, so den.",
         ),
+        case = ArticleForms.Case.DATIVE,
+        gender = ArticleForms.Gender.PLURAL,
     ),
     "prep:mit:0" to PrepositionRuleContent(
         "prep-which-fixed",
@@ -173,6 +261,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "das" to "nominative or accusative. These prepositions take the dative, so dem.",
             "der" to "feminine dative. The noun is masculine or neuter, so dem.",
         ),
+        case = ArticleForms.Case.DATIVE,
+        gender = ArticleForms.Gender.MASCULINE,
     ),
     "prep:nach:0" to PrepositionRuleContent(
         "prep-which-fixed",
@@ -188,6 +278,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "das" to "nominative or accusative. These prepositions take the dative, so dem.",
             "der" to "feminine dative. The noun is masculine or neuter, so dem.",
         ),
+        case = ArticleForms.Case.DATIVE,
+        gender = ArticleForms.Gender.MASCULINE,
     ),
     "prep:seit:0" to PrepositionRuleContent(
         "prep-which-fixed",
@@ -203,6 +295,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "das" to "nominative or accusative. These prepositions take the dative, so dem.",
             "der" to "feminine dative. The noun is masculine or neuter, so dem.",
         ),
+        case = ArticleForms.Case.DATIVE,
+        gender = ArticleForms.Gender.MASCULINE,
     ),
     "prep:von:0" to PrepositionRuleContent(
         "prep-which-fixed",
@@ -218,6 +312,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "der" to "singular dative feminine. The noun is plural, so den.",
             "des" to "genitive. von takes the dative, so den.",
         ),
+        case = ArticleForms.Case.DATIVE,
+        gender = ArticleForms.Gender.PLURAL,
     ),
     "prep:zu:0" to PrepositionRuleContent(
         "prep-which-fixed",
@@ -233,6 +329,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "das" to "nominative or accusative. These prepositions take the dative, so dem.",
             "der" to "feminine dative. The noun is masculine or neuter, so dem.",
         ),
+        case = ArticleForms.Case.DATIVE,
+        gender = ArticleForms.Gender.MASCULINE,
     ),
     "prep:gegenüber:0" to PrepositionRuleContent(
         "prep-which-fixed",
@@ -248,6 +346,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "das" to "nominative or accusative. These prepositions take the dative, so dem.",
             "der" to "feminine dative. The noun is masculine or neuter, so dem.",
         ),
+        case = ArticleForms.Case.DATIVE,
+        gender = ArticleForms.Gender.MASCULINE,
     ),
     "prep:wegen:0" to PrepositionRuleContent(
         "prep-which-fixed",
@@ -264,6 +364,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "den" to "accusative. The noun is masculine or neuter; its genitive is des.",
             "das" to "nominative or accusative. These prepositions take the genitive, so des.",
         ),
+        case = ArticleForms.Case.GENITIVE,
+        gender = ArticleForms.Gender.NEUTER,
     ),
     "prep:trotz:0" to PrepositionRuleContent(
         "prep-which-fixed",
@@ -280,6 +382,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "den" to "accusative. The noun is masculine or neuter; its genitive is des.",
             "das" to "nominative or accusative. These prepositions take the genitive, so des.",
         ),
+        case = ArticleForms.Case.GENITIVE,
+        gender = ArticleForms.Gender.MASCULINE,
     ),
     "prep:während:0" to PrepositionRuleContent(
         "prep-which-fixed",
@@ -296,6 +400,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "den" to "accusative masculine. Fahrt is feminine, so der.",
             "dem" to "dative. während takes the genitive, so der.",
         ),
+        case = ArticleForms.Case.GENITIVE,
+        gender = ArticleForms.Gender.FEMININE,
     ),
     "prep:statt:0" to PrepositionRuleContent(
         "prep-which-fixed",
@@ -312,6 +418,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "den" to "accusative. The noun is masculine or neuter; its genitive is des.",
             "das" to "nominative or accusative. These prepositions take the genitive, so des.",
         ),
+        case = ArticleForms.Case.GENITIVE,
+        gender = ArticleForms.Gender.MASCULINE,
     ),
     "prep:an:0" to PrepositionRuleContent(
         "prep-two-way",
@@ -320,6 +428,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "den" to "accusative masculine. Wand is feminine, so der.",
             "dem" to "dative masculine or neuter. Wand is feminine, so der.",
         ),
+        case = ArticleForms.Case.DATIVE,
+        gender = ArticleForms.Gender.FEMININE,
     ),
     "prep:an:1" to PrepositionRuleContent(
         "prep-two-way",
@@ -328,6 +438,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "den" to "accusative masculine. Wand is feminine, so die.",
             "dem" to "dative masculine or neuter. Wand is feminine and this is movement, so die.",
         ),
+        case = ArticleForms.Case.ACCUSATIVE,
+        gender = ArticleForms.Gender.FEMININE,
     ),
     "prep:auf:0" to PrepositionRuleContent(
         "prep-two-way",
@@ -336,6 +448,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "der" to "dative feminine. Tisch is masculine, so dem.",
             "das" to "neuter. Tisch is masculine, so dem.",
         ),
+        case = ArticleForms.Case.DATIVE,
+        gender = ArticleForms.Gender.MASCULINE,
     ),
     "prep:auf:1" to PrepositionRuleContent(
         "prep-two-way",
@@ -344,6 +458,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "der" to "dative feminine. Tisch is masculine, so den.",
             "das" to "neuter. Tisch is masculine, so den.",
         ),
+        case = ArticleForms.Case.ACCUSATIVE,
+        gender = ArticleForms.Gender.MASCULINE,
     ),
     "prep:hinter:0" to PrepositionRuleContent(
         "prep-two-way",
@@ -353,6 +469,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "des" to "genitive. A two-way preposition takes the movement or the position form; a fixed " +
                     "position needs dem.",
         ),
+        case = ArticleForms.Case.DATIVE,
+        gender = ArticleForms.Gender.NEUTER,
     ),
     "prep:hinter:1" to PrepositionRuleContent(
         "prep-two-way",
@@ -361,6 +479,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "den" to "accusative masculine. Haus is neuter, so das.",
             "des" to "genitive. Movement (Wohin?) with a neuter noun needs das.",
         ),
+        case = ArticleForms.Case.ACCUSATIVE,
+        gender = ArticleForms.Gender.NEUTER,
     ),
     "prep:in:0" to PrepositionRuleContent(
         "prep-two-way",
@@ -369,6 +489,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "der" to "dative feminine. Garten is masculine, so dem.",
             "das" to "neuter. Garten is masculine, so dem.",
         ),
+        case = ArticleForms.Case.DATIVE,
+        gender = ArticleForms.Gender.MASCULINE,
     ),
     "prep:in:1" to PrepositionRuleContent(
         "prep-two-way",
@@ -377,6 +499,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "der" to "dative feminine. Garten is masculine, so den.",
             "das" to "neuter. Garten is masculine, so den.",
         ),
+        case = ArticleForms.Case.ACCUSATIVE,
+        gender = ArticleForms.Gender.MASCULINE,
     ),
     "prep:neben:0" to PrepositionRuleContent(
         "prep-two-way",
@@ -385,6 +509,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "den" to "accusative masculine. Fenster is neuter, so dem.",
             "des" to "genitive. A fixed position (Wo?) with a neuter noun needs dem.",
         ),
+        case = ArticleForms.Case.DATIVE,
+        gender = ArticleForms.Gender.NEUTER,
     ),
     "prep:neben:1" to PrepositionRuleContent(
         "prep-two-way",
@@ -393,6 +519,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "den" to "accusative masculine. Fenster is neuter, so das.",
             "des" to "genitive. Movement (Wohin?) with a neuter noun needs das.",
         ),
+        case = ArticleForms.Case.ACCUSATIVE,
+        gender = ArticleForms.Gender.NEUTER,
     ),
     "prep:über:0" to PrepositionRuleContent(
         "prep-two-way",
@@ -401,6 +529,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "den" to "accusative masculine. Sofa is neuter, so dem.",
             "der" to "dative feminine. Sofa is neuter, so dem.",
         ),
+        case = ArticleForms.Case.DATIVE,
+        gender = ArticleForms.Gender.NEUTER,
     ),
     "prep:über:1" to PrepositionRuleContent(
         "prep-two-way",
@@ -409,6 +539,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "den" to "accusative masculine. Sofa is neuter, so das.",
             "der" to "dative feminine. Sofa is neuter, so das.",
         ),
+        case = ArticleForms.Case.ACCUSATIVE,
+        gender = ArticleForms.Gender.NEUTER,
     ),
     "prep:unter:0" to PrepositionRuleContent(
         "prep-two-way",
@@ -417,6 +549,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "den" to "accusative masculine. Bett is neuter, so dem.",
             "des" to "genitive. A fixed position (Wo?) with a neuter noun needs dem.",
         ),
+        case = ArticleForms.Case.DATIVE,
+        gender = ArticleForms.Gender.NEUTER,
     ),
     "prep:unter:1" to PrepositionRuleContent(
         "prep-two-way",
@@ -425,6 +559,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "den" to "accusative masculine. Bett is neuter, so das.",
             "des" to "genitive. Movement (Wohin?) with a neuter noun needs das.",
         ),
+        case = ArticleForms.Case.ACCUSATIVE,
+        gender = ArticleForms.Gender.NEUTER,
     ),
     "prep:vor:0" to PrepositionRuleContent(
         "prep-two-way",
@@ -433,6 +569,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "den" to "accusative masculine. Garage is feminine, so der.",
             "dem" to "dative masculine or neuter. Garage is feminine, so der.",
         ),
+        case = ArticleForms.Case.DATIVE,
+        gender = ArticleForms.Gender.FEMININE,
     ),
     "prep:vor:1" to PrepositionRuleContent(
         "prep-two-way",
@@ -441,6 +579,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "den" to "accusative masculine. Garage is feminine, so die.",
             "dem" to "dative masculine or neuter. Garage is feminine and this is movement, so die.",
         ),
+        case = ArticleForms.Case.ACCUSATIVE,
+        gender = ArticleForms.Gender.FEMININE,
     ),
     "prep:zwischen:0" to PrepositionRuleContent(
         "prep-two-way",
@@ -449,6 +589,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "dem" to "dative singular. Stühle is plural, so den.",
             "der" to "dative singular feminine. Stühle is plural, so den.",
         ),
+        case = ArticleForms.Case.DATIVE,
+        gender = ArticleForms.Gender.PLURAL,
     ),
     "prep:zwischen:1" to PrepositionRuleContent(
         "prep-two-way",
@@ -457,6 +599,8 @@ internal val PREPOSITION_RULE_CONTENT: Map<String, PrepositionRuleContent> = map
             "der" to "dative singular. Stühle is plural, so die.",
             "dem" to "dative singular. Stühle is plural and this is movement, so die.",
         ),
+        case = ArticleForms.Case.ACCUSATIVE,
+        gender = ArticleForms.Gender.PLURAL,
     ),
 )
 
