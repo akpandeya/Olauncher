@@ -1023,4 +1023,49 @@
     <string name="ai_practice_model">Model</string>
     <string name="ai_practice_model_required">Set a model first</string>
     <string name="ai_practice_key_save_failed">Could not save the key — try again</string>
+
+    <!-- Ask-AI chat screen (#699, docs/design/ask-ai-chat.md §Chat screen, §Reliability) -->
+    <string name="chat_new_conversation">New conversation</string>
+    <string name="chat_close">Close</string>
+    <string name="chat_close_glyph">✕</string>
+    <string name="chat_send">Send</string>
+    <string name="chat_send_glyph">↑</string>
+    <string name="chat_chevron_expanded">▾</string>
+    <string name="chat_chevron_collapsed">▸</string>
+    <string name="chat_composer_hint">Ask a follow-up…</string>
+    <string name="chat_grounding_label">What the AI sees</string>
+    <string name="chat_grounding_word_chip">Word · %1$s (%2$s)</string>
+    <string name="chat_grounding_word_chip_no_meaning">Word · %1$s</string>
+    <string name="chat_grounding_word_context">Saved context: %1$s</string>
+    <string name="chat_grounding_miss_prompt">✗ %1$s</string>
+    <string name="chat_grounding_miss_line">You picked %1$s · correct: %2$s</string>
+    <string name="chat_grounding_practice_chip">Practice</string>
+    <string name="chat_grounding_practice_answer">Answer: %1$s</string>
+    <string name="chat_rule_chip">Rule · %1$s</string>
+    <string name="chat_thinking">Thinking…</string>
+    <string name="chat_cancel">Cancel</string>
+    <string name="chat_not_sent">Not sent</string>
+    <string name="chat_not_sent_line">Not sent · %1$s</string>
+    <string name="chat_retry">Retry</string>
+    <string name="chat_ask_again">Ask again</string>
+    <string name="chat_open_ai_settings">Open AI settings</string>
+    <!-- The six error strings are the design table's copy, verbatim. -->
+    <string name="chat_error_rate_limit">The AI is busy. Try again in a moment.</string>
+    <string name="chat_error_network">Couldn\'t reach the AI. Check your connection.</string>
+    <string name="chat_error_server">The AI service had a problem. Try again.</string>
+    <string name="chat_error_bad_response">The AI sent something unreadable. Try again.</string>
+    <string name="chat_error_auth">Your AI key was rejected. Check your AI settings.</string>
+    <string name="chat_error_billing">The AI account is out of credits. Top up to continue.</string>
+    <string name="chat_store_error">Couldn\'t save this conversation</string>
+    <string name="chat_marker_summarised">Earlier turns summarised · see what it kept</string>
+    <string name="chat_marker_omitted">Earlier turns omitted</string>
+    <string name="chat_marker_summary_heading">What the AI was given</string>
+    <string name="chat_original_asked">You said: %1$s</string>
+    <string name="chat_original_replied">AI replied: %1$s</string>
+    <string name="chat_usage_line">≈ %1$s · %2$d turns</string>
+    <string name="chat_usage_tokens_thousands">%1$sk tokens</string>
+    <string name="chat_usage_tokens">%1$d tokens</string>
+    <string name="chat_usage_detail_title">Token use</string>
+    <string name="chat_usage_detail">Latest request: %1$d input · %2$d output tokens</string>
+    <string name="chat_a11y_announce">Chat, %1$d turns</string>
 </resources>

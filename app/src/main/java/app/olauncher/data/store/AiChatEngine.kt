@@ -13,6 +13,13 @@ sealed class AiChatOpen {
     data class Fresh(
         val subject: AiChatSubject,
         val groundings: List<AiChatGrounding> = emptyList(),
+        /**
+         * The alternative candidate of a fresh both-candidates thread (design
+         * §Threads: "When a fresh thread could be word or rule"). [subject] stays
+         * the fallback (the rule); when the first reply names [proposal]'s kind,
+         * the thread is filed under [proposal] instead.
+         */
+        val proposal: AiChatSubject? = null,
     ) : AiChatOpen()
 
     data class Resumed(val threadId: String) : AiChatOpen()
@@ -101,6 +108,12 @@ sealed class AiChatCancel {
  * - **Only the newest failed turn retries.** Once a newer turn exists, an older
  *   failed turn converts to "Ask again": the retry sends a NEW turn quoting the
  *   question, so history never orders a retry after later messages.
+ * - **A fresh both-candidates thread is filed by its first reply.** [AiChatOpen.Fresh]
+ *   carries an optional [AiChatOpen.Fresh.proposal]; until a reply lands every send
+ *   rides the SUBJECT instruction, and the first successful reply is parsed, its
+ *   SUBJECT line stripped before render, and a word verdict re-files the thread
+ *   under the word candidate (rule fallback otherwise). A failed first reply keeps
+ *   the thread provisional — the retry's reply is still parsed.
  * - **Cancel** removes the in-flight tile, deletes the stored turn (nothing of a
  *   cancelled turn remains) and restores the draft; a first-turn cancel deletes
  *   the thread. The late reply of a cancelled request is discarded.
@@ -140,14 +153,24 @@ class AiChatEngine(
     private var freshSubject: AiChatSubject? = null
     private var freshGroundings: List<AiChatGrounding> = emptyList()
 
+    /**
+     * The alternative candidate still awaiting the thread's first reply (design
+     * §Threads: a failed first reply is still followed by a parsed retry — the
+     * thread stays provisional until a reply lands, so this survives settled
+     * failures and only a successful reply, a cancel, or a re-open consumes it).
+     */
+    private var pendingProposal: AiChatSubject? = null
+
     /** Opens a session: a fresh, unpersisted chat or a stored thread by id. */
     fun open(open: AiChatOpen): AiChatState = synchronized(lock) {
         generation++
         storeError = false
+        pendingProposal = null
         val thread = when (open) {
             is AiChatOpen.Fresh -> {
                 freshSubject = open.subject
                 freshGroundings = open.groundings
+                pendingProposal = open.proposal
                 null
             }
             is AiChatOpen.Resumed -> {
@@ -260,7 +283,13 @@ class AiChatEngine(
         val thread = current.thread ?: return AiChatCancel.NothingPending
         val question = current.pendingQuestion ?: return AiChatCancel.NothingPending
         generation++
-        val trimmed = thread.copy(messages = thread.messages.dropLast(1), updatedAt = time())
+        val turn = thread.messages.lastOrNull()
+        // The grounding the cancelled turn introduced goes with it — nothing of a
+        // cancelled turn remains (design §Chat screen).
+        val groundings = turn?.groundingId
+            ?.let { id -> thread.groundings.filterNot { it.id == id } }
+            ?: thread.groundings
+        val trimmed = thread.copy(messages = thread.messages.dropLast(1), groundings = groundings, updatedAt = time())
         if (trimmed.messages.isEmpty()) {
             // First-turn cancel deletes the thread (design §Chat screen); the
             // session returns to the fresh chat it started as.
@@ -309,18 +338,39 @@ class AiChatEngine(
             if (pending == null || pending.role != AiChatMessage.Role.USER) return
             val now = time()
             val updated = when (result) {
-                is AiResult.Ok -> thread.copy(
-                    messages = thread.messages.dropLast(1) + pending.copy(failed = false) +
-                        AiChatMessage(
-                            role = AiChatMessage.Role.ASSISTANT,
-                            text = result.text,
-                            ts = now,
-                            usage = result.usage,
-                        ),
-                    updatedAt = now,
-                )
+                is AiResult.Ok -> {
+                    // A fresh both-candidates thread is filed by its first reply
+                    // (design §Threads): the SUBJECT line is parsed, stripped
+                    // before render, and a word verdict re-files the thread under
+                    // the word candidate; malformed or missing falls back to the
+                    // rule subject the thread was created with.
+                    val hadReply = thread.messages.any { it.role == AiChatMessage.Role.ASSISTANT }
+                    val proposal = pendingProposal?.takeUnless { hadReply }
+                    val parsed = if (proposal != null) {
+                        pendingProposal = null
+                        AiChatRequestBuilder.parseFirstReply(result.text)
+                    } else {
+                        null
+                    }
+                    var filed = thread.copy(
+                        messages = thread.messages.dropLast(1) +
+                            pending.copy(failed = false, errorKind = null) +
+                            AiChatMessage(
+                                role = AiChatMessage.Role.ASSISTANT,
+                                text = parsed?.renderText ?: result.text,
+                                ts = now,
+                                usage = result.usage,
+                            ),
+                        updatedAt = now,
+                    )
+                    if (proposal != null && parsed?.subject == proposal.kind) {
+                        filed = filed.copy(subject = proposal)
+                    }
+                    filed
+                }
                 is AiResult.Error -> thread.copy(
-                    messages = thread.messages.dropLast(1) + pending.copy(failed = true),
+                    messages = thread.messages.dropLast(1) +
+                        pending.copy(failed = true, errorKind = result.kind),
                     updatedAt = now,
                 )
             }
@@ -460,6 +510,9 @@ class AiChatEngine(
         return AiChatRequestBuilder.build(
             thread,
             newQuestion = question,
+            // The both-candidates instruction rides every send of a thread whose
+            // first reply has not landed yet (design §Threads).
+            subjectProposal = pendingProposal != null,
             omitTurnsUpTo = omittedUpTo ?: AiChatRequestBuilder.NO_OMITTED_TURNS,
         )
     }

@@ -110,7 +110,9 @@ data class AiChatSummary(
  * request fires (design §Reliability) and stays visible as "Not sent · Retry";
  * it is excluded from AI context and counts until a retry succeeds.
  * [usage] is the provider's token report for an assistant reply; [groundingId]
- * sits on the user turn that introduced the grounding.
+ * sits on the user turn that introduced the grounding. [errorKind] is the provider
+ * error that failed the turn, persisted so the chat screen can show the design's
+ * per-kind message again after process death (§Reliability error table).
  */
 data class AiChatMessage(
     val role: Role,
@@ -119,6 +121,7 @@ data class AiChatMessage(
     val usage: AiUsage? = null,
     val failed: Boolean = false,
     val groundingId: String? = null,
+    val errorKind: AiResult.ErrorKind? = null,
 ) {
     enum class Role { USER, ASSISTANT }
 }
@@ -245,7 +248,31 @@ object AiChatCodec {
             .put("ref", subject.ref)
     }
 
-    private fun encodeGroundings(groundings: List<AiChatGrounding>): JSONArray {
+    /**
+     * Encodes [groundings] as a JSON string for passing them in navigation
+     * arguments (the chat screen opens with the miss/word context its caller
+     * built). Same entry shape as a thread's `groundings` array.
+     */
+    fun encodeGroundingsJson(groundings: List<AiChatGrounding>): String {
+        return JSONObject().put("groundings", encodeGroundings(groundings)).toString()
+    }
+
+    /**
+     * Decodes [encodeGroundingsJson]'s output. Blank or malformed input decodes
+     * to an empty list — arguments come from this app's own screens, so a bad
+     * payload under-matches gracefully to a grounding-less chat instead of
+     * crashing navigation.
+     */
+    fun decodeGroundingsJson(raw: String?): List<AiChatGrounding> {
+        if (raw.isNullOrBlank()) return emptyList()
+        return try {
+            decodeGroundings(JSONObject(raw.trim()), "groundings")
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+
+    internal fun encodeGroundings(groundings: List<AiChatGrounding>): JSONArray {
         val array = JSONArray()
         for (grounding in groundings) {
             val obj = JSONObject()
@@ -312,6 +339,7 @@ object AiChatCodec {
             }
             if (message.failed) obj.put("failed", true)
             if (message.groundingId != null) obj.put("groundingId", message.groundingId)
+            if (message.failed && message.errorKind != null) obj.put("errorKind", message.errorKind.name)
             array.put(obj)
         }
         return array
@@ -377,14 +405,15 @@ object AiChatCodec {
                     ts = ts,
                     usage = usage,
                     failed = m.optStrictBoolean("failed", "$label message $i"),
-                    groundingId = m.optStrictString("groundingId", "$label message $i")
+                    groundingId = m.optStrictString("groundingId", "$label message $i"),
+                    errorKind = m.optErrorKind("$label message $i")
                 )
             )
         }
         return messages
     }
 
-    private fun decodeGroundings(obj: JSONObject, label: String): List<AiChatGrounding> {
+    internal fun decodeGroundings(obj: JSONObject, label: String): List<AiChatGrounding> {
         val array = obj.optArrayOrEmpty("groundings", label)
         val groundings = mutableListOf<AiChatGrounding>()
         for (i in 0 until array.length()) {
@@ -514,5 +543,16 @@ object AiChatCodec {
         val value = opt(key) ?: return false
         if (value === JSONObject.NULL) return false
         return value as? Boolean ?: throw CorruptFile("$label: '$key' is not a boolean")
+    }
+
+    /**
+     * Optional error kind: absent or JSON null is null; a present non-string
+     * rejects the file. A string that names no known kind degrades to null —
+     * display metadata only (the chat screen falls back to the plain
+     * "Not sent" line), never worth rejecting a whole store over.
+     */
+    private fun JSONObject.optErrorKind(label: String): AiResult.ErrorKind? {
+        val value = optStrictString("errorKind", label) ?: return null
+        return AiResult.ErrorKind.entries.firstOrNull { it.name == value }
     }
 }
