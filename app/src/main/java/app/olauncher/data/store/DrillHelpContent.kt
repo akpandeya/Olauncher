@@ -72,6 +72,28 @@ object DrillHelpContent {
     /** Every rule id in the content files that items point to. */
     fun ids(): Set<String> = rules.keys
 
+    /**
+     * A rule's chips as one-line facts of its forms table, for the Ask-AI miss
+     * grounding (docs/design/ask-ai-chat.md §Chat screen: the card shows what the
+     * AI sees). Each chip is one table row — its label and the cells it holds — so
+     * the pattern travels with its meaning: `Dat: dem der dem den`, not the bare
+     * column headers `m, f, n, pl`, which detached from the table say nothing and
+     * for a which-case question suggest a gender decision that is not part of the
+     * reasoning (#721).
+     */
+    fun ruleChips(ruleId: String?): List<String> {
+        val table = rule(ruleId)?.table ?: return emptyList()
+        return table.rows.map { row ->
+            val cells = row.cells.filter { it.isNotBlank() }.joinToString(" ")
+            when {
+                row.label.isBlank() && cells.isBlank() -> ""
+                row.label.isBlank() -> cells
+                cells.isBlank() -> row.label
+                else -> "${row.label}: $cells"
+            }
+        }.filter { it.isNotBlank() }
+    }
+
     /** Every authored rule, gap topics and live topics together, in authored order. */
     internal fun allRules(): List<DrillHelpRule> =
         gapTopicRules() + DrillHelpContentLive.rules

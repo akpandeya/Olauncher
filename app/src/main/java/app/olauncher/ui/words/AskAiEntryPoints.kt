@@ -167,11 +167,8 @@ object AskAiEntryPoints {
         ),
     )
 
-    /** The rule chips of a miss: the help table's pattern headers, as the help card shows them. */
-    private fun ruleChips(ruleId: String?): List<String> {
-        val table = DrillHelpContent.rule(ruleId)?.table ?: return emptyList()
-        return table.headers.drop(1).filter { it.isNotBlank() }
-    }
+    /** The rule chips of a miss: the help table's rows, as one-line facts ([DrillHelpContent.ruleChips]). */
+    private fun ruleChips(ruleId: String?): List<String> = DrillHelpContent.ruleChips(ruleId)
 
     /** The sheet's title for [subject]: the word as written, the rule's title, the topic's label. */
     fun subjectTitle(context: Context, savedWords: Collection<Word>, subject: AiChatSubject): String {

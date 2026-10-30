@@ -311,6 +311,13 @@ class AiChatFragment : BaseFragment() {
                     payload.ruleId
                         ?.let { DrillHelpContent.rule(it)?.title ?: it }
                         ?.let { binding.groundingBody.addView(chipView(context, getString(R.string.chat_rule_chip, it))) }
+                    // The rule's own sentence: the request sends it next to the id
+                    // (#721), so the card shows it too — this card is what the AI
+                    // sees, and a rule chip alone does not teach the rule.
+                    payload.ruleId
+                        ?.let { DrillHelpContent.rule(it)?.rule }
+                        ?.takeIf { it.isNotBlank() }
+                        ?.let { binding.groundingBody.addView(bodyView(context, it, muted = true)) }
                     binding.groundingBody.addView(
                         bodyView(context, getString(R.string.chat_grounding_miss_prompt, payload.prompt), muted = false)
                     )

@@ -96,6 +96,49 @@ class DrillHelpContentTest {
     }
 
     @Test
+    fun missChipsCarryTheTableRowsNotBareColumnHeaders() {
+        // #721: the miss grounding's chips were the table's bare column headers
+        // ("m, f, n, pl") — detached from the table they say nothing, and on a
+        // which-case question they suggest a gender decision that is not part of
+        // the reasoning. The chips are the table's rows instead: each one carries
+        // its label and the forms it holds.
+        assertEquals(
+            listOf(
+                "Akk: den die das die",
+                "Dat: dem der dem den",
+                "Gen: des der des der",
+            ),
+            DrillHelpContent.ruleChips("prep-which-fixed"),
+        )
+        // A different rule carries its own rows — a swapped rule id cannot pass.
+        assertEquals(
+            listOf(
+                "Wohin? → Akk: den die das die",
+                "Wo? → Dat: dem der dem den",
+            ),
+            DrillHelpContent.ruleChips("prep-two-way"),
+        )
+        // No rule's chip is one of the bare gender headers the old code produced.
+        for (id in DrillHelpContent.ids()) {
+            for (chip in DrillHelpContent.ruleChips(id)) {
+                assertTrue(
+                    "$id: chip \"$chip\" must carry more than a bare header",
+                    chip.trim().length > 2 || ": " in chip,
+                )
+            }
+        }
+        // A row whose label is blank (the passive roles table) still renders its
+        // cells without a dangling label separator.
+        assertTrue(
+            DrillHelpContent.ruleChips("passiv-agent").contains("von durch mit bei"),
+        )
+        // An unknown rule id yields no chips at all — never the headers of a
+        // different rule.
+        assertEquals(emptyList<String>(), DrillHelpContent.ruleChips("rule-no-such-thing"))
+        assertEquals(emptyList<String>(), DrillHelpContent.ruleChips(null))
+    }
+
+    @Test
     fun everyRuleCarriesShortTitleNamingThePattern() {
         for (id in DrillHelpContent.ids()) {
             val rule = DrillHelpContent.rule(id)!!

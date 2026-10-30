@@ -213,7 +213,10 @@ class AiChatRequestBuilderTest {
         assertTrue(
             prompt.contains(
                 "- Miss: prompt \"Ich lege das Buch auf ___ Tisch.\" | learner picked: dem | correct: den" +
-                    " | rule: prep-two-way | chips: movement, accusative",
+                    " | rule: Two-way prepositions (prep-two-way)" +
+                    " | rule text: This is a two-way preposition. Wohin? means movement to a place; Wo? means" +
+                    " a fixed position. The verb tells you which one the sentence describes." +
+                    " | chips: movement, accusative",
             ),
         )
         assertTrue(
@@ -226,6 +229,43 @@ class AiChatRequestBuilderTest {
                 "- Practice item: prompt \"Nenne den Dativ von \"das Buch\".\" | answer: dem Buch",
             ),
         )
+    }
+
+    @Test
+    fun `miss grounding resolves the rule to its title and text, not the raw id`() {
+        // The model is held to the facts of this conversation; a raw rule id gives it
+        // a rule it cannot state (#721). The genitive rule is a different rule with a
+        // different title and text, so a swap cannot pass.
+        val genitive = AiChatGroundingPayload.Miss(
+            prompt = "Wegen ___ Wetters bleiben wir hier.",
+            picked = "dem",
+            answer = "des",
+            ruleId = "prep-fixed-gen",
+            chips = emptyList(),
+        )
+        val prompt = AiChatRequestBuilder.build(thread(groundings = listOf(grounding(genitive, "g1"))), "q")
+        assertTrue(prompt.contains("| rule: Prepositions with the genitive (prep-fixed-gen)"))
+        assertTrue(
+            prompt.contains(
+                "| rule text: This preposition is one of those that always take the same case",
+            ),
+        )
+    }
+
+    @Test
+    fun `miss with an unknown rule id falls back to the raw id`() {
+        // A persisted thread can carry a rule id the content no longer knows; it still
+        // renders, and no rule text is invented for it.
+        val unknown = AiChatGroundingPayload.Miss(
+            prompt = "Welcher Fall folgt auf „gegenüber“?",
+            picked = "Akkusativ",
+            answer = "Dativ",
+            ruleId = "rule-no-such-thing",
+            chips = emptyList(),
+        )
+        val prompt = AiChatRequestBuilder.build(thread(groundings = listOf(grounding(unknown, "g1"))), "q")
+        assertTrue(prompt.contains("| rule: rule-no-such-thing (rule-no-such-thing)"))
+        assertFalse(prompt.contains("| rule text:"))
     }
 
     @Test
