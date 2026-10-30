@@ -496,4 +496,121 @@ class AiChatRequestBuilderTest {
         assertTrue(AiChatRequestBuilder.exceedsTrigger(overloaded, newQuestion = null))
         assertEquals(null, AiChatRequestBuilder.compactionCoversUpTo(overloaded))
     }
+
+    // --- compaction summarise prompt -------------------------------------------
+
+    @Test
+    fun `summarise prompt carries the stored originals up to the coverage and never a summary`() {
+        val summarised = thread(
+            summaries = listOf(AiChatSummary("ALTE Zusammenfassung", coversUpTo = 1, createdAt = 1L)),
+            messages = listOf(
+                user("Frage 1", ts = 1),
+                assistant("Antwort 1", ts = 2),
+                user("Frage 2", ts = 3),
+                assistant("Antwort 2", ts = 4),
+                user("Frage 3", ts = 5),
+                assistant("Antwort 3", ts = 6),
+            ),
+        )
+        // Re-summarising covers the stored originals through index 4 (turns 1-2)
+        // — never the previous summary's text.
+        val prompt = AiChatRequestBuilder.buildSummarisePrompt(summarised, coversUpTo = 4)
+        assertTrue(prompt.startsWith(AiChatRequestBuilder.SUMMARISE_INSTRUCTIONS))
+        assertTrue(prompt.contains("[Turn 1 | user] Frage 1"))
+        assertTrue(prompt.contains("[Turn 1 | assistant] Antwort 1"))
+        assertTrue(prompt.contains("[Turn 2 | user] Frage 2"))
+        assertTrue(prompt.contains("[Turn 2 | assistant] Antwort 2"))
+        assertFalse(prompt.contains("Frage 3"))
+        assertFalse(prompt.contains("ALTE Zusammenfassung"))
+        assertFalse(prompt.contains("Summary of earlier turns:"))
+    }
+
+    @Test
+    fun `summarise prompt excludes failed turns`() {
+        val withFailed = thread(
+            messages = listOf(
+                user("Frage 1", ts = 1),
+                assistant("Antwort 1", ts = 2),
+                user("Nie gesendet", ts = 3, failed = true),
+                user("Frage 2", ts = 4),
+                assistant("Antwort 2", ts = 5),
+            ),
+        )
+        val prompt = AiChatRequestBuilder.buildSummarisePrompt(withFailed, coversUpTo = 4)
+        assertFalse(prompt.contains("Nie gesendet"))
+        assertTrue(prompt.contains("Frage 1"))
+        assertTrue(prompt.contains("Frage 2"))
+    }
+
+    // --- truncation fallback planner ---------------------------------------------
+
+    @Test
+    fun `truncation planner returns null when the projection already fits`() {
+        val small = thread(messages = listOf(user("x".repeat(4000)), assistant("y".repeat(4000))))
+        assertEquals(null, AiChatRequestBuilder.truncationOmitUpTo(small))
+    }
+
+    @Test
+    fun `truncation planner picks the smallest omission that fits under the target`() {
+        // Four delivered turns of ~2000 estimated tokens each: dropping the first
+        // turn leaves ~6k + baseline — under the target; dropping none is over.
+        val large = thread(
+            messages = listOf(
+                user("a".repeat(4000)), assistant("b".repeat(4000)),
+                user("c".repeat(4000)), assistant("d".repeat(4000)),
+                user("e".repeat(4000)), assistant("f".repeat(4000)),
+                user("g".repeat(4000)), assistant("h".repeat(4000)),
+            ),
+        )
+        val omit = AiChatRequestBuilder.truncationOmitUpTo(large)
+        assertEquals(1, omit!!.toInt())
+        assertTrue(
+            AiChatRequestBuilder.projectedRequestTokens(large, null, omitTurnsUpTo = omit) <=
+                AiChatRequestBuilder.POST_COMPACTION_TARGET_TOKENS,
+        )
+    }
+
+    @Test
+    fun `truncation planner drops everything when even that cannot fit`() {
+        val hugeGrounding = AiChatGroundingPayload.Word(
+            text = "x".repeat(30_000),
+            meaning = "y".repeat(30_000),
+            context = "z".repeat(30_000),
+        )
+        val overloaded = thread(
+            groundings = listOf(grounding(hugeGrounding, "g1"), grounding(hugeGrounding, "g2")),
+            messages = listOf(user("a".repeat(4000)), assistant("b".repeat(4000))),
+        )
+        assertEquals(1, AiChatRequestBuilder.truncationOmitUpTo(overloaded)!!.toInt())
+    }
+
+    // --- request omission ---------------------------------------------------------
+
+    @Test
+    fun `build leaves the omitted turns out and keeps the rest and the question`() {
+        val omitted = thread(
+            messages = listOf(
+                user("Frage 1", ts = 1),
+                assistant("Antwort 1", ts = 2),
+                user("Frage 2", ts = 3),
+                assistant("Antwort 2", ts = 4),
+                user("Frage 3", ts = 5),
+                assistant("Antwort 3", ts = 6),
+            ),
+        )
+        val prompt = AiChatRequestBuilder.build(omitted, newQuestion = "Frage 4", omitTurnsUpTo = 3)
+        // Turns up to reply index 3 (pairs 1-2) are omitted; the rest renumber.
+        assertFalse(prompt.contains("Frage 1"))
+        assertFalse(prompt.contains("Antwort 1"))
+        assertFalse(prompt.contains("Frage 2"))
+        assertFalse(prompt.contains("Antwort 2"))
+        assertTrue(prompt.contains("[Turn 1 | user] Frage 3"))
+        assertTrue(prompt.contains("[Turn 1 | assistant] Antwort 3"))
+        assertTrue(prompt.contains("[New question | user] Frage 4"))
+        // The projection honours the same omission.
+        assertTrue(
+            AiChatRequestBuilder.projectedRequestTokens(omitted, "Frage 4", omitTurnsUpTo = 3) <
+                AiChatRequestBuilder.projectedRequestTokens(omitted, "Frage 4"),
+        )
+    }
 }

@@ -21,6 +21,18 @@ sealed class AiChatWrite {
 }
 
 /**
+ * The persistence seam the chat engine ([AiChatEngine]) talks to: find one thread
+ * by id, replace-or-append it, or delete it. [AiChatStore] is the disk-backed
+ * implementation; the engine's tests supply an in-memory one, so the engine's
+ * send/retry/cancel/compaction logic stays JVM-testable without a file system.
+ */
+interface AiChatPersistence {
+    fun thread(id: String): AiChatThread?
+    fun upsert(thread: AiChatThread): AiChatWrite
+    fun delete(threadId: String): AiChatWrite
+}
+
+/**
  * Outcome of loading the store. [Recovered] means the file on disk was corrupt:
  * it was renamed to `ai_chats.json.bak` and the store starts empty, so the UI can
  * tell the learner once that their conversations could not be loaded (design
@@ -43,7 +55,7 @@ sealed class AiChatLoad {
  */
 class AiChatStore(
     private val filesDir: File
-) {
+) : AiChatPersistence {
     constructor(context: Context) : this(context.filesDir)
 
     private val file = File(filesDir, FILE_NAME)
@@ -82,7 +94,7 @@ class AiChatStore(
         }
     }
 
-    fun thread(id: String): AiChatThread? = synchronized(LOCK) {
+    override fun thread(id: String): AiChatThread? = synchronized(LOCK) {
         threads().firstOrNull { it.id == id }
     }
 
@@ -91,7 +103,7 @@ class AiChatStore(
     }
 
     /** Replaces the thread with [thread]'s id or appends it; exactly one write. */
-    fun upsert(thread: AiChatThread): AiChatWrite = synchronized(LOCK) {
+    override fun upsert(thread: AiChatThread): AiChatWrite = synchronized(LOCK) {
         when (val base = mutationBase()) {
             is MutationBase.Refused -> AiChatWrite.Failed(base.cause)
             is MutationBase.Ready -> {
@@ -102,7 +114,7 @@ class AiChatStore(
     }
 
     /** Removes the thread with [threadId]; a no-op on an unknown id is still [AiChatWrite.Ok]. */
-    fun delete(threadId: String): AiChatWrite = synchronized(LOCK) {
+    override fun delete(threadId: String): AiChatWrite = synchronized(LOCK) {
         when (val base = mutationBase()) {
             is MutationBase.Refused -> AiChatWrite.Failed(base.cause)
             is MutationBase.Ready ->

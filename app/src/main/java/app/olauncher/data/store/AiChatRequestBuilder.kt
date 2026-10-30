@@ -78,6 +78,25 @@ object AiChatRequestBuilder {
      */
     const val SUMMARY_COMPRESSION_RATIO = 0.5
 
+    /**
+     * Instruction block for the compaction summarise call ([buildSummarisePrompt]).
+     * Distinct from [INSTRUCTIONS] so a caller (and the tests' fake provider) can
+     * tell a summarise request from a chat request by the prompt alone.
+     */
+    val SUMMARISE_INSTRUCTIONS = """
+        Compress the tutor conversation turns below into a short summary for future context. Keep every concrete fact: the German words and their meanings, the grammar rules discussed, the mistakes and their corrections, and any decision the learner made. Write compact prose — no greetings, no advice, nothing that is not in the turns.
+    """.trimIndent()
+
+    /**
+     * Output-token budget for one compaction summarise call: a summary must be far
+     * shorter than the turns it replaces; a reply that hits the cap is a poor
+     * summary but still usable, so it is kept rather than rejected.
+     */
+    const val SUMMARY_MAX_TOKENS = 2048
+
+    /** Sentinel for [build]/[projectedRequestTokens]: no turns are omitted. */
+    const val NO_OMITTED_TURNS = -1
+
     // ---- Prompt assembly ----------------------------------------------------
 
     /**
@@ -86,12 +105,15 @@ object AiChatRequestBuilder {
      * the request as it would look without a pending question (used by the budget
      * projection, where the next question is not known yet). [subjectProposal]
      * appends [SUBJECT_INSTRUCTION] — only for a fresh thread with both a word and
-     * a rule candidate.
+     * a rule candidate. [omitTurnsUpTo] is the truncation fallback (design §Threads:
+     * compaction could not run): delivered turns whose reply message index is at or
+     * below it leave the request, which the UI marks "Earlier turns omitted".
      */
     fun build(
         thread: AiChatThread,
         newQuestion: String?,
         subjectProposal: Boolean = false,
+        omitTurnsUpTo: Int = NO_OMITTED_TURNS,
     ): String = buildString {
         append(INSTRUCTIONS)
         if (subjectProposal) {
@@ -103,7 +125,7 @@ object AiChatRequestBuilder {
             append(SUMMARY_HEADER).append(summary.text).append('\n')
         }
         append(TRANSCRIPT_HEADER)
-        transcriptLines(thread).forEach { append(it) }
+        transcriptLines(thread, omitTurnsUpTo).forEach { append(it) }
         if (newQuestion != null) {
             append(QUESTION_PREFIX).append(newQuestion).append('\n')
             append(TAIL)
@@ -136,12 +158,22 @@ object AiChatRequestBuilder {
      * answered by a non-failed assistant reply) after the active summary's
      * coverage, as labelled lines with trailing newlines. A pair is shown only
      * when BOTH of its messages sit after the coverage, so a boundary can never
-     * split a turn.
+     * split a turn. Turns whose reply index is at or below [omitTurnsUpTo] are
+     * left out (the truncation fallback).
      */
-    private fun transcriptLines(thread: AiChatThread): List<String> =
-        transcriptLinesFrom(thread, firstIndex = (activeSummary(thread)?.coversUpTo ?: -1) + 1)
+    private fun transcriptLines(thread: AiChatThread, omitTurnsUpTo: Int = NO_OMITTED_TURNS): List<String> =
+        transcriptLinesFrom(
+            thread,
+            firstIndex = (activeSummary(thread)?.coversUpTo ?: -1) + 1,
+            omitTurnsUpTo = omitTurnsUpTo,
+        )
 
-    private fun transcriptLinesFrom(thread: AiChatThread, firstIndex: Int): List<String> {
+    private fun transcriptLinesFrom(
+        thread: AiChatThread,
+        firstIndex: Int,
+        omitTurnsUpTo: Int = NO_OMITTED_TURNS,
+        upTo: Int = Int.MAX_VALUE,
+    ): List<String> {
         val lines = mutableListOf<String>()
         var turn = 0
         for (i in thread.messages.indices) {
@@ -149,6 +181,8 @@ object AiChatRequestBuilder {
             val reply = thread.messages.getOrNull(i + 1) ?: break
             if (i < firstIndex || user.role != AiChatMessage.Role.USER || user.failed) continue
             if (reply.role != AiChatMessage.Role.ASSISTANT || reply.failed) continue
+            if (i + 1 > upTo) break
+            if (i + 1 <= omitTurnsUpTo) continue
             turn++
             lines.add("[Turn $turn | ${user.role.name.lowercase()}] ${user.text}\n")
             lines.add("[Turn $turn | ${reply.role.name.lowercase()}] ${reply.text}\n")
@@ -211,12 +245,13 @@ object AiChatRequestBuilder {
      * The projected input-token cost of the NEXT request for [thread]: the prompt
      * [build] would assemble for [newQuestion], estimated block by block (the
      * per-block ceiling makes the sum a slight over-estimate — the conservative
-     * direction for a compaction decision).
+     * direction for a compaction decision). [omitTurnsUpTo] matches [build].
      */
     fun projectedRequestTokens(
         thread: AiChatThread,
         newQuestion: String?,
         subjectProposal: Boolean = false,
+        omitTurnsUpTo: Int = NO_OMITTED_TURNS,
     ): Int {
         var tokens = estimateTokens(INSTRUCTIONS)
         if (subjectProposal) tokens += estimateTokens(SUBJECT_INSTRUCTION)
@@ -226,7 +261,7 @@ object AiChatRequestBuilder {
             tokens += estimateTokens(SUMMARY_HEADER) + estimateTokens(summary.text)
         }
         tokens += estimateTokens(TRANSCRIPT_HEADER)
-        transcriptLines(thread).forEach { tokens += estimateTokens(it) }
+        transcriptLines(thread, omitTurnsUpTo).forEach { tokens += estimateTokens(it) }
         if (newQuestion != null) {
             tokens += estimateTokens(QUESTION_PREFIX + newQuestion + "\n")
             tokens += estimateTokens(TAIL)
@@ -309,6 +344,40 @@ object AiChatRequestBuilder {
         return originals
     }
 
+    /**
+     * The prompt for one compaction summarise call (design §Threads): the stored
+     * ORIGINALS of every delivered turn up to [coversUpTo] — never a previous
+     * summary ("Re-summarise from the stored originals, never from the previous
+     * summary, so drift is capped at one pass") — as labelled transcript lines.
+     */
+    fun buildSummarisePrompt(thread: AiChatThread, coversUpTo: Int): String = buildString {
+        append(SUMMARISE_INSTRUCTIONS)
+        append(SUMMARISE_HEADER)
+        transcriptLinesFrom(thread, firstIndex = 0, upTo = coversUpTo).forEach { append(it) }
+    }
+
+    /**
+     * The truncation fallback planner (design §Threads: "Fallback when compaction
+     * cannot run: the oldest prose turns leave the request and 'Earlier turns
+     * omitted' appears in the visible history"): the smallest delivered-turn end
+     * index whose omission leaves the projected request under
+     * [POST_COMPACTION_TARGET_TOKENS], or the LAST delivered-turn end when even
+     * that cannot fit (the send still goes out — it is never blocked). null when
+     * the projection already fits and nothing needs to be dropped.
+     */
+    fun truncationOmitUpTo(thread: AiChatThread): Int? {
+        if (projectedRequestTokens(thread, newQuestion = null) <= POST_COMPACTION_TARGET_TOKENS) {
+            return null
+        }
+        val ends = deliveredTurnEndIndexes(thread)
+        for (end in ends) {
+            if (projectedRequestTokens(thread, newQuestion = null, omitTurnsUpTo = end) <= POST_COMPACTION_TARGET_TOKENS) {
+                return end
+            }
+        }
+        return ends.lastOrNull()
+    }
+
     /** Index in [AiChatThread.messages] of the reply that completes each delivered turn. */
     private fun deliveredTurnEndIndexes(thread: AiChatThread): List<Int> {
         val ends = mutableListOf<Int>()
@@ -328,6 +397,7 @@ object AiChatRequestBuilder {
 
     private const val FACTS_HEADER = "\nFacts you may use:\n"
     private const val SUMMARY_HEADER = "\nSummary of earlier turns:\n"
+    private const val SUMMARISE_HEADER = "\nTurns to summarise:\n"
     private const val TRANSCRIPT_HEADER = "\nTranscript:\n"
     private const val QUESTION_PREFIX = "[New question | user] "
     private const val TAIL = "\nAnswer as the assistant: reply to the new question only.\n"
