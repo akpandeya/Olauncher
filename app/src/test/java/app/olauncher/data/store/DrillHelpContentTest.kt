@@ -31,7 +31,11 @@ class DrillHelpContentTest {
         DrillType.ADJECTIVE_ENDINGS to DrillAdjectiveEndings.items(),
         DrillType.ARTICLES to DrillArticles.items(),
         DrillType.PLURALS to DrillPlurals.items(),
+        DrillType.PRONOUNS to DrillPronouns.items(),
+        DrillType.SEPARABLE_VERBS to DrillSeparableVerbs.items(),
     )
+
+    private fun wordOrderItems(): List<WordOrderItem> = DrillWordOrder.items()
 
     private fun itemRules(): List<ItemRule> =
         (DrillGapTopics.allTopics() + liveItems()).flatMap { (_, items) ->
@@ -41,6 +45,24 @@ class DrillHelpContentTest {
                 }
             }
         }
+
+    /** Word-order items are [WordOrderItem]s; adapt them so the shared prose checks apply. */
+    private fun wordOrderItemRules(): List<ItemRule> = wordOrderItems().mapNotNull { w ->
+        w.ruleId?.let { id ->
+            DrillHelpContent.rule(id)?.let {
+                ItemRule(
+                    DrillItem(
+                        id = w.id,
+                        prompt = w.tiles.joinToString(" "),
+                        answer = w.canonicalAnswer,
+                        choices = emptyList(),
+                        ruleId = id,
+                    ),
+                    it,
+                )
+            }
+        }
+    }
 
     @Test
     fun everyRuleCarriesCompleteCardContent() {
@@ -125,6 +147,8 @@ class DrillHelpContentTest {
         // adjective endings by template key, articles and plurals by table noun.
         val authored: Map<String, String> =
             PREPOSITION_RULE_CONTENT.mapValues { it.value.ruleId } +
+                PRONOUN_RULE_CONTENT.mapValues { it.value.ruleId } +
+                SEPARABLE_VERB_RULE_CONTENT.mapValues { it.value.ruleId } +
                 CASE_ENDING_RULE_CONTENT.entries.associate { "case:${it.key}" to it.value.ruleId } +
                 VERB_PREP_RULE_CONTENT.entries.flatMap { (pairKey, content) ->
                     val pairs = DrillVerbPrepositions.PAIRS.filter {
@@ -163,6 +187,54 @@ class DrillHelpContentTest {
                 built[key],
             )
         }
+    }
+
+    @Test
+    fun everyBuiltInWordOrderItemCarriesItsAuthoredHelpRule() {
+        val built = wordOrderItems()
+        assertEquals(
+            "Authored word order items must match the built-in items exactly",
+            built.map { it.id.key }.toSet(),
+            WORD_ORDER_RULE_ITEMS.keys,
+        )
+        assertEquals(built.size, built.map { it.id.key }.distinct().size)
+        for (item in built) {
+            assertNotNull("Word order item ${item.id}: no rule id", item.ruleId)
+            assertNotNull(
+                "Word order item ${item.id}: rule ${item.ruleId} is not in the registry",
+                DrillHelpContent.rule(item.ruleId),
+            )
+            assertEquals(
+                "Word order item ${item.id}: built-in rule id must be the authored one",
+                WORD_ORDER_RULE_ITEMS[item.id.key],
+                item.ruleId,
+            )
+        }
+        assertEquals(
+            DrillWordOrder.Category.entries.map { it.ruleId }.toSet(),
+            built.mapNotNull { it.ruleId }.toSet(),
+        )
+    }
+
+    @Test
+    fun savedWordPronounSeparableAndWordOrderItemsKeepNoRuleId() {
+        val pronounWords = listOf(Word(id = 707L, text = "ich", dueDay = 0L, addedAt = 0L))
+        val savedPronouns = DrillPronouns.items(pronounWords).filter { it.id.key == "707" }
+        assertTrue("Expected saved-word items for ich", savedPronouns.isNotEmpty())
+        for (item in savedPronouns) assertNull("${item.id} must carry no rule id", item.ruleId)
+
+        val sepWords = listOf(Word(id = 808L, text = "anrufen", dueDay = 0L, addedAt = 0L))
+        val savedSeparable = DrillSeparableVerbs.items(sepWords).filter { it.id.key.startsWith("808") }
+        assertTrue("Expected saved-word items for anrufen", savedSeparable.isNotEmpty())
+        for (item in savedSeparable) assertNull("${item.id} must carry no rule id", item.ruleId)
+
+        val builtIn = wordOrderItems().first()
+        val tile = builtIn.tiles.first()
+        val saved = DrillWordOrder.items(
+            listOf(Word(id = 909L, text = tile, dueDay = 0L, addedAt = 0L)),
+        ).filter { it.id.key.startsWith("909:") }
+        assertTrue("Expected a saved-word word order item", saved.isNotEmpty())
+        for (item in saved) assertNull("${item.id} must carry no rule id", item.ruleId)
     }
 
     @Test
@@ -227,12 +299,16 @@ class DrillHelpContentTest {
 
     @Test
     fun preAnswerProseNamesNoItemSpecificAnswer() {
-        for ((item, rule) in itemRules()) {
+        for ((item, rule) in itemRules() + wordOrderItemRules()) {
             // Words the rule already shows in its forms table are part of the shown
             // contrast set, not a named answer.
             val contrastWords = DrillHints.words(rule.table.allText()).toSet()
             for (answerWord in DrillHints.words(item.answer)) {
                 if (answerWord in contrastWords) continue
+                // Word-order answers are whole sentences (synthetic items have no choices),
+                // so their short function words ("in", "an", "um") collide with ordinary
+                // English in the authored prose and carry no answer.
+                if (item.choices.isEmpty() && answerWord.length <= 3) continue
                 for ((label, prose) in listOf(
                     "title" to rule.title,
                     "rule" to rule.rule,
@@ -269,7 +345,7 @@ class DrillHelpContentTest {
     fun everyRuleIdInContentIsUsedByAnItem() {
         val usedIds = (DrillGapTopics.allTopics() + liveItems())
             .flatMap { (_, items) -> items.mapNotNull { it.ruleId } }
-            .toSet()
+            .toSet() + wordOrderItems().mapNotNull { it.ruleId }
         for (id in DrillHelpContent.ids()) {
             assertTrue(
                 "$id is defined in DrillHelpContent but no item points at it",
@@ -399,6 +475,9 @@ class DrillHelpContentTest {
                 rule.id.startsWith("adj-") -> "adjective endings"
                 rule.id.startsWith("art-") -> "articles"
                 rule.id.startsWith("plural") -> "plurals"
+                rule.id.startsWith("pron-") -> "pronouns"
+                rule.id.startsWith("sep-") -> "separable verbs"
+                rule.id.startsWith("wo-") -> "word order"
                 else -> throw AssertionError("Unclassified live rule id: ${rule.id}")
             }
         }
@@ -483,5 +562,63 @@ class DrillHelpContentTest {
             "Darf ich dich **um** Hilfe bitten?",
             DrillHelpCard.filledExample(DrillQuizQuestion(bittenUm, DrillFormat.FLASHCARD)),
         )
+    }
+
+    @Test
+    fun authoredPronounAndSeparableContentCoversExactlyTheBuiltInItems() {
+        for ((type, content) in listOf(
+            DrillType.PRONOUNS to PRONOUN_RULE_CONTENT.mapValues { it.value.ruleId },
+            DrillType.SEPARABLE_VERBS to SEPARABLE_VERB_RULE_CONTENT.mapValues { it.value.ruleId },
+        )) {
+            val built = DrillTables.items(type)
+            assertTrue("$type must have built-in items", built.isNotEmpty())
+            // Both directions: authored content that matches no item, or an item with
+            // no authored content, fails; a count match alone proves nothing.
+            assertEquals(
+                "$type: authored keys must match the built-in item keys exactly",
+                built.map { it.id.key }.toSet(),
+                content.keys,
+            )
+            assertEquals(built.size, built.map { it.id.key }.distinct().size)
+            for (item in built) {
+                assertEquals(
+                    "$type item ${item.id}: built-in rule id must be the authored one",
+                    content[item.id.key],
+                    item.ruleId,
+                )
+            }
+        }
+    }
+
+    @Test
+    fun pronounAndSeparableMissLinesAreWiredPerWrongChoice() {
+        val pronouns = DrillPronouns.items().single { it.id.key == "pron:ich:2" }
+        assertEquals("pron-first-second", pronouns.ruleId)
+        assertEquals(
+            "the dative form of du — the help comes to me, so mir.",
+            pronouns.missByChoice["dir"],
+        )
+        val separable = DrillSeparableVerbs.items().single { it.id.key == "sep:anrufen:1" }
+        assertEquals("sep-participle-ge", separable.ruleId)
+        assertEquals(
+            "ge- belongs between the prefix and the stem, never in front, so angerufen.",
+            separable.missByChoice["geanrufen"],
+        )
+    }
+
+    @Test
+    fun onlyConjugationAndClozeStillHaveNoBuiltInHelpRule() {
+        // A type lands in this set when a built-in item of it carries no rule id, or
+        // when it has no built-in items at all (such a type must not count as wired).
+        // Word-order items are [WordOrderItem]s, so their rule ids are read apart.
+        val withoutRule = DrillType.entries.filter { type ->
+            val ruleIds = if (type == DrillType.WORD_ORDER) {
+                wordOrderItems().map { it.ruleId }
+            } else {
+                DrillTables.items(type).map { it.ruleId }
+            }
+            ruleIds.isEmpty() || ruleIds.any { it == null }
+        }.toSet()
+        assertEquals(setOf(DrillType.CONJUGATION, DrillType.CLOZE), withoutRule)
     }
 }

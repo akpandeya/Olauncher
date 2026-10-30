@@ -14,14 +14,14 @@ package app.olauncher.data.store
  */
 object DrillWordOrder {
 
-    enum class Category(val displayName: String) {
-        VERB_SECOND("Verb second in main clauses"),
-        VERB_LAST_SUBORDINATE("Verb last after subjunctions"),
-        SEPARABLE_VERB("Separable prefix at the end"),
-        MODAL_INFINITIVE("Modal plus infinitive at the end"),
-        PERFEKT_BRACKET("Perfekt bracket"),
-        TEKAMOLO("TeKaMoLo order"),
-        YES_NO_QUESTION("Verb-first yes/no questions"),
+    enum class Category(val displayName: String, val ruleId: String) {
+        VERB_SECOND("Verb second in main clauses", "wo-verb-second"),
+        VERB_LAST_SUBORDINATE("Verb last after subjunctions", "wo-verb-last-sub"),
+        SEPARABLE_VERB("Separable prefix at the end", "wo-separable-end"),
+        MODAL_INFINITIVE("Modal plus infinitive at the end", "wo-modal-infinitive"),
+        PERFEKT_BRACKET("Perfekt bracket", "wo-perfekt-bracket"),
+        TEKAMOLO("TeKaMoLo order", "wo-tekamolo"),
+        YES_NO_QUESTION("Verb-first yes/no questions", "wo-verb-first-question"),
     }
 
     data class Entry(
@@ -674,7 +674,13 @@ object DrillWordOrder {
                 hint = "Ja/Nein-Frage: Konjugiertes Verb auf Position 1",
             ),
         ),
-    )
+    ).map { entry ->
+        val ruleId = DrillHelpContent.requireValidRuleId(
+            entry.category.ruleId,
+            "word order item ${entry.key}",
+        )
+        entry.copy(item = entry.item.copy(ruleId = ruleId))
+    }
 
     /** Complete table of word order drill items. */
     val TABLE: List<WordOrderItem> = ENTRIES.map { it.item }
@@ -688,7 +694,10 @@ object DrillWordOrder {
                 wordMap[tile.lowercase()]
             }
             if (matchingWord != null) {
-                item.copy(id = DrillItemId(DrillType.WORD_ORDER, "${matchingWord.id}:${item.id.key}"))
+                item.copy(
+                    id = DrillItemId(DrillType.WORD_ORDER, "${matchingWord.id}:${item.id.key}"),
+                    ruleId = null,
+                )
             } else {
                 item
             }
