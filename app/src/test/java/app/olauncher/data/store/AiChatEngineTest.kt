@@ -605,4 +605,52 @@ class AiChatEngineTest {
         assertNull(state.pendingQuestion)
         assertFalse(state.storeError)
     }
+
+    @Test
+    fun `resume after process death repairs the trailing unanswered turn so retry recovers it`() =
+        runBlocking {
+            val store = FakeStore()
+            val provider = FakeProvider()
+            val chat = engine(store, provider)
+            chat.open(AiChatOpen.Fresh(subject))
+            provider.script = { p, _ -> p.reply() }
+            chat.send("Erste Frage")
+
+            // A second send persists its turn, then the request hangs — the
+            // process dies before any result settles, so the turn stays on disk
+            // as an ordinary, non-failed question.
+            val inFlight = CompletableDeferred<Unit>()
+            provider.onRequest = { inFlight.complete(Unit) }
+            provider.gate = CompletableDeferred<Unit>()
+            val job = launch { chat.send("Zweite Frage") }
+            inFlight.await()
+            val threadId = store.threads.keys.single()
+            job.cancel()
+            assertFalse(store.threads.values.single().messages.last().failed)
+
+            val resumed = engine(store, provider)
+            val state = resumed.open(AiChatOpen.Resumed(threadId))
+
+            // The resume repairs the trailing unanswered turn to failed
+            // ("Not sent · Retry") — in the state and in the store.
+            assertNull(state.pendingQuestion)
+            val repaired = state.thread!!.messages.last()
+            assertEquals("Zweite Frage", repaired.text)
+            assertTrue(repaired.failed)
+            assertTrue(store.threads.values.single().messages.last().failed)
+
+            // Retry recovers the question: it re-fires as the newest failed turn.
+            provider.gate = null
+            provider.script = { p, _ -> p.reply() }
+            val outcome = resumed.retry()
+
+            assertTrue(outcome is AiChatRetry.Fired)
+            assertFalse((outcome as AiChatRetry.Fired).askAgain)
+            assertTrue(provider.lastChatRequest().prompt.contains("[New question | user] Zweite Frage"))
+            val thread = resumed.state.value.thread!!
+            assertEquals(4, thread.messages.size)
+            assertEquals("Zweite Frage", thread.messages[2].text)
+            assertFalse(thread.messages[2].failed)
+            assertEquals(2, AiChatThreads.deliveredTurns(thread))
+        }
 }

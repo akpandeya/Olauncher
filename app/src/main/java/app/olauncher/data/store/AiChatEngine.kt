@@ -153,7 +153,7 @@ class AiChatEngine(
             is AiChatOpen.Resumed -> {
                 freshSubject = null
                 freshGroundings = emptyList()
-                persistence.thread(open.threadId)
+                persistence.thread(open.threadId)?.let { repairTrailingUnansweredTurn(it) }
             }
         }
         publish(
@@ -462,6 +462,24 @@ class AiChatEngine(
             newQuestion = question,
             omitTurnsUpTo = omittedUpTo ?: AiChatRequestBuilder.NO_OMITTED_TURNS,
         )
+    }
+
+    /**
+     * A resume that finds a trailing non-failed USER turn — process death between
+     * the persisted send and the settled result (design §Reliability) — marks it
+     * failed and persists the repair: by the `failed` ⇔ "Not sent · Retry"
+     * contract the turn must not render as an ordinary sent question that no
+     * answer is coming for, and retry() filters on `failed`.
+     */
+    private fun repairTrailingUnansweredTurn(thread: AiChatThread): AiChatThread {
+        val last = thread.messages.lastOrNull() ?: return thread
+        if (last.role != AiChatMessage.Role.USER || last.failed) return thread
+        val repaired = thread.copy(
+            messages = thread.messages.dropLast(1) + last.copy(failed = true),
+            updatedAt = time(),
+        )
+        recordWrite(persistence.upsert(repaired))
+        return repaired
     }
 
     /** Records a storage outcome; a failure surfaces as the inline store-error state. */
