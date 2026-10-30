@@ -264,7 +264,10 @@ class AiChatRequestBuilderTest {
             chips = emptyList(),
         )
         val prompt = AiChatRequestBuilder.build(thread(groundings = listOf(grounding(unknown, "g1"))), "q")
-        assertTrue(prompt.contains("| rule: rule-no-such-thing (rule-no-such-thing)"))
+        assertTrue(prompt.contains("| rule: rule-no-such-thing"))
+        // The raw id is not repeated in parens when no title resolved — only a
+        // resolved rule earns the "title (id)" form.
+        assertFalse(prompt.contains("(rule-no-such-thing)"))
         assertFalse(prompt.contains("| rule text:"))
     }
 
