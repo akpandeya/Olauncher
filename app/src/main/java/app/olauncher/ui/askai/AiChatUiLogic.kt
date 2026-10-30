@@ -183,7 +183,7 @@ object AiChatUiLogic {
         state: AiChatState,
         provisional: Boolean,
         openingSubject: AiChatSubject? = null,
-        openingGroundings: List<app.olauncher.data.store.AiChatGrounding> = emptyList(),
+        openingGroundings: List<AiChatGrounding> = emptyList(),
     ): Header {
         if (provisional) return Header.NewConversation
         val thread = state.thread
@@ -191,7 +191,7 @@ object AiChatUiLogic {
         return openingSubject?.let { header(it, openingGroundings) } ?: Header.NewConversation
     }
 
-    private fun header(subject: AiChatSubject, groundings: List<app.olauncher.data.store.AiChatGrounding>): Header =
+    private fun header(subject: AiChatSubject, groundings: List<AiChatGrounding>): Header =
         when (subject.kind) {
             AiChatSubject.Kind.WORD -> Header.Word(
                 // The citation form as written lives on the word grounding; the

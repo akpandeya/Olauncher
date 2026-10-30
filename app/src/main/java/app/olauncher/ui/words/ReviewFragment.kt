@@ -1,9 +1,10 @@
 package app.olauncher.ui.words
 
+import android.content.Context
 import android.os.Bundle
 import android.os.SystemClock
-import android.view.Menu
 import android.view.LayoutInflater
+import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
@@ -45,10 +46,10 @@ import app.olauncher.helper.MotionPolicy
 import app.olauncher.helper.SystemMotion
 import app.olauncher.helper.showPopupMenu
 import app.olauncher.ui.BaseFragment
+import app.olauncher.ui.askai.AskAiEntries
 import app.olauncher.ui.today.attachPressScale
 import app.olauncher.ui.today.cards.WordsCard
 import app.olauncher.ui.today.cards.WordsCardLogic
-import android.content.Context
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -367,7 +368,7 @@ class ReviewFragment : BaseFragment() {
             chip.isVisible = false
             return
         }
-        val subject = AiChatSubject(AiChatSubject.Kind.WORD, AiChatRouter.normalizeCitation(word.text))
+        val subject = (AiChatRouter.routeForReviewMiss(word) as AiChatRouter.Route.Word).subject
         val groundings = listOf(AskAiEntryPoints.wordGrounding(word))
         chip.text = AskAiEntryPoints.chipText(context, askAi.turns(subject))
         chip.contentDescription = AskAiEntryPoints.chipAnnouncement(context, askAi.turns(subject))
@@ -487,10 +488,16 @@ class ReviewFragment : BaseFragment() {
             b.askAiRow.isVisible = false
             b.askAiRow.setOnClickListener(null)
             b.askAiRow.setOnLongClickListener(null)
+            b.askAiHint.isVisible = false
             return
         }
         b.askAiRow.text = AskAiEntryPoints.wordRowText(context, askAi.turns(target.subject))
         b.askAiRow.isVisible = true
+        // The muted older-threads hint under the row (mock screen 3): only when
+        // the subject has two or more threads to list.
+        val threadCount = askAi.threadCount(target.subject)
+        b.askAiHint.isVisible = AskAiEntries.showOlderThreadsHint(threadCount)
+        b.askAiHint.text = context.getString(R.string.ask_ai_word_row_older_hint, threadCount)
         b.askAiRow.setOnClickListener { view ->
             Haptics.tick(view)
             AskAiEntryPoints.openChat(this, R.id.reviewFragment, target.subject, groundings = target.groundings)
@@ -558,7 +565,8 @@ class ReviewFragment : BaseFragment() {
             when (item.itemId) {
                 1 -> WordDialogs.showEditDialog(context, word, { viewLifecycleOwnerOrNull() }) { refreshQueueFromStore() }
                 3 -> ai?.let {
-                    Haptics.tick(anchor)
+                    // showPopupMenu already ticks (Haptics.Kind.MENU) per item;
+                    // another tick here would double-vibrate.
                     AskAiEntryPoints.openChat(this, R.id.reviewFragment, it.subject, groundings = it.groundings)
                 }
                 2 -> WordDialogs.showDeleteDialog(context, word) { refreshQueueFromStore() }

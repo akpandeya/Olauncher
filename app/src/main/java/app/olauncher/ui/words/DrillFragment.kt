@@ -64,7 +64,6 @@ import app.olauncher.helper.hideKeyboard
 import app.olauncher.helper.isSystemAnimationsDisabled
 import app.olauncher.helper.showKeyboard
 import app.olauncher.ui.BaseFragment
-import app.olauncher.ui.askai.AskAiEntries
 import app.olauncher.ui.today.attachPressScale
 import app.olauncher.ui.today.cards.WordsCard
 import java.util.Random

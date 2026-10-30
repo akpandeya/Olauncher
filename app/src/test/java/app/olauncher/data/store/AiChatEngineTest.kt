@@ -361,6 +361,26 @@ class AiChatEngineTest {
         assertEquals(2, recreated.messages.size)
     }
 
+    @Test
+    fun `cancel with nothing in flight is a no-op NothingPending`() = runBlocking {
+        val store = FakeStore()
+        val provider = FakeProvider()
+        val chat = engine(store, provider)
+        chat.open(AiChatOpen.Fresh(subject))
+        provider.script = { p, _ -> p.reply() }
+
+        // Nothing sent yet: no thread, nothing pending.
+        assertEquals(AiChatCancel.NothingPending, chat.cancel())
+        assertTrue(store.threads.isEmpty())
+
+        // After a settled turn the thread exists, but no request is running.
+        chat.send("Erste Frage")
+        assertEquals(AiChatCancel.NothingPending, chat.cancel())
+        assertEquals(2, chat.state.value.thread!!.messages.size)
+        assertEquals(2, store.threads.values.single().messages.size)
+        assertNull(chat.state.value.pendingQuestion)
+    }
+
     // --- storage failure ---------------------------------------------------------------------
 
     @Test
@@ -429,6 +449,60 @@ class AiChatEngineTest {
             assertTrue(nextPrompt.contains("[Turn 1 | user] Frage 4 "))
             assertTrue(nextPrompt.contains("[New question | user] Kurze Nachfrage"))
         }
+
+    @Test
+    fun `a successful compaction's usage becomes the latest request's usage`() = runBlocking {
+        val store = FakeStore()
+        val provider = FakeProvider()
+        provider.replyPadding = bigReplyPadding
+        val chat = engine(store, provider)
+        chat.open(AiChatOpen.Fresh(subject))
+        val summariseUsage = AiUsage(inputTokens = 9000, outputTokens = 40)
+        provider.script = { p, request ->
+            if (isSummarise(request)) AiResult.Ok("Kompakt: Praepositionen geklaert", summariseUsage, latencyMs = 5L)
+            else p.reply()
+        }
+        for (i in 1..4) chat.send(bigQuestion(i))
+
+        // Design §Threads: the usage line reports the LATEST request, a
+        // compaction cost included — the summarise call ran after the last chat
+        // reply, so its usage replaces the chat reply's.
+        assertEquals(summariseUsage, chat.state.value.lastUsage)
+    }
+
+    @Test
+    fun `a send that fired during compaction keeps the usage line off the stale summarise`() = runBlocking {
+        val store = FakeStore()
+        val provider = FakeProvider()
+        provider.replyPadding = bigReplyPadding
+        val chat = engine(store, provider)
+        chat.open(AiChatOpen.Fresh(subject))
+        provider.script = { p, request ->
+            if (isSummarise(request)) AiResult.Ok("Kompakt", AiUsage(9000, 40), latencyMs = 5L) else p.reply()
+        }
+        for (i in 1..3) chat.send(bigQuestion(i))
+
+        val summariseHeld = CompletableDeferred<Unit>()
+        provider.onRequest = { request -> if (isSummarise(request)) summariseHeld.complete(Unit) }
+        provider.summariseGate = CompletableDeferred()
+        val compactionJob = launch { chat.send(bigQuestion(4)) }
+        summariseHeld.await()
+
+        provider.gate = CompletableDeferred()
+        val sendJob = launch { chat.send("Neue Frage") }
+
+        // The summary lands while a newer chat request is in flight: the
+        // summarise ran BEFORE that request, so it is not the latest — the
+        // usage line keeps the chat usage instead.
+        provider.summariseGate!!.complete(Unit)
+        compactionJob.join()
+        assertEquals(AiUsage(111, 22), chat.state.value.lastUsage)
+
+        // The send's own reply then reports its usage as usual.
+        provider.gate!!.complete(Unit)
+        sendJob.join()
+        assertEquals(AiUsage(111, 22), chat.state.value.lastUsage)
+    }
 
     @Test
     fun `compaction failure is not an error - the oldest prose is omitted and the store stays lossless`() =

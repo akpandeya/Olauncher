@@ -409,11 +409,11 @@ class AiChatEngine(
                 if (projected <= threshold) return
                 val covers = AiChatRequestBuilder.compactionCoversUpTo(thread)
                 when {
-                    covers != null -> CompactionPlan.Summarise(thread, covers)
+                    covers != null -> CompactionPlan.Summarise(thread, covers, generation)
                     // The 7k target is unreachable, but the request still fits
                     // under the trigger: keep it, never truncate for less.
                     projected <= AiChatRequestBuilder.COMPACTION_TRIGGER_TOKENS -> return
-                    else -> CompactionPlan.Truncate
+                    else -> CompactionPlan.Truncate(thread.id)
                 }
             }
             when (plan) {
@@ -453,7 +453,17 @@ class AiChatEngine(
                             // waiting state instead of clearing it.
                             pendingQuestion = stateFlow.value.pendingQuestion,
                             omittedUpTo = null,
-                            lastUsage = stateFlow.value.lastUsage,
+                            // Design §Threads: the usage line reports the LATEST
+                            // request, a compaction cost included — so when no
+                            // send fired while the summarise ran (the fired
+                            // generation still stands), its usage becomes the
+                            // latest. A send that fired meanwhile reports its own
+                            // usage when its reply lands.
+                            lastUsage = if (plan.firedGeneration == generation) {
+                                (result as? AiResult.Ok)?.usage ?: stateFlow.value.lastUsage
+                            } else {
+                                stateFlow.value.lastUsage
+                            },
                         )
                     }
                     passes++
@@ -462,8 +472,8 @@ class AiChatEngine(
                         return
                     }
                 }
-                CompactionPlan.Truncate -> {
-                    applyTruncationFallback()
+                is CompactionPlan.Truncate -> {
+                    applyTruncationFallback(plan.threadId)
                     return
                 }
             }
@@ -575,8 +585,15 @@ class AiChatEngine(
     }
 
     private sealed class CompactionPlan {
-        data class Summarise(val thread: AiChatThread, val coversUpTo: Int) : CompactionPlan()
-        object Truncate : CompactionPlan()
+        /** [firedGeneration] is the generation the summarise call rides (design §Threads usage line). */
+        data class Summarise(
+            val thread: AiChatThread,
+            val coversUpTo: Int,
+            val firedGeneration: Long,
+        ) : CompactionPlan()
+
+        /** [threadId] guards the fallback against a session that moved threads meanwhile. */
+        data class Truncate(val threadId: String) : CompactionPlan()
     }
 
     companion object {

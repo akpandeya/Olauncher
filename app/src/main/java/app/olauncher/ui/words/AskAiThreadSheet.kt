@@ -87,7 +87,9 @@ object AskAiThreadSheet {
             isClickable = true
             isFocusable = true
             // The row announces its content ("Chat, 4 turns"), design §Accessibility.
-            contentDescription = context.getString(R.string.ask_ai_row_a11y, row.turns)
+            contentDescription = context.resources.getQuantityString(
+                R.plurals.chat_a11y_announce, row.turns, row.turns,
+            )
         }
         val snippet = TextView(context).apply {
             TextViewCompat.setTextAppearance(this, R.style.TodayCardBody)

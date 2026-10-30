@@ -96,4 +96,11 @@ object AskAiEntries {
      * more ("Two-way prepositions · 2 conversations"); one or none reads plain.
      */
     fun sheetTitleShowsCount(threadCount: Int): Boolean = threadCount > 1
+
+    /**
+     * Whether the word-card row shows the muted "Long-press for older threads
+     * (n)" hint (mock screen 3): only when the subject has two or more threads —
+     * with fewer, the long-press has nothing beyond the latest thread to list.
+     */
+    fun showOlderThreadsHint(threadCount: Int): Boolean = threadCount >= 2
 }
