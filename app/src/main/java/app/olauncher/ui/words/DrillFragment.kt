@@ -1,6 +1,7 @@
 package app.olauncher.ui.words
 
 import android.animation.ObjectAnimator
+import android.content.Context
 import android.graphics.Typeface
 import android.os.Bundle
 import android.text.SpannableString
@@ -49,8 +50,11 @@ import app.olauncher.data.store.PracticeItemsStore
 import app.olauncher.data.store.ReviewEventsStore
 import app.olauncher.data.store.ReviewSessionLogic
 import app.olauncher.data.store.SharedOfflineGermanStore
+import app.olauncher.data.store.Word
 import app.olauncher.data.store.WordOrderQuestion
 import app.olauncher.data.store.WordOrderQuiz
+import app.olauncher.data.store.AiChatRouter
+import app.olauncher.data.store.AiChatSubject
 import app.olauncher.data.store.shouldAutoAdvance
 import app.olauncher.databinding.FragmentDrillBinding
 import app.olauncher.databinding.ItemSummaryRowBinding
@@ -60,6 +64,7 @@ import app.olauncher.helper.hideKeyboard
 import app.olauncher.helper.isSystemAnimationsDisabled
 import app.olauncher.helper.showKeyboard
 import app.olauncher.ui.BaseFragment
+import app.olauncher.ui.askai.AskAiEntries
 import app.olauncher.ui.today.attachPressScale
 import app.olauncher.ui.today.cards.WordsCard
 import java.util.Random
@@ -1319,6 +1324,7 @@ class DrillFragment : BaseFragment() {
                 result = res,
                 learnerAnswer = learnerAnswers[item.id],
                 roundIndex = index,
+                ruleId = item.ruleId,
             )
         }
         val sortedItems = DrillSummaryLogic.sort(summaryItems)
@@ -1358,6 +1364,11 @@ class DrillFragment : BaseFragment() {
     private fun bindSummaryRows(items: List<DrillSummaryItem>) {
         val b = binding
         val context = b.root.context
+        // One render pass's Ask-AI state: visibility (gate + valid config) and the
+        // per-subject turn counts, read once for the whole list (docs/design/
+        // ask-ai-chat.md §Entry points).
+        val ai = AskAiEntryPoints.environment(context)
+        val savedWords = WordsCard.getStore(context).all()
         b.summaryList.removeAllViews()
         for (item in items) {
             val itemBinding = ItemSummaryRowBinding.inflate(layoutInflater, b.summaryList, false)
@@ -1380,7 +1391,62 @@ class DrillFragment : BaseFragment() {
                     itemBinding.tvSecondary.isVisible = correction.isNotEmpty()
                 }
             }
+            bindAskAiChip(itemBinding.tvAskAi, context, ai, savedWords, item)
             b.summaryList.addView(itemBinding.root)
+        }
+    }
+
+    /**
+     * Binds one summary row's Ask-AI chip (docs/design/ask-ai-chat.md §Entry
+     * points): wrong and almost rows only, visible iff the AI gate is open and
+     * the provider config valid — hidden, never greyed. The chip opens the
+     * subject's latest thread (or a fresh one carrying the miss); long-press
+     * opens the thread sheet.
+     */
+    private fun bindAskAiChip(
+        chip: TextView,
+        context: Context,
+        ai: AskAiEntryPoints.Environment,
+        savedWords: List<Word>,
+        item: DrillSummaryItem,
+    ) {
+        if (item.result == DrillResult.RIGHT || !ai.visible) {
+            chip.isVisible = false
+            return
+        }
+        val (subject, proposal) = when (val route = AiChatRouter.route(item.id, item.ruleId, savedWords, ai.subjects)) {
+            is AiChatRouter.Route.ProvisionalBoth -> route.wordSubject to route.ruleSubject
+            is AiChatRouter.Route.Word -> route.subject to null
+            is AiChatRouter.Route.Rule -> route.subject to null
+            is AiChatRouter.Route.Topic -> route.subject to null
+        }
+        // The grounding the fresh chat carries: the miss itself, plus the word
+        // block when the thread belongs to a saved word (so a fresh both-
+        // candidates thread shows both blocks, design §Chat screen).
+        val groundings = buildList {
+            add(AskAiEntryPoints.missGrounding(item.prompt, item.learnerAnswer, item.answer, item.ruleId))
+            if (subject.kind == AiChatSubject.Kind.WORD) {
+                AskAiEntryPoints.wordForSubject(savedWords, subject)?.let { add(AskAiEntryPoints.wordGrounding(it)) }
+            }
+        }
+        chip.text = AskAiEntryPoints.chipText(context, ai.turns(subject))
+        chip.contentDescription = AskAiEntryPoints.chipAnnouncement(context, ai.turns(subject))
+        chip.isVisible = true
+        chip.setOnClickListener { view ->
+            Haptics.tick(view)
+            AskAiEntryPoints.openChat(this, R.id.drillFragment, subject, proposal, groundings)
+        }
+        chip.setOnLongClickListener { view ->
+            Haptics.tick(view)
+            AskAiThreadSheet.show(
+                this,
+                subject,
+                AskAiEntryPoints.subjectTitle(context, savedWords, subject),
+                groundings,
+            ) { threadId ->
+                AskAiEntryPoints.open(this, R.id.drillFragment, subject, threadId, proposal, groundings)
+            }
+            true
         }
     }
 
@@ -1589,6 +1655,7 @@ class DrillFragment : BaseFragment() {
                 result = res,
                 learnerAnswer = learnerAnswers[item.id],
                 roundIndex = index,
+                ruleId = item.ruleId,
             )
         }
         val sortedItems = DrillSummaryLogic.sort(summaryItems)
