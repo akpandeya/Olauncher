@@ -180,7 +180,7 @@ class CaptureOverlayView @JvmOverloads constructor(
             if (word !in pendingWords) continue
             drawPendingFill(canvas, t, word)
         }
-        dragSelection?.words?.forEach { drawPendingFill(canvas, t, it) }
+        dragFillWords(dragSelection?.words, pendingWords).forEach { drawPendingFill(canvas, t, it) }
         // The focused word (the meaning card's word) gets a thicker outline on top.
         focusedWord?.let { word ->
             val rect = highlightRect(t, word) ?: return@let
@@ -352,3 +352,11 @@ class CaptureOverlayView @JvmOverloads constructor(
         private const val FOCUS_STROKE = 5f
     }
 }
+
+/**
+ * The words the transient long-press drag pass paints. A word that is already pending
+ * keeps its fill from the pending loop — painting it again stacks the translucent alphas
+ * and reads darker than its neighbours — so the drag pass skips it.
+ */
+internal fun dragFillWords(dragWords: List<ScreenWord>?, pendingWords: Set<ScreenWord>): List<ScreenWord> =
+    dragWords.orEmpty().filter { it !in pendingWords }
