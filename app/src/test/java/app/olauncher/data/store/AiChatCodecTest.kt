@@ -502,6 +502,51 @@ class AiChatCodecTest {
         assertNull(AiChatThreads.latestThread(emptyList(), subject))
     }
 
+    @Test
+    fun `error kind round-trips on a failed turn and degrades to null when unknown`() {
+        val failed = AiChatMessage(
+            role = AiChatMessage.Role.USER,
+            text = "Wann sagt man wohin?",
+            ts = 5,
+            failed = true,
+            errorKind = AiResult.ErrorKind.AUTH,
+        )
+        val decoded = AiChatCodec.decode(AiChatCodec.encode(listOf(threadWithMessage(failed))))
+        val message = (decoded as AiChatCodec.AiChatDecoded.Decoded).threads.single().messages.single()
+        assertEquals(AiResult.ErrorKind.AUTH, message.errorKind)
+
+        val unknown = AiChatCodec.decode(
+            """
+            {"version":1,"threads":[{"id":"t","subject":{"kind":"word","ref":"haus"},
+              "createdAt":1,"messages":[{"role":"user","text":"q","ts":2,"failed":true,"errorKind":"SOMETHING_NEW"}]}]}
+            """.trimIndent()
+        )
+        val degraded = (unknown as AiChatCodec.AiChatDecoded.Decoded).threads.single().messages.single()
+        assertNull(degraded.errorKind)
+        assertTrue(degraded.failed)
+    }
+
+    @Test
+    fun `groundings JSON seam round-trips and malformed input decodes to nothing`() {
+        val raw = AiChatCodec.encodeGroundingsJson(listOf(wordGrounding(), practiceGrounding()))
+        val decoded = AiChatCodec.decodeGroundingsJson(raw)
+        assertEquals(listOf(wordGrounding(), practiceGrounding()), decoded)
+
+        assertTrue(AiChatCodec.decodeGroundingsJson(null).isEmpty())
+        assertTrue(AiChatCodec.decodeGroundingsJson("").isEmpty())
+        assertTrue(AiChatCodec.decodeGroundingsJson("not json").isEmpty())
+    }
+
+    private fun threadWithMessage(message: AiChatMessage): AiChatThread {
+        return AiChatThread(
+            id = "t-err",
+            subject = AiChatSubject(AiChatSubject.Kind.WORD, "haus"),
+            createdAt = 1,
+            updatedAt = 2,
+            messages = listOf(message),
+        )
+    }
+
     private fun threadWith(grounding: AiChatGrounding): AiChatThread {
         return AiChatThread(
             id = "t-g",

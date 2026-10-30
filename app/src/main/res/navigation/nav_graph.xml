@@ -346,4 +346,53 @@
             app:popExitAnim="@animator/fade_exit" />
     </fragment>
 
+    <fragment
+        android:id="@+id/aiChatFragment"
+        android:name="app.olauncher.ui.words.AiChatFragment"
+        android:label="AiChatFragment"
+        tools:layout="@layout/fragment_ai_chat">
+        <argument
+            android:name="subjectKind"
+            app:argType="string" />
+        <argument
+            android:name="subjectRef"
+            app:argType="string" />
+        <argument
+            android:name="threadId"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
+        <argument
+            android:name="proposalKind"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
+        <argument
+            android:name="proposalRef"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
+        <argument
+            android:name="groundingsJson"
+            app:argType="string"
+            app:nullable="true"
+            android:defaultValue="@null" />
+    </fragment>
+
+    <!-- Opened by the chat screen's AUTH recovery and available to any entry point -->
+    <action
+        android:id="@+id/action_global_aiChatFragment"
+        app:destination="@id/aiChatFragment"
+        app:enterAnim="@animator/fade_enter"
+        app:exitAnim="@animator/fade_exit"
+        app:popEnterAnim="@animator/fade_enter"
+        app:popExitAnim="@animator/fade_exit" />
+    <action
+        android:id="@+id/action_global_settingsFragment"
+        app:destination="@id/settingsFragment"
+        app:enterAnim="@animator/fade_enter"
+        app:exitAnim="@animator/fade_exit"
+        app:popEnterAnim="@animator/fade_enter"
+        app:popExitAnim="@animator/fade_exit" />
+
 </navigation>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/today_panel"
+    android:gravity="center_vertical"
+    android:minHeight="48dp"
+    android:orientation="horizontal"
+    android:paddingHorizontal="14dp"
+    android:paddingVertical="6dp">
+
+    <TextView
+        android:id="@+id/tvError"
+        style="@style/TodayCardBodyLight"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:lineSpacingMultiplier="1.15"
+        android:textColor="?attr/dangerColor"
+        android:accessibilityLiveRegion="polite"
+        tools:text="Not sent · The AI is busy. Try again in a moment." />
+
+    <!-- Primary recovery (Open AI settings); hidden except on AUTH -->
+    <TextView
+        android:id="@+id/btnRecovery"
+        style="@style/TodayButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:minWidth="48dp"
+        android:paddingHorizontal="14dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:text="@string/chat_open_ai_settings"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
+    <!-- Retry on the newest failed turn, Ask again on an older one -->
+    <TextView
+        android:id="@+id/btnRetry"
+        style="@style/TodayChip"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:minWidth="48dp"
+        android:minHeight="48dp"
+        android:background="@drawable/today_chip_selectable"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:paddingHorizontal="14dp"
+        tools:text="Retry" />
+
+</LinearLayout>

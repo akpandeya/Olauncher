@@ -653,4 +653,140 @@ class AiChatEngineTest {
             assertFalse(thread.messages[2].failed)
             assertEquals(2, AiChatThreads.deliveredTurns(thread))
         }
+
+    // --- provisional both-candidates filing (design §Threads) ----------------------------
+
+    private val wordSubject = AiChatSubject(AiChatSubject.Kind.WORD, "die straße")
+
+    @Test
+    fun `the first reply's SUBJECT word line files the thread under the word candidate`() = runBlocking {
+        val store = FakeStore()
+        val provider = FakeProvider()
+        val chat = engine(store, provider)
+        chat.open(
+            AiChatOpen.Fresh(
+                subject = AiChatSubject(AiChatSubject.Kind.RULE, "noun-e"),
+                proposal = wordSubject,
+            )
+        )
+        provider.script = { p, _ -> okReply("SUBJECT: word\nDie Straße ist feminin.") }
+
+        chat.send("Warum die?")
+
+        val thread = chat.state.value.thread!!
+        // Re-filed under the word candidate; the SUBJECT line is stripped before render.
+        assertEquals(wordSubject, thread.subject)
+        assertEquals("Die Straße ist feminin.", thread.messages.last().text)
+        assertEquals(wordSubject, store.threads.values.single().subject)
+
+        // The proposal is consumed: a second turn renders and files nothing new.
+        provider.script = { p, _ -> p.reply() }
+        chat.send("Und der Genitiv?")
+        assertEquals(wordSubject, chat.state.value.thread!!.subject)
+    }
+
+    @Test
+    fun `a malformed SUBJECT line falls back to the rule subject and renders unchanged`() = runBlocking {
+        val store = FakeStore()
+        val provider = FakeProvider()
+        val chat = engine(store, provider)
+        val ruleSubject = AiChatSubject(AiChatSubject.Kind.RULE, "noun-e")
+        chat.open(AiChatOpen.Fresh(subject = ruleSubject, proposal = wordSubject))
+        provider.script = { _, _ -> okReply("SUBJECT:rule no space") }
+
+        chat.send("Warum die?")
+
+        val thread = chat.state.value.thread!!
+        assertEquals(ruleSubject, thread.subject)
+        assertEquals("SUBJECT:rule no space", thread.messages.last().text)
+    }
+
+    @Test
+    fun `a failed first reply keeps the proposal and the retry's reply is still parsed`() = runBlocking {
+        val store = FakeStore()
+        val provider = FakeProvider()
+        val chat = engine(store, provider)
+        chat.open(AiChatOpen.Fresh(subject = subject, proposal = wordSubject))
+        provider.script = { _, _ -> fail() }
+        chat.send("Warum die?")
+        assertTrue(chat.state.value.thread!!.messages.last().failed)
+
+        provider.script = { _, _ -> okReply("SUBJECT: word\nDie Straße ist feminin.") }
+        val outcome = chat.retry()
+
+        assertTrue(outcome is AiChatRetry.Fired)
+        val thread = chat.state.value.thread!!
+        assertEquals(wordSubject, thread.subject)
+        assertEquals("Die Straße ist feminin.", thread.messages.last().text)
+        assertFalse(thread.messages.last().failed)
+    }
+
+    @Test
+    fun `the both-candidates instruction rides the prompt until the first reply lands`() = runBlocking {
+        val store = FakeStore()
+        val provider = FakeProvider()
+        val chat = engine(store, provider)
+        chat.open(AiChatOpen.Fresh(subject = subject, proposal = wordSubject))
+        provider.script = { _, _ -> fail() }
+        chat.send("Warum die?")
+
+        // A settled failure keeps the thread provisional: the retry prompt too.
+        assertTrue(provider.lastChatRequest().prompt.contains(AiChatRequestBuilder.SUBJECT_INSTRUCTION))
+
+        provider.script = { _, _ -> okReply("Antwort") }
+        chat.retry()
+        // The successful reply consumed the proposal: the next send goes out
+        // without the both-candidates instruction.
+        chat.send("Zweite Frage")
+        assertFalse(provider.lastChatRequest().prompt.contains("SUBJECT: word"))
+    }
+
+    // --- error kind on failed turns (design §Reliability error table) --------------------
+
+    @Test
+    fun `a failed turn persists its error kind and a retry clears it`() = runBlocking {
+        val store = FakeStore()
+        val provider = FakeProvider()
+        val chat = engine(store, provider)
+        chat.open(AiChatOpen.Fresh(subject))
+        provider.script = { _, _ -> fail(AiResult.ErrorKind.AUTH) }
+        chat.send("Erste Frage")
+
+        val failed = chat.state.value.thread!!.messages.last()
+        assertTrue(failed.failed)
+        assertEquals(AiResult.ErrorKind.AUTH, failed.errorKind)
+        assertEquals(AiResult.ErrorKind.AUTH, store.threads.values.single().messages.last().errorKind)
+
+        provider.script = { p, _ -> p.reply() }
+        chat.retry()
+        val settled = chat.state.value.thread!!.messages.first()
+        assertFalse(settled.failed)
+        assertNull(settled.errorKind)
+    }
+
+    @Test
+    fun `cancel removes the grounding the cancelled turn introduced`() = runBlocking {
+        val store = FakeStore()
+        val provider = FakeProvider()
+        val chat = engine(store, provider)
+        chat.open(AiChatOpen.Fresh(subject))
+        provider.script = { p, _ -> p.reply() }
+        chat.send("Erste Frage")
+
+        // A second send carries a new grounding; cancelling it must leave none of it.
+        val newGrounding = grounding("g-new")
+        val started = CompletableDeferred<Unit>()
+        provider.onRequest = { started.complete(Unit) }
+        provider.gate = CompletableDeferred()
+        val job = launch { chat.send("Zweite Frage", newGrounding) }
+        started.await()
+        val outcome = chat.cancel()
+        job.cancel()
+
+        assertTrue(outcome is AiChatCancel.Cancelled)
+        val thread = chat.state.value.thread!!
+        assertFalse(thread.groundings.any { it.id == "g-new" })
+        assertFalse(store.threads.values.single().groundings.any { it.id == "g-new" })
+        assertTrue(thread.groundings.isEmpty())
+    }
 }

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/tvAssistantPanel"
+    style="@style/TodayCardBody"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/today_panel"
+    android:lineSpacingMultiplier="1.15"
+    android:paddingHorizontal="14dp"
+    android:paddingVertical="12dp"
+    tools:text="Movement into a place with a two-way preposition takes the accusative." />
