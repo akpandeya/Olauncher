@@ -32,6 +32,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import app.olauncher.R
 import app.olauncher.data.Prefs
+import app.olauncher.data.store.AiJoinBudget
 import app.olauncher.data.store.AiPracticeGate
 import app.olauncher.data.store.AiProvider
 import app.olauncher.data.store.AiProviderConfig
@@ -67,10 +68,10 @@ import app.olauncher.data.store.WordsStore
 import app.olauncher.databinding.ActivityWordCaptureBinding
 import java.io.File
 import java.util.Locale
+import java.util.UUID
+import java.util.concurrent.atomic.AtomicInteger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 class WordCaptureActivity : AppCompatActivity() {
@@ -108,11 +109,17 @@ class WordCaptureActivity : AppCompatActivity() {
         /** Saved in [onSaveInstanceState]: AI split-verb suggestions issued this capture. */
         private const val STATE_AI_JOIN_USED = "app.olauncher.AI_JOIN_USED"
 
+        /** Saved in [onSaveInstanceState]: the capture session the AI budget counter belongs to. */
+        private const val STATE_AI_JOIN_SESSION = "app.olauncher.AI_JOIN_SESSION"
+
         /**
          * Tier-3 AI split-verb suggestions per capture (#523): a capture is minutes long,
          * so the cap bounds the cost of the fallback while still covering a few unknowns.
          */
         private const val AI_JOIN_SESSION_CAP = 3
+
+        /** The AI suggestion budgets of the capture sessions alive in this process (#698). */
+        private val aiJoinBudget = AiJoinBudget(AI_JOIN_SESSION_CAP)
     }
 
     /** Capture files this intent referenced (path → lastModified at open); deleted on close. */
@@ -121,14 +128,14 @@ class WordCaptureActivity : AppCompatActivity() {
     /**
      * AI split-verb suggestions issued this capture session (#523 tier 3). Counted when a
      * request goes out, not when it succeeds, so retries cannot exceed [AI_JOIN_SESSION_CAP].
-     * Check-then-increment happens under [aiJoinMutex]: overlapping tap coroutines on IO must
-     * not both read below the cap and issue together. Carried through rotation via
-     * [STATE_AI_JOIN_USED], because rotation recreates the activity mid-capture.
+     * The counter lives in the process-scoped [aiJoinBudget], keyed by [aiJoinSessionId]:
+     * rotation rebinds to the same counter, so an in-flight request from the previous
+     * instance cannot under-count the restored session (#698).
      */
-    private var aiJoinSuggestionsUsed = 0
+    private lateinit var aiJoinCounter: AtomicInteger
 
-    /** Serializes the cap check-then-increment of [aiJoinSuggestionsUsed]. */
-    private val aiJoinMutex = Mutex()
+    /** The capture session's id, carried through rotation via [STATE_AI_JOIN_SESSION] (#698). */
+    private lateinit var aiJoinSessionId: String
 
     /** The Reader is the visible UI — remembered across rotation so it is not lost. */
     private var readerMode = false
@@ -157,9 +164,16 @@ class WordCaptureActivity : AppCompatActivity() {
         val screenLines = intent?.getStringArrayListExtra(WordScreenService.EXTRA_SCREEN_LINES)
         val capture = WordCapture.classify(readIncomingText())
         val restoredReader = savedInstanceState?.getBoolean(STATE_READER_MODE, false) == true
-        // Rotation mid-capture restores the issued-suggestions count with the reader mode,
-        // so the per-capture AI budget is not refilled by turning the device.
-        aiJoinSuggestionsUsed = savedInstanceState?.getInt(STATE_AI_JOIN_USED, 0) ?: 0
+        // Rotation mid-capture rebinds to the same session counter (#698), so the per-capture
+        // AI budget is not refilled by turning the device — and an in-flight request from the
+        // previous instance increments a counter this instance still reads. After process
+        // death the counter is gone; the count saved in the bundle seeds a fresh one.
+        aiJoinSessionId = savedInstanceState?.getString(STATE_AI_JOIN_SESSION)
+            ?: UUID.randomUUID().toString()
+        aiJoinCounter = aiJoinBudget.counter(
+            aiJoinSessionId,
+            savedInstanceState?.getInt(STATE_AI_JOIN_USED, 0) ?: 0,
+        )
         if (nodesPath != null || screenLines != null || capture is Capture.Sentence || restoredReader) {
             setTheme(R.style.Theme_WordCapture_Reader)
         }
@@ -651,14 +665,20 @@ class WordCaptureActivity : AppCompatActivity() {
         // mode so they are not dropped back into the overlay.
         if (readerMode) outState.putBoolean(STATE_READER_MODE, true)
         // The AI suggestion cap counts a whole capture session: a rotation mid-capture
-        // must not grant a fresh budget (the activity is recreated, not finished).
-        outState.putInt(STATE_AI_JOIN_USED, aiJoinSuggestionsUsed)
+        // must not grant a fresh budget (the activity is recreated, not finished). The
+        // session id lets the recreated instance rebind to the same counter (#698); the
+        // count covers process death, where the counter no longer exists.
+        outState.putString(STATE_AI_JOIN_SESSION, aiJoinSessionId)
+        outState.putInt(STATE_AI_JOIN_USED, aiJoinCounter.get())
     }
 
     /** Closes the capture: ✕, back and the close swipe all land here via [finish]. */
     override fun onDestroy() {
         super.onDestroy()
         if (isFinishing) {
+            // A real close ends the capture session; a rotation (isFinishing false)
+            // keeps the budget alive for the recreated instance (#698).
+            aiJoinBudget.release(aiJoinSessionId)
             // Only the files this intent referenced — the reader path never touches them.
             // The service overwrites both on the next press, so this is tidy-up; a file
             // whose timestamp moved on belongs to a newer capture and stays.
@@ -1070,7 +1090,7 @@ class WordCaptureActivity : AppCompatActivity() {
         paragraph: String,
         offlineAllowed: Boolean,
     ): SplitVerbs.Match? {
-        if (aiJoinSuggestionsUsed >= AI_JOIN_SESSION_CAP) return null
+        if (aiJoinCounter.get() >= AI_JOIN_SESSION_CAP) return null
         val aiPrefs = Prefs(applicationContext)
         // Same key source as the practice feature: KeyVault through a KeySource, never logged.
         val vault = KeyVault(applicationContext)
@@ -1083,13 +1103,10 @@ class WordCaptureActivity : AppCompatActivity() {
             keySource,
         ) ?: return null
         // One suggestion is counted as soon as its first request goes out: retries and
-        // failed verifications still count, so the cap can never be exceeded. The lock
+        // failed verifications still count, so the cap can never be exceeded. tryIssue
         // makes the check-then-increment atomic: overlapping tap coroutines on IO can
         // otherwise both read below the cap and issue together.
-        aiJoinMutex.withLock {
-            if (aiJoinSuggestionsUsed >= AI_JOIN_SESSION_CAP) return null
-            aiJoinSuggestionsUsed++
-        }
+        if (!aiJoinBudget.tryIssue(aiJoinCounter)) return null
         val result = requestSplitVerb(
             provider,
             paragraph,
