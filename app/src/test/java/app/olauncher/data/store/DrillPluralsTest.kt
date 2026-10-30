@@ -4,6 +4,7 @@ import app.olauncher.R
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -191,5 +192,114 @@ class DrillPluralsTest {
             assertEquals(directItems[i].choices, tableItems[i].choices)
             assertEquals(directItems[i].hint, tableItems[i].hint)
         }
+    }
+
+    @Test
+    fun builtInItemsMatchTheAuthoredRuleAssignment() {
+        val built = DrillPlurals.items().associate { it.id.key to it.ruleId!! }
+        val authored = PLURAL_RULE_CONTENT_BY_NOUN.entries.associate { (noun, content) ->
+            "plur:${noun.lowercase()}" to content.ruleId
+        }
+        // Both directions: every table noun carries the rule its content file assigns,
+        // and every authored noun is a built-in one (no partial mapping).
+        assertEquals(authored, built)
+    }
+
+    @Test
+    fun missLinesExplainEveryWrongChoice() {
+        for (item in DrillPlurals.items()) {
+            assertEquals(
+                "Item ${item.id}: miss lines must cover exactly the wrong choices",
+                (item.choices - item.answer).toSet(),
+                item.missByChoice.keys,
+            )
+            assertTrue(
+                "Item ${item.id}: every miss line must be filled in",
+                item.missByChoice.values.all { it.isNotBlank() },
+            )
+        }
+    }
+
+    @Test
+    fun missLinesShowThisNounOwnPlural() {
+        val haus = DrillPlurals.items().firstOrNull { it.id.key == "plur:haus" }
+        assertNotNull(haus)
+        assertEquals("plural-umlaut-er", haus?.ruleId)
+        // The wrong choice "Hauser" is the umlaut-free -er form: its line name-changes
+        // no ending ("au") and shows Häuser, the answer of THIS noun (not the rule's
+        // example Lämmer).
+        assertEquals(
+            "the vowel changes too, au becomes äu: die Häuser.",
+            haus?.missByChoice?.getValue("Hauser"),
+        )
+        assertEquals(
+            "this noun takes -er, and the vowel changes: die Häuser.",
+            haus?.missByChoice?.getValue("Hause"),
+        )
+    }
+
+    @Test
+    fun umlautMissLinesNameThisNounVowel() {
+        val items = DrillPlurals.items().associateBy { it.id.key }
+
+        // plural-umlaut-e: the wording's illustration noun is Hand (a→ä), but the
+        // vowel pair must come from the drilled noun itself.
+        val stuhl = items["plur:stuhl"]
+        assertNotNull(stuhl)
+        assertEquals("plural-umlaut-e", stuhl?.ruleId)
+        assertEquals(
+            "the vowel changes too, u becomes ü: die Stühle.",
+            stuhl?.missByChoice?.getValue("Stuhle"),
+        )
+
+        val baum = items["plur:baum"]
+        assertNotNull(baum)
+        assertEquals("plural-umlaut-e", baum?.ruleId)
+        assertEquals(
+            "the vowel changes too, au becomes äu: die Bäume.",
+            baum?.missByChoice?.getValue("Baume"),
+        )
+
+        // plural-umlaut-er: the wording's illustration noun is Haus (au→äu), but
+        // the rule also drills o→ö and u→ü nouns.
+        val dorf = items["plur:dorf"]
+        assertNotNull(dorf)
+        assertEquals("plural-umlaut-er", dorf?.ruleId)
+        assertEquals(
+            "the vowel changes too, o becomes ö: die Dörfer.",
+            dorf?.missByChoice?.getValue("Dorfer"),
+        )
+
+        val buch = items["plur:buch"]
+        assertNotNull(buch)
+        assertEquals("plural-umlaut-er", buch?.ruleId)
+        assertEquals(
+            "the vowel changes too, u becomes ü: die Bücher.",
+            buch?.missByChoice?.getValue("Bucher"),
+        )
+    }
+
+    @Test
+    fun authoredPluralNounsNeverCollideAcrossRules() {
+        // The by-noun map is built with toMap(), which silently drops duplicate
+        // keys, so a repeated noun would lose its rule instead of failing loudly.
+        assertEquals(
+            "Every authored plural noun must land in PLURAL_RULE_CONTENT_BY_NOUN;" +
+                " a duplicate noun would be silently dropped",
+            PLURAL_RULE_CONTENT.sumOf { it.nouns.size },
+            PLURAL_RULE_CONTENT_BY_NOUN.size,
+        )
+    }
+
+    @Test
+    fun savedWordItemsCarryNoRuleId() {
+        val savedWords = listOf(
+            Word(id = 606L, text = "das Haus", dueDay = 1L, addedAt = 1000L),
+        )
+        val lookupPlural: (String) -> String? = { if (it == "Haus") "Häuser" else null }
+        val items = DrillPlurals.items(savedWords, pluralLookup = lookupPlural)
+        val haus = items.first { it.id.key == "606" }
+        assertNull("Saved-word item must carry no rule id", haus.ruleId)
+        assertTrue("Saved-word item must carry no miss lines", haus.missByChoice.isEmpty())
     }
 }

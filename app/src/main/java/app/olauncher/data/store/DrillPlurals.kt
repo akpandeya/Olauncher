@@ -57,74 +57,74 @@ object DrillPlurals {
      * Generates plausible plural forms for [noun] using the 8 plural patterns:
      * (-e, umlaut plus -e, -er, umlaut plus -er, -n, -en, -s, no change).
      */
-    fun candidateForms(noun: String): List<String> {
+    fun candidateForms(noun: String): List<String> =
+        candidatePatternForms(noun).map { it.first }
+
+    /**
+     * The pattern slot of each generated candidate form, most plausible first.
+     *
+     * Mirrors the exact construction order [buildChoices] takes the wrong distractors
+     * from, so the help content can key each wrong choice to its authored miss line
+     * (docs/design/drill-content/plurals.md). The label is the pattern slot the form
+     * fills: "-e", "umlaut-e", "-er", "umlaut-er", "-n", "-en", "-s", "no-change" and
+     * "umlaut" (the umlauted stem alone). Where one form fits two slots the first in
+     * construction order wins, matching the first-wins keeps of the choice builder.
+     */
+    internal fun candidatePatternForms(noun: String): List<Pair<String, String>> {
         val stem = noun.trim()
         val umlautStem = applyUmlaut(stem)
-        val candidates = linkedSetOf<String>()
+        val umlautable = umlautStem != null
+        val stemEndsWithE = stem.endsWith("e")
+        val umlautE = umlautStem?.let { if (it.endsWith("e")) it else it + "e" }
 
-        // 1. -e
-        val formE = if (stem.endsWith("e")) stem else stem + "e"
-        candidates += formE
+        val formsWithSlots = mutableListOf<Pair<String, String>>()
+        fun slot(form: String, label: String) {
+            formsWithSlots += form to label
+        }
 
+        // 1. -e (the bare stem when it already ends in -e: the unchanged form)
+        slot(if (stemEndsWithE) stem else stem + "e", if (stemEndsWithE) "no-change" else "-e")
         // 2. umlaut plus -e
-        if (umlautStem != null) {
-            val formUmlautE = if (umlautStem.endsWith("e")) umlautStem else umlautStem + "e"
-            candidates += formUmlautE
-        }
-
+        if (umlautable) slot(umlautE!!, "umlaut-e")
         // 3. -er
-        candidates += stem + "er"
-
+        slot(stem + "er", "-er")
         // 4. umlaut plus -er
-        if (umlautStem != null) {
-            candidates += umlautStem + "er"
-        }
-
+        if (umlautable) slot(umlautStem + "er", "umlaut-er")
         // 5. -n
-        candidates += if (stem.endsWith("e") || stem.endsWith("el") || stem.endsWith("er")) {
-            stem + "n"
-        } else {
-            stem + "n"
-        }
-
-        // 6. -en
-        candidates += if (stem.endsWith("e")) {
-            stem + "n"
-        } else {
-            stem + "en"
-        }
-
+        slot(stem + "n", "-n")
+        // 6. -en (repeats the -n form on nouns that already end in -e)
+        slot(if (stemEndsWithE) stem + "n" else stem + "en", "-en")
         // 7. -s
-        candidates += stem + "s"
-
+        slot(stem + "s", "-s")
         // 8. no change
-        candidates += stem
+        slot(stem, "no-change")
+        // 9. umlaut without suffix (e.g. Apfel -> Äpfel)
+        if (umlautable) slot(umlautStem, "umlaut")
 
-        // Umlaut without suffix (e.g. Apfel -> Äpfel)
-        if (umlautStem != null) {
-            candidates += umlautStem
-        }
-
-        return candidates.toList()
+        val seen = mutableSetOf<String>()
+        return formsWithSlots.filter { seen.add(it.first) }
     }
+
+    /** The number of wrong choices an item carries alongside its answer. */
+    internal const val WRONG_CHOICE_COUNT = 3
 
     /**
      * Builds exactly 4 choice options containing [answer] and 3 distinct distractors
      * generated from plural patterns, none of which equals [answer].
      */
     fun buildChoices(noun: String, answer: String): List<String> {
-        val candidates = candidateForms(noun)
+        val candidates = candidatePatternForms(noun)
+            .map { it.first }
             .filter { it != answer }
-            .distinct()
 
-        val distractors = candidates.take(3).toMutableList()
-        if (distractors.size < 3) {
+        val distractors = candidates.take(WRONG_CHOICE_COUNT).toMutableList()
+        if (distractors.size < WRONG_CHOICE_COUNT) {
             val fallbacks = listOf("e", "en", "er", "s", "n")
             for (fb in fallbacks) {
                 val candidate = noun + fb
                 if (candidate != answer && candidate !in distractors) {
                     distractors += candidate
-                    if (distractors.size == 3) break
+                    if (distractors.size == WRONG_CHOICE_COUNT) break
                 }
             }
         }
@@ -273,12 +273,18 @@ object DrillPlurals {
         val tableItems = TABLE_ENTRIES
             .filter { it.noun.lowercase() !in seenNouns }
             .map { entry ->
+                val content = PLURAL_RULE_CONTENT_BY_NOUN.getValue(entry.noun.lowercase())
                 DrillItem(
                     id = DrillItemId(DrillType.PLURALS, "plur:${entry.noun.lowercase()}"),
                     prompt = "${entry.gender} ${entry.noun} → die ${DrillItem.GAP_MARKER}",
                     answer = entry.plural,
                     choices = buildChoices(entry.noun, entry.plural),
                     hint = entry.pattern.hint,
+                    ruleId = DrillHelpContent.requireValidRuleId(
+                        content.ruleId,
+                        "plurals item plur:${entry.noun.lowercase()}",
+                    ),
+                    missByChoice = content.missByChoiceFor(entry.noun, entry.plural),
                 )
             }
 

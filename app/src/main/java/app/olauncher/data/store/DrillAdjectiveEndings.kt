@@ -658,12 +658,24 @@ object DrillAdjectiveEndings {
                 "adj:${template.key}"
             }
 
+            // Built-in items carry their authored help rule; saved-word items match
+            // no authored help item, so they stay without one.
+            val content = if (matchingWord == null) {
+                ADJECTIVE_ENDING_RULE_CONTENT[ADJECTIVE_ENDING_RULE_ITEMS.getValue(template.key)]
+            } else {
+                null
+            }
+            val ruleId = content?.ruleId
+                ?.let { DrillHelpContent.requireValidRuleId(it, "adjective endings item ${template.key}") }
+
             DrillItem(
                 id = DrillItemId(DrillType.ADJECTIVE_ENDINGS, idKey),
                 prompt = prompt,
                 answer = answer,
                 choices = choices,
                 hint = hint,
+                ruleId = ruleId,
+                missByChoice = content?.missByChoiceFor(answer, choices) ?: emptyMap(),
             )
         }
     }
