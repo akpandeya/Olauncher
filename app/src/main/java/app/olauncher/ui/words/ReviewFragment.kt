@@ -362,7 +362,7 @@ class ReviewFragment : BaseFragment() {
      * opens the latest thread; long-press opens the thread sheet.
      */
     private fun bindSummaryAskAiChip(chip: TextView, context: Context, word: Word, result: String) {
-        if (result != ReviewEvent.Result.KNEW || !askAi.visible) {
+        if (result == ReviewEvent.Result.KNEW || !askAi.visible) {
             chip.isVisible = false
             return
         }
