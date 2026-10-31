@@ -89,12 +89,21 @@
 
         </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/groundingBody"
+        <app.olauncher.ui.views.MaxHeightScrollView
+            android:id="@+id/groundingScroll"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingBottom="6dp" />
+            android:overScrollMode="never"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/groundingBody"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingBottom="6dp" />
+
+        </app.olauncher.ui.views.MaxHeightScrollView>
 
     </LinearLayout>
 
