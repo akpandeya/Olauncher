@@ -138,6 +138,25 @@ object DrillHelpCard {
 
     data class MissParts(val wrong: String, val reason: String)
 
+    /** The bare gender/number column labels: m, f, n, pl. */
+    private val BARE_GENDER_HEADERS = setOf("m", "f", "n", "pl")
+
+    /**
+     * The chips of the card's pattern row: the table's data-column headers — except
+     * the bare gender labels (`m · f · n · pl`), which only repeat the table's own
+     * header row rendered right below and, detached from their cells, carry no
+     * pattern of their own (#723). Question-word headers (`Wer? → Nom`) name the
+     * pattern and stay. An empty result hides the chips row.
+     */
+    fun patternChips(table: DrillHelpTable): List<String> {
+        val chips = table.headers.drop(1).filter { it.isNotBlank() }
+        return if (chips.all { it.trim().lowercase() in BARE_GENDER_HEADERS }) {
+            emptyList()
+        } else {
+            chips
+        }
+    }
+
     /**
      * The table position to bold+underline for the item's answer, as `(row, data
      * column)` indexes into [table], or null for no cell.
