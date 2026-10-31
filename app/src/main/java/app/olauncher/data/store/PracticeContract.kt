@@ -127,7 +127,13 @@ object PracticeContract {
         builder.append("- Exactly one ___ per prompt. Putting the answer into ___ must give a correct German sentence with normal capitalisation (\"Die …\" at sentence start).\n")
         builder.append("- full: the prompt with its ___ replaced by the answer — exactly the sentence the learner reads when the gap is filled, not the original context sentence.\n")
         builder.append("- The $ITEMS_PER_WORD cards of one word have $ITEMS_PER_WORD different answers.\n")
-        builder.append("- Neither prompt nor hint may contain the answer or spell it out (no \"bei + dem\" for \"beim\"). A base form in brackets, \"___ (anwachsen)\", is allowed only if the answer differs from it.\n")
+        builder.append("- Neither prompt nor hint may contain the answer or spell it out (no \"bei + dem\" for \"beim\").\n")
+        builder.append(
+            "- If the gap tests a form of a verb and the sentence does not name the verb, put its base form " +
+                "in brackets right after the gap: \"___ (verzichten) auf unerlaubte Zölle!\" → \"Verzichte\". " +
+                "Without it many verbs fit the gap and the card cannot be answered from what it shows. A card " +
+                "whose answer is the base form itself needs no bracket; a bracketed base always differs from the answer.\n",
+        )
         builder.append("- hint: a German synonym or short definition, or tense and person (\"Präsens, 3. Person Singular\"). At most 6 words, no rule explanations.\n")
         builder.append("- \"type\" names what the gap tests: articles → an article; plurals → a plural noun; conjugation, praeteritum, modal_verbs → a finite verb form; prepositions, verb_prepositions → a preposition; case_endings, adjective_endings, genitive, n_declension → a form whose ending is the point; any other type → its grammar point.\n")
         builder.append("\n")
@@ -317,7 +323,7 @@ object PracticeContract {
                 .filter { it.type == DrillType.CLOZE }
                 .map { it.answer }
                 .toSet()
-            val verdict = PracticeFilters.check(type, prompt, fixedAnswer, hint, full, clozeAnswers)
+            val verdict = PracticeFilters.check(type, prompt, fixedAnswer, hint, full, clozeAnswers, word.text)
             if (verdict.rejected) {
                 rejected += "Item $i: filter '${verdict.filter}' — ${verdict.reason}"
                 rejections += PracticeRejection(

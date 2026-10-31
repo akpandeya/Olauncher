@@ -68,7 +68,8 @@ class PracticeContractTest {
             - Exactly one ___ per prompt. Putting the answer into ___ must give a correct German sentence with normal capitalisation ("Die …" at sentence start).
             - full: the prompt with its ___ replaced by the answer — exactly the sentence the learner reads when the gap is filled, not the original context sentence.
             - The 3 cards of one word have 3 different answers.
-            - Neither prompt nor hint may contain the answer or spell it out (no "bei + dem" for "beim"). A base form in brackets, "___ (anwachsen)", is allowed only if the answer differs from it.
+            - Neither prompt nor hint may contain the answer or spell it out (no "bei + dem" for "beim").
+            - If the gap tests a form of a verb and the sentence does not name the verb, put its base form in brackets right after the gap: "___ (verzichten) auf unerlaubte Zölle!" → "Verzichte". Without it many verbs fit the gap and the card cannot be answered from what it shows. A card whose answer is the base form itself needs no bracket; a bracketed base always differs from the answer.
             - hint: a German synonym or short definition, or tense and person ("Präsens, 3. Person Singular"). At most 6 words, no rule explanations.
             - "type" names what the gap tests: articles → an article; plurals → a plural noun; conjugation, praeteritum, modal_verbs → a finite verb form; prepositions, verb_prepositions → a preposition; case_endings, adjective_endings, genitive, n_declension → a form whose ending is the point; any other type → its grammar point.
 
@@ -209,7 +210,10 @@ class PracticeContractTest {
     fun `valid response parses to three items per word`() {
         val words = listOf(wordWithContext(1, "insistieren"), wordWithContext(2, "Vertrauen"))
         val json = response(
-            item(1, "cloze", answer = "insistiert", choices = listOf("insistiert", "insistieren", "insistiertest")),
+            item(
+                1, "cloze", prompt = "Er ___ (insistieren) auf seiner Meinung.",
+                answer = "insistiert", choices = listOf("insistiert", "insistieren", "insistiertest"),
+            ),
             item(1, "prepositions", answer = "auf", choices = listOf("auf", "an", "in")),
             item(1, "plurals", answer = "Arbeiten", choices = listOf("Arbeiten", "Arbeit", "Arbeitet"), hint = "Mehrzahl"),
             item(2, "cloze", answer = "Vertrauen", choices = listOf("Vertrauen", "vertraut", "vertrauen")),
@@ -263,7 +267,10 @@ class PracticeContractTest {
     fun `missing word id gets three cloze fallbacks and is never dropped`() {
         val words = listOf(wordWithContext(1, "insistieren"), word(2, "Vertrauen", context = ""))
         val json = response(
-            item(1, "cloze", answer = "insistiert", choices = listOf("insistiert", "insistieren")),
+            item(
+                1, "cloze", prompt = "Er ___ (insistieren) auf seiner Meinung.",
+                answer = "insistiert", choices = listOf("insistiert", "insistieren"),
+            ),
             item(1, "plurals", answer = "Arbeiten", choices = listOf("Arbeiten", "Arbeit")),
         )
         val result = PracticeContract.parse(json, words)
@@ -279,8 +286,14 @@ class PracticeContractTest {
     fun `duplicate word id items land in one pool and fill the slots`() {
         val words = listOf(wordWithContext(1, "insistieren"))
         val json = response(
-            item(1, "cloze", answer = "insistiert", choices = listOf("insistiert", "insistieren")),
-            item(1, "cloze", answer = "Arbeit", choices = listOf("Arbeit", "Arbeiten")),
+            item(
+                1, "cloze", prompt = "Er ___ (insistieren) auf seiner Meinung.",
+                answer = "insistiert", choices = listOf("insistiert", "insistieren"),
+            ),
+            item(
+                1, "cloze", prompt = "Die ___ (insistieren) dauerte lange.",
+                answer = "Arbeit", choices = listOf("Arbeit", "Arbeiten"),
+            ),
             item(1, "plurals", answer = "Arbeiten", choices = listOf("Arbeiten", "Arbeit")),
             item(1, "genitive", answer = "der", choices = listOf("der", "des")),
         )
@@ -294,7 +307,10 @@ class PracticeContractTest {
     fun `two valid items leave one slot for a fallback`() {
         val words = listOf(wordWithContext(1, "insistieren"))
         val json = response(
-            item(1, "cloze", answer = "insistiert", choices = listOf("insistiert", "insistieren")),
+            item(
+                1, "cloze", prompt = "Er ___ (insistieren) auf seiner Meinung.",
+                answer = "insistiert", choices = listOf("insistiert", "insistieren"),
+            ),
             item(1, "plurals", answer = "Arbeiten", choices = listOf("Arbeiten", "Arbeit")),
         )
         val result = PracticeContract.parse(json, words)
@@ -317,7 +333,12 @@ class PracticeContractTest {
     @Test
     fun `padFallbacks false leaves the missing slots empty for the caller's retry pass`() {
         val words = listOf(wordWithContext(1, "insistieren"))
-        val json = response(item(1, "cloze", answer = "insistiert", choices = listOf("insistiert", "insistieren")))
+        val json = response(
+            item(
+                1, "cloze", prompt = "Er ___ (insistieren) auf seiner Meinung.",
+                answer = "insistiert", choices = listOf("insistiert", "insistieren"),
+            ),
+        )
         val result = PracticeContract.parse(json, words, padFallbacks = false)
         assertEquals(1, result.items.size)
         assertTrue(result.clozeFallbacks.isEmpty())
@@ -331,7 +352,7 @@ class PracticeContractTest {
     fun `extra json keys are ignored`() {
         val words = listOf(wordWithContext(1, "insistieren"))
         val json = "{\"model_used\": \"glm-5.3-flash\", \"billing_cost\": \"0.0002\", " +
-            "\"items\": [${item(1, "cloze", extra = ", \"temperature\": 0.7")}, " +
+            "\"items\": [${item(1, "cloze", prompt = "Er ___ (insistieren) das Wort heute.", extra = ", \"temperature\": 0.7")}, " +
             "${item(1, "plurals", answer = "Arbeiten", choices = listOf("Arbeiten", "Arbeit"), extra = ", \"usage\": {\"tokens\": 12}")}, " +
             "${item(1, "genitive", answer = "der", choices = listOf("der", "des"))}]}"
         val result = PracticeContract.parse(json, words)
@@ -499,7 +520,10 @@ class PracticeContractTest {
     fun `filter duplicate rejects a non-cloze answer that repeats the accepted cloze`() {
         val words = listOf(wordWithContext(1, "insistieren"))
         val json = response(
-            item(1, "cloze", answer = "insistiert", choices = listOf("insistiert", "insistieren")),
+            item(
+                1, "cloze", prompt = "Er ___ (insistieren) auf seiner Meinung.",
+                answer = "insistiert", choices = listOf("insistiert", "insistieren"),
+            ),
             item(1, "conjugation", answer = "Insistiert", choices = listOf("Insistiert", "insistieren")),
             item(1, "prepositions", answer = "auf", choices = listOf("auf", "an")),
         )
@@ -536,10 +560,10 @@ class PracticeContractTest {
         val match = response(
             item(
                 1, "conjugation",
-                prompt = "weil das Heimatland sich ___.",
+                prompt = "weil das Heimatland sich ___ (weigern).",
                 answer = "weigert",
                 choices = listOf("weigert", "weigern"),
-                full = "weil  das Heimatland sich weigert.",
+                full = "weil  das Heimatland sich weigert (weigern).",
             ),
         )
         val accepted = PracticeContract.parse(match, words, padFallbacks = false)
@@ -661,13 +685,116 @@ class PracticeContractTest {
         val words = listOf(word(1, "anwachsen", context = "Das Personal wächst an."))
         val json = response(
             item(
-                1, "separable_verbs", prompt = "Das Personal ___ von 3.000 auf 6.000 an.",
+                1, "separable_verbs", prompt = "Das Personal ___ (anwachsen) von 3.000 auf 6.000 an.",
                 answer = "wächst an", choices = listOf("wächst an", "wächst"),
             ),
         )
         val result = PracticeContract.parse(json, words, padFallbacks = false)
         assertTrue(result.items.isEmpty())
         assertEquals(PracticeFilters.SEPARABLE_SPACE, result.rejections.single().filter)
+    }
+
+    @Test
+    fun `filter missing_base rejects a verb-form card that never names the verb`() {
+        // #724: "___ auf unerlaubte Zölle oder Zwang!" fits Achte, passe and
+        // Verzichte alike — the card cannot be answered from its own material.
+        val words = listOf(word(1, "verzichten", context = "Man könne darauf verzichten."))
+        val bare = response(
+            item(
+                1, "conjugation",
+                prompt = "___ auf unerlaubte Zölle oder Zwang!",
+                answer = "Verzichte", choices = listOf("Verzichte", "Verzichtet", "Verzichtest"),
+                hint = "Imperativ, du-Form",
+                full = "Verzichte auf unerlaubte Zölle oder Zwang!",
+            ),
+        )
+        assertEquals(
+            PracticeFilters.MISSING_BASE,
+            PracticeContract.parse(bare, words, padFallbacks = false).rejections.single().filter,
+        )
+
+        // The bracketed base names the verb: the same card is solvable and accepted.
+        val bracketed = response(
+            item(
+                1, "conjugation",
+                prompt = "___ (verzichten) auf unerlaubte Zölle oder Zwang!",
+                answer = "Verzichte", choices = listOf("Verzichte", "Verzichtet", "Verzichtest"),
+                hint = "Imperativ, du-Form",
+                full = "Verzichte (verzichten) auf unerlaubte Zölle oder Zwang!",
+            ),
+        )
+        val accepted = PracticeContract.parse(bracketed, words, padFallbacks = false)
+        assertEquals(1, accepted.items.size)
+        assertTrue(accepted.rejections.isEmpty())
+
+        // A reflexive saved word is checked by its verb stem.
+        val words3 = listOf(word(3, "sich weigern", context = "weil das Heimatland sich weigert."))
+        val reflexive = response(
+            item(
+                3, "conjugation",
+                prompt = "weil das Heimatland sich ___.",
+                answer = "weigert", choices = listOf("weigert", "weigern"),
+                full = "weil das Heimatland sich weigert.",
+            ),
+        )
+        assertEquals(
+            PracticeFilters.MISSING_BASE,
+            PracticeContract.parse(reflexive, words3, padFallbacks = false).rejections.single().filter,
+        )
+    }
+
+    @Test
+    fun `filter missing_base accepts cards that already name the verb`() {
+        val words = listOf(word(1, "verzichten", context = "Man könne darauf verzichten."))
+        // The answer IS the base form: the card names the verb by itself.
+        val baseAnswer = response(
+            item(
+                1, "cloze",
+                prompt = "Man könne gemeinsam darauf dringen, dass andere Staaten auf Zwang ___.",
+                answer = "verzichten", choices = listOf("verzichten", "verzichtet"),
+                full = "Man könne gemeinsam darauf dringen, dass andere Staaten auf Zwang verzichten.",
+            ),
+        )
+        assertTrue(PracticeContract.parse(baseAnswer, words, padFallbacks = false).rejections.isEmpty())
+
+        // The base appears in the sentence itself: no bracket needed.
+        val words2 = listOf(word(2, "anwachsen", context = "Das Personal wächst an."))
+        val inSentence = response(
+            item(
+                2, "separable_verbs",
+                prompt = "Während das Personal weiter anwachsen soll, ___ es heute nur langsam an.",
+                answer = "wächst", choices = listOf("wächst", "wuchsen"),
+                full = "Während das Personal weiter anwachsen soll, wächst es heute nur langsam an.",
+            ),
+        )
+        assertTrue(PracticeContract.parse(inSentence, words2, padFallbacks = false).rejections.isEmpty())
+    }
+
+    @Test
+    fun `filter missing_base leaves non-verb words and non-verb types alone`() {
+        // A noun is never verb-shaped, even when its plural leaves the sentence.
+        val words = listOf(word(1, "Kind", context = "Die Kinder spielen."))
+        val plural = response(
+            item(
+                1, "plurals",
+                prompt = "Die ___ spielen im Garten.",
+                answer = "Kinder", choices = listOf("Kinder", "Kindern", "Kinds"),
+                full = "Die Kinder spielen im Garten.",
+            ),
+        )
+        assertTrue(PracticeContract.parse(plural, words, padFallbacks = false).rejections.isEmpty())
+
+        // A verb word, but the item tests a preposition: out of scope.
+        val words2 = listOf(word(2, "verzichten", context = "Man könne darauf verzichten."))
+        val preposition = response(
+            item(
+                2, "prepositions",
+                prompt = "Man dringt darauf, dass andere Staaten ___ Zölle verzichten.",
+                answer = "auf", choices = listOf("auf", "an", "in"),
+                full = "Man dringt darauf, dass andere Staaten auf Zölle verzichten.",
+            ),
+        )
+        assertTrue(PracticeContract.parse(preposition, words2, padFallbacks = false).rejections.isEmpty())
     }
 
     @Test
@@ -698,9 +825,9 @@ class PracticeContractTest {
         val words = listOf(word(1, "weigern", context = "weil das Heimatland sich weigert."))
         val json = response(
             item(
-                1, "conjugation", prompt = "weil das Heimatland sich ___.",
+                1, "conjugation", prompt = "weil das Heimatland sich ___ (weigern).",
                 answer = "weigert", choices = listOf("weigert", "weigern"),
-                full = "weil das Heimatland sich weigert.",
+                full = "weil das Heimatland sich weigert (weigern).",
             ),
         )
         val result = PracticeContract.parse(json, words)

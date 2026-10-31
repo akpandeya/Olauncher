@@ -128,7 +128,7 @@ class PracticeGeneratorTest {
 
     private fun okJson(vararg wordIds: Long): String {
         val items = wordIds.mapIndexed { index, id ->
-            """{"word_id": $id, "type": "cloze", "prompt": "Sie ___ auf der Arbeit $index.",
+            """{"word_id": $id, "type": "cloze", "prompt": "Sie ___ (insistieren) auf der Arbeit $index.",
                "answer": "insistiert$index", "choices": ["insistiert$index", "insistieren"]}"""
         }.joinToString(",")
         return """{"items": [$items]}"""
@@ -542,13 +542,13 @@ class PracticeGeneratorTest {
     fun `retry-on-missing tops thin words up to three accepted items with one follow-up call`() = runBlocking {
         // First call: only one item for word 1. The follow-up brings the two
         // missing slots as real items, so no cloze fallback is needed.
-        val first = """{"items": [{"word_id": 1, "type": "cloze", "prompt": "Sie ___ auf der Arbeit.",
+        val first = """{"items": [{"word_id": 1, "type": "cloze", "prompt": "Sie ___ (insistieren) auf der Arbeit.",
             "answer": "insistiert", "choices": ["insistiert", "insistieren"]}]}"""
         val followUp = """{"items": [
             {"word_id": 1, "type": "conjugation", "prompt": "Wir ___ auf der Arbeit.",
              "answer": "insistieren", "choices": ["insistieren", "insistiert"], "full": "Wir insistieren auf der Arbeit."},
-            {"word_id": 1, "type": "praeteritum", "prompt": "Sie ___ auf der Arbeit.",
-             "answer": "insistierte", "choices": ["insistierte", "insistiert"], "full": "Sie insistierte auf der Arbeit."}]}"""
+            {"word_id": 1, "type": "praeteritum", "prompt": "Sie ___ (insistieren) auf der Arbeit.",
+             "answer": "insistierte", "choices": ["insistierte", "insistiert"], "full": "Sie insistierte (insistieren) auf der Arbeit."}]}"""
         val provider = ScriptedProvider(
             AiResult.Ok(first, AiUsage(10, 20), 5),
             AiResult.Ok(followUp, AiUsage(10, 20), 5),
@@ -571,7 +571,7 @@ class PracticeGeneratorTest {
 
     @Test
     fun `a failed follow-up is ignored and cloze fallbacks fill the rest`() = runBlocking {
-        val first = """{"items": [{"word_id": 1, "type": "cloze", "prompt": "Sie ___ auf der Arbeit.",
+        val first = """{"items": [{"word_id": 1, "type": "cloze", "prompt": "Sie ___ (insistieren) auf der Arbeit.",
             "answer": "insistiert", "choices": ["insistiert", "insistieren"]}]}"""
         val provider = ScriptedProvider(
             AiResult.Ok(first, AiUsage(10, 20), 5),
@@ -671,15 +671,15 @@ class PracticeGeneratorTest {
         // Condition 3: the retry prompt still asks for the cloze first, so the
         // response's first item is a second copy of the accepted cloze. It must
         // not be taken; the two non-cloze items behind it fill the slots.
-        val first = """{"items": [{"word_id": 1, "type": "cloze", "prompt": "Sie ___ auf der Arbeit.",
+        val first = """{"items": [{"word_id": 1, "type": "cloze", "prompt": "Sie ___ (insistieren) auf der Arbeit.",
             "answer": "insistiert", "choices": ["insistiert", "insistieren"]}]}"""
         val followUp = """{"items": [
-            {"word_id": 1, "type": "cloze", "prompt": "Sie ___ auf der Arbeit.",
-             "answer": "insistiert", "choices": ["insistiert", "insistieren"], "full": "Sie insistiert auf der Arbeit."},
+            {"word_id": 1, "type": "cloze", "prompt": "Sie ___ (insistieren) auf der Arbeit.",
+             "answer": "insistiert", "choices": ["insistiert", "insistieren"], "full": "Sie insistiert (insistieren) auf der Arbeit."},
             {"word_id": 1, "type": "conjugation", "prompt": "Wir ___ auf der Arbeit.",
              "answer": "insistieren", "choices": ["insistieren", "insistiert"], "full": "Wir insistieren auf der Arbeit."},
-            {"word_id": 1, "type": "praeteritum", "prompt": "Sie ___ auf der Arbeit.",
-             "answer": "insistierte", "choices": ["insistierte", "insistiert"], "full": "Sie insistierte auf der Arbeit."}]}"""
+            {"word_id": 1, "type": "praeteritum", "prompt": "Sie ___ (insistieren) auf der Arbeit.",
+             "answer": "insistierte", "choices": ["insistierte", "insistiert"], "full": "Sie insistierte (insistieren) auf der Arbeit."}]}"""
         val provider = ScriptedProvider(
             AiResult.Ok(first, AiUsage(10, 20), 5),
             AiResult.Ok(followUp, AiUsage(10, 20), 5),
@@ -704,7 +704,7 @@ class PracticeGeneratorTest {
         // Condition 3, duplicate check: parse only sees the retry batch, so a
         // retry item repeating the FIRST call's answer must be dropped here —
         // case- and punctuation-insensitively — with fallbacks filling the slot.
-        val first = """{"items": [{"word_id": 1, "type": "cloze", "prompt": "Sie ___ auf der Arbeit.",
+        val first = """{"items": [{"word_id": 1, "type": "cloze", "prompt": "Sie ___ (insistieren) auf der Arbeit.",
             "answer": "insistiert", "choices": ["insistiert", "insistieren"]}]}"""
         val followUp = """{"items": [{"word_id": 1, "type": "conjugation", "prompt": "Wir ___ auf der Arbeit.",
              "answer": "Insistiert.", "choices": ["Insistiert.", "insistieren"], "full": "Wir insistiert auf der Arbeit."}]}"""
@@ -732,11 +732,11 @@ class PracticeGeneratorTest {
         // Condition 3, fallback path: the word has its cloze, the retry brings
         // nothing but clozes — the accepted set stays and the cloze fallbacks
         // fill the two missing slots exactly like the pre-fix behaviour.
-        val first = """{"items": [{"word_id": 1, "type": "cloze", "prompt": "Sie ___ auf der Arbeit.",
+        val first = """{"items": [{"word_id": 1, "type": "cloze", "prompt": "Sie ___ (insistieren) auf der Arbeit.",
             "answer": "insistiert", "choices": ["insistiert", "insistieren"]}]}"""
         val followUp = """{"items": [
-            {"word_id": 1, "type": "cloze", "prompt": "Sie ___ auf der Arbeit.",
-             "answer": "insistiert", "choices": ["insistiert", "insistieren"], "full": "Sie insistiert auf der Arbeit."},
+            {"word_id": 1, "type": "cloze", "prompt": "Sie ___ (insistieren) auf der Arbeit.",
+             "answer": "insistiert", "choices": ["insistiert", "insistieren"], "full": "Sie insistiert (insistieren) auf der Arbeit."},
             {"word_id": 1, "type": "cloze", "prompt": "Wir ___ auf der Arbeit.",
              "answer": "insistieren", "choices": ["insistieren", "insistiert"], "full": "Wir insistieren auf der Arbeit."}]}"""
         val provider = ScriptedProvider(
