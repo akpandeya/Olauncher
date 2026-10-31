@@ -140,6 +140,17 @@ before it is stored; a rejected item never reaches the store):
   exempt.
 - **separable_space** — a `separable_verbs` answer containing a space (a split
   prefix form in a main-clause item) is rejected.
+- **missing_base** (#724, 2026-10-31) — a verb-form card (`conjugation`,
+  `praeteritum`, `modal_verbs`, `separable_verbs`, `cloze`) whose answer is a
+  form of the saved verb and whose prompt neither contains nor brackets the
+  base form cannot be answered from its own material ("___ auf unerlaubte
+  Zölle!" fits Achte, passe and Verzichte alike). The contract requires the
+  bracketed base right after the gap ("___ (verzichten)"); a card whose answer
+  IS the base form, or whose sentence already names it, needs nothing. Only
+  words that look like a verb infinitive (-en/-ern/-eln, sein, tun) are
+  checked, reflexives by their stem. Cloze fallbacks are exempt: they blank
+  the saved word's own occurrence in its own sentence, so the card names the
+  lexeme by construction.
 - **capitalization fix** (rejects nothing) — a prompt starting with `___`
   capitalizes the answer's first letter (and the matching choice), so
   sentence-initial articles are stored correctly.

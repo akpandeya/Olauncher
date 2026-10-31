@@ -26,6 +26,15 @@ object PracticeFilters {
     /** A separable-verb answer that contains a space (a split prefix form). */
     const val SEPARABLE_SPACE = "separable_space"
 
+    /**
+     * A verb-form card that never names the verb: the answer is a form of the
+     * word (not the base itself), and neither the prompt sentence nor a bracket
+     * carries the base — the gap fits many verbs and the card cannot be answered
+     * from its own material (#724: "___ auf unerlaubte Zölle!" fits Achte, passe
+     * and Verzichte alike).
+     */
+    const val MISSING_BASE = "missing_base"
+
     /** Outcome of one item's filter pass: rejected with a filter id, or accepted. */
     data class Verdict(val filter: String?, val reason: String?) {
         val rejected: Boolean get() = filter != null
@@ -39,7 +48,8 @@ object PracticeFilters {
     /**
      * The full filter pass over one candidate item. [clozeAnswers] holds the word's
      * already-accepted cloze answers (from the same response) for the duplicate
-     * check; empty on the first item.
+     * check; empty on the first item. [word] is the saved word's text, for the
+     * verb-base check (#724); null skips it.
      */
     fun check(
         type: DrillType,
@@ -48,6 +58,7 @@ object PracticeFilters {
         hint: String?,
         full: String?,
         clozeAnswers: Set<String>,
+        word: String? = null,
     ): Verdict {
         if (type == DrillType.WORD_ORDER) {
             wordOrder(prompt, answer)?.let { return it }
@@ -60,6 +71,9 @@ object PracticeFilters {
         }
         answerFit(prompt, answer, full)?.let { return it }
         leak(prompt, answer, hint)?.let { return it }
+        if (word != null) {
+            missingBase(type, prompt, answer, word)?.let { return it }
+        }
         if (type == DrillType.SEPARABLE_VERBS && answer.trim().contains(' ')) {
             return Verdict.reject(SEPARABLE_SPACE, "separable-verb answer '$answer' contains a space")
         }
@@ -144,6 +158,50 @@ object PracticeFilters {
             return Verdict.reject(LEAK, "hint contains the prompt's base form '$base' for answer '$trimmed'")
         }
         return null
+    }
+
+    /** The types whose gap can test a verb form. */
+    private val VERB_FORM_TYPES = setOf(
+        DrillType.CONJUGATION,
+        DrillType.PRAETERITUM,
+        DrillType.MODAL_VERBS,
+        DrillType.SEPARABLE_VERBS,
+        DrillType.CLOZE,
+    )
+
+    /**
+     * missing_base (#724): a verb-form gap the learner cannot solve from the
+     * card — the answer is a form of the saved verb (not the base itself), and
+     * the prompt neither contains the base nor brackets it ("___ auf unerlaubte
+     * Zölle!" fits Achte, passe and Verzichte alike). The contract requires the
+     * bracketed base ("___ (verzichten)") on exactly these cards. A card whose
+     * answer IS the base form names the verb by itself; a base already visible
+     * in the sentence or in a bracket needs nothing more. Only the verb-form
+     * types are checked, and only words that look like a verb infinitive — a
+     * noun can end in -en too ("Garten"), and its cards keep the noun in the
+     * prompt anyway.
+     */
+    private fun missingBase(type: DrillType, prompt: String, answer: String, word: String): Verdict? {
+        if (type !in VERB_FORM_TYPES) return null
+        val trimmed = word.trim()
+        val base = if (trimmed.lowercase().startsWith("sich ")) trimmed.substring(5).trim() else trimmed
+        if (!looksLikeVerbBase(base)) return null
+        if (normalize(answer) == normalize(base)) return null
+        if (containsWord(normalize(prompt), normalize(base))) return null
+        return Verdict.reject(
+            MISSING_BASE,
+            "verb-form answer '$answer' but the card never names the verb '$base'" +
+                " (#724: the gap needs its bracketed base, \"___ ($base)\")",
+        )
+    }
+
+    /**
+     * A saved word that reads as a German verb infinitive: ends in -en, -ern or
+     * -eln, or is one of the two bare-stem infinitives (sein, tun).
+     */
+    private fun looksLikeVerbBase(base: String): Boolean {
+        val w = base.lowercase()
+        return w.endsWith("en") || w.endsWith("ern") || w.endsWith("eln") || w == "sein" || w == "tun"
     }
 
     /** Case-insensitive, punctuation-stripped comparison form. */
