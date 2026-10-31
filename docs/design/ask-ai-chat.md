@@ -72,6 +72,19 @@ plus the reply that answered it; a failed or in-flight question is not a turn.
   Reliability), so Cancel also deletes that stored turn — nothing of a cancelled
   turn remains. If the cancelled turn was the thread's first, the thread is
   deleted.
+- **Reply formatting**: a reply renders with a small inline-markdown subset —
+  bold `**…**`, italic `*…*` / `_…_`, inline code `` `…` `` — applied at display
+  time only (`AiChatInlineMarkdown` → spans in the fragment). The stored
+  transcript keeps the reply verbatim: the compaction summary and the
+  "original asked / original replied" lines quote it, and the token estimate
+  counts characters. The summary text and the "original replied" lines get the
+  same renderer; the grounding card and user tiles stay plain. Spans set only
+  style and family, never colour, so the body weight and the muted/danger
+  variants hold for emphasised runs. An unclosed marker stays literal (a
+  truncated reply must not eat the paragraph); whitespace-flanked and
+  intraword-`_` pairs stay literal; German quotation marks „ … " pass through
+  untouched. Headings, lists and fences are deliberately out: the panel is one
+  prose block and the instructions ask for 2–5 sentences.
 - Chat is **post-answer only** — it never appears while a question is on screen,
   never scores, advances or mutates a round, and back returns the summary exactly
   as it was.

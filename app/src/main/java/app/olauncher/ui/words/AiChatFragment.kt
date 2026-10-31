@@ -1,10 +1,15 @@
 package app.olauncher.ui.words
 
 import android.content.Context
+import android.graphics.Typeface
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.text.Editable
+import android.text.SpannableString
+import android.text.Spanned
 import android.text.TextWatcher
+import android.text.style.StyleSpan
+import android.text.style.TypefaceSpan
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -49,6 +54,7 @@ import app.olauncher.databinding.ItemAiChatUserBinding
 import app.olauncher.helper.Haptics
 import app.olauncher.helper.showMessageDialog
 import app.olauncher.ui.BaseFragment
+import app.olauncher.ui.askai.AiChatInlineMarkdown
 import app.olauncher.ui.askai.AiChatUiLogic
 import app.olauncher.ui.askai.AiChatViewModel
 import app.olauncher.ui.today.ImeInset
@@ -390,7 +396,7 @@ class AiChatFragment : BaseFragment() {
                 }
                 is AiChatUiLogic.Row.AssistantPanel -> {
                     val item = ItemAiChatAiBinding.inflate(layoutInflater, binding.messagesList, false)
-                    item.tvAssistantPanel.text = row.text
+                    item.tvAssistantPanel.text = markdownText(row.text)
                     binding.messagesList.addView(item.root)
                 }
                 is AiChatUiLogic.Row.ErrorLine -> {
@@ -428,14 +434,22 @@ class AiChatFragment : BaseFragment() {
                     // the omitted-variant's turns were not sent to the AI.
                     item.tvSummaryHeading.isVisible = row.summaryText != null
                     item.tvSummaryText.isVisible = row.summaryText != null
-                    item.tvSummaryText.text = row.summaryText.orEmpty()
+                    item.tvSummaryText.text =
+                        if (row.summaryText != null) markdownText(row.summaryText) else ""
                     item.originalsList.removeAllViews()
                     row.originals.forEach { turn ->
                         item.originalsList.addView(
                             bodyView(binding.root.context, getString(R.string.chat_original_asked, turn.question), muted = true)
                         )
+                        // The replied line quotes a stored assistant reply verbatim,
+                        // so it gets the same display-time markdown as the panel.
                         item.originalsList.addView(
-                            bodyView(binding.root.context, getString(R.string.chat_original_replied, turn.answer), muted = true)
+                            bodyView(
+                                binding.root.context,
+                                getString(R.string.chat_original_replied, turn.answer),
+                                muted = true,
+                                markdown = true,
+                            )
                         )
                     }
                     item.tvMarker.setOnClickListener {
@@ -524,14 +538,45 @@ class AiChatFragment : BaseFragment() {
         return chip
     }
 
-    private fun bodyView(context: Context, text: String, muted: Boolean, danger: Boolean = false): TextView {
+    private fun bodyView(context: Context, text: String, muted: Boolean, danger: Boolean = false, markdown: Boolean = false): TextView {
         val body = TextView(context)
         TextViewCompat.setTextAppearance(body, if (muted) R.style.TodayCardBodyLight else R.style.TodayCardBody)
-        body.text = text
+        body.text = if (markdown) markdownText(text) else text
         body.setLineSpacing(1f, 1.15f)
         if (danger) body.setTextColor(ContextCompat.getColor(context, dangerColorRes(context)))
         body.layoutParams = listParams(width = LinearLayout.LayoutParams.MATCH_PARENT)
         return body
+    }
+
+    /**
+     * Renders the display-time inline-markdown subset (bold, italic, inline
+     * code; docs/design/ask-ai-chat.md §Chat screen "Reply formatting") as
+     * spans. Plain text is returned as-is; a styled run gets a single
+     * [StyleSpan] (BOLD_ITALIC when both) plus monospace for code. The spans
+     * layer on top of the view's text appearance — they set only style and
+     * family, never colour — so the body weight and the muted/danger variants
+     * hold for emphasised runs. The stored text is never rewritten: this is
+     * display only.
+     */
+    private fun markdownText(text: String): CharSequence {
+        val runs = AiChatInlineMarkdown.parse(text)
+        if (runs.size == 1 && !runs[0].bold && !runs[0].italic && !runs[0].code) return text
+        val spannable = SpannableString(runs.joinToString("") { it.text })
+        var offset = 0
+        for (run in runs) {
+            val end = offset + run.text.length
+            var flags = 0
+            if (run.bold) flags = flags or Typeface.BOLD
+            if (run.italic) flags = flags or Typeface.ITALIC
+            if (flags != 0) {
+                spannable.setSpan(StyleSpan(flags), offset, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            }
+            if (run.code) {
+                spannable.setSpan(TypefaceSpan("monospace"), offset, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+            }
+            offset = end
+        }
+        return spannable
     }
 
     private fun dangerColorRes(context: Context): Int {
