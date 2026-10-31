@@ -57,7 +57,6 @@ import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.os.bundleOf
 import app.olauncher.glance.Place
 import app.olauncher.glance.WeatherApi
 import app.olauncher.glance.WeatherLocation

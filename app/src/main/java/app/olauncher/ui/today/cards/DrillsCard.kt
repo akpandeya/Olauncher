@@ -1,10 +1,10 @@
 package app.olauncher.ui.today.cards
 
 import android.content.Context
+import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.os.bundleOf
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import app.olauncher.R
@@ -116,7 +116,7 @@ object DrillsCard : TodayCard {
                 if (navController.currentDestination?.id == R.id.todayFragment) {
                     navController.navigate(
                         R.id.action_todayFragment_to_drillFragment,
-                        bundleOf("drillType" to typeId),
+                        Bundle().apply { putString("drillType", typeId) },
                     )
                 }
             },

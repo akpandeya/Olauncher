@@ -6,7 +6,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.inputmethod.EditorInfo
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.navigation.fragment.findNavController
 import androidx.core.widget.doOnTextChanged
@@ -116,7 +115,7 @@ class NotesFragment : BaseFragment() {
             Haptics.tick(it)
             val nav = findNavController()
             if (nav.currentDestination?.id == R.id.notesFragment) {
-                nav.navigate(R.id.action_notesFragment_to_noteViewFragment, bundleOf(NoteViewFragment.ARG_NOTE_ID to note.id))
+                nav.navigate(R.id.action_notesFragment_to_noteViewFragment, Bundle().apply { putLong(NoteViewFragment.ARG_NOTE_ID, note.id) })
             }
         }
         val edited = Notes.editedLabel(

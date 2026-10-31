@@ -5,7 +5,6 @@ import android.view.LayoutInflater
 import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.fragment.findNavController
@@ -156,7 +155,7 @@ class WordListFragment : BaseFragment() {
         if (navController.currentDestination?.id == R.id.wordListFragment) {
             navController.navigate(
                 R.id.action_wordListFragment_to_conjugationFragment,
-                bundleOf("word" to current.text),
+                Bundle().apply { putString("word", current.text) },
             )
         }
     }

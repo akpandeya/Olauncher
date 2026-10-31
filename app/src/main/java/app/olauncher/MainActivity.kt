@@ -21,7 +21,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContextCompat
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.os.bundleOf
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
@@ -667,14 +666,14 @@ class MainActivity : AppCompatActivity() {
         }
         viewModel.pauseLaunch.observe(this) { appModel ->
             if (navController.currentDestination?.id == R.id.pauseFragment) return@observe
-            val bundle = bundleOf(
-                "package" to appModel.appPackage,
-                "class" to (appModel as? AppModel.App)?.activityClassName,
-                "user" to appModel.user.toString(),
-                "label" to appModel.appLabel,
-                "shortcutId" to (appModel as? AppModel.PinnedShortcut)?.shortcutId,
-                "isArchived" to appModel.isArchived
-            )
+            val bundle = Bundle().apply {
+                putString("package", appModel.appPackage)
+                putString("class", (appModel as? AppModel.App)?.activityClassName)
+                putString("user", appModel.user.toString())
+                putString("label", appModel.appLabel)
+                putString("shortcutId", (appModel as? AppModel.PinnedShortcut)?.shortcutId)
+                putBoolean("isArchived", appModel.isArchived)
+            }
             try {
                 when (navController.currentDestination?.id) {
                     R.id.appListFragment -> navController.navigate(R.id.action_appListFragment_to_pauseFragment, bundle)
@@ -866,7 +865,10 @@ class MainActivity : AppCompatActivity() {
         try {
             navController.navigate(
                 R.id.action_mainFragment_to_appListFragment,
-                bundleOf(Constants.Key.FLAG to slot, Constants.Key.RENAME to false),
+                Bundle().apply {
+                    putInt(Constants.Key.FLAG, slot)
+                    putBoolean(Constants.Key.RENAME, false)
+                },
             )
         } catch (_: Exception) {
             // Not on home; the welcome returns when home is shown again.
@@ -981,7 +983,9 @@ class MainActivity : AppCompatActivity() {
             TodayWidgets.REQUEST_CONFIGURE -> {
                 supportFragmentManager.setFragmentResult(
                     TodayWidgets.CONFIGURE_RESULT,
-                    bundleOf(TodayWidgets.RESULT_CODE to resultCode),
+                    Bundle().apply {
+                        putInt(TodayWidgets.RESULT_CODE, resultCode)
+                    },
                 )
             }
 

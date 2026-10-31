@@ -18,7 +18,6 @@ import android.telephony.TelephonyManager
 import android.view.View
 import android.view.Window
 import android.view.WindowInsets
-import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import app.olauncher.R
 import app.olauncher.data.Constants
@@ -106,10 +105,9 @@ fun Context.isEinkDisplay(): Boolean {
 
 private fun Context.hasEinkRefreshRate(): Boolean {
     return try {
-        val windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         // Check max supported refresh rate, not the current one, because adaptive
         // refresh rate displays can drop to 30Hz or lower without being e-ink
-        windowManager.defaultDisplay.supportedModes.maxOf { it.refreshRate } <= Constants.MIN_ANIM_REFRESH_RATE
+        display.supportedModes.maxOf { it.refreshRate } <= Constants.MIN_ANIM_REFRESH_RATE
     } catch (e: Exception) {
         Log.w(TAG, "hasEinkRefreshRate failed", e)
         false

@@ -8,11 +8,11 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.drawable.GradientDrawable
+import android.os.Bundle
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -152,10 +152,10 @@ object WeatherCard : TodayCard {
                 context, prefs,
                 pickApp = {
                     viewModel?.getAppList(false)
-                    val args = bundleOf(
-                        Constants.Key.FLAG to Constants.FLAG_SET_WEATHER_APP,
-                        Constants.Key.RENAME to false,
-                    )
+                    val args = Bundle().apply {
+                        putInt(Constants.Key.FLAG, Constants.FLAG_SET_WEATHER_APP)
+                        putBoolean(Constants.Key.RENAME, false)
+                    }
                     try {
                         fragment.findNavController().navigate(R.id.action_todayFragment_to_appListFragment, args)
                     } catch (e: Exception) {

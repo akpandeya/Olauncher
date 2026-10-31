@@ -8,7 +8,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.inputmethod.InputMethodManager
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.core.widget.doAfterTextChanged
 import androidx.lifecycle.LifecycleOwner
@@ -233,7 +232,7 @@ class WordsFragment : BaseFragment() {
         if (navController.currentDestination?.id == R.id.wordsFragment) {
             navController.navigate(
                 R.id.action_wordsFragment_to_conjugationFragment,
-                bundleOf("word" to current.text),
+                Bundle().apply { putString("word", current.text) },
             )
         }
     }

@@ -21,7 +21,6 @@ import android.view.ViewGroup
 import android.view.WindowInsets
 import android.widget.FrameLayout
 import android.widget.TextView
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.core.view.setPadding
 import androidx.lifecycle.Observer
@@ -816,18 +815,18 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         try {
             findNavController().navigate(
                 R.id.action_mainFragment_to_appListFragment,
-                bundleOf(
-                    Constants.Key.FLAG to flag,
-                    Constants.Key.RENAME to rename
-                )
+                Bundle().apply {
+                    putInt(Constants.Key.FLAG, flag)
+                    putBoolean(Constants.Key.RENAME, rename)
+                }
             )
         } catch (e: Exception) {
             findNavController().navigate(
                 R.id.appListFragment,
-                bundleOf(
-                    Constants.Key.FLAG to flag,
-                    Constants.Key.RENAME to rename
-                )
+                Bundle().apply {
+                    putInt(Constants.Key.FLAG, flag)
+                    putBoolean(Constants.Key.RENAME, rename)
+                }
             )
             Log.w(TAG, "showAppList failed", e)
         }

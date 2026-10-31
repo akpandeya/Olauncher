@@ -2,7 +2,6 @@ package app.olauncher.ui.settings
 
 import android.os.Bundle
 import androidx.annotation.IdRes
-import androidx.core.os.bundleOf
 import app.olauncher.R
 import app.olauncher.ui.SettingsFragment
 
@@ -16,9 +15,9 @@ data class SettingsDeepLink(
     /**
      * Builds the argument bundle to pass when navigating to [R.id.settingsFragment].
      */
-    fun toBundle(): Bundle = bundleOf(
-        SettingsFragment.ARG_ROW to rowViewId,
-    )
+    fun toBundle(): Bundle = Bundle().apply {
+        putInt(SettingsFragment.ARG_ROW, rowViewId)
+    }
 }
 
 typealias SettingsTarget = SettingsDeepLink

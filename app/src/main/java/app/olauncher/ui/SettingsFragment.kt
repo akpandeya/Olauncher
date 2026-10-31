@@ -14,7 +14,6 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.fragment.findNavController
@@ -375,7 +374,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         viewModel.getHiddenApps()
         findNavController().navigate(
             R.id.action_settingsFragment_to_appListFragment,
-            bundleOf(Constants.Key.FLAG to Constants.FLAG_HIDDEN_APPS)
+            Bundle().apply { putInt(Constants.Key.FLAG, Constants.FLAG_HIDDEN_APPS) }
         )
     }
 

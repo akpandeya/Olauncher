@@ -255,6 +255,9 @@ class AiChatFragment : BaseFragment() {
             // turn is announced when it lands.
             if (turns > 0) {
                 announcedTurns = true
+                // No replacement API: deprecated in API 36 to steer apps toward semantic
+                // descriptions; this one-off announcement is intentional, so keep it and suppress.
+                @Suppress("DEPRECATION")
                 binding.messagesScroll.announceForAccessibility(
                     resources.getQuantityString(R.plurals.chat_a11y_announce, turns, turns)
                 )

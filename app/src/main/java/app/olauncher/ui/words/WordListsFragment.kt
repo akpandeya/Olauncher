@@ -5,7 +5,6 @@ import android.view.LayoutInflater
 import android.view.Menu
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.navigation.fragment.findNavController
 import app.olauncher.R
@@ -109,7 +108,7 @@ class WordListsFragment : BaseFragment() {
             bindDueStatus(item, context, WordListsSummary.dueCount(members, today))
             item.root.setOnClickListener {
                 Haptics.tick(it)
-                openWordList(bundleOf("listId" to list.id))
+                openWordList(Bundle().apply { putString("listId", list.id) })
             }
             item.root.hapticLongClick {
                 showListPopup(item.tvName, list)
@@ -134,7 +133,7 @@ class WordListsFragment : BaseFragment() {
             bindDueStatus(item, context, WordListsSummary.dueCount(bucketWords, today))
             item.root.setOnClickListener {
                 Haptics.tick(it)
-                openWordList(bundleOf("sourceBucket" to bucket.name))
+                openWordList(Bundle().apply { putString("sourceBucket", bucket.name) })
             }
             b.sourcesPanel.addView(item.root)
         }

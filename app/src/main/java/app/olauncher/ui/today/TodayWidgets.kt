@@ -445,6 +445,9 @@ internal class TodayWidgets(
                                 handleView.parent.requestDisallowInterceptTouchEvent(false)
                                 if (moved) {
                                     commitSize(prefs.todayWidgetSizes[appWidgetId]?.widthSpan, liveDp)
+                                    // No replacement API: deprecated in API 36; this one-off
+                                    // resize announcement is intentional, so keep it and suppress.
+                                    @Suppress("DEPRECATION")
                                     handleView.announceForAccessibility(
                                         context.getString(R.string.today_widget_resize_dp, liveDp)
                                     )
@@ -567,6 +570,9 @@ internal class TodayWidgets(
                                 handleView.parent.requestDisallowInterceptTouchEvent(false)
                                 if (moved) {
                                     commitSize(liveSpan, currentHeightDp(hostView, density))
+                                    // No replacement API: deprecated in API 36; this one-off
+                                    // resize announcement is intentional, so keep it and suppress.
+                                    @Suppress("DEPRECATION")
                                     handleView.announceForAccessibility(
                                         context.getString(R.string.today_widget_resize_dp, widthDp(liveSpan))
                                     )

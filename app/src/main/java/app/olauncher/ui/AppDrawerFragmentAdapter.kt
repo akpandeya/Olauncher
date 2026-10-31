@@ -6,10 +6,10 @@ import android.provider.AlarmClock
 import android.provider.CalendarContract
 import android.content.Intent
 import android.net.Uri
+import android.os.Bundle
 import android.os.Process
 import android.view.View
 import android.view.animation.AnimationUtils
-import androidx.core.os.bundleOf
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -182,7 +182,7 @@ internal fun AppDrawerFragment.initAdapter() {
                             if (navController.currentDestination?.id == R.id.appListFragment) {
                                 navController.navigate(
                                     R.id.action_appListFragment_to_conjugationFragment,
-                                    bundleOf("word" to action.text),
+                                    Bundle().apply { putString("word", action.text) },
                                 )
                             }
                         }
@@ -195,7 +195,7 @@ internal fun AppDrawerFragment.initAdapter() {
                             if (navController.currentDestination?.id == R.id.appListFragment) {
                                 navController.navigate(
                                     R.id.action_appListFragment_to_drillFragment,
-                                    bundleOf("drillType" to action.typeId),
+                                    Bundle().apply { putString("drillType", action.typeId) },
                                 )
                             }
                         }

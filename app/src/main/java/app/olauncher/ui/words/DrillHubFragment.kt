@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
 import androidx.navigation.fragment.findNavController
 import app.olauncher.R
@@ -123,7 +122,7 @@ class DrillHubFragment : BaseFragment() {
         if (navController.currentDestination?.id == R.id.drillHubFragment) {
             navController.navigate(
                 R.id.action_drillHubFragment_to_drillFragment,
-                bundleOf("drillType" to types.joinToString(",") { it.id }),
+                Bundle().apply { putString("drillType", types.joinToString(",") { it.id }) },
             )
         }
     }

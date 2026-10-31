@@ -421,11 +421,7 @@ internal fun AppDrawerFragment.isCjkKeyboard(): Boolean {
     val result = try {
         val imm = requireContext().getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
         val subtype = imm.currentInputMethodSubtype
-        val language = when {
-            subtype == null -> ""
-            subtype.languageTag.isNotEmpty() -> subtype.languageTag // e.g. "zh-CN", "ja-JP", "en-US"
-            else -> subtype.locale // deprecated fallback, e.g. "zh_CN"
-        }
+        val language = subtype?.languageTag.orEmpty()
         language.startsWith("zh") || language.startsWith("ja") || language.startsWith("ko")
     } catch (e: Exception) {
         Log.w("AppDrawerFragment", "Failed to detect CJK keyboard", e)

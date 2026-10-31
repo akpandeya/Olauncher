@@ -57,7 +57,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.os.bundleOf
 import app.olauncher.glance.Place
 import app.olauncher.glance.WeatherApi
 import app.olauncher.glance.WeatherLocation
@@ -148,7 +147,7 @@ internal fun SettingsFragment.showAppListIfEnabled(flag: Int) {
     viewModel.getAppList(true)
     findNavController().navigate(
         R.id.action_settingsFragment_to_appListFragment,
-        bundleOf(Constants.Key.FLAG to flag)
+        Bundle().apply { putInt(Constants.Key.FLAG, flag) }
     )
 }
 

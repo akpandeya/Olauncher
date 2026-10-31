@@ -17,7 +17,6 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Matrix
 import android.graphics.Paint
-import android.graphics.Point
 import android.net.Uri
 import android.os.UserHandle
 import android.os.UserManager
@@ -25,7 +24,6 @@ import android.provider.AlarmClock
 import android.provider.CalendarContract
 import android.provider.MediaStore
 import android.provider.Settings
-import android.util.DisplayMetrics
 import android.util.Log
 import android.util.TypedValue
 import android.view.WindowManager
@@ -376,9 +374,8 @@ suspend fun getWallpaperBitmap(originalImage: Bitmap, width: Int, height: Int): 
 
 fun getScreenDimensions(context: Context): Pair<Int, Int> {
     val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-    val point = Point()
-    windowManager.defaultDisplay.getRealSize(point)
-    return Pair(point.x, point.y)
+    val bounds = windowManager.maximumWindowMetrics.bounds
+    return Pair(bounds.width(), bounds.height())
 }
 
 @SuppressLint("WrongConstant", "PrivateApi")
@@ -474,9 +471,7 @@ fun isAccessServiceEnabled(context: Context): Boolean {
 }
 
 fun isTablet(context: Context): Boolean {
-    val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
-    val metrics = DisplayMetrics()
-    windowManager.defaultDisplay.getMetrics(metrics)
+    val metrics = context.resources.displayMetrics
     val widthInches = metrics.widthPixels / metrics.xdpi
     val heightInches = metrics.heightPixels / metrics.ydpi
     val diagonalInches = sqrt(widthInches.toDouble().pow(2.0) + heightInches.toDouble().pow(2.0))

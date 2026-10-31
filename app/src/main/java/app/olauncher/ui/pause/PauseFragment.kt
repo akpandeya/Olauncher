@@ -1,6 +1,5 @@
 package app.olauncher.ui.pause
 
-import androidx.core.view.ViewCompat
 import app.olauncher.helper.HomeAccessibilityActions
 import android.content.Context
 import android.os.Bundle
@@ -333,10 +332,9 @@ class PauseFragment : Fragment() {
         countdownRemaining = remaining
         if (_binding == null) return
         // Polite live region only for the announced updates, so TalkBack stays quiet every other second.
-        ViewCompat.setAccessibilityLiveRegion(
-            binding.btnOpen,
-            if (announce) ViewCompat.ACCESSIBILITY_LIVE_REGION_POLITE
-            else ViewCompat.ACCESSIBILITY_LIVE_REGION_NONE,
+        binding.btnOpen.setAccessibilityLiveRegion(
+            if (announce) View.ACCESSIBILITY_LIVE_REGION_POLITE
+            else View.ACCESSIBILITY_LIVE_REGION_NONE,
         )
         updateOpenButtonState()
     }
