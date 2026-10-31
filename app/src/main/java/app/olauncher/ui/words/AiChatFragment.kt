@@ -196,9 +196,9 @@ class AiChatFragment : BaseFragment() {
             if (composer.paddingBottom != padding) {
                 composer.setPadding(composer.paddingLeft, composer.paddingTop, composer.paddingRight, padding)
             }
-            // An open grounding card has no height cap and, with the keyboard up,
-            // would take the whole visible area and push the composer off screen:
-            // fold it away while typing (the user's collapse choice is untouched).
+            // An open grounding card would take the whole visible area with the
+            // keyboard up and push the composer off screen: cap its height while
+            // typing so it still opens and scrolls, instead of hiding it.
             val imeNowVisible = insets.isVisible(WindowInsets.Type.ime())
             if (imeNowVisible != imeVisible) {
                 imeVisible = imeNowVisible
@@ -293,7 +293,7 @@ class AiChatFragment : BaseFragment() {
         applyGrounding()
     }
 
-    /** True while the keyboard is showing; the grounding body is hidden meanwhile. */
+    /** True while the keyboard is showing; the grounding body is height-capped meanwhile. */
     private var imeVisible = false
 
     /** Applies the collapse state to the already-computed grounding card. */
@@ -301,7 +301,9 @@ class AiChatFragment : BaseFragment() {
         if (renderedGroundings.isEmpty()) return
         renderGroundingBody(renderedGroundings)
         val expanded = groundingExpanded == true
-        binding.groundingBody.isVisible = expanded && !imeVisible
+        binding.groundingScroll.isVisible = expanded
+        binding.groundingScroll.maxHeightPx =
+            if (imeVisible) (binding.root.height * GROUNDING_MAX_HEIGHT_WITH_KEYBOARD).toInt() else 0
         binding.tvGroundingChevron.text =
             getString(if (expanded) R.string.chat_chevron_expanded else R.string.chat_chevron_collapsed)
     }
@@ -588,6 +590,9 @@ class AiChatFragment : BaseFragment() {
     companion object {
         /** "What the AI sees" starts folded; the header row opens it. */
         private const val DEFAULT_GROUNDING_EXPANDED = false
+
+        /** Share of the screen the open card may take while the keyboard is up. */
+        private const val GROUNDING_MAX_HEIGHT_WITH_KEYBOARD = 0.28f
 
         private const val ARG_SUBJECT_KIND = "subjectKind"
         private const val ARG_SUBJECT_REF = "subjectRef"

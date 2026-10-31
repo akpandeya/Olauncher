@@ -15,4 +15,12 @@ object ImeInset {
      */
     fun pinnedBottomPadding(imeVisible: Boolean, imeBottomPx: Int, basePx: Int): Int =
         if (imeVisible) imeBottomPx.coerceAtLeast(0) else basePx
+
+    /**
+     * How far to raise a bottom-anchored dialog window so it clears the keyboard.
+     * The window already sits above the navigation bar, which the keyboard covers,
+     * so that part is not lifted twice.
+     */
+    fun windowLift(imeVisible: Boolean, imeBottomPx: Int, navBottomPx: Int): Int =
+        if (imeVisible) (imeBottomPx - navBottomPx.coerceAtLeast(0)).coerceAtLeast(0) else 0
 }

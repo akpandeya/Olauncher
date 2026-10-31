@@ -32,4 +32,15 @@ class ImeInsetTest {
         // which the keyboard already covers.
         assertEquals(40, ImeInset.pinnedBottomPadding(imeVisible = true, imeBottomPx = 40, basePx = 132))
     }
+
+    @Test
+    fun windowLiftSkipsTheNavBarTheKeyboardCovers() {
+        assertEquals(700, ImeInset.windowLift(true, 800, 100))
+    }
+
+    @Test
+    fun windowLiftIsZeroWithoutKeyboardOrWhenKeyboardIsShorterThanNavBar() {
+        assertEquals(0, ImeInset.windowLift(false, 800, 100))
+        assertEquals(0, ImeInset.windowLift(true, 50, 100))
+    }
 }

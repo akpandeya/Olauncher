@@ -93,22 +93,27 @@ object AddNoteSheet {
                 true
             } else keyCode == KeyEvent.KEYCODE_BACK
         }
-        // Edge-to-edge app: ADJUST_RESIZE does not move the sheet, so lift its
-        // content by the keyboard height (the sheet is bottom-anchored).
-        b.root.setOnApplyWindowInsetsListener { root, insets ->
-            val padding = ImeInset.bottomPadding(
-                imeVisible = insets.isVisible(WindowInsets.Type.ime()),
-                imeBottomPx = insets.getInsets(WindowInsets.Type.ime()).bottom,
-            )
-            if (root.paddingBottom != padding) {
-                root.setPadding(root.paddingLeft, root.paddingTop, root.paddingRight, padding)
-            }
-            insets
-        }
+        // Edge-to-edge app: the dialog window is not resized for the keyboard, and
+        // a listener on the sheet's own view never sees the IME inset (the window
+        // decor consumes it first). Read the raw insets on the decor view, pass them
+        // on unchanged, and raise the bottom-anchored window by the keyboard height.
         dialog.window?.apply {
             setGravity(Gravity.BOTTOM)
             setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
-            setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
+            setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING)
+            decorView.setOnApplyWindowInsetsListener { decor, insets ->
+                val lift = ImeInset.windowLift(
+                    imeVisible = insets.isVisible(WindowInsets.Type.ime()),
+                    imeBottomPx = insets.getInsets(WindowInsets.Type.ime()).bottom,
+                    navBottomPx = insets.getInsets(WindowInsets.Type.navigationBars()).bottom,
+                )
+                val params = attributes
+                if (params.y != lift) {
+                    params.y = lift
+                    attributes = params
+                }
+                decor.onApplyWindowInsets(insets)
+            }
         }
         dialog.showRespectingStatusBar()
         b.etNoteTitle.post {
