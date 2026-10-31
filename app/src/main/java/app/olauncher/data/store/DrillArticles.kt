@@ -185,9 +185,27 @@ object DrillArticles {
                         "articles item art:${entry.noun.lowercase()}",
                     ),
                     missByChoice = content.missByChoiceFor(entry.noun, entry.gender),
+                    helpCell = articleHelpCell(entry.gender),
                 )
             }
 
         return savedItems + tableItems
+    }
+
+    /**
+     * The item's cell in the shared article table (`Nom: der die das die`): the
+     * answer's own gender column, so the card highlights the item's position
+     * instead of every cell whose text equals the answer (#723). *die* fills both
+     * the feminine and the plural column, but the article tables are gender
+     * tables — every noun authored in [TABLE_ENTRIES] is singular (a plural noun
+     * demonstrates no gender rule), so *die* is always the feminine column here.
+     * Saved-word items carry no rule and no cell; the unique-text fallback covers
+     * anything unmapped.
+     */
+    private fun articleHelpCell(gender: String): DrillHelpCard.Cell? = when (gender) {
+        "der" -> DrillHelpCard.Cell("Nom", "m")
+        "die" -> DrillHelpCard.Cell("Nom", "f")
+        "das" -> DrillHelpCard.Cell("Nom", "n")
+        else -> null
     }
 }

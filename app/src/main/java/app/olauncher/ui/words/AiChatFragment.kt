@@ -183,12 +183,15 @@ class AiChatFragment : BaseFragment() {
         // resized for the keyboard: pad the composer by the IME inset so it rides
         // the keyboard — the transcript gives up the height — and the composer with
         // its send button stays fully visible (same rule as every other screen).
-        val composerBasePadding = binding.composer.paddingBottom
+        // The hidden-keyboard base is the live navigation-bars inset, not the
+        // layout's fixed 48dp: on 3-button devices the two are about equal, but on
+        // gesture-nav devices the bar is much thinner and the constant floated the
+        // composer (same pattern as SettingsSectionNavigation).
         binding.composer.setOnApplyWindowInsetsListener { composer, insets ->
             val padding = ImeInset.pinnedBottomPadding(
                 imeVisible = insets.isVisible(WindowInsets.Type.ime()),
                 imeBottomPx = insets.getInsets(WindowInsets.Type.ime()).bottom,
-                basePx = composerBasePadding,
+                basePx = insets.getInsets(WindowInsets.Type.navigationBars()).bottom,
             )
             if (composer.paddingBottom != padding) {
                 composer.setPadding(composer.paddingLeft, composer.paddingTop, composer.paddingRight, padding)

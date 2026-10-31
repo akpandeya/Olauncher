@@ -711,22 +711,28 @@ class DrillHelpContentTest {
     }
 
     @Test
-    fun caseEndingAndPrepositionItemsHighlightTheirOwnCellNotEveryTextMatch() {
+    fun liveItemsHighlightTheirOwnCellNotEveryTextMatch() {
         // #723: the card highlighted every cell whose text equals the answer, so the
         // genitive des lit both the masculine and the neuter column. The item's cell
         // is a position, authored or derived from its case and gender; where an item
         // carries none, its answer must be unique in the table so the text fallback
         // cannot light a different noun's form.
-        val audited = setOf(DrillType.CASE_ENDINGS, DrillType.PREPOSITIONS)
+        //
+        // PRONOUNS is the deliberate exemption: its forms repeat across person and
+        // gender cells (sie alone fills five of them), and the items' case and
+        // gender exist only as miss-line prose, not as structured fields — an
+        // authored cell there would be an unverifiable transcription, so pronoun
+        // cards keep the honest no-highlight fallback. Any other live type turning
+        // ambiguous fails here, so new content cannot silently lose its highlight.
+        val ambiguityExempt = setOf(DrillType.PRONOUNS)
         for ((type, items) in liveItems()) {
-            if (type !in audited) continue
             for (item in items) {
                 val ruleId = item.ruleId ?: continue
                 val table = DrillHelpContent.rule(ruleId)?.table ?: continue
                 val matches = table.rows.sumOf { row ->
                     row.cells.count { it.trim().equals(item.answer.trim(), ignoreCase = true) }
                 }
-                if (matches > 1) {
+                if (matches > 1 && type !in ambiguityExempt) {
                     assertNotNull(
                         "$type ${item.id}: the answer repeats in $matches cells of " +
                             "$ruleId; the item needs an authored help cell",

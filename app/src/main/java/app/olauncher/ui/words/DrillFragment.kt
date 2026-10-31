@@ -746,10 +746,12 @@ class DrillFragment : BaseFragment() {
         val context = b.root.context
         val table = state.rule.table
 
-        // Chips: the table's column headers carry the pattern (Wohin?/Wo?, m·f·n·pl),
-        // never this item's answer.
+        // Chips: the table's column headers when they carry the pattern (Wohin?/Wo?,
+        // Wer? → Nom). Bare gender labels (m·f·n·pl) only repeat the table's own
+        // header row below, so the row hides for them (DrillHelpCard.patternChips,
+        // #723). Never this item's answer.
         b.helpChips.removeAllViews()
-        val chips = table.headers.drop(1).filter { it.isNotBlank() }
+        val chips = DrillHelpCard.patternChips(table)
         for (chip in chips) b.helpChips.addView(newHelpChip(chip))
         b.helpChips.isVisible = chips.isNotEmpty()
 

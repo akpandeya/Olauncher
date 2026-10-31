@@ -121,6 +121,64 @@ class DrillHelpCardCellTest {
         assertEquals(DrillHelpCard.Cell("f", "Wem? → Dat"), mutter.helpCell)
     }
 
+    @Test
+    fun articleItemsCarryTheirGenderColumnInTheSharedTable() {
+        // The article table is one Nom row of der/die/das/die: "die" sits in both
+        // the feminine and the plural column. Every table noun is singular (a
+        // plural noun demonstrates no gender rule), so a die item's cell is always
+        // the feminine one (#723).
+        val zeitung = DrillArticles.items().first { it.id.key == "art:zeitung" }
+        assertEquals("die", zeitung.answer)
+        assertEquals(DrillHelpCard.Cell("Nom", "f"), zeitung.helpCell)
+
+        // der and das items land in their own columns — a shared constant cell
+        // cannot pass.
+        val mann = DrillArticles.items().first { it.id.key == "art:mann" }
+        assertEquals("der", mann.answer)
+        assertEquals(DrillHelpCard.Cell("Nom", "m"), mann.helpCell)
+        val dasItem = DrillArticles.items().first { it.answer == "das" && it.helpCell != null }
+        assertEquals(DrillHelpCard.Cell("Nom", "n"), dasItem.helpCell)
+    }
+
+    @Test
+    fun bareGenderHeadersProduceNoChipsRow() {
+        // m · f · n · pl detached from their cells only repeat the table's own
+        // header row rendered below; the chips row hides for them (#723).
+        assertEquals(emptyList<String>(), DrillHelpCard.patternChips(prepTable))
+    }
+
+    @Test
+    fun questionWordHeadersStayAsChips() {
+        val caseTable = DrillHelpTable(
+            headers = listOf("", "Wer? → Nom", "Wem? → Dat"),
+            rows = listOf(DrillHelpRow("m · n", listOf("der · das", "dem"))),
+        )
+        assertEquals(listOf("Wer? → Nom", "Wem? → Dat"), DrillHelpCard.patternChips(caseTable))
+    }
+
+    @Test
+    fun blankHeadersAreDroppedBeforeTheBareCheck() {
+        val sparse = DrillHelpTable(
+            headers = listOf("", "", "Wer? → Nom"),
+            rows = listOf(DrillHelpRow("Nom", listOf("der", "die"))),
+        )
+        assertEquals(listOf("Wer? → Nom"), DrillHelpCard.patternChips(sparse))
+    }
+
+    @Test
+    fun realTablesSplitTheirChipsAsExpected() {
+        // Content drift check: the shared preposition table loses its chips row,
+        // the case table keeps its question words.
+        assertEquals(
+            emptyList<String>(),
+            DrillHelpCard.patternChips(DrillHelpContent.rule("prep-fixed-gen")!!.table!!),
+        )
+        assertEquals(
+            listOf("Wer? → Nom", "Wen? → Akk", "Wem? → Dat", "Wessen? → Gen"),
+            DrillHelpCard.patternChips(DrillHelpContent.rule("case-verb-dat")!!.table!!),
+        )
+    }
+
     private fun assertNotEquals(a: Any?, b: Any?) {
         org.junit.Assert.assertNotEquals(a, b)
     }
