@@ -732,7 +732,7 @@ class DrillFragment : BaseFragment() {
             // shifts the prompt and the tiles (design §1).
             if (question.isFlashcard) {
                 b.btnWhy.isVisible = false
-                b.hintRow.isVisible = b.tvHint.isVisible
+                b.hintRow.isInvisible = !b.tvHint.isVisible
             } else {
                 b.btnWhy.isInvisible = true
                 b.hintRow.isInvisible = true
