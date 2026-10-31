@@ -6,6 +6,7 @@ import android.view.Gravity
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.view.WindowInsets
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import android.widget.TextView
@@ -22,6 +23,7 @@ import app.olauncher.helper.showToast
 import app.olauncher.ui.today.TodayChips
 import app.olauncher.ui.today.cards.NotesCard
 import app.olauncher.ui.today.cards.WordsCard
+import app.olauncher.ui.today.ImeInset
 import java.time.LocalDate
 import java.time.ZonedDateTime
 
@@ -90,6 +92,18 @@ object AddNoteSheet {
                 cancel()
                 true
             } else keyCode == KeyEvent.KEYCODE_BACK
+        }
+        // Edge-to-edge app: ADJUST_RESIZE does not move the sheet, so lift its
+        // content by the keyboard height (the sheet is bottom-anchored).
+        b.root.setOnApplyWindowInsetsListener { root, insets ->
+            val padding = ImeInset.bottomPadding(
+                imeVisible = insets.isVisible(WindowInsets.Type.ime()),
+                imeBottomPx = insets.getInsets(WindowInsets.Type.ime()).bottom,
+            )
+            if (root.paddingBottom != padding) {
+                root.setPadding(root.paddingLeft, root.paddingTop, root.paddingRight, padding)
+            }
+            insets
         }
         dialog.window?.apply {
             setGravity(Gravity.BOTTOM)
