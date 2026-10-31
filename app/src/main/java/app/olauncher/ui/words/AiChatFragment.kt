@@ -174,7 +174,7 @@ class AiChatFragment : BaseFragment() {
         binding.groundingHeader.setOnClickListener {
             Haptics.tick(binding.root)
             groundingExpanded =
-                !(groundingExpanded ?: defaultGroundingExpanded(openedResumed && resumeGrounding == null))
+                !(groundingExpanded ?: DEFAULT_GROUNDING_EXPANDED)
             applyGrounding()
         }
         binding.tvUsage.setOnClickListener { showUsageDetail() }
@@ -195,6 +195,14 @@ class AiChatFragment : BaseFragment() {
             )
             if (composer.paddingBottom != padding) {
                 composer.setPadding(composer.paddingLeft, composer.paddingTop, composer.paddingRight, padding)
+            }
+            // An open grounding card has no height cap and, with the keyboard up,
+            // would take the whole visible area and push the composer off screen:
+            // fold it away while typing (the user's collapse choice is untouched).
+            val imeNowVisible = insets.isVisible(WindowInsets.Type.ime())
+            if (imeNowVisible != imeVisible) {
+                imeVisible = imeNowVisible
+                applyGrounding()
             }
             insets
         }
@@ -279,24 +287,25 @@ class AiChatFragment : BaseFragment() {
             return
         }
         if (groundingExpanded == null) {
-            groundingExpanded = defaultGroundingExpanded(resumed && carried == null)
+            groundingExpanded = DEFAULT_GROUNDING_EXPANDED
         }
         renderedGroundings = groundings
         applyGrounding()
     }
+
+    /** True while the keyboard is showing; the grounding body is hidden meanwhile. */
+    private var imeVisible = false
 
     /** Applies the collapse state to the already-computed grounding card. */
     private fun applyGrounding() {
         if (renderedGroundings.isEmpty()) return
         renderGroundingBody(renderedGroundings)
         val expanded = groundingExpanded == true
-        binding.groundingBody.isVisible = expanded
+        binding.groundingBody.isVisible = expanded && !imeVisible
         binding.tvGroundingChevron.text =
             getString(if (expanded) R.string.chat_chevron_expanded else R.string.chat_chevron_collapsed)
     }
 
-    /** Fresh thread or a resume carrying a new miss → open; otherwise collapsed. */
-    private fun defaultGroundingExpanded(resumedWithoutNewMiss: Boolean): Boolean = !resumedWithoutNewMiss
 
     /** The expanded state of the marker kind ([summarised] or omitted) being rendered. */
     private fun markerExpanded(summarised: Boolean): Boolean =
@@ -577,6 +586,9 @@ class AiChatFragment : BaseFragment() {
     }
 
     companion object {
+        /** "What the AI sees" starts folded; the header row opens it. */
+        private const val DEFAULT_GROUNDING_EXPANDED = false
+
         private const val ARG_SUBJECT_KIND = "subjectKind"
         private const val ARG_SUBJECT_REF = "subjectRef"
         private const val ARG_THREAD_ID = "threadId"

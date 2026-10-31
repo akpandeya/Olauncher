@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowInsets
 import android.view.inputmethod.EditorInfo
 import androidx.core.os.bundleOf
 import androidx.core.view.isVisible
@@ -18,6 +19,7 @@ import app.olauncher.helper.NoteViewRules
 import app.olauncher.helper.Notes
 import app.olauncher.helper.hideKeyboard
 import app.olauncher.ui.BaseFragment
+import app.olauncher.ui.today.ImeInset
 import app.olauncher.ui.today.attachPressScale
 import app.olauncher.ui.today.cards.NotesCard
 import java.time.LocalDate
@@ -37,6 +39,18 @@ class NotesFragment : BaseFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        // Edge-to-edge activity: the window is not resized for the keyboard, so pad
+        // the page by the IME inset and the scroll view gives up the height.
+        binding.root.setOnApplyWindowInsetsListener { root, insets ->
+            val padding = ImeInset.bottomPadding(
+                imeVisible = insets.isVisible(WindowInsets.Type.ime()),
+                imeBottomPx = insets.getInsets(WindowInsets.Type.ime()).bottom,
+            )
+            if (root.paddingBottom != padding) {
+                root.setPadding(root.paddingLeft, root.paddingTop, root.paddingRight, padding)
+            }
+            insets
+        }
         binding.etSearch.doOnTextChanged { _, _, _, _ -> render() }
         binding.etSearch.setOnEditorActionListener { v, actionId, _ ->
             if (actionId != EditorInfo.IME_ACTION_SEARCH) return@setOnEditorActionListener false

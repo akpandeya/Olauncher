@@ -8,6 +8,7 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowInsets
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.TextView
@@ -29,6 +30,7 @@ import app.olauncher.helper.hideKeyboard
 import app.olauncher.helper.showMessageDialog
 import app.olauncher.helper.showToast
 import app.olauncher.ui.BaseFragment
+import app.olauncher.ui.today.ImeInset
 import app.olauncher.ui.today.cards.NotesCard
 import app.olauncher.ui.today.cards.WordsCard
 import java.time.LocalDate
@@ -55,6 +57,18 @@ class NoteViewFragment : BaseFragment() {
         super.onViewCreated(view, savedInstanceState)
         noteId = arguments?.getLong(ARG_NOTE_ID, -1L) ?: -1L
         val b = binding
+        // Edge-to-edge activity: the window is not resized for the keyboard, so pad
+        // the page by the IME inset and the scroll view gives up the height.
+        b.root.setOnApplyWindowInsetsListener { root, insets ->
+            val padding = ImeInset.bottomPadding(
+                imeVisible = insets.isVisible(WindowInsets.Type.ime()),
+                imeBottomPx = insets.getInsets(WindowInsets.Type.ime()).bottom,
+            )
+            if (root.paddingBottom != padding) {
+                root.setPadding(root.paddingLeft, root.paddingTop, root.paddingRight, padding)
+            }
+            insets
+        }
         b.btnBack.setOnClickListener { goBack() }
         b.etViewTitle.onCommit { text ->
             update { n, now -> NoteViewRules.withTitle(n, text, now) }
