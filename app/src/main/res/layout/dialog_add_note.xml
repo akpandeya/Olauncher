@@ -22,7 +22,8 @@
             android:textColor="?attr/ink" />
     </FrameLayout>
 
-    <ScrollView
+    <app.olauncher.ui.views.MaxHeightScrollView
+        android:id="@+id/scrollNote"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:overScrollMode="never"
@@ -188,7 +189,7 @@
                 android:layout_marginTop="8dp"
                 android:text="@string/note_add_hint" />
         </LinearLayout>
-    </ScrollView>
+    </app.olauncher.ui.views.MaxHeightScrollView>
 
     <LinearLayout
         android:layout_width="match_parent"

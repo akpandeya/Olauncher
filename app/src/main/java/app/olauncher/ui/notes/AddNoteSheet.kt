@@ -102,11 +102,19 @@ object AddNoteSheet {
             setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
             setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING)
             decorView.setOnApplyWindowInsetsListener { decor, insets ->
-                val lift = ImeInset.windowLift(
-                    imeVisible = insets.isVisible(WindowInsets.Type.ime()),
-                    imeBottomPx = insets.getInsets(WindowInsets.Type.ime()).bottom,
-                    navBottomPx = insets.getInsets(WindowInsets.Type.navigationBars()).bottom,
-                )
+                val imeVisible = insets.isVisible(WindowInsets.Type.ime())
+                val imeBottom = insets.getInsets(WindowInsets.Type.ime()).bottom
+                val navBottom = insets.getInsets(WindowInsets.Type.navigationBars()).bottom
+                val statusTop = insets.getInsets(WindowInsets.Type.statusBars()).top
+                val lift = ImeInset.windowLift(imeVisible, imeBottom, navBottom)
+
+                val screenHeight = decor.rootView.height.takeIf { it > 0 }
+                    ?: context.resources.displayMetrics.heightPixels
+                val nonScrollPx = (context.resources.displayMetrics.density * 180).toInt()
+                val availableForScroll = (screenHeight - imeBottom - statusTop - nonScrollPx)
+                    .coerceAtLeast((context.resources.displayMetrics.density * 100).toInt())
+                b.scrollNote.maxHeightPx = if (imeVisible) availableForScroll else 0
+
                 val params = attributes
                 if (params.y != lift) {
                     params.y = lift
