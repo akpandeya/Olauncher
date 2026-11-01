@@ -396,11 +396,12 @@ object PracticeContract {
     /**
      * A cloze built from the saved [Word.context] with the word blanked. When the
      * word appears only in an inflected form, the context token sharing the longest
-     * stem with it is blanked instead. Without usable context the card is a bare gap
-     * with the word as the answer — the word is never dropped. A word with blank
-     * text gets a deterministic minimal card (the saved meaning, else the word id,
-     * as the answer) so "never dropped" holds for it too (review R1 #9). There is
-     * no hint, so the fallback can never reveal the answer (#643).
+     * stem with it is blanked instead. Without usable context the card uses the saved
+     * meaning (`<meaning> → ___`) only when it does not echo the word, or falls back to
+     * a bare gap when the meaning is blank or echoes the word, with the word as the answer
+     * — the word is never dropped. A word with blank text gets a deterministic minimal card
+     * (the saved meaning, else the word id, as the answer) so "never dropped" holds for it
+     * too (review R1 #9). There is no hint, so the fallback can never reveal the answer (#643).
      */
     private fun clozeFallback(word: Word, source: String): PracticeItem {
         val text = word.text.trim()
@@ -426,7 +427,9 @@ object PracticeContract {
                 word.context.substring(index + matched.length)
             answer = matched
         } else {
-            prompt = DrillItem.GAP_MARKER
+            val meaning = word.meaning.lines().map { it.trim() }.filter { it.isNotEmpty() }.joinToString(" ")
+            val cue = meaning.takeIf { it.isNotEmpty() && !it.contains(text, ignoreCase = true) }
+            prompt = if (cue != null) "$cue → ${DrillItem.GAP_MARKER}" else DrillItem.GAP_MARKER
             answer = text
         }
         return PracticeItem(

@@ -396,6 +396,78 @@ class PracticeContractTest {
     }
 
     @Test
+    fun `fallback without stem match uses the meaning as prompt cue`() {
+        val word = word(1, "verlieren", context = "... Leben verloren hatten.")
+            .copy(meaning = "to lose (something, or a game)")
+        val result = PracticeContract.parse(response(), listOf(word))
+        assertEquals(3, result.clozeFallbacks.size)
+        val fallback = result.clozeFallbacks[0]
+        assertEquals("to lose (something, or a game) → ___", fallback.prompt)
+        assertEquals("verlieren", fallback.answer)
+        assertFalse("The prompt never contains the word itself (#643)", fallback.prompt.contains(word.text, ignoreCase = true))
+    }
+
+    @Test
+    fun `fallback without stem match and blank meaning keeps bare gap`() {
+        val word = word(1, "verlieren", context = "... Leben verloren hatten.")
+            .copy(meaning = "   ")
+        val result = PracticeContract.parse(response(), listOf(word))
+        assertEquals(3, result.clozeFallbacks.size)
+        val fallback = result.clozeFallbacks[0]
+        assertEquals("___", fallback.prompt)
+        assertEquals("verlieren", fallback.answer)
+        assertFalse("The prompt never contains the word itself (#643)", fallback.prompt.contains(word.text, ignoreCase = true))
+    }
+
+    @Test
+    fun `fallback meaning echoing word case-insensitively keeps bare gap`() {
+        val word = word(1, "Hand", context = "Er winkt.")
+            .copy(meaning = "hand")
+        val result = PracticeContract.parse(response(), listOf(word))
+        val fallback = result.clozeFallbacks[0]
+        assertEquals("___", fallback.prompt)
+        assertEquals("Hand", fallback.answer)
+        assertFalse("The prompt never contains the word itself (#643)", fallback.prompt.contains(word.text, ignoreCase = true))
+    }
+
+    @Test
+    fun `fallback meaning containing word keeps bare gap`() {
+        val word = word(1, "verlieren", context = "... Leben verloren hatten.")
+            .copy(meaning = "verlieren – to lose")
+        val result = PracticeContract.parse(response(), listOf(word))
+        val fallback = result.clozeFallbacks[0]
+        assertEquals("___", fallback.prompt)
+        assertEquals("verlieren", fallback.answer)
+        assertFalse("The prompt never contains the word itself (#643)", fallback.prompt.contains(word.text, ignoreCase = true))
+
+        val wordNoContext = word(2, "verlieren")
+            .copy(meaning = "verlieren – to lose")
+        val resultNoContext = PracticeContract.parse(response(), listOf(wordNoContext))
+        assertEquals("___", resultNoContext.clozeFallbacks[0].prompt)
+        assertFalse("The prompt never contains the word itself (#643)", resultNoContext.clozeFallbacks[0].prompt.contains(wordNoContext.text, ignoreCase = true))
+    }
+
+    @Test
+    fun `fallback meaning prompt trims and normalizes multiline meaning to one line`() {
+        val word = word(1, "verlieren", context = "... Leben verloren hatten.")
+            .copy(meaning = "  to lose \n (something, or a game)  ")
+        val result = PracticeContract.parse(response(), listOf(word))
+        val fallback = result.clozeFallbacks[0]
+        assertEquals("to lose (something, or a game) → ___", fallback.prompt)
+        assertEquals("verlieren", fallback.answer)
+        assertFalse("The prompt never contains the word itself (#643)", fallback.prompt.contains(word.text, ignoreCase = true))
+    }
+
+    @Test
+    fun `stem match in context takes priority over meaning`() {
+        val word = word(1, "insistieren", context = "Die Arbeit insistiert auf seiner Unterschrift.")
+            .copy(meaning = "to insist")
+        val result = PracticeContract.parse(response(), listOf(word))
+        assertEquals("Die Arbeit ___ auf seiner Unterschrift.", result.clozeFallbacks[0].prompt)
+        assertEquals("insistiert", result.clozeFallbacks[0].answer)
+    }
+
+    @Test
     fun `fallback choices carry no case-flip distractor`() {
         val words = listOf(wordWithContext(1, "Haus"))
         val result = PracticeContract.parse(response(), words)
