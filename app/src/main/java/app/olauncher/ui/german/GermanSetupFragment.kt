@@ -17,6 +17,8 @@ import app.olauncher.data.store.WordLookup
 import app.olauncher.databinding.FragmentGermanSetupBinding
 import app.olauncher.databinding.ItemGermanSetupChoiceBinding
 import app.olauncher.helper.Haptics
+import app.olauncher.helper.NewsHarvestToggle
+import app.olauncher.helper.NewsHarvestWorkerScheduler
 import app.olauncher.helper.WordCaptureActivity
 import app.olauncher.helper.WordScreenService
 import app.olauncher.helper.showToast
@@ -220,6 +222,11 @@ class GermanSetupFragment : BaseFragment() {
         prefs.germanUi = result.germanUi
         WordCaptureActivity.setEnabled(context, true, WordLookup.isLookupAllowed(true, prefs.germanLookup))
         WordScreenService.setEnabled(context, result.screenPick)
+        NewsHarvestToggle.onGermanToggled(
+            germanEnabled = true,
+            newsSentencesEnabled = prefs.newsSentencesEnabled,
+            scheduler = NewsHarvestWorkerScheduler(context)
+        )
         findNavController().popBackStack()
     }
 

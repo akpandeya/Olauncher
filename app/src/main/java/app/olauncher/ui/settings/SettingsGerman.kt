@@ -166,6 +166,11 @@ internal fun SettingsFragment.toggleGerman() {
     prefs.germanEnabled = false
     syncWordShareEntries()
     WordScreenService.setEnabled(requireContext(), prefs.germanEnabled && prefs.germanScreenPick)
+    NewsHarvestToggle.onGermanToggled(
+        germanEnabled = false,
+        newsSentencesEnabled = prefs.newsSentencesEnabled,
+        scheduler = NewsHarvestWorkerScheduler(requireContext())
+    )
     populateGerman()
 }
 

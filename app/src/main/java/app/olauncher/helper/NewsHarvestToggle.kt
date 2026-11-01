@@ -24,6 +24,27 @@ object NewsHarvestToggle {
             scheduler.cancel()
         }
     }
+
+    fun onGermanToggled(
+        germanEnabled: Boolean,
+        newsSentencesEnabled: Boolean,
+        scheduler: NewsHarvestScheduler
+    ) {
+        if (!germanEnabled) {
+            scheduler.cancel()
+        } else if (newsSentencesEnabled) {
+            scheduler.schedulePeriodic()
+        }
+    }
+
+    /** Brings the periodic work in line with both flags, e.g. after a backup restore. */
+    fun sync(germanEnabled: Boolean, newsSentencesEnabled: Boolean, scheduler: NewsHarvestScheduler) {
+        if (NewsHarvestPolicy.mayRun(newsSentencesEnabled, germanEnabled)) {
+            scheduler.schedulePeriodic()
+        } else {
+            scheduler.cancel()
+        }
+    }
 }
 
 object NewsHarvestPolicy {

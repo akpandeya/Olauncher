@@ -134,6 +134,8 @@ import app.olauncher.wellbeing.PauseSnooze
 import java.time.ZoneId
 import app.olauncher.wellbeing.ScreenTimeCue
 import app.olauncher.wellbeing.restoreNeedsWait
+import app.olauncher.helper.NewsHarvestToggle
+import app.olauncher.helper.NewsHarvestWorkerScheduler
 import app.olauncher.wellbeing.UsageSnapshotWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -304,6 +306,11 @@ internal fun SettingsFragment.restoreBackupNow(backupData: BackupData) {
             WordScreenService.setEnabled(appContext, prefs.germanEnabled && prefs.germanScreenPick)
             NudgeScheduler.rescheduleAll(appContext)
             UsageSnapshotWorker.syncWithDistractingApps(appContext, prefs.distractingApps)
+            NewsHarvestToggle.sync(
+                germanEnabled = prefs.germanEnabled,
+                newsSentencesEnabled = prefs.newsSentencesEnabled,
+                scheduler = NewsHarvestWorkerScheduler(appContext)
+            )
             activity?.recreate()
         }
     }

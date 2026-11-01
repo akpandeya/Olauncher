@@ -101,13 +101,21 @@ open class HttpNewsFetcher : NewsFetcher {
                 out.write(buffer, 0, read)
             }
         }
+        val bytes = out.toByteArray()
         val rawContentType = connection.contentType ?: connection.getHeaderField("Content-Type")
-        val charset = parseCharset(rawContentType)
-        return NewsFetch.Ok(String(out.toByteArray(), charset))
+        val charset = determineCharset(rawContentType, bytes)
+        return NewsFetch.Ok(String(bytes, charset))
     }
 
-    private fun parseCharset(contentType: String?): Charset {
-        if (contentType.isNullOrBlank()) return Charsets.UTF_8
+    private fun determineCharset(contentType: String?, bytes: ByteArray): Charset {
+        // A valid header charset wins; an unknown or malformed one is treated as absent.
+        return parseHeaderCharset(contentType)
+            ?: sniffBodyCharset(bytes)
+            ?: Charsets.UTF_8
+    }
+
+    private fun parseHeaderCharset(contentType: String?): Charset? {
+        if (contentType.isNullOrBlank()) return null
         val parts = contentType.split(';')
         for (part in parts) {
             val trimmed = part.trim()
@@ -116,13 +124,24 @@ open class HttpNewsFetcher : NewsFetcher {
                 val paramName = trimmed.substring(0, eqIndex).trim()
                 if (paramName.equals("charset", ignoreCase = true)) {
                     val name = trimmed.substring(eqIndex + 1).trim().trim('"', '\'')
-                    val charset = safeCharset(name)
-                    if (charset != null) return charset
+                    return safeCharset(name)
                 }
             }
         }
         val direct = contentType.trim().trim('"', '\'')
-        return safeCharset(direct) ?: Charsets.UTF_8
+        return safeCharset(direct)
+    }
+
+    private fun sniffBodyCharset(bytes: ByteArray): Charset? {
+        if (bytes.size >= 3 && bytes[0] == 0xEF.toByte() && bytes[1] == 0xBB.toByte() && bytes[2] == 0xBF.toByte()) {
+            return Charsets.UTF_8
+        }
+        // The declaration must open the document, so only its first bytes are read.
+        val prefixLen = minOf(bytes.size, XML_DECL_MAX_BYTES)
+        val prefix = String(bytes, 0, prefixLen, Charsets.ISO_8859_1)
+        val match = XML_DECL_REGEX.find(prefix) ?: return null
+        val encodingName = match.groupValues[1].trim()
+        return safeCharset(encodingName)
     }
 
     private fun safeCharset(name: String): Charset? {
@@ -142,5 +161,11 @@ open class HttpNewsFetcher : NewsFetcher {
         const val USER_AGENT = "Thumbline (+https://github.com/akpandeya/Olauncher)"
         const val ACCEPT_HEADER =
             "application/rss+xml, application/atom+xml, application/xml, text/xml, text/html;q=0.9"
+
+        private const val XML_DECL_MAX_BYTES = 256
+        private val XML_DECL_REGEX = Regex(
+            """^\s*<\?xml\s+[^>]*?\bencoding\s*=\s*["']([^"']+)["']""",
+            RegexOption.IGNORE_CASE
+        )
     }
 }
