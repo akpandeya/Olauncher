@@ -111,6 +111,8 @@ internal class SettingsViews(private val frame: FragmentSettingsBinding) {
     val aiPracticeOnOff: TextView get() = textView(R.id.aiPracticeOnOff)
     val aiPracticeSubtitle: TextView get() = textView(R.id.aiPracticeSubtitle)
     val aiPracticeActionKey: TextView get() = textView(R.id.aiPracticeActionKey)
+    val newsSentencesLayout: ViewGroup get() = viewGroup(R.id.newsSentencesLayout)
+    val newsSentencesOnOff: TextView get() = textView(R.id.newsSentencesOnOff)
     val glowStrength: TextView get() = textView(R.id.glowStrength)
     val glowStrengthSeekBar: SeekBar get() = seekBar(R.id.glowStrengthSeekBar)
     val hapticDuration: TextView get() = textView(R.id.hapticDuration)

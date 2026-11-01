@@ -11,7 +11,7 @@ class SettingsRowAvailabilityTest {
         R.id.shortcutCount, R.id.shortcutSize, R.id.shortcutSide, R.id.shortcutHeight, R.id.shortcutIconStyle,
     )
     private val germanRows = listOf(
-        R.id.germanClock, R.id.dictionaryApp, R.id.germanOfflineDictionaryOnOff, R.id.germanLookupOnOff, R.id.germanPauseWordOnOff, R.id.germanUiOnOff, R.id.aiPracticeOnOff,
+        R.id.germanClock, R.id.dictionaryApp, R.id.germanOfflineDictionaryOnOff, R.id.germanLookupOnOff, R.id.germanPauseWordOnOff, R.id.germanUiOnOff, R.id.aiPracticeOnOff, R.id.newsSentencesOnOff,
     )
 
     @Test

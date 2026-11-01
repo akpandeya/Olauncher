@@ -100,6 +100,8 @@ import app.olauncher.data.store.PracticeItemsStore
 import app.olauncher.data.store.PracticeQueue
 import app.olauncher.data.store.WordsStore
 import app.olauncher.helper.AiPracticeToggle
+import app.olauncher.helper.NewsHarvestToggle
+import app.olauncher.helper.NewsHarvestWorkerScheduler
 import app.olauncher.helper.PracticeWorker
 import app.olauncher.helper.PracticeWorkerScheduler
 import app.olauncher.helper.RatesWorker
@@ -263,6 +265,12 @@ internal fun SettingsFragment.toggleAiPractice() {
     if (prefs.aiPracticeEnabled && KeyVault(requireContext()).read().isNullOrBlank()) {
         showAiKeyDialog()
     }
+}
+
+internal fun SettingsFragment.toggleNewsSentences() {
+    prefs.newsSentencesEnabled = !prefs.newsSentencesEnabled
+    NewsHarvestToggle.apply(prefs.newsSentencesEnabled, NewsHarvestWorkerScheduler(requireContext()))
+    populateGerman()
 }
 
 internal fun SettingsFragment.populateAiPractice() {
@@ -517,6 +525,8 @@ internal fun SettingsFragment.populateGerman() {
     binding.germanUiOnOff.text = getString(if (prefs.germanUi) R.string.on else R.string.off)
     binding.aiPracticeLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
     populateAiPractice()
+    binding.newsSentencesLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
+    binding.newsSentencesOnOff.text = getString(if (prefs.newsSentencesEnabled) R.string.on else R.string.off)
 }
 
 internal fun SettingsFragment.showDictionaryAppMenu(anchor: View) {
