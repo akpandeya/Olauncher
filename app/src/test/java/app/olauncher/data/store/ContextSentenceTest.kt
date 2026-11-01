@@ -116,4 +116,43 @@ class ContextSentenceTest {
         assertEquals("", ContextSentence.around("   ", 0, 2))
         assertEquals("Ende.", ContextSentence.around("Ende.", -5, -1))
     }
+
+    @Test
+    fun `split separates sentences on punctuation and capital letter`() {
+        val paragraph = "Er kam früh? Wir warteten. Sie ging … Dann kam sie."
+        val expected = listOf(
+            "Er kam früh?",
+            "Wir warteten.",
+            "Sie ging …",
+            "Dann kam sie."
+        )
+        assertEquals(expected, ContextSentence.split(paragraph))
+    }
+
+    @Test
+    fun `split keeps abbreviations like z B and Dr and decimals intact`() {
+        val paragraph = "Ich mag Obst, z. B. Äpfel. Siehe Dr. Müller. Version 3.5 ist neu."
+        val expected = listOf(
+            "Ich mag Obst, z. B. Äpfel.",
+            "Siehe Dr. Müller.",
+            "Version 3.5 ist neu."
+        )
+        assertEquals(expected, ContextSentence.split(paragraph))
+    }
+
+    @Test
+    fun `split separates before a sentence opening with a German quote`() {
+        val paragraph = "Das war gestern. „Heute ist alles anders“, schrieb sie."
+        val expected = listOf(
+            "Das war gestern.",
+            "„Heute ist alles anders“, schrieb sie."
+        )
+        assertEquals(expected, ContextSentence.split(paragraph))
+    }
+
+    @Test
+    fun `split on blank or empty input returns empty list`() {
+        assertEquals(emptyList<String>(), ContextSentence.split(""))
+        assertEquals(emptyList<String>(), ContextSentence.split("   \n\t  "))
+    }
 }
