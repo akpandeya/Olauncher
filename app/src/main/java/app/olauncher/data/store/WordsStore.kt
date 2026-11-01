@@ -12,15 +12,15 @@ data class Word(
     val id: Long,
     val text: String,
     val context: String = "",
-    /** [ContextSource.CAPTURED] | [ContextSource.USER] | [ContextSource.AUTO] */
-    val contextSource: String = ContextSource.CAPTURED,
     val meaning: String = "",
     val meaningSource: String = "", /* "" | "wiktionary" | "user" */
     val box: Int = 1,
     val dueDay: Long,
     val addedAt: Long,
     val learnedAt: Long? = null,
-    val listIds: List<String> = emptyList()
+    val listIds: List<String> = emptyList(),
+    /** [ContextSource.CAPTURED] | [ContextSource.USER] | [ContextSource.AUTO]. Last so positional callers keep working. */
+    val contextSource: String = ContextSource.CAPTURED
 )
 
 data class WordList(

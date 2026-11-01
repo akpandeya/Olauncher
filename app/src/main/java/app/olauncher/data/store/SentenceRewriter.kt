@@ -118,7 +118,7 @@ class SentenceRewriter(
         var index = 0
         while (index < jobs.size) {
             val job = jobs[index]
-            when (val attempt = rewriteLocked(job, prefs, today)) {
+            when (val attempt = PracticeGenerator.generationMutex.withLock { rewriteLocked(job, prefs, today) }) {
                 is Attempt.Done -> outcomes += attempt.outcome
                 Attempt.CapReached -> {
                     // This job and all remaining jobs stay out of today's budget.

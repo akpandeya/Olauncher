@@ -45,9 +45,9 @@ class WordsCodecTest {
     @Test
     fun `round trip multiple words preserves order and fields`() {
         val words = listOf(
-            Word(1L, "eins", "Eins zwei drei", ContextSource.CAPTURED, "one", "user", 1, 100L, 1000L, null),
-            Word(2L, "zwei", "", ContextSource.CAPTURED, "two", "wiktionary", 2, 102L, 2000L, 105L),
-            Word(3L, "drei", "Alle guten Dinge sind drei", ContextSource.CAPTURED, "", "", 5, 116L, 3000L, null)
+            Word(1L, "eins", "Eins zwei drei", "one", "user", 1, 100L, 1000L, null),
+            Word(2L, "zwei", "", "two", "wiktionary", 2, 102L, 2000L, 105L),
+            Word(3L, "drei", "Alle guten Dinge sind drei", "", "", 5, 116L, 3000L, null)
         )
         val encoded = WordsCodec.encode(words, emptyList())
         val decoded = WordsCodec.decode(encoded)
@@ -151,7 +151,7 @@ class WordsCodecTest {
     @Test
     fun `encodeToJson and decode with JSONArray directly`() {
         val words = listOf(
-            Word(10L, "Hund", "Der Hund bellt", ContextSource.CAPTURED, "dog", "wiktionary", 1, 100L, 1000L, null)
+            Word(10L, "Hund", "Der Hund bellt", "dog", "wiktionary", 1, 100L, 1000L, null)
         )
         val jsonArray = WordsCodec.encodeToJson(words)
         val decoded = WordsCodec.decode(jsonArray)
@@ -185,9 +185,9 @@ class WordsCodecTest {
             WordList("travel-2", "Travel!")
         )
         val words = listOf(
-            Word(1L, "Gabel", "", ContextSource.CAPTURED, "fork", "wiktionary", 1, 100L, 1000L, null, listOf("kitchen")),
-            Word(2L, "Zug", "", ContextSource.USER, "train", "user", 2, 102L, 2000L, 105L, listOf("kitchen", "travel-2")),
-            Word(3L, "Haus", "", ContextSource.CAPTURED, "", "", 1, 100L, 3000L, null)
+            Word(1L, "Gabel", "", "fork", "wiktionary", 1, 100L, 1000L, null, listOf("kitchen")),
+            Word(2L, "Zug", "", "train", "user", 2, 102L, 2000L, 105L, listOf("kitchen", "travel-2"), contextSource = ContextSource.USER),
+            Word(3L, "Haus", "", "", "", 1, 100L, 3000L, null)
         )
         val encoded = WordsCodec.encode(words, lists)
         val decoded = WordsCodec.decode(encoded)
