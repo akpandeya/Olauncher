@@ -1,6 +1,7 @@
 package app.olauncher.helper
 
 import android.content.Context
+import android.os.SystemClock
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
@@ -202,6 +203,27 @@ class PracticeWorker(
         fun scheduleAfterCapture(context: Context) {
             if (!Prefs(context).aiPracticeEnabled) return
             enqueueSoon(context, CAPTURE_DELAY_MS)
+        }
+
+        /** elapsedRealtime of this process's last review-open kick; null before the first. */
+        @Volatile private var lastReviewKickAtMs: Long? = null
+
+        /**
+         * Review opened (#725): fire-and-forget. Enqueues `ai_practice_soon` with
+         * no delay when [ReviewKickPolicy.shouldKick] allows; never waits, never
+         * blocks the first card. KEEP: a pending capture run (≤ 2 min away) or a
+         * run in flight absorbs the kick.
+         */
+        fun kickFromReview(context: Context, dueNeedItems: Boolean) {
+            val prefs = Prefs(context)
+            val now = SystemClock.elapsedRealtime()
+            if (!ReviewKickPolicy.shouldKick(
+                    prefs.aiPracticeEnabled, prefs.aiModel, prefs.aiKeyRejected,
+                    dueNeedItems, now, lastReviewKickAtMs,
+                )
+            ) return
+            lastReviewKickAtMs = now
+            enqueueSoon(context, delayMs = 0L)
         }
 
         private fun enqueueSoon(context: Context, delayMs: Long) {

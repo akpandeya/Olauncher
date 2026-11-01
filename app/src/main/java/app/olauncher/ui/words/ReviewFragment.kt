@@ -17,15 +17,9 @@ import app.olauncher.data.Prefs
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import app.olauncher.data.store.AiProviderConfig
-import app.olauncher.data.store.AiProviders
 import app.olauncher.data.store.AiChatGrounding
 import app.olauncher.data.store.AiChatRouter
 import app.olauncher.data.store.AiChatSubject
-import app.olauncher.data.store.KeySource
-import app.olauncher.data.store.KeyVault
-import app.olauncher.data.store.PracticeGeneration
-import app.olauncher.data.store.PracticeGenerator
 import app.olauncher.data.store.PracticeItemsStore
 import app.olauncher.data.store.PracticeItem
 import app.olauncher.data.store.PracticeQueue
@@ -43,6 +37,7 @@ import app.olauncher.databinding.FragmentReviewBinding
 import app.olauncher.databinding.ItemSummaryRowBinding
 import app.olauncher.helper.Haptics
 import app.olauncher.helper.MotionPolicy
+import app.olauncher.helper.PracticeWorker
 import app.olauncher.helper.SystemMotion
 import app.olauncher.helper.showPopupMenu
 import app.olauncher.ui.BaseFragment
@@ -172,62 +167,10 @@ class ReviewFragment : BaseFragment() {
         sessionEvents = emptyList()
         eventsBeforeSession = ReviewEventsStore(context).all()
         practiceItems = PracticeItemsStore(context).all()
-        generateOnDemandIfNeeded()
-    }
-
-    /**
-     * The on-demand half of the hybrid generation design (#601): when the session
-     * starts with thin due pools, top them up inline before the first card, off
-     * the UI thread. The first render waits behind the result — bounded by the
-     * ~10 s on-demand ceiling, which the per-request read timeout enforces on
-     * the connection (connect + read time; see review R2 C) — so the round
-     * starts once, on the final pool, and never mutates mid-view
-     * (review R1 #2). A gate that is off, a rejected key, a missing key or
-     * nothing queued skips the call and renders immediately.
-     */
-    private fun generateOnDemandIfNeeded() {
-        val context = context ?: return
-        val appContext = context.applicationContext
-        val prefs = Prefs(appContext)
-        if (!prefs.aiPracticeEnabled || prefs.aiModel.isBlank() || prefs.aiKeyRejected) {
-            render()
-            return
-        }
-        if (PracticeQueue.thinWords(queue, practiceItems).isEmpty()) {
-            render()
-            return
-        }
-        _binding?.tvGenerating?.isVisible = true
-        viewLifecycleOwner.lifecycleScope.launch {
-            val generation = withContext(Dispatchers.IO) {
-                val vault = KeyVault(appContext)
-                val keySource = KeySource { vault.read() }
-                if (keySource.get().isNullOrBlank()) {
-                    PracticeGeneration.Skipped(queue, PracticeGeneration.Reason.NO_KEY)
-                } else {
-                    val config = AiProviderConfig(prefs.aiProvider, prefs.aiBaseUrl, prefs.aiModel)
-                    val provider = AiProviders.create(config, keySource)
-                    if (provider == null) {
-                        PracticeGeneration.Skipped(queue, PracticeGeneration.Reason.NO_MODEL)
-                    } else {
-                        PracticeGenerator(
-                            provider = provider,
-                            store = PracticeItemsStore(appContext),
-                            model = prefs.aiModel,
-                            keySource = keySource,
-                        ).onDemand(queue, prefs, LocalDate.now())
-                    }
-                }
-            }
-            val b = _binding ?: return@launch
-            b.tvGenerating.isVisible = false
-            // Generated and Partial both put items in the store (review R2 B):
-            // reload so the round renders on what actually arrived.
-            if (generation is PracticeGeneration.Generated || generation is PracticeGeneration.Partial) {
-                practiceItems = PracticeItemsStore(appContext).all()
-            }
-            render()
-        }
+        // Never wait on generation (#725): a short due pool only starts a
+        // background run; this session renders on the pools it has now.
+        PracticeWorker.kickFromReview(context.applicationContext, PracticeQueue.anyNeedsItems(queue, practiceItems))
+        render()
     }
 
     /** The rotating practice item for [word], or null when its pool is empty. */

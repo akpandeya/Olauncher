@@ -22,7 +22,7 @@ import app.olauncher.data.Prefs.Companion.AI_SENT_DAY
  * Settings group: AI practice (see [Prefs]). Also the budget bookkeeping the
  * generation queue (#601, 9.8) reads and writes: the daily word cap is counted
  * from a persisted "words sent today" counter, reset by calendar day, so it
- * holds across both the background top-up and the on-demand path.
+ * holds across every PracticeWorker run and the digest.
  */
 interface AiPracticePrefs {
 

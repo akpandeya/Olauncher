@@ -504,7 +504,6 @@
     <string name="words_review_back" tools:ignore="MissingTranslation">‹ Back</string>
     <string name="words_review_progress" tools:ignore="MissingTranslation">%1$d left · %2$d today</string>
     <string name="words_review_show_answer" tools:ignore="MissingTranslation">Show answer</string>
-    <string name="words_review_generating" tools:ignore="MissingTranslation">Generating practice…</string>
     <string name="words_digest_announcement" tools:ignore="MissingTranslation">New practice for %1$d weak spots</string>
     <string name="words_review_meaning_label" tools:ignore="MissingTranslation">Meaning</string>
     <string name="words_review_example_label" tools:ignore="MissingTranslation">Example</string>

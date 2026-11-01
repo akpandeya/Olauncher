@@ -4,13 +4,12 @@ import app.olauncher.data.AiPracticePrefs
 import java.time.LocalDate
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * The outcome of one [PracticeGenerator] attempt. [words] are the words the
- * attempt covered, so the caller can fall back to them (on-demand) or know what
- * stays queued (background): the queue is derived, so an under-stocked word is
- * automatically "enqueued" — it is picked again by [PracticeQueue.next].
+ * attempt covered, so the caller can know what stays queued: the queue is
+ * derived, so an under-stocked word is automatically "enqueued" — it is picked
+ * again by [PracticeQueue.next].
  */
 sealed class PracticeGeneration {
     abstract val words: List<Word>
@@ -31,7 +30,6 @@ sealed class PracticeGeneration {
     data class Failed(
         override val words: List<Word>,
         val kind: AiResult.ErrorKind,
-        val timedOut: Boolean = false,
     ) : PracticeGeneration()
 
     /**
@@ -47,13 +45,12 @@ sealed class PracticeGeneration {
         val kind: AiResult.ErrorKind,
     ) : PracticeGeneration()
 
-    enum class Reason { DISABLED, NO_KEY, NO_MODEL, CAP_REACHED, NOTHING_QUEUED, KEY_REJECTED }
+    enum class Reason { DISABLED, NO_KEY, NO_MODEL, CAP_REACHED }
 }
 
 /**
- * The one generation path behind both triggers of the hybrid design (docs/design/
- * ai-practice.md "Budgets", #601, 9.8): the synchronous on-demand call when a
- * practice round starts with a thin pool, and the WorkManager background top-up.
+ * The one generation path behind every PracticeWorker run (periodic, after capture,
+ * on review open, Generate now — #601, #725).
  *
  * Every attempt applies the same guard the settings gate (#602) encodes — feature
  * on, key present, model set — and the same daily word cap, counted from the
@@ -67,8 +64,7 @@ sealed class PracticeGeneration {
  * budget (review R1 #1): one request carries [WORDS_PER_REQUEST] words and asks
  * for [MAX_TOKENS_PER_WORD] output tokens per word, so a 50-word queue becomes
  * several small calls instead of one call that is cut off at the default cap.
- * All generation is serialized behind one app-wide mutex so the on-demand path
- * and the worker can never send the same queue at once (review R1 #3).
+ * Every call is serialized behind one app-wide mutex.
  */
 class PracticeGenerator(
     private val provider: AiProvider,
@@ -78,38 +74,6 @@ class PracticeGenerator(
 ) {
 
     /**
-     * On-demand: the thin due words (fewer than [PracticeQueue.ON_DEMAND_MIN_POOL]
-     * items each) are generated inline before the round, under [timeoutMs] —
-     * the deadline is bounded by the per-request read timeout on the HTTP
-     * connection (connect time + read timeout; see [AiRequest.readTimeoutMs]),
-     * not by an immediate interrupt of a blocked socket read (review R1 #2, R2 C;
-     * the benchmark measured p50 36.8 s for 20 words, far past any "1–2 s" hope).
-     * Only [ON_DEMAND_MAX_WORDS] words go out — one small chunk fits the ~10 s
-     * ceiling, a full 5-word chunk mostly times out billed (review R2 D). The
-     * path is skipped entirely while [AiPracticePrefs.aiKeyRejected] is set, like
-     * the worker gate. On failure or timeout the caller falls back to whatever
-     * the pool has; the words stay under-stocked, so the derived queue hands
-     * them to the background top-up. Never call this on the UI thread.
-     */
-    suspend fun onDemand(
-        dueWords: List<Word>,
-        prefs: AiPracticePrefs,
-        today: LocalDate,
-        timeoutMs: Long = ON_DEMAND_TIMEOUT_MS,
-    ): PracticeGeneration {
-        // A standing key rejection pauses every call until a new key is saved
-        // (review R2 D): the on-demand path honours it like the worker gate.
-        if (prefs.aiKeyRejected) {
-            return PracticeGeneration.Skipped(dueWords, PracticeGeneration.Reason.KEY_REJECTED)
-        }
-        val thin = PracticeQueue.thinWords(dueWords, store.all())
-        if (thin.isEmpty()) return PracticeGeneration.Skipped(dueWords, PracticeGeneration.Reason.NOTHING_QUEUED)
-        // Pending owner decision (review R2 D): skip on-demand entirely when the
-        // day's background top-up has already covered these words.
-        return generate(thin.take(ON_DEMAND_MAX_WORDS), prefs, today, timeoutMs)
-    }
-
-    /**
      * Background top-up: the queue in chunked requests under the daily word cap,
      * each with a generous read timeout (WorkManager owns the overall deadline).
      */
@@ -117,7 +81,7 @@ class PracticeGenerator(
         words: List<Word>,
         prefs: AiPracticePrefs,
         today: LocalDate,
-    ): PracticeGeneration = generate(words, prefs, today, timeoutMs = null)
+    ): PracticeGeneration = generate(words, prefs, today)
 
     /**
      * The digest (#604, 9.11): the weak-spot [weakWords] in chunked calls,
@@ -141,7 +105,6 @@ class PracticeGenerator(
             words = weakWords,
             prefs = prefs,
             today = today,
-            timeoutMs = null,
             types = weakTypes.ifEmpty { DrillType.values().toList() },
             source = PracticeItem.Source.DIGEST,
             narrowTypes = false,
@@ -156,7 +119,6 @@ class PracticeGenerator(
         words: List<Word>,
         prefs: AiPracticePrefs,
         today: LocalDate,
-        timeoutMs: Long?,
         types: List<DrillType> = DrillType.values().toList(),
         source: String = PracticeItem.Source.WORD,
         narrowTypes: Boolean = true,
@@ -168,19 +130,9 @@ class PracticeGenerator(
             AiPracticeGate.Block.NO_MODEL -> return PracticeGeneration.Skipped(words, PracticeGeneration.Reason.NO_MODEL)
             null -> {}
         }
-        // One app-wide mutex: the cap's read-then-write and the queue are only
-        // safe when the on-demand path and the worker never generate at once.
-        return if (timeoutMs == null) {
-            generationMutex.withLock { generateLocked(words, prefs, today, types, source, BACKGROUND_READ_TIMEOUT_MS, allowRetry = true, narrowTypes = narrowTypes) }
-        } else {
-            // Timed out: the caller stops waiting — cancellation interrupts the
-            // thread, and a socket read already blocked in the kernel ends at
-            // the per-request read timeout (review R2 C) — the pool is
-            // untouched, the words stay queued. No retry-on-missing here: the
-            // ~10 s ceiling cannot fit a follow-up call, the cloze fallbacks fill.
-            withTimeoutOrNull(timeoutMs) {
-                generationMutex.withLock { generateLocked(words, prefs, today, types, source, timeoutMs.toInt(), allowRetry = false, narrowTypes = narrowTypes) }
-            } ?: PracticeGeneration.Failed(words, AiResult.ErrorKind.NETWORK, timedOut = true)
+        // One app-wide mutex: the cap's read-then-write is only safe when two generations never interleave.
+        return generationMutex.withLock {
+            generateLocked(words, prefs, today, types, source, BACKGROUND_READ_TIMEOUT_MS, allowRetry = true, narrowTypes = narrowTypes)
         }
     }
 
@@ -315,8 +267,7 @@ class PracticeGenerator(
      * [PracticeContract.ITEMS_PER_WORD] accepted items after the quality filters
      * get one small follow-up call covering exactly them — never repeated. Only
      * the missing slots are taken from the follow-up response; a failed or junk
-     * follow-up is ignored (the cloze fallbacks fill). Runs only on the
-     * background paths ([allowRetry]); the on-demand ~10 s ceiling cannot fit it.
+     * follow-up is ignored (the cloze fallbacks fill). Runs when [allowRetry] is set.
      *
      * The retry prompt still asks for the cloze first, so the response's first
      * item is usually a second copy of the word's existing cloze (round-3 review
@@ -380,16 +331,6 @@ class PracticeGenerator(
         else PracticeGeneration.Failed(batch, kind)
 
     companion object {
-        /** Owner decision (2026-10-27): on-demand answers within ~10 s; that is the ceiling. */
-        const val ON_DEMAND_TIMEOUT_MS = 10_000L
-
-        /**
-         * On-demand sends one small chunk only (review R2 D): the benchmark's p50
-         * puts a 5-word chunk at ~9–10 s — the whole ceiling — so a full chunk
-         * would mostly time out billed on every Review start. 1–2 words fit.
-         */
-        const val ON_DEMAND_MAX_WORDS = 2
-
         /**
          * The background read timeout per chunked request (review R1 #1): the
          * benchmark (#600) needed a 300 s timeout — p95 72 s for 20 words — so a
@@ -411,7 +352,7 @@ class PracticeGenerator(
          */
         const val MAX_TOKENS_PER_WORD = 2400
 
-        /** Serializes every generation call app-wide (both paths, all instances). */
+        /** Serializes every generation call app-wide (all instances); [PracticeRunLock] keeps whole runs apart. */
         private val generationMutex = Mutex()
     }
 }

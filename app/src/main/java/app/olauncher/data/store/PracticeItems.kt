@@ -175,8 +175,8 @@ class PracticeItemsStore(
 
     companion object {
         /**
-         * One lock for every instance: workers and the on-demand path each build
-         * their own store, and the file's read-modify-write must never interleave —
+         * One lock for every instance: every worker run builds its own store,
+         * and the file's read-modify-write must never interleave —
          * a lost append loses paid-for items (review R1 #3).
          */
         private val LOCK = Any()

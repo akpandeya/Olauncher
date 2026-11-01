@@ -31,7 +31,7 @@ open class OpenAiCompatibleProvider(
         val key = keySource.get()
             ?: return AiResult.Error(AiResult.ErrorKind.AUTH, "No API key set")
         return try {
-            // runInterruptible: a cancelled caller (the on-demand ~10 s deadline)
+            // runInterruptible: a cancelled caller (for example a stopped worker)
             // interrupts the thread at once — but a socket read already blocked
             // in the kernel only ends at the connection's read timeout, and the
             // disconnect() in the finally runs after the call returns, not

@@ -49,3 +49,23 @@ object AiPracticeToggle {
         }
     }
 }
+
+/**
+ * The review-open kick (#725): when Review opens on a due word short of a full
+ * pool, start one background run — at most once per [COOLDOWN_MS] per process,
+ * so repeated opens never stack runs. The worker re-checks the key and cap.
+ */
+object ReviewKickPolicy {
+    const val COOLDOWN_MS = 30 * 60 * 1000L
+
+    fun shouldKick(
+        enabled: Boolean,
+        model: String,
+        keyRejected: Boolean,
+        dueNeedItems: Boolean,
+        nowMs: Long,
+        lastKickAtMs: Long?,
+    ): Boolean =
+        enabled && model.isNotBlank() && !keyRejected && dueNeedItems &&
+            (lastKickAtMs == null || nowMs - lastKickAtMs >= COOLDOWN_MS)
+}
