@@ -53,6 +53,8 @@
     <dimen name="home_apps_top_min">112dp</dimen>
     <!-- Small tracked caps for the date and weather line under the home clock -->
     <dimen name="home_meta_size">15sp</dimen>
+    <!-- Weather icon beside the date on home; larger than the text so it reads as an icon -->
+    <dimen name="home_weather_icon_size">24sp</dimen>
     <!-- Serif italic intention (quote) line on home -->
     <dimen name="home_quote_size">19sp</dimen>
     <!-- Smallest tap height for the next-event and now-playing lines -->
