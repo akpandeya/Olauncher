@@ -48,6 +48,7 @@ import app.olauncher.wellbeing.UsageSnapshotWorker
 import app.olauncher.databinding.ActivityMainBinding
 import app.olauncher.helper.AppListReloadPolicy
 import app.olauncher.helper.AppListReloadTrigger
+import app.olauncher.helper.NewsHarvestWorker
 import app.olauncher.helper.PracticeWorker
 import app.olauncher.databinding.DialogOnboardingDefaultBinding
 import app.olauncher.helper.BackRules
@@ -175,6 +176,7 @@ class MainActivity : AppCompatActivity() {
         NudgeScheduler.ensureAll(this)
         // Moves an existing `ai_practice` work to the 6 h spec (#725); UPDATE keeps its timing.
         if (prefs.aiPracticeEnabled) PracticeWorker.schedulePeriodic(this)
+        if (prefs.newsSentencesEnabled && prefs.germanEnabled) NewsHarvestWorker.schedulePeriodic(this)
         if (prefs.quietEnabled && QuietAccess.isNotificationAccessGranted(this)) {
             ReleaseWorker.schedule(this, ExistingWorkPolicy.KEEP)
         }
