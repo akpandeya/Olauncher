@@ -269,6 +269,14 @@ class WordCaptureActivity : AppCompatActivity() {
      * [ScreenMapping.Mismatch] falls back to the reader — it needs no geometry.
      */
     private fun openOverlayCapture(framePath: String, nodesPath: String, prefs: Prefs) {
+        // Show a spinner while the frame decodes on IO; without this the window stays blank.
+        val loading = ActivityWordCaptureBinding.inflate(layoutInflater)
+        setContentView(loading.root)
+        loading.readerRoot.visibility = View.GONE
+        loading.overlayRoot.visibility = View.GONE
+        loading.captureSheet.visibility = View.GONE
+        loading.captureLoading.visibility = View.VISIBLE
+
         lifecycleScope.launch {
             val decoded = withContext(Dispatchers.IO) {
                 val encoded = try {

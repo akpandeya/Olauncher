@@ -190,7 +190,9 @@
             <app.olauncher.helper.CaptureOverlayView
                 android:id="@+id/captureOverlay"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent" />
+                android:layout_height="match_parent"
+                android:contentDescription="@string/capture_overlay_desc"
+                android:importantForAccessibility="yes" />
 
             <LinearLayout
                 android:id="@+id/overlayCard"
@@ -322,5 +324,15 @@
             android:visibility="gone" />
 
     </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/captureLoading"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:contentDescription="@string/capture_loading_desc"
+        android:indeterminate="true"
+        android:indeterminateTint="?attr/accentColor"
+        android:visibility="gone" />
 
 </FrameLayout>
