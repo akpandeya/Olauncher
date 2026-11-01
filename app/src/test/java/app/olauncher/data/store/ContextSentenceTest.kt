@@ -162,6 +162,18 @@ class ContextSentenceTest {
     }
 
     @Test
+    fun `split keeps news abbreviations before a capital inside the sentence`() {
+        val paragraph = "Der Bau kostet 3 Mio. Euro mehr als geplant. Prof. Weber widerspricht, u. a. Berlin auch. " +
+            "Die Partie gegen St. Pauli endete torlos."
+        val expected = listOf(
+            "Der Bau kostet 3 Mio. Euro mehr als geplant.",
+            "Prof. Weber widerspricht, u. a. Berlin auch.",
+            "Die Partie gegen St. Pauli endete torlos."
+        )
+        assertEquals(expected, ContextSentence.split(paragraph))
+    }
+
+    @Test
     fun `split on blank or empty input returns empty list`() {
         assertEquals(emptyList<String>(), ContextSentence.split(""))
         assertEquals(emptyList<String>(), ContextSentence.split("   \n\t  "))

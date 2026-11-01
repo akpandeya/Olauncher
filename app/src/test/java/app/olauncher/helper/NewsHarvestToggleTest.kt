@@ -1,6 +1,8 @@
 package app.olauncher.helper
 
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -48,5 +50,28 @@ class NewsHarvestToggleTest {
         assertEquals(30, NewsHarvestPolicy.articlesLeftToday(30, 0))
         assertEquals(1, NewsHarvestPolicy.articlesLeftToday(30, 29))
         assertEquals(0, NewsHarvestPolicy.articlesLeftToday(30, 31))
+    }
+
+    @Test
+    fun `run guard skips a second run while one is in progress and frees itself afterwards`() = runBlocking {
+        val guard = NewsHarvestRunGuard()
+        val ran = mutableListOf<String>()
+
+        val outer = guard.runExclusive {
+            ran += "outer"
+            val nested = guard.runExclusive { ran += "nested"; 7 }
+            assertNull(nested)
+            42
+        }
+        assertEquals(42, outer)
+
+        try {
+            guard.runExclusive<Int> { ran += "failing"; throw IllegalStateException("boom") }
+        } catch (_: IllegalStateException) {
+        }
+        val after = guard.runExclusive { ran += "after"; 9 }
+
+        assertEquals(9, after)
+        assertEquals(listOf("outer", "failing", "after"), ran)
     }
 }

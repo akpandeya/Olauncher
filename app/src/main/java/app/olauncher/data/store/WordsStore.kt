@@ -287,6 +287,30 @@ class WordsStore(
         }
     }
 
+    /**
+     * Sets each word's context from [contexts] (word id to text) only where it is still blank,
+     * in one read and one write, so it never overwrites a context the user captured and never
+     * reverts other fields (box, due day, meaning) changed since the caller read the word.
+     * Returns the ids that were filled.
+     */
+    @Synchronized
+    fun fillBlankContexts(contexts: Map<Long, String>): Set<Long> {
+        if (contexts.isEmpty()) return emptySet()
+        val data = loadData()
+        val filled = mutableSetOf<Long>()
+        val updated = data.words.map { word ->
+            val text = contexts[word.id]?.trim()
+            if (text.isNullOrEmpty() || word.context.isNotBlank()) {
+                word
+            } else {
+                filled += word.id
+                word.copy(context = text)
+            }
+        }
+        if (filled.isNotEmpty()) saveData(data.copy(words = updated))
+        return filled
+    }
+
     @Synchronized
     fun delete(id: Long) {
         val data = loadData()
