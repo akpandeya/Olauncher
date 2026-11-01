@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns="http://purl.org/rss/1.0/"
+         xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel rdf:about="https://www.dw.com">
+    <title>Deutsche Welle Nachrichten</title>
+    <link>https://www.dw.com</link>
+    <description>Aktuelle Berichte der DW</description>
+    <items>
+      <rdf:Seq>
+        <rdf:li rdf:resource="https://www.dw.com/de/wirtschaft-nachrichten/a-101"/>
+        <rdf:li rdf:resource="https://www.dw.com/de/kultur-berichte/a-102"/>
+      </rdf:Seq>
+    </items>
+  </channel>
+  <item rdf:about="https://www.dw.com/de/wirtschaft-nachrichten/a-101">
+    <title>DW Wirtschaftsbericht aus Bonn</title>
+    <link>https://www.dw.com/de/wirtschaft-nachrichten/a-101</link>
+    <dc:date>2026-10-28T14:05:00+01:00</dc:date>
+  </item>
+  <item rdf:about="https://www.dw.com/de/kultur-berichte/a-102">
+    <title>DW Kultur und Gesellschaft</title>
+    <link>https://www.dw.com/de/kultur-berichte/a-102</link>
+    <dc:date>2026-10-27T09:15:00Z</dc:date>
+  </item>
+</rdf:RDF>
