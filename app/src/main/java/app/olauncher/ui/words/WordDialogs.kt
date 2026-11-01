@@ -85,10 +85,12 @@ object WordDialogs {
                         newMeaning = db.etMeaning.text?.toString().orEmpty(),
                         lookupAllowed = lookupAllowed
                     )
+                    val newContext = db.etExample.text?.toString().orEmpty().trim()
                     val knownListIds = store.lists().mapTo(HashSet()) { it.id }
                     val outcome = applied.copy(
                         word = applied.word.copy(
-                            context = db.etExample.text?.toString().orEmpty().trim(),
+                            context = newContext,
+                            contextSource = WordEdit.contextSourceAfterEdit(word, newContext),
                             listIds = selectedLists.filter { it in knownListIds },
                         )
                     )

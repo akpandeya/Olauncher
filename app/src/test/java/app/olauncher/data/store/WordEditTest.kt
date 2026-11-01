@@ -113,6 +113,26 @@ class WordEditTest {
     }
 
     @Test
+    fun `unchanged context keeps the existing source`() {
+        val captured = wiktionaryWord.copy(context = "Ein alter Satz.", contextSource = ContextSource.CAPTURED)
+        assertEquals(ContextSource.CAPTURED, WordEdit.contextSourceAfterEdit(captured, " Ein alter Satz. "))
+        val auto = captured.copy(contextSource = ContextSource.AUTO)
+        assertEquals(ContextSource.AUTO, WordEdit.contextSourceAfterEdit(auto, "Ein alter Satz."))
+    }
+
+    @Test
+    fun `a changed non-blank context marks it as the user's own`() {
+        val captured = wiktionaryWord.copy(context = "Ein alter Satz.", contextSource = ContextSource.CAPTURED)
+        assertEquals(ContextSource.USER, WordEdit.contextSourceAfterEdit(captured, "Ein neuer Satz."))
+    }
+
+    @Test
+    fun `a cleared context returns to captured`() {
+        val user = wiktionaryWord.copy(context = "Ein alter Satz.", contextSource = ContextSource.USER)
+        assertEquals(ContextSource.CAPTURED, WordEdit.contextSourceAfterEdit(user, "  "))
+    }
+
+    @Test
     fun `wiktionary url points at the German section`() {
         assertEquals("https://en.wiktionary.org/wiki/ging#German", WordEdit.wiktionaryUrl("ging"))
         assertEquals(
