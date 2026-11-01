@@ -364,7 +364,11 @@ class PracticeGenerator(
          */
         const val MAX_TOKENS_PER_WORD = 2400
 
-        /** Serializes every generation call app-wide (all instances); [PracticeRunLock] keeps whole runs apart. */
-        private val generationMutex = Mutex()
+        /**
+         * Serializes every generation call app-wide (all instances); [PracticeRunLock] keeps whole
+         * runs apart. [SentenceRewriter] shares this same mutex, so its per-attempt cap check and
+         * sent-counter write never interleave with a generation's.
+         */
+        internal val generationMutex = Mutex()
     }
 }
