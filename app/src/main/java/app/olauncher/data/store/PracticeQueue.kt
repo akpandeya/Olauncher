@@ -23,9 +23,6 @@ object PracticeQueue {
      */
     const val JITTER_MS = 60_000L
 
-    /** The on-demand threshold: a due word with fewer than this many items is thin. */
-    const val ON_DEMAND_MIN_POOL = 2
-
     /**
      * The batch of words to generate for now: pool-thin, oldest first with jitter,
      * and bounded by [cap] minus the words that already got items today. [today] and
@@ -54,18 +51,14 @@ object PracticeQueue {
     }
 
     /**
-     * The due words whose pool is thin (fewer than [minPool] items) — the on-demand
-     * trigger. A word with exactly 2 items is not thin; 2 < 3 still queues it for
-     * the background top-up. Blank-context words are never thin: they have nothing
-     * to ground a generation in.
+     * Whether any of [words] is short of a full pool: a non-blank context and
+     * fewer than [PracticeContract.ITEMS_PER_WORD] items — the words [next] would
+     * queue, ignoring the cap. Review uses it to decide whether to start a
+     * background run (#725); it never generates.
      */
-    fun thinWords(
-        words: List<Word>,
-        items: List<PracticeItem>,
-        minPool: Int = ON_DEMAND_MIN_POOL,
-    ): List<Word> {
+    fun anyNeedsItems(words: List<Word>, items: List<PracticeItem>): Boolean {
         val poolSizes = poolSizes(items)
-        return words.filter { it.context.isNotBlank() && (poolSizes[it.id] ?: 0) < minPool }
+        return words.any { it.context.isNotBlank() && (poolSizes[it.id] ?: 0) < PracticeContract.ITEMS_PER_WORD }
     }
 
     /** Distinct words that got items (generated or fallback) on [today]. */

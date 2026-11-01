@@ -22,6 +22,7 @@ import app.olauncher.data.store.WordsStore
 import app.olauncher.databinding.DialogEditWordBinding
 import app.olauncher.databinding.DialogWordListNameBinding
 import app.olauncher.helper.OlDialog
+import app.olauncher.helper.PracticeWorker
 import app.olauncher.helper.createDialog
 import app.olauncher.helper.createMultiChoiceDialog
 import app.olauncher.helper.showMessageDialog
@@ -97,6 +98,7 @@ object WordDialogs {
                         store.update(outcome.word)
                         onChanged()
                     }
+                    if (outcome.word.context != word.context) PracticeWorker.scheduleAfterCapture(context)
                 }
             }
         ) { container ->

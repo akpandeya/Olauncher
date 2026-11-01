@@ -4,6 +4,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import kotlin.random.Random
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -131,19 +132,18 @@ class PracticeQueueTest {
     }
 
     @Test
-    fun `thin pool detection distinguishes two items from three`() {
-        val words = listOf(
-            word(1, addedAt = 1_000), // 2 items: not thin for on-demand, thin for top-up
-            word(2, addedAt = 2_000), // 1 item: thin for both
-            word(3, addedAt = 3_000), // 3 items: full
-            word(4, addedAt = 4_000, context = ""), // blank context: never
-        )
+    fun `a due word short of three items needs a run`() {
+        val w1 = word(1, addedAt = 1_000)
+        val w2 = word(2, addedAt = 2_000)
+        val w3 = word(3, addedAt = 3_000)
+        val w4 = word(4, addedAt = 4_000, context = "")
+        val words = listOf(w1, w2, w3, w4)
         val items = pool(1, 2) + pool(2, 1) + pool(3, 3)
 
-        assertEquals(
-            listOf(2L),
-            PracticeQueue.thinWords(words, items).map { it.id },
-        )
+        assertFalse(PracticeQueue.anyNeedsItems(listOf(w3, w4), items))
+        assertTrue(PracticeQueue.anyNeedsItems(listOf(w1, w3), items))
+        assertFalse(PracticeQueue.anyNeedsItems(emptyList(), items))
+
         // The top-up restores every word's pool to 3, so 2 items still queues.
         assertEquals(
             listOf(1L, 2L),

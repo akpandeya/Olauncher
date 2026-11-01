@@ -5,7 +5,7 @@ import app.olauncher.data.store.AiResult
 
 /**
  * The worker wiring behind the settings switch (#602, 9.9): on means the unique
- * periodic `ai_practice` work is scheduled (starting a day later — the first
+ * periodic `ai_practice` work is scheduled (starting 6 h later — the first
  * top-up is the one-shot `ai_practice_now` run, so two workers never race on the
  * same queue, review R1 #3); off means everything is idle — both work names are
  * cancelled and nothing is generated. The logic is context-free and unit-tested
@@ -48,4 +48,24 @@ object AiPracticeToggle {
             scheduler.cancel()
         }
     }
+}
+
+/**
+ * The review-open kick (#725): when Review opens on a due word short of a full
+ * pool, start one background run — at most once per [COOLDOWN_MS] per process,
+ * so repeated opens never stack runs. The worker re-checks the key and cap.
+ */
+object ReviewKickPolicy {
+    const val COOLDOWN_MS = 30 * 60 * 1000L
+
+    fun shouldKick(
+        enabled: Boolean,
+        model: String,
+        keyRejected: Boolean,
+        dueNeedItems: Boolean,
+        nowMs: Long,
+        lastKickAtMs: Long?,
+    ): Boolean =
+        enabled && model.isNotBlank() && !keyRejected && dueNeedItems &&
+            (lastKickAtMs == null || nowMs - lastKickAtMs >= COOLDOWN_MS)
 }

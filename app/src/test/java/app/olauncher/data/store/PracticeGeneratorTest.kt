@@ -15,8 +15,8 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * The one generation path behind both triggers (#601, 9.8): gate, daily word cap,
- * on-demand timeout with fallback, and the AUTH / BILLING bookkeeping. The
+ * The one generation path behind every worker run (#601, 9.8): gate, daily word cap,
+ * chunking, and the AUTH / BILLING bookkeeping. The
  * provider is faked — no network in tests — and the key never leaves [KeySource].
  */
 class PracticeGeneratorTest {
@@ -52,23 +52,6 @@ class PracticeGeneratorTest {
                 kotlinx.coroutines.delay(hangMs)
             }
             return result ?: AiResult.Error(AiResult.ErrorKind.NETWORK, "no script")
-        }
-    }
-
-    /**
-     * Blocks the thread like the real HttpURLConnection does (no suspension
-     * point): a cancelled caller can only stop it by interrupting the thread —
-     * the suspending delay() fake above could never pin that (review R1 #2).
-     */
-    private class BlockingProvider(private val hangMs: Long) : AiProvider {
-        val requests = mutableListOf<AiRequest>()
-
-        override suspend fun complete(request: AiRequest): AiResult {
-            requests += request
-            return kotlinx.coroutines.runInterruptible(kotlinx.coroutines.Dispatchers.IO) {
-                Thread.sleep(hangMs)
-                AiResult.Error(AiResult.ErrorKind.NETWORK, "unreachable")
-            }
         }
     }
 
@@ -147,76 +130,6 @@ class PracticeGeneratorTest {
         model = model,
         keySource = KeySource { "sk-test-key" },
     )
-
-    @Test
-    fun `on-demand generates for thin words only and stores the items`() = runBlocking {
-        // Word 5 has 1 item (thin); word 6 has 2 (not thin) — only word 5 goes out.
-        val items = listOf(
-            PracticeItem(
-                wordId = 5, type = DrillType.CLOZE, prompt = "alt", answer = "alt",
-                choices = listOf("alt", "altes"), createdAt = 1,
-            ),
-            PracticeItem(
-                wordId = 6, type = DrillType.CLOZE, prompt = "a", answer = "a",
-                choices = listOf("a", "b"), createdAt = 1,
-            ),
-            PracticeItem(
-                wordId = 6, type = DrillType.CLOZE, prompt = "b", answer = "b",
-                choices = listOf("b", "c"), createdAt = 2,
-            ),
-        )
-        tempDir.resolve("practice_items.json").writeText(PracticeItemsCodec.encode(items))
-        val provider = FakeProvider(result = AiResult.Ok(okJson(5), AiUsage(10, 20), 5))
-
-        val outcome = generator(provider).onDemand(listOf(word(5), word(6)), prefs, today)
-
-        assertEquals(1, provider.prompts.size)
-        assertTrue(provider.prompts[0].contains("word_id 5"))
-        assertFalse(provider.prompts[0].contains("word_id 6"))
-        assertTrue(outcome is PracticeGeneration.Generated)
-        assertEquals(5, (outcome as PracticeGeneration.Generated).words.single().id)
-        // 3 new items for word 5 landed in the store, alongside the untouched 3 old ones.
-        assertEquals(6, store.all().size)
-        assertEquals(1, prefs.aiWordsSentToday(todayEpochDay))
-    }
-
-    @Test
-    fun `on-demand timeout interrupts the call and still counts the words as sent`() = runBlocking {
-        // Blocks the thread for far longer than the deadline: only a real
-        // interruption returns in time — the old suspending fake never pinned it.
-        val provider = BlockingProvider(hangMs = 20_000)
-        val due = listOf(word(7))
-
-        val startedAt = System.currentTimeMillis()
-        val outcome = generator(provider).onDemand(due, prefs, today, timeoutMs = 50)
-        val elapsed = System.currentTimeMillis() - startedAt
-
-        assertTrue("timeout returned after ${elapsed} ms — the blocking call was not interrupted", elapsed < 10_000)
-        assertTrue(outcome is PracticeGeneration.Failed)
-        assertTrue((outcome as PracticeGeneration.Failed).timedOut)
-        assertEquals(AiResult.ErrorKind.NETWORK, outcome.kind)
-        // The request went out and was billed, so the cap counts it even on a
-        // timeout (review R1 #2).
-        assertEquals(1, prefs.aiWordsSentToday(todayEpochDay))
-        // The deadline lives on the connection too, not only around the call.
-        assertEquals(50, provider.requests.single().readTimeoutMs)
-        // The word is still pool-thin, so the derived queue picks it up: "enqueued".
-        val queue = PracticeQueue.next(listOf(word(7)), store.all(), today, cap = 50, Random(1))
-        assertEquals(listOf(7L), queue.map { it.id })
-    }
-
-    @Test
-    fun `daily cap blocks the on-demand path`() = runBlocking {
-        prefs.cap = 50
-        prefs.recordAiWordsSent(50, todayEpochDay)
-        val provider = FakeProvider(result = AiResult.Ok(okJson(1), AiUsage(1, 1), 1))
-
-        val outcome = generator(provider).onDemand(listOf(word(1)), prefs, today)
-
-        assertTrue(outcome is PracticeGeneration.Skipped)
-        assertEquals(PracticeGeneration.Reason.CAP_REACHED, (outcome as PracticeGeneration.Skipped).reason)
-        assertTrue(provider.prompts.isEmpty())
-    }
 
     @Test
     fun `daily cap blocks the background top-up path and resets next day`() = runBlocking {
@@ -504,41 +417,6 @@ class PracticeGeneratorTest {
     }
 
     @Test
-    fun `on-demand sends one small chunk of at most two words`() = runBlocking {
-        val due = (1L..5L).map { word(it) }
-        val provider = FakeProvider(result = AiResult.Ok(okJson(1, 2), AiUsage(10, 20), 5))
-
-        val outcome = generator(provider).onDemand(due, prefs, today)
-
-        // One 2-word request, not a full 5-word chunk that mostly times out
-        // billed (review R2 D).
-        assertEquals(1, provider.requests.size)
-        assertTrue(provider.prompts[0].contains("word_id 1"))
-        assertTrue(provider.prompts[0].contains("word_id 2"))
-        assertFalse(provider.prompts[0].contains("word_id 3"))
-        assertTrue(outcome is PracticeGeneration.Generated)
-        assertEquals(listOf(1L, 2L), (outcome as PracticeGeneration.Generated).words.map { it.id })
-        // Words 1–2 are now at the full 3-item pool; only words 3–5 stay thin,
-        // so the derived queue hands exactly them to the background top-up.
-        val queue = PracticeQueue.next(due, store.all(), today, cap = 50, Random(1))
-        assertEquals((3L..5L).toSet(), queue.map { it.id }.toSet())
-    }
-
-    @Test
-    fun `on-demand skips entirely while the key is rejected`() = runBlocking {
-        prefs.aiKeyRejected = true
-        val provider = FakeProvider(result = AiResult.Ok(okJson(1), AiUsage(1, 1), 1))
-
-        val outcome = generator(provider).onDemand(listOf(word(1)), prefs, today)
-
-        // Like the worker gate: no call until a new key is saved (review R2 D).
-        assertTrue(outcome is PracticeGeneration.Skipped)
-        assertEquals(PracticeGeneration.Reason.KEY_REJECTED, (outcome as PracticeGeneration.Skipped).reason)
-        assertTrue(provider.prompts.isEmpty())
-        assertTrue(store.all().isEmpty())
-    }
-
-    @Test
     fun `retry-on-missing tops thin words up to three accepted items with one follow-up call`() = runBlocking {
         // First call: only one item for word 1. The follow-up brings the two
         // missing slots as real items, so no cloze fallback is needed.
@@ -584,19 +462,6 @@ class PracticeGeneratorTest {
         // once per run); the word still ends with its 3-item pool.
         assertTrue(outcome is PracticeGeneration.Generated)
         assertEquals(2, provider.requests.size)
-        assertEquals(3, store.all().size)
-        assertEquals(2, store.all().count { it.model == null })
-    }
-
-    @Test
-    fun `on-demand never retries missing slots — the ~10 s ceiling cannot fit it`() = runBlocking {
-        val provider = FakeProvider(result = AiResult.Ok(okJson(1), AiUsage(10, 20), 5))
-
-        val outcome = generator(provider).onDemand(listOf(word(1)), prefs, today)
-
-        // One request only; the cloze fallbacks fill the thin pool (round 3).
-        assertTrue(outcome is PracticeGeneration.Generated)
-        assertEquals(1, provider.requests.size)
         assertEquals(3, store.all().size)
         assertEquals(2, store.all().count { it.model == null })
     }
@@ -753,5 +618,58 @@ class PracticeGeneratorTest {
         // even though its answer differs — the word already has its cloze.
         assertEquals(1, stored.count { it.type == DrillType.CLOZE && it.model != null })
         assertEquals(2, stored.count { it.model == null })
+    }
+
+    @Test
+    fun `a run sends only words short of three items, at most five per request`() = runBlocking {
+        val items = listOf(
+            PracticeItem(
+                wordId = 7, type = DrillType.CLOZE, prompt = "a", answer = "a",
+                choices = listOf("a", "b"), createdAt = 1,
+            ),
+            PracticeItem(
+                wordId = 7, type = DrillType.CLOZE, prompt = "b", answer = "b",
+                choices = listOf("b", "c"), createdAt = 2,
+            ),
+            PracticeItem(
+                wordId = 7, type = DrillType.CLOZE, prompt = "c", answer = "c",
+                choices = listOf("c", "d"), createdAt = 3,
+            ),
+        )
+        tempDir.resolve("practice_items.json").writeText(PracticeItemsCodec.encode(items))
+        val words = (1L..7L).map { word(it) }
+        val queue = PracticeQueue.next(words, store.all(), today, cap = prefs.cap, random = Random(1))
+        assertEquals((1L..6L).toSet(), queue.map { it.id }.toSet())
+
+        val provider = FakeProvider(result = AiResult.Ok(okJson(1, 2, 3, 4, 5, 6), AiUsage(10, 20), 5))
+        generator(provider).topUp(queue, prefs, today)
+
+        assertTrue(provider.prompts.none { it.contains("word_id 7") })
+        val countInFirst = (1L..6L).count { provider.requests[0].prompt.contains("word_id $it") }
+        assertEquals(5, countInFirst)
+        assertEquals(5 * PracticeGenerator.MAX_TOKENS_PER_WORD, provider.requests[0].maxTokens)
+        assertEquals(6, prefs.aiWordsSentToday(todayEpochDay))
+    }
+
+    @Test
+    fun `a run with every pool full makes no request`() = runBlocking {
+        val items = (1L..2L).flatMap { id ->
+            (1..3).map { i ->
+                PracticeItem(
+                    wordId = id, type = DrillType.CLOZE, prompt = "p$i", answer = "a$i",
+                    choices = listOf("a$i", "b$i"), createdAt = i.toLong(),
+                )
+            }
+        }
+        tempDir.resolve("practice_items.json").writeText(PracticeItemsCodec.encode(items))
+        val words = listOf(word(1), word(2))
+        val queue = PracticeQueue.next(words, store.all(), today, cap = prefs.cap, random = Random(1))
+        assertTrue(queue.isEmpty())
+
+        val provider = FakeProvider()
+        generator(provider).topUp(emptyList(), prefs, today)
+
+        assertTrue(provider.requests.isEmpty())
+        assertEquals(0, prefs.aiWordsSentToday(todayEpochDay))
     }
 }

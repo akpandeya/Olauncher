@@ -107,19 +107,6 @@
             android:paddingHorizontal="24dp"
             android:paddingVertical="16dp">
 
-            <!-- Brief on-demand generation state (#601): shown while the thin due
-                 pools are topped up, before the first card renders. -->
-            <TextView
-                android:id="@+id/tvGenerating"
-                style="@style/TextSmall"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:paddingVertical="16dp"
-                android:text="@string/words_review_generating"
-                android:visibility="gone"
-                tools:visibility="visible" />
-
             <!-- The flashcard: question first, answer after the reveal -->
             <LinearLayout
                 android:id="@+id/reviewCard"

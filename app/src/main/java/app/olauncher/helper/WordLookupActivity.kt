@@ -104,6 +104,7 @@ class WordLookupActivity : AppCompatActivity() {
         } else {
             WordLookup.enqueue(this, word.id)
         }
+        PracticeWorker.scheduleAfterCapture(this)
         markSaved()
     }
 

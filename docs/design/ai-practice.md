@@ -21,7 +21,7 @@ unverified until #595 (9.2) recorded it from the public docs; the
 saved word + context          Word (text, context) — the user's saved sentence
         |
    generation queue           words without items, FIFO oldest-first + jitter,
-        |                     daily cap; also synchronous on-demand when thin
+        |                     daily cap; also ~2 min after a capture and on review open (#725)
         v
    AiProvider (BYOK)          Melious first, OpenAI-compatible adapter
         |
@@ -159,9 +159,7 @@ before it is stored; a rejected item never reaches the store):
 word with fewer than 3 accepted items gets its missing slots requested once —
 one small follow-up call per chunk covering the thin words, never repeated,
 within the same cap accounting (the slots were already counted when the chunk
-went out). Cloze fallbacks fill whatever is still missing. The on-demand path
-skips the retry: its ~10 s ceiling cannot fit a second call, so fallbacks fill
-there.
+went out). Cloze fallbacks fill whatever is still missing.
 
 ## Budgets
 
@@ -175,14 +173,14 @@ there.
   `AiResult.Error`, **distinct from `AUTH`**, so the settings UI can say "top up
   your Melious credits" instead of "key rejected".
 - **The in-app daily word cap is the behavioral guardrail.** `AI_DAILY_WORD_CAP`,
-  default **50 words/day** (raised from 20 on 2026-10-27), counted from today's
+  default **100 words/day** (raised from 20 on 2026-10-27, then to 100 for capture-time generation, #725), counted from today's
   items. It is never removed, even though cost stopped being the binding
   constraint: it bounds a runaway loop, a misconfigured base URL pointed at an
   expensive endpoint, or a bug that regenerates in circles.
 
 Cost rationale for the relaxation: at 20 words/day on GLM 5.3 Flash pricing
 (€0.10/M input tokens, €0.40/M output tokens) a month of daily generation costs
-roughly €0.15. Even at the 50-word cap the monthly cost stays in cents, so the
+roughly €0.15. Even at the 100-word cap the monthly cost stays in cents, so the
 original tight throttles were relaxed — the cap stays purely as a guardrail.
 
 **Hybrid generation trigger** (owner decision, 2026-10-27):
@@ -202,9 +200,11 @@ original tight throttles were relaxed — the cap stays purely as a guardrail.
   in the kernel only ends at the read timeout; `disconnect()` runs after the
   call returns. The first card waits for the inline generation at most that
   long; the round then starts once, on whatever the pools hold.
+  Amendment (#725): removed. Review never waits on generation. A thin word shows as the plain word card. Opening Review with a short due word starts the background run instead, at most once per 30 min.
 - **Background top-up.** The WorkManager batched queue (unique periodic work
-  `ai_practice`, 24 h, network-constrained) restores all pools to **3 items**
+  `ai_practice`, every 6 h (was 24 h until #725), network-constrained) restores all pools to **3 items**
   per word, FIFO oldest-first with jitter.
+- **After capture** (#725). Saving a word or changing its sentence enqueues unique one-shot work `ai_practice_soon`. It runs 2 min later, needs a network and uses `KEEP`, so a burst of captures goes out as one run. Every PracticeWorker run takes one app-wide try-lock (`PracticeRunLock`). A run that finds it held ends without a request.
 
 Review serving stays free — it is rotation over the local store, no network.
 
