@@ -28,6 +28,35 @@ object ContextSentence {
         return cappedAround(paragraph, lo, hi, s, e)
     }
 
+    /**
+     * Splits [paragraph] into sentences using German punctuation and boundary rules. Reuses
+     * [boundaryAfter] so captured context and harvested sentences split identically.
+     */
+    fun split(paragraph: String): List<String> {
+        if (paragraph.isBlank()) return emptyList()
+        val sentences = mutableListOf<String>()
+        var start = 0
+        var j = 0
+        while (j < paragraph.length) {
+            val k = boundaryAfter(paragraph, j)
+            if (k != null) {
+                val piece = paragraph.substring(start, k).trim()
+                if (piece.isNotEmpty()) {
+                    sentences.add(piece)
+                }
+                start = k
+                j = k
+            } else {
+                j++
+            }
+        }
+        val tail = paragraph.substring(start).trim()
+        if (tail.isNotEmpty()) {
+            sentences.add(tail)
+        }
+        return sentences
+    }
+
     /** Start index of the sentence containing [s]: first boundary before it, else 0. */
     private fun sentenceStart(p: String, s: Int): Int {
         var j = s - 1
