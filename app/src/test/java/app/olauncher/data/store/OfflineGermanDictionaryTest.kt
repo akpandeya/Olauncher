@@ -134,4 +134,13 @@ class OfflineGermanDictionaryTest {
         assertEquals("das", dictionary.gender("Gehen"))
         assertEquals("das", OfflineGermanDictionary.genderOf("haus") { if (it == "Haus") listOf(haus) else emptyList() })
     }
+
+    @Test
+    fun `lemma lookups resolve inflected words and lowercase candidates`() {
+        assertEquals("gehen", dictionary.lemma("ging"))
+        assertEquals("Haus", dictionary.lemma("Häuser"))
+        assertEquals("Hund", dictionary.lemma("hunde"))
+        assertNull(dictionary.lemma("xyz"))
+        assertNull(dictionary.lemma("  "))
+    }
 }
