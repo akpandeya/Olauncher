@@ -111,4 +111,42 @@ class NewsFeedParserTest {
         assertNull(NewsFeedParser.parseDate(""))
         assertNull(NewsFeedParser.parseDate("   "))
     }
+
+    @Test
+    fun `parseDate accepts RFC-822 zone names and -0000 offset`() {
+        val expected = Instant.parse("2026-10-28T13:05:00Z").toEpochMilli()
+
+        // CEST is UTC+02:00
+        assertEquals(expected, NewsFeedParser.parseDate("Wed, 28 Oct 2026 15:05:00 CEST"))
+
+        // CET is UTC+01:00
+        assertEquals(expected, NewsFeedParser.parseDate("Wed, 28 Oct 2026 14:05:00 CET"))
+
+        // EST is UTC-05:00
+        assertEquals(expected, NewsFeedParser.parseDate("Wed, 28 Oct 2026 08:05:00 EST"))
+
+        // PST is UTC-08:00
+        assertEquals(expected, NewsFeedParser.parseDate("Wed, 28 Oct 2026 05:05:00 PST"))
+
+        // UT is UTC+00:00
+        assertEquals(expected, NewsFeedParser.parseDate("Wed, 28 Oct 2026 13:05:00 UT"))
+
+        // GMT is UTC+00:00
+        assertEquals(expected, NewsFeedParser.parseDate("Wed, 28 Oct 2026 13:05:00 GMT"))
+
+        // Z is UTC+00:00
+        assertEquals(expected, NewsFeedParser.parseDate("Wed, 28 Oct 2026 13:05:00 Z"))
+
+        // -0000 offset
+        assertEquals(expected, NewsFeedParser.parseDate("Wed, 28 Oct 2026 13:05:00 -0000"))
+
+        // Numeric positive offset
+        assertEquals(expected, NewsFeedParser.parseDate("Wed, 28 Oct 2026 14:05:00 +0100"))
+
+        // Garbage inputs still return null
+        assertNull(NewsFeedParser.parseDate("CEST"))
+        assertNull(NewsFeedParser.parseDate("Wed, 28 Oct 2026 13:05:00"))
+        assertNull(NewsFeedParser.parseDate("Wed, 28 Oct 2026 13:05:00 INVALID"))
+        assertNull(NewsFeedParser.parseDate("not a date"))
+    }
 }

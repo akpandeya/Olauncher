@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.net.Uri
 import app.olauncher.BuildConfig
+import app.olauncher.data.Prefs
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -24,7 +25,10 @@ object Backup {
         // them elsewhere binds dead IDs ("This widget is unavailable").
         "TODAY_WIDGET_IDS",
         "TODAY_PENDING_WIDGET_ID",
-        "TODAY_WIDGET_HEIGHTS"
+        "TODAY_WIDGET_HEIGHTS",
+        // News daily fetch counter: ephemeral runtime state, never reset or lowered on restore.
+        Prefs.NEWS_FETCH_DAY,
+        Prefs.NEWS_FETCH_COUNT
     )
     const val OWN_OPENS_PREFIX = "OWN_OPENS_"
 
@@ -122,7 +126,36 @@ object Backup {
         for ((key, value) in current) {
             if (key in VOLATILE_KEYS) merged[key] = value
         }
+        mergeNewsFetchCounter(current, imported, merged)
         return merged
+    }
+
+    internal fun mergeNewsFetchCounter(
+        current: Map<String, *>,
+        imported: Map<String, Any?>,
+        merged: MutableMap<String, Any?>
+    ) {
+        val currentDay = (current[Prefs.NEWS_FETCH_DAY] as? Number)?.toLong()
+        val currentCount = (current[Prefs.NEWS_FETCH_COUNT] as? Number)?.toInt() ?: 0
+
+        val importedDay = (imported[Prefs.NEWS_FETCH_DAY] as? Number)?.toLong()
+        val importedCount = (imported[Prefs.NEWS_FETCH_COUNT] as? Number)?.toInt() ?: 0
+
+        // The device's own day wins: adopting an imported day that differs from it (even a
+        // later or future one) would make today's count read as 0 and bypass the daily cap.
+        val (bestDay, bestCount) = when {
+            currentDay != null && importedDay == currentDay -> currentDay to maxOf(currentCount, importedCount)
+            currentDay != null -> currentDay to currentCount
+            importedDay != null -> importedDay to importedCount
+            else -> {
+                merged.remove(Prefs.NEWS_FETCH_DAY)
+                merged.remove(Prefs.NEWS_FETCH_COUNT)
+                return
+            }
+        }
+
+        merged[Prefs.NEWS_FETCH_DAY] = bestDay
+        merged[Prefs.NEWS_FETCH_COUNT] = bestCount
     }
 
     fun restorePrefs(prefs: SharedPreferences, importedMap: Map<String, Any?>) {

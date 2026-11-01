@@ -121,9 +121,39 @@ object NewsFeedParser {
         return cleanElementText(match.groupValues[1])
     }
 
+    private val RFC822_ZONE_OFFSETS = mapOf(
+        "CEST" to "+0200",
+        "CET" to "+0100",
+        "EST" to "-0500",
+        "EDT" to "-0400",
+        "CST" to "-0600",
+        "CDT" to "-0500",
+        "MST" to "-0700",
+        "MDT" to "-0600",
+        "PST" to "-0800",
+        "PDT" to "-0700",
+        "UT" to "+0000",
+        "GMT" to "+0000",
+        "Z" to "+0000"
+    )
+
+    private val TRAILING_ZONE_REGEX = Regex("""\s+([A-Za-z]+)$""")
+
     fun parseDate(raw: String): Long? {
         val trimmed = raw.trim()
         if (trimmed.isEmpty()) return null
+
+        val candidate = TRAILING_ZONE_REGEX.find(trimmed)?.let { match ->
+            val zone = match.groupValues[1].uppercase(Locale.ROOT)
+            val offset = RFC822_ZONE_OFFSETS[zone]
+            if (offset != null) {
+                trimmed.substring(0, match.range.first) + " " + offset
+            } else null
+        } ?: trimmed
+
+        try {
+            return ZonedDateTime.parse(candidate, DateTimeFormatter.RFC_1123_DATE_TIME).toInstant().toEpochMilli()
+        } catch (_: Exception) {}
 
         try {
             return ZonedDateTime.parse(trimmed, DateTimeFormatter.RFC_1123_DATE_TIME).toInstant().toEpochMilli()

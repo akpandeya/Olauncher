@@ -113,6 +113,90 @@ class HttpNewsFetcherTest {
     }
 
     @Test
+    fun `ISO-8859-1 bytes with umlauts and no header charset decode correctly`() {
+        val xmlIso = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><rss><title>München Größe Über</title></rss>"
+        val fake = FakeNewsConnection(URL("https://www.tagesschau.de/feed"))
+        fake.status = 200
+        fake.headers["Content-Type"] = "text/xml" // no charset in header
+        fake.bodyBytes = xmlIso.toByteArray(Charset.forName("ISO-8859-1"))
+        queuedConnections.add(fake)
+
+        val result = fetcher.fetch("https://www.tagesschau.de/feed")
+
+        assertEquals(NewsFetch.Ok(xmlIso), result)
+        assertEquals(1, fake.disconnects)
+    }
+
+    @Test
+    fun `header charset wins over XML declaration`() {
+        val xml = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><rss><title>München</title></rss>"
+        val fake = FakeNewsConnection(URL("https://www.tagesschau.de/feed"))
+        fake.status = 200
+        fake.headers["Content-Type"] = "text/xml; charset=UTF-8"
+        fake.bodyBytes = xml.toByteArray(Charsets.UTF_8)
+        queuedConnections.add(fake)
+
+        val result = fetcher.fetch("https://www.tagesschau.de/feed")
+
+        assertEquals(NewsFetch.Ok(xml), result)
+        assertEquals(1, fake.disconnects)
+    }
+
+    @Test
+    fun `unknown header charset falls back to the XML declaration`() {
+        val xmlIso = "<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><rss><title>Kärnten Straße</title></rss>"
+        val fake = FakeNewsConnection(URL("https://www.tagesschau.de/feed"))
+        fake.status = 200
+        fake.headers["Content-Type"] = "text/xml; charset=no-such-charset"
+        fake.bodyBytes = xmlIso.toByteArray(Charset.forName("ISO-8859-1"))
+        queuedConnections.add(fake)
+
+        assertEquals(NewsFetch.Ok(xmlIso), fetcher.fetch("https://www.tagesschau.de/feed"))
+    }
+
+    @Test
+    fun `encoding text later in the body is not read as a declaration`() {
+        val xml = "<rss><title>Zürich</title><desc>&lt;?xml encoding=\"ISO-8859-1\"?&gt;</desc></rss>"
+        val notADeclaration = "<rss><title>Zürich</title><desc><?xml encoding=\"ISO-8859-1\"?></desc></rss>"
+        for (body in listOf(xml, notADeclaration)) {
+            val fake = FakeNewsConnection(URL("https://www.tagesschau.de/feed"))
+            fake.status = 200
+            fake.headers["Content-Type"] = "text/xml"
+            fake.bodyBytes = body.toByteArray(Charsets.UTF_8)
+            queuedConnections.add(fake)
+
+            assertEquals(NewsFetch.Ok(body), fetcher.fetch("https://www.tagesschau.de/feed"))
+        }
+    }
+
+    @Test
+    fun `unknown encoding in the XML declaration falls back to UTF-8`() {
+        val xml = "<?xml version=\"1.0\" encoding=\"bogus-enc\"?><rss><title>Köln</title></rss>"
+        val fake = FakeNewsConnection(URL("https://www.tagesschau.de/feed"))
+        fake.status = 200
+        fake.headers["Content-Type"] = "text/xml"
+        fake.bodyBytes = xml.toByteArray(Charsets.UTF_8)
+        queuedConnections.add(fake)
+
+        assertEquals(NewsFetch.Ok(xml), fetcher.fetch("https://www.tagesschau.de/feed"))
+    }
+
+    @Test
+    fun `no header charset and no XML declaration falls back to UTF-8`() {
+        val xml = "<rss><title>München</title></rss>"
+        val fake = FakeNewsConnection(URL("https://www.tagesschau.de/feed"))
+        fake.status = 200
+        fake.headers["Content-Type"] = "text/xml"
+        fake.bodyBytes = xml.toByteArray(Charsets.UTF_8)
+        queuedConnections.add(fake)
+
+        val result = fetcher.fetch("https://www.tagesschau.de/feed")
+
+        assertEquals(NewsFetch.Ok(xml), result)
+        assertEquals(1, fake.disconnects)
+    }
+
+    @Test
     fun `off-list host and http url return NOT_ALLOWED with zero connections opened`() {
         val resultOffList = fetcher.fetch("https://example.com/feed")
         assertEquals(NewsFetch.Failed(NewsFetch.Reason.NOT_ALLOWED), resultOffList)
