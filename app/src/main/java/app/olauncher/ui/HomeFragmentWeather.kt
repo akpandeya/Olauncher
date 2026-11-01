@@ -9,6 +9,7 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import app.olauncher.MainActivity
+import app.olauncher.R
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
 import app.olauncher.glance.Forecast
@@ -28,7 +29,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Locale
-import kotlin.math.roundToInt
 
 private var weatherMemory: WeatherJsonCache<Pair<Forecast, Long>>? = null
 
@@ -62,7 +62,7 @@ internal fun HomeFragment.combinedWeatherText(): CharSequence? {
     val ctx = context ?: return line
     val iconRes = WeatherCodes.homeIconFor(look, prefs.homeWeatherIconStyle)
     val drawable = ContextCompat.getDrawable(ctx, iconRes)?.mutate() ?: return line
-    val iconSize = binding.date.textSize.roundToInt()
+    val iconSize = ctx.resources.getDimensionPixelSize(R.dimen.home_weather_icon_size)
     drawable.setBounds(0, 0, iconSize, iconSize)
     if (prefs.homeWeatherIconStyle == WeatherIconStyle.MONOCHROME) {
         drawable.setTint(binding.date.currentTextColor)
@@ -213,7 +213,7 @@ internal fun HomeFragment.populateWeather() {
             val iconRes = WeatherCodes.homeIconFor(look, prefs.homeWeatherIconStyle)
             val drawable = ContextCompat.getDrawable(ctx, iconRes)?.mutate()
             if (drawable != null) {
-                val iconSize = binding.weather.textSize.roundToInt()
+                val iconSize = ctx.resources.getDimensionPixelSize(R.dimen.home_weather_icon_size)
                 drawable.setBounds(0, 0, iconSize, iconSize)
                 if (prefs.homeWeatherIconStyle == WeatherIconStyle.MONOCHROME) {
                     drawable.setTint(binding.weather.currentTextColor)
