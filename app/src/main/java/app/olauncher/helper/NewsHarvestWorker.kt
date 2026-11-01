@@ -65,8 +65,12 @@ class NewsHarvestWorker(
 
         try {
             val sentenceStore = RecentSentencesStore(applicationContext)
+            // Count each article request as it is sent, so a run cancelled part-way (charger
+            // unplugged, Wi-Fi lost) or a failing backfill still uses up the daily cap.
             val result = NewsHarvester(HttpNewsFetcher(), sentenceStore)
-                .harvest(NewsHarvestLimits(articlesLeftToday = left))
+                .harvest(NewsHarvestLimits(articlesLeftToday = left)) {
+                    prefs.recordNewsArticlesFetched(1, today)
+                }
             if (result.newSentences.isNotEmpty()) {
                 val offline = if (prefs.germanOfflineDictionary) SharedOfflineGermanStore.get(applicationContext) else null
                 val matcher = SentenceWordMatcher { form -> offline?.lemma(form) }
@@ -74,7 +78,6 @@ class NewsHarvestWorker(
                 val plan = NewsBackfill.plan(wordsStore.all(), result.newSentences, matcher)
                 NewsBackfill.applyPlan(plan, sentenceStore, wordsStore)
             }
-            prefs.recordNewsArticlesFetched(result.articleRequests, today)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {

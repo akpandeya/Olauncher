@@ -377,6 +377,14 @@ class RecentSentencesStoreTest {
     }
 
     @Test
+    fun `articleUrls returns exactly the recorded article urls`() {
+        assertEquals(emptySet<String>(), store.articleUrls())
+        store.recordArticles(listOf("https://www.dw.com/de/a-1", "https://www.faz.net/b-2"), 5000L)
+        store.recordArticles(listOf("https://www.dw.com/de/a-1"), 6000L)
+        assertEquals(setOf("https://www.dw.com/de/a-1", "https://www.faz.net/b-2"), store.articleUrls())
+    }
+
+    @Test
     fun `prune keeps sentence 39 days old and drops 41 days old, same for articles`() {
         val nowMs = 100_000_000_000L
         val dayMs = TimeUnit.DAYS.toMillis(1)

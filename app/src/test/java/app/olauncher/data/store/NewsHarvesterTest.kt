@@ -433,6 +433,50 @@ class NewsHarvesterTest {
         assertEquals(1, stored.count { it.text == newSentenceText })
     }
 
+    @Test
+    fun `onArticleRequest counts each article request before it is sent, also when the run is cancelled`() {
+        val source = NewsSources.ALL[0]
+        val host = source.hosts.first()
+        val urls = (1..3).map { "https://$host/art-$it" }
+        val feed = rssFeed(*urls.mapIndexed { i, u -> u to fixedClock - (i + 1) * 1000L }.toTypedArray())
+        val requested = mutableListOf<String>()
+        var counted = 0
+        val countsSeenAtFetch = mutableListOf<Int>()
+        val fetcher = object : NewsFetcher {
+            override fun fetch(url: String): NewsFetch {
+                requested.add(url)
+                if (url == source.feedUrl) return NewsFetch.Ok(feed)
+                countsSeenAtFetch.add(counted)
+                // The second article request is interrupted (charger unplugged).
+                if (url == urls[1]) throw CancellationException("stopped")
+                return NewsFetch.Ok(articleHtml("Dies ist ein vollständiger Satz aus dem Artikel $url."))
+            }
+        }
+        val harvester = NewsHarvester(
+            fetcher = fetcher,
+            store = store,
+            sources = listOf(source),
+            random = Random(42),
+            sleep = recordingSleep,
+            clock = { fixedClock }
+        )
+
+        var cancelled = false
+        try {
+            runBlocking {
+                harvester.harvest(NewsHarvestLimits(articlesLeftToday = 7)) { counted++ }
+            }
+        } catch (_: CancellationException) {
+            cancelled = true
+        }
+
+        assertTrue(cancelled)
+        assertEquals(listOf(source.feedUrl, urls[0], urls[1]), requested)
+        // Counted before each send: 1 when the first article is fetched, 2 for the second.
+        assertEquals(listOf(1, 2), countsSeenAtFetch)
+        assertEquals(2, counted)
+    }
+
     @Test(expected = CancellationException::class)
     fun `cancellation exception propagates out of harvest`() {
         runBlocking {

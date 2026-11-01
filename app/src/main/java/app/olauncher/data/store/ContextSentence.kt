@@ -12,6 +12,12 @@ object ContextSentence {
     /** Abbreviations whose dot must not end a sentence: z. B., d. h., Nr., Dr., usw. */
     private val ABBREVIATIONS = setOf("z", "b", "d", "h", "nr", "dr", "usw")
 
+    /** Month names that follow a German ordinal date ("am 3. Oktober"): its dot is no boundary. */
+    private val MONTHS = setOf(
+        "januar", "jänner", "februar", "märz", "april", "mai", "juni", "juli",
+        "august", "september", "oktober", "november", "dezember",
+    )
+
     /**
      * Returns the sentence in [paragraph] that contains the span [start, end). Sentences split
      * after `.`, `!`, `?` and `…` when a space and a capital letter or quote follow, so
@@ -90,7 +96,19 @@ object ContextSentence {
         while (k < p.length && p[k].isWhitespace()) k++
         if (k >= p.length) return k
         val next = p[k]
+        if (p[j] == '.' && isOrdinalDate(p, j, k)) return null
         return if (next.isUpperCase() || next in QUOTES) k else null
+    }
+
+    /** True when the dot at [dot] ends a 1–2 digit day and the word at [next] is a month. */
+    private fun isOrdinalDate(p: String, dot: Int, next: Int): Boolean {
+        var i = dot
+        while (i > 0 && p[i - 1].isDigit()) i--
+        val digits = dot - i
+        if (digits !in 1..2 || (i > 0 && p[i - 1].isLetterOrDigit())) return false
+        var end = next
+        while (end < p.length && p[end].isLetter()) end++
+        return p.substring(next, end).lowercase() in MONTHS
     }
 
     /** True when the dot at [dot] belongs to a known abbreviation like "Dr." or "z. B.". */
