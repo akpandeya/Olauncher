@@ -79,7 +79,7 @@ data class DrillQuizQuestion(
 /**
  * Context-free round construction for the redesigned drill round (#639):
  *
- * - 3 to 5 items per round ([MIN_ROUND_SIZE]..[MAX_ROUND_SIZE]); a type with fewer
+ * - 5 to 15 items per round ([MIN_ROUND_SIZE]..[MAX_ROUND_SIZE]); a type with fewer
  *   items contributes all of them.
  * - A mixed round interleaves the 2-3 sampled types' items.
  * - Per-item format from the recognition ladder, driven by the per-item maturity
@@ -95,8 +95,8 @@ data class DrillQuizQuestion(
  */
 object DrillRoundPlanner {
 
-    const val MIN_ROUND_SIZE = 3
-    const val MAX_ROUND_SIZE = 5
+    const val MIN_ROUND_SIZE = 5
+    const val MAX_ROUND_SIZE = 15
     const val MAX_TYPED_PER_ROUND = 3
     const val MAX_FLASHCARDS_PER_ROUND = 1
 
@@ -111,7 +111,7 @@ object DrillRoundPlanner {
 
     /**
      * Draws the round's item count: a random size between [MIN_ROUND_SIZE] and
-     * [MAX_ROUND_SIZE] — capped at 5 so no round bombards the learner; the round
+     * [MAX_ROUND_SIZE] (5-15, #741); the round
      * itself shrinks further on wrong answers (see [DrillQuiz]). Deterministic
      * under a seeded [random].
      */
@@ -262,7 +262,7 @@ object DrillRoundPlanner {
      * Shows at most one flashcard: an early item (maturity 0 or 1) gets a flashcard
      * step immediately before its own question, so the learner sees the answer right
      * before the first or second quiz on it. The flashcard counts toward the round's
-     * 3-5 steps — when the round is already over [cap], one other question
+     * 5-15 steps — when the round is already over [cap], one other question
      * is dropped to make room.
      */
     private fun addFlashcards(
@@ -316,8 +316,9 @@ object DrillRoundPlanner {
     }
 
     /**
-     * Shuffles the steps until no two consecutive questions share a format. A flashcard
-     * stays immediately before its own tap question. Returns the last shuffle when no
+     * Orders the steps so no two consecutive questions share a format: a greedy pass
+     * ([greedyOrder]) first, then random shuffles if it still repeats. A flashcard stays
+     * immediately before its own tap question. Returns the best order found when no
      * arrangement can satisfy the rule (for example a tap-only round of one format).
      */
     private fun orderWithoutRepeat(steps: List<DrillQuizQuestion>, random: Random): List<DrillQuizQuestion> {
@@ -337,7 +338,9 @@ object DrillRoundPlanner {
             }
         }
 
-        var best = steps
+        // Rounds run up to MAX_ROUND_SIZE steps (#741); random shuffles alone rarely find a
+        // valid order at that length, so a greedy arrangement goes first.
+        var best = greedyOrder(units.shuffled(random))
         var bestViolations = countRepeats(best)
         var attempts = 0
         while (bestViolations > 0 && attempts < 64) {
@@ -350,6 +353,29 @@ object DrillRoundPlanner {
             attempts++
         }
         return best
+    }
+
+    /**
+     * Places [units] one by one: each pick must open with a format other than the one the
+     * sequence ends on, and among those the unit whose opening format has the most units
+     * left goes first, so the most common format is spread out before it runs short of
+     * gaps. Ties keep the incoming (already shuffled) order. Falls back to any unit when
+     * every remaining one would repeat.
+     */
+    private fun greedyOrder(units: List<List<DrillQuizQuestion>>): List<DrillQuizQuestion> {
+        val remaining = units.toMutableList()
+        val result = mutableListOf<DrillQuizQuestion>()
+        while (remaining.isNotEmpty()) {
+            val lastFormat = result.lastOrNull()?.format
+            val left = remaining.groupingBy { it.first().format }.eachCount()
+            val pick = remaining
+                .filter { it.first().format != lastFormat }
+                .maxByOrNull { left.getValue(it.first().format) }
+                ?: remaining.first()
+            remaining.remove(pick)
+            result.addAll(pick)
+        }
+        return result
     }
 
     private fun countRepeats(steps: List<DrillQuizQuestion>): Int =

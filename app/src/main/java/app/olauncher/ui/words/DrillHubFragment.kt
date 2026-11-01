@@ -21,7 +21,7 @@ import app.olauncher.ui.BaseFragment
 
 /**
  * Full-screen drills hub: the 9 drill types weakest first, with Continue and Practise weakest
- * suggestion buttons on top. A row tap starts a 5-8 item round of that type; Practise weakest
+ * suggestion buttons on top. A row tap starts a 5-15 item round of that type; Practise weakest
  * starts the mixed round of the 2-3 weakest types. The popup picker it replaces lived in
  * WordsFragment.
  */

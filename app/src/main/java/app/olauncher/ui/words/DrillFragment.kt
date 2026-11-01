@@ -69,7 +69,7 @@ import app.olauncher.ui.today.cards.WordsCard
 import java.util.Random
 
 /**
- * Full-screen drill quiz for one short round (#639): 3-5 items drawn from one type or a
+ * Full-screen drill quiz for one short round (#639): 5-15 items drawn from one type or a
  * mix of the weakest types, each question's format taken from the recognition ladder
  * (flashcard, tap, true-false, typed graduation). Wrong answers are corrected inline on
  * the same screen, the round shrinks by one per miss, and nothing is requeued; the
@@ -280,7 +280,7 @@ class DrillFragment : BaseFragment() {
         return DrillItemHistory.maturities(Prefs(context.applicationContext).drillItemHistory)
     }
 
-    /** Builds a new 3-5 item round over [drillTypes] with ladder formats. */
+    /** Builds a new 5-15 item round over [drillTypes] with ladder formats. */
     private fun buildRound(): DrillQuiz? {
         val appContext = context?.applicationContext ?: return null
         val words = WordsCard.getStore(appContext).all()
