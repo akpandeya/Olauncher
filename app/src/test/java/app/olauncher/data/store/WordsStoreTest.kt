@@ -167,4 +167,32 @@ class WordsStoreTest {
         assertEquals(word, store.get(word.id))
         assertNull(store.get(999999L))
     }
+
+    @Test
+    fun `fillBlankContexts fills only blank contexts and keeps fields changed after the caller read`() {
+        val blank = store.add("gehen")
+        val captured = store.add("Haus", "Das Haus ist alt.")
+        val reviewed = store.add("Katze")
+        // A review after the caller read the words moves the word to box 4 with a new due day.
+        store.update(store.get(reviewed.id)!!.copy(box = 4, dueDay = 19777L, meaning = "cat"))
+
+        val filled = store.fillBlankContexts(
+            mapOf(
+                blank.id to "Wir gehen heute früh nach Hause.",
+                captured.id to "Ein anderes Haus steht leer.",
+                reviewed.id to "Die Katze schläft auf dem Sofa.",
+                987654321L to "Kein Wort hat diese Id.",
+            )
+        )
+
+        assertEquals(setOf(blank.id, reviewed.id), filled)
+        assertEquals("Wir gehen heute früh nach Hause.", store.get(blank.id)!!.context)
+        assertEquals("Das Haus ist alt.", store.get(captured.id)!!.context)
+        val afterReview = store.get(reviewed.id)!!
+        assertEquals("Die Katze schläft auf dem Sofa.", afterReview.context)
+        assertEquals(4, afterReview.box)
+        assertEquals(19777L, afterReview.dueDay)
+        assertEquals("cat", afterReview.meaning)
+        assertEquals(3, store.all().size)
+    }
 }

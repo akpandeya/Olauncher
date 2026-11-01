@@ -54,14 +54,17 @@ class NewsHarvestWorker(
             return@withContext Result.success()
         }
 
+        runGuard.runExclusive { harvestAndBackfill(prefs) }
+        Result.success()
+    }
+
+    private suspend fun harvestAndBackfill(prefs: Prefs) {
         val today = LocalDate.now().toEpochDay()
         val left = NewsHarvestPolicy.articlesLeftToday(
             Prefs.NEWS_DAILY_ARTICLE_CAP,
             prefs.newsArticlesFetchedToday(today),
         )
-        if (left == 0) {
-            return@withContext Result.success()
-        }
+        if (left == 0) return
 
         try {
             val sentenceStore = RecentSentencesStore(applicationContext)
@@ -83,8 +86,6 @@ class NewsHarvestWorker(
         } catch (e: Exception) {
             Log.w(TAG, "News harvest failed (${e.javaClass.simpleName})")
         }
-
-        Result.success()
     }
 
     companion object {
@@ -92,6 +93,9 @@ class NewsHarvestWorker(
         const val WORK_NAME_PERIODIC = "news_sentences"
         const val WORK_NAME_NOW = "news_sentences_now"
         const val PERIODIC_INTERVAL_HOURS = 12L
+
+        /** Process-wide: the periodic and the one-off work must not harvest at the same time. */
+        private val runGuard = NewsHarvestRunGuard()
 
         private fun constraints() = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.UNMETERED)

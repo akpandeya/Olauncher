@@ -45,14 +45,8 @@ object NewsBackfill {
         if (plan.links.isNotEmpty()) {
             sentences.linkWords(plan.links)
         }
-        var updatedCount = 0
-        for ((wordId, text) in plan.contextFills) {
-            val current = words.get(wordId)
-            if (current != null && current.context.isBlank()) {
-                words.update(current.copy(context = text))
-                updatedCount++
-            }
-        }
-        return updatedCount
+        // One atomic read-modify-write: a context the user captured after plan() is kept, and
+        // a review that changed box/dueDay in the meantime is not reverted.
+        return words.fillBlankContexts(plan.contextFills).size
     }
 }

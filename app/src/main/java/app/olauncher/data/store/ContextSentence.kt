@@ -9,8 +9,14 @@ object ContextSentence {
     private const val SENTENCE_PUNCT = ".!?…"
     private const val QUOTES = "„“”‚‘«»\"'"
 
-    /** Abbreviations whose dot must not end a sentence: z. B., d. h., Nr., Dr., usw. */
-    private val ABBREVIATIONS = setOf("z", "b", "d", "h", "nr", "dr", "usw")
+    /**
+     * Abbreviations whose dot must not end a sentence: z. B., d. h., Nr., Dr., usw., plus the
+     * ones German news text uses before a capital ("3 Mio. Euro", "Prof. Weber", "u. a. Berlin").
+     */
+    private val ABBREVIATIONS = setOf(
+        "z", "b", "d", "h", "nr", "dr", "usw",
+        "a", "u", "bzw", "ca", "ggf", "inkl", "jh", "mio", "mrd", "prof", "sog", "st", "tsd", "vgl",
+    )
 
     /** Month names that follow a German ordinal date ("am 3. Oktober"): its dot is no boundary. */
     private val MONTHS = setOf(
