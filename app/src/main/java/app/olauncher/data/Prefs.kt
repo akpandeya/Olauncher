@@ -33,6 +33,7 @@ class Prefs(context: Context) :
     WeatherPrefs by WeatherPrefsStore(context.appPrefs()),
     GermanPrefs by GermanPrefsStore(context.appPrefs()),
     AiPracticePrefs by AiPracticePrefsStore(context.appPrefs()),
+    NewsSentencesPrefs by NewsSentencesPrefsStore(context.appPrefs()),
     PausePrefs by PausePrefsStore(context.appPrefs()),
     WindDownPrefs by WindDownPrefsStore(context.appPrefs()),
     NudgePrefs by NudgePrefsStore(context.appPrefs()),
@@ -164,6 +165,11 @@ class Prefs(context: Context) :
 
         /** The "New practice for N weak spots" one-shot announcement (#604); 0 = nothing new. */
         const val AI_DIGEST_NEW = "AI_DIGEST_NEW"
+        const val NEWS_SENTENCES_ENABLED = "NEWS_SENTENCES_ENABLED"
+        const val NEWS_SENTENCES_ENABLED_DEFAULT = false
+        const val NEWS_FETCH_DAY = "NEWS_FETCH_DAY"
+        const val NEWS_FETCH_COUNT = "NEWS_FETCH_COUNT"
+        const val NEWS_DAILY_ARTICLE_CAP = 30
         const val DRILL_LAST_TYPE = "DRILL_LAST_TYPE"
         const val DRILL_SCORES = "DRILL_SCORES"
         const val DRILL_LAST_ROUND = "DRILL_LAST_ROUND"
