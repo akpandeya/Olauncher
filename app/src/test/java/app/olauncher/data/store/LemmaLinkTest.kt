@@ -16,6 +16,11 @@ class LemmaLinkTest {
     }
 
     @Test
+    fun `case list with several slashes returns the base word`() {
+        assertEquals("Angriff", LemmaLink.baseWord("nominative/accusative/genitive plural of Angriff"))
+    }
+
+    @Test
     fun `other form-of glosses return the base word`() {
         assertEquals("Haus", LemmaLink.baseWord("plural of Haus"))
         assertEquals("gehen", LemmaLink.baseWord("past participle of gehen"))
