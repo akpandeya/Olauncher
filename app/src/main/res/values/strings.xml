@@ -868,6 +868,8 @@
     <string name="capture_saved_token">Saved „%1$s“</string>
     <string name="capture_menu" translatable="false">⋮</string>
     <string name="capture_menu_desc">More options</string>
+    <string name="capture_loading_desc">Loading the captured screen</string>
+    <string name="capture_overlay_desc">Frozen screen. Tap or circle words to look them up. With a screen reader, open More options, then Reader view.</string>
     <string name="privacy_intro" tools:ignore="MissingTranslation">Thumbline does not send your data to any analytics or ads service. Some features fetch data from the internet (weather, dictionary, currency, now-playing artwork), listed below.</string>
     <string name="privacy_state_granted" tools:ignore="MissingTranslation">Granted</string>
     <string name="privacy_state_not_granted" tools:ignore="MissingTranslation">Not granted</string>
