@@ -12,12 +12,20 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import app.olauncher.data.Prefs
+import app.olauncher.data.store.AiProviderConfig
+import app.olauncher.data.store.AiProviders
+import app.olauncher.data.store.ContextRewriteRun
 import app.olauncher.data.store.HttpNewsFetcher
+import app.olauncher.data.store.KeySource
+import app.olauncher.data.store.KeyVault
 import app.olauncher.data.store.NewsBackfill
 import app.olauncher.data.store.NewsHarvestLimits
 import app.olauncher.data.store.NewsHarvester
 import app.olauncher.data.store.NewsSources
+import app.olauncher.data.store.PracticeItemsStore
+import app.olauncher.data.store.PracticeSentencesStore
 import app.olauncher.data.store.RecentSentencesStore
+import app.olauncher.data.store.SentenceRewriter
 import app.olauncher.data.store.SentenceWordMatcher
 import app.olauncher.data.store.SharedOfflineGermanStore
 import app.olauncher.data.store.WordsStore
@@ -36,8 +44,14 @@ import kotlinx.coroutines.withContext
  * at most 30 articles per day ([Prefs.NEWS_DAILY_ARTICLE_CAP]).
  *
  * Only sentences harvested in this run are matched, which bounds the lemma lookups per run
- * (≈ 10 articles × 40 sentences); words saved later get links from later harvests. No AI call
- * is triggered here; filled contexts are picked up by the next [PracticeWorker] periodic run.
+ * (≈ 10 articles × 40 sentences); words saved later get links from later harvests.
+ *
+ * After the harvest and backfill — inside the same exclusive run, and also when the daily
+ * article cap is used up or the harvest found nothing new — the worker runs the context
+ * rewrite step ([ContextRewriteRun]): weak or blank word contexts are filled from a linked
+ * sentence as-is, or from an AI rewrite ([SentenceRewriter]) that is gated by AI practice
+ * and counted against the daily word cap there. Its own try/catch keeps a harvest failure
+ * from blocking it and a rewrite failure from breaking the harvest.
  *
  * Never retries ([androidx.work.ListenableWorker.Result.retry]): on failure, it logs and
  * returns [androidx.work.ListenableWorker.Result.success] so the next periodic run can try
@@ -59,33 +73,95 @@ class NewsHarvestWorker(
     }
 
     private suspend fun harvestAndBackfill(prefs: Prefs) {
-        val today = LocalDate.now().toEpochDay()
+        val today = LocalDate.now()
         val left = NewsHarvestPolicy.articlesLeftToday(
             Prefs.NEWS_DAILY_ARTICLE_CAP,
-            prefs.newsArticlesFetchedToday(today),
+            prefs.newsArticlesFetchedToday(today.toEpochDay()),
         )
-        if (left == 0) return
+        // One matcher per run, shared by the backfill and the rewrite: the offline
+        // dictionary lemma is loaded once instead of per step.
+        val sentenceStore = RecentSentencesStore(applicationContext)
+        val matcher = buildMatcher(prefs)
+
+        if (left > 0) {
+            try {
+                val result = NewsHarvester(HttpNewsFetcher(), sentenceStore)
+                    .harvest(NewsHarvestLimits(articlesLeftToday = left)) {
+                        // Count each article request as it is sent, so a run cancelled
+                        // part-way (charger unplugged, Wi-Fi lost) or a failing backfill
+                        // still uses up the daily cap.
+                        prefs.recordNewsArticlesFetched(1, today.toEpochDay())
+                    }
+                if (result.newSentences.isNotEmpty()) {
+                    val wordsStore = WordsStore(applicationContext)
+                    // Capped and learned words are not linked or filled here: they do
+                    // not need practice, so no sentence or context budget for them.
+                    val practiceCounts = PracticeItemsStore(applicationContext)
+                        .all().groupingBy { it.wordId }.eachCount()
+                    val plan = NewsBackfill.plan(
+                        NewsBackfill.eligibleWords(wordsStore.all(), practiceCounts),
+                        result.newSentences,
+                        matcher,
+                    )
+                    NewsBackfill.applyPlan(plan, sentenceStore, wordsStore)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "News harvest failed (${e.javaClass.simpleName})")
+            }
+        }
 
         try {
-            val sentenceStore = RecentSentencesStore(applicationContext)
-            // Count each article request as it is sent, so a run cancelled part-way (charger
-            // unplugged, Wi-Fi lost) or a failing backfill still uses up the daily cap.
-            val result = NewsHarvester(HttpNewsFetcher(), sentenceStore)
-                .harvest(NewsHarvestLimits(articlesLeftToday = left)) {
-                    prefs.recordNewsArticlesFetched(1, today)
-                }
-            if (result.newSentences.isNotEmpty()) {
-                val offline = if (prefs.germanOfflineDictionary) SharedOfflineGermanStore.get(applicationContext) else null
-                val matcher = SentenceWordMatcher { form -> offline?.lemma(form) }
-                val wordsStore = WordsStore(applicationContext)
-                val plan = NewsBackfill.plan(wordsStore.all(), result.newSentences, matcher)
-                NewsBackfill.applyPlan(plan, sentenceStore, wordsStore)
-            }
+            rewriteContexts(prefs, sentenceStore, matcher, today)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Log.w(TAG, "News harvest failed (${e.javaClass.simpleName})")
+            Log.w(TAG, "Context rewrite failed (${e.javaClass.simpleName})")
         }
+    }
+
+    /** Same construction as [PracticeWorker]: the key only travels via [KeyVault]. */
+    private fun buildMatcher(prefs: Prefs): SentenceWordMatcher {
+        val offline = if (prefs.germanOfflineDictionary) SharedOfflineGermanStore.get(applicationContext) else null
+        return SentenceWordMatcher { form -> offline?.lemma(form) }
+    }
+
+    /**
+     * Fills weak word contexts from linked sentences, or from an AI rewrite. The
+     * gate, daily word cap, key-rejection pause and generation mutex live inside
+     * [SentenceRewriter]; a null provider (feature off, no key, unknown provider)
+     * leaves the as-is fills only.
+     */
+    private suspend fun rewriteContexts(
+        prefs: Prefs,
+        sentenceStore: RecentSentencesStore,
+        matcher: SentenceWordMatcher,
+        today: LocalDate,
+    ) {
+        val vault = KeyVault(applicationContext)
+        val keySource = KeySource { vault.read() }
+        val provider = AiProviders.create(
+            AiProviderConfig(prefs.aiProvider, prefs.aiBaseUrl, prefs.aiModel),
+            keySource,
+        )
+        val rewriter = provider?.let {
+            SentenceRewriter(
+                provider = it,
+                model = prefs.aiModel,
+                keySource = keySource,
+                matcher = matcher,
+                markConsumed = { id -> sentenceStore.markConsumed(listOf(id)) },
+            )
+        }
+        ContextRewriteRun(
+            words = WordsStore(applicationContext),
+            sentences = sentenceStore,
+            practiceItems = PracticeItemsStore(applicationContext),
+            practiceSentences = PracticeSentencesStore(applicationContext),
+            rewriter = rewriter,
+            model = prefs.aiModel,
+        ).run(prefs, today)
     }
 
     companion object {

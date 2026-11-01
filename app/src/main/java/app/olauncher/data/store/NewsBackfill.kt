@@ -10,6 +10,17 @@ object NewsBackfill {
     const val MIN_CONTEXT_CHARS = 40
     const val MAX_CONTEXT_CHARS = 200
 
+    /**
+     * The words backfill may touch in one run: not learned and fewer than
+     * [WordNeedRanker.PRACTICE_CAP] practice cards. A capped or learned word does
+     * not need practice, so it gets no sentence link and no context fill — the
+     * worker passes this filtered list to [plan] instead of every stored word.
+     */
+    fun eligibleWords(words: List<Word>, practiceCounts: Map<Long, Int>): List<Word> =
+        words.filter { word ->
+            word.learnedAt == null && (practiceCounts[word.id] ?: 0) < WordNeedRanker.PRACTICE_CAP
+        }
+
     fun plan(
         words: List<Word>,
         newSentences: List<RecentSentence>,
