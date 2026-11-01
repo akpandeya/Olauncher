@@ -1,0 +1,58 @@
+package app.olauncher.data.store
+
+data class NewsBackfillPlan(
+    val links: Map<String, List<Long>>,
+    val contextFills: Map<Long, String>
+)
+
+object NewsBackfill {
+    const val MAX_SENTENCES_PER_WORD = 5
+    const val MIN_CONTEXT_CHARS = 40
+    const val MAX_CONTEXT_CHARS = 200
+
+    fun plan(
+        words: List<Word>,
+        newSentences: List<RecentSentence>,
+        matcher: SentenceWordMatcher
+    ): NewsBackfillPlan {
+        val byWord = matcher.candidates(words, newSentences, MAX_SENTENCES_PER_WORD)
+        val inverted = LinkedHashMap<String, MutableList<Long>>()
+        for ((wordId, matchedSentences) in byWord) {
+            for (sentence in matchedSentences) {
+                inverted.getOrPut(sentence.id) { mutableListOf() }.add(wordId)
+            }
+        }
+        val links = inverted.mapValues { (_, wordIds) -> wordIds.distinct().sorted() }
+
+        val contextFills = LinkedHashMap<Long, String>()
+        for (word in words) {
+            if (word.context.isNotBlank()) continue
+            val candidates = byWord[word.id] ?: continue
+            if (candidates.isEmpty()) continue
+            val chosen = candidates.firstOrNull { it.text.length in MIN_CONTEXT_CHARS..MAX_CONTEXT_CHARS }
+                ?: candidates.first()
+            contextFills[word.id] = chosen.text
+        }
+
+        return NewsBackfillPlan(links = links, contextFills = contextFills)
+    }
+
+    fun applyPlan(
+        plan: NewsBackfillPlan,
+        sentences: RecentSentencesStore,
+        words: WordsStore
+    ): Int {
+        if (plan.links.isNotEmpty()) {
+            sentences.linkWords(plan.links)
+        }
+        var updatedCount = 0
+        for ((wordId, text) in plan.contextFills) {
+            val current = words.get(wordId)
+            if (current != null && current.context.isBlank()) {
+                words.update(current.copy(context = text))
+                updatedCount++
+            }
+        }
+        return updatedCount
+    }
+}
