@@ -49,6 +49,21 @@ object WordEdit {
     /** Forgets the current meaning, so the next lookup fills it from Wiktionary again. */
     fun resetMeaning(word: Word): Word = word.copy(meaning = "", meaningSource = "")
 
+    /**
+     * The context's source after an edit-dialog save. A changed, non-blank context is the
+     * user's own writing ([ContextSource.USER]), so a rewrite must never overwrite it; a
+     * cleared context returns to [ContextSource.CAPTURED], so a rewrite may fill it again.
+     * An unchanged edit keeps the word's existing source.
+     */
+    fun contextSourceAfterEdit(word: Word, newContext: String): String {
+        val trimmed = newContext.trim()
+        return when {
+            trimmed == word.context.trim() -> word.contextSource
+            trimmed.isBlank() -> ContextSource.CAPTURED
+            else -> ContextSource.USER
+        }
+    }
+
     fun wiktionaryUrl(text: String): String {
         val encoded = URLEncoder.encode(text.trim(), "UTF-8").replace("+", "_")
         return "https://en.wiktionary.org/wiki/$encoded#German"

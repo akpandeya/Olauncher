@@ -12,6 +12,8 @@ data class Word(
     val id: Long,
     val text: String,
     val context: String = "",
+    /** [ContextSource.CAPTURED] | [ContextSource.USER] | [ContextSource.AUTO] */
+    val contextSource: String = ContextSource.CAPTURED,
     val meaning: String = "",
     val meaningSource: String = "", /* "" | "wiktionary" | "user" */
     val box: Int = 1,
@@ -34,6 +36,12 @@ data class WordsData(
 data class AddAllResult(
     val added: List<Word>,
     val alreadySaved: List<Word>
+)
+
+/** A planned context rewrite: replace [expectedContext] (as last read) with [newContext]. */
+data class ContextReplacement(
+    val expectedContext: String,
+    val newContext: String
 )
 
 data class WordStats(
@@ -63,6 +71,7 @@ object WordsCodec {
             obj.put("id", word.id)
             obj.put("text", word.text)
             obj.put("context", word.context)
+            obj.put("contextSource", word.contextSource)
             obj.put("meaning", word.meaning)
             obj.put("meaningSource", word.meaningSource)
             obj.put("box", word.box)
@@ -147,6 +156,12 @@ object WordsCodec {
                 val id = obj.getLong("id")
                 val text = obj.getString("text")
                 val context = if (obj.has("context") && !obj.isNull("context")) obj.getString("context") else ""
+                // Additive field: files written before it existed decode every context as
+                // captured, so no rewrite of old words.json files is needed.
+                val contextSource = when (val raw = obj.opt("contextSource")) {
+                    is String -> raw.trim().ifBlank { ContextSource.CAPTURED }
+                    else -> ContextSource.CAPTURED
+                }
                 val meaning = if (obj.has("meaning") && !obj.isNull("meaning")) obj.getString("meaning") else ""
                 val meaningSource = if (obj.has("meaningSource") && !obj.isNull("meaningSource")) obj.getString("meaningSource") else ""
                 val box = if (obj.has("box") && !obj.isNull("box")) obj.getInt("box") else 1
@@ -165,6 +180,7 @@ object WordsCodec {
                         id = id,
                         text = text,
                         context = context,
+                        contextSource = contextSource,
                         meaning = meaning,
                         meaningSource = meaningSource,
                         box = clampedBox,
@@ -205,8 +221,7 @@ class WordsStore(
     internal var epochDaySupplier: () -> Long = { LocalDate.now().toEpochDay() }
     internal var clockSupplier: () -> Long = { System.currentTimeMillis() }
 
-    @Synchronized
-    fun add(text: String, context: String = ""): Word {
+    fun add(text: String, context: String = ""): Word = synchronized(LOCK) {
         val cleanText = text.trim()
         val cleanContext = context.trim()
         val data = loadData()
@@ -215,7 +230,9 @@ class WordsStore(
         val word = if (existingIndex != -1) {
             val existing = all[existingIndex]
             if (cleanContext.isNotBlank() && cleanContext != existing.context) {
-                val updated = existing.copy(context = cleanContext)
+                // A new captured context supersedes the old one, so the source resets too:
+                // what is stored after this is again a fresh capture, not the user's text.
+                val updated = existing.copy(context = cleanContext, contextSource = ContextSource.CAPTURED)
                 all[existingIndex] = updated
                 saveData(data.copy(words = all))
                 updated
@@ -238,12 +255,11 @@ class WordsStore(
             saveData(data.copy(words = all))
             newWord
         }
-        return word
+        word
     }
 
     /** Saves each text not already stored (case-insensitive). Existing words are left untouched. */
-    @Synchronized
-    fun addAll(texts: List<String>, context: String = ""): AddAllResult {
+    fun addAll(texts: List<String>, context: String = ""): AddAllResult = synchronized(LOCK) {
         val cleanContext = context.trim()
         val data = loadData()
         val all = data.words.toMutableList()
@@ -273,11 +289,10 @@ class WordsStore(
             added.add(newWord)
         }
         if (added.isNotEmpty()) saveData(data.copy(words = all))
-        return AddAllResult(added, alreadySaved)
+        AddAllResult(added, alreadySaved)
     }
 
-    @Synchronized
-    fun update(word: Word) {
+    fun update(word: Word) = synchronized(LOCK) {
         val data = loadData()
         val all = data.words.toMutableList()
         val index = all.indexOfFirst { it.id == word.id }
@@ -293,9 +308,8 @@ class WordsStore(
      * reverts other fields (box, due day, meaning) changed since the caller read the word.
      * Returns the ids that were filled.
      */
-    @Synchronized
-    fun fillBlankContexts(contexts: Map<Long, String>): Set<Long> {
-        if (contexts.isEmpty()) return emptySet()
+    fun fillBlankContexts(contexts: Map<Long, String>): Set<Long> = synchronized(LOCK) {
+        if (contexts.isEmpty()) return@synchronized emptySet()
         val data = loadData()
         val filled = mutableSetOf<Long>()
         val updated = data.words.map { word ->
@@ -308,11 +322,49 @@ class WordsStore(
             }
         }
         if (filled.isNotEmpty()) saveData(data.copy(words = updated))
-        return filled
+        filled
     }
 
-    @Synchronized
-    fun delete(id: Long) {
+    /**
+     * Applies planned context rewrites ([replacements]: word id to the context expected
+     * on disk and the new sentence) in one read and one write. A word is replaced only
+     * when all of these still hold:
+     *
+     * - its current context equals [ContextReplacement.expectedContext], so anything the
+     *   user or another flow changed after planning is left alone;
+     * - [ContextQuality.isReplaceable] still holds — the user's own context is never
+     *   touched, and a context that has become non-weak meanwhile is kept;
+     * - the new context is non-blank and itself not weak, so a bad rewrite cannot plant
+     *   a new weak context that the next run would just pick again.
+     *
+     * Every other field (box, due day, meaning, learnedAt, lists) is kept from the
+     * freshly loaded word, so a review that moved the word between planning and apply
+     * is not reverted. Returns the ids that were replaced.
+     */
+    fun replaceWeakContexts(replacements: Map<Long, ContextReplacement>): Set<Long> = synchronized(LOCK) {
+        if (replacements.isEmpty()) return@synchronized emptySet()
+        val data = loadData()
+        val replaced = mutableSetOf<Long>()
+        val updated = data.words.map { word ->
+            val replacement = replacements[word.id] ?: return@map word
+            val expected = replacement.expectedContext.trim()
+            val newContext = replacement.newContext.trim()
+            val replaceable = word.context.trim() == expected &&
+                ContextQuality.isReplaceable(word) &&
+                newContext.isNotEmpty() &&
+                !ContextQuality.isWeak(newContext, word.text)
+            if (!replaceable) {
+                word
+            } else {
+                replaced += word.id
+                word.copy(context = newContext, contextSource = ContextSource.AUTO)
+            }
+        }
+        if (replaced.isNotEmpty()) saveData(data.copy(words = updated))
+        replaced
+    }
+
+    fun delete(id: Long) = synchronized(LOCK) {
         val data = loadData()
         val all = data.words.toMutableList()
         val index = all.indexOfFirst { it.id == id }
@@ -361,8 +413,7 @@ class WordsStore(
     }
 
     /** Null when the name is blank or already taken (compared ignoring case and punctuation). */
-    @Synchronized
-    fun addList(name: String): WordList? {
+    fun addList(name: String): WordList? = synchronized(LOCK) {
         val data = loadData()
         val normalized = WordListsLogic.normalizeName(name)
         if (WordListsLogic.validateName(normalized, data.lists) != null) return null
@@ -371,24 +422,22 @@ class WordsStore(
             name = normalized
         )
         saveData(data.copy(lists = data.lists + list))
-        return list
+        list
     }
 
     /** False on unknown id or a name clash; the id never changes. */
-    @Synchronized
-    fun renameList(id: String, newName: String): Boolean {
+    fun renameList(id: String, newName: String): Boolean = synchronized(LOCK) {
         val data = loadData()
         if (data.lists.none { it.id == id }) return false
         val normalized = WordListsLogic.normalizeName(newName)
         if (WordListsLogic.validateName(normalized, data.lists, exceptId = id) != null) return false
         val updated = data.lists.map { if (it.id == id) it.copy(name = normalized) else it }
         saveData(data.copy(lists = updated))
-        return true
+        true
     }
 
     /** Removes the list and scrubs its id from member words in the same save. */
-    @Synchronized
-    fun deleteList(id: String) {
+    fun deleteList(id: String) = synchronized(LOCK) {
         val data = loadData()
         if (data.lists.none { it.id == id }) return
         saveData(
@@ -400,8 +449,7 @@ class WordsStore(
     }
 
     /** Replaces a word's memberships; unknown list ids are dropped. No-op when the word is missing. */
-    @Synchronized
-    fun setLists(wordId: Long, listIds: List<String>) {
+    fun setLists(wordId: Long, listIds: List<String>) = synchronized(LOCK) {
         val data = loadData()
         if (data.words.none { it.id == wordId }) return
         val known = data.lists.mapTo(HashSet()) { it.id }
@@ -411,18 +459,16 @@ class WordsStore(
     }
 
     /** Idempotent bulk membership change; no-op when the list id is unknown. */
-    @Synchronized
     fun assignAll(wordIds: Collection<Long>, listId: String) {
         mutateMembership(wordIds, listId, assign = true)
     }
 
     /** Idempotent bulk membership change; no-op when the list id is unknown. */
-    @Synchronized
     fun unassignAll(wordIds: Collection<Long>, listId: String) {
         mutateMembership(wordIds, listId, assign = false)
     }
 
-    private fun mutateMembership(wordIds: Collection<Long>, listId: String, assign: Boolean) {
+    private fun mutateMembership(wordIds: Collection<Long>, listId: String, assign: Boolean) = synchronized(LOCK) {
         val data = loadData()
         if (data.lists.none { it.id == listId }) return
         val updated = WordListsLogic.withAssignment(data.words, wordIds.toSet(), listId, assign)
@@ -472,5 +518,15 @@ class WordsStore(
     private fun generateId(items: List<Word>, seed: Long): Long {
         val maxId = items.maxOfOrNull { it.id } ?: 0L
         return maxOf(seed, maxId + 1)
+    }
+
+    companion object {
+        /**
+         * One lock for every instance: the app builds a new WordsStore per call site
+         * (WordsCard.getStore, the workers, the dialogs), so an instance-level monitor
+         * would not stop a review's load-modify-save from interleaving with a rewrite's
+         * and losing the box/dueDay change (same idea as PracticeItemsStore).
+         */
+        private val LOCK = Any()
     }
 }
