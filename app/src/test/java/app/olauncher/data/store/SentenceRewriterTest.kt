@@ -3,7 +3,12 @@ package app.olauncher.data.store
 import app.olauncher.data.AiPracticePrefs
 import java.time.LocalDate
 import java.util.Locale
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.withLock
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -291,5 +296,27 @@ class SentenceRewriterTest {
         assertFalse(prefs.aiKeyRejected)
         assertEquals(AiResult.ErrorKind.BILLING, (run.outcomes.single() as RewriteOutcome.Failed).kind)
         assertTrue(consumed.isEmpty())
+    }
+
+    @Test
+    fun `rewrite waits while another caller holds the shared generation mutex`() = runBlocking {
+        val provider = QueueProvider(okSentence(sourceText))
+        val consumed = mutableListOf<String>()
+        val pending = PracticeGenerator.generationMutex.withLock {
+            val run = async(Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
+                rewriter(provider, consumed).rewrite(listOf(job()), prefs, today)
+            }
+            delay(200)
+            // Held by us: no provider call and no cap billing may happen yet.
+            assertTrue(provider.requests.isEmpty())
+            assertEquals(0, prefs.aiWordsSentToday(todayEpochDay))
+            assertFalse(run.isCompleted)
+            run
+        }
+        val result = pending.await()
+        assertEquals(1, provider.requests.size)
+        assertEquals(1, prefs.aiWordsSentToday(todayEpochDay))
+        assertEquals(listOf(sourceA.id), consumed)
+        assertEquals(1, result.outcomes.size)
     }
 }
