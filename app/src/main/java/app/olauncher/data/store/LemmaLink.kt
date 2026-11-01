@@ -10,7 +10,7 @@ object LemmaLink {
     data class Resolution(val baseForm: String, val meaning: String)
 
     private val INFLECTION_OF_REGEX = Regex(
-        """(?i)^(?:\S+\s+[—–]\s+)?(?:[\w-]+(?:/[\w-]+)?\s+){0,4}""" +
+        """(?i)^(?:\S+\s+[—–]\s+)?(?:[\w-]+(?:/[\w-]+)*\s+){0,4}""" +
             """(?:inflection|form|plural|participle|singular|preterite|subjunctive|imperative|""" +
             """comparative|superlative|genitive|dative|accusative|nominative)\s+of\s+(\S+)"""
     )
