@@ -83,7 +83,7 @@ class DrillsCardTest {
     @Test
     fun suggestedLineTextNamesTheTypeAndTheOffer() {
         assertEquals(
-            "Suggested: Prepositions · Start 3",
+            "Suggested: Prepositions · Start 5",
             text(DrillsCardLine.Suggested("prepositions"), "Prepositions"),
         )
     }

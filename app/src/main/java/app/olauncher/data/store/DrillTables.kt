@@ -46,7 +46,7 @@ object DrillTables {
 
     /**
      * Selects up to [limit] shuffled items for a round, or all items if fewer.
-     * A round draws 3 to 5 items ([DrillRoundPlanner.MIN_ROUND_SIZE] to
+     * A round draws 5 to 15 items ([DrillRoundPlanner.MIN_ROUND_SIZE] to
      * [DrillRoundPlanner.MAX_ROUND_SIZE]); [limit] is the cap.
      */
     fun <T> selectRound(

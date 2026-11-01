@@ -252,70 +252,79 @@ class DrillQuizTest {
             )
         }
 
+    /** The scored-step floor a round never shrinks below. */
+    private val floor = DrillRoundPlanner.MIN_ROUND_SIZE
+
+    /** Answers every remaining step right until the round ends. */
+    private fun finishRight(quiz: DrillQuiz) {
+        while (!quiz.isFinished) {
+            val step = quiz.current!!
+            if (!step.isTeaching) quiz.answer(step.answer)
+            quiz.advance()
+        }
+    }
+
     @Test
     fun roundShrinksByOnePerWrongAnswerDownToTheFloor() {
-        val items = itemsOf(DrillType.PREPOSITIONS, "p", 5)
+        val items = itemsOf(DrillType.PREPOSITIONS, "p", floor + 2)
         val quiz = DrillQuiz(items.map { tap(it) })
-        assertEquals(5, quiz.total)
+        assertEquals(floor + 2, quiz.total)
 
         quiz.answer(wrongChoice(items[0]))
-        assertEquals("first miss shrinks the round by one", 4, quiz.total)
+        assertEquals("first miss shrinks the round by one", floor + 1, quiz.total)
         quiz.advance()
 
         // Second miss: the breather replaced the next step of this type with a recap,
-        // and the floor keeps the round at three scored questions — the unscored recap
-        // does not eat into them, so the last scored question stays.
+        // and the floor keeps the round at its scored questions — the unscored recap
+        // does not eat into them, so no further question is dropped.
         quiz.answer(wrongChoice(items[1]))
-        assertEquals(DrillRoundPlanner.MIN_ROUND_SIZE, quiz.items.size)
+        assertEquals(floor, quiz.items.size)
         quiz.advance()
         assertEquals(DrillFormat.RECAP, quiz.current!!.format)
         quiz.advance()
         assertEquals(items[3].id, quiz.current!!.id)
-        quiz.answer(items[3].answer)
-        quiz.advance()
-        assertTrue(quiz.isFinished)
+        finishRight(quiz)
+        assertEquals(floor, quiz.itemResults().size)
     }
 
     @Test
     fun theShrinkFloorCountsScoredStepsNotTeachingOnes() {
-        val items = itemsOf(DrillType.PREPOSITIONS, "p", 3)
-        // A flashcard step must not eat into the floor of three scored questions.
-        val quiz = DrillQuiz(listOf(flashcard(items[0]), tap(items[0]), tap(items[1]), tap(items[2])))
-        assertEquals(4, quiz.total)
-        assertEquals(3, quiz.items.size)
+        val items = itemsOf(DrillType.PREPOSITIONS, "p", floor)
+        // A flashcard step must not eat into the floor of scored questions.
+        val quiz = DrillQuiz(listOf(flashcard(items[0])) + items.map { tap(it) })
+        assertEquals(floor + 1, quiz.total)
+        assertEquals(floor, quiz.items.size)
 
         quiz.answer(wrongChoice(items[0]))
-        assertEquals("no scored question is dropped below the floor", 4, quiz.total)
-        assertEquals(3, quiz.items.size)
+        assertEquals("no scored question is dropped below the floor", floor + 1, quiz.total)
+        assertEquals(floor, quiz.items.size)
     }
 
     @Test
     fun aWrongAnswerDropsAPairedFlashcardTogetherWithItsQuestion() {
-        val items = itemsOf(DrillType.PREPOSITIONS, "p", 4)
-        // Q1, Q2, Q3, F4, Q4: a miss on Q1 must not leave F4 without its question.
+        val items = itemsOf(DrillType.PREPOSITIONS, "p", floor + 1)
+        // Q0..Q(floor-1), F(floor), Q(floor): a miss on Q0 must not leave the trailing
+        // flashcard without its question.
         val quiz = DrillQuiz(
-            listOf(tap(items[0]), tap(items[1]), tap(items[2]), flashcard(items[3]), tap(items[3])),
+            items.take(floor).map { tap(it) } + flashcard(items[floor]) + tap(items[floor]),
         )
-        assertEquals(5, quiz.total)
+        assertEquals(floor + 2, quiz.total)
 
         quiz.answer(wrongChoice(items[0]))
         // The trailing flashcard and its question go together, so the round never
         // ends on a card whose question was dropped.
-        assertEquals(items.take(3).map { it.id }, quiz.steps.map { it.id })
+        assertEquals(items.take(floor).map { it.id }, quiz.steps.map { it.id })
         assertTrue(quiz.steps.none { it.isFlashcard })
-        assertEquals(3, quiz.items.size)
+        assertEquals(floor, quiz.items.size)
 
         quiz.advance()
-        quiz.answer(items[1].answer)
-        quiz.advance()
-        quiz.answer(items[2].answer)
-        quiz.advance()
+        finishRight(quiz)
         assertTrue(quiz.isFinished)
     }
 
     @Test
     fun theRoundOnlyLosesFutureStepsItNeverReached() {
-        val items = itemsOf(DrillType.PREPOSITIONS, "p", 5)
+        val items = itemsOf(DrillType.PREPOSITIONS, "p", floor + 2)
         val quiz = DrillQuiz(items.map { tap(it) })
         quiz.answer(items[0].answer)
         quiz.advance()
@@ -324,7 +333,7 @@ class DrillQuizTest {
         // Only the tail was dropped; every reached step stays in the plan in order.
         assertEquals(items.take(2).map { it.id }, quiz.steps.take(2).map { it.id })
         assertEquals(items[2].id, quiz.current!!.id)
-        assertEquals(4, quiz.total)
+        assertEquals(floor + 1, quiz.total)
     }
 
     @Test
@@ -338,10 +347,11 @@ class DrillQuizTest {
     @Test
     fun twoConsecutiveMissesOfATypeInsertAnUnscoredRecap() {
         val preps = itemsOf(DrillType.PREPOSITIONS, "p", 3)
-        val arts = itemsOf(DrillType.ARTICLES, "a", 2)
+        val arts = itemsOf(DrillType.ARTICLES, "a", floor - 1)
         // p0 misses, an articles question answers right in between (that does not
         // reset the prepositions streak), then p1 misses: prepositions breathe.
-        val steps = listOf(tap(preps[0]), tap(arts[0]), tap(preps[1]), tap(preps[2]), tap(arts[1]))
+        val steps = listOf(tap(preps[0]), tap(arts[0]), tap(preps[1]), tap(preps[2])) +
+            arts.drop(1).map { tap(it) }
         val quiz = DrillQuiz(steps)
 
         quiz.answer(wrongChoice(preps[0]))
@@ -367,15 +377,16 @@ class DrillQuizTest {
 
         // The recap replaced the next prepositions step rather than adding a step.
         assertEquals(quiz.steps.size, quiz.total)
+        assertTrue(quiz.steps.none { it.id == preps[2].id })
         quiz.advance()
+        finishRight(quiz)
         assertTrue(quiz.isFinished)
     }
 
     @Test
     fun theRecapReplacesTheNextStepOfTheMissedTypeAboveTheFloor() {
-        val preps = itemsOf(DrillType.PREPOSITIONS, "p", 5)
-        val steps = listOf(tap(preps[0]), tap(preps[1]), tap(preps[2]), tap(preps[3]), tap(preps[4]))
-        val quiz = DrillQuiz(steps, Random(3))
+        val preps = itemsOf(DrillType.PREPOSITIONS, "p", floor + 2)
+        val quiz = DrillQuiz(preps.map { tap(it) }, Random(3))
 
         quiz.answer(wrongChoice(preps[0]))
         quiz.advance()
@@ -393,14 +404,13 @@ class DrillQuizTest {
 
     @Test
     fun atTheFloorTheBreatherInsertsTheRecapInsteadOfReplacingAQuestion() {
-        val items = itemsOf(DrillType.PREPOSITIONS, "p", 3)
-        // A planned size of three: three scored questions plus a flashcard fronting
-        // the first one — the round already sits at the scored-step floor.
+        val items = itemsOf(DrillType.PREPOSITIONS, "p", floor)
+        // A round at the scored-step floor, plus a flashcard fronting the first question.
         val quiz = DrillQuiz(
-            listOf(flashcard(items[0]), tap(items[0]), tap(items[1]), tap(items[2])),
+            listOf(flashcard(items[0])) + items.map { tap(it) },
             Random(11),
         )
-        assertEquals(3, quiz.items.size)
+        assertEquals(floor, quiz.items.size)
 
         quiz.advance() // past the opening flashcard
         quiz.answer(wrongChoice(items[0]))
@@ -409,9 +419,10 @@ class DrillQuizTest {
 
         // Two misses of the same type at the floor: the recap is inserted before the
         // third question, not swapped for it, so the round keeps its scored floor.
-        assertTrue(quiz.items.size >= DrillRoundPlanner.MIN_ROUND_SIZE)
-        assertEquals(3, quiz.items.size)
-        assertEquals(items[2].id, quiz.steps.last().id)
+        assertEquals(floor, quiz.items.size)
+        val recapIndex = quiz.steps.indexOfFirst { it.isRecap }
+        assertEquals(items[2].id, quiz.steps[recapIndex + 1].id)
+        assertEquals(DrillFormat.TAP, quiz.steps[recapIndex + 1].format)
 
         quiz.advance()
         assertEquals(DrillFormat.RECAP, quiz.current!!.format)
@@ -426,13 +437,8 @@ class DrillQuizTest {
 
         quiz.advance()
         assertEquals(items[2].id, quiz.current!!.id)
-        quiz.answer(items[2].answer)
-        quiz.advance()
-        assertTrue(quiz.isFinished)
-        assertEquals(
-            setOf(items[0].id, items[1].id, items[2].id),
-            quiz.itemResults().keys,
-        )
+        finishRight(quiz)
+        assertEquals(items.map { it.id }.toSet(), quiz.itemResults().keys)
     }
 
     @Test
@@ -480,19 +486,14 @@ class DrillQuizTest {
 
     @Test
     fun aboveTheFloorTheBreatherTakesTheReplacedQuestionFlashcardWithIt() {
-        val items = itemsOf(DrillType.PREPOSITIONS, "p", 5)
-        // The trailing flashcard blocks the round from shrinking past four scored
+        val items = itemsOf(DrillType.PREPOSITIONS, "p", floor + 2)
+        // The trailing flashcard blocks the round from shrinking past floor + 1 scored
         // questions, so the breather lands above the floor and replaces a step that
         // has its own flashcard right before it.
         val quiz = DrillQuiz(
-            listOf(
-                tap(items[0]),
-                tap(items[1]),
-                flashcard(items[2]),
-                tap(items[2]),
-                tap(items[3]),
-                flashcard(items[4]),
-            ),
+            listOf(tap(items[0]), tap(items[1]), flashcard(items[2])) +
+                items.subList(2, floor + 1).map { tap(it) } +
+                flashcard(items[floor + 1]),
         )
 
         quiz.answer(wrongChoice(items[0]))
@@ -505,7 +506,7 @@ class DrillQuizTest {
         // never asked this round.
         assertTrue(quiz.steps.none { it.isFlashcard && it.id == items[2].id })
         assertTrue(quiz.steps.none { it.id == items[2].id && it.format == DrillFormat.TAP })
-        assertEquals(3, quiz.items.size)
+        assertEquals(floor, quiz.items.size)
     }
 
     @Test

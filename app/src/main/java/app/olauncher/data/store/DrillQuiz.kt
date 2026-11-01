@@ -291,7 +291,7 @@ class DrillQuiz(
      * Places a recap of the item the streak ended on before the next scored step of
      * [type]. Above the floor the recap replaces that step; at the floor
      * ([DrillRoundPlanner.MIN_ROUND_SIZE] scored steps) it is inserted instead, so the
-     * round keeps its three scored questions. A flashcard travels with its question:
+     * round keeps its floor of scored questions. A flashcard travels with its question:
      * when the target step has one right before it, the card goes too — it would front
      * a recap of a different item and teach something the round never asks. Above the
      * floor the card and its question are both replaced by the recap; at the floor the

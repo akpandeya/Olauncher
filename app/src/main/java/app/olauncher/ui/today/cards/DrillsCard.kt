@@ -64,7 +64,7 @@ object DrillsCardLogic {
     /**
      * The card text for [line]. [suggestedTemplate] takes the type name and round size,
      * [lastRoundTemplate] takes the type name and the right-of-total counts. The offered
-     * round size is the minimum ([DrillRoundPlanner.MIN_ROUND_SIZE]); a round draws 3-5.
+     * round size is the minimum ([DrillRoundPlanner.MIN_ROUND_SIZE]); a round draws 5-15.
      */
     fun lineText(
         suggestedTemplate: String,
