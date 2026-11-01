@@ -180,7 +180,7 @@ went out). Cloze fallbacks fill whatever is still missing.
 
 Cost rationale for the relaxation: at 20 words/day on GLM 5.3 Flash pricing
 (€0.10/M input tokens, €0.40/M output tokens) a month of daily generation costs
-roughly €0.15. Even at the 50-word cap the monthly cost stays in cents, so the
+roughly €0.15. Even at the 100-word cap the monthly cost stays in cents, so the
 original tight throttles were relaxed — the cap stays purely as a guardrail.
 
 **Hybrid generation trigger** (owner decision, 2026-10-27):

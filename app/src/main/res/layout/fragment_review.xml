@@ -107,7 +107,6 @@
             android:paddingHorizontal="24dp"
             android:paddingVertical="16dp">
 
-
             <!-- The flashcard: question first, answer after the reveal -->
             <LinearLayout
                 android:id="@+id/reviewCard"
