@@ -232,14 +232,16 @@ class PracticeDigestTest {
         assertTrue(prompt.contains("Pick only types that fit this word: plurals\n"))
         // The digest keeps its explicit type list: no per-word narrowing lines.
         assertFalse(prompt.contains("\n  types:"))
-        // The stored items carry the digest source and are served by rotation.
+        // The stored items carry the digest source and are served by rotation:
+        // per word the AI item plus one fallback card (the padding's copies
+        // are the same card, stored once).
         val stored = store.all()
-        assertEquals(6, stored.size)
+        assertEquals(4, stored.size)
         assertTrue(stored.all { it.source == PracticeItem.Source.DIGEST })
         val pool = stored.filter { it.wordId == 3L }
         assertEquals(pool[0], PracticeRotation.pick(word(3), stored, 0))
         assertEquals(pool[1], PracticeRotation.pick(word(3), stored, 1))
-        assertEquals(pool[2], PracticeRotation.pick(word(3), stored, 2))
+        assertEquals(pool[0], PracticeRotation.pick(word(3), stored, 2))
     }
 
     @Test

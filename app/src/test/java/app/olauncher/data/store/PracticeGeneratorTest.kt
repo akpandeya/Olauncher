@@ -352,9 +352,10 @@ class PracticeGeneratorTest {
         assertEquals(5, provider.requests.size)
         assertTrue(outcome is PracticeGeneration.Generated)
         assertEquals(listOf(1L, 2L, 3L, 4L, 5L, 11L), (outcome as PracticeGeneration.Generated).words.map { it.id })
-        // Chunk 1's and chunk 3's items are in the store (parse pads each word's
-        // pool to 3 with cloze fallbacks); chunk 2's stay queued.
-        assertEquals(18, store.all().size)
+        // Chunk 1's and chunk 3's items are in the store: each word's parsed
+        // item plus one cloze fallback (the padding's rotated copies are the
+        // same card, stored once); chunk 2's stay queued.
+        assertEquals(12, store.all().size)
         assertEquals(11, prefs.aiWordsSentToday(todayEpochDay))
     }
 
@@ -373,10 +374,11 @@ class PracticeGeneratorTest {
         assertTrue(outcome is PracticeGeneration.Partial)
         val partial = outcome as PracticeGeneration.Partial
         assertEquals(AiResult.ErrorKind.AUTH, partial.kind)
-        // The parsed item plus the two cloze fallbacks per word.
-        assertEquals(15, partial.itemCount)
+        // The parsed item plus one cloze fallback per word (the padding's
+        // copies are the same card, stored once).
+        assertEquals(10, partial.itemCount)
         assertEquals((1L..5L).toList(), partial.words.map { it.id })
-        assertEquals(15, store.all().size)
+        assertEquals(10, store.all().size)
         assertTrue(prefs.aiKeyRejected)
     }
 
@@ -414,6 +416,97 @@ class PracticeGeneratorTest {
         // The covered words are done — re-digesting them would only duplicate
         // source=digest items (review R2 B) — so the timestamp is set.
         assertEquals(1234L, prefs.aiLastDigestAt)
+    }
+
+    /** A cloze item for [wordId] whose prompt and answer carry [tag], so copies are exact. */
+    private fun clozeJson(wordId: Long, tag: String) =
+        """{"word_id": $wordId, "type": "cloze", "prompt": "Sie ___ (insistieren) auf dem Vertrag $tag.",
+           "answer": "insistiert$tag", "choices": ["insistiert$tag", "insistieren"]}"""
+
+    @Test
+    fun `an AI reply that repeats a card still gets a fallback and leaves the queue`() = runBlocking {
+        // [A, A, B]: parse accepts three items, but the store keeps only A and
+        // B. The fallback count must see two unique cards, so the cloze
+        // fallback is stored and the word is stocked — not resent every run.
+        val target = word(73, context = "Der Anwalt insistiert auf dem Vertrag.")
+        val reply = """{"items": [${clozeJson(73, "Alpha")}, ${clozeJson(73, "Alpha")}, ${clozeJson(73, "Beta")}]}"""
+        val provider = ScriptedProvider(AiResult.Ok(reply, AiUsage(10, 20), 5))
+
+        val outcome = generator(provider).topUp(listOf(target), prefs, today)
+
+        assertTrue(outcome is PracticeGeneration.Generated)
+        assertEquals(1, provider.requests.size)
+        val stored = store.all()
+        assertEquals(listOf("insistiertAlpha", "insistiertBeta"), stored.filter { it.model != null }.map { it.answer })
+        val fallback = PracticeContract.fallbacksFor(target, 1, PracticeItem.Source.WORD).first()
+        assertEquals(1, stored.count { it.model == null && PracticeCardKey.of(it) == PracticeCardKey.of(fallback) })
+        assertEquals(3, stored.size)
+        assertTrue(PracticeQueue.next(listOf(target), stored, today, cap = 50, random = Random(7)).isEmpty())
+    }
+
+    @Test
+    fun `a reply that only repeats stored cards still gets a fallback and leaves the queue`() = runBlocking {
+        // The word already holds two AI cards and no fallback; the reply sends
+        // both back as exact copies. The store skips them, so the fallback count
+        // must see two unique cards and store the fallback as the third.
+        val target = word(74, context = "Die Kanzlei insistiert auf dem Vertrag.")
+        store.append(
+            PracticeContract.parse(
+                """{"items": [${clozeJson(74, "Gamma")}, ${clozeJson(74, "Delta")}]}""",
+                listOf(target), prefs.aiModel, padFallbacks = false,
+            ).items,
+        )
+        assertEquals(2, store.all().size)
+        assertFalse(PracticeQueue.next(listOf(target), store.all(), today, cap = 50, random = Random(7)).isEmpty())
+        val reply = """{"items": [${clozeJson(74, "Gamma")}, ${clozeJson(74, "Delta")}, ${clozeJson(74, "Gamma")}]}"""
+        val provider = ScriptedProvider(AiResult.Ok(reply, AiUsage(10, 20), 5))
+
+        generator(provider).topUp(listOf(target), prefs, today)
+
+        val stored = store.all()
+        assertEquals(3, stored.size)
+        assertEquals(1, stored.count { it.model == null })
+        assertTrue(PracticeQueue.next(listOf(target), stored, today, cap = 50, random = Random(7)).isEmpty())
+    }
+
+    @Test
+    fun `a repeated digest stores no copies of known cards`() = runBlocking {
+        // The AI repeats its cloze and the padding rebuilds the same fallback on
+        // every run (#749 follow-up): the second digest must add nothing, and
+        // still count as done — the call was billed.
+        val provider = ScriptedProvider(AiResult.Ok(okJson(1), AiUsage(10, 20), 5))
+
+        generator(provider).digest(listOf(word(1)), emptyList(), prefs, today, nowMs = 1L)
+        val afterFirst = store.all()
+        val second = generator(provider).digest(listOf(word(1)), emptyList(), prefs, today, nowMs = 2L)
+
+        assertEquals(2, afterFirst.size)
+        assertEquals(afterFirst, store.all())
+        assertTrue(second is PracticeGeneration.Generated)
+        assertEquals(0, (second as PracticeGeneration.Generated).itemCount)
+        assertEquals(listOf(1L), second.words.map { it.id })
+        assertEquals(2L, prefs.aiLastDigestAt)
+    }
+
+    @Test
+    fun `a bad chunk next to a chunk of only known cards is not a failure`() = runBlocking {
+        // Word 6's cards are already stored, so its chunk stores nothing; the
+        // junk chunk must not turn the billed, parsed chunk into a Failed run.
+        store.append(
+            PracticeContract.parse(okJson(6), listOf(word(6)), prefs.aiModel).let { it.items + it.clozeFallbacks },
+        )
+        val words = (1L..6L).map { word(it) }
+        val provider = ScriptedProvider(
+            AiResult.Ok("{\"items\": [{\"word_id\": 1", AiUsage(10, 4096), 5),
+            AiResult.Ok(okJson(6), AiUsage(10, 20), 5),
+            AiResult.Ok(okJson(6), AiUsage(10, 20), 5),
+        )
+
+        val outcome = generator(provider).topUp(words, prefs, today)
+
+        assertTrue(outcome is PracticeGeneration.Generated)
+        assertEquals(listOf(6L), (outcome as PracticeGeneration.Generated).words.map { it.id })
+        assertEquals(0, outcome.itemCount)
     }
 
     @Test
@@ -459,11 +552,14 @@ class PracticeGeneratorTest {
         val outcome = generator(provider).topUp(listOf(word(1)), prefs, today)
 
         // The follow-up failed once and was NOT repeated (retry-on-missing is
-        // once per run); the word still ends with its 3-item pool.
+        // once per run); the word ends with its AI item and one fallback card
+        // (the padding's two copies are the same card, stored once), which
+        // keeps it out of the queue.
         assertTrue(outcome is PracticeGeneration.Generated)
         assertEquals(2, provider.requests.size)
-        assertEquals(3, store.all().size)
-        assertEquals(2, store.all().count { it.model == null })
+        assertEquals(2, store.all().size)
+        assertEquals(1, store.all().count { it.model == null })
+        assertTrue(PracticeQueue.next(listOf(word(1)), store.all(), today, cap = 50, random = Random(1)).isEmpty())
     }
 
     @Test
@@ -582,11 +678,12 @@ class PracticeGeneratorTest {
 
         assertTrue(outcome is PracticeGeneration.Generated)
         val stored = store.all()
-        assertEquals(3, stored.size)
+        assertEquals(2, stored.size)
         // Only the first call's cloze is a real item; the repeated answer never
-        // stored, the two missing slots are cloze fallbacks as before.
+        // stored, the two missing slots are padded with one fallback card (its
+        // copies are the same card, stored once).
         assertEquals(1, stored.count { it.model != null })
-        assertEquals(2, stored.count { it.model == null })
+        assertEquals(1, stored.count { it.model == null })
         // The repeated answer never stored as a conjugation.
         assertEquals(0, stored.count { it.type == DrillType.CONJUGATION })
         assertEquals(1, stored.count { it.type == DrillType.CLOZE && it.model != null })
@@ -613,11 +710,12 @@ class PracticeGeneratorTest {
 
         assertTrue(outcome is PracticeGeneration.Generated)
         val stored = store.all()
-        assertEquals(3, stored.size)
+        assertEquals(2, stored.size)
         // One AI cloze only; the second retry cloze ("insistieren") is skipped
-        // even though its answer differs — the word already has its cloze.
+        // even though its answer differs — the word already has its cloze. The
+        // padding stores its fallback card once.
         assertEquals(1, stored.count { it.type == DrillType.CLOZE && it.model != null })
-        assertEquals(2, stored.count { it.model == null })
+        assertEquals(1, stored.count { it.model == null })
     }
 
     @Test

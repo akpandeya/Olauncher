@@ -154,14 +154,12 @@ class PracticeWorker(
             .filter { it.context.isNotBlank() }
         if (weakWords.isEmpty()) return
         val outcome = generator.digest(weakWords, weak.drillTypes, prefs, LocalDate.now(), now)
-        if (outcome is PracticeGeneration.Generated || outcome is PracticeGeneration.Partial) {
-            // The announcement counts the words the digest actually covered —
-            // outcome.words — not the whole weak-spot list: blank-context words
-            // are filtered out before the call (review R1 #5). A partial digest
-            // counts the covered words too, so the timestamp and announcement
-            // reflect what was done (review R2 B).
-            prefs.aiDigestNew = outcome.words.size
-        }
+        // The announcement counts the words the digest actually covered —
+        // outcome.words — not the whole weak-spot list: blank-context words
+        // are filtered out before the call (review R1 #5). A partial digest
+        // counts the covered words too (review R2 B). A digest that stored
+        // nothing new (every card a copy of a stored one) announces nothing.
+        PracticeWorkerPolicy.digestAnnouncement(outcome)?.let { prefs.aiDigestNew = it }
     }
 
     companion object {

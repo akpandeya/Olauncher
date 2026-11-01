@@ -1,6 +1,9 @@
 package app.olauncher.helper
 
 import app.olauncher.data.store.AiResult
+import app.olauncher.data.store.PracticeGeneration
+import app.olauncher.data.store.Word
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -65,6 +68,34 @@ class AiPracticeToggleTest {
         assertFalse(PracticeWorkerPolicy.stopsRun(AiResult.ErrorKind.NETWORK))
         assertFalse(PracticeWorkerPolicy.stopsRun(AiResult.ErrorKind.BAD_RESPONSE))
         assertFalse(PracticeWorkerPolicy.stopsRun(AiResult.ErrorKind.SERVER))
+    }
+
+    @Test
+    fun `the digest announcement counts covered words only when something new was stored`() {
+        val covered = (61L..64L).map { Word(id = it, text = "w$it", context = "c$it", dueDay = 1, addedAt = it) }
+        // Four covered words, seven new items: the announcement counts the words.
+        assertEquals(4, PracticeWorkerPolicy.digestAnnouncement(PracticeGeneration.Generated(covered, itemCount = 7)))
+        assertEquals(
+            4,
+            PracticeWorkerPolicy.digestAnnouncement(
+                PracticeGeneration.Partial(covered, itemCount = 2, kind = AiResult.ErrorKind.AUTH),
+            ),
+        )
+        // Every card was a copy of a stored one: nothing new to announce.
+        assertNull(PracticeWorkerPolicy.digestAnnouncement(PracticeGeneration.Generated(covered, itemCount = 0)))
+        assertNull(
+            PracticeWorkerPolicy.digestAnnouncement(
+                PracticeGeneration.Partial(covered, itemCount = 0, kind = AiResult.ErrorKind.BILLING),
+            ),
+        )
+        assertNull(
+            PracticeWorkerPolicy.digestAnnouncement(PracticeGeneration.Failed(covered, AiResult.ErrorKind.NETWORK)),
+        )
+        assertNull(
+            PracticeWorkerPolicy.digestAnnouncement(
+                PracticeGeneration.Skipped(covered, PracticeGeneration.Reason.CAP_REACHED),
+            ),
+        )
     }
 
     @Test

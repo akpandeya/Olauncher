@@ -150,4 +150,24 @@ class PracticeQueueTest {
             PracticeQueue.next(words, items, today, cap = 50, random = Random(1)).map { it.id },
         )
     }
+
+    @Test
+    fun `a word whose pool holds its own fallback card is stocked`() {
+        // The store keeps one fallback copy instead of three: that copy must
+        // keep the word out of the queue, or every run would resend it.
+        val w1 = word(1, addedAt = 1_000, context = "Er insistiert1 darauf.")
+        val w2 = word(2, addedAt = 2_000, context = "Er insistiert2 darauf.")
+        val fallback = PracticeContract.fallbacksFor(w1, 1, PracticeItem.Source.WORD).single()
+            .copy(id = 1, createdAt = todayMillis - 100_000)
+        // w2's single card is not its fallback: still thin.
+        val items = listOf(fallback) + pool(2, 1)
+
+        assertTrue(PracticeQueue.isStocked(w1, listOf(fallback)))
+        assertFalse(PracticeQueue.isStocked(w2, pool(2, 1)))
+        assertEquals(listOf(2L), PracticeQueue.next(listOf(w1, w2), items, today, cap = 50, random = Random(1)).map { it.id })
+        assertFalse(PracticeQueue.anyNeedsItems(listOf(w1), items))
+        assertTrue(PracticeQueue.anyNeedsItems(listOf(w2), items))
+        // A changed sentence gives a different fallback card: queued again.
+        assertFalse(PracticeQueue.isStocked(w1.copy(context = "Sie insistiert1 nicht."), listOf(fallback)))
+    }
 }

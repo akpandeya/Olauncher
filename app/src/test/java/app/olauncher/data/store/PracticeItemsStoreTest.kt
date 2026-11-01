@@ -133,4 +133,40 @@ class PracticeItemsStoreTest {
         assertEquals((1L..4L).toSet(), all.map { it.wordId }.toSet())
         assertEquals((1L..4L).toSet(), all.map { it.id }.toSet())
     }
+
+    @Test
+    fun `append skips a card that is already stored and keeps existing ids`() {
+        val first = store.append(listOf(item()))[0]
+        // Same word, type, prompt and answer: a fallback copy with other
+        // choices, no hint and no model is still the same card.
+        val copy = item().copy(choices = listOf("insistieren", "insistiert"), hint = null, model = null)
+
+        val stored = store.append(listOf(copy, item(wordId = 2)))
+
+        assertEquals(listOf(2L), stored.map { it.wordId })
+        assertEquals(2L, stored[0].id)
+        assertEquals(listOf(first, stored[0]), store.all())
+    }
+
+    @Test
+    fun `append stores one copy of a card repeated within the batch`() {
+        val slot0 = item()
+        val slot1 = item().copy(choices = slot0.choices.drop(1) + slot0.choices.take(1))
+
+        val stored = store.append(listOf(slot0, slot1, slot0))
+
+        assertEquals(1, stored.size)
+        assertEquals(slot0.choices, stored[0].choices)
+        assertEquals(1, store.all().size)
+    }
+
+    @Test
+    fun `append of only known cards writes nothing`() {
+        val first = store.append(listOf(item()))
+        val before = File(tempDir, "practice_items.json").readText()
+
+        assertTrue(store.append(listOf(item())).isEmpty())
+        assertEquals(before, File(tempDir, "practice_items.json").readText())
+        assertEquals(first, store.all())
+    }
 }

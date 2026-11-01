@@ -24,6 +24,7 @@ import app.olauncher.data.store.PracticeItemsStore
 import app.olauncher.data.store.PracticeItem
 import app.olauncher.data.store.PracticeQueue
 import app.olauncher.data.store.PracticeRotation
+import app.olauncher.data.store.PracticeVisibleItems
 import app.olauncher.data.store.SharedOfflineGermanStore
 import app.olauncher.data.store.ReviewComebacks
 import app.olauncher.data.store.ReviewEvent
@@ -154,7 +155,7 @@ class ReviewFragment : BaseFragment() {
         )
         sessionEvents = split.session
         eventsBeforeSession = split.before
-        practiceItems = PracticeItemsStore(context).all()
+        practiceItems = PracticeVisibleItems.of(PracticeItemsStore(context).all(), store.all())
     }
 
     private fun startSession() {
@@ -166,10 +167,13 @@ class ReviewFragment : BaseFragment() {
         answered = 0
         sessionEvents = emptyList()
         eventsBeforeSession = ReviewEventsStore(context).all()
-        practiceItems = PracticeItemsStore(context).all()
+        val storedItems = PracticeItemsStore(context).all()
+        // Stale stored cards are hidden, never deleted (PracticeVisibleItems).
+        practiceItems = PracticeVisibleItems.of(storedItems, store.all())
         // Never wait on generation (#725): a short due pool only starts a
-        // background run; this session renders on the pools it has now.
-        PracticeWorker.kickFromReview(context.applicationContext, PracticeQueue.anyNeedsItems(queue, practiceItems))
+        // background run; this session renders on the pools it has now. The
+        // queue counts the stored pool, so the check does too.
+        PracticeWorker.kickFromReview(context.applicationContext, PracticeQueue.anyNeedsItems(queue, storedItems))
         render()
     }
 

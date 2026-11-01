@@ -47,6 +47,7 @@ import app.olauncher.data.store.DrillTables
 import app.olauncher.data.store.DrillType
 import app.olauncher.data.store.PracticeDrillItems
 import app.olauncher.data.store.PracticeItemsStore
+import app.olauncher.data.store.PracticeVisibleItems
 import app.olauncher.data.store.ReviewEventsStore
 import app.olauncher.data.store.ReviewSessionLogic
 import app.olauncher.data.store.SharedOfflineGermanStore
@@ -304,7 +305,7 @@ class DrillFragment : BaseFragment() {
         // rounds, the dedicated word-order round and practise-misses rounds stay
         // AI-free. The planner renders them flashcard-only, capped per round.
         val aiItems = if (drillTypes.size > 1) {
-            PracticeDrillItems.toDrillItems(PracticeItemsStore(appContext).all())
+            PracticeDrillItems.toDrillItems(PracticeVisibleItems.of(PracticeItemsStore(appContext).all(), words))
         } else {
             emptyList()
         }

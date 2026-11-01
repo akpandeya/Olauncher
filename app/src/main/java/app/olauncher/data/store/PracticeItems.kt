@@ -131,13 +131,23 @@ class PracticeItemsStore(
         }
     }
 
-    /** Stores new items (ids and createdAt assigned here) and returns the stored copies. */
+    /**
+     * Stores new items (ids and createdAt assigned here) and returns the stored
+     * copies. An item that is the same card ([PracticeCardKey]) as one already
+     * stored, or as an earlier item in [newItems], is skipped: every worker run
+     * pads with the same cloze fallbacks, and the AI often repeats its own cloze,
+     * so without this the file kept growing with copies. Existing items and ids
+     * are never touched.
+     */
     fun append(newItems: List<PracticeItem>): List<PracticeItem> = synchronized(LOCK) {
         if (newItems.isEmpty()) return emptyList()
         val existing = all()
+        val seen = existing.mapTo(HashSet(), PracticeCardKey::of)
+        val fresh = newItems.filter { seen.add(PracticeCardKey.of(it)) }
+        if (fresh.isEmpty()) return emptyList()
         var nextId = generateId(existing)
         val createdAt = System.currentTimeMillis()
-        val stored = newItems.map { item ->
+        val stored = fresh.map { item ->
             item.copy(id = nextId++, createdAt = createdAt)
         }
         save(existing + stored)
