@@ -154,8 +154,8 @@ class Prefs(context: Context) :
         const val AI_PRACTICE_ENABLED_DEFAULT = false
         const val AI_DAILY_WORD_CAP = "AI_DAILY_WORD_CAP"
 
-        /** Owner decision (2026-10-27): raised from 20 to 50 words/day; a guardrail, never removed. */
-        const val AI_DAILY_WORD_CAP_DEFAULT = 50
+        /** Owner decisions: 20 → 50 (2026-10-27), 50 → 100 (#725: capture-time generation shares the cap); a guardrail, never removed. */
+        const val AI_DAILY_WORD_CAP_DEFAULT = 100
         const val AI_KEY_REJECTED = "AI_KEY_REJECTED"
         const val AI_BILLING_BLOCKED = "AI_BILLING_BLOCKED"
         const val AI_SENT_DAY = "AI_SENT_DAY"

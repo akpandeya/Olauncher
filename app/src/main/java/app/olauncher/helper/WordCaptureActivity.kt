@@ -638,6 +638,7 @@ class WordCaptureActivity : AppCompatActivity() {
                 // would otherwise stop being pickable for the rest of the session.
                 if (pick is CapturePick.Word) savedThisSession += item.words
             }
+            PracticeWorker.scheduleAfterCapture(this)
             overlay.setSavedTexts(captureSavedByText.keys)
             selection.clear()
             val message = if (plan.size == 1) {
@@ -902,6 +903,7 @@ class WordCaptureActivity : AppCompatActivity() {
                     viewsByNode[word.nodeId]?.let { markSaved(word, it) }
                 }
             }
+            PracticeWorker.scheduleAfterCapture(this)
             for ((nodeId, nodeWords) in wordsByNode) {
                 val view = viewsByNode[nodeId] ?: continue
                 for (nw in nodeWords) {
@@ -1200,12 +1202,14 @@ class WordCaptureActivity : AppCompatActivity() {
     private fun saveWord(text: String, context: String) {
         val word = WordsStore(this).add(text, context)
         WordLookup.enqueue(this, word.id)
+        PracticeWorker.scheduleAfterCapture(this)
         showToast(getString(R.string.saved_word_de, text))
     }
 
     private fun saveSelected(texts: List<String>, context: String) {
         val result = WordsStore(this).addAll(texts, context)
         result.added.forEach { WordLookup.enqueue(this, it.id) }
+        if (result.added.isNotEmpty()) PracticeWorker.scheduleAfterCapture(this)
         val base = when {
             result.added.size == 1 -> getString(R.string.word_saved_de, result.added[0].text)
             result.added.isEmpty() && result.alreadySaved.size == 1 ->

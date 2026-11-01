@@ -66,4 +66,13 @@ class AiPracticeToggleTest {
         assertFalse(PracticeWorkerPolicy.stopsRun(AiResult.ErrorKind.BAD_RESPONSE))
         assertFalse(PracticeWorkerPolicy.stopsRun(AiResult.ErrorKind.SERVER))
     }
+
+    @Test
+    fun `capture work has its own name, a two-minute delay and a six-hour periodic net`() {
+        assertEquals("ai_practice_soon", PracticeWorker.WORK_NAME_SOON)
+        assertTrue(PracticeWorker.WORK_NAME_SOON != PracticeWorker.WORK_NAME_NOW)
+        assertTrue(PracticeWorker.WORK_NAME_SOON != PracticeWorker.WORK_NAME_PERIODIC)
+        assertEquals(120_000L, PracticeWorker.CAPTURE_DELAY_MS)
+        assertEquals(6L, PracticeWorker.PERIODIC_INTERVAL_HOURS)
+    }
 }

@@ -5,7 +5,7 @@ import app.olauncher.data.store.AiResult
 
 /**
  * The worker wiring behind the settings switch (#602, 9.9): on means the unique
- * periodic `ai_practice` work is scheduled (starting a day later — the first
+ * periodic `ai_practice` work is scheduled (starting 6 h later — the first
  * top-up is the one-shot `ai_practice_now` run, so two workers never race on the
  * same queue, review R1 #3); off means everything is idle — both work names are
  * cancelled and nothing is generated. The logic is context-free and unit-tested

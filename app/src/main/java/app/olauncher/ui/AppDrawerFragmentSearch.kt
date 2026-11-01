@@ -36,6 +36,7 @@ import app.olauncher.helper.openSearch
 import app.olauncher.helper.openUrl
 import app.olauncher.helper.DrawerCommand
 import app.olauncher.helper.DictionaryWebsite
+import app.olauncher.helper.PracticeWorker
 import app.olauncher.helper.createChoiceDialog
 import app.olauncher.data.store.WiktionaryApi
 import app.olauncher.data.store.WiktionaryCache
@@ -390,6 +391,7 @@ internal fun AppDrawerFragment.saveWords(action: AppModel.Result.Action.SaveWord
                 }
             }
             res.added.forEach { WordLookup.enqueue(ctx, it.id) }
+            if (res.added.isNotEmpty()) PracticeWorker.scheduleAfterCapture(ctx)
             res
         }
         val base = when {

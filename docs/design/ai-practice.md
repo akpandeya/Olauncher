@@ -175,7 +175,7 @@ there.
   `AiResult.Error`, **distinct from `AUTH`**, so the settings UI can say "top up
   your Melious credits" instead of "key rejected".
 - **The in-app daily word cap is the behavioral guardrail.** `AI_DAILY_WORD_CAP`,
-  default **50 words/day** (raised from 20 on 2026-10-27), counted from today's
+  default **100 words/day** (raised from 20 on 2026-10-27, then to 100 for capture-time generation, #725), counted from today's
   items. It is never removed, even though cost stopped being the binding
   constraint: it bounds a runaway loop, a misconfigured base URL pointed at an
   expensive endpoint, or a bug that regenerates in circles.
@@ -203,8 +203,9 @@ original tight throttles were relaxed — the cap stays purely as a guardrail.
   call returns. The first card waits for the inline generation at most that
   long; the round then starts once, on whatever the pools hold.
 - **Background top-up.** The WorkManager batched queue (unique periodic work
-  `ai_practice`, 24 h, network-constrained) restores all pools to **3 items**
+  `ai_practice`, every 6 h (was 24 h until #725), network-constrained) restores all pools to **3 items**
   per word, FIFO oldest-first with jitter.
+- **After capture** (#725). Saving a word or changing its sentence enqueues unique one-shot work `ai_practice_soon`. It runs 2 min later, needs a network and uses `KEEP`, so a burst of captures goes out as one run. Every PracticeWorker run takes one app-wide try-lock (`PracticeRunLock`). A run that finds it held ends without a request.
 
 Review serving stays free — it is rotation over the local store, no network.
 

@@ -25,4 +25,10 @@ class AiPracticePrefsTest {
         assertEquals("melious", Prefs.AI_PROVIDER_MELIOUS)
         assertEquals("https://api.melious.ai", Prefs.AI_BASE_URL_DEFAULT)
     }
+
+    @Test
+    fun `the daily word cap defaults to 100`() {
+        assertEquals(100, Prefs.AI_DAILY_WORD_CAP_DEFAULT)
+        assertEquals("AI_DAILY_WORD_CAP", Prefs.AI_DAILY_WORD_CAP)
+    }
 }

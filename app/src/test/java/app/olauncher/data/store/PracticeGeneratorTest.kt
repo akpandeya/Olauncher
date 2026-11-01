@@ -754,4 +754,57 @@ class PracticeGeneratorTest {
         assertEquals(1, stored.count { it.type == DrillType.CLOZE && it.model != null })
         assertEquals(2, stored.count { it.model == null })
     }
+
+    @Test
+    fun `a run sends only words short of three items, at most five per request`() = runBlocking {
+        val items = listOf(
+            PracticeItem(
+                wordId = 7, type = DrillType.CLOZE, prompt = "a", answer = "a",
+                choices = listOf("a", "b"), createdAt = 1,
+            ),
+            PracticeItem(
+                wordId = 7, type = DrillType.CLOZE, prompt = "b", answer = "b",
+                choices = listOf("b", "c"), createdAt = 2,
+            ),
+            PracticeItem(
+                wordId = 7, type = DrillType.CLOZE, prompt = "c", answer = "c",
+                choices = listOf("c", "d"), createdAt = 3,
+            ),
+        )
+        tempDir.resolve("practice_items.json").writeText(PracticeItemsCodec.encode(items))
+        val words = (1L..7L).map { word(it) }
+        val queue = PracticeQueue.next(words, store.all(), today, cap = prefs.cap, random = Random(1))
+        assertEquals((1L..6L).toSet(), queue.map { it.id }.toSet())
+
+        val provider = FakeProvider(result = AiResult.Ok(okJson(1, 2, 3, 4, 5, 6), AiUsage(10, 20), 5))
+        generator(provider).topUp(queue, prefs, today)
+
+        assertTrue(provider.prompts.none { it.contains("word_id 7") })
+        val countInFirst = (1L..6L).count { provider.requests[0].prompt.contains("word_id $it") }
+        assertEquals(5, countInFirst)
+        assertEquals(5 * PracticeGenerator.MAX_TOKENS_PER_WORD, provider.requests[0].maxTokens)
+        assertEquals(6, prefs.aiWordsSentToday(todayEpochDay))
+    }
+
+    @Test
+    fun `a run with every pool full makes no request`() = runBlocking {
+        val items = (1L..2L).flatMap { id ->
+            (1..3).map { i ->
+                PracticeItem(
+                    wordId = id, type = DrillType.CLOZE, prompt = "p$i", answer = "a$i",
+                    choices = listOf("a$i", "b$i"), createdAt = i.toLong(),
+                )
+            }
+        }
+        tempDir.resolve("practice_items.json").writeText(PracticeItemsCodec.encode(items))
+        val words = listOf(word(1), word(2))
+        val queue = PracticeQueue.next(words, store.all(), today, cap = prefs.cap, random = Random(1))
+        assertTrue(queue.isEmpty())
+
+        val provider = FakeProvider()
+        generator(provider).topUp(emptyList(), prefs, today)
+
+        assertTrue(provider.requests.isEmpty())
+        assertEquals(0, prefs.aiWordsSentToday(todayEpochDay))
+    }
 }

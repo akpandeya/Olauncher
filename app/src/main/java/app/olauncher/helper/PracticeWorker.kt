@@ -23,6 +23,7 @@ import app.olauncher.data.store.PracticeGeneration
 import app.olauncher.data.store.PracticeGenerator
 import app.olauncher.data.store.PracticeItemsStore
 import app.olauncher.data.store.PracticeQueue
+import app.olauncher.data.store.PracticeRunLock
 import app.olauncher.data.store.ReviewEventsStore
 import app.olauncher.data.store.WordsStore
 import java.time.LocalDate
@@ -32,13 +33,16 @@ import kotlinx.coroutines.withContext
 
 /**
  * The background top-up of the hybrid generation design (#601, 9.8; docs/design/
- * ai-practice.md "Budgets"): unique periodic work `ai_practice`, 24 h, network-
+ * ai-practice.md "Budgets"): unique periodic work `ai_practice`, 6 h, network-
  * constrained, that restores every word's pool to 3 items — chunked requests,
  * FIFO oldest-first with jitter, under the daily word cap ([PracticeQueue.next]).
  *
  * The first top-up after switching on is the unique one-shot `ai_practice_now`
- * work; the periodic run starts a day later, so switching on never runs two
+ * work; the periodic run starts 6 h later, so switching on never runs two
  * workers that send the same queue at once (review R1 #3).
+ *
+ * A capture or sentence edit enqueues one-shot `ai_practice_soon` 2 min later
+ * (#725). Every run takes [PracticeRunLock.APP] and skips when another run holds it.
  *
  * AUTH sets `AI_KEY_REJECTED` and stops — later runs are skipped until a new key
  * is saved, which clears the flag; BILLING sets `AI_BILLING_BLOCKED` (the user
@@ -70,9 +74,15 @@ class PracticeWorker(
             return@withContext Result.success()
         }
 
+        // One run at a time (#725): a run that finds another in flight ends here,
+        // without a request; its words stay queued for the next trigger.
+        PracticeRunLock.APP.runOrSkip { generateAndDigest(prefs, keySource) } ?: Result.success()
+    }
+
+    private suspend fun generateAndDigest(prefs: Prefs, keySource: KeySource): Result {
         val config = AiProviderConfig(prefs.aiProvider, prefs.aiBaseUrl, prefs.aiModel)
         val provider = AiProviders.create(config, keySource)
-            ?: return@withContext Result.success()
+            ?: return Result.success()
         val generator = PracticeGenerator(
             provider = provider,
             store = PracticeItemsStore(applicationContext),
@@ -107,7 +117,7 @@ class PracticeWorker(
                 else -> Result.success()
             }
         }
-        if (topUpResult == Result.retry()) return@withContext topUpResult
+        if (topUpResult == Result.retry()) return topUpResult
         // AUTH and BILLING end the run here: the digest would call the provider
         // again with a key that was just rejected or an account out of credits
         // (review R1 #6) — also when earlier chunks stored (a Partial, R2 B). A
@@ -119,10 +129,10 @@ class PracticeWorker(
             else -> null
         }
         if (topUpErrorKind != null && PracticeWorkerPolicy.stopsRun(topUpErrorKind)) {
-            return@withContext Result.success()
+            return Result.success()
         }
         maybeDigest(generator, prefs)
-        return@withContext Result.success()
+        return Result.success()
     }
 
     /**
@@ -156,6 +166,12 @@ class PracticeWorker(
     companion object {
         const val WORK_NAME_PERIODIC = "ai_practice"
         const val WORK_NAME_NOW = "ai_practice_now"
+        /** One-shot work after a capture or on review open (#725); separate from "Generate now". */
+        const val WORK_NAME_SOON = "ai_practice_soon"
+        /** Captures within this window go out together in one run (#725). */
+        const val CAPTURE_DELAY_MS = 120_000L
+        /** Periodic safety net (#725): was 24 h. Also the initial delay. */
+        const val PERIODIC_INTERVAL_HOURS = 6L
         private const val BACKOFF_MS = 30_000L
 
         private fun constraints() = Constraints.Builder()
@@ -163,16 +179,39 @@ class PracticeWorker(
             .build()
 
         fun schedulePeriodic(context: Context) {
-            // The first day's top-up is the one-shot `ai_practice_now` run; the
-            // periodic work starts a day later so switching on never launches two
-            // workers that both send the same queue at once (review R1 #3).
-            val request = PeriodicWorkRequestBuilder<PracticeWorker>(1, TimeUnit.DAYS)
-                .setInitialDelay(1, TimeUnit.DAYS)
+            // The initial delay stays one period. Switching on already calls
+            // runOnce at once, so a zero delay would start a second run that the
+            // lock skips anyway (#725). UPDATE moves existing installs from 24 h to 6 h.
+            val request = PeriodicWorkRequestBuilder<PracticeWorker>(PERIODIC_INTERVAL_HOURS, TimeUnit.HOURS)
+                .setInitialDelay(PERIODIC_INTERVAL_HOURS, TimeUnit.HOURS)
                 .setConstraints(constraints())
                 .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, BACKOFF_MS, TimeUnit.MILLISECONDS)
                 .build()
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-                WORK_NAME_PERIODIC, ExistingPeriodicWorkPolicy.KEEP, request
+                WORK_NAME_PERIODIC, ExistingPeriodicWorkPolicy.UPDATE, request
+            )
+        }
+
+        /**
+         * After a word is saved or its sentence changes (#725): one run about
+         * [CAPTURE_DELAY_MS] later, network-constrained. KEEP: a capture while
+         * the work is pending joins that run (one batch); a capture while it is
+         * running never cancels a billed call — that word waits for the next
+         * trigger. No-op while AI practice is off.
+         */
+        fun scheduleAfterCapture(context: Context) {
+            if (!Prefs(context).aiPracticeEnabled) return
+            enqueueSoon(context, CAPTURE_DELAY_MS)
+        }
+
+        private fun enqueueSoon(context: Context, delayMs: Long) {
+            val request = OneTimeWorkRequestBuilder<PracticeWorker>()
+                .setInitialDelay(delayMs, TimeUnit.MILLISECONDS)
+                .setConstraints(constraints())
+                .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, BACKOFF_MS, TimeUnit.MILLISECONDS)
+                .build()
+            WorkManager.getInstance(context.applicationContext).enqueueUniqueWork(
+                WORK_NAME_SOON, ExistingWorkPolicy.KEEP, request
             )
         }
 
@@ -192,6 +231,7 @@ class PracticeWorker(
             val wm = WorkManager.getInstance(context)
             wm.cancelUniqueWork(WORK_NAME_PERIODIC)
             wm.cancelUniqueWork(WORK_NAME_NOW)
+            wm.cancelUniqueWork(WORK_NAME_SOON)
         }
     }
 }
