@@ -193,6 +193,7 @@ private fun SettingsFragment.handleGermanBackupFooterClick(view: View): Boolean 
         R.id.germanUiOnOff, R.id.germanUiTitle, R.id.germanUiLayout -> tickOnChange(view) { toggleGermanUi() }
         R.id.aiPracticeOnOff, R.id.aiPracticeTitle, R.id.aiPracticeSubtitle, R.id.aiPracticeLayout -> tickOnChange(view) { toggleAiPractice() }
         R.id.aiPracticeActionKey -> showAiKeyDialog()
+        R.id.newsSentencesOnOff, R.id.newsSentencesTitle, R.id.newsSentencesSubtitle, R.id.newsSentencesLayout -> tickOnChange(view) { toggleNewsSentences() }
         R.id.exportBackup, R.id.exportBackupLayout -> launchExportBackup()
         R.id.importBackup, R.id.importBackupLayout -> launchImportBackup()
         R.id.autoBackup, R.id.autoBackupTitle, R.id.autoBackupLayout -> tickOnChange(view) { toggleAutoBackup() }

@@ -27,6 +27,7 @@ object SettingsRowAvailability {
         R.id.germanPauseWordOnOff,
         R.id.germanUiOnOff,
         R.id.aiPracticeOnOff,
+        R.id.newsSentencesOnOff,
     )
 
     private val windDownDependentRows = setOf(

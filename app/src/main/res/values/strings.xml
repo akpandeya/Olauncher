@@ -1024,6 +1024,8 @@
     <string name="ai_practice_model">Model</string>
     <string name="ai_practice_model_required">Set a model first</string>
     <string name="ai_practice_key_save_failed">Could not save the key — try again</string>
+    <string name="news_sentences">News sentences</string>
+    <string name="news_sentences_subtitle">Collect example sentences from German news sites on Wi-Fi while charging</string>
 
     <!-- Ask-AI chat screen (#699, docs/design/ask-ai-chat.md §Chat screen, §Reliability) -->
     <string name="chat_new_conversation">New conversation</string>

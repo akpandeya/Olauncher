@@ -168,6 +168,10 @@
     <item name="musicPulse" type="id" />
     <item name="musicPulseLayout" type="id" />
     <item name="musicPulseTitle" type="id" />
+    <item name="newsSentencesLayout" type="id" />
+    <item name="newsSentencesOnOff" type="id" />
+    <item name="newsSentencesSubtitle" type="id" />
+    <item name="newsSentencesTitle" type="id" />
     <item name="nudgeActiveHours" type="id" />
     <item name="nudgeActiveHoursLayout" type="id" />
     <item name="nudgeActiveHoursTitle" type="id" />
