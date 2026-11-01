@@ -13,10 +13,14 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import app.olauncher.data.Prefs
 import app.olauncher.data.store.HttpNewsFetcher
+import app.olauncher.data.store.NewsBackfill
 import app.olauncher.data.store.NewsHarvestLimits
 import app.olauncher.data.store.NewsHarvester
 import app.olauncher.data.store.NewsSources
 import app.olauncher.data.store.RecentSentencesStore
+import app.olauncher.data.store.SentenceWordMatcher
+import app.olauncher.data.store.SharedOfflineGermanStore
+import app.olauncher.data.store.WordsStore
 import java.time.LocalDate
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.CancellationException
@@ -30,6 +34,10 @@ import kotlinx.coroutines.withContext
  * Runs only under unmetered network (Wi-Fi) and while charging, scheduled every 12 hours.
  * Enforces caps: at most 10 articles per run ([NewsHarvestLimits.maxArticlesPerRun]) and
  * at most 30 articles per day ([Prefs.NEWS_DAILY_ARTICLE_CAP]).
+ *
+ * Only sentences harvested in this run are matched, which bounds the lemma lookups per run
+ * (≈ 10 articles × 40 sentences); words saved later get links from later harvests. No AI call
+ * is triggered here; filled contexts are picked up by the next [PracticeWorker] periodic run.
  *
  * Never retries ([androidx.work.ListenableWorker.Result.retry]): on failure, it logs and
  * returns [androidx.work.ListenableWorker.Result.success] so the next periodic run can try
@@ -56,9 +64,16 @@ class NewsHarvestWorker(
         }
 
         try {
-            val result = NewsHarvester(HttpNewsFetcher(), RecentSentencesStore(applicationContext))
+            val sentenceStore = RecentSentencesStore(applicationContext)
+            val result = NewsHarvester(HttpNewsFetcher(), sentenceStore)
                 .harvest(NewsHarvestLimits(articlesLeftToday = left))
-            // #694 backfill hook: match result.newSentences to saved words (task-09).
+            if (result.newSentences.isNotEmpty()) {
+                val offline = if (prefs.germanOfflineDictionary) SharedOfflineGermanStore.get(applicationContext) else null
+                val matcher = SentenceWordMatcher { form -> offline?.lemma(form) }
+                val wordsStore = WordsStore(applicationContext)
+                val plan = NewsBackfill.plan(wordsStore.all(), result.newSentences, matcher)
+                NewsBackfill.applyPlan(plan, sentenceStore, wordsStore)
+            }
             prefs.recordNewsArticlesFetched(result.articleRequests, today)
         } catch (e: CancellationException) {
             throw e
