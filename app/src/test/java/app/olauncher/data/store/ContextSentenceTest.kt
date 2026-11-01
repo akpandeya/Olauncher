@@ -151,6 +151,17 @@ class ContextSentenceTest {
     }
 
     @Test
+    fun `split keeps a German ordinal date together but still splits after a year`() {
+        val paragraph = "Am 3. Oktober feierten viele. Das war im Jahr 2025. Danach kam der 12. Mai."
+        val expected = listOf(
+            "Am 3. Oktober feierten viele.",
+            "Das war im Jahr 2025.",
+            "Danach kam der 12. Mai."
+        )
+        assertEquals(expected, ContextSentence.split(paragraph))
+    }
+
+    @Test
     fun `split on blank or empty input returns empty list`() {
         assertEquals(emptyList<String>(), ContextSentence.split(""))
         assertEquals(emptyList<String>(), ContextSentence.split("   \n\t  "))

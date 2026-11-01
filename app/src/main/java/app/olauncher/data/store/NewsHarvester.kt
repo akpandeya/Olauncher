@@ -33,6 +33,9 @@ data class NewsHarvestResult(
  * 5. Pick articles round-robin across source queues up to the run budget.
  * 6. Fetch picked articles with pacing, extract sentences, record articles, and update store.
  * 7. Return aggregate result counts and added sentences without throwing on network/parse errors.
+ *
+ * [onArticleRequest] runs once per article request, just before it is sent, so a caller can
+ * count requests against its daily cap even when the run is cancelled part-way.
  */
 class NewsHarvester(
     private val fetcher: NewsFetcher,
@@ -43,7 +46,10 @@ class NewsHarvester(
     private val clock: () -> Long = { System.currentTimeMillis() }
 ) {
 
-    suspend fun harvest(limits: NewsHarvestLimits): NewsHarvestResult {
+    suspend fun harvest(
+        limits: NewsHarvestLimits,
+        onArticleRequest: () -> Unit = {},
+    ): NewsHarvestResult {
         val now = clock()
         store.prune(now)
 
@@ -76,6 +82,8 @@ class NewsHarvester(
         var feedsFetched = 0
         var feedsFailed = 0
         val sourceQueues = mutableMapOf<String, ArrayDeque<QueuedArticle>>()
+        // One snapshot instead of a full store read per feed item.
+        val knownArticles = store.articleUrls()
 
         for (source in order) {
             pace()
@@ -103,7 +111,7 @@ class NewsHarvester(
                         for (item in recent) {
                             val canonical = NewsSources.canonicalArticleUrl(item.url) ?: continue
                             if (NewsSources.sourceForUrl(canonical)?.id != source.id) continue
-                            if (store.hasArticle(canonical)) continue
+                            if (canonical in knownArticles) continue
                             if (seenUrls.add(canonical)) {
                                 queue.add(
                                     QueuedArticle(
@@ -146,6 +154,7 @@ class NewsHarvester(
         for (pick in picks) {
             pace()
             articleRequests++
+            onArticleRequest()
             val articleFetch = try {
                 withContext(Dispatchers.IO) {
                     fetcher.fetch(pick.url)

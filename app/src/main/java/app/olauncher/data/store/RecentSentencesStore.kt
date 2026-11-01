@@ -301,6 +301,12 @@ class RecentSentencesStore(
         return loadData().articles.any { it.url == url }
     }
 
+    /** Every recorded article url, read once (cheaper than [hasArticle] per feed item). */
+    @Synchronized
+    fun articleUrls(): Set<String> {
+        return loadData().articles.mapTo(HashSet()) { it.url }
+    }
+
     @Synchronized
     fun recordArticles(urls: Collection<String>, fetchedAt: Long) {
         if (urls.isEmpty()) return
