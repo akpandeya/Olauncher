@@ -2,6 +2,7 @@ package app.olauncher.helper
 
 import app.olauncher.data.store.AiPracticeGate
 import app.olauncher.data.store.AiResult
+import app.olauncher.data.store.PracticeGeneration
 
 /**
  * The worker wiring behind the settings switch (#602, 9.9): on means the unique
@@ -35,6 +36,19 @@ object PracticeWorkerPolicy {
 
     fun stopsRun(kind: AiResult.ErrorKind): Boolean =
         kind == AiResult.ErrorKind.AUTH || kind == AiResult.ErrorKind.BILLING
+
+    /**
+     * How many words the Words-card digest announcement should count, or null
+     * to leave it untouched: the covered words of a Generated or Partial digest
+     * (review R1 #5, R2 B), but only when it stored at least one new item — a
+     * digest whose cards were all copies of stored ones has nothing new to
+     * announce.
+     */
+    fun digestAnnouncement(outcome: PracticeGeneration): Int? = when (outcome) {
+        is PracticeGeneration.Generated -> outcome.words.size.takeIf { outcome.itemCount > 0 }
+        is PracticeGeneration.Partial -> outcome.words.size.takeIf { outcome.itemCount > 0 }
+        else -> null
+    }
 }
 
 object AiPracticeToggle {

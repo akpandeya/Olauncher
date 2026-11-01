@@ -226,8 +226,18 @@ class PracticeGenerator(
                     if (allowRetry) {
                         accepted += retryMissingSlots(chunk, accepted, types, typesByWord, source, readTimeoutMs, schemaMode)
                     }
+                    // Count unique cards (PracticeCardKey) across the word's
+                    // stored pool and this chunk's accepted items: the store
+                    // skips exact copies, so counting raw accepted items would
+                    // let [A, A, B] skip the fallback, store only A and B, and
+                    // leave the word short of stocked — resent to the paid AI on
+                    // every run.
+                    val stored = store.all()
                     val fallbacks = chunk.flatMap { word ->
-                        val have = accepted.count { it.wordId == word.id }
+                        val have = (stored.asSequence() + accepted.asSequence())
+                            .filter { it.wordId == word.id }
+                            .mapTo(HashSet(), PracticeCardKey::of)
+                            .size
                         val missing = PracticeContract.ITEMS_PER_WORD - have
                         if (missing > 0) PracticeContract.fallbacksFor(word, missing, source) else emptyList()
                     }
@@ -254,9 +264,11 @@ class PracticeGenerator(
                 }
             }
         }
-        // A batch that never stored anything is a failure, not an empty success
-        // — the digest must not fire off an empty pool (review R1 #5, R2 B).
-        if (sawBadResponse && storedCount == 0) {
+        // A batch where no chunk parsed is a failure, not an empty success —
+        // the digest must not fire off an empty pool (review R1 #5, R2 B). A
+        // parsed chunk counts even when the store skipped all of its items as
+        // copies of stored cards: the call was billed and the words are done.
+        if (sawBadResponse && covered.isEmpty()) {
             return PracticeGeneration.Failed(batch, AiResult.ErrorKind.BAD_RESPONSE)
         }
         return PracticeGeneration.Generated(covered, storedCount)
@@ -318,8 +330,8 @@ class PracticeGenerator(
 
     /**
      * The outcome when an error stops the chunk loop: chunks that already
-     * stored and billed keep their success as a [PracticeGeneration.Partial]
-     * (review R2 B); with nothing stored the batch fails as before.
+     * parsed and billed keep their success as a [PracticeGeneration.Partial]
+     * (review R2 B); with no chunk parsed the batch fails as before.
      */
     private fun stoppedAfterStored(
         kind: AiResult.ErrorKind,
@@ -327,7 +339,7 @@ class PracticeGenerator(
         covered: List<Word>,
         storedCount: Int,
     ): PracticeGeneration =
-        if (storedCount > 0) PracticeGeneration.Partial(covered, storedCount, kind)
+        if (covered.isNotEmpty()) PracticeGeneration.Partial(covered, storedCount, kind)
         else PracticeGeneration.Failed(batch, kind)
 
     companion object {

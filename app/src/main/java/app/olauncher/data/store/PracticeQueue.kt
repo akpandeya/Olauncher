@@ -11,6 +11,11 @@ import kotlin.random.Random
  * [PracticeContract.ITEMS_PER_WORD] items (the background top-up restores every
  * word's pool to 3), oldest first with jitter, under the daily word cap.
  *
+ * A word whose pool already holds its own cloze fallback card is stocked too:
+ * the store skips identical cards, so a word the AI could not fill keeps only one
+ * fallback copy instead of three, and re-queuing it would only resend it on every
+ * run for the same fallback (see [isStocked]).
+ *
  * Words with a blank `context` are never queued: nothing is generated without
  * grounding. Deleted words drop out automatically because the queue is derived.
  */
@@ -39,10 +44,10 @@ object PracticeQueue {
     ): List<Word> {
         val remaining = cap - wordsGeneratedToday(items, today)
         if (remaining <= 0) return emptyList()
-        val poolSizes = poolSizes(items)
+        val pools = items.groupBy { it.wordId }
         return words.asSequence()
             .filter { it.context.isNotBlank() }
-            .filter { (poolSizes[it.id] ?: 0) < PracticeContract.ITEMS_PER_WORD }
+            .filter { !isStocked(it, pools[it.id].orEmpty()) }
             .map { it to (it.addedAt + random.nextLong(JITTER_MS)) }
             .sortedBy { it.second }
             .map { it.first }
@@ -52,13 +57,28 @@ object PracticeQueue {
 
     /**
      * Whether any of [words] is short of a full pool: a non-blank context and
-     * fewer than [PracticeContract.ITEMS_PER_WORD] items — the words [next] would
-     * queue, ignoring the cap. Review uses it to decide whether to start a
+     * not [isStocked] — the words [next] would queue, ignoring the cap. Review uses it to decide whether to start a
      * background run (#725); it never generates.
      */
     fun anyNeedsItems(words: List<Word>, items: List<PracticeItem>): Boolean {
-        val poolSizes = poolSizes(items)
-        return words.any { it.context.isNotBlank() && (poolSizes[it.id] ?: 0) < PracticeContract.ITEMS_PER_WORD }
+        val pools = items.groupBy { it.wordId }
+        return words.any { it.context.isNotBlank() && !isStocked(it, pools[it.id].orEmpty()) }
+    }
+
+    /**
+     * A word's [pool] is stocked when it has [PracticeContract.ITEMS_PER_WORD]
+     * items, or when it already holds the word's own cloze fallback card (same
+     * [PracticeCardKey]): a run that could not fill the pool has padded it with
+     * that fallback. Before the store skipped identical cards the padding was
+     * three copies, which kept the word out of the queue; this keeps it out
+     * without the copies. A changed context gives a different fallback card,
+     * so such a word is queued again.
+     */
+    internal fun isStocked(word: Word, pool: List<PracticeItem>): Boolean {
+        if (pool.size >= PracticeContract.ITEMS_PER_WORD) return true
+        if (pool.isEmpty()) return false
+        val fallback = PracticeCardKey.of(PracticeContract.fallbacksFor(word, 1, PracticeItem.Source.WORD).first())
+        return pool.any { PracticeCardKey.of(it) == fallback }
     }
 
     /** Distinct words that got items (generated or fallback) on [today]. */
@@ -69,11 +89,5 @@ object PracticeQueue {
             .map { it.wordId }
             .distinct()
             .count()
-    }
-
-    private fun poolSizes(items: List<PracticeItem>): Map<Long, Int> {
-        val sizes = HashMap<Long, Int>()
-        for (item in items) sizes.merge(item.wordId, 1, Int::plus)
-        return sizes
     }
 }

@@ -22,6 +22,7 @@ import app.olauncher.data.Prefs
 import app.olauncher.data.store.PauseWordPicker
 import app.olauncher.data.store.PracticeItemsStore
 import app.olauncher.data.store.PracticeRotation
+import app.olauncher.data.store.PracticeVisibleItems
 import app.olauncher.data.store.ReviewEvent
 import app.olauncher.data.store.ReviewEventsStore
 import app.olauncher.data.store.ReviewSessionLogic
@@ -546,7 +547,7 @@ class PauseFragment : Fragment() {
         // itself), so the user can check themselves (review R1 #10).
         val practiceItem = PracticeRotation.pick(
             pickedWord,
-            PracticeItemsStore(context).all(),
+            PracticeVisibleItems.of(PracticeItemsStore(context).all(), listOf(pickedWord)),
             ReviewEventsStore(context).all().filter { it.wordId == pickedWord.id },
         )
         helper.promptOverride = practiceItem?.prompt
