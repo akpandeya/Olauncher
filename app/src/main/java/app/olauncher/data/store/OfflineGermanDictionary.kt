@@ -54,7 +54,20 @@ class OfflineGermanDictionary(private val findEntries: (String) -> List<OfflineG
      */
     fun plural(text: String): String? = pluralOf(text, findEntries)
 
+    fun lemma(text: String): String? = lemmaOf(text, findEntries)
+
     companion object {
+        fun lemmaOf(text: String, findEntries: (String) -> List<OfflineGermanEntry>): String? {
+            val clean = text.trim()
+            if (clean.isEmpty()) return null
+            val normalized = Normalizer.normalize(clean, Normalizer.Form.NFC)
+            for (candidate in WiktionaryParser.candidates(normalized)) {
+                val entries = findEntries(candidate)
+                if (entries.isNotEmpty()) return entries.first().lemma
+            }
+            return null
+        }
+
         fun genderOf(text: String, findEntries: (String) -> List<OfflineGermanEntry>): String? {
             val normalized = Normalizer.normalize(text.trim(), Normalizer.Form.NFC)
             for (candidate in WiktionaryParser.candidates(normalized)) {

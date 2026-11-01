@@ -21,6 +21,7 @@ class OfflineGermanStore(context: Context) {
 
     private val genderCache = java.util.concurrent.ConcurrentHashMap<String, String>()
     private val pluralCache = java.util.concurrent.ConcurrentHashMap<String, String>()
+    private val lemmaCache = java.util.concurrent.ConcurrentHashMap<String, String>()
 
     private fun deleteInstalled() {
         File(appContext.noBackupFilesDir, "german-dictionary").listFiles()
@@ -65,6 +66,7 @@ class OfflineGermanStore(context: Context) {
         }
         genderCache.clear()
         pluralCache.clear()
+        lemmaCache.clear()
         try {
             opened.close()
         } catch (_: Exception) {
@@ -151,6 +153,32 @@ class OfflineGermanStore(context: Context) {
         return try {
             val result = OfflineGermanDictionary.pluralOf(clean) { candidate -> queryEntries(db, candidate, 8) }
             pluralCache[clean] = result.orEmpty()
+            result
+        } catch (e: Exception) {
+            Log.w(TAG, "Offline dictionary unreadable; deleting it so the next lookup reinstalls", e)
+            discard(db)
+            null
+        }
+    }
+
+    /**
+     * Looks up the dictionary lemma for [text] (or its inflections), or null if unknown.
+     * Call on Dispatchers.IO.
+     */
+    fun lemma(text: String): String? {
+        val clean = text.trim()
+        if (clean.isEmpty()) return null
+        val cached = lemmaCache[clean]
+        if (cached != null) return cached.takeIf { it.isNotEmpty() }
+        val db = try {
+            open()
+        } catch (e: Exception) {
+            Log.w(TAG, "Offline dictionary unavailable; using existing fallback", e)
+            return null
+        }
+        return try {
+            val result = OfflineGermanDictionary.lemmaOf(clean) { candidate -> queryEntries(db, candidate, 2) }
+            lemmaCache[clean] = result.orEmpty()
             result
         } catch (e: Exception) {
             Log.w(TAG, "Offline dictionary unreadable; deleting it so the next lookup reinstalls", e)
