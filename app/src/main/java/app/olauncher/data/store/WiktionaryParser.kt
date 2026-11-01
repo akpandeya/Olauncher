@@ -122,7 +122,7 @@ object WiktionaryParser {
             .trim()
     }
 
-    private fun decodeHtmlEntities(input: String): String {
+    internal fun decodeHtmlEntities(input: String): String {
         if (!input.contains('&')) return input
         return ENTITY_REGEX.replace(input) { match ->
             val content = match.groupValues[1]

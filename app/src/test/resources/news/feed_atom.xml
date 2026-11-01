@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>ZEIT ONLINE Nachrichten</title>
+  <link href="https://newsfeed.zeit.de/index"/>
+  <updated>2026-10-28T15:00:00Z</updated>
+  <id>https://newsfeed.zeit.de/index</id>
+  <entry>
+    <title>ZEIT Debatte über Bildung</title>
+    <link rel="alternate" type="text/html" href="https://www.zeit.de/politik/artikel-1"/>
+    <published>2026-10-28T14:00:00+01:00</published>
+    <updated>2026-10-28T14:30:00+01:00</updated>
+    <id>https://www.zeit.de/politik/artikel-1</id>
+  </entry>
+  <entry>
+    <title>ZEIT Wissenschaft und Forschung</title>
+    <link rel="alternate" href="https://www.zeit.de/wissen/artikel-2"/>
+    <updated>2026-10-27T12:00:00Z</updated>
+    <id>https://www.zeit.de/wissen/artikel-2</id>
+  </entry>
+</feed>
