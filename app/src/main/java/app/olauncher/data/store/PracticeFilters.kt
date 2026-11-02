@@ -48,7 +48,9 @@ object PracticeFilters {
     /**
      * The full filter pass over one candidate item. [clozeAnswers] holds the word's
      * already-accepted cloze answers (from the same response) for the duplicate
-     * check; empty on the first item. [word] is the saved word's text, for the
+     * check; empty on the first item. [choices] are the item's wrong-order /
+     * wrong-form options — the word_order verdict (#804, part 1) checks them; the
+     * other filters ignore them. [word] is the saved word's text, for the
      * verb-base check (#724); null skips it.
      */
     fun check(
@@ -58,10 +60,11 @@ object PracticeFilters {
         hint: String?,
         full: String?,
         clozeAnswers: Set<String>,
+        choices: List<String>,
         word: String? = null,
     ): Verdict {
         if (type == DrillType.WORD_ORDER) {
-            wordOrder(prompt, answer)?.let { return it }
+            wordOrder(prompt, answer, choices)?.let { return it }
         }
         if (type != DrillType.CLOZE && clozeAnswers.isNotEmpty()) {
             val cloze = clozeAnswers.firstOrNull { normalize(it) == normalize(answer) }
@@ -94,22 +97,59 @@ object PracticeFilters {
     }
 
     /**
-     * word_order: the prompt's " / " tile list, rearranged, must spell out exactly
-     * the answer's words — ignoring case and punctuation, nothing added, dropped,
-     * split or merged. A prompt without a tile list is unverifiable and rejected.
+     * word_order verdict (#804, part 1): the tile structure is verified by
+     * [PracticeWordOrder.parse] (a real "Ordne: " tile list, at least 3 tiles, no
+     * blank tile, tiles spelling exactly the answer's words), then the contract's
+     * shape rules: the answer is a 4-8 word main clause, and the choices carry at
+     * least one wrong order, with every choice a permutation of the tiles. A
+     * choice equal to the answer after normalisation counts as the answer's slot,
+     * not a wrong order — so wrong orders identical to the answer leave the card
+     * without a distractor and are rejected.
+     *
+     * The "looks like a sentence" check is a deterministic structural heuristic:
+     * it only sees that the answer's first word is capitalised (a German main
+     * clause starts with one, and nouns are always capitalised). It cannot judge
+     * grammar, naturalness or clause order — a capitalised non-sentence ("Auch
+     * heute") or an ungrammatical clause passes it; an answer starting with a
+     * digit or quote fails it. Tightening further would need a model call, which
+     * the filter pass deliberately avoids (no network).
      */
-    private fun wordOrder(prompt: String, answer: String): Verdict? {
-        if (!prompt.contains(" / ")) {
-            return Verdict.reject(WORD_ORDER, "prompt has no \" / \" tile list")
+    private fun wordOrder(prompt: String, answer: String, choices: List<String>): Verdict? {
+        val card = when (val parsed = PracticeWordOrder.parse(prompt, answer, choices)) {
+            is PracticeWordOrder.Result.Parsed -> parsed.card
+            is PracticeWordOrder.Result.Rejected ->
+                return Verdict.reject(WORD_ORDER, parsed.reason)
         }
-        val tilePart = if (prompt.startsWith("Ordne:")) prompt.removePrefix("Ordne:") else prompt
-        val tiles = tilePart.split(" / ").map { normalize(it) }.filter { it.isNotBlank() }
-        val answerWords = normalize(answer).split(' ').filter { it.isNotBlank() }
-        if (tiles.isEmpty() || answerWords.isEmpty()) {
-            return Verdict.reject(WORD_ORDER, "empty tile list or answer")
+        val words = card.acceptedOrder
+        if (words.size < MIN_WORD_ORDER_WORDS || words.size > MAX_WORD_ORDER_WORDS) {
+            return Verdict.reject(
+                WORD_ORDER,
+                "answer has ${words.size} words, the contract asks for " +
+                    "$MIN_WORD_ORDER_WORDS-$MAX_WORD_ORDER_WORDS words",
+            )
         }
-        if (tiles.sorted() != answerWords.sorted()) {
-            return Verdict.reject(WORD_ORDER, "tiles $tiles do not spell the answer words $answerWords")
+        // The answer, not the tiles, is the sentence: the tiles' spelling may
+        // differ in case from the answer's first word.
+        val firstWord = answer.trim().split(Regex("\\s+")).firstOrNull().orEmpty()
+        val first = firstWord.firstOrNull { it.isLetter() }
+        if (first == null || first != first.uppercaseChar()) {
+            return Verdict.reject(
+                WORD_ORDER,
+                "answer '$answer' does not look like a sentence (first word not capitalised)",
+            )
+        }
+        if (card.wrongOrders.isEmpty()) {
+            return Verdict.reject(
+                WORD_ORDER,
+                "no wrong order among the choices $choices — every choice equals the answer",
+            )
+        }
+        val tileWords = card.tiles.map { normalize(it) }.sorted()
+        for (choice in choices) {
+            val choiceWords = normalize(choice).split(' ').filter { it.isNotBlank() }
+            if (choiceWords.sorted() != tileWords) {
+                return Verdict.reject(WORD_ORDER, "choice '$choice' is not a permutation of the tiles ${card.tiles}")
+            }
         }
         return null
     }
@@ -232,4 +272,8 @@ object PracticeFilters {
 
     /** Answers shorter than this are exempt from the substring leak check. */
     private const val MIN_LEAK_ANSWER_LEN = 3
+
+    /** The word_order contract (#804): a main clause of 4-8 words. */
+    private const val MIN_WORD_ORDER_WORDS = 4
+    private const val MAX_WORD_ORDER_WORDS = 8
 }

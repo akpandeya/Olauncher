@@ -152,6 +152,37 @@ class PracticeVisibleItemsTest {
     }
 
     @Test
+    fun `a stored legacy word_order item that fails the tightened check is hidden`() {
+        // #804: built when the filter only checked that the tiles spell the
+        // answer — this one has only 3 words, so the new 4-8 word clause rule
+        // hides it at read time, without deleting it from the store.
+        val legacy = PracticeItem(
+            id = 16, wordId = verb.id, type = DrillType.WORD_ORDER,
+            prompt = "Ordne: Die / Firma / verzichtet",
+            answer = "Die Firma verzichtet.",
+            choices = listOf("Die Firma verzichtet.", "Firma Die verzichtet"),
+            source = PracticeItem.Source.WORD, model = "test-model", createdAt = 100,
+        )
+
+        val visible = PracticeVisibleItems.of(listOf(goodCard, legacy), listOf(verb))
+
+        assertEquals(listOf(1L), visible.map { it.id })
+    }
+
+    @Test
+    fun `a stored word_order item that passes the tightened check stays visible`() {
+        val good = PracticeItem(
+            id = 17, wordId = verb.id, type = DrillType.WORD_ORDER,
+            prompt = "Ordne: Die / Firma / verzichtet / heute / darauf",
+            answer = "Die Firma verzichtet heute darauf.",
+            choices = listOf("Die Firma verzichtet heute darauf.", "Die Firma heute darauf verzichtet"),
+            source = PracticeItem.Source.WORD, model = "test-model", createdAt = 100,
+        )
+
+        assertEquals(listOf(17L), PracticeVisibleItems.of(listOf(good), listOf(verb)).map { it.id })
+    }
+
+    @Test
     fun `a word without stored items gets no fallback, and unknown words keep their cards`() {
         // Review keeps the plain word for an empty pool; a deleted word's items
         // pass unfiltered, as before.

@@ -76,7 +76,7 @@ class PracticeContractTest {
             Type rules:
             - Separable verb in a main clause: the gap takes only the finite verb; the prefix stays in the prompt at the clause end. "Das Personal ___ von 3.000 auf 6.000 an." → "wächst". After a modal or in a subordinate clause the verb is one word: "…, weil das Personal ___." → "anwächst".
             - articles: blank an article only if exactly one article fits ("___ eigenes Zentrum" → "ein"). If a definite and an indefinite article would both fit, write "bestimmter Artikel" or "unbestimmter Artikel" as the hint.
-            - word_order: take one main clause of 4-8 words from the context. prompt = "Ordne: " + its words shuffled, one word per tile, separated by " / ". answer = exactly those tiles in the right order: same words, same spelling, nothing added, dropped, split or merged, no comma. choices = the answer plus 1-2 wrong orders of the same tiles.
+            - word_order: take one natural, complete main clause of 4-8 words from the context. prompt = "Ordne: " + its words shuffled, one word per tile, separated by " / ". answer = exactly those tiles in the correct German order: same words, same spelling, nothing added, dropped, split or merged, no comma. choices = the answer plus 1-2 wrong orders of the same tiles that are plausible learner mistakes — the finite verb in the wrong slot, or a subordinate-clause verb order — never a random shuffle and never an order equal to the answer.
             - All other types: choices = the answer plus 1-3 wrong forms of the same word (e.g. "weigert", "weigern", "weigerst").
 
             Words:
@@ -528,11 +528,11 @@ class PracticeContractTest {
     @Test
     fun `filter word_order rejects tiles that do not spell the answer`() {
         val words = listOf(word(1, "insistieren", context = "Das Personal wächst heute an."))
-        // Tile "auf 6.000" must be reversed — the tiles can't produce the answer.
+        // Tile "6.000 auf" is merged — the tiles can't produce the answer.
         val unsolvable = response(
             item(
                 1, "word_order",
-                prompt = "Ordne: Personal / Das / 6.000 auf / wächst / an / .",
+                prompt = "Ordne: Personal / Das / 6.000 auf / wächst / an",
                 answer = "Das Personal wächst auf 6.000 an.",
                 choices = listOf("Das Personal wächst auf 6.000 an.", "Personal Das wächst 6.000 auf an."),
             ),
@@ -545,7 +545,7 @@ class PracticeContractTest {
         val solvable = response(
             item(
                 1, "word_order",
-                prompt = "Ordne: Das / Personal / wächst / heute / an / .",
+                prompt = "Ordne: Das / Personal / wächst / heute / an",
                 answer = "Das Personal wächst heute an.",
                 choices = listOf("Das Personal wächst heute an.", "Personal Das wächst heute an."),
             ),
@@ -562,12 +562,13 @@ class PracticeContractTest {
         val ok = response(
             item(
                 1, "word_order",
-                prompt = "Ordne: die / Arbeit / insistiert",
-                answer = "Die Arbeit insistiert.",
-                choices = listOf("Die Arbeit insistiert.", "Arbeit die insistiert"),
+                prompt = "Ordne: die / Arbeit / insistiert / heute",
+                answer = "Die Arbeit insistiert heute.",
+                choices = listOf("Die Arbeit insistiert heute.", "Arbeit die heute insistiert"),
             ),
         )
-        assertTrue(PracticeContract.parse(ok, words, padFallbacks = false).items.size == 1)
+        val okResult = PracticeContract.parse(ok, words, padFallbacks = false)
+        assertTrue("rejections: ${okResult.rejected}", okResult.items.size == 1)
 
         // A tile that must be split ("EU-Kommission" vs "Kommission") is rejected.
         val split = response(
@@ -586,6 +587,105 @@ class PracticeContractTest {
             item(1, "word_order", prompt = "Ordne die Wörter.", answer = "Die Arbeit insistiert"),
         )
         assertEquals(PracticeFilters.WORD_ORDER, PracticeContract.parse(noTiles, words, padFallbacks = false).rejections.single().filter)
+    }
+
+    @Test
+    fun `filter word_order accepts a plausible learner-mistake wrong order`() {
+        val words = listOf(word(1, "insistieren", context = "Das Personal wächst heute an."))
+        // The subordinate-clause order (finite verb at the end) is exactly the
+        // mistake the tightened contract asks for (#804).
+        val json = response(
+            item(
+                1, "word_order",
+                prompt = "Ordne: Das / Personal / wächst / heute / an",
+                answer = "Das Personal wächst heute an.",
+                choices = listOf("Das Personal wächst heute an.", "Das Personal heute an wächst"),
+            ),
+        )
+        val result = PracticeContract.parse(json, words, padFallbacks = false)
+        assertEquals(1, result.items.size)
+        assertTrue(result.rejections.isEmpty())
+    }
+
+    @Test
+    fun `filter word_order rejects answers outside the 4-8 word clause`() {
+        val words = listOf(word(1, "insistieren", context = "Kontext."))
+        // 3 words: below the clause minimum.
+        val short = response(
+            item(
+                1, "word_order",
+                prompt = "Ordne: Ich / gehe / gern",
+                answer = "Ich gehe gern.",
+                choices = listOf("Ich gehe gern.", "Gern gehe ich"),
+            ),
+        )
+        val rejected = PracticeContract.parse(short, words, padFallbacks = false)
+        assertTrue(rejected.items.isEmpty())
+        assertEquals(PracticeFilters.WORD_ORDER, rejected.rejections.single().filter)
+        assertTrue("reason: ${rejected.rejections.single().reason}", rejected.rejections.single().reason.contains("4-8 words"))
+
+        // 9 words: above the clause maximum.
+        val long = response(
+            item(
+                1, "word_order",
+                prompt = "Ordne: Der / kleine / Mann / liest / das / alte / Buch / heute / noch",
+                answer = "Der kleine Mann liest das alte Buch heute noch.",
+                choices = listOf("Der kleine Mann liest das alte Buch heute noch.", "Der kleine Mann liest heute noch das alte Buch"),
+            ),
+        )
+        val rejectedLong = PracticeContract.parse(long, words, padFallbacks = false)
+        assertEquals(PracticeFilters.WORD_ORDER, rejectedLong.rejections.single().filter)
+        assertTrue(rejectedLong.rejections.single().reason.contains("4-8 words"))
+    }
+
+    @Test
+    fun `filter word_order rejects an answer that does not look like a sentence`() {
+        // Deterministic structural heuristic: a German main clause starts with a
+        // capitalised word; this answer's first word is not.
+        val words = listOf(word(1, "anwachsen", context = "Das Personal wächst heute an."))
+        val lowercase = response(
+            item(
+                1, "word_order",
+                prompt = "Ordne: das / Personal / wächst / heute / an",
+                answer = "das Personal wächst heute an.",
+                choices = listOf("das Personal wächst heute an.", "Personal das wächst heute an."),
+            ),
+        )
+        val rejected = PracticeContract.parse(lowercase, words, padFallbacks = false)
+        assertTrue(rejected.items.isEmpty())
+        assertEquals(PracticeFilters.WORD_ORDER, rejected.rejections.single().filter)
+        assertTrue(rejected.rejections.single().reason.contains("does not look like a sentence"))
+    }
+
+    @Test
+    fun `filter word_order rejects a wrong order equal to the answer and a non-permutation choice`() {
+        val words = listOf(word(1, "anwachsen", context = "Das Personal wächst heute an."))
+        // The only other choice is the answer in a different case: no wrong
+        // order remains, so the card is rejected.
+        val noWrongOrder = response(
+            item(
+                1, "word_order",
+                prompt = "Ordne: Das / Personal / wächst / heute / an",
+                answer = "Das Personal wächst heute an.",
+                choices = listOf("Das Personal wächst heute an.", "das Personal wächst heute an"),
+            ),
+        )
+        val rejected = PracticeContract.parse(noWrongOrder, words, padFallbacks = false)
+        assertEquals(PracticeFilters.WORD_ORDER, rejected.rejections.single().filter)
+        assertTrue(rejected.rejections.single().reason.contains("no wrong order"))
+
+        // A choice with an extra word is not a permutation of the tiles.
+        val extraWord = response(
+            item(
+                1, "word_order",
+                prompt = "Ordne: Das / Personal / wächst / heute / an",
+                answer = "Das Personal wächst heute an.",
+                choices = listOf("Das Personal wächst heute an.", "Das Personal wächst heute sehr an."),
+            ),
+        )
+        val rejectedExtra = PracticeContract.parse(extraWord, words, padFallbacks = false)
+        assertEquals(PracticeFilters.WORD_ORDER, rejectedExtra.rejections.single().filter)
+        assertTrue(rejectedExtra.rejections.single().reason.contains("not a permutation"))
     }
 
     @Test
