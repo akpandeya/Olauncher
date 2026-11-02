@@ -46,7 +46,7 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **flashcard_and_miss_hint**: Many masculine and neuter nouns add -e and keep the vowel (der Tag → die Tage).
 
-**later_rung_cue**: Recall this noun's plural pattern: the ending, and any vowel change.
+**later_rung_cue**: Recall the noun's plural pattern: the ending, and any vowel change.
 
 ---
 
@@ -81,7 +81,7 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **flashcard_and_miss_hint**: The vowel changes too: a→ä, o→ö, u→ü (die Hand → die Hände). Many one-syllable feminines do this.
 
-**later_rung_cue**: Recall this noun's plural pattern: the ending, and any vowel change.
+**later_rung_cue**: Recall the noun's plural pattern: the ending, and any vowel change.
 
 ---
 
@@ -116,7 +116,7 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **flashcard_and_miss_hint**: Many neuter one-syllable nouns add -er and keep the vowel (das Kind → die Kinder).
 
-**later_rung_cue**: Recall this noun's plural pattern: the ending, and any vowel change.
+**later_rung_cue**: Recall the noun's plural pattern: the ending, and any vowel change.
 
 ---
 
@@ -151,7 +151,7 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **flashcard_and_miss_hint**: Add -er and change the vowel: das Haus → die Häuser, das Buch → die Bücher.
 
-**later_rung_cue**: Recall this noun's plural pattern: the ending, and any vowel change.
+**later_rung_cue**: Recall the noun's plural pattern: the ending, and any vowel change.
 
 ---
 
@@ -223,7 +223,7 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **flashcard_and_miss_hint**: Many feminine nouns and all -ung nouns take -en; so do das Bett, das Hemd, das Ohr and der Mensch.
 
-**later_rung_cue**: Recall this noun's plural pattern: the ending, and any vowel change.
+**later_rung_cue**: Recall the noun's plural pattern: the ending, and any vowel change.
 
 ---
 
@@ -259,7 +259,7 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **flashcard_and_miss_hint**: Borrowed words add -s: das Auto → die Autos, der Chef → die Chefs, das Hotel → die Hotels.
 
-**later_rung_cue**: Think about where this word comes from.
+**later_rung_cue**: Think about where the word comes from.
 
 ---
 
@@ -296,4 +296,4 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **flashcard_and_miss_hint**: Masculine and neuter nouns ending in -er, -el, -en or -chen often stay the same; so does das Gebäude.
 
-**later_rung_cue**: Recall this noun's plural pattern: the ending, and any vowel change.
+**later_rung_cue**: Recall the noun's plural pattern: the ending, and any vowel change.

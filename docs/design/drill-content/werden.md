@@ -222,7 +222,7 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **flashcard_and_miss_hint**: An deiner Stelle signals advice, not a plan — the would-form fits.
 
-**later_rung_cue**: Is this a real plan or an imagined situation? Each takes its own werden form.
+**later_rung_cue**: Is the sentence a real plan or an imagined situation? Each takes its own werden form.
 
 ---
 

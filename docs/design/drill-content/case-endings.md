@@ -20,7 +20,7 @@ Author note, not learner-facing: the doer of the action (drill trigger "Subjekt"
 
 **items**: Dort steht ___ Lehrer. (nom_m_lehrer) · Auf dem Tisch liegt ___ Roman von Paul. (nom_m_tisch) · Hier schläft ___ Hund. (nom_m_hund) · Dort wartet ___ Frau. (nom_f_frau) · Hier arbeitet ___ Ärztin. (nom_f_aerztin) · Hier liegt ___ Buch. (nom_n_buch) · ___ neue Auto steht in der Garage. (nom_n_auto) · Dort spielt ___ Kind. (nom_n_kind) · Dort stehen ___ Kinder. (nom_pl_kinder) · Hier treffen sich ___ besten Freunde. (nom_pl_freunde) · Hier wohnen ___ Studenten. (nom_pl_studenten)
 
-**rule (pre-answer)**: The article shows the noun's job: the doer (Wer?), the thing acted on (Wen?) or the receiver (Wem?). Decide this noun's job, then its gender.
+**rule (pre-answer)**: The article shows the noun's job: the doer (Wer?), the thing acted on (Wen?) or the receiver (Wem?). Decide the noun's job, then its gender.
 
 **first_exposure_rule**: omitted. The case is the reasoning step, and the design names a case before an answer only for one-case prepositions.
 
@@ -66,7 +66,7 @@ Equal weight before an answer; every choice in these items (der, die, das, den, 
 
 **flashcard_and_miss_hint**: The one doing the action is the subject, and the subject takes the nominative: der, die, das, die.
 
-**later_rung_cue**: Ask Wer?, Wen? or Wem? for this noun, then recall its gender.
+**later_rung_cue**: Ask Wer?, Wen? or Wem? for the noun, then recall its gender.
 
 ---
 
@@ -78,7 +78,7 @@ Author note, not learner-facing: the noun after sein (drill trigger "sein").
 
 **items**: Das ist ___ beste Lösung. (nom_f_loesung)
 
-**rule (pre-answer)**: The article shows the noun's job: the doer (Wer?), the thing acted on (Wen?) or the receiver (Wem?). Decide this noun's job, then its gender.
+**rule (pre-answer)**: The article shows the noun's job: the doer (Wer?), the thing acted on (Wen?) or the receiver (Wem?). Decide the noun's job, then its gender.
 
 **first_exposure_rule**: omitted. The case is the reasoning step, and the design names a case before an answer only for one-case prepositions.
 
@@ -116,7 +116,7 @@ Author note, not learner-facing: the verb's direct object (drill triggers sehen,
 
 **items**: Ich sehe ___ Hund. (akk_m_sehen_hund) · Er kauft ___ Wagen. (akk_m_kaufen_wagen) · Wir besuchen ___ Großvater. (akk_m_besuchen_grossvater) · Ich kenne ___ Frau schon lange. (akk_f_kennen_frau) · Er liest ___ Zeitung jeden Morgen. (akk_f_lesen_zeitung) · Sie öffnet ___ Fenster. (akk_n_oeffnen_fenster) · Ich trinke ___ Wasser gern. (akk_n_trinken_wasser) · Er zählt ___ Tage bis zum Urlaub. (akk_pl_zaehlen_tage)
 
-**rule (pre-answer)**: The article shows the noun's job: the doer (Wer?), the thing acted on (Wen?) or the receiver (Wem?). Decide this noun's job, then its gender.
+**rule (pre-answer)**: The article shows the noun's job: the doer (Wer?), the thing acted on (Wen?) or the receiver (Wem?). Decide the noun's job, then its gender.
 
 **first_exposure_rule**: omitted. The case is the reasoning step, and the design names a case before an answer only for one-case prepositions.
 
@@ -161,7 +161,7 @@ Equal weight before an answer; every choice in these items (der, die, das, den, 
 
 **flashcard_and_miss_hint**: The thing the verb acts on is the direct object, and it takes the accusative (Wen?).
 
-**later_rung_cue**: Ask Wer?, Wen? or Wem? for this noun, then recall its gender.
+**later_rung_cue**: Ask Wer?, Wen? or Wem? for the noun, then recall its gender.
 
 ---
 
@@ -173,7 +173,7 @@ Author note, not learner-facing: the dative verbs (drill triggers helfen, danken
 
 **items**: Ich helfe ___ Mann gerne. (dat_m_helfen_mann) · Wir danken ___ Arzt für die Hilfe. (dat_m_danken_arzt) · Die Suppe schmeckt ___ Mutter gut. (dat_f_schmecken_mutter) · Das Kleid gefällt ___ Frau sehr. (dat_f_gefallen_frau) · Das Buch gehört ___ Mädchen. (dat_n_gehoeren_maedchen) · Der Lehrer antwortet ___ Schülern. (dat_pl_antworten_schuelern)
 
-**rule (pre-answer)**: The article shows the noun's job: the doer (Wer?), the thing acted on (Wen?) or the receiver (Wem?). Decide this noun's job, then its gender.
+**rule (pre-answer)**: The article shows the noun's job: the doer (Wer?), the thing acted on (Wen?) or the receiver (Wem?). Decide the noun's job, then its gender.
 
 **first_exposure_rule**: omitted. The case is the reasoning step, and the design names a case before an answer only for one-case prepositions.
 
@@ -221,7 +221,7 @@ Equal weight before an answer; every choice in these items (der, die, das, den, 
 
 **flashcard_and_miss_hint**: helfen, danken, schmecken, gefallen, gehören and antworten take the dative: the person who benefits or receives (Wem?).
 
-**later_rung_cue**: Ask Wer?, Wen? or Wem? for this noun, then recall its gender.
+**later_rung_cue**: Ask Wer?, Wen? or Wem? for the noun, then recall its gender.
 
 ---
 
@@ -233,7 +233,7 @@ Shared with `prepositions.md`: every field except the items and the miss lines i
 
 **items**: Das Geschenk ist für ___ Vater. (akk_m_fuer_vater) · Er geht ohne ___ Schirm aus dem Haus. (akk_m_ohne_schirm) · Wir gehen durch ___ Tunnel. (akk_m_durch_tunnel) · Wir kämpfen gegen ___ Grippe. (akk_f_gegen_grippe) · Wir fahren um ___ Schloss. (akk_n_um_schloss) · Diese Blumen sind für ___ Großeltern. (akk_pl_fuer_grosseltern)
 
-**rule (pre-answer)**: This preposition is one of those that always take the same case, whatever the sentence says. Learn which one it takes.
+**rule (pre-answer)**: Some German prepositions always take the same case, whatever the sentence says. Learn each one together with its case.
 
 **first_exposure_rule**: (flashcard and first tap only) durch, für, gegen, ohne, um and entlang always take the accusative.
 
@@ -278,7 +278,7 @@ Equal weight before an answer. After the answer (flashcard, after a miss), highl
 
 **flashcard_and_miss_hint**: These prepositions always take the accusative: den, die, das, die.
 
-**later_rung_cue**: This preposition keeps one case. Recall it, then the noun's gender.
+**later_rung_cue**: The preposition keeps one case. Recall which one, then the noun's gender.
 
 ---
 
@@ -290,7 +290,7 @@ Shared with `prepositions.md`: every field except the items and the miss lines i
 
 **items**: Ich fahre mit ___ Bus zur Arbeit. (dat_m_mit_bus) · Nach ___ Unterricht gehen wir essen. (dat_m_nach_unterricht) · Er wohnt bei ___ Onkel. (dat_m_bei_onkel) · Sie kommt aus ___ Schule. (dat_f_aus_schule) · Er geht zu ___ Post. (dat_f_zu_post) · Ich spreche mit ___ Kind. (dat_n_mit_kind) · Sie kommt von ___ Konzert. (dat_n_von_konzert) · Er spricht mit ___ Kollegen. (dat_pl_mit_kollegen)
 
-**rule (pre-answer)**: This preposition is one of those that always take the same case, whatever the sentence says. Learn which one it takes.
+**rule (pre-answer)**: Some German prepositions always take the same case, whatever the sentence says. Learn each one together with its case.
 
 **first_exposure_rule**: (flashcard and first tap only) aus, bei, mit, nach, seit, von, zu and gegenüber always take the dative.
 
@@ -337,7 +337,7 @@ Equal weight before an answer. After the answer (flashcard, after a miss), highl
 
 **flashcard_and_miss_hint**: These prepositions always take the dative: dem for masculine and neuter, der for feminine, den for plural.
 
-**later_rung_cue**: This preposition keeps one case. Recall it, then the noun's gender.
+**later_rung_cue**: The preposition keeps one case. Recall which one, then the noun's gender.
 
 ---
 
@@ -349,7 +349,7 @@ Shared with `prepositions.md`: every field except the items and the miss lines i
 
 **items**: Trotz ___ Regens gehen wir spazieren. (gen_m_trotz_regens) · Wegen ___ Streiks fährt heute kein Zug. (gen_m_wegen_streiks) · Während ___ Konzerts war es ruhig. (gen_n_waehrend_konzerts) · Anstatt ___ Kaffees trinkt er Tee. (gen_m_anstatt_kaffees) · Außerhalb ___ Stadt gibt es kaum Parkplätze. (gen_f_ausserhalb_stadt) · Innerhalb ___ Woche war alles erledigt. (gen_f_innerhalb_woche) · Anlässlich ___ Feier backen wir Kuchen. (gen_f_anlaesslich_feier) · Unweit ___ Bahnhofs liegt ein kleines Café. (gen_n_unweit_bahnhofs) · Jenseits ___ Dorfes liegt eine kleine Kirche. (gen_n_jenseits_dorfes) · Infolge ___ Unfalls wurde die Straße gesperrt. (gen_m_infolge_unfalls) · Trotz ___ Probleme geben wir nicht auf. (gen_pl_trotz_probleme) · Wegen ___ Bauarbeiten ist die Bahn langsam. (gen_pl_wegen_bauarbeiten)
 
-**rule (pre-answer)**: This preposition is one of those that always take the same case, whatever the sentence says. Learn which one it takes.
+**rule (pre-answer)**: Some German prepositions always take the same case, whatever the sentence says. Learn each one together with its case.
 
 **first_exposure_rule**: (flashcard and first tap only) wegen, trotz, während, (an)statt, innerhalb, außerhalb, anlässlich, unweit, jenseits and infolge take the genitive.
 
@@ -397,4 +397,4 @@ Equal weight before an answer. After the answer (flashcard, after a miss), highl
 
 **flashcard_and_miss_hint**: These prepositions take the genitive: des for masculine and neuter nouns, der for feminine and plural nouns.
 
-**later_rung_cue**: This preposition keeps one case. Recall it, then the noun's gender.
+**later_rung_cue**: The preposition keeps one case. Recall which one, then the noun's gender.

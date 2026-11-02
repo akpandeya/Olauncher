@@ -158,7 +158,7 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 - ___ Sie bitte etwas Geduld!
 - ___ Sie das Formular bitte ganz aus!
 
-**rule (pre-answer)**: German has an imperative form for each person addressed: du, ihr, or formal Sie. This sentence addresses Sie formally, so recall the form that goes with it.
+**rule (pre-answer)**: German has an imperative form for each person addressed: du, ihr, or formal Sie. A formal request uses the Sie form.
 
 **first_exposure_rule**: (flashcard and first tap only) The formal Sie imperative is the infinitive, the dictionary form of the verb: Kommen Sie bitte!
 
@@ -190,7 +190,7 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **flashcard_and_miss_hint**: Sie marks formal address, and its imperative is the infinitive.
 
-**later_rung_cue**: This sentence uses formal address; recall its imperative form.
+**later_rung_cue**: Formal address: recall the imperative form that goes with it.
 
 ---
 

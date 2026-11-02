@@ -159,13 +159,13 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 - Der Text wird ___ dem Lehrer korrigiert.
 
-**rule (pre-answer)**: A passive can tell who did the action and how. The doer, the means or cause and the tool each take their own preposition. Match each noun to its role.
+**rule (pre-answer)**: A passive can tell who did the action and how. The doer, the means or cause, the tool and the circumstance each take their own preposition. Match each noun to its role.
 
 **first_exposure_rule**: omitted. The answer is a preposition, and its role, not a case, decides it.
 
 **forms table**:
 
-| | who did it | means or cause | tool | place |
+| | who did it | means or cause | tool | circumstance |
 |---|---|---|---|---|
 | | von | durch | mit | bei |
 
@@ -182,7 +182,7 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **flashcard_and_miss_hint**: The doer takes von + dative; dem Lehrer already shows the dative.
 
-**later_rung_cue**: Is the noun the doer, the means or the tool? Each role takes its own preposition.
+**later_rung_cue**: Is the noun the doer, the means, the tool or the circumstance? Each role takes its own preposition.
 
 ---
 
@@ -196,7 +196,7 @@ Shared with `prepositions.md`: every field except the items and the miss lines i
 
 - Das Lied wird von ___ Sängerin gesungen.
 
-**rule (pre-answer)**: This preposition is one of those that always take the same case, whatever the sentence says. Learn which one it takes.
+**rule (pre-answer)**: Some German prepositions always take the same case, whatever the sentence says. Learn each one together with its case.
 
 **first_exposure_rule**: (flashcard and first tap only) aus, bei, mit, nach, seit, von, zu and gegenüber always take the dative.
 
@@ -221,7 +221,7 @@ Equal weight before an answer. After the answer (flashcard, after a miss), highl
 
 **flashcard_and_miss_hint**: These prepositions always take the dative: dem for masculine and neuter, der for feminine, den for plural.
 
-**later_rung_cue**: This preposition keeps one case. Recall it, then the noun's gender.
+**later_rung_cue**: The preposition keeps one case. Recall which one, then the noun's gender.
 
 ---
 

@@ -84,7 +84,7 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 - Die Frau, von ___ ich viel gelernt habe, ist meine Chefin.
 - Die Kinder, mit ___ sie im Park spielt, sind sehr nett.
 
-**rule (pre-answer)**: A preposition in front of the gap decides the pronoun's case, exactly as with articles. Gender and number still copy the noun it refers to.
+**rule (pre-answer)**: A preposition directly before the relative pronoun decides its case, exactly as with articles. Gender and number still copy the noun it refers to.
 
 **first_exposure_rule**: (flashcard and first tap only) mit and von always take the dative, so the relative pronoun after them uses the dative row, matching the noun's gender and number.
 
@@ -130,7 +130,7 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 - Der Mann, ___ Auto in der Garage steht, ist Polizist.
 - Die Frau, ___ Sohn in meiner Klasse ist, kommt aus Köln.
 
-**rule (pre-answer)**: When a noun sits right after the gap, the clause shows possession (his car, her son). The pronoun then takes a special possessive form, matching the noun it refers to.
+**rule (pre-answer)**: A noun right after the relative pronoun marks possession (his car, her son). Its possessive form matches the owner noun the clause refers back to, not that noun.
 
 **first_exposure_rule**: omitted. The case is the answer's case here, and the design names a case before an answer only for one-case prepositions.
 
@@ -157,7 +157,7 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **flashcard_and_miss_hint**: dessen is "his" for a masculine or neuter noun; deren is "her" for a feminine or plural noun.
 
-**later_rung_cue**: A noun right after the gap means possession: use the special possessive form.
+**later_rung_cue**: When a noun without its own article follows the pronoun and belongs to the noun it refers to, the clause shows possession: use the special possessive form.
 
 ---
 

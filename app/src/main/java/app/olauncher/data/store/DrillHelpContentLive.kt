@@ -26,8 +26,8 @@ internal object DrillHelpContentLive {
         DrillHelpRule(
             id = "prep-which-fixed",
             title = "Prepositions with one case",
-            rule = "This preposition is one of those that always take the same case, whatever " +
-                "the sentence says. Learn which one it takes.",
+            rule = "Some German prepositions always take the same case, whatever the sentence " +
+                "says. Learn each one together with its case.",
             table = DrillHelpTable(
                 headers = listOf("", "m", "f", "n", "pl"),
                 rows = listOf(
@@ -37,13 +37,13 @@ internal object DrillHelpContentLive {
                 ),
             ),
             example = "Ich fahre mit **dem** Bus.",
-            cue = "Fixed case. Recall which one this preposition takes.",
+            cue = "Fixed case. Recall which one the preposition takes.",
         ),
         DrillHelpRule(
             id = "prep-fixed-acc",
             title = "Prepositions with the accusative",
-            rule = "This preposition is one of those that always take the same case, whatever " +
-                "the sentence says. Learn which one it takes.",
+            rule = "Some German prepositions always take the same case, whatever the sentence " +
+                "says. Learn each one together with its case.",
             firstExposureRule = "durch, für, gegen, ohne, um and entlang always take the accusative.",
             table = DrillHelpTable(
                 headers = listOf("", "m", "f", "n", "pl"),
@@ -54,13 +54,13 @@ internal object DrillHelpContentLive {
                 ),
             ),
             example = "Ich gehe durch **den** Park.",
-            cue = "This preposition keeps one case. Recall it, then the noun's gender.",
+            cue = "The preposition keeps one case. Recall which one, then the noun's gender.",
         ),
         DrillHelpRule(
             id = "prep-fixed-gen",
             title = "Prepositions with the genitive",
-            rule = "This preposition is one of those that always take the same case, whatever " +
-                "the sentence says. Learn which one it takes.",
+            rule = "Some German prepositions always take the same case, whatever the sentence " +
+                "says. Learn each one together with its case.",
             firstExposureRule = "wegen, trotz, während, (an)statt, innerhalb, außerhalb, " +
                 "anlässlich, unweit, jenseits and infolge take the genitive.",
             table = DrillHelpTable(
@@ -72,13 +72,13 @@ internal object DrillHelpContentLive {
                 ),
             ),
             example = "Wegen **des** Wetters bleiben wir hier.",
-            cue = "This preposition keeps one case. Recall it, then the noun's gender.",
+            cue = "The preposition keeps one case. Recall which one, then the noun's gender.",
         ),
         DrillHelpRule(
             id = "prep-two-way",
             title = "Two-way prepositions",
-            rule = "This is a two-way preposition. Wohin? means movement to a place; Wo? means " +
-                "a fixed position. The verb tells you which one the sentence describes.",
+            rule = "A two-way preposition takes the accusative for movement (Wohin?) and the dative " +
+                "for a location (Wo?). The verb tells you which one the sentence describes.",
             firstExposureRule = "an, auf, hinter, in, neben, über, unter, vor and zwischen take " +
                 "the accusative after Wohin? and the dative after Wo?.",
             table = DrillHelpTable(
@@ -99,7 +99,7 @@ internal object DrillHelpContentLive {
             id = "case-subject-nom",
             title = "Nouns as the subject",
             rule = "The article shows the noun's job: the doer (Wer?), the thing acted on " +
-                "(Wen?) or the receiver (Wem?). Decide this noun's job, then its gender.",
+                "(Wen?) or the receiver (Wem?). Decide the noun's job, then its gender.",
             table = DrillHelpTable(
                 headers = listOf("", "Wer? → Nom", "Wen? → Akk", "Wem? → Dat", "Wessen? → Gen"),
                 rows = listOf(
@@ -109,13 +109,13 @@ internal object DrillHelpContentLive {
                 ),
             ),
             example = "Hier schläft de**r** Hund.",
-            cue = "Ask Wer?, Wen? or Wem? for this noun, then recall its gender.",
+            cue = "Ask Wer?, Wen? or Wem? for the noun, then recall its gender.",
         ),
         DrillHelpRule(
             id = "case-sein-nom",
             title = "The noun after sein",
             rule = "The article shows the noun's job: the doer (Wer?), the thing acted on " +
-                "(Wen?) or the receiver (Wem?). Decide this noun's job, then its gender.",
+                "(Wen?) or the receiver (Wem?). Decide the noun's job, then its gender.",
             table = DrillHelpTable(
                 headers = listOf("", "Wer? → Nom", "Wen? → Akk", "Wem? → Dat", "Wessen? → Gen"),
                 rows = listOf(
@@ -131,7 +131,7 @@ internal object DrillHelpContentLive {
             id = "case-verb-acc",
             title = "The direct object",
             rule = "The article shows the noun's job: the doer (Wer?), the thing acted on " +
-                "(Wen?) or the receiver (Wem?). Decide this noun's job, then its gender.",
+                "(Wen?) or the receiver (Wem?). Decide the noun's job, then its gender.",
             table = DrillHelpTable(
                 headers = listOf("", "Wer? → Nom", "Wen? → Akk", "Wem? → Dat", "Wessen? → Gen"),
                 rows = listOf(
@@ -141,13 +141,13 @@ internal object DrillHelpContentLive {
                 ),
             ),
             example = "Wir besuchen de**n** Großvater.",
-            cue = "Ask Wer?, Wen? or Wem? for this noun, then recall its gender.",
+            cue = "Ask Wer?, Wen? or Wem? for the noun, then recall its gender.",
         ),
         DrillHelpRule(
             id = "case-verb-dat",
             title = "The receiver after certain verbs",
             rule = "The article shows the noun's job: the doer (Wer?), the thing acted on " +
-                "(Wen?) or the receiver (Wem?). Decide this noun's job, then its gender.",
+                "(Wen?) or the receiver (Wem?). Decide the noun's job, then its gender.",
             table = DrillHelpTable(
                 headers = listOf("", "Wer? → Nom", "Wen? → Akk", "Wem? → Dat", "Wessen? → Gen"),
                 rows = listOf(
@@ -157,7 +157,7 @@ internal object DrillHelpContentLive {
                 ),
             ),
             example = "Ich helfe de**m** Mann gerne.",
-            cue = "Ask Wer?, Wen? or Wem? for this noun, then recall its gender.",
+            cue = "Ask Wer?, Wen? or Wem? for the noun, then recall its gender.",
         ),
 
         // -----------------------------------------------------------------
@@ -189,7 +189,7 @@ internal object DrillHelpContentLive {
                 ),
             ),
             example = "Sie entschuldigt sich **bei** dem Lehrer **für** die Verspätung.",
-            cue = "Two pairs, two meanings — pick the one this sentence means.",
+            cue = "Two pairs, two meanings — pick the one the sentence means.",
         ),
         DrillHelpRule(
             id = "verb-prep-case-pair",
@@ -568,7 +568,7 @@ internal object DrillHelpContentLive {
                 ),
             ),
             example = "Es gibt viele Weg**e** nach Rom.",
-            cue = "Recall this noun's plural pattern: the ending, and any vowel change.",
+            cue = "Recall the noun's plural pattern: the ending, and any vowel change.",
         ),
         DrillHelpRule(
             id = "plural-umlaut-e",
@@ -584,7 +584,7 @@ internal object DrillHelpContentLive {
                 ),
             ),
             example = "Meine F**ü**ß**e** sind müde.",
-            cue = "Recall this noun's plural pattern: the ending, and any vowel change.",
+            cue = "Recall the noun's plural pattern: the ending, and any vowel change.",
         ),
         DrillHelpRule(
             id = "plural-er",
@@ -600,7 +600,7 @@ internal object DrillHelpContentLive {
                 ),
             ),
             example = "Die Vögel bauen neue Nest**er**.",
-            cue = "Recall this noun's plural pattern: the ending, and any vowel change.",
+            cue = "Recall the noun's plural pattern: the ending, and any vowel change.",
         ),
         DrillHelpRule(
             id = "plural-umlaut-er",
@@ -616,7 +616,7 @@ internal object DrillHelpContentLive {
                 ),
             ),
             example = "Auf der Wiese springen viele L**ä**mm**er**.",
-            cue = "Recall this noun's plural pattern: the ending, and any vowel change.",
+            cue = "Recall the noun's plural pattern: the ending, and any vowel change.",
         ),
         DrillHelpRule(
             id = "plural-n",
@@ -648,7 +648,7 @@ internal object DrillHelpContentLive {
                 ),
             ),
             example = "Die Schüler schreiben heute viele Übung**en**.",
-            cue = "Recall this noun's plural pattern: the ending, and any vowel change.",
+            cue = "Recall the noun's plural pattern: the ending, and any vowel change.",
         ),
         DrillHelpRule(
             id = "plural-s",
@@ -664,7 +664,7 @@ internal object DrillHelpContentLive {
                 ),
             ),
             example = "Am Bahnhof warten viele Taxi**s**.",
-            cue = "Think about where this word comes from.",
+            cue = "Think about where the word comes from.",
         ),
         DrillHelpRule(
             id = "plural-no-change",
@@ -680,7 +680,7 @@ internal object DrillHelpContentLive {
                 ),
             ),
             example = "Im Büro stehen viele Computer.",
-            cue = "Recall this noun's plural pattern: the ending, and any vowel change.",
+            cue = "Recall the noun's plural pattern: the ending, and any vowel change.",
         ),
         DrillHelpRule(
             id = "pron-first-second",
@@ -695,7 +695,7 @@ internal object DrillHelpContentLive {
                 ),
             ),
             example = "Der Lehrer lobt **uns** für unsere gute Arbeit.",
-            cue = "Find the doer. If the pronoun is not the doer, ask Wen? or Wem? after this verb.",
+            cue = "Find the doer. If the pronoun is not the doer, ask Wen? or Wem? after the verb.",
         ),
         DrillHelpRule(
             id = "pron-third",
@@ -782,7 +782,7 @@ internal object DrillHelpContentLive {
                 ),
             ),
             example = "Wo arbeitet **eure** Mutter eigentlich?",
-            cue = "Does an ending belong here? If yes, drop the stem e first, then add it like ein.",
+            cue = "Does the form carry an ending? If yes, drop the stem e first, then add it like ein.",
         ),
         DrillHelpRule(
             id = "sep-which",
@@ -796,7 +796,7 @@ internal object DrillHelpContentLive {
                 ),
             ),
             example = "Ich hole dich am Bahnhof **ab**. Ich **be**antworte deine Frage.",
-            cue = "Does this verb's prefix split off in a main clause, or stay attached?",
+            cue = "Does the verb's prefix split off in a main clause, or stay attached?",
         ),
         DrillHelpRule(
             id = "sep-dual",
@@ -810,7 +810,7 @@ internal object DrillHelpContentLive {
                 ),
             ),
             example = "Ich kehre morgen **um**. Ich **über**lebe die Prüfung.",
-            cue = "Which group does this verb's meaning put it in?",
+            cue = "Which group does the verb's meaning put it in?",
         ),
         DrillHelpRule(
             id = "sep-participle-ge",
@@ -825,7 +825,7 @@ internal object DrillHelpContentLive {
                 ),
             ),
             example = "Ich habe dich am Bahnhof ab**ge**holt.",
-            cue = "Does this verb's prefix split off? That decides where ge- goes.",
+            cue = "Does the verb's prefix split off? That decides where ge- goes.",
         ),
         DrillHelpRule(
             id = "sep-participle-no-ge",
@@ -840,7 +840,7 @@ internal object DrillHelpContentLive {
                 ),
             ),
             example = "Ich habe deine Frage **beantwortet**.",
-            cue = "Does this verb's prefix split off? That decides where ge- goes.",
+            cue = "Does the verb's prefix split off? That decides where ge- goes.",
         ),
         DrillHelpRule(
             id = "sep-prefix-end",
@@ -854,7 +854,7 @@ internal object DrillHelpContentLive {
                 ),
             ),
             example = "Ich hole dich am Bahnhof **ab**.",
-            cue = "The verb in the sentence has dropped its prefix at the end of the clause.",
+            cue = "The verb has dropped its prefix at the end of the clause.",
         ),
         DrillHelpRule(
             id = "wo-verb-second",

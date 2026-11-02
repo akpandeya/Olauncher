@@ -423,7 +423,7 @@ The example verb is not part of this drill, so the table never shows an item's a
 **flashcard_and_miss_hint**: This verb has two pairs with different meanings — the sentence's
 meaning picks which one.
 
-**later_rung_cue**: Two pairs, two meanings — pick the one this sentence means.
+**later_rung_cue**: Two pairs, two meanings — pick the one the sentence means.
 
 ---
 
@@ -468,7 +468,7 @@ Shared with `prepositions.md`: every field except the items and the miss lines i
 31. Welcher Fall folgt auf „berichten von“?
 32. Welcher Fall folgt auf „bestehen aus“?
 
-**rule (pre-answer)**: This preposition is one of those that always take the same case, whatever the sentence says. Learn which one it takes.
+**rule (pre-answer)**: Some German prepositions always take the same case, whatever the sentence says. Learn each one together with its case.
 
 **first_exposure_rule**: omitted. For these items the case name is the answer, so it may never be named before the answer in any field (design section 2; same reason the items carry no hint in `DrillPrepositions.kt`).
 
@@ -526,7 +526,7 @@ Dative pairs (wrong choice: Akkusativ — the preposition never takes the accusa
 
 **flashcard_and_miss_hint**: These prepositions never change their case. Learn each one with its case.
 
-**later_rung_cue**: Fixed case. Recall which one this preposition takes.
+**later_rung_cue**: Fixed case. Recall which one the preposition takes.
 
 ---
 
