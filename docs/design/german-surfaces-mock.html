@@ -98,7 +98,7 @@
   .head .title { font-size: 14px; font-weight: 600; letter-spacing: .02em; }
   .head .prog { font-size: 13px; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
 
-  /* ---------- 1 · rules index ---------- */
+  /* ---------- 2 · rules index ---------- */
   input.search {
     width: 100%; min-height: 48px; margin-top: 14px;
     background: var(--tile); border: 1px solid var(--tile-stroke);
@@ -122,7 +122,7 @@
   .rule .chev { color: var(--ink-muted); font-size: 13px; }
   .rule.open { background: var(--chip); }
 
-  /* ---------- 2 · rule detail (help-card rendering) ---------- */
+  /* ---------- 3 · rule detail (help-card rendering) ---------- */
   .card {
     margin-top: 14px; background: var(--tile); border-radius: 20px; /* radiusMedium */
     padding: 16px 16px 14px; display: flex; flex-direction: column; gap: 12px;
@@ -157,7 +157,7 @@
   }
   .askai .chev { color: var(--ink-muted); font-size: 13px; }
 
-  /* ---------- 3 · all conversations ---------- */
+  /* ---------- 5 · all conversations ---------- */
   .newchat {
     align-self: flex-end; margin-top: 10px; min-height: 36px;
     display: inline-flex; align-items: center;
@@ -186,7 +186,7 @@
   .emptybody p { margin: 0; font-size: 14px; color: var(--ink-muted); }
   .emptybody .newchat { align-self: center; margin-top: 0; color: var(--ink-muted); }
 
-  /* ---------- 4 · settings crop ---------- */
+  /* ---------- 6 · settings crop ---------- */
   .crop { height: 620px; }
   .settings {
     margin-top: 14px; background: var(--readable); border: 1px solid var(--tile-stroke);
@@ -214,6 +214,83 @@
     box-shadow: 0 4px 16px rgba(0, 0, 0, .25);
   }
 
+  .crop.short { height: 430px; }
+
+  /* ---------- 1 · drills hub entry (#792) ---------- */
+  .hubbtn {
+    margin-top: 12px; min-height: 48px; display: flex; align-items: center; justify-content: center;
+    background: var(--tile); border: 1px solid var(--tile-stroke); border-radius: 999px;
+    font-size: 15px; font-weight: 700; color: var(--sage); cursor: pointer;
+  }
+  .hubbtn + .hubbtn { margin-top: 8px; }
+  .hubpanel {
+    flex: 1; min-height: 0; margin-top: 16px; background: var(--panel);
+    border-radius: 20px; padding: 8px 16px 14px;
+  }
+  .hubrow { padding: 10px 0; }
+  .hubrow .top { display: flex; align-items: baseline; gap: 12px; }
+  .hubrow .hn {
+    flex: 1; min-width: 0; font-size: 15px; font-weight: 700; line-height: 1.3;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .hubrow .hs {
+    font-size: 12.5px; color: var(--ink-muted); white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .scorebar { height: 4px; margin-top: 8px; border-radius: 999px; background: var(--chip); position: relative; }
+  .scorebar i { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 999px; background: var(--sage); }
+  .hubgroup {
+    font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--ink-muted); padding: 12px 0 4px;
+  }
+  .hubsep { border-top: 1px solid var(--tile-stroke); margin-top: 10px; }
+  .hubrow.entry {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--chip); border-radius: 12px; padding: 12px; margin-top: 6px;
+  }
+  .hubrow.entry .top { flex: 1; }
+  .hubrow.entry .chev { color: var(--ink-muted); font-size: 13px; }
+
+  /* ---------- 4 · words footer header (#793) ---------- */
+  .wordscrop { height: 400px; }
+  .wpanel { margin-top: 14px; background: var(--panel); border-radius: 20px; padding: 4px 16px; }
+  .wrow { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 10px 0; opacity: .55; }
+  .wrow .wl { flex: 1; min-width: 0; }
+  .wrow .w { font-size: 16px; font-weight: 700; line-height: 1.3; }
+  .wrow .wm { font-size: 13px; color: var(--ink-muted); line-height: 1.35; margin-top: 1px; }
+  .wchip {
+    font-size: 11px; font-weight: 600; color: var(--ink);
+    background: var(--chip); border-radius: 999px; padding: 4px 10px; white-space: nowrap;
+  }
+  .grow { flex: 1; }
+  .wordsfoot { margin-top: 14px; padding-bottom: 8px; }
+  .wfhead { display: flex; align-items: flex-end; gap: 10px; }
+  .wtitle { flex: 1; min-width: 0; font-size: 28px; font-weight: 700; letter-spacing: -.01em; }
+  .wbtn {
+    font-size: 15px; font-weight: 700; color: var(--ink); min-height: 48px; margin-bottom: 4px;
+    display: inline-flex; align-items: center; padding: 0 4px; position: relative; cursor: pointer;
+  }
+  .wbtn .tag {
+    position: absolute; top: 2px; right: 4px;
+    font-size: 8.5px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase;
+    color: var(--rose); border: 1px solid var(--rose); border-radius: 999px; padding: 1px 5px;
+  }
+  .wstats { margin-top: 2px; font-size: 12.5px; color: var(--ink-muted); }
+
+  /* ---------- 6/7 · ai practice actions + overflow menu (#794) ---------- */
+  .ract { display: flex; align-items: center; gap: 2px; }
+  .more {
+    font-size: 17px; font-weight: 700; color: var(--ink-muted);
+    padding: 5px 10px; cursor: pointer;
+  }
+  .menu {
+    position: absolute; z-index: 3; top: 180px; right: 40px; min-width: 172px;
+    background: var(--tile); border: 1px solid var(--tile-stroke); border-radius: 14px;
+    padding: 6px; box-shadow: 0 6px 24px rgba(0, 0, 0, .22);
+  }
+  .menu .mi { font-size: 13.5px; font-weight: 600; padding: 11px 14px; border-radius: 9px; }
+  .menu .mi.danger { color: var(--rose); }
+
   .footnote { font-size: 11px; color: var(--ink-muted); text-align: center; }
   @media (max-width: 420px) { .screen { padding: 48px 16px 16px; } }
 </style>
@@ -224,13 +301,67 @@
   <div class="pagehead">
     <h1>German surfaces you cannot reach — mock</h1>
     <p>Mock only — all names, counts, dates and previews are example data. The screens sketch the three
-       surfaces proposed in german-hidden-surfaces.md §6: a grammar-rules index with its rule detail, an
-       all-conversations list for the Ask-AI chat, and a Fetch now action on the News sentences row.</p>
+       surfaces proposed in german-hidden-surfaces.md §6 and fix their entry points (decisions
+       2026-11-02): a grammar-rules index with its rule detail, reached from a Grammar rules entry in
+       the Drills hub; an all-conversations list for the Ask-AI chat, opened from a Chats button in the
+       Words screen header next to Drills; and the Settings rows for AI practice in its two key states
+       and News sentences with a Fetch now action.</p>
   </div>
 
   <div class="frames">
 
-    <!-- ============ 1 · grammar rules index ============ -->
+    <!-- ============ 1 · drills hub with the grammar rules entry ============ -->
+    <div class="col">
+      <div class="phone">
+        <section class="screen">
+          <div class="head"><span class="title">DRILLS</span></div>
+          <div class="hubbtn">Continue: Prepositions</div>
+          <div class="hubbtn">Practise weakest: Prepositions · Pronouns · Plurals</div>
+          <div class="hubpanel">
+            <div class="hubrow">
+              <div class="top"><span class="hn">Prepositions</span><span class="hs">71% · 3 rounds</span></div>
+              <div class="scorebar"><i style="width:71%"></i></div>
+            </div>
+            <div class="hubrow">
+              <div class="top"><span class="hn">Pronouns</span><span class="hs">64% · 5 rounds</span></div>
+              <div class="scorebar"><i style="width:64%"></i></div>
+            </div>
+            <div class="hubrow">
+              <div class="top"><span class="hn">Verb + preposition</span><span class="hs">55% · 2 rounds</span></div>
+              <div class="scorebar"><i style="width:55%"></i></div>
+            </div>
+            <div class="hubrow">
+              <div class="top"><span class="hn">Plurals</span><span class="hs">1 round</span></div>
+              <div class="scorebar"><i style="width:33%"></i></div>
+            </div>
+            <div class="hubgroup">New</div>
+            <div class="hubrow">
+              <div class="top"><span class="hn">Case endings</span></div>
+              <div class="scorebar"></div>
+            </div>
+            <div class="hubrow">
+              <div class="top"><span class="hn">Separable verbs</span></div>
+              <div class="scorebar"></div>
+            </div>
+            <div class="hubsep"></div>
+            <div class="hubrow entry">
+              <div class="top"><span class="hn">Grammar rules</span><span class="hs">113 rules</span></div>
+              <span class="chev">›</span>
+            </div>
+          </div>
+        </section>
+      </div>
+      <div class="colhead">
+        <h2>Drills hub — Grammar rules entry</h2>
+        <p>The hub as built today — Continue and Practise weakest buttons, then the drill types weakest
+           first, each row with its thin score bar — plus one added entry after the rows: Grammar rules,
+           with the rule count in the stat position and no score bar. Highlighted here as the tapped
+           entry; it opens the rules index in the next frame. There is no separate screen for the index
+           and no link from the miss help card.</p>
+      </div>
+    </div>
+
+    <!-- ============ 2 · grammar rules index ============ -->
     <div class="col">
       <div class="phone">
         <section class="screen">
@@ -316,11 +447,13 @@
       <div class="colhead">
         <h2>Grammar rules index</h2>
         <p>Every authored rule in one scrollable list, with search. One row per rule: the title in body
-           bold, its one-line plain-English rule underneath in muted body. The open row is highlighted.</p>
+           bold, its one-line plain-English rule underneath in muted body. The open row is highlighted.
+           Reached from the Grammar rules entry in the Drills hub (first frame); there is no separate
+           screen for it and no link from the miss help card.</p>
       </div>
     </div>
 
-    <!-- ============ 2 · rule detail ============ -->
+    <!-- ============ 3 · rule detail ============ -->
     <div class="col">
       <div class="phone">
         <section class="screen">
@@ -371,7 +504,48 @@
       </div>
     </div>
 
-    <!-- ============ 3 · all conversations (+ empty state) ============ -->
+    <!-- ============ 4 · words footer header with the chats button ============ -->
+    <div class="col">
+      <div class="phone wordscrop">
+        <section class="screen">
+          <div class="wpanel">
+            <div class="wrow">
+              <div class="wl">
+                <div class="w">die Brücke</div>
+                <div class="wm">bridge · Wiktionary</div>
+              </div>
+              <span class="wchip">Due in 16 d</span>
+            </div>
+            <div class="wrow">
+              <div class="wl">
+                <div class="w">die Straße</div>
+                <div class="wm">road · Wiktionary</div>
+              </div>
+              <span class="wchip">Due in 2 d</span>
+            </div>
+          </div>
+          <div class="grow"></div>
+          <div class="wordsfoot">
+            <div class="wfhead">
+              <span class="wtitle">Words</span>
+              <span class="wbtn">Drills</span>
+              <span class="wbtn">Chats<span class="tag">new</span></span>
+            </div>
+            <div class="wstats">12 words · 3 due · 4 learned</div>
+          </div>
+        </section>
+      </div>
+      <div class="colhead">
+        <h2>Words screen — header with the Chats button</h2>
+        <p>The fixed footer header of the Words screen, as in fragment_words.xml: the Words title on the
+           left, then the trailing Drills text button, and the added third button, Chats, right next to
+           Drills — the same small bold text-button shape and 48dp touch target (the NEW tag only marks
+           the addition; it is not part of the UI). The muted word rows above give the header context.
+           Chats opens the all-conversations list in the next frame.</p>
+      </div>
+    </div>
+
+    <!-- ============ 5 · all conversations (+ empty state) ============ -->
     <div class="col">
       <div class="phone">
         <section class="screen">
@@ -435,8 +609,9 @@
       <div class="colhead">
         <h2>All conversations</h2>
         <p>Every stored Ask-AI thread, newest first, across word, rule and topic subjects: title, turn
-           count with a relative date, and a one-line preview of the last message. The newest thread's
-           last send failed, so its preview is the persisted Not sent line.</p>
+           count with a relative date, and a one-line preview of the last message. It opens from the
+           Chats button in the Words screen header, next to Drills (previous frame). The newest
+           thread's last send failed, so its preview is the persisted Not sent line.</p>
       </div>
 
       <div class="phone emptyphone">
@@ -456,7 +631,7 @@
       </div>
     </div>
 
-    <!-- ============ 4 · settings crop ============ -->
+    <!-- ============ 6 · settings crop ============ -->
     <div class="col">
       <div class="phone crop">
         <section class="screen">
@@ -474,13 +649,19 @@
                 <div class="st">AI practice</div>
                 <div class="ss">Sends saved words and their sentences to your AI provider with your own key. Off works fine.</div>
               </div>
-              <div class="v">On</div>
+              <div class="r">
+                <div class="v">On</div>
+                <div class="ract">
+                  <span class="act">Generate now</span>
+                  <span class="more">⋮</span>
+                </div>
+              </div>
             </div>
             <div class="srow">
               <div class="l">
                 <div class="st">News sentences</div>
-                <div class="ss">Collect example sentences from German news sites on Wi-Fi while charging</div>
-                <div class="sh">Runs every 12 h while charging · up to 30 articles a day</div>
+                <div class="ss">Collect example sentences from German news sites on Wi-Fi</div>
+                <div class="sh">Runs every 12 h on Wi-Fi · up to 30 articles a day</div>
               </div>
               <div class="r">
                 <div class="v">On</div>
@@ -489,22 +670,65 @@
             </div>
             <div class="lic">Wiktionary · kaikki.org/wiktextract · CC BY-SA 4.0</div>
           </div>
+          <div class="menu">
+            <div class="mi">Update key</div>
+            <div class="mi danger">Remove key</div>
+          </div>
           <div class="toast">Harvest queued · up to 10 articles</div>
         </section>
       </div>
       <div class="colhead">
-        <h2>Settings — News sentences row</h2>
-        <p>A crop of the Deutsch list. The row keeps its settings shape — title, subtitle, On value —
-           and adds a Fetch now action chip at the trailing edge, mirroring AI practice's Generate now.
-           The toast shows the queued run.</p>
+        <h2>Settings — News sentences row + AI practice, key set</h2>
+        <p>A crop of the Deutsch list. The News sentences row keeps its settings shape — title,
+           subtitle, On value — and adds a Fetch now action chip at the trailing edge; the background
+           run is Wi-Fi only now, the charging requirement is dropped. With a key set, AI practice
+           shows the prominent Generate now and moves key management behind the ⋮ menu, drawn open
+           with Update key and Remove key. The toast shows the queued fetch.</p>
+      </div>
+    </div>
+
+    <!-- ============ 7 · settings crop — ai practice, no key ============ -->
+    <div class="col">
+      <div class="phone crop short">
+        <section class="screen">
+          <div class="head">
+            <span class="title">‹ SETTINGS</span>
+            <span class="prog">Deutsch</span>
+          </div>
+          <div class="settings">
+            <div class="srow faded">
+              <div class="l"><div class="st">German UI</div></div>
+              <div class="v">On</div>
+            </div>
+            <div class="srow">
+              <div class="l">
+                <div class="st">AI practice</div>
+                <div class="ss">Sends saved words and their sentences to your AI provider with your own key. Off works fine.</div>
+              </div>
+              <div class="r">
+                <div class="v">On</div>
+                <span class="act">Add API key</span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+      <div class="colhead">
+        <h2>Settings — AI practice row, no key</h2>
+        <p>The same row in the other state: the switch is On but no key is set, so the prominent
+           trailing action is Add API key, which opens the key dialog. There is no ⋮ menu yet —
+           no key to update or remove. The previous frame shows the key-set state.</p>
       </div>
     </div>
 
   </div>
 
-  <p class="footnote">Self-contained · tokens mirrored from values/colors.xml and values-night:
-     todayScrim · todayPanel · todayTile · todayTileStroke · todayChip · inkMuted · readableCard ·
-     accentSage · accentSand · accentRose · system fonts, no remote assets</p>
+  <p class="footnote">Self-contained · seven frames: the Drills hub entry and the rules index (#792),
+     the rule detail, the Words header Chats button and the all-conversations list (#793), and the
+     Settings rows — AI practice in its two key states and the News sentences Fetch now (#794) ·
+     tokens mirrored from values/colors.xml and values-night: todayScrim · todayPanel · todayTile ·
+     todayTileStroke · todayChip · inkMuted · readableCard · accentSage · accentSand · accentRose ·
+     system fonts, no remote assets</p>
 </div>
 </body>
 </html>
