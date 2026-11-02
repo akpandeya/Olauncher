@@ -72,6 +72,7 @@ object PracticeVisibleItems {
             hint = item.hint,
             full = null,
             clozeAnswers = emptySet(),
+            choices = item.choices,
             word = word?.text,
         ).rejected
     }

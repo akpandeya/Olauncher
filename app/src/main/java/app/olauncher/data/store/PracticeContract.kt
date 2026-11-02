@@ -140,7 +140,7 @@ object PracticeContract {
         builder.append("Type rules:\n")
         builder.append("- Separable verb in a main clause: the gap takes only the finite verb; the prefix stays in the prompt at the clause end. \"Das Personal ___ von 3.000 auf 6.000 an.\" → \"wächst\". After a modal or in a subordinate clause the verb is one word: \"…, weil das Personal ___.\" → \"anwächst\".\n")
         builder.append("- articles: blank an article only if exactly one article fits (\"___ eigenes Zentrum\" → \"ein\"). If a definite and an indefinite article would both fit, write \"bestimmter Artikel\" or \"unbestimmter Artikel\" as the hint.\n")
-        builder.append("- word_order: take one main clause of 4-8 words from the context. prompt = \"Ordne: \" + its words shuffled, one word per tile, separated by \" / \". answer = exactly those tiles in the right order: same words, same spelling, nothing added, dropped, split or merged, no comma. choices = the answer plus 1-2 wrong orders of the same tiles.\n")
+        builder.append("- word_order: take one natural, complete main clause of 4-8 words from the context. prompt = \"Ordne: \" + its words shuffled, one word per tile, separated by \" / \". answer = exactly those tiles in the correct German order: same words, same spelling, nothing added, dropped, split or merged, no comma. choices = the answer plus 1-2 wrong orders of the same tiles that are plausible learner mistakes — the finite verb in the wrong slot, or a subordinate-clause verb order — never a random shuffle and never an order equal to the answer.\n")
         builder.append("- All other types: choices = the answer plus 1-3 wrong forms of the same word (e.g. \"weigert\", \"weigern\", \"weigerst\").\n")
         builder.append("\n")
         builder.append("Words:\n")
@@ -323,7 +323,7 @@ object PracticeContract {
                 .filter { it.type == DrillType.CLOZE }
                 .map { it.answer }
                 .toSet()
-            val verdict = PracticeFilters.check(type, prompt, fixedAnswer, hint, full, clozeAnswers, word.text)
+            val verdict = PracticeFilters.check(type, prompt, fixedAnswer, hint, full, clozeAnswers, fixedChoices, word.text)
             if (verdict.rejected) {
                 rejected += "Item $i: filter '${verdict.filter}' — ${verdict.reason}"
                 rejections += PracticeRejection(
