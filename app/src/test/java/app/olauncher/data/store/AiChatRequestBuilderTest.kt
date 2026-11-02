@@ -214,8 +214,9 @@ class AiChatRequestBuilderTest {
             prompt.contains(
                 "- Miss: prompt \"Ich lege das Buch auf ___ Tisch.\" | learner picked: dem | correct: den" +
                     " | rule: Two-way prepositions (prep-two-way)" +
-                    " | rule text: This is a two-way preposition. Wohin? means movement to a place; Wo? means" +
-                    " a fixed position. The verb tells you which one the sentence describes." +
+                    " | rule text: A two-way preposition takes the accusative for movement " +
+                    "(Wohin?) and the dative for a location (Wo?). The verb tells you which one the " +
+                    "sentence describes." +
                     " | chips: movement, accusative",
             ),
         )
@@ -247,7 +248,7 @@ class AiChatRequestBuilderTest {
         assertTrue(prompt.contains("| rule: Prepositions with the genitive (prep-fixed-gen)"))
         assertTrue(
             prompt.contains(
-                "| rule text: This preposition is one of those that always take the same case",
+                "| rule text: Some German prepositions always take the same case",
             ),
         )
     }

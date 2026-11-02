@@ -111,7 +111,7 @@ recall, so no case is named before the answer.
 **flashcard_and_miss_hint**: Ask who does the verb. If the pronoun is affected, ask Wen? or
 Wem? after that verb.
 
-**later_rung_cue**: Find the doer. If the pronoun is not the doer, ask Wen? or Wem? after this
+**later_rung_cue**: Find the doer. If the pronoun is not the doer, ask Wen? or Wem? after the
 verb.
 
 ---
@@ -785,7 +785,7 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: The noun's gender and job pick the ending; any ending costs
 euer its stem e.
 
-**later_rung_cue**: Does an ending belong here? If yes, drop the stem e first, then add it
+**later_rung_cue**: Does the form carry an ending? If yes, drop the stem e first, then add it
 like ein.
 
 ---

@@ -38,7 +38,7 @@ Shared conventions (author notes, not learner-facing):
 - Welcher Fall folgt auf „während“?
 - Welcher Fall folgt auf „statt“?
 
-**rule (pre-answer)**: This preposition is one of those that always take the same case, whatever the sentence says. Learn which one it takes.
+**rule (pre-answer)**: Some German prepositions always take the same case, whatever the sentence says. Learn each one together with its case.
 
 **first_exposure_rule**: omitted. For these items the case name is the answer, so it may never be named before the answer in any field (design section 2; same reason the items carry no hint in `DrillPrepositions.kt`).
 
@@ -62,7 +62,7 @@ The row labels include every case the item offers as a choice, shown with equal 
 
 **flashcard_and_miss_hint**: These prepositions never change their case. Learn each one with its case.
 
-**later_rung_cue**: Fixed case. Recall which one this preposition takes.
+**later_rung_cue**: Fixed case. Recall which one the preposition takes.
 
 ---
 
@@ -79,7 +79,7 @@ The row labels include every case the item offers as a choice, shown with equal 
 - Die Kinder laufen um ___ Tisch.
 - Wir spazieren ___ Fluss entlang.
 
-**rule (pre-answer)**: This preposition is one of those that always take the same case, whatever the sentence says. Learn which one it takes.
+**rule (pre-answer)**: Some German prepositions always take the same case, whatever the sentence says. Learn each one together with its case.
 
 **first_exposure_rule**: (flashcard and first tap only) durch, für, gegen, ohne, um and entlang always take the accusative.
 
@@ -104,7 +104,7 @@ Equal weight before an answer. After the answer (flashcard, after a miss), highl
 
 **flashcard_and_miss_hint**: These prepositions always take the accusative: den, die, das, die.
 
-**later_rung_cue**: This preposition keeps one case. Recall it, then the noun's gender.
+**later_rung_cue**: The preposition keeps one case. Recall which one, then the noun's gender.
 
 ---
 
@@ -123,7 +123,7 @@ Equal weight before an answer. After the answer (flashcard, after a miss), highl
 - Ich gehe zu ___ Arzt.
 - Das Hotel liegt gegenüber ___ Park.
 
-**rule (pre-answer)**: This preposition is one of those that always take the same case, whatever the sentence says. Learn which one it takes.
+**rule (pre-answer)**: Some German prepositions always take the same case, whatever the sentence says. Learn each one together with its case.
 
 **first_exposure_rule**: (flashcard and first tap only) aus, bei, mit, nach, seit, von, zu and gegenüber always take the dative.
 
@@ -155,7 +155,7 @@ Plural items (bei Eltern, von Großeltern — answer den):
 
 **flashcard_and_miss_hint**: These prepositions always take the dative: dem for masculine and neuter, der for feminine, den for plural.
 
-**later_rung_cue**: This preposition keeps one case. Recall it, then the noun's gender.
+**later_rung_cue**: The preposition keeps one case. Recall which one, then the noun's gender.
 
 ---
 
@@ -170,7 +170,7 @@ Plural items (bei Eltern, von Großeltern — answer den):
 - Während ___ Fahrt lesen wir.
 - Statt ___ Kaffees trinkt er Tee.
 
-**rule (pre-answer)**: This preposition is one of those that always take the same case, whatever the sentence says. Learn which one it takes.
+**rule (pre-answer)**: Some German prepositions always take the same case, whatever the sentence says. Learn each one together with its case.
 
 **first_exposure_rule**: (flashcard and first tap only) wegen, trotz, während, (an)statt, innerhalb, außerhalb, anlässlich, unweit, jenseits and infolge take the genitive.
 
@@ -200,7 +200,7 @@ während item (während Fahrt — answer der):
 
 **flashcard_and_miss_hint**: These prepositions take the genitive: des for masculine and neuter nouns, der for feminine and plural nouns.
 
-**later_rung_cue**: This preposition keeps one case. Recall it, then the noun's gender.
+**later_rung_cue**: The preposition keeps one case. Recall which one, then the noun's gender.
 
 ---
 
@@ -229,7 +229,7 @@ während item (während Fahrt — answer der):
 - Das Kind sitzt zwischen ___ Stühlen.
 - Das Kind setzt sich zwischen ___ Stühle.
 
-**rule (pre-answer)**: This is a two-way preposition. Wohin? means movement to a place; Wo? means a fixed position. The verb tells you which one the sentence describes.
+**rule (pre-answer)**: A two-way preposition takes the accusative for movement (Wohin?) and the dative for a location (Wo?). The verb tells you which one the sentence describes.
 
 **first_exposure_rule**: (flashcard and first tap only) an, auf, hinter, in, neben, über, unter, vor and zwischen take the accusative after Wohin? and the dative after Wo?.
 

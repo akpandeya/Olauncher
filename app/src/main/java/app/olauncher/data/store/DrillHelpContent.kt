@@ -157,21 +157,21 @@ object DrillHelpContent {
         ),
         DrillHelpRule(
             id = "passiv-agent",
-            title = "Passive: doer, means and tool",
-            rule = "A passive can tell who did the action and how. The doer, the means or cause and " +
-                "the tool each take their own preposition. Match each noun to its role.",
+            title = "Passive: doer, means, tool, circumstance",
+            rule = "A passive can tell who did the action and how. The doer, the means or cause, " +
+                "the tool and the circumstance each take their own preposition. Match each noun to its role.",
             table = DrillHelpTable(
-                headers = listOf("", "who did it", "means or cause", "tool", "place"),
+                headers = listOf("", "who did it", "means or cause", "tool", "circumstance"),
                 rows = listOf(DrillHelpRow("", listOf("von", "durch", "mit", "bei"))),
             ),
             example = "Der Text wird **von** dem Lehrer korrigiert.",
-            cue = "Is the noun the doer, the means or the tool? Each role takes its own preposition.",
+            cue = "Is the noun the doer, the means, the tool or the circumstance? Each role takes its own preposition.",
         ),
         DrillHelpRule(
             id = "prep-fixed-dat",
             title = "Prepositions with the dative",
-            rule = "This preposition is one of those that always take the same case, whatever the " +
-                "sentence says. Learn which one it takes.",
+            rule = "Some German prepositions always take the same case, whatever the sentence " +
+                "says. Learn each one together with its case.",
             firstExposureRule = "aus, bei, mit, nach, seit, von, zu and gegenüber always take the dative.",
             table = DrillHelpTable(
                 headers = listOf("", "m", "f", "n", "pl"),
@@ -182,7 +182,7 @@ object DrillHelpContent {
                 ),
             ),
             example = "Ich fahre mit **dem** Bus.",
-            cue = "This preposition keeps one case. Recall it, then the noun's gender.",
+            cue = "The preposition keeps one case. Recall which one, then the noun's gender.",
         ),
         DrillHelpRule(
             id = "passiv-partizip-ii",
@@ -245,7 +245,7 @@ object DrillHelpContent {
                 ),
             ),
             example = "An deiner Stelle **würde** ich das Angebot annehmen.",
-            cue = "Is this a real plan or an imagined situation? Each takes its own werden form.",
+            cue = "Is the sentence a real plan or an imagined situation? Each takes its own werden form.",
         ),
 
         // -----------------------------------------------------------------
@@ -255,7 +255,7 @@ object DrillHelpContent {
             id = "konj2-wenn-unreal",
             title = "Unreal wenn-clauses",
             rule = "Wenn can open an unreal condition: something imagined, not real. The normal " +
-                "present and past state facts, so German uses its Konjunktiv II forms here instead.",
+                "present and past state facts, so German uses its Konjunktiv II forms instead.",
             table = DrillHelpTable(
                 headers = listOf("", "haben", "sein", "most other verbs"),
                 rows = listOf(
@@ -283,8 +283,8 @@ object DrillHelpContent {
         DrillHelpRule(
             id = "konj2-helper-infinitive",
             title = "The two-word unreal form",
-            rule = "For verbs besides haben and sein, German builds the unreal form from two words: " +
-                "helper plus dictionary form — no ending, no past, no participle.",
+            rule = "Most verbs build the unreal form from two words: helper plus dictionary " +
+                "form — no ending, no past, no participle.",
             table = DrillHelpTable(
                 headers = listOf("", "haben", "sein", "most other verbs"),
                 rows = listOf(
@@ -365,8 +365,8 @@ object DrillHelpContent {
         DrillHelpRule(
             id = "rel-after-prep",
             title = "Relative pronouns after a preposition",
-            rule = "A preposition in front of the gap decides the pronoun's case, exactly as with " +
-                "articles. Gender and number still copy the noun it refers to.",
+            rule = "A preposition directly before the relative pronoun decides its case, exactly " +
+                "as with articles. Gender and number still copy the noun it refers to.",
             firstExposureRule = "mit and von always take the dative, so the relative pronoun after " +
                 "them uses the dative row, matching the noun's gender and number.",
             table = DrillHelpTable(
@@ -383,8 +383,8 @@ object DrillHelpContent {
         DrillHelpRule(
             id = "rel-genitive",
             title = "Possessive relative pronouns",
-            rule = "When a noun sits right after the gap, the clause shows possession (his car, her " +
-                "son). The pronoun then takes a special possessive form, matching the noun it refers to.",
+            rule = "A noun right after the relative pronoun marks possession (his car, her son). " +
+                "Its possessive form matches the owner noun the clause refers back to, not that noun.",
             table = DrillHelpTable(
                 headers = listOf("", "m", "f", "n", "pl"),
                 rows = listOf(
@@ -392,7 +392,8 @@ object DrillHelpContent {
                 ),
             ),
             example = "Der Mann, **dessen** Auto rot ist, ist mein Nachbar.",
-            cue = "A noun right after the gap means possession: use the special possessive form.",
+            cue = "When a noun without its own article follows the pronoun and belongs to the noun " +
+                "it refers to, the clause shows possession: use the special possessive form.",
         ),
 
         // -----------------------------------------------------------------
@@ -438,7 +439,7 @@ object DrillHelpContent {
                 ),
             ),
             example = "Das ist das Auto des Nachbar**n**.",
-            cue = "Is this a weak noun? Weak nouns never take the -s owner ending.",
+            cue = "Is the noun weak? Weak nouns never take the -s owner ending.",
         ),
         DrillHelpRule(
             id = "gen-time-phrase",
@@ -481,7 +482,7 @@ object DrillHelpContent {
                 ),
             ),
             example = "Vater**s** altes Fahrrad steht in der Garage.",
-            cue = "No article here: this owner works like a name and takes bare -s.",
+            cue = "No article: the owner works like a name and takes bare -s.",
         ),
         DrillHelpRule(
             id = "gen-noun-zero",
@@ -569,7 +570,7 @@ object DrillHelpContent {
             id = "imp-sie-infinitive",
             title = "The formal Sie imperative",
             rule = "German has an imperative form for each person addressed: du, ihr, or formal Sie. " +
-                "This sentence addresses Sie formally, so recall the form that goes with it.",
+                "A formal request uses the Sie form.",
             firstExposureRule = "The formal Sie imperative is the infinitive, the dictionary form of " +
                 "the verb: Kommen Sie bitte!",
             table = DrillHelpTable(
@@ -580,7 +581,7 @@ object DrillHelpContent {
                 ),
             ),
             example = "**Nehmen** Sie bitte Platz!",
-            cue = "This sentence uses formal address; recall its imperative form.",
+            cue = "Formal address: recall the imperative form that goes with it.",
         ),
 
         // -----------------------------------------------------------------
@@ -777,7 +778,7 @@ object DrillHelpContent {
             id = "konj1-perfect",
             title = "Konjunktiv I in the perfect",
             rule = "A reported past event keeps the perfect with its participle, but the helper " +
-                "shifts into Konjunktiv I, built like any verb: stem + -e.",
+                "shifts into Konjunktiv I, built like any verb: stem + -e (sein has its own form).",
             table = DrillHelpTable(
                 headers = listOf("", "Konjunktiv I", "Present", "Past", "Konjunktiv II"),
                 rows = listOf(

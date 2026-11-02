@@ -26,7 +26,7 @@ Conventions (author notes, not learner-facing):
 - Wenn ich Zeit ___, käme ich mit.
 - Wenn ich reich ___, würde ich um die Welt reisen.
 
-**rule (pre-answer)**: Wenn can open an unreal condition: something imagined, not real. The normal present and past state facts, so German uses its Konjunktiv II forms here instead.
+**rule (pre-answer)**: Wenn can open an unreal condition: something imagined, not real. The normal present and past state facts, so German uses its Konjunktiv II forms instead.
 
 **first_exposure_rule**: omitted. No case or gender is named before an answer.
 
@@ -107,7 +107,7 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 - Ich ___ gern wissen, wie spät es ist.
 - Wenn du mir ___ würdest, wäre ich sehr dankbar.
 
-**rule (pre-answer)**: For verbs besides haben and sein, German builds the unreal form from two words: helper plus dictionary form — no ending, no past, no participle.
+**rule (pre-answer)**: Most verbs build the unreal form from two words: helper plus dictionary form — no ending, no past, no participle.
 
 **first_exposure_rule**: omitted. No case or gender is named before an answer.
 

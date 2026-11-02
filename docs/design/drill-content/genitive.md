@@ -134,7 +134,7 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **flashcard_and_miss_hint**: Junge is a weak noun: in the genitive it takes -n/-en (des Jungen), never -s.
 
-**later_rung_cue**: Is this a weak noun? Weak nouns never take the -s owner ending.
+**later_rung_cue**: Is the noun weak? Weak nouns never take the -s owner ending.
 
 ---
 
@@ -240,7 +240,7 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **flashcard_and_miss_hint**: Male kinship nouns can show the genitive with no article and bare -s: Vaters, like English "father's".
 
-**later_rung_cue**: No article here: this owner works like a name and takes bare -s.
+**later_rung_cue**: No article: the owner works like a name and takes bare -s.
 
 ---
 

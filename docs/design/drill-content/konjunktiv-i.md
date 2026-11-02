@@ -128,7 +128,7 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 - Er behauptet, er ___ das Buch schon gelesen.
 
-**rule (pre-answer)**: A reported past event keeps the perfect with its participle, but the helper shifts into Konjunktiv I, built like any verb: stem + -e.
+**rule (pre-answer)**: A reported past event keeps the perfect with its participle, but the helper shifts into Konjunktiv I, built like any verb: stem + -e (sein has its own form).
 
 **first_exposure_rule**: omitted. No case or gender is named before an answer.
 

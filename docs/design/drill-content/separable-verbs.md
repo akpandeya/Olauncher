@@ -107,7 +107,7 @@ belongs to the flashcard / after-miss hint only, like the "-e nouns are feminine
 **flashcard_and_miss_hint**: an, auf, aus, ein, mit, vor, zu, zurück and fern split; be, ver, er,
 ent, zer, ge, emp, miss never do.
 
-**later_rung_cue**: Does this verb's prefix split off in a main clause, or stay attached?
+**later_rung_cue**: Does the verb's prefix split off in a main clause, or stay attached?
 
 ---
 
@@ -183,7 +183,7 @@ Kind 2, per wrong-choice pattern:
 **flashcard_and_miss_hint**: Each dual verb has one fixed group — learn it with its meaning:
 umkehren splits, überleben does not.
 
-**later_rung_cue**: Which group does this verb's meaning put it in?
+**later_rung_cue**: Which group does the verb's meaning put it in?
 
 ---
 
@@ -262,7 +262,7 @@ umkehren splits, überleben does not.
 **flashcard_and_miss_hint**: an, auf, aus, ein, mit, vor, zu, zurück, fern are separable, so ge-
 sits inside: ab + ge + holt. If the stem has its own inseparable prefix, no ge-: anerkennen → anerkannt.
 
-**later_rung_cue**: Does this verb's prefix split off? That decides where ge- goes.
+**later_rung_cue**: Does the verb's prefix split off? That decides where ge- goes.
 
 ---
 
@@ -322,7 +322,7 @@ sits inside: ab + ge + holt. If the stem has its own inseparable prefix, no ge-:
 **flashcard_and_miss_hint**: be, ver, er, ent, zer, ge, emp, miss are inseparable — no ge- anywhere
 (beantwortet, verraten).
 
-**later_rung_cue**: Does this verb's prefix split off? That decides where ge- goes.
+**later_rung_cue**: Does the verb's prefix split off? That decides where ge- goes.
 
 ---
 
@@ -399,7 +399,7 @@ Template, filled per item: {wrong} = the tapped tile, {verb} = the item's infini
 **flashcard_and_miss_hint**: The sentence's verb is missing its prefix — recall the infinitive, and
 its prefix fills the gap.
 
-**later_rung_cue**: The verb in the sentence has dropped its prefix at the end of the clause.
+**later_rung_cue**: The verb has dropped its prefix at the end of the clause.
 
 ---
 
