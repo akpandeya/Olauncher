@@ -4,6 +4,7 @@
 
 Conventions (author notes, not learner-facing):
 
+- `common_mistakes` (#811): 1–3 short lines, each a typical learner error and the correct form. The card shows them only where no unanswered item is attached — the flashcard and the rules-index detail — never in a pre-answer state or on a later rung. Omitted where no frequent, real mistake exists.
 - Layout follows `articles.md`: id, items, rule, first_exposure_rule, forms table, example,
   miss lines, flashcard_and_miss_hint, later_rung_cue.
 - All ten items test two sides of one pattern (weak nouns: bare subject singular vs -(e)n
@@ -96,6 +97,10 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: These nouns are masculine. Every case adds -(e)n except the nominative singular — the plural keeps it too.
 
 **later_rung_cue**: Weak noun: every form takes -(e)n except the bare subject singular — the plural too.
+
+**common_mistakes**:
+- the bare singular everywhere: dem Bären, den Bären, des Bären — only the nominative singular stays bare.
+- dropping the ending in the plural: die Bären, den Bären — the plural takes -(e)n too.
 
 ---
 

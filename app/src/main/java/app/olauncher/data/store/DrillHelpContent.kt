@@ -55,6 +55,13 @@ data class DrillHelpRule(
     val example: String,
     /** The collapsed cue line of the later rungs (the item's `hint`). */
     val cue: String,
+    /**
+     * 1–3 short English lines (#811), each a typical learner error and the correct
+     * form. Shown only where no unanswered item is attached — the flashcard and the
+     * rules-index detail (docs/design/drill-help-card.md §3) — never in a pre-answer
+     * state or on a later rung; empty when the rule has no frequent, real mistake.
+     */
+    val commonMistakes: List<String> = emptyList(),
 )
 
 /**
@@ -125,6 +132,12 @@ object DrillHelpContent {
             ),
             example = "Die Bücher **werden** oft gelesen.",
             cue = "The helper matches the subject in number and the time word in tense, like any verb.",
+            commonMistakes = listOf(
+                "ist or war with a participle describes a state only; an ongoing action needs " +
+                    "werden: der Zaun wird gestrichen.",
+                "wurde for one subject, wurden for several: der Zaun wurde gestrichen, " +
+                    "die Zäune wurden gestrichen.",
+            ),
         ),
         DrillHelpRule(
             id = "passiv-perfekt-sein",
@@ -140,6 +153,11 @@ object DrillHelpContent {
             ),
             example = "Die Wohnung **ist** schon verkauft worden.",
             cue = "Perfect passive: a form of sein + Partizip II + worden. haben never appears.",
+            commonMistakes = listOf(
+                "haben in the perfect passive: it is always sein + Partizip II + worden — " +
+                    "das Fenster ist geöffnet worden.",
+                "sind for several subjects: die Briefe sind geschickt worden.",
+            ),
         ),
         DrillHelpRule(
             id = "passiv-perfekt-partizip",
@@ -154,6 +172,10 @@ object DrillHelpContent {
             ),
             example = "Die Suppe ist schon gekocht **worden**.",
             cue = "Perfect passive: sein + Partizip II + the helper's special participle, not its full-verb form.",
+            commonMistakes = listOf(
+                "geworden inside the passive: the participle there is worden — " +
+                    "geworden only with werden as a full verb (ist müde geworden).",
+            ),
         ),
         DrillHelpRule(
             id = "passiv-agent",
@@ -166,6 +188,11 @@ object DrillHelpContent {
             ),
             example = "Der Text wird **von** dem Lehrer korrigiert.",
             cue = "Is the noun the doer, the means, the tool or the circumstance? Each role takes its own preposition.",
+            commonMistakes = listOf(
+                "mit for the doer: a person doing the action takes von — von der Ärztin; " +
+                    "mit names the tool.",
+                "durch for a person as doer: durch names the means or cause, von the doer.",
+            ),
         ),
         DrillHelpRule(
             id = "prep-fixed-dat",
@@ -183,6 +210,11 @@ object DrillHelpContent {
             ),
             example = "Ich fahre mit **dem** Bus.",
             cue = "The preposition keeps one case. Recall which one, then the noun's gender.",
+            commonMistakes = listOf(
+                "the accusative after a dative preposition: sie spielt mit dem Ball, not mit den Ball.",
+                "die for a feminine dative noun: mit der Lehrerin, not mit die Lehrerin.",
+                "die for the dative plural: mit den Freunden, not mit die Freunde.",
+            ),
         ),
         DrillHelpRule(
             id = "passiv-partizip-ii",
@@ -198,6 +230,10 @@ object DrillHelpContent {
             ),
             example = "Das Geschirr wird jetzt **gewaschen**.",
             cue = "The helper carries person and tense; the action word after it stays the Partizip II.",
+            commonMistakes = listOf(
+                "conjugating the second verb: der Rasen wird gemäht — not mäht, " +
+                    "and not the infinitive mähen.",
+            ),
         ),
 
         // -----------------------------------------------------------------
@@ -217,6 +253,10 @@ object DrillHelpContent {
             ),
             example = "Er **wird** Arzt.",
             cue = "The subject pronoun picks the form: ich, du, er, wir, ihr, sie.",
+            commonMistakes = listOf(
+                "wird for a plural subject: sie werden schnell nervös.",
+                "ihr werden: the ihr form is werdet — werdet ihr auch nervös?",
+            ),
         ),
         DrillHelpRule(
             id = "futur-helper-form",
@@ -232,6 +272,10 @@ object DrillHelpContent {
             ),
             example = "Ich **werde** dir morgen beim Umzug helfen.",
             cue = "Infinitive at the end + werden form matched to the subject = future.",
+            commonMistakes = listOf(
+                "conjugating the second verb too: er wird morgen kochen, not wird kocht — " +
+                    "the infinitive stays at the end.",
+            ),
         ),
         DrillHelpRule(
             id = "werden-subjunctive-ii",
@@ -246,6 +290,10 @@ object DrillHelpContent {
             ),
             example = "An deiner Stelle **würde** ich das Angebot annehmen.",
             cue = "Is the sentence a real plan or an imagined situation? Each takes its own werden form.",
+            commonMistakes = listOf(
+                "würde for a real plan: a real plan takes the present or werde — ich werde es kaufen.",
+                "werde for an imagined situation: imagined takes würde — ich würde es kaufen.",
+            ),
         ),
 
         // -----------------------------------------------------------------
@@ -264,6 +312,9 @@ object DrillHelpContent {
             ),
             example = "Wenn ich Zeit **hätte**, käme ich mit.",
             cue = "Imagined wenn-clause → Konjunktiv II, not the real present or past.",
+            commonMistakes = listOf(
+                "the real present in an unreal wenn-clause: Wenn wir ein Auto hätten, not haben.",
+            ),
         ),
         DrillHelpRule(
             id = "konj2-subject-agreement",
@@ -279,6 +330,11 @@ object DrillHelpContent {
             ),
             example = "Wenn ihr mehr Geld **hättet**, würdet ihr ein neues Auto kaufen.",
             cue = "Check who the subject is, then take that person's unreal form.",
+            commonMistakes = listOf(
+                "hätte and wäre for every person: the ending still matches — du hättest, " +
+                    "wir hätten.",
+                "du wäre: the du forms are du hättest and du wärst.",
+            ),
         ),
         DrillHelpRule(
             id = "konj2-helper-infinitive",
@@ -293,6 +349,10 @@ object DrillHelpContent {
             ),
             example = "Wenn du mir **helfen** würdest, wäre ich sehr dankbar.",
             cue = "Other verb → two-word unreal form: helper plus dictionary form.",
+            commonMistakes = listOf(
+                "conjugating the second verb: wenn du anrufen würdest — not anrufst.",
+                "hätte or wäre with an ordinary verb: most verbs take würde + infinitive.",
+            ),
         ),
         DrillHelpRule(
             id = "konj2-past-wish",
@@ -309,6 +369,11 @@ object DrillHelpContent {
             ),
             example = "Ich **wäre** gern mitgekommen, aber ich musste arbeiten.",
             cue = "A past that did not happen → unreal form plus participle, not the real past.",
+            commonMistakes = listOf(
+                "the real past for a wish about the past: wir wären gern geblieben, " +
+                    "not wir waren.",
+                "würde + infinitive for the past: it takes hätte or wäre + participle.",
+            ),
         ),
         DrillHelpRule(
             id = "konj2-single-form",
@@ -325,6 +390,9 @@ object DrillHelpContent {
             ),
             example = "Ich **wüsste** gern, wo sie wohnt.",
             cue = "Wish with gern → the verb's own single unreal form, not present or past.",
+            commonMistakes = listOf(
+                "the real present in a wish: ich bräuchte mehr Zeit, not ich brauche mehr Zeit.",
+            ),
         ),
         DrillHelpRule(
             id = "konj2-polite-request",
@@ -341,6 +409,10 @@ object DrillHelpContent {
             ),
             example = "Ich **hätte** gern einen Kaffee, bitte.",
             cue = "Polite order → unreal form plus gern, not the real present or past.",
+            commonMistakes = listOf(
+                "the real present in a polite order: wir hätten gern die Rechnung, " +
+                    "not wir haben.",
+            ),
         ),
 
         // -----------------------------------------------------------------
@@ -361,6 +433,12 @@ object DrillHelpContent {
             ),
             example = "Das Kind, **das** dort spielt, ist fünf Jahre alt.",
             cue = "Gender and number come from the noun; the case comes from the pronoun's own role in the clause.",
+            commonMistakes = listOf(
+                "matching the pronoun to the main clause: its gender and number copy the " +
+                    "noun — das Kind, das; die Kinder, die.",
+                "the main clause's case for the pronoun: its case follows its own job in the " +
+                    "relative clause — den ich sehe, dem ich helfe.",
+            ),
         ),
         DrillHelpRule(
             id = "rel-after-prep",
@@ -379,6 +457,12 @@ object DrillHelpContent {
             ),
             example = "Der Kollege, mit **dem** ich arbeite, kommt aus Bonn.",
             cue = "After a preposition, the preposition — not the clause — decides the pronoun's form.",
+            commonMistakes = listOf(
+                "moving the preposition out of the clause: die Freundin, mit der ich reise — " +
+                    "the preposition stays right before the pronoun.",
+                "dem for every gender after mit: the dative form follows the noun's gender — " +
+                    "mit der Sängerin, mit dem Kollegen.",
+            ),
         ),
         DrillHelpRule(
             id = "rel-genitive",
@@ -394,6 +478,11 @@ object DrillHelpContent {
             example = "Der Mann, **dessen** Auto rot ist, ist mein Nachbar.",
             cue = "When a noun without its own article follows the pronoun and belongs to the noun " +
                 "it refers to, the clause shows possession: use the special possessive form.",
+            commonMistakes = listOf(
+                "sein or ihr for the possessed noun: German uses dessen/deren — der Junge, dessen Hund.",
+                "dessen for every owner: dessen for masculine and neuter owners, deren for " +
+                    "feminine and plural — die Lehrerin, deren Kurs.",
+            ),
         ),
 
         // -----------------------------------------------------------------
@@ -412,6 +501,10 @@ object DrillHelpContent {
             ),
             example = "Das ist die Farbe **des** Meeres.",
             cue = "Wessen? The owner's article follows its gender.",
+            commonMistakes = listOf(
+                "des for a feminine or plural owner: die Tür der Küche, der Bücher — " +
+                    "des is only for masculine and neuter owners.",
+            ),
         ),
         DrillHelpRule(
             id = "gen-noun-s",
@@ -426,6 +519,10 @@ object DrillHelpContent {
             ),
             example = "Ich lese den Anfang des Buch**es**.",
             cue = "After des the noun adds -s — or the fuller -es when the word is short.",
+            commonMistakes = listOf(
+                "leaving the noun unchanged: des Mannes, des Buches — after des the owner " +
+                    "noun adds -s or -es.",
+            ),
         ),
         DrillHelpRule(
             id = "gen-noun-weak",
@@ -440,6 +537,10 @@ object DrillHelpContent {
             ),
             example = "Das ist das Auto des Nachbar**n**.",
             cue = "Is the noun weak? Weak nouns never take the -s owner ending.",
+            commonMistakes = listOf(
+                "adding -s to a weak noun: des Menschen, des Bären — weak nouns take -(e)n, " +
+                    "never -s.",
+            ),
         ),
         DrillHelpRule(
             id = "gen-time-phrase",
@@ -455,6 +556,10 @@ object DrillHelpContent {
             ),
             example = "**Eines** Tages erzähle ich dir alles.",
             cue = "A fixed time phrase: recall it as a whole, article included.",
+            commonMistakes = listOf(
+                "ein for the whole phrase: eines Morgens — the time phrase keeps " +
+                    "its genitive article.",
+            ),
         ),
         DrillHelpRule(
             id = "gen-question-whose",
@@ -469,6 +574,9 @@ object DrillHelpContent {
             ),
             example = "**Wessen** Schlüssel ist das?",
             cue = "\"Whose\" has its own question word — not wer, wen or wem.",
+            commonMistakes = listOf(
+                "wer or wem for whose: Wessen Jacke hängt hier? — whose has its own word.",
+            ),
         ),
         DrillHelpRule(
             id = "gen-kinship-s",
@@ -483,6 +591,10 @@ object DrillHelpContent {
             ),
             example = "Vater**s** altes Fahrrad steht in der Garage.",
             cue = "No article: the owner works like a name and takes bare -s.",
+            commonMistakes = listOf(
+                "an English apostrophe: Onkels neues Haus — German writes the bare -s " +
+                    "with no 's.",
+            ),
         ),
         DrillHelpRule(
             id = "gen-noun-zero",
@@ -497,6 +609,10 @@ object DrillHelpContent {
             ),
             example = "Das sind die Bücher der **Schüler**.",
             cue = "Plural owners stay unchanged; only the article changes.",
+            commonMistakes = listOf(
+                "adding -s to a plural owner: die Fahrräder der Kinder — a plural owner noun " +
+                    "stays unchanged.",
+            ),
         ),
 
         // -----------------------------------------------------------------
@@ -516,6 +632,12 @@ object DrillHelpContent {
             ),
             example = "Wir helfen dem Nachbar**n** am Wochenende im Garten.",
             cue = "Weak noun: every form takes -(e)n except the bare subject singular — the plural too.",
+            commonMistakes = listOf(
+                "the bare singular everywhere: dem Bären, den Bären, des Bären — " +
+                    "only the nominative singular stays bare.",
+                "dropping the ending in the plural: die Bären, den Bären — the plural takes " +
+                    "-(e)n too.",
+            ),
         ),
 
         // -----------------------------------------------------------------
@@ -535,6 +657,10 @@ object DrillHelpContent {
             ),
             example = "**Zieht** eure Schuhe an!",
             cue = "Whom are you addressing: one person (du), several (ihr) or formally (Sie)?",
+            commonMistakes = listOf(
+                "the du and ihr forms drop the pronoun (Komm!, Kommt!), but Sie stays: " +
+                    "Kommen Sie!",
+            ),
         ),
         DrillHelpRule(
             id = "imp-du-vowel-change",
@@ -550,6 +676,10 @@ object DrillHelpContent {
             ),
             example = "**Gib** mir bitte das Salz!",
             cue = "Whom are you addressing? Strong verbs change the stem vowel only for du.",
+            commonMistakes = listOf(
+                "the normal stem for du: Sprich!, Hilf!, Sieh! — the vowel changes to i or " +
+                    "ie only in the du imperative.",
+            ),
         ),
         DrillHelpRule(
             id = "imp-sein",
@@ -565,6 +695,10 @@ object DrillHelpContent {
             ),
             example = "**Sei** bitte vorsichtig mit dem Glas!",
             cue = "sein has its own imperative forms — check whom you are addressing.",
+            commonMistakes = listOf(
+                "bist or sind as a command is wrong: Sei!, Seid!, Seien Sie! — sein has its " +
+                    "own imperative forms.",
+            ),
         ),
         DrillHelpRule(
             id = "imp-sie-infinitive",
@@ -582,6 +716,10 @@ object DrillHelpContent {
             ),
             example = "**Nehmen** Sie bitte Platz!",
             cue = "Formal address: recall the imperative form that goes with it.",
+            commonMistakes = listOf(
+                "the du form with Sie: the Sie imperative is the infinitive + Sie — " +
+                    "Warten Sie bitte, not Warte Sie.",
+            ),
         ),
 
         // -----------------------------------------------------------------
@@ -601,6 +739,11 @@ object DrillHelpContent {
             ),
             example = "Letzte Woche **wart** ihr im Urlaub.",
             cue = "sein has its own simple past forms, one per person — never the regular -te pattern.",
+            commonMistakes = listOf(
+                "the regular -te pattern for sein: du warst, wir waren — sein " +
+                    "never takes machte-style endings.",
+                "ihr has its own short form: wart.",
+            ),
         ),
         DrillHelpRule(
             id = "praet-haben",
@@ -616,6 +759,9 @@ object DrillHelpContent {
             ),
             example = "Gestern **hatte** ich kein Geld dabei.",
             cue = "haben has its own simple past stem; it never takes the regular -te pattern.",
+            commonMistakes = listOf(
+                "habte: the stem changes — du hattest, sie hatten.",
+            ),
         ),
         DrillHelpRule(
             id = "praet-modal",
@@ -632,6 +778,9 @@ object DrillHelpContent {
             ),
             example = "Als Kind **durfte** ich nicht lange fernsehen.",
             cue = "Modals build the simple past with plain -te and drop the umlaut.",
+            commonMistakes = listOf(
+                "keeping the umlaut: er durfte, mochte — not dürfte, möchte.",
+            ),
         ),
         DrillHelpRule(
             id = "praet-strong-vowel",
@@ -648,6 +797,10 @@ object DrillHelpContent {
             ),
             example = "Wir **kamen** gestern sehr spät nach Hause.",
             cue = "Strong verbs change the stem vowel; the person's ending is regular.",
+            commonMistakes = listOf(
+                "adding -te to a strong verb: er trank, schrieb, las — the vowel changes, " +
+                    "and no -te joins it.",
+            ),
         ),
 
         // -----------------------------------------------------------------
@@ -666,6 +819,11 @@ object DrillHelpContent {
             ),
             example = "Ich habe keine Lust, heute **zu** arbeiten.",
             cue = "Is the first verb a modal, or another trigger? That decides the infinitive's form.",
+            commonMistakes = listOf(
+                "zu after a modal: ich muss heute arbeiten — modals keep the bare infinitive.",
+                "a bare infinitive after other triggers: ich versuche, pünktlich zu sein — most " +
+                    "triggers need zu.",
+            ),
         ),
         DrillHelpRule(
             id = "infzu-separable-split",
@@ -680,6 +838,10 @@ object DrillHelpContent {
             ),
             example = "Vergiss nicht, das Licht aus**zu**machen, wenn du ins Bett gehst.",
             cue = "Separable prefix? The linking word slides in between prefix and stem.",
+            commonMistakes = listOf(
+                "zu in front of the whole verb: aufzuhören, not zu aufhören — zu slides " +
+                    "between prefix and stem.",
+            ),
         ),
         DrillHelpRule(
             id = "infzu-clause-meaning",
@@ -694,6 +856,10 @@ object DrillHelpContent {
             ),
             example = "Er ging weg, **ohne** ein Wort zu sagen.",
             cue = "What does the second clause say: the goal, or something that did not happen?",
+            commonMistakes = listOf(
+                "um ... zu and ohne ... zu swapped: um ... zu names the goal, ohne ... zu " +
+                    "says it did not happen.",
+            ),
         ),
 
         // -----------------------------------------------------------------
@@ -722,6 +888,10 @@ object DrillHelpContent {
             ),
             example = "Du **darfst** hier nicht rauchen.",
             cue = "What does the sentence mean: allowed, able, has to, or likes? Then match the subject.",
+            commonMistakes = listOf(
+                "können for permission: Darf ich gehen? — dürfen is allowed, " +
+                    "können is able.",
+            ),
         ),
         DrillHelpRule(
             id = "modal-person-form",
@@ -738,6 +908,12 @@ object DrillHelpContent {
             ),
             example = "Der Arzt sagt, ich **soll** mehr Wasser trinken.",
             cue = "Find the subject, then take that person's form.",
+            commonMistakes = listOf(
+                "an ending for ich and er: ich mag, er mag — they share one short form " +
+                    "with no ending.",
+                "conjugating wir: wir, sie (they) and Sie use the infinitive — wir wollen, " +
+                    "Sie müssen.",
+            ),
         ),
 
         // -----------------------------------------------------------------
@@ -758,6 +934,10 @@ object DrillHelpContent {
             ),
             example = "Sie sagt, sie arbeit**e** heute bis acht.",
             cue = "Reported after sagt or meint, the verb takes Konjunktiv I instead of the normal present.",
+            commonMistakes = listOf(
+                "the normal present in reported speech: Sie sagt, sie arbeite heute — " +
+                    "stem + -e in Konjunktiv I.",
+            ),
         ),
         DrillHelpRule(
             id = "konj1-switch",
@@ -773,6 +953,10 @@ object DrillHelpContent {
             ),
             example = "Die Eltern sagen, sie müss**ten** am Wochenende länger schlafen.",
             cue = "If the Konjunktiv I would look like the normal present, reported speech uses Konjunktiv II.",
+            commonMistakes = listOf(
+                "keeping Konjunktiv I where it equals the present: sie haben — the " +
+                    "reported form falls back to Konjunktiv II.",
+            ),
         ),
         DrillHelpRule(
             id = "konj1-perfect",
@@ -787,6 +971,10 @@ object DrillHelpContent {
             ),
             example = "Er behauptet, er hab**e** das Buch schon gelesen.",
             cue = "A reported perfect puts its helper into Konjunktiv I and keeps the participle.",
+            commonMistakes = listOf(
+                "hat in the reported perfect: er sei gekommen — the helper takes " +
+                    "Konjunktiv I, the participle stays.",
+            ),
         ),
         DrillHelpRule(
             id = "konj1-future",
@@ -801,6 +989,10 @@ object DrillHelpContent {
             ),
             example = "Sie sagt, er werd**e** dich morgen anrufen.",
             cue = "A reported future puts its helper into Konjunktiv I and keeps the infinitive at the end.",
+            commonMistakes = listOf(
+                "wird in the reported future: the helper werde, " +
+                    "the infinitive stays at the end.",
+            ),
         ),
     )
 }

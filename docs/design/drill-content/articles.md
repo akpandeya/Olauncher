@@ -77,6 +77,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: Look at the -ung ending.
 
+**common_mistakes**:
+- der Meinung: nouns in -ung are die — die Rechnung, die Meinung.
+
 ## art-gender-suffix-heit
 
 **id**: `art-gender-suffix-heit`
@@ -104,6 +107,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: Nouns ending in -heit are feminine.
 
 **later_rung_cue**: Look at the -heit ending.
+
+**common_mistakes**:
+- das Krankheit: nouns in -heit are die — die Krankheit, die Wahrheit.
 
 ## art-gender-suffix-keit
 
@@ -133,6 +139,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: Look at the -keit ending.
 
+**common_mistakes**:
+- das Fähigkeit: nouns in -keit are die — die Fähigkeit.
+
 ## art-gender-suffix-schaft
 
 **id**: `art-gender-suffix-schaft`
@@ -160,6 +169,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: Nouns ending in -schaft are feminine.
 
 **later_rung_cue**: Look at the -schaft ending.
+
+**common_mistakes**:
+- der Mannschaft: nouns in -schaft are die — die Mannschaft, die Gesellschaft.
 
 ## art-gender-suffix-ion
 
@@ -189,6 +201,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: Look at the -ion ending.
 
+**common_mistakes**:
+- der Nation: nouns in -ion are die — die Nation, die Region.
+
 ## art-gender-suffix-taet
 
 **id**: `art-gender-suffix-taet`
@@ -216,6 +231,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: Nouns ending in -tät are feminine.
 
 **later_rung_cue**: Look at the -tät ending.
+
+**common_mistakes**:
+- das Qualität: nouns in -tät are die — die Qualität, die Fakultät.
 
 ## art-gender-suffix-ei
 
@@ -245,6 +263,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: Look at the -ei ending.
 
+**common_mistakes**:
+- das Polizei: nouns in -ei are die — die Polizei.
+
 ## art-gender-suffix-e
 
 **id**: `art-gender-suffix-e`
@@ -272,6 +293,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: Most nouns ending in -e are feminine.
 
 **later_rung_cue**: Look at the -e ending.
+
+**common_mistakes**:
+- der Tasse: most nouns in -e are die — die Tasse, die Blume (but der Junge, der Name).
 
 ## art-gender-suffix-ismus
 
@@ -301,6 +325,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: Look at the -ismus ending.
 
+**common_mistakes**:
+- das Realismus: nouns in -ismus are der — der Realismus.
+
 ## art-gender-suffix-ling
 
 **id**: `art-gender-suffix-ling`
@@ -328,6 +355,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: Nouns ending in -ling are masculine.
 
 **later_rung_cue**: Look at the -ling ending.
+
+**common_mistakes**:
+- das Lehrling: nouns in -ling are der — der Lehrling, der Liebling.
 
 ## art-gender-suffix-ment
 
@@ -357,6 +387,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: Look at the -ment ending.
 
+**common_mistakes**:
+- das Medikament: nouns in -ment are das — das Medikament, das Parlament.
+
 ## art-gender-suffix-chen
 
 **id**: `art-gender-suffix-chen`
@@ -384,6 +417,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: Diminutive nouns ending in -chen are neuter.
 
 **later_rung_cue**: Look at the -chen ending.
+
+**common_mistakes**:
+- das Häuschen: nouns in -chen are das — das Häuschen, das Kätzchen.
 
 ## art-gender-suffix-lein
 
@@ -413,6 +449,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: Look at the -lein ending.
 
+**common_mistakes**:
+- das Tischlein: nouns in -lein are das — das Tischlein, das Büchlein.
+
 ## art-gender-suffix-um
 
 **id**: `art-gender-suffix-um`
@@ -440,6 +479,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: Latin loan nouns ending in -um are neuter.
 
 **later_rung_cue**: Look at the -um ending.
+
+**common_mistakes**:
+- das Datum: nouns in -um are das — das Datum, das Studium.
 
 ## art-gender-suffix-exception
 
@@ -475,6 +517,8 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: Learn the article together with the noun.
 
+**common_mistakes**: omitted.
+
 ## art-gender-natural
 
 **id**: `art-gender-natural`
@@ -507,6 +551,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: Think about the person the noun names.
 
+**common_mistakes**:
+- die Onkel / der Tante: natural gender usually matches the article — der Onkel, die Tante.
+
 ## art-gender-fixed
 
 **id**: `art-gender-fixed`
@@ -537,3 +584,5 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: Learn the article with the noun.
 
 **later_rung_cue**: Learn the article together with the noun.
+
+**common_mistakes**: omitted.

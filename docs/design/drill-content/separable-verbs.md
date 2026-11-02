@@ -109,6 +109,9 @@ ent, zer, ge, emp, miss never do.
 
 **later_rung_cue**: Does the verb's prefix split off in a main clause, or stay attached?
 
+**common_mistakes**:
+- splitting an inseparable verb: Ich beantworte deine Frage — be-, ver-, er- and friends never split.
+
 ---
 
 ## sep-dual
@@ -184,6 +187,9 @@ Kind 2, per wrong-choice pattern:
 umkehren splits, überleben does not.
 
 **later_rung_cue**: Which group does the verb's meaning put it in?
+
+**common_mistakes**:
+- one rule for über, um, unter and durch: the meaning decides — Ich kehre um, but Ich überlebe.
 
 ---
 
@@ -264,6 +270,9 @@ sits inside: ab + ge + holt. If the stem has its own inseparable prefix, no ge-:
 
 **later_rung_cue**: Does the verb's prefix split off? That decides where ge- goes.
 
+**common_mistakes**:
+- ge- in front of the prefix: abgeholt, angesehen — ge- goes after a separable prefix.
+
 ---
 
 ## sep-participle-no-ge
@@ -323,6 +332,9 @@ sits inside: ab + ge + holt. If the stem has its own inseparable prefix, no ge-:
 (beantwortet, verraten).
 
 **later_rung_cue**: Does the verb's prefix split off? That decides where ge- goes.
+
+**common_mistakes**:
+- gebeantwortet: an inseparable prefix takes no ge- — beantwortet, verkauft.
 
 ---
 
@@ -400,6 +412,9 @@ Template, filled per item: {wrong} = the tapped tile, {verb} = the item's infini
 its prefix fills the gap.
 
 **later_rung_cue**: The verb has dropped its prefix at the end of the clause.
+
+**common_mistakes**:
+- keeping the prefix beside the verb: Ich hole dich ab — the prefix drops to the very end of the clause.
 
 ---
 

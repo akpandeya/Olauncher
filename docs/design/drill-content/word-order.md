@@ -15,6 +15,7 @@ Notes for this topic:
 - The forms tables below are small position-pattern tables. Before an answer, no row or
   cell is marked; all rows carry equal weight. A matching cell is marked only in
   after-answer states.
+- `common_mistakes` (#811): 1–3 short lines, each a typical learner error and the correct form. The card shows them only where no unanswered item is attached — the flashcard and the rules-index detail — never in a pre-answer state or on a later rung. Omitted where no frequent, real mistake exists.
 - Each rule's `example` is rendered per item as that item's first accepted order, shown in the
   flashcard and after-miss states only, so a card never shows another item's answer. The verb
   parts whose position is the point are bold; the sentence given below is the rendering for one item.
@@ -58,6 +59,9 @@ Notes for this topic:
 **flashcard_and_miss_hint**: Either the subject or a time word may open the clause — the verb still lands in position 2.
 
 **later_rung_cue**: Verb second; a fronted time word pushes the subject behind the verb.
+
+**common_mistakes**:
+- the subject right after a fronted time word: Heute kocht er Suppe — the verb stays second, the subject follows it.
 
 ---
 
@@ -103,6 +107,9 @@ Notes for this topic:
 
 **later_rung_cue**: After weil, dass, wenn or ob the conjugated verb closes the clause.
 
+**common_mistakes**:
+- the verb second after weil: weil sie Deutsch lernt — the conjugated verb closes the clause.
+
 ---
 
 ## wo-separable-end
@@ -140,6 +147,9 @@ Notes for this topic:
 **flashcard_and_miss_hint**: The verb splits: the conjugated part is early, the prefix tile belongs at the very end.
 
 **later_rung_cue**: Conjugated verb part second, separable prefix at the very end.
+
+**common_mistakes**:
+- keeping the prefix next to the verb: Ich hole dich später vom Bahnhof ab — the prefix drops to the end.
 
 ---
 
@@ -179,6 +189,9 @@ Notes for this topic:
 
 **later_rung_cue**: Modal conjugated in position 2, infinitive at the end.
 
+**common_mistakes**:
+- conjugating the main verb too: only the modal carries the ending — Wir dürfen hier nicht parken.
+
 ---
 
 ## wo-perfekt-bracket
@@ -217,6 +230,10 @@ Notes for this topic:
 
 **later_rung_cue**: Helping verb in position 2, participle at the end.
 
+**common_mistakes**:
+- the infinitive in the Perfekt: the participle closes the bracket — Wir haben den Film gesehen.
+- the participle in position 2: the helper takes position 2, the participle goes to the end.
+
 ---
 
 ## wo-tekamolo
@@ -253,6 +270,9 @@ Notes for this topic:
 **flashcard_and_miss_hint**: Sort the adverbial tiles by the question they answer: Wann? before Wie? before Wohin?.
 
 **later_rung_cue**: TeKaMoLo: time, cause, manner, place.
+
+**common_mistakes**:
+- Ich gehe zum Arzt morgen: time comes before place — Ich gehe morgen zum Arzt.
 
 ---
 
@@ -291,3 +311,6 @@ Notes for this topic:
 **flashcard_and_miss_hint**: There is no question word here, so the conjugated verb itself opens the question.
 
 **later_rung_cue**: Yes/no question: conjugated verb first, subject right after it.
+
+**common_mistakes**:
+- statement order in a yes/no question: Hast du Zeit? — the conjugated verb opens the question.

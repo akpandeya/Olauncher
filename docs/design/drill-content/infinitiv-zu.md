@@ -4,6 +4,7 @@
 
 Conventions (author notes, not learner-facing):
 
+- `common_mistakes` (#811): 1–3 short lines, each a typical learner error and the correct form. The card shows them only where no unanswered item is attached — the flashcard and the rules-index detail — never in a pre-answer state or on a later rung. Omitted where no frequent, real mistake exists.
 - Layout follows `articles.md`: id, items, rule, first_exposure_rule, forms table, example,
   miss lines, flashcard_and_miss_hint, later_rung_cue.
 - No existing ID is reused: all other IDs are article, case, pronoun or verb rules.
@@ -64,6 +65,10 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: Is the first verb a modal, or another trigger? That decides the infinitive's form.
 
+**common_mistakes**:
+- zu after a modal: ich muss heute arbeiten — modals keep the bare infinitive.
+- a bare infinitive after other triggers: ich versuche, pünktlich zu sein — most triggers need zu.
+
 ---
 
 ## infzu-separable-split
@@ -109,6 +114,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: Separable prefix? The linking word slides in between prefix and stem.
 
+**common_mistakes**:
+- zu in front of the whole verb: aufzuhören, not zu aufhören — zu slides between prefix and stem.
+
 ---
 
 ## infzu-clause-meaning
@@ -153,6 +161,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: um ... zu = the goal (in order to); ohne ... zu = without — it did not happen.
 
 **later_rung_cue**: What does the second clause say: the goal, or something that did not happen?
+
+**common_mistakes**:
+- um ... zu and ohne ... zu swapped: um ... zu names the goal, ohne ... zu says it did not happen.
 
 ---
 

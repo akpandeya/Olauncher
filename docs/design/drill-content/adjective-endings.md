@@ -47,6 +47,9 @@ Equal weight before an answer; the same table is shown for every item of this de
 
 **later_rung_cue**: Find the article in the table: which row and column is it in?
 
+**common_mistakes**:
+- der weißer Hund: after der the adjective takes -e, never -er.
+
 ---
 
 ## adj-weak-akk
@@ -82,6 +85,9 @@ Equal weight before an answer; the same table is shown for every item of this de
 
 **later_rung_cue**: Find the article in the table: which row and column is it in?
 
+**common_mistakes**:
+- den kleiner Hund: after den the adjective takes -en — den kleinen Hund.
+
 ---
 
 ## adj-weak-dat
@@ -115,6 +121,9 @@ Equal weight before an answer; the same table is shown for every item of this de
 
 **later_rung_cue**: Find the article in the table: which row and column is it in?
 
+**common_mistakes**:
+- -e in the dative: after dem or der, every dative adjective ends in -en — dem alten Haus.
+
 ---
 
 ## adj-weak-gen
@@ -147,6 +156,9 @@ Equal weight before an answer; the same table is shown for every item of this de
 **flashcard_and_miss_hint**: Schwache Deklination, Genitiv: des and der — the adjective always takes -en.
 
 **later_rung_cue**: Find the article in the table: which row and column is it in?
+
+**common_mistakes**:
+- des großes Briefes: the adjective takes -en in the genitive too — des großen Briefes.
 
 ---
 
@@ -183,6 +195,9 @@ Equal weight before an answer; the same table is shown for every item of this de
 
 **later_rung_cue**: Does the article have an ending of its own? If not, the adjective carries the signal.
 
+**common_mistakes**:
+- ein neu Tisch: where ein shows no ending, the adjective carries the signal — ein neuer Tisch.
+
 ---
 
 ## adj-mixed-akk
@@ -218,6 +233,9 @@ Equal weight before an answer; the same table is shown for every item of this de
 
 **later_rung_cue**: Does the article have an ending of its own? If not, the adjective carries the signal.
 
+**common_mistakes**:
+- einen kleiner Hund: after einen the adjective takes -en — einen kleinen Hund.
+
 ---
 
 ## adj-mixed-dat
@@ -251,6 +269,9 @@ Equal weight before an answer; the same table is shown for every item of this de
 
 **later_rung_cue**: Does the article have an ending of its own? If not, the adjective carries the signal.
 
+**common_mistakes**:
+- einem neuer Wagen: the dative always takes -en — einem neuen Wagen.
+
 ---
 
 ## adj-mixed-gen
@@ -283,3 +304,6 @@ Equal weight before an answer; the same table is shown for every item of this de
 **flashcard_and_miss_hint**: Gemischte Deklination, Genitiv: eines, einer and keiner — the adjective always takes -en.
 
 **later_rung_cue**: Does the article have an ending of its own? If not, the adjective carries the signal.
+
+**common_mistakes**:
+- eines nettes Nachbarn: the genitive takes -en — eines netten Nachbarn.

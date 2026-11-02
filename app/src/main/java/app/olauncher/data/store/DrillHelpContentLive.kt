@@ -38,6 +38,10 @@ internal object DrillHelpContentLive {
             ),
             example = "Ich fahre mit **dem** Bus.",
             cue = "Fixed case. Recall which one the preposition takes.",
+            commonMistakes = listOf(
+                "picking the case from the noun's meaning: the preposition fixes the case, " +
+                    "then the noun's gender picks the form.",
+            ),
         ),
         DrillHelpRule(
             id = "prep-fixed-acc",
@@ -55,6 +59,10 @@ internal object DrillHelpContentLive {
             ),
             example = "Ich gehe durch **den** Park.",
             cue = "The preposition keeps one case. Recall which one, then the noun's gender.",
+            commonMistakes = listOf(
+                "the dative after durch, für, gegen, ohne or um: they always take the " +
+                    "accusative — durch den Wald, ohne dich.",
+            ),
         ),
         DrillHelpRule(
             id = "prep-fixed-gen",
@@ -73,6 +81,10 @@ internal object DrillHelpContentLive {
             ),
             example = "Wegen **des** Wetters bleiben wir hier.",
             cue = "The preposition keeps one case. Recall which one, then the noun's gender.",
+            commonMistakes = listOf(
+                "the dative after wegen or trotz: they take the genitive — wegen des " +
+                    "Staus, trotz des Lärms.",
+            ),
         ),
         DrillHelpRule(
             id = "prep-two-way",
@@ -90,6 +102,11 @@ internal object DrillHelpContentLive {
             ),
             example = "Ich lege das Buch auf **den** Tisch.",
             cue = "Ask Wohin? (movement) or Wo? (fixed position) — the verb decides.",
+            commonMistakes = listOf(
+                "the dative for movement: wohin? takes the accusative — Ich gehe in die Stadt.",
+                "the accusative for a fixed position: wo? takes the dative — Die Tasche " +
+                    "bleibt auf dem Stuhl.",
+            ),
         ),
 
         // -----------------------------------------------------------------
@@ -110,6 +127,9 @@ internal object DrillHelpContentLive {
             ),
             example = "Hier schläft de**r** Hund.",
             cue = "Ask Wer?, Wen? or Wem? for the noun, then recall its gender.",
+            commonMistakes = listOf(
+                "den for the doer: Wer? takes the nominative — der Vogel singt.",
+            ),
         ),
         DrillHelpRule(
             id = "case-sein-nom",
@@ -126,6 +146,10 @@ internal object DrillHelpContentLive {
             ),
             example = "Das ist di**e** beste Lösung.",
             cue = "Ask what the noun after sein refers to, then recall its gender.",
+            commonMistakes = listOf(
+                "den or dem after sein: the noun after sein stays nominative — Mein " +
+                    "Bruder ist der neue Chef.",
+            ),
         ),
         DrillHelpRule(
             id = "case-verb-acc",
@@ -142,6 +166,10 @@ internal object DrillHelpContentLive {
             ),
             example = "Wir besuchen de**n** Großvater.",
             cue = "Ask Wer?, Wen? or Wem? for the noun, then recall its gender.",
+            commonMistakes = listOf(
+                "the nominative for the thing acted on: Wen? takes the accusative — der " +
+                    "Bruder becomes den Bruder.",
+            ),
         ),
         DrillHelpRule(
             id = "case-verb-dat",
@@ -158,6 +186,10 @@ internal object DrillHelpContentLive {
             ),
             example = "Ich helfe de**m** Mann gerne.",
             cue = "Ask Wer?, Wen? or Wem? for the noun, then recall its gender.",
+            commonMistakes = listOf(
+                "the accusative for the receiver: helfen, glauben and gehören take the " +
+                    "dative — Ich vertraue dem Kind.",
+            ),
         ),
 
         // -----------------------------------------------------------------
@@ -176,6 +208,10 @@ internal object DrillHelpContentLive {
             ),
             example = "Am Sonntag streiten die Kinder **um** die Fernbedienung.",
             cue = "Verb and preposition are one unit — recall the whole pair.",
+            commonMistakes = listOf(
+                "swapping the preposition by meaning: sich streiten um, sich fürchten vor — " +
+                    "each verb owns its preposition.",
+            ),
         ),
         DrillHelpRule(
             id = "verb-prep-gap-meaning",
@@ -190,6 +226,9 @@ internal object DrillHelpContentLive {
             ),
             example = "Sie entschuldigt sich **bei** dem Lehrer **für** die Verspätung.",
             cue = "Two pairs, two meanings — pick the one the sentence means.",
+            commonMistakes = listOf(
+                "bei and für swapped: sich entschuldigen beim Lehrer für die Verspätung.",
+            ),
         ),
         DrillHelpRule(
             id = "verb-prep-case-pair",
@@ -205,6 +244,10 @@ internal object DrillHelpContentLive {
             ),
             example = "Der Bericht beruht **auf** alte**n** Daten.",
             cue = "Same preposition, different verb — the verb decides. Recall the whole trio.",
+            commonMistakes = listOf(
+                "the preposition's usual case: hinweisen auf + accusative, beruhen auf + " +
+                    "dative — the verb fixes it.",
+            ),
         ),
 
         // -----------------------------------------------------------------
@@ -225,6 +268,9 @@ internal object DrillHelpContentLive {
             ),
             example = "Die weiß**e** Katze sitzt auf dem Dach.",
             cue = "Find the article in the table: which row and column is it in?",
+            commonMistakes = listOf(
+                "der weißer Hund: after der the adjective takes -e, never -er.",
+            ),
         ),
         DrillHelpRule(
             id = "adj-weak-akk",
@@ -241,6 +287,9 @@ internal object DrillHelpContentLive {
             ),
             example = "Ich kenne den nett**en** Lehrer gut.",
             cue = "Find the article in the table: which row and column is it in?",
+            commonMistakes = listOf(
+                "den kleiner Hund: after den the adjective takes -en — den kleinen Hund.",
+            ),
         ),
         DrillHelpRule(
             id = "adj-weak-dat",
@@ -257,6 +306,10 @@ internal object DrillHelpContentLive {
             ),
             example = "Ich helfe dem groß**en** Bruder beim Umzug.",
             cue = "Find the article in the table: which row and column is it in?",
+            commonMistakes = listOf(
+                "-e in the dative: after dem or der, every dative adjective ends in -en — " +
+                    "dem alten Haus.",
+            ),
         ),
         DrillHelpRule(
             id = "adj-weak-gen",
@@ -273,6 +326,10 @@ internal object DrillHelpContentLive {
             ),
             example = "Das ist das Fahrrad des alt**en** Vaters.",
             cue = "Find the article in the table: which row and column is it in?",
+            commonMistakes = listOf(
+                "des großes Briefes: the adjective takes -en in the genitive too — " +
+                    "des großen Briefes.",
+            ),
         ),
         DrillHelpRule(
             id = "adj-mixed-nom",
@@ -290,6 +347,10 @@ internal object DrillHelpContentLive {
             ),
             example = "Dort läuft ein treu**er** Hund über die Wiese.",
             cue = "Does the article have an ending of its own? If not, the adjective carries the signal.",
+            commonMistakes = listOf(
+                "ein neu Tisch: where ein shows no ending, the adjective carries the " +
+                    "signal — ein neuer Tisch.",
+            ),
         ),
         DrillHelpRule(
             id = "adj-mixed-akk",
@@ -307,6 +368,9 @@ internal object DrillHelpContentLive {
             ),
             example = "Er trinkt einen heiß**en** Tee mit Zitrone.",
             cue = "Does the article have an ending of its own? If not, the adjective carries the signal.",
+            commonMistakes = listOf(
+                "einen kleiner Hund: after einen the adjective takes -en — einen kleinen Hund.",
+            ),
         ),
         DrillHelpRule(
             id = "adj-mixed-dat",
@@ -324,6 +388,9 @@ internal object DrillHelpContentLive {
             ),
             example = "Sie spricht mit einem gut**en** Freund über alles.",
             cue = "Does the article have an ending of its own? If not, the adjective carries the signal.",
+            commonMistakes = listOf(
+                "einem neuer Wagen: the dative always takes -en — einem neuen Wagen.",
+            ),
         ),
         DrillHelpRule(
             id = "adj-mixed-gen",
@@ -341,6 +408,9 @@ internal object DrillHelpContentLive {
             ),
             example = "Das ist das Buch eines klug**en** Lehrers.",
             cue = "Does the article have an ending of its own? If not, the adjective carries the signal.",
+            commonMistakes = listOf(
+                "eines nettes Nachbarn: the genitive takes -en — eines netten Nachbarn.",
+            ),
         ),
 
         // -----------------------------------------------------------------
@@ -357,6 +427,9 @@ internal object DrillHelpContentLive {
             ),
             example = "**Die** Wohnung ist hell.",
             cue = "Look at the -ung ending.",
+            commonMistakes = listOf(
+                "der Meinung: nouns in -ung are die — die Rechnung, die Meinung.",
+            ),
         ),
         DrillHelpRule(
             id = "art-gender-suffix-heit",
@@ -369,6 +442,9 @@ internal object DrillHelpContentLive {
             ),
             example = "**Die** Freiheit ist wichtig.",
             cue = "Look at the -heit ending.",
+            commonMistakes = listOf(
+                "das Krankheit: nouns in -heit are die — die Krankheit, die Wahrheit.",
+            ),
         ),
         DrillHelpRule(
             id = "art-gender-suffix-keit",
@@ -381,6 +457,9 @@ internal object DrillHelpContentLive {
             ),
             example = "**Die** Möglichkeit ist da.",
             cue = "Look at the -keit ending.",
+            commonMistakes = listOf(
+                "das Fähigkeit: nouns in -keit are die — die Fähigkeit.",
+            ),
         ),
         DrillHelpRule(
             id = "art-gender-suffix-schaft",
@@ -393,6 +472,9 @@ internal object DrillHelpContentLive {
             ),
             example = "**Die** Landschaft ist schön.",
             cue = "Look at the -schaft ending.",
+            commonMistakes = listOf(
+                "der Mannschaft: nouns in -schaft are die — die Mannschaft, die Gesellschaft.",
+            ),
         ),
         DrillHelpRule(
             id = "art-gender-suffix-ion",
@@ -405,6 +487,9 @@ internal object DrillHelpContentLive {
             ),
             example = "**Die** Situation ist schwierig.",
             cue = "Look at the -ion ending.",
+            commonMistakes = listOf(
+                "der Nation: nouns in -ion are die — die Nation, die Region.",
+            ),
         ),
         DrillHelpRule(
             id = "art-gender-suffix-taet",
@@ -417,6 +502,9 @@ internal object DrillHelpContentLive {
             ),
             example = "**Die** Universität ist alt.",
             cue = "Look at the -tät ending.",
+            commonMistakes = listOf(
+                "das Qualität: nouns in -tät are die — die Qualität, die Fakultät.",
+            ),
         ),
         DrillHelpRule(
             id = "art-gender-suffix-ei",
@@ -429,6 +517,9 @@ internal object DrillHelpContentLive {
             ),
             example = "**Die** Bäckerei ist offen.",
             cue = "Look at the -ei ending.",
+            commonMistakes = listOf(
+                "das Polizei: nouns in -ei are die — die Polizei.",
+            ),
         ),
         DrillHelpRule(
             id = "art-gender-suffix-e",
@@ -441,6 +532,9 @@ internal object DrillHelpContentLive {
             ),
             example = "**Die** Sonne ist warm.",
             cue = "Look at the -e ending.",
+            commonMistakes = listOf(
+                "der Tasse: most nouns in -e are die — die Tasse, die Blume (but der Junge, der Name).",
+            ),
         ),
         DrillHelpRule(
             id = "art-gender-suffix-ismus",
@@ -453,6 +547,9 @@ internal object DrillHelpContentLive {
             ),
             example = "**Der** Optimismus hilft.",
             cue = "Look at the -ismus ending.",
+            commonMistakes = listOf(
+                "das Realismus: nouns in -ismus are der — der Realismus.",
+            ),
         ),
         DrillHelpRule(
             id = "art-gender-suffix-ling",
@@ -465,6 +562,9 @@ internal object DrillHelpContentLive {
             ),
             example = "**Der** Frühling beginnt.",
             cue = "Look at the -ling ending.",
+            commonMistakes = listOf(
+                "das Lehrling: nouns in -ling are der — der Lehrling, der Liebling.",
+            ),
         ),
         DrillHelpRule(
             id = "art-gender-suffix-ment",
@@ -477,6 +577,9 @@ internal object DrillHelpContentLive {
             ),
             example = "**Das** Dokument ist lang.",
             cue = "Look at the -ment ending.",
+            commonMistakes = listOf(
+                "das Medikament: nouns in -ment are das — das Medikament, das Parlament.",
+            ),
         ),
         DrillHelpRule(
             id = "art-gender-suffix-chen",
@@ -489,6 +592,9 @@ internal object DrillHelpContentLive {
             ),
             example = "**Das** Mädchen liest.",
             cue = "Look at the -chen ending.",
+            commonMistakes = listOf(
+                "das Häuschen: nouns in -chen are das — das Häuschen, das Kätzchen.",
+            ),
         ),
         DrillHelpRule(
             id = "art-gender-suffix-lein",
@@ -501,6 +607,9 @@ internal object DrillHelpContentLive {
             ),
             example = "**Das** Fräulein wartet.",
             cue = "Look at the -lein ending.",
+            commonMistakes = listOf(
+                "das Tischlein: nouns in -lein are das — das Tischlein, das Büchlein.",
+            ),
         ),
         DrillHelpRule(
             id = "art-gender-suffix-um",
@@ -513,6 +622,9 @@ internal object DrillHelpContentLive {
             ),
             example = "**Das** Museum ist neu.",
             cue = "Look at the -um ending.",
+            commonMistakes = listOf(
+                "das Datum: nouns in -um are das — das Datum, das Studium.",
+            ),
         ),
         DrillHelpRule(
             id = "art-gender-suffix-exception",
@@ -537,6 +649,9 @@ internal object DrillHelpContentLive {
             ),
             example = "**Der** Vater ist hier.",
             cue = "Think about the person the noun names.",
+            commonMistakes = listOf(
+                "die Onkel / der Tante: natural gender usually matches the article — der Onkel, die Tante.",
+            ),
         ),
         DrillHelpRule(
             id = "art-gender-fixed",
@@ -569,6 +684,9 @@ internal object DrillHelpContentLive {
             ),
             example = "Es gibt viele Weg**e** nach Rom.",
             cue = "Recall the noun's plural pattern: the ending, and any vowel change.",
+            commonMistakes = listOf(
+                "die Wegs: many masculine nouns take -e — der Beruf → die Berufe.",
+            ),
         ),
         DrillHelpRule(
             id = "plural-umlaut-e",
@@ -585,6 +703,9 @@ internal object DrillHelpContentLive {
             ),
             example = "Meine F**ü**ß**e** sind müde.",
             cue = "Recall the noun's plural pattern: the ending, and any vowel change.",
+            commonMistakes = listOf(
+                "forgetting the umlaut: der Fuß → die Füße — this -e plural comes with the vowel change.",
+            ),
         ),
         DrillHelpRule(
             id = "plural-er",
@@ -601,6 +722,9 @@ internal object DrillHelpContentLive {
             ),
             example = "Die Vögel bauen neue Nest**er**.",
             cue = "Recall the noun's plural pattern: the ending, and any vowel change.",
+            commonMistakes = listOf(
+                "die Neste: many neuter nouns take -er — das Nest → die Nester.",
+            ),
         ),
         DrillHelpRule(
             id = "plural-umlaut-er",
@@ -617,6 +741,9 @@ internal object DrillHelpContentLive {
             ),
             example = "Auf der Wiese springen viele L**ä**mm**er**.",
             cue = "Recall the noun's plural pattern: the ending, and any vowel change.",
+            commonMistakes = listOf(
+                "die Lammer: the -er plural here comes with the umlaut — das Lamm → die Lämmer.",
+            ),
         ),
         DrillHelpRule(
             id = "plural-n",
@@ -633,6 +760,9 @@ internal object DrillHelpContentLive {
             ),
             example = "Im Garten blühen viele Blume**n**.",
             cue = "Look at how the singular ends.",
+            commonMistakes = listOf(
+                "die Blumes: feminine nouns in -e take -n — die Blume → die Blumen.",
+            ),
         ),
         DrillHelpRule(
             id = "plural-en",
@@ -649,6 +779,9 @@ internal object DrillHelpContentLive {
             ),
             example = "Die Schüler schreiben heute viele Übung**en**.",
             cue = "Recall the noun's plural pattern: the ending, and any vowel change.",
+            commonMistakes = listOf(
+                "die Übunge: -ung, -heit and -keit nouns take -en — die Übungen, die Möglichkeiten.",
+            ),
         ),
         DrillHelpRule(
             id = "plural-s",
@@ -665,6 +798,9 @@ internal object DrillHelpContentLive {
             ),
             example = "Am Bahnhof warten viele Taxi**s**.",
             cue = "Think about where the word comes from.",
+            commonMistakes = listOf(
+                "die Büro: many nouns ending in -i, -o or -u take -s — das Büro → die Büros.",
+            ),
         ),
         DrillHelpRule(
             id = "plural-no-change",
@@ -681,6 +817,10 @@ internal object DrillHelpContentLive {
             ),
             example = "Im Büro stehen viele Computer.",
             cue = "Recall the noun's plural pattern: the ending, and any vowel change.",
+            commonMistakes = listOf(
+                "die Messern: masculine and neuter nouns in -el, -en and -er take no ending — " +
+                    "das Messer → die Messer.",
+            ),
         ),
         DrillHelpRule(
             id = "pron-first-second",
@@ -696,6 +836,9 @@ internal object DrillHelpContentLive {
             ),
             example = "Der Lehrer lobt **uns** für unsere gute Arbeit.",
             cue = "Find the doer. If the pronoun is not the doer, ask Wen? or Wem? after the verb.",
+            commonMistakes = listOf(
+                "mich/mir and dich/dir mixed up: the receiver forms are mir and dir — Zeig mir den Weg, ich frage dich.",
+            ),
         ),
         DrillHelpRule(
             id = "pron-third",
@@ -711,6 +854,10 @@ internal object DrillHelpContentLive {
             ),
             example = "Herr Weber ist nicht da, wir rufen **ihn** später an.",
             cue = "Take the pronoun for the noun's gender, then pick the row for its job.",
+            commonMistakes = listOf(
+                "ihn and ihm swapped: the directly affected form is ihn — wir besuchen ihn; the receiver form is ihm — wir helfen ihm.",
+                "es for the receiver: the dative of es is ihm — Ich schreibe ihm.",
+            ),
         ),
         DrillHelpRule(
             id = "pron-formal",
@@ -724,6 +871,9 @@ internal object DrillHelpContentLive {
             ),
             example = "Darf ich **Ihnen** behilflich sein, Herr Direktor?",
             cue = "Two of the three jobs share one word; only the receiver form is different.",
+            commonMistakes = listOf(
+                "ihnen with a small i: the formal receiver form is Ihnen — capital I always, even mid-sentence.",
+            ),
         ),
         DrillHelpRule(
             id = "pron-reflex-shift",
@@ -739,6 +889,10 @@ internal object DrillHelpContentLive {
             ),
             example = "Vor dem Essen wasche ich **mir** gründlich die Hände.",
             cue = "Look for a second affected thing: none → Wen? form, one → Wem? form.",
+            commonMistakes = listOf(
+                "mich where mir belongs: ich koche mir einen Kaffee — a second affected thing takes the Wem? form.",
+                "mir where mich belongs: with nothing else affected the Wen? form stands — er wäscht sich.",
+            ),
         ),
         DrillHelpRule(
             id = "pron-reflex-person",
@@ -753,6 +907,9 @@ internal object DrillHelpContentLive {
             ),
             example = "Er erinnert **sich** gern an die Zeit in Wien.",
             cue = "Find the doer in the verb ending; the reflexive pronoun takes that person's object form.",
+            commonMistakes = listOf(
+                "sich for every person: only er, sie, es, sie (they) and Sie take sich — ich erinnere mich.",
+            ),
         ),
         DrillHelpRule(
             id = "pron-poss-ending",
@@ -768,6 +925,10 @@ internal object DrillHelpContentLive {
             ),
             example = "Ich habe mein**en** Schlüsselbund überall gesucht.",
             cue = "Which ending would ein or kein take here? The possessive takes the same one.",
+            commonMistakes = listOf(
+                "meine for a masculine object: the accusative masculine takes -en — meinen Schlüssel, meinen Vater.",
+                "der/die-style endings on the possessive: it declines like ein — mein Mann, meinen Mann, meinem Mann.",
+            ),
         ),
         DrillHelpRule(
             id = "pron-poss-edrop",
@@ -783,6 +944,9 @@ internal object DrillHelpContentLive {
             ),
             example = "Wo arbeitet **eure** Mutter eigentlich?",
             cue = "Does the form carry an ending? If yes, drop the stem e first, then add it like ein.",
+            commonMistakes = listOf(
+                "eueren: an ending shortens the stem first — euren, eurem, eures; without an ending the stem stays whole: euer.",
+            ),
         ),
         DrillHelpRule(
             id = "sep-which",
@@ -797,6 +961,9 @@ internal object DrillHelpContentLive {
             ),
             example = "Ich hole dich am Bahnhof **ab**. Ich **be**antworte deine Frage.",
             cue = "Does the verb's prefix split off in a main clause, or stay attached?",
+            commonMistakes = listOf(
+                "splitting an inseparable verb: Ich beantworte deine Frage — be-, ver-, er- and friends never split.",
+            ),
         ),
         DrillHelpRule(
             id = "sep-dual",
@@ -811,6 +978,9 @@ internal object DrillHelpContentLive {
             ),
             example = "Ich kehre morgen **um**. Ich **über**lebe die Prüfung.",
             cue = "Which group does the verb's meaning put it in?",
+            commonMistakes = listOf(
+                "one rule for über, um, unter and durch: the meaning decides — Ich kehre um, but Ich überlebe.",
+            ),
         ),
         DrillHelpRule(
             id = "sep-participle-ge",
@@ -826,6 +996,9 @@ internal object DrillHelpContentLive {
             ),
             example = "Ich habe dich am Bahnhof ab**ge**holt.",
             cue = "Does the verb's prefix split off? That decides where ge- goes.",
+            commonMistakes = listOf(
+                "ge- in front of the prefix: abgeholt, angesehen — ge- goes after a separable prefix.",
+            ),
         ),
         DrillHelpRule(
             id = "sep-participle-no-ge",
@@ -841,6 +1014,9 @@ internal object DrillHelpContentLive {
             ),
             example = "Ich habe deine Frage **beantwortet**.",
             cue = "Does the verb's prefix split off? That decides where ge- goes.",
+            commonMistakes = listOf(
+                "gebeantwortet: an inseparable prefix takes no ge- — beantwortet, verkauft.",
+            ),
         ),
         DrillHelpRule(
             id = "sep-prefix-end",
@@ -855,6 +1031,9 @@ internal object DrillHelpContentLive {
             ),
             example = "Ich hole dich am Bahnhof **ab**.",
             cue = "The verb has dropped its prefix at the end of the clause.",
+            commonMistakes = listOf(
+                "keeping the prefix beside the verb: Ich hole dich ab — the prefix drops to the very end of the clause.",
+            ),
         ),
         DrillHelpRule(
             id = "wo-verb-second",
@@ -870,6 +1049,9 @@ internal object DrillHelpContentLive {
             ),
             example = "Morgen **gehe** ich ins Kino.",
             cue = "Verb second; a fronted time word pushes the subject behind the verb.",
+            commonMistakes = listOf(
+                "the subject right after a fronted time word: Heute kocht er Suppe — the verb stays second, the subject follows it.",
+            ),
         ),
         DrillHelpRule(
             id = "wo-verb-last-sub",
@@ -884,6 +1066,9 @@ internal object DrillHelpContentLive {
             ),
             example = "Er bleibt im Bett, weil er krank **ist**.",
             cue = "After weil, dass, wenn or ob the conjugated verb closes the clause.",
+            commonMistakes = listOf(
+                "the verb second after weil: weil sie Deutsch lernt — the conjugated verb closes the clause.",
+            ),
         ),
         DrillHelpRule(
             id = "wo-separable-end",
@@ -898,6 +1083,9 @@ internal object DrillHelpContentLive {
             ),
             example = "Ich **stehe** jeden Morgen um sieben Uhr **auf**.",
             cue = "Conjugated verb part second, separable prefix at the very end.",
+            commonMistakes = listOf(
+                "keeping the prefix next to the verb: Ich hole dich später vom Bahnhof ab — the prefix drops to the end.",
+            ),
         ),
         DrillHelpRule(
             id = "wo-modal-infinitive",
@@ -912,6 +1100,9 @@ internal object DrillHelpContentLive {
             ),
             example = "Ich **kann** sehr gut Deutsch **sprechen**.",
             cue = "Modal conjugated in position 2, infinitive at the end.",
+            commonMistakes = listOf(
+                "conjugating the main verb too: only the modal carries the ending — Wir dürfen hier nicht parken.",
+            ),
         ),
         DrillHelpRule(
             id = "wo-perfekt-bracket",
@@ -926,6 +1117,10 @@ internal object DrillHelpContentLive {
             ),
             example = "Ich **habe** gestern ein spannendes Buch **gelesen**.",
             cue = "Helping verb in position 2, participle at the end.",
+            commonMistakes = listOf(
+                "the infinitive in the Perfekt: the participle closes the bracket — Wir haben den Film gesehen.",
+                "the participle in position 2: the helper takes position 2, the participle goes to the end.",
+            ),
         ),
         DrillHelpRule(
             id = "wo-tekamolo",
@@ -939,6 +1134,9 @@ internal object DrillHelpContentLive {
             ),
             example = "Ich fahre **morgen** mit dem Fahrrad **zur Arbeit**.",
             cue = "TeKaMoLo: time, cause, manner, place.",
+            commonMistakes = listOf(
+                "Ich gehe zum Arzt morgen: time comes before place — Ich gehe morgen zum Arzt.",
+            ),
         ),
         DrillHelpRule(
             id = "wo-verb-first-question",
@@ -953,6 +1151,9 @@ internal object DrillHelpContentLive {
             ),
             example = "**Kommst** du heute Abend zur Party?",
             cue = "Yes/no question: conjugated verb first, subject right after it.",
+            commonMistakes = listOf(
+                "statement order in a yes/no question: Hast du Zeit? — the conjugated verb opens the question.",
+            ),
         ),
     )
 }

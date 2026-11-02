@@ -64,6 +64,9 @@ The row labels include every case the item offers as a choice, shown with equal 
 
 **later_rung_cue**: Fixed case. Recall which one the preposition takes.
 
+**common_mistakes**:
+- picking the case from the noun's meaning: the preposition fixes the case, then the noun's gender picks the form.
+
 ---
 
 ## prep-fixed-acc
@@ -105,6 +108,9 @@ Equal weight before an answer. After the answer (flashcard, after a miss), highl
 **flashcard_and_miss_hint**: These prepositions always take the accusative: den, die, das, die.
 
 **later_rung_cue**: The preposition keeps one case. Recall which one, then the noun's gender.
+
+**common_mistakes**:
+- the dative after durch, für, gegen, ohne or um: they always take the accusative — durch den Wald, ohne dich.
 
 ---
 
@@ -157,6 +163,11 @@ Plural items (bei Eltern, von Großeltern — answer den):
 
 **later_rung_cue**: The preposition keeps one case. Recall which one, then the noun's gender.
 
+**common_mistakes**:
+- the accusative after a dative preposition: sie spielt mit dem Ball, not mit den Ball.
+- die for a feminine dative noun: mit der Lehrerin, not mit die Lehrerin.
+- die for the dative plural: mit den Freunden, not mit die Freunde.
+
 ---
 
 ## prep-fixed-gen
@@ -201,6 +212,9 @@ während item (während Fahrt — answer der):
 **flashcard_and_miss_hint**: These prepositions take the genitive: des for masculine and neuter nouns, der for feminine and plural nouns.
 
 **later_rung_cue**: The preposition keeps one case. Recall which one, then the noun's gender.
+
+**common_mistakes**:
+- the dative after wegen or trotz: they take the genitive — wegen des Staus, trotz des Lärms.
 
 ---
 
@@ -322,3 +336,7 @@ Both rows have equal weight before an answer. After the answer (flashcard, after
 **flashcard_and_miss_hint**: Movement (Wohin?) takes the accusative; a fixed position (Wo?) takes the dative.
 
 **later_rung_cue**: Ask Wohin? (movement) or Wo? (fixed position) — the verb decides.
+
+**common_mistakes**:
+- the dative for movement: wohin? takes the accusative — Ich gehe in die Stadt.
+- the accusative for a fixed position: wo? takes the dative — Die Tasche bleibt auf dem Stuhl.

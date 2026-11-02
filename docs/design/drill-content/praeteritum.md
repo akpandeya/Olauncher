@@ -4,6 +4,7 @@
 
 Conventions (author notes, not learner-facing):
 
+- `common_mistakes` (#811): 1–3 short lines, each a typical learner error and the correct form. The card shows them only where no unanswered item is attached — the flashcard and the rules-index detail — never in a pre-answer state or on a later rung. Omitted where no frequent, real mistake exists.
 - Layout follows `articles.md`: id, items, rule, first_exposure_rule, forms table, example,
   miss lines, flashcard_and_miss_hint, later_rung_cue.
 - No existing ID is reused. `praet-modal` covers the simple past of modals; the modal-verbs
@@ -55,6 +56,10 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: sein has its own simple past forms, one per person — never the regular -te pattern.
 
+**common_mistakes**:
+- the regular -te pattern for sein: du warst, wir waren — sein never takes machte-style endings.
+- ihr has its own short form: wart.
+
 ---
 
 ## praet-haben
@@ -90,6 +95,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: The simple past of haben: ich/er/sie/es hatte, du hattest, ihr hattet, wir/sie hatten.
 
 **later_rung_cue**: haben has its own simple past stem; it never takes the regular -te pattern.
+
+**common_mistakes**:
+- habte: the stem changes — du hattest, sie hatten.
 
 ---
 
@@ -137,6 +145,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: Modals in the simple past: drop the umlaut and add -te; ich and er/sie/es take no extra ending.
 
 **later_rung_cue**: Modals build the simple past with plain -te and drop the umlaut.
+
+**common_mistakes**:
+- keeping the umlaut: er durfte, mochte — not dürfte, möchte.
 
 ---
 
@@ -189,6 +200,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: Strong verbs change the stem vowel; ich/er/sie/es add no ending, wir/sie add -en.
 
 **later_rung_cue**: Strong verbs change the stem vowel; the person's ending is regular.
+
+**common_mistakes**:
+- adding -te to a strong verb: er trank, schrieb, las — the vowel changes, and no -te joins it.
 
 ---
 

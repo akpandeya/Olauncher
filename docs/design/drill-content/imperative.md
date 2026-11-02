@@ -4,6 +4,7 @@
 
 Conventions (author notes, not learner-facing):
 
+- `common_mistakes` (#811): 1–3 short lines, each a typical learner error and the correct form. The card shows them only where no unanswered item is attached — the flashcard and the rules-index detail — never in a pre-answer state or on a later rung. Omitted where no frequent, real mistake exists.
 - Layout follows `articles.md`: id, items, rule, first_exposure_rule, forms table, example,
   miss lines, flashcard_and_miss_hint, later_rung_cue.
 - No existing ID fits. Separable prefixes (zu, an, aus) already sit at the end of the prompts,
@@ -64,6 +65,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: Whom are you addressing: one person (du), several (ihr) or formally (Sie)?
 
+**common_mistakes**:
+- the du and ihr forms drop the pronoun (Komm!, Kommt!), but Sie stays: Kommen Sie!
+
 ---
 
 ## imp-du-vowel-change
@@ -105,6 +109,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: Whom are you addressing? Strong verbs change the stem vowel only for du.
 
+**common_mistakes**:
+- the normal stem for du: Sprich!, Hilf!, Sieh! — the vowel changes to i or ie only in the du imperative.
+
 ---
 
 ## imp-sein
@@ -145,6 +152,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: sein is irregular: Sei for du, Seid for ihr, Seien Sie for formal address.
 
 **later_rung_cue**: sein has its own imperative forms — check whom you are addressing.
+
+**common_mistakes**:
+- bist or sind as a command is wrong: Sei!, Seid!, Seien Sie! — sein has its own imperative forms.
 
 ---
 
@@ -191,6 +201,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: Sie marks formal address, and its imperative is the infinitive.
 
 **later_rung_cue**: Formal address: recall the imperative form that goes with it.
+
+**common_mistakes**:
+- the du form with Sie: the Sie imperative is the infinitive + Sie — Warten Sie bitte, not Warte Sie.
 
 ---
 

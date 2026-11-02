@@ -5,6 +5,7 @@ exactly once · 0 `UNSURE:` marks.
 
 Conventions (author notes, not learner-facing):
 
+- `common_mistakes` (#811): 1–3 short lines, each a typical learner error and the correct form. The card shows them only where no unanswered item is attached — the flashcard and the rules-index detail — never in a pre-answer state or on a later rung. Omitted where no frequent, real mistake exists.
 - Layout follows `articles.md`: id, items, rule, first_exposure_rule, forms table, example,
   miss lines, flashcard_and_miss_hint, later_rung_cue.
 - The passive items reuse `passiv-aux-form` and `passiv-perfekt-partizip` from `passive.md`:
@@ -58,6 +59,10 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: The subject pronoun picks the form: ich, du, er, wir, ihr, sie.
 
+**common_mistakes**:
+- wird for a plural subject: sie werden schnell nervös.
+- ihr werden: the ihr form is werdet — werdet ihr auch nervös?
+
 ---
 
 ## futur-helper-form
@@ -103,6 +108,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: An infinitive at the end (helfen, ziehen, kommen) is the future marker; then match the subject.
 
 **later_rung_cue**: Infinitive at the end + werden form matched to the subject = future.
+
+**common_mistakes**:
+- conjugating the second verb too: er wird morgen kochen, not wird kocht — the infinitive stays at the end.
 
 ---
 
@@ -152,6 +160,10 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: The helper matches the subject in number and the time word in tense, like any verb.
 
+**common_mistakes**:
+- ist or war with a participle describes a state only; an ongoing action needs werden: der Zaun wird gestrichen.
+- wurde for one subject, wurden for several: der Zaun wurde gestrichen, die Zäune wurden gestrichen.
+
 ---
 
 ## passiv-perfekt-partizip
@@ -189,6 +201,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: Perfect passive: sein + Partizip II + the helper's special participle, not its full-verb form.
 
+**common_mistakes**:
+- geworden inside the passive: the participle there is worden — geworden only with werden as a full verb (ist müde geworden).
+
 ---
 
 ## werden-subjunctive-ii
@@ -223,6 +238,10 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: An deiner Stelle signals advice, not a plan — the would-form fits.
 
 **later_rung_cue**: Is the sentence a real plan or an imagined situation? Each takes its own werden form.
+
+**common_mistakes**:
+- würde for a real plan: a real plan takes the present or werde — ich werde es kaufen.
+- werde for an imagined situation: imagined takes würde — ich würde es kaufen.
 
 ---
 
