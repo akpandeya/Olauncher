@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The help-card body (#651 design §3, docs/design/drill-help-card.md): chips,
-     rule text, forms table, example and miss line, in the drill's open order.
-     Shared by the drill screen's help slot (fragment_drill.xml, inside
-     DrillHelpCardView) and the rules-index detail (fragment_grammar_rule.xml);
+     rule text, first-exposure line, forms table, example and miss line, in the
+     drill's open order. Shared by the drill screen's help slot (fragment_drill.xml,
+     inside DrillHelpCardView) and the rules-index detail (fragment_grammar_rule.xml);
      HelpCardViewBinder binds a DrillHelpCard.State to these views. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
@@ -23,6 +23,17 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         tools:text="A relative pronoun points back to a noun." />
+
+    <!-- The first-exposure line (#808, design §2): the one-case preposition's case
+         list, shown only where the design allows it (flashcard, first-exposure tap,
+         rules-index detail); hidden on later rungs and for rules without one. -->
+    <TextView
+        android:id="@+id/tvHelpFirstExposure"
+        style="@style/TodayCardBody"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        tools:text="durch, für, gegen, ohne, um and entlang always take the accusative." />
 
     <GridLayout
         android:id="@+id/helpTable"

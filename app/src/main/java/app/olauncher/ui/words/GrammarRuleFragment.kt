@@ -18,7 +18,9 @@ import app.olauncher.ui.BaseFragment
 
 /**
  * One rule's full help card, opened from the grammar-rules index (#792): the
- * shared #651 help-card rendering — chips, rule, forms table, example — through
+ * shared #651 help-card rendering — chips, rule, first-exposure line (#808,
+ * design §2: the index detail is a teaching view with no item, so the rule's
+ * one-case list may name its case), forms table, example — through
  * [HelpCardViewBinder], with the state built by [DrillHelpCard.ruleIndexState]
  * (no item attached, so no answer cell and no miss line). The "Ask AI about
  * this rule" row is an ordinary chat entry (docs/design/ask-ai-chat.md
@@ -66,6 +68,7 @@ class GrammarRuleFragment : BaseFragment() {
             HelpCardViewBinder.CardViews(
                 chips = card.helpChips,
                 rule = card.tvHelpRule,
+                firstExposure = card.tvHelpFirstExposure,
                 table = card.helpTable,
                 example = card.tvHelpExample,
                 miss = card.tvHelpMiss,

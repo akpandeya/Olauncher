@@ -35,6 +35,14 @@ object DrillHelpCard {
          * which form fits. Null outside the after-a-miss state.
          */
         val miss: MissParts?,
+        /**
+         * The rule's first-exposure line (#808, design §2): the one place a one-case
+         * preposition may name its case before an answer. Set in the flashcard state,
+         * in the open states (Why? or after a miss) of a first-exposure tap, and in
+         * [DrillHelpCard.ruleIndexState]; null on later rungs (variety, typed), in
+         * recaps, in word-order states, and for rules that author no line.
+         */
+        val firstExposureRule: String? = null,
     )
 
     /**
@@ -46,12 +54,17 @@ object DrillHelpCard {
      * - Any other moment: null — the slot stays hidden behind the collapsed cue line.
      *
      * A recap card keeps its own compact presentation and never shows this card.
+     *
+     * [firstExposure] carries the [DrillHelpCard.isFirstExposure] verdict: only a
+     * first-exposure tap's open states (Why? or after a miss) may show the rule's
+     * [DrillHelpRule.firstExposureRule]; the flashcard state always shows it (#808).
      */
     fun state(
         question: DrillQuizQuestion,
         whyOpen: Boolean,
         answeredWrong: Boolean,
         wrongChoice: String? = null,
+        firstExposure: Boolean = false,
     ): State? {
         val rule = DrillHelpContent.rule(question.item.ruleId) ?: return null
         return when {
@@ -62,6 +75,7 @@ object DrillHelpCard {
                 answerCell = question.item.helpCell,
                 example = filledExample(question),
                 miss = null,
+                firstExposureRule = rule.firstExposureRule,
             )
             answeredWrong -> State(
                 rule = rule,
@@ -69,11 +83,29 @@ object DrillHelpCard {
                 answerCell = question.item.helpCell,
                 example = filledExample(question),
                 miss = missParts(question, wrongChoice),
+                firstExposureRule = rule.firstExposureRule.takeIf { firstExposure },
             )
-            whyOpen -> State(rule = rule, showAnswer = false, example = null, miss = null)
+            whyOpen -> State(
+                rule = rule,
+                showAnswer = false,
+                example = null,
+                miss = null,
+                firstExposureRule = rule.firstExposureRule.takeIf { firstExposure },
+            )
             else -> null
         }
     }
+
+    /**
+     * Whether [question] is a first-exposure tap (#808): a [DrillFormat.TAP] question
+     * of an item with no recorded maturity — [maturity] holds no count for it, i.e.
+     * it has never been answered right. Design §2 (docs/design/drill-help-card.md):
+     * a one-case preposition may name its case before the answer only on first
+     * exposure, and the first tap is the only pre-answer question moment besides the
+     * flashcard. Context-free: the screen computes this and hands it to [state].
+     */
+    fun isFirstExposure(question: DrillQuizQuestion, maturity: Map<DrillItemId, Int>): Boolean =
+        question.format == DrillFormat.TAP && (maturity[question.id] ?: 0) == 0
 
     /**
      * The help state of a word-order item (#699). A word-order round has no
@@ -102,13 +134,15 @@ object DrillHelpCard {
      * table, example. No item is attached, so there is no answer cell to
      * highlight and no miss line; the example is the rule's own authored one,
      * shown with the same weight as the table, and nothing names an item's
-     * answer.
+     * answer. The rule's first-exposure line (#808) shows too: the index detail
+     * is a teaching view with no question, so naming the case leaks nothing.
      */
     fun ruleIndexState(rule: DrillHelpRule): State = State(
         rule = rule,
         showAnswer = false,
         example = rule.example,
         miss = null,
+        firstExposureRule = rule.firstExposureRule,
     )
 
     /**

@@ -20,10 +20,10 @@ import app.olauncher.data.store.DrillHelpCard
 
 /**
  * Binds a [DrillHelpCard.State] to the shared help-card views of
- * `view_help_card.xml` (#651 design §3): chips, rule text, forms table, example
- * and miss line. The drill screen's help slot and the rules-index detail
- * (#792) render through this one path, so a rule looks the same wherever it
- * is opened.
+ * `view_help_card.xml` (#651 design §3): chips, rule text, first-exposure line,
+ * forms table, example and miss line. The drill screen's help slot and the
+ * rules-index detail (#792) render through this one path, so a rule looks the
+ * same wherever it is opened.
  */
 object HelpCardViewBinder {
 
@@ -31,12 +31,14 @@ object HelpCardViewBinder {
     class CardViews(
         val chips: LinearLayout,
         val rule: TextView,
+        /** The rule's first-exposure line (#808); hidden when the state has none. */
+        val firstExposure: TextView,
         val table: GridLayout,
         val example: TextView,
         val miss: TextView,
     )
 
-    /** Binds one help-card state: chips, rule, forms table, example, miss line. */
+    /** Binds one help-card state: chips, rule, first-exposure line, table, example, miss. */
     fun bind(context: Context, views: CardViews, state: DrillHelpCard.State, answer: String?) {
         val table = state.rule.table
 
@@ -50,6 +52,18 @@ object HelpCardViewBinder {
         views.chips.isVisible = chips.isNotEmpty()
 
         views.rule.text = state.rule.rule
+
+        // The first-exposure line (#808, design §2): the rule's one-case list, shown
+        // only where the design allows it — the flashcard, a first-exposure tap's open
+        // states and the rules-index detail. Null hides the line on later rungs,
+        // recaps and word-order states.
+        val firstExposure = state.firstExposureRule
+        if (firstExposure != null) {
+            views.firstExposure.text = firstExposure
+            views.firstExposure.isVisible = true
+        } else {
+            views.firstExposure.isVisible = false
+        }
 
         // The item's own cell: by position when the item carries it, else the unique
         // text match (DrillHelpCard.answerCellPosition). Null lights no cell.
