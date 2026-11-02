@@ -7,10 +7,13 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * AI practice items in mixed rounds (#621, Epic 9 #561): flashcard-only, capped at
+ * AI practice items in mixed rounds (#621, Epic 9 #561): capped at
  * [DrillRoundPlanner.MAX_AI_PER_ROUND] per round (their own cap, independent of the
- * built-in flashcard cap), inside the planned round size, excluded from scoring —
- * and a no-op when no AI items are stored.
+ * built-in flashcard cap), inside the planned round size. A word-order AI item with a
+ * parseable tile card joins as a scored [DrillFormat.WORD_TILES] step (#804 part 2);
+ * everything else stays the flashcard-only teaching step of #621, excluded from
+ * scoring. Practise-misses rounds stay AI-free, and the planner is a no-op when no
+ * AI items are stored.
  */
 class DrillRoundPlannerAiTest {
 
@@ -37,6 +40,26 @@ class DrillRoundPlannerAiTest {
                     answer = "ai$index",
                     choices = listOf("ai$index", "aiOther$index", "aiThird$index"),
                     hint = "ai hint $index",
+                ),
+            )
+        }
+
+    /**
+     * AI word-order items with parseable tile cards (#804 part 2): the generation
+     * contract's "Ordne: " prompt, the answer as the accepted order, one wrong order
+     * among the choices.
+     */
+    private fun aiWordOrderItems(count: Int): List<DrillItem> =
+        (0 until count).map { index ->
+            PracticeDrillItems.toDrillItem(
+                PracticeItem(
+                    id = 300L + index,
+                    wordId = 7,
+                    type = DrillType.WORD_ORDER,
+                    prompt = "Ordne: Wir$index / sehen / heute / den / Film",
+                    answer = "Wir$index sehen heute den Film",
+                    choices = listOf("Wir$index sehen heute den Film", "Wir$index heute sehen den Film"),
+                    hint = "Hauptsatz: Position 2 ist das Verb",
                 ),
             )
         }
@@ -222,5 +245,93 @@ class DrillRoundPlannerAiTest {
             abandoned = false,
         )
         assertEquals(evidenceWithout, evidenceWith)
+    }
+
+    // ------------------------------------------------------------------
+    // Word-tiles steps (#804 part 2)
+    // ------------------------------------------------------------------
+
+    @Test
+    fun parseableAiWordOrderItemBecomesAScoredTileStep() {
+        val ai = aiWordOrderItems(1)
+        for (seed in 0 until 20) {
+            val steps = DrillRoundPlanner.plan(
+                mixedPools,
+                emptyMap(),
+                Random(seed.toLong()),
+                size = 5,
+                aiItems = ai,
+            )
+            val tileSteps = aiSteps(steps)
+            assertEquals("seed $seed", 1, tileSteps.size)
+            val step = tileSteps.single()
+            assertEquals("seed $seed", DrillFormat.WORD_TILES, step.format)
+            // A scored question, not a teaching beat or a reveal fallback.
+            assertFalse("seed $seed", step.isTeaching)
+            assertFalse("seed $seed", step.isReveal)
+            assertEquals("seed $seed", listOf("Wir0", "sehen", "heute", "den", "Film"), step.tiles)
+            assertEquals(
+                "seed $seed",
+                listOf(listOf("Wir0", "sehen", "heute", "den", "Film")),
+                step.acceptedOrders,
+            )
+            assertEquals("seed $seed", "Hauptsatz: Position 2 ist das Verb", step.hint)
+        }
+    }
+
+    @Test
+    fun unparseableAiWordOrderItemStaysAFlashcard() {
+        // The prompt is not "Ordne: " + tiles joined by " / ", so the task-01
+        // parser rejects it and the item keeps the flashcard-only behaviour of #621.
+        val ai = listOf(
+            PracticeDrillItems.toDrillItem(
+                PracticeItem(
+                    id = 310L,
+                    wordId = 7,
+                    type = DrillType.WORD_ORDER,
+                    prompt = "Ordne die Wörter richtig",
+                    answer = "Wir sehen heute den Film",
+                    choices = listOf("Wir sehen heute den Film"),
+                    hint = "hint",
+                ),
+            ),
+        )
+        for (seed in 0 until 20) {
+            val steps = DrillRoundPlanner.plan(
+                mixedPools,
+                emptyMap(),
+                Random(seed.toLong()),
+                size = 5,
+                aiItems = ai,
+            )
+            assertEquals("seed $seed", 1, aiSteps(steps).size)
+            assertEquals("seed $seed", DrillFormat.FLASHCARD, aiSteps(steps).single().format)
+        }
+    }
+
+    @Test
+    fun aiTileStepsKeepThePerRoundCapAndRoundSize() {
+        val ai = aiWordOrderItems(4)
+        for (seed in 0 until 50) {
+            val steps = DrillRoundPlanner.plan(
+                mixedPools,
+                emptyMap(),
+                Random(seed.toLong()),
+                size = 5,
+                aiItems = ai,
+            )
+            assertEquals("seed $seed", DrillRoundPlanner.MAX_AI_PER_ROUND, aiSteps(steps).size)
+            assertEquals("seed $seed", 5, steps.size)
+            assertTrue("seed $seed", aiSteps(steps).all { it.format == DrillFormat.WORD_TILES })
+        }
+    }
+
+    @Test
+    fun planMissesStaysAiFreeIncludingTileSteps() {
+        val missed = pool(DrillType.PREPOSITIONS, "prep:", 2) + aiWordOrderItems(1)
+        val steps = DrillRoundPlanner.planMisses(missed, emptyMap(), Random(3))
+        assertTrue(steps.none { PracticeDrillItems.isAiItem(it.id) })
+        // The built-in misses still come back, in ladder formats.
+        assertEquals(2, steps.size)
     }
 }

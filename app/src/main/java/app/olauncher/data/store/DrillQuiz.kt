@@ -192,6 +192,29 @@ class DrillQuiz(
     }
 
     /**
+     * Records a tile arrangement for a word-tiles step (#804 part 2): a wrong order
+     * is a miss, a right one a hit — recorded as the step's first attempt, so the
+     * answer feeds the round's per-type evidence (owner decision 1). Grading mirrors
+     * the native word-order drill ([WordOrderQuiz.answer]): the submitted order must
+     * match an accepted order, ignoring case. A wrong arrangement is kept as the
+     * learner answer, like a wrong choice.
+     */
+    fun answerWordTiles(order: List<String>): QuizAnswer? {
+        val q = question ?: return null
+        if (lastAnswerValue != null || !q.isWordTiles) return null
+        val lowerOrder = order.map { it.lowercase() }
+        val isCorrect = order in q.acceptedOrders ||
+            q.acceptedOrders.any { it.map(String::lowercase) == lowerOrder }
+        val result = QuizAnswer(isCorrect, q.answer)
+        recordAttempt(q.item, isCorrect)
+        if (!isCorrect && q.item.id !in learnerAnswersMap) {
+            learnerAnswersMap[q.item.id] = order.joinToString(" ")
+        }
+        lastAnswerValue = result
+        return result
+    }
+
+    /**
      * Advances to the next step. Nothing is requeued: a wrong answer has already been
      * recorded and corrected inline. Teaching steps (flashcards, recaps) advance on
      * their Continue tap.
@@ -327,7 +350,12 @@ class DrillQuiz(
         question = when {
             step == null -> null
             step.isTeaching -> step
-            else -> step.copy(choices = step.choices.shuffled(random))
+            else -> step.copy(
+                choices = step.choices.shuffled(random),
+                // The tiles are shuffled once per step, like the choices, so a
+                // re-render never rearranges the learner's in-progress answer.
+                tiles = step.tiles.shuffled(random),
+            )
         }
     }
 

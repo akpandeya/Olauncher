@@ -47,6 +47,7 @@ import app.olauncher.data.store.SharedOfflineGermanStore
 import app.olauncher.data.store.Word
 import app.olauncher.data.store.WordOrderQuestion
 import app.olauncher.data.store.WordOrderQuiz
+import app.olauncher.data.store.WordOrderTile
 import app.olauncher.data.store.AiChatRouter
 import app.olauncher.data.store.AiChatSubject
 import app.olauncher.data.store.shouldAutoAdvance
@@ -79,6 +80,8 @@ class DrillFragment : BaseFragment() {
     private var quiz: DrillQuiz? = null
     private var wordOrderQuiz: WordOrderQuiz? = null
     private var selectedChoice: String? = null
+    /** The learner's in-progress tile arrangement on a mixed round's word-tiles step (#804 part 2). */
+    private val selectedTiles = mutableListOf<WordOrderTile>()
     private var lastRenderedItemId: String? = null
     private var autoAdvanceScheduled = false
     private var hintRevealedForItemId: String? = null
@@ -126,6 +129,7 @@ class DrillFragment : BaseFragment() {
     /** Clears the per-question render state when the round moves to the next question. */
     private fun resetQuestionState() {
         selectedChoice = null
+        selectedTiles.clear()
         lastRenderedItemId = null
         hintRevealedForItemId = null
         whyRevealedForItemId = null
@@ -225,12 +229,23 @@ class DrillFragment : BaseFragment() {
             }
         }
 
+        // The tile view serves both the dedicated word-order round (state in the
+        // WordOrderQuiz) and a mixed round's AI word-tiles step (#804 part 2, state
+        // in selectedTiles; the DrillQuiz grades the submitted order).
         binding.wordOrderView.onTileSelected = { tile ->
-            wordOrderQuiz?.selectTile(tile)
+            if (isWordOrderRound) {
+                wordOrderQuiz?.selectTile(tile)
+            } else {
+                selectedTiles.add(tile)
+            }
             render()
         }
         binding.wordOrderView.onTileUnselected = { tile ->
-            wordOrderQuiz?.unselectTile(tile)
+            if (isWordOrderRound) {
+                wordOrderQuiz?.unselectTile(tile)
+            } else {
+                selectedTiles.remove(tile)
+            }
             render()
         }
 
@@ -371,6 +386,12 @@ class DrillFragment : BaseFragment() {
                     render()
                 }
             }
+            q.currentFormat == DrillFormat.WORD_TILES -> {
+                // The submitted arrangement, graded like the native word-order drill.
+                val result = q.answerWordTiles(selectedTiles.map { it.text }) ?: return
+                render()
+                if (shouldAutoAdvance(result)) scheduleAutoAdvance()
+            }
             q.currentFormat == DrillFormat.TYPED -> {
                 val input = binding.etAnswer.text?.toString().orEmpty()
                 val result = q.answerTyped(input) ?: return
@@ -471,7 +492,7 @@ class DrillFragment : BaseFragment() {
         b.choiceScroll.isVisible = inQuiz && q.current?.correctChoice != null &&
             q.current?.choices?.isNotEmpty() == true
         b.typedContainer.isVisible = inQuiz && q.currentFormat == DrillFormat.TYPED
-        b.wordOrderView.isVisible = false
+        b.wordOrderView.isVisible = inQuiz && q.currentFormat == DrillFormat.WORD_TILES
         b.quizCard.isVisible = finished
         b.tvEmpty.isVisible = empty
         b.btnPrimary.isVisible = !empty
@@ -515,6 +536,7 @@ class DrillFragment : BaseFragment() {
         DrillFormat.RECAP -> R.string.drill_round_recap
         DrillFormat.TRUE_FALSE -> R.string.drill_round_true_false
         DrillFormat.TYPED -> R.string.drill_round_typed
+        DrillFormat.WORD_TILES -> R.string.drill_round_word_tiles
         else -> R.string.drill_round_choice
     }
 
@@ -558,6 +580,10 @@ class DrillFragment : BaseFragment() {
         }
         if (question.isRecap) {
             renderRecap(q, question)
+            return
+        }
+        if (question.isWordTiles) {
+            renderWordTiles(q, question)
             return
         }
 
@@ -641,6 +667,72 @@ class DrillFragment : BaseFragment() {
         b.btnPrimary.isVisible = true
         b.btnPrimary.isEnabled = true
         b.btnPrimary.alpha = 1f
+    }
+
+    /**
+     * A mixed round's AI word-order tile step (#804 part 2): the same bank-and-answer
+     * tile view as the dedicated word-order round, driven by [selectedTiles] — the
+     * [DrillQuiz] grades the submitted arrangement on Check. The prompt is the ordered
+     * sentence, so it stays hidden; the item's hint stays visible in the tile view
+     * (owner decision 2). Feedback matches the native word-order drill: green tiles on
+     * a right order, the accepted order as the inline correction on a wrong one.
+     */
+    private fun renderWordTiles(q: DrillQuiz, question: DrillQuizQuestion) {
+        val b = binding
+        val answered = q.isAnswered
+        val lastAnswer = q.lastAnswer
+
+        b.tvPrompt.isVisible = false
+        b.choiceScroll.isVisible = false
+        b.typedContainer.isVisible = false
+        b.wordOrderView.isVisible = true
+
+        b.tvHint.isVisible = !question.hint.isNullOrBlank() && lastAnswer?.correct != true
+        b.tvHint.isClickable = false
+        b.tvHint.text = question.hint.orEmpty()
+        // AI items carry no ruleId, so this keeps the help slot closed; the hint line
+        // stays visible instead.
+        renderHelp(q, question)
+
+        // Stable tile ids by position: two tiles with the same word stay independently
+        // selectable, like in the native word-order drill.
+        val tiles = question.tiles.mapIndexed { index, text -> WordOrderTile(index, text) }
+        b.wordOrderView.render(
+            answerTiles = selectedTiles,
+            availableTiles = tiles.filterNot { it in selectedTiles },
+            answerState = lastAnswer,
+        )
+
+        if (!answered) {
+            b.tvCorrection.isVisible = false
+            b.btnPrimary.setText(R.string.conjugation_check)
+            b.btnPrimary.isVisible = true
+            b.btnPrimary.isEnabled = selectedTiles.isNotEmpty()
+            b.btnPrimary.alpha = if (selectedTiles.isNotEmpty()) 1f else 0.5f
+        } else {
+            val isCorrect = lastAnswer?.correct == true
+            if (isCorrect) {
+                b.tvCorrection.isVisible = false
+                b.btnPrimary.isVisible = false
+                scheduleAutoAdvance()
+            } else {
+                // Inline correction: the accepted order (the item's answer), one Continue.
+                b.tvCorrection.text = question.answer
+                b.tvCorrection.isVisible = true
+                b.btnPrimary.setText(R.string.conjugation_continue)
+                b.btnPrimary.isVisible = true
+                b.btnPrimary.isEnabled = true
+                b.btnPrimary.alpha = 1f
+            }
+            // Feedback runs once per question, at the moment the answer lands (#640).
+            val feedbackKey = question.id.toString()
+            if (feedbackAnimatedItemId != feedbackKey) {
+                feedbackAnimatedItemId = feedbackKey
+                if (lastAnswer?.correct != true) {
+                    animateCorrectionRise(motionSpec(), *revealedCorrectionViews(feedbackKey).toTypedArray())
+                }
+            }
+        }
     }
 
     /**
@@ -1361,8 +1453,15 @@ class DrillFragment : BaseFragment() {
             }
         }
 
-        // Per-item maturity: every item answered right this round counts toward graduation.
-        DrillItemHistory.record(prefs, q.itemResults().filterValues { it == DrillResult.RIGHT })
+        // Per-item maturity: every item answered right this round counts toward
+        // graduation — except AI practice items (#621): their ids never reach the
+        // history, so an AI tile step (#804 part 2) still never graduates a word.
+        DrillItemHistory.record(
+            prefs,
+            q.itemResults()
+                .filterValues { it == DrillResult.RIGHT }
+                .filterKeys { !PracticeDrillItems.isAiItem(it) },
+        )
     }
 
     /** Feeds the round's first attempts through the review schedule for matching saved words. */
