@@ -1,7 +1,9 @@
 package app.olauncher.data.store
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
@@ -182,8 +184,10 @@ class DrillHelpCardCellTest {
     @Test
     fun ruleIndexStateShowsTheWholeCardWithoutAnItem() {
         // The rules-index detail (#792) browses a rule, not an item: the card is
-        // the full authored content — rule, table, the rule's own example — with
-        // no answer highlight and no miss line, so no item's answer can leak.
+        // the full authored content — rule, table, the rule's own example, the
+        // first-exposure line (#808: a teaching view with no item, so naming the
+        // case leaks nothing) — with no answer highlight and no miss line, so no
+        // item's answer can leak.
         for (rule in DrillHelpContent.allRules()) {
             val state = DrillHelpCard.ruleIndexState(rule)
             assertEquals(rule, state.rule)
@@ -191,7 +195,158 @@ class DrillHelpCardCellTest {
             assertEquals(false, state.showAnswer)
             assertNull(state.answerCell)
             assertNull(state.miss)
+            assertEquals(rule.firstExposureRule, state.firstExposureRule)
         }
+    }
+
+    // -------------------------------------------------------------------
+    // The first-exposure line (#808, design §2): a one-case preposition may
+    // name its case only on first exposure — the flashcard, a first-exposure
+    // tap's open states, and the rules-index detail — never on later rungs.
+    // -------------------------------------------------------------------
+
+    /** The prep-fixed-acc item whose rule authors the accusative list (#808). */
+    private val accItem = DrillPrepositions.items().first { it.id.key == "prep:durch:1" }
+
+    @Test
+    fun firstExposureMeansATapQuestionOfAnUnmaturedItem() {
+        assertEquals("prep-fixed-acc", accItem.ruleId)
+        val tap = DrillQuizQuestion(accItem, DrillFormat.TAP, accItem.choices)
+        assertTrue(DrillHelpCard.isFirstExposure(tap, emptyMap()))
+        // A distinguishing count (2, not the default 0) proves the lookup wins,
+        // not the fallback.
+        assertFalse(DrillHelpCard.isFirstExposure(tap, mapOf(accItem.id to 2)))
+        // Only the tap rung is a first-exposure question; the flashcard is its own
+        // state and the typed graduation is a later rung, both at maturity 0 here.
+        assertFalse(
+            DrillHelpCard.isFirstExposure(
+                DrillQuizQuestion(accItem, DrillFormat.FLASHCARD, accItem.choices),
+                emptyMap(),
+            ),
+        )
+        assertFalse(
+            DrillHelpCard.isFirstExposure(
+                DrillQuizQuestion(accItem, DrillFormat.TYPED, accItem.choices),
+                emptyMap(),
+            ),
+        )
+    }
+
+    @Test
+    fun firstExposureLineShowsOnTheFlashcardAlways() {
+        val rule = DrillHelpContent.rule(accItem.ruleId)!!
+        val question = DrillQuizQuestion(accItem, DrillFormat.FLASHCARD, accItem.choices)
+        val state = DrillHelpCard.state(question, whyOpen = false, answeredWrong = false)!!
+        assertEquals(rule.firstExposureRule, state.firstExposureRule)
+    }
+
+    @Test
+    fun firstExposureLineShowsOnAFirstExposureTapsOpenStates() {
+        val rule = DrillHelpContent.rule(accItem.ruleId)!!
+        val tap = DrillQuizQuestion(accItem, DrillFormat.TAP, accItem.choices)
+        val why = DrillHelpCard.state(
+            tap,
+            whyOpen = true,
+            answeredWrong = false,
+            firstExposure = DrillHelpCard.isFirstExposure(tap, emptyMap()),
+        )!!
+        assertEquals(rule.firstExposureRule, why.firstExposureRule)
+        val miss = DrillHelpCard.state(
+            tap,
+            whyOpen = false,
+            answeredWrong = true,
+            wrongChoice = "dem",
+            firstExposure = DrillHelpCard.isFirstExposure(tap, emptyMap()),
+        )!!
+        assertEquals(rule.firstExposureRule, miss.firstExposureRule)
+    }
+
+    @Test
+    fun firstExposureLineStaysHiddenOnLaterRungs() {
+        val tap = DrillQuizQuestion(accItem, DrillFormat.TAP, accItem.choices)
+        // A distinguishing maturity (2) marks the tap as answered right before.
+        val matured = mapOf(accItem.id to 2)
+        assertNull(
+            DrillHelpCard.state(
+                tap,
+                whyOpen = true,
+                answeredWrong = false,
+                firstExposure = DrillHelpCard.isFirstExposure(tap, matured),
+            )!!.firstExposureRule,
+        )
+        assertNull(
+            DrillHelpCard.state(
+                tap,
+                whyOpen = false,
+                answeredWrong = true,
+                wrongChoice = "dem",
+                firstExposure = DrillHelpCard.isFirstExposure(tap, matured),
+            )!!.firstExposureRule,
+        )
+        // A variety step (run 3) and a typed step (run 4) are never first exposure,
+        // even before their first right answer.
+        val variety = DrillQuizQuestion(accItem, DrillFormat.TRUE_FALSE, listOf("True", "False"))
+        assertNull(
+            DrillHelpCard.state(
+                variety,
+                whyOpen = true,
+                answeredWrong = false,
+                firstExposure = DrillHelpCard.isFirstExposure(variety, emptyMap()),
+            )!!.firstExposureRule,
+        )
+        val typed = DrillQuizQuestion(accItem, DrillFormat.TYPED, accItem.choices)
+        assertNull(
+            DrillHelpCard.state(
+                typed,
+                whyOpen = true,
+                answeredWrong = false,
+                firstExposure = DrillHelpCard.isFirstExposure(typed, emptyMap()),
+            )!!.firstExposureRule,
+        )
+        // A recap keeps its own compact card and never opens this one at all.
+        val recap = DrillQuizQuestion(accItem, DrillFormat.RECAP)
+        assertNull(
+            DrillHelpCard.state(recap, whyOpen = false, answeredWrong = false, firstExposure = true),
+        )
+    }
+
+    @Test
+    fun wordOrderStatesNeverCarryTheFirstExposureLine() {
+        val item = DrillWordOrder.items().first { it.ruleId != null }
+        val why = DrillHelpCard.wordOrderState(item, whyOpen = true, answeredWrong = false)
+        if (why != null) assertNull(why.firstExposureRule)
+        val miss = DrillHelpCard.wordOrderState(item, whyOpen = false, answeredWrong = true)
+        if (miss != null) assertNull(miss.firstExposureRule)
+    }
+
+    @Test
+    fun rulesWithoutAFirstExposureRuleGiveNullEverywhere() {
+        // durch as a which-case item points at prep-which-fixed, whose design
+        // authoring allows no first-exposure line (#808).
+        val item = DrillPrepositions.items().first { it.id.key == "prep:durch:0" }
+        assertEquals("prep-which-fixed", item.ruleId)
+        val rule = DrillHelpContent.rule(item.ruleId)!!
+        assertNull(rule.firstExposureRule)
+        val flashcard = DrillQuizQuestion(item, DrillFormat.FLASHCARD, item.choices)
+        assertNull(
+            DrillHelpCard.state(flashcard, whyOpen = false, answeredWrong = false)!!
+                .firstExposureRule,
+        )
+        val tap = DrillQuizQuestion(item, DrillFormat.TAP, item.choices)
+        assertNull(
+            DrillHelpCard.state(tap, whyOpen = true, answeredWrong = false, firstExposure = true)!!
+                .firstExposureRule,
+        )
+        assertNull(
+            DrillHelpCard.state(
+                tap,
+                whyOpen = false,
+                answeredWrong = true,
+                wrongChoice = "dem",
+                firstExposure = true,
+            )!!.firstExposureRule,
+        )
+        assertNull(DrillHelpCard.ruleIndexState(rule).firstExposureRule)
     }
 
     private fun assertNotEquals(a: Any?, b: Any?) {

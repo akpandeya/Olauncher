@@ -800,6 +800,7 @@ class DrillFragment : BaseFragment() {
             whyOpen = whyOpen,
             answeredWrong = answeredWrong,
             wrongChoice = wrongChoice,
+            firstExposure = DrillHelpCard.isFirstExposure(question, itemMaturity()),
         )
         if (state == null) {
             b.helpScroll.isVisible = false
@@ -827,9 +828,9 @@ class DrillFragment : BaseFragment() {
     }
 
     /**
-     * Binds one help-card state: chips, rule, forms table, example, miss line.
-     * The rendering itself lives in [HelpCardViewBinder], shared with the
-     * rules-index detail (#792); this wiring only hands it the card's views.
+     * Binds one help-card state: chips, rule, first-exposure line, forms table,
+     * example, miss line. The rendering itself lives in [HelpCardViewBinder], shared
+     * with the rules-index detail (#792); this wiring only hands it the card's views.
      */
     private fun bindHelpCard(state: DrillHelpCard.State, answer: String?) {
         val b = binding
@@ -839,6 +840,7 @@ class DrillFragment : BaseFragment() {
             HelpCardViewBinder.CardViews(
                 chips = card.helpChips,
                 rule = card.tvHelpRule,
+                firstExposure = card.tvHelpFirstExposure,
                 table = card.helpTable,
                 example = card.tvHelpExample,
                 miss = card.tvHelpMiss,
