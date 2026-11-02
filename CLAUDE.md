@@ -20,7 +20,7 @@ Thumbline is a minimalist Android launcher forked from Olauncher (licensed under
 
 - The GitHub Actions workflow `build-apk.yml` runs only when triggered by hand (`workflow_dispatch`): Actions tab, or `gh workflow run build-apk.yml --ref main`. It does not run on push or PR.
 - Trigger it, or do the manual release below, after every set of testable features is delivered (for example at the end of an epic group), not after every PR.
-- **GitHub Actions is down until end of October 2026** ($0 budget). Until then, publish releases by hand with `scripts/build-release.sh --publish`. The script:
+- **Default to the script.** Publish releases with `scripts/build-release.sh --publish`. GitHub Actions is disabled for this repository, so releases are cut with the script. The `build-apk.yml` workflow numbers releases from the last `build-<n>` tag and should only be used once Actions is re-enabled. The script:
   1. Checks the keystore checksum against `.github/workflows/build-apk.yml`.
   2. Uses `n` = the last `build-<n>` tag + 1 (override with `--number <n>`).
   3. Runs `assembleRelease testDebugUnitTest` with `GITHUB_RUN_NUMBER=<n>` and Java 17.
