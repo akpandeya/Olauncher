@@ -2,13 +2,7 @@ package app.olauncher.ui.words
 
 import android.animation.ObjectAnimator
 import android.content.Context
-import android.graphics.Typeface
 import android.os.Bundle
-import android.text.SpannableString
-import android.text.Spanned
-import android.text.style.ForegroundColorSpan
-import android.text.style.StyleSpan
-import android.text.style.UnderlineSpan
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.KeyEvent
@@ -24,7 +18,6 @@ import androidx.annotation.AttrRes
 import androidx.core.content.ContextCompat
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
-import androidx.core.widget.TextViewCompat
 import androidx.navigation.fragment.findNavController
 import app.olauncher.R
 import app.olauncher.data.Prefs
@@ -741,157 +734,26 @@ class DrillFragment : BaseFragment() {
         }
     }
 
-    /** Binds one help-card state: chips, rule, forms table, example, miss line. */
+    /**
+     * Binds one help-card state: chips, rule, forms table, example, miss line.
+     * The rendering itself lives in [HelpCardViewBinder], shared with the
+     * rules-index detail (#792); this wiring only hands it the card's views.
+     */
     private fun bindHelpCard(state: DrillHelpCard.State, answer: String?) {
         val b = binding
-        val context = b.root.context
-        val table = state.rule.table
-
-        // Chips: the table's column headers when they carry the pattern (Wohin?/Wo?,
-        // Wer? → Nom). Bare gender labels (m·f·n·pl) only repeat the table's own
-        // header row below, so the row hides for them (DrillHelpCard.patternChips,
-        // #723). Never this item's answer.
-        b.helpChips.removeAllViews()
-        val chips = DrillHelpCard.patternChips(table)
-        for (chip in chips) b.helpChips.addView(newHelpChip(chip))
-        b.helpChips.isVisible = chips.isNotEmpty()
-
-        b.tvHelpRule.text = state.rule.rule
-
-        // The item's own cell: by position when the item carries it, else the unique
-        // text match (DrillHelpCard.answerCellPosition). Null lights no cell.
-        val answerPosition = DrillHelpCard.answerCellPosition(table, answer, state.answerCell)
-
-        b.helpTable.removeAllViews()
-        b.helpTable.columnCount = table.headers.size
-        for (header in table.headers) {
-            b.helpTable.addView(
-                helpCell(
-                    text = header,
-                    emphasised = true,
-                    color = genderColorFor(header),
-                ),
-            )
-        }
-        table.rows.forEachIndexed { rowIndex, row ->
-            b.helpTable.addView(helpCell(text = row.label, emphasised = true, color = null))
-            row.cells.forEachIndexed { index, cell ->
-                b.helpTable.addView(
-                    helpCell(
-                        text = cell,
-                        emphasised = false,
-                        color = genderColorFor(table.headers.getOrNull(index + 1)),
-                        showAnswer = state.showAnswer && answerPosition == (rowIndex to index),
-                    ),
-                )
-            }
-        }
-
-        // Example: shown in the flashcard and after-a-miss states, never before a tap
-        // answer (design §3).
-        if (state.example != null) {
-            b.tvHelpExample.text = markedText(state.example)
-            b.tvHelpExample.isVisible = true
-        } else {
-            b.tvHelpExample.isVisible = false
-        }
-
-        // Miss line: rose ✗ mark, then the wrong choice and why it is wrong, in ink.
-        // The reason's `*…*` marked pairs render italic (DrillHelpCard.italicSegments);
-        // the data keeps the marks, the screen strips them from the shown text.
-        val miss = state.miss
-        if (miss != null) {
-            val line = getString(R.string.drill_help_miss_line, miss.wrong, miss.reason)
-            val segments = DrillHelpCard.italicSegments(line)
-            val span = SpannableString(segments.joinToString("") { it.text })
-            if (span.isNotEmpty()) {
-                span.setSpan(
-                    ForegroundColorSpan(ContextCompat.getColor(context, R.color.accentRose)),
-                    0, 1, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
-                )
-            }
-            var index = 0
-            for (segment in segments) {
-                if (segment.italic) {
-                    span.setSpan(
-                        StyleSpan(Typeface.ITALIC),
-                        index, index + segment.text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE,
-                    )
-                }
-                index += segment.text.length
-            }
-            b.tvHelpMiss.text = span
-            b.tvHelpMiss.isVisible = true
-        } else {
-            b.tvHelpMiss.isVisible = false
-        }
-    }
-
-    /** A rule chip (design §3 anatomy 1): TodayChip.Small on the chip background. */
-    private fun newHelpChip(label: String): TextView = TextView(requireContext()).apply {
-        TextViewCompat.setTextAppearance(this, R.style.TodayChip_Small)
-        text = label
-        background = ContextCompat.getDrawable(context, R.drawable.today_chip)
-        val horizontalPadding = resources.getDimensionPixelSize(R.dimen.today_chip_padding_horizontal)
-        setPadding(horizontalPadding, 0, horizontalPadding, 0)
-        gravity = Gravity.CENTER
-    }
-
-    /**
-     * One forms-table cell. Gender columns take their fixed colour ([genderColorFor]);
-     * the answer's cell, shown only in the flashcard and after-a-miss states, is bold
-     * and underlined (design §4).
-     */
-    private fun helpCell(
-        text: String,
-        emphasised: Boolean,
-        color: Int?,
-        showAnswer: Boolean = false,
-    ): TextView {
-        val tv = TextView(requireContext())
-        TextViewCompat.setTextAppearance(tv, R.style.TodayCardBody)
-        tv.text = text
-        tv.setTextSize(TypedValue.COMPLEX_UNIT_PX, resources.getDimension(R.dimen.today_label_size))
-        if (color != null) tv.setTextColor(color)
-        tv.maxWidth = resources.getDimensionPixelSize(R.dimen.help_cell_max_width)
-        val padding = resources.getDimensionPixelSize(R.dimen.help_cell_padding)
-        tv.setPadding(padding, padding / 2, padding, padding / 2)
-        if (showAnswer) {
-            val span = SpannableString(text)
-            span.setSpan(StyleSpan(Typeface.BOLD), 0, text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-            span.setSpan(UnderlineSpan(), 0, text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-            tv.text = span
-        } else if (emphasised) {
-            tv.paint.isFakeBoldText = true
-        }
-        return tv
-    }
-
-    /**
-     * The fixed gender colour of a table column header (design §4): m blue, f red,
-     * n green; plural and any other label stay ink (null). Case rows carry no colour.
-     */
-    private fun genderColorFor(header: String?): Int? = when (header?.trim()) {
-        "m" -> ContextCompat.getColor(requireContext(), R.color.genderMasc)
-        "f" -> ContextCompat.getColor(requireContext(), R.color.genderFem)
-        "n" -> ContextCompat.getColor(requireContext(), R.color.genderNeut)
-        else -> null
-    }
-
-    /** Renders `**…**` marked help text: marked segments bold and underlined. */
-    private fun markedText(text: String): CharSequence {
-        val segments = DrillHelpCard.markedSegments(text)
-        if (segments.none { it.bold }) return text
-        val span = SpannableString(segments.joinToString("") { it.text })
-        var index = 0
-        for (segment in segments) {
-            if (segment.bold) {
-                span.setSpan(StyleSpan(Typeface.BOLD), index, index + segment.text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-                span.setSpan(UnderlineSpan(), index, index + segment.text.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-            }
-            index += segment.text.length
-        }
-        return span
+        val card = b.helpCard
+        HelpCardViewBinder.bind(
+            b.root.context,
+            HelpCardViewBinder.CardViews(
+                chips = card.helpChips,
+                rule = card.tvHelpRule,
+                table = card.helpTable,
+                example = card.tvHelpExample,
+                miss = card.tvHelpMiss,
+            ),
+            state,
+            answer,
+        )
     }
 
     private fun renderChoiceQuestion(q: DrillQuiz, question: DrillQuizQuestion) {

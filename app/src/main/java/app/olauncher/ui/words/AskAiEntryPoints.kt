@@ -212,4 +212,18 @@ object AskAiEntryPoints {
             label
         }
     }
+
+    /**
+     * The rule-detail row's label (#792): "Ask AI about this rule", appending
+     * "n turns" the same way as the word-card row — one shape per surface.
+     */
+    fun ruleRowText(context: Context, turns: Int): String {
+        val label = context.getString(R.string.ask_ai_rule_row)
+        val suffixTurns = AskAiEntries.wordRowTurns(turns)
+        return if (suffixTurns > 0) {
+            context.getString(R.string.ask_ai_rule_row_turns, label, suffixTurns)
+        } else {
+            label
+        }
+    }
 }

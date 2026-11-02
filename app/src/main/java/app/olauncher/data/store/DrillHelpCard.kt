@@ -97,6 +97,21 @@ object DrillHelpCard {
     }
 
     /**
+     * The rules-index detail state (#792, docs/design/german-hidden-surfaces.md
+     * §4.1): the full card of a rule browsed from the index — rule, forms
+     * table, example. No item is attached, so there is no answer cell to
+     * highlight and no miss line; the example is the rule's own authored one,
+     * shown with the same weight as the table, and nothing names an item's
+     * answer.
+     */
+    fun ruleIndexState(rule: DrillHelpRule): State = State(
+        rule = rule,
+        showAnswer = false,
+        example = rule.example,
+        miss = null,
+    )
+
+    /**
      * The word-order item's own example from [ITEM_HELP_EXAMPLES], or null when none is
      * authored. Word-order prompts have no gap, so the rule's example is never used here:
      * it would show the same sentence for every item of the rule.
