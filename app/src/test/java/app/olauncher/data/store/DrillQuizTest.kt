@@ -570,4 +570,117 @@ class DrillQuizTest {
         assertEquals(0, counts.almost)
         assertEquals(0, counts.wrong)
     }
+
+    // -----------------------------------------------------------------
+    // Word-tiles steps (#804 part 2): a parseable AI word-order item joins
+    // a mixed round as a scored tile question; its wrong order is a miss
+    // for the item's type, its right order a hit (owner decision 1).
+    // -----------------------------------------------------------------
+
+    /** A parseable AI word-order card, as the adapter produces it from a stored PracticeItem. */
+    private fun aiWordTileItem(): DrillItem = PracticeDrillItems.toDrillItem(
+        PracticeItem(
+            id = 401L,
+            wordId = 7,
+            type = DrillType.WORD_ORDER,
+            prompt = "Ordne: Wir / sehen / heute / den / Film",
+            answer = "Wir sehen heute den Film",
+            choices = listOf("Wir sehen heute den Film", "Wir heute sehen den Film"),
+            hint = "Konjunktiv I, Hauptsatz",
+        ),
+    )
+
+    /** The tile step the planner adds for [aiWordTileItem]. */
+    private fun aiWordTileStep(): DrillQuizQuestion = PracticeDrillItems.aiStep(aiWordTileItem())
+
+    private fun aiTileId(): DrillItemId = aiWordTileItem().id
+
+    @Test
+    fun aiWordTileStepCarriesTilesAndIsScored() {
+        val step = aiWordTileStep()
+        assertEquals(DrillFormat.WORD_TILES, step.format)
+        assertTrue(step.isWordTiles)
+        // A scored question, not a teaching beat or a reveal fallback.
+        assertFalse(step.isTeaching)
+        assertFalse(step.isReveal)
+        assertEquals(listOf("Wir", "sehen", "heute", "den", "Film"), step.tiles)
+        assertEquals(listOf(listOf("Wir", "sehen", "heute", "den", "Film")), step.acceptedOrders)
+        assertEquals("Konjunktiv I, Hauptsatz", step.hint)
+    }
+
+    @Test
+    fun wrongTileOrderIsAMissUnderTheItemsType() {
+        val quiz = DrillQuiz(listOf(tap(item1), aiWordTileStep()), Random(1))
+        quiz.answer(item1.answer)
+        quiz.advance()
+        // The same five words, but the verb sits in position 3 instead of 2 —
+        // a distinguishing miss, not a typo of another tile.
+        val ans = quiz.answerWordTiles(listOf("Wir", "heute", "sehen", "den", "Film"))
+        assertNotNull(ans)
+        assertFalse(ans!!.correct)
+        assertEquals("Wir sehen heute den Film", ans.answer)
+
+        val aiId = aiTileId()
+        assertEquals(mapOf(aiId to false), quiz.firstAttempts().filterKeys { PracticeDrillItems.isAiItem(it) })
+        assertEquals(DrillResult.WRONG, quiz.itemResults()[aiId])
+        assertEquals("Wir heute sehen den Film", quiz.learnerAnswers()[aiId])
+
+        // The miss feeds the round's per-type evidence for the item's type.
+        val evidence = DrillScores.roundEvidenceByType(quiz.firstAttempts(), quiz.typedResults(), abandoned = false)
+        val wordOrder = evidence[DrillType.WORD_ORDER]
+        assertNotNull(wordOrder)
+        assertEquals(1, wordOrder!!.asked)
+        assertEquals(0, wordOrder.firstTryRight)
+    }
+
+    @Test
+    fun rightTileOrderIsAHitUnderTheItemsType() {
+        val quiz = DrillQuiz(listOf(aiWordTileStep()))
+        val ans = quiz.answerWordTiles(listOf("Wir", "sehen", "heute", "den", "Film"))
+        assertNotNull(ans)
+        assertTrue(ans!!.correct)
+        assertEquals(mapOf(aiTileId() to true), quiz.firstAttempts())
+
+        val evidence = DrillScores.roundEvidenceByType(quiz.firstAttempts(), quiz.typedResults(), abandoned = false)
+        val wordOrder = evidence[DrillType.WORD_ORDER]!!
+        assertEquals(1, wordOrder.asked)
+        assertEquals(1, wordOrder.firstTryRight)
+    }
+
+    @Test
+    fun tileOrderGradingIgnoresCaseLikeTheNativeDrill() {
+        val quiz = DrillQuiz(listOf(aiWordTileStep()))
+        val ans = quiz.answerWordTiles(listOf("wir", "sehen", "heute", "den", "film"))
+        assertNotNull(ans)
+        assertTrue(ans!!.correct)
+    }
+
+    @Test
+    fun answerWordTilesIgnoresNonTileStepsAndRepeats() {
+        val quiz = DrillQuiz(listOf(tap(item1), aiWordTileStep()), Random(1))
+        // A choice question is never graded through the tile answer...
+        assertNull(quiz.answerWordTiles(listOf("Wir", "sehen", "heute", "den", "Film")))
+        quiz.answer(item1.answer)
+        quiz.advance()
+        assertTrue(quiz.answerWordTiles(listOf("Wir", "sehen", "heute", "den", "Film"))!!.correct)
+        // ...and an answered tile step is never graded twice.
+        assertNull(quiz.answerWordTiles(listOf("Wir", "sehen", "heute", "den", "Film")))
+    }
+
+    @Test
+    fun aiTileResultsNeverReachPerItemMaturity() {
+        val quiz = DrillQuiz(listOf(aiWordTileStep()))
+        quiz.answerWordTiles(listOf("Wir", "sehen", "heute", "den", "Film"))
+        val results = quiz.itemResults()
+        // The step is scored in the round...
+        assertEquals(DrillResult.RIGHT, results.values.single())
+        assertTrue(PracticeDrillItems.isAiItem(results.keys.single()))
+        // ...but the AI id is filtered before the history records it: no "ai:" key.
+        val history = DrillItemHistory.updated(
+            emptyMap(),
+            results.filterKeys { !PracticeDrillItems.isAiItem(it) },
+        )
+        assertTrue(history.isEmpty())
+        assertTrue(history.keys.none { it.startsWith("ai:") })
+    }
 }

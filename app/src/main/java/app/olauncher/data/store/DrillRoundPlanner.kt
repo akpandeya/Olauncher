@@ -15,6 +15,10 @@ import java.util.Random
  * ODD_ONE_OUT, MATCH, WORD_BANK and listen-and-tap (TTS, #532) have no question
  * generation yet; the planner degrades those rung-3 assignments to [TAP] until
  * they are implemented (see [varietyFormat]).
+ *
+ * [WORD_TILES] is off the ladder: it is the scored tile question an AI word-order
+ * practice item joins a mixed round as (#804 part 2), never assigned to a built-in
+ * item.
  */
 enum class DrillFormat {
     FLASHCARD,
@@ -24,6 +28,9 @@ enum class DrillFormat {
     MATCH,
     WORD_BANK,
     TYPED,
+
+    /** Scored tap-to-arrange tile question for a parseable AI word-order item (#804 part 2). */
+    WORD_TILES,
 
     /** Unscored rule-recap card: the adaptive breather after consecutive misses (#drill-pacing). */
     RECAP,
@@ -42,6 +49,10 @@ data class DrillQuizQuestion(
     val statement: String? = null,
     /** Whether [statement] is the true one. Only meaningful for true-false. */
     val isTrue: Boolean = false,
+    /** The tiles to arrange, for [DrillFormat.WORD_TILES]; empty otherwise. */
+    val tiles: List<String> = emptyList(),
+    /** The tile orders that count as right, for [DrillFormat.WORD_TILES]; empty otherwise. */
+    val acceptedOrders: List<List<String>> = emptyList(),
 ) {
     val id: DrillItemId get() = item.id
     val prompt: String get() = item.prompt
@@ -49,6 +60,7 @@ data class DrillQuizQuestion(
     val hint: String? get() = item.hint
     val isFlashcard: Boolean get() = format == DrillFormat.FLASHCARD
     val isRecap: Boolean get() = format == DrillFormat.RECAP
+    val isWordTiles: Boolean get() = format == DrillFormat.WORD_TILES
 
     /** An unscored teaching step (flashcard or rule recap) that advances on Continue. */
     val isTeaching: Boolean get() = isFlashcard || isRecap
@@ -57,9 +69,10 @@ data class DrillQuizQuestion(
     /**
      * Defensive guard for a choice question that somehow lost its choices: it gets a
      * reveal-style presentation with an enabled Continue and is never graded, so the
-     * screen can never dead-end with an empty grid and a hidden button.
+     * screen can never dead-end with an empty grid and a hidden button. A word-tiles
+     * step carries no choices by design, so it is excluded.
      */
-    val isReveal: Boolean get() = !isTeaching && !isTyped && choices.isEmpty()
+    val isReveal: Boolean get() = !isTeaching && !isTyped && !isWordTiles && choices.isEmpty()
 
     /** The choice a learner must pick to be right, or null when there are no choices. */
     val correctChoice: String?
@@ -89,7 +102,9 @@ data class DrillQuizQuestion(
  *   steps per round, so a round stays inside the ~12-interaction budget.
  * - AI practice items (#621, Epic 9 #561) join a mixed round as flashcard-only steps,
  *   capped at [MAX_AI_PER_ROUND] — their own cap, not [MAX_FLASHCARDS_PER_ROUND],
- *   which stays the cap for built-in flashcard teaching steps.
+ *   which stays the cap for built-in flashcard teaching steps. A word-order AI item
+ *   whose card the task-01 parser accepts (#804 part 2) joins as a scored
+ *   [DrillFormat.WORD_TILES] tile step instead; unparseable ones stay flashcards.
  * - No two consecutive questions share a format (as long as the assigned formats
  *   allow it).
  */
@@ -140,7 +155,8 @@ object DrillRoundPlanner {
     /**
      * Plans a practise-misses round: exactly the given items, no flashcard steps
      * (their first exposure is long past), ladder formats as usual. AI practice
-     * items stay out — misses rounds are AI-free (#621).
+     * items stay out — misses rounds are AI-free (#621), including a missed AI
+     * tile step (#804 part 2), so the filter drops them here.
      */
     fun planMisses(
         missed: List<DrillItem>,
@@ -149,7 +165,7 @@ object DrillRoundPlanner {
     ): List<DrillQuizQuestion> =
         // The misses keep their own item ids; the placeholder type only balances sampling.
         planRound(
-            mapOf(DrillType.PREPOSITIONS to missed),
+            mapOf(DrillType.PREPOSITIONS to missed.filterNot { PracticeDrillItems.isAiItem(it.id) }),
             maturity,
             random,
             missed.size,
@@ -166,7 +182,8 @@ object DrillRoundPlanner {
         aiItems: List<DrillItem>,
     ): List<DrillQuizQuestion> {
         // AI practice items (#621): at most MAX_AI_PER_ROUND, drawn once per round, and
-        // each rendered as a flashcard step. They take question slots, so the built-in
+        // each rendered as a flashcard step — or, for a parseable word-order card, a
+        // scored tile step (#804 part 2). They take question slots, so the built-in
         // pool fills the rest of the round and the total stays at the planned size.
         val aiCards = aiItems.shuffled(random).take(MAX_AI_PER_ROUND)
         val builtInSize = (size - aiCards.size).coerceAtLeast(1)
@@ -192,7 +209,7 @@ object DrillRoundPlanner {
         // the AI cards' slots come out of it, so the whole round stays at [size].
         val flashcardCap = if (aiCards.isEmpty()) MAX_ROUND_SIZE else builtInSize
         val withFlashcard = addFlashcards(planned, maturity, random, allowFlashcard, flashcardCap)
-        val withAi = addAiFlashcards(withFlashcard, aiCards, random)
+        val withAi = addAiSteps(withFlashcard, aiCards, random)
         return orderWithoutRepeat(withAi, random)
     }
 
@@ -293,14 +310,15 @@ object DrillRoundPlanner {
     }
 
     /**
-     * Adds the AI practice items (#621) as flashcard steps: flashcard-only, never a
-     * question, never graduating to tap or typed — [DrillQuiz] scores teaching steps
-     * not at all, so an AI card changes no type's evidence. Each card is inserted
-     * before a random step (or at the end) so the cards spread through the round;
-     * the no-two-consecutive-same-format rule applies to them best-effort, like to
-     * every step, through [orderWithoutRepeat].
+     * Adds the AI practice items (#621) as their own steps: flashcard-only, never
+     * a built-in question format — except a word-order item whose card the task-01
+     * parser accepts, which joins as a scored [DrillFormat.WORD_TILES] tile step
+     * (#804 part 2, [PracticeDrillItems.aiStep]); unparseable ones stay flashcards.
+     * Each step is inserted before a random step (or at the end) so they spread
+     * through the round; the no-two-consecutive-same-format rule applies to them
+     * best-effort, like to every step, through [orderWithoutRepeat].
      */
-    private fun addAiFlashcards(
+    private fun addAiSteps(
         planned: List<DrillQuizQuestion>,
         aiItems: List<DrillItem>,
         random: Random,
@@ -308,9 +326,9 @@ object DrillRoundPlanner {
         if (aiItems.isEmpty()) return planned
         var result = planned
         for (item in aiItems) {
-            val card = DrillQuizQuestion(item, DrillFormat.FLASHCARD)
+            val step = PracticeDrillItems.aiStep(item)
             val index = random.nextInt(result.size + 1)
-            result = result.subList(0, index) + card + result.subList(index, result.size)
+            result = result.subList(0, index) + step + result.subList(index, result.size)
         }
         return result
     }
