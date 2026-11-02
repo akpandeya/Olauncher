@@ -130,6 +130,33 @@ supports has no entry point of its own; a rule detail that carries an "Ask AI ab
 The row is an ordinary chat entry: it goes through `AskAiEntryPoints.openChat`, resumes the rule's latest thread, and
 its sends obey the same automatic-compaction rule as every other thread.
 
+**Index (#792, since shipped).** The Drills hub has a "Grammar rules" entry: `GrammarRulesFragment` lists every rule
+with its title and one-line rule, searchable by title (`GrammarRulesIndex`), a row tap opening the rule's help card.
+
+**Groups and learning order (#809).** The index is no longer one flat list: `GrammarRuleGroups` (a Context-free,
+tested Kotlin map, `data/store/GrammarRuleGroups.kt`) groups the rule ids into eleven topic groups, each with a
+stable lowercase key (`articles`, `plurals`, …) that the fragment resolves to a `grammar_rules_group_<key>` label in
+strings.xml. Task-05 keys further-reading links on these keys, so they are stable. The labels are topic names, never
+a case name (Nominative, Accusative, Dative, Genitive), because the case is the answer of the which-case items. With
+a search query the group order and headers stay and the groups with no match disappear.
+
+Suggested learning order, roughly CEFR A1 → C1 (the reviewer may reorder here, in `GrammarRuleGroups.ordered`, one
+place):
+
+| # | Key | Rules | Why here |
+|---|-----|-------|----------|
+| 1 | `articles` | 17 | der/die/das is the first thing a learner meets; suffix patterns come before the no-pattern and exception rules. |
+| 2 | `plurals` | 8 | Plural formation builds directly on the article; plain endings before their umlaut variants. |
+| 3 | `pronouns` | 10 | Personal and reflexive pronouns are A1–A2; the relative-pronoun rules close the group (agreement → after a preposition → possessive). |
+| 4 | `word_order` | 7 | Verb-second and question order are A1; subordinate-clause and sentence-bracket patterns A2–B1; TeKaMoLo last. |
+| 5 | `cases` | 12 | The which-case rules (nominative → accusative → dative) first, then the n-declension, then the genitive rules, the last case learners add. |
+| 6 | `prepositions` | 8 | Fixed-case prepositions (accusative, dative, genitive) before the two-way ones; the verb+preposition units are the hardest. |
+| 7 | `verbs` | 15 | Present conjugation and modals, then separable verbs, then the imperative (grouped into Verbs rather than its own group), then infinitive constructions with zu. |
+| 8 | `tenses` | 5 | The Präteritum rules in frequency order (sein, haben, modals, strong verbs), then the future with werden. |
+| 9 | `adjectives` | 8 | The weak declension (after the definite article) before the mixed one, each in case order. |
+| 10 | `passive` | 5 | B1 material: the present-tense helper and the Partizip II first, the doer phrases, then the perfect passive. |
+| 11 | `moods` | 11 | B1–C1: Konjunktiv II (the werden rule is the gentlest entry, polite requests near the end), then Konjunktiv I — reported speech — last of all. |
+
 ### 4.2 The AI chats have no "all conversations" list
 
 `AiChatStore.threads()` returns every stored thread, but the only list in the app is `AskAiThreadSheet`, which shows
