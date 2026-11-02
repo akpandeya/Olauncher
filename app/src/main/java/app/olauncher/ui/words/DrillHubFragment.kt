@@ -17,15 +17,14 @@ import app.olauncher.data.store.DrillType
 import app.olauncher.databinding.FragmentDrillHubBinding
 import app.olauncher.databinding.ItemDrillHubNewLabelBinding
 import app.olauncher.databinding.ItemDrillHubRowBinding
-import app.olauncher.databinding.ItemDrillHubSeparatorBinding
 import app.olauncher.helper.Haptics
 import app.olauncher.ui.BaseFragment
 
 /**
  * Full-screen drills hub: the 9 drill types weakest first, with Continue and Practise weakest
- * suggestion buttons on top. A row tap starts a 5-15 item round of that type; Practise weakest
- * starts the mixed round of the 2-3 weakest types. The popup picker it replaces lived in
- * WordsFragment.
+ * suggestion buttons on top and the Grammar rules button under them (#812). A row tap starts a
+ * 5-15 item round of that type; Practise weakest starts the mixed round of the 2-3 weakest
+ * types. The popup picker it replaces lived in WordsFragment.
  */
 class DrillHubFragment : BaseFragment() {
 
@@ -65,6 +64,17 @@ class DrillHubFragment : BaseFragment() {
             if (weakestMix.isNotEmpty()) startMixedRound(weakestMix)
         }
 
+        binding.btnGrammarRules.text =
+            getString(R.string.drill_hub_grammar_rules, DrillHelpContent.allRules().size)
+        binding.btnGrammarRules.setOnClickListener { view ->
+            Haptics.tick(view)
+            val navController = findNavController()
+            // Ignore a second tap delivered before the first navigation lands.
+            if (navController.currentDestination?.id == R.id.drillHubFragment) {
+                navController.navigate(R.id.action_drillHubFragment_to_grammarRulesFragment)
+            }
+        }
+
         renderRows(types, scores)
     }
 
@@ -101,35 +111,6 @@ class DrillHubFragment : BaseFragment() {
             item.root.setOnClickListener { startRound(row.type) }
             b.hubRowsPanel.addView(item.root)
         }
-
-        renderGrammarRulesEntry()
-    }
-
-    /**
-     * The Grammar rules entry after the drill rows (#792,
-     * docs/design/german-hidden-surfaces.md §6.1): the rule count in the stat
-     * position, no score bar, separated by a hairline. It opens the rules
-     * index — no separate screen carries it.
-     */
-    private fun renderGrammarRulesEntry() {
-        val b = _binding ?: return
-        b.hubRowsPanel.addView(
-            ItemDrillHubSeparatorBinding.inflate(layoutInflater, b.hubRowsPanel, false).root
-        )
-        val item = ItemDrillHubRowBinding.inflate(layoutInflater, b.hubRowsPanel, false)
-        val ruleCount = DrillHelpContent.allRules().size
-        item.tvName.text = getString(R.string.grammar_rules_title)
-        item.tvStat.text = resources.getQuantityString(R.plurals.grammar_rules_count, ruleCount, ruleCount)
-        item.scoreBar.isVisible = false
-        item.root.setOnClickListener { view ->
-            Haptics.tick(view)
-            val navController = findNavController()
-            // Ignore a second tap delivered before the first navigation lands.
-            if (navController.currentDestination?.id == R.id.drillHubFragment) {
-                navController.navigate(R.id.action_drillHubFragment_to_grammarRulesFragment)
-            }
-        }
-        b.hubRowsPanel.addView(item.root)
     }
 
     /** A tap starts a round of the type and makes it the new last type. */

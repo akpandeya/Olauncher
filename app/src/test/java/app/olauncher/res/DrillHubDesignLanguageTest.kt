@@ -56,6 +56,7 @@ class DrillHubDesignLanguageTest {
             "tvTitle" to "@style/TodayCardLabel",
             "btnContinue" to "@style/TodayButton",
             "btnWeakest" to "@style/TodayButton",
+            "btnGrammarRules" to "@style/TodayButton.Secondary",
         )
         for ((id, style) in expectedStyles) {
             val el = findElementById(doc, id)
@@ -68,8 +69,8 @@ class DrillHubDesignLanguageTest {
         assertEquals("match_parent", root.getAttribute("android:layout_width"))
         assertEquals("match_parent", root.getAttribute("android:layout_height"))
 
-        // Both suggestion buttons are tappable.
-        for (id in listOf("btnContinue", "btnWeakest")) {
+        // Both suggestion buttons and the Grammar rules button are tappable.
+        for (id in listOf("btnContinue", "btnWeakest", "btnGrammarRules")) {
             val el = findElementById(doc, id)!!
             assertEquals("View '$id' must be clickable", "true", el.getAttribute("android:clickable"))
             assertEquals("View '$id' must be focusable", "true", el.getAttribute("android:focusable"))

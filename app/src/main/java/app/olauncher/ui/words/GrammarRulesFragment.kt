@@ -28,8 +28,8 @@ import app.olauncher.ui.BaseFragment
  * A title search ([GrammarRulesIndex], Context-free and JVM tested) keeps the
  * group order and headers and hides the groups it finds nothing in. A row tap
  * opens the rule's full help card on the detail screen. Reached from the Grammar
- * rules entry in the Drills hub; no separate screen links here and the miss
- * help card does not.
+ * rules header button in the Drills hub; no separate screen links here and the
+ * miss help card does not.
  */
 class GrammarRulesFragment : BaseFragment() {
 
