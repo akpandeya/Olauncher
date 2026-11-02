@@ -28,13 +28,15 @@ class SettingsRowHolder(
     val seekBar: SeekBar? = null,
     val actions: List<TextView> = emptyList(),
     val actionsContainer: View? = null,
+    val trailingActions: List<TextView> = emptyList(),
+    val trailingActionsContainer: View? = null,
 ) : RecyclerView.ViewHolder(root) {
 
     /** The row this holder shows now; null while it shows a heading or nothing. */
     var boundSpec: SettingsRowSpec? = null
 
     /** The row background and every text in it. The slider is left out: it handles its own touches. */
-    fun tappableViews(): List<View> = listOfNotNull(itemView, title, value, subtitle) + actions
+    fun tappableViews(): List<View> = listOfNotNull(itemView, title, value, subtitle) + actions + trailingActions
 
     /** Every id-carrying view of the bound row, by the id the row model gives it. */
     fun viewsById(spec: SettingsRowSpec): Map<Int, View> {
@@ -49,6 +51,8 @@ class SettingsRowHolder(
         put(spec.seekBarId, seekBar)
         put(spec.actionsContainerId, actionsContainer)
         spec.actionIds.forEachIndexed { index, id -> put(id, actions.getOrNull(index)) }
+        put(spec.trailingActionsContainerId, trailingActionsContainer)
+        spec.trailingActionIds.forEachIndexed { index, id -> put(id, trailingActions.getOrNull(index)) }
         return views
     }
 }
@@ -110,6 +114,8 @@ class SettingsRowsAdapter(
                     subtitle = it.settingsRowSubtitle,
                     actions = listOf(it.settingsRowActionFirst, it.settingsRowActionSecond),
                     actionsContainer = it.settingsRowActions,
+                    trailingActions = listOf(it.settingsRowTrailingActionFirst, it.settingsRowTrailingActionSecond),
+                    trailingActionsContainer = it.settingsRowTrailingActions,
                 )
             }
             VIEW_SLIDER -> ItemSettingsRowSliderBinding.inflate(inflater, parent, false).let {
@@ -168,6 +174,16 @@ class SettingsRowsAdapter(
                 val label = spec.actionLabelRes.getOrNull(index)
                 if (label != null) view.setText(label) else view.text = ""
                 view.visibility = if (index < spec.actionIds.size) View.VISIBLE else View.GONE
+            }
+        }
+        holder.trailingActionsContainer?.let { container ->
+            container.id = idOrNone(spec.trailingActionsContainerId)
+            container.visibility = if (spec.trailingActionIds.isEmpty()) View.GONE else View.VISIBLE
+            holder.trailingActions.forEachIndexed { index, view ->
+                view.id = idOrNone(spec.trailingActionIds.getOrNull(index) ?: 0)
+                val label = spec.trailingActionLabelRes.getOrNull(index)
+                if (label != null) view.setText(label) else view.text = ""
+                view.visibility = if (index < spec.trailingActionIds.size) View.VISIBLE else View.GONE
             }
         }
         // A status line starts hidden and is shown by its own populate function.

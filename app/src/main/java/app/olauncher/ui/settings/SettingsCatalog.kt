@@ -45,12 +45,16 @@ class SettingsRowSpec(
     val actionIds: IntArray = IntArray(0),
     @StringRes val actionLabelRes: IntArray = IntArray(0),
     @IdRes val actionsContainerId: Int = 0,
+    /** Trailing chips under the value (end edge), e.g. "Fetch now" (#794). */
+    val trailingActionIds: IntArray = IntArray(0),
+    @StringRes val trailingActionLabelRes: IntArray = IntArray(0),
+    @IdRes val trailingActionsContainerId: Int = 0,
     val searchable: Boolean = true,
     val pref: BooleanSettingPref? = null,
 ) {
     /** Every view id this row owns. */
     val viewIds: List<Int> by lazy {
-        (listOf(primaryId, layoutId, titleId, valueId, subtitleId, seekBarId, actionsContainerId).filter { it != 0 } + actionIds.toList()).distinct()
+        (listOf(primaryId, layoutId, titleId, valueId, subtitleId, seekBarId, actionsContainerId, trailingActionsContainerId).filter { it != 0 } + actionIds.toList() + trailingActionIds.toList()).distinct()
     }
 }
 
@@ -90,6 +94,9 @@ private fun row(
     actionIds: IntArray = IntArray(0),
     actionLabelRes: IntArray = IntArray(0),
     @IdRes actionsContainerId: Int = 0,
+    trailingActionIds: IntArray = IntArray(0),
+    trailingActionLabelRes: IntArray = IntArray(0),
+    @IdRes trailingActionsContainerId: Int = 0,
     searchable: Boolean = true,
     pref: BooleanSettingPref? = null,
 ): SettingsItem.Row = SettingsItem.Row(
@@ -97,7 +104,9 @@ private fun row(
         key = key, sectionKey = sectionKey, titleRes = titleRes, type = type, shape = shape,
         primaryId = primaryId, layoutId = layoutId, titleId = titleId, valueId = valueId,
         subtitleRes = subtitleRes, subtitleId = subtitleId, seekBarId = seekBarId,
-        actionIds = actionIds, actionLabelRes = actionLabelRes, actionsContainerId = actionsContainerId, searchable = searchable, pref = pref,
+        actionIds = actionIds, actionLabelRes = actionLabelRes, actionsContainerId = actionsContainerId,
+        trailingActionIds = trailingActionIds, trailingActionLabelRes = trailingActionLabelRes,
+        trailingActionsContainerId = trailingActionsContainerId, searchable = searchable, pref = pref,
     )
 )
 
@@ -262,10 +271,20 @@ object SettingsCatalog {
         primaryId = R.id.germanPauseWordOnOff, layoutId = R.id.germanPauseWordLayout, titleId = R.id.germanPauseWordTitle, valueId = R.id.germanPauseWordOnOff),
     row(key = "germanUiOnOff", sectionKey = SettingsSections.KEY_DEUTSCH, titleRes = R.string.german_ui, type = SettingsRowType.TOGGLE,
         primaryId = R.id.germanUiOnOff, layoutId = R.id.germanUiLayout, titleId = R.id.germanUiTitle, valueId = R.id.germanUiOnOff),
+    // The AI practice row (#794): with a key the trailing chip is "Generate now" and the
+    // ⋮ chip plus the long-press hold "Update key" / "Remove key"; with no key the chip
+    // is "Add API key" (populateAiPractice swaps the labels).
     row(key = "aiPracticeOnOff", sectionKey = SettingsSections.KEY_DEUTSCH, titleRes = R.string.ai_practice, type = SettingsRowType.TOGGLE, shape = SettingsRowShape.SUBTITLE,
         primaryId = R.id.aiPracticeOnOff, layoutId = R.id.aiPracticeLayout, titleId = R.id.aiPracticeTitle, valueId = R.id.aiPracticeOnOff, subtitleId = R.id.aiPracticeSubtitle,
-        actionIds = intArrayOf(R.id.aiPracticeActionKey), actionLabelRes = intArrayOf(R.string.ai_practice_api_key), actionsContainerId = R.id.aiPracticeActions),
-    row(key = "newsSentencesOnOff", sectionKey = SettingsSections.KEY_DEUTSCH, titleRes = R.string.news_sentences, type = SettingsRowType.TOGGLE, shape = SettingsRowShape.SUBTITLE, primaryId = R.id.newsSentencesOnOff, layoutId = R.id.newsSentencesLayout, titleId = R.id.newsSentencesTitle, valueId = R.id.newsSentencesOnOff, subtitleRes = R.string.news_sentences_subtitle, subtitleId = R.id.newsSentencesSubtitle),
+        trailingActionIds = intArrayOf(R.id.aiPracticeActionKey, R.id.aiPracticeActionMore),
+        trailingActionLabelRes = intArrayOf(R.string.ai_practice_generate_now, R.string.ai_practice_more_actions),
+        trailingActionsContainerId = R.id.aiPracticeActions),
+    // The News sentences row gets the "Fetch now" chip (#794); populateGerman hides it
+    // while the switch is off.
+    row(key = "newsSentencesOnOff", sectionKey = SettingsSections.KEY_DEUTSCH, titleRes = R.string.news_sentences, type = SettingsRowType.TOGGLE, shape = SettingsRowShape.SUBTITLE, primaryId = R.id.newsSentencesOnOff, layoutId = R.id.newsSentencesLayout, titleId = R.id.newsSentencesTitle, valueId = R.id.newsSentencesOnOff, subtitleRes = R.string.news_sentences_subtitle, subtitleId = R.id.newsSentencesSubtitle,
+        trailingActionIds = intArrayOf(R.id.newsSentencesFetchNow),
+        trailingActionLabelRes = intArrayOf(R.string.news_sentences_fetch_now),
+        trailingActionsContainerId = R.id.newsSentencesActions),
     )
 
     private val appearance: List<SettingsItem> = listOf(

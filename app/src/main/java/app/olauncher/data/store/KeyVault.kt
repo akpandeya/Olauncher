@@ -93,6 +93,9 @@ class KeyVault(private val context: Context) {
         }
     }
 
+    /** Whether a key file is present — a cheap presence check for UI state, no decrypt. */
+    fun isSet(): Boolean = file().exists()
+
     /** Deletes the stored key and the Keystore key behind it. Best effort both ways. */
     fun clear() {
         try {

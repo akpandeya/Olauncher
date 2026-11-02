@@ -10,6 +10,7 @@
          declared here (not in a layout) and assigned to the row views when the adapter binds them. -->
     <item name="accent" type="id" />
     <item name="aiPracticeActionKey" type="id" />
+    <item name="aiPracticeActionMore" type="id" />
     <item name="aiPracticeActions" type="id" />
     <item name="aiPracticeAdvanced" type="id" />
     <item name="aiPracticeAdvancedFields" type="id" />
@@ -168,6 +169,8 @@
     <item name="musicPulse" type="id" />
     <item name="musicPulseLayout" type="id" />
     <item name="musicPulseTitle" type="id" />
+    <item name="newsSentencesActions" type="id" />
+    <item name="newsSentencesFetchNow" type="id" />
     <item name="newsSentencesLayout" type="id" />
     <item name="newsSentencesOnOff" type="id" />
     <item name="newsSentencesSubtitle" type="id" />

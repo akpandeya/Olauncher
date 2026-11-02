@@ -7,10 +7,14 @@ import kotlin.math.min
 
 data class NewsHarvestLimits(
     val articlesLeftToday: Int,
-    val maxArticlesPerRun: Int = 10,
+    val maxArticlesPerRun: Int = DEFAULT_MAX_ARTICLES_PER_RUN,
     val minJitterMs: Long = 3_000,
     val maxJitterMs: Long = 10_000
-)
+) {
+    companion object {
+        const val DEFAULT_MAX_ARTICLES_PER_RUN = 10
+    }
+}
 
 data class NewsHarvestResult(
     val feedsFetched: Int,

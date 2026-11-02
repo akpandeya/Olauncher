@@ -5,6 +5,7 @@ import android.view.View
 import app.olauncher.BuildConfig
 import app.olauncher.R
 import app.olauncher.data.Constants
+import app.olauncher.data.store.KeyVault
 import app.olauncher.helper.GestureSlot
 import app.olauncher.helper.Haptics
 import app.olauncher.helper.HomeSet
@@ -192,8 +193,13 @@ private fun SettingsFragment.handleGermanBackupFooterClick(view: View): Boolean 
         R.id.germanPauseWordOnOff, R.id.germanPauseWordTitle, R.id.germanPauseWordLayout -> tickOnChange(view) { toggleGermanPauseWord() }
         R.id.germanUiOnOff, R.id.germanUiTitle, R.id.germanUiLayout -> tickOnChange(view) { toggleGermanUi() }
         R.id.aiPracticeOnOff, R.id.aiPracticeTitle, R.id.aiPracticeSubtitle, R.id.aiPracticeLayout -> tickOnChange(view) { toggleAiPractice() }
-        R.id.aiPracticeActionKey -> showAiKeyDialog()
+        // #794: the trailing chip is the key state — "Add API key" opens the dialog,
+        // "Generate now" starts one immediate practice run.
+        R.id.aiPracticeActionKey ->
+            if (KeyVault(requireContext()).isSet()) generateAiPracticeNow() else showAiKeyDialog()
+        R.id.aiPracticeActionMore -> showAiPracticeMenu(view)
         R.id.newsSentencesOnOff, R.id.newsSentencesTitle, R.id.newsSentencesSubtitle, R.id.newsSentencesLayout -> tickOnChange(view) { toggleNewsSentences() }
+        R.id.newsSentencesFetchNow -> fetchNewsSentencesNow()
         R.id.exportBackup, R.id.exportBackupLayout -> launchExportBackup()
         R.id.importBackup, R.id.importBackupLayout -> launchImportBackup()
         R.id.autoBackup, R.id.autoBackupTitle, R.id.autoBackupLayout -> tickOnChange(view) { toggleAutoBackup() }

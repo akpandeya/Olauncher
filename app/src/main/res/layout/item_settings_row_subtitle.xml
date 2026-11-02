@@ -71,4 +71,34 @@
         android:layout_gravity="end|center_vertical"
         android:layout_marginEnd="4dp"
         android:padding="8dp" />
+
+    <!-- #794: trailing action chips under the value, e.g. News sentences "Fetch now" -->
+    <LinearLayout
+        android:id="@+id/settingsRowTrailingActions"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|bottom"
+        android:layout_marginEnd="4dp"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/settingsRowTrailingActionFirst"
+            style="@style/TextSettingsValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/today_chip"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="6dp" />
+
+        <TextView
+            android:id="@+id/settingsRowTrailingActionSecond"
+            style="@style/TextSettingsValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="4dp"
+            android:background="@drawable/today_chip"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="6dp" />
+    </LinearLayout>
 </FrameLayout>
