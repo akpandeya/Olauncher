@@ -39,7 +39,7 @@ import kotlinx.coroutines.withContext
  * Background worker that harvests German news sentences into [RecentSentencesStore].
  *
  * Fetches only allowlisted news feeds and article pages from [NewsSources.ALL] hosts.
- * Runs only under unmetered network (Wi-Fi) and while charging, scheduled every 12 hours.
+ * Runs only under unmetered network (Wi-Fi), scheduled every 12 hours.
  * Enforces caps: at most 10 articles per run ([NewsHarvestLimits.maxArticlesPerRun]) and
  * at most 30 articles per day ([Prefs.NEWS_DAILY_ARTICLE_CAP]).
  *
@@ -88,8 +88,8 @@ class NewsHarvestWorker(
                 val result = NewsHarvester(HttpNewsFetcher(), sentenceStore)
                     .harvest(NewsHarvestLimits(articlesLeftToday = left)) {
                         // Count each article request as it is sent, so a run cancelled
-                        // part-way (charger unplugged, Wi-Fi lost) or a failing backfill
-                        // still uses up the daily cap.
+                        // part-way (Wi-Fi lost) or a failing backfill still uses up
+                        // the daily cap.
                         prefs.recordNewsArticlesFetched(1, today.toEpochDay())
                     }
                 if (result.newSentences.isNotEmpty()) {
@@ -175,7 +175,6 @@ class NewsHarvestWorker(
 
         private fun constraints() = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.UNMETERED)
-            .setRequiresCharging(true)
             .build()
 
         fun schedulePeriodic(context: Context) {
@@ -187,7 +186,7 @@ class NewsHarvestWorker(
                 .build()
             WorkManager.getInstance(context).enqueueUniquePeriodicWork(
                 WORK_NAME_PERIODIC,
-                ExistingPeriodicWorkPolicy.KEEP,
+                ExistingPeriodicWorkPolicy.UPDATE,
                 request,
             )
         }
