@@ -4,8 +4,8 @@ Date: 2026-11-02
 
 ## Status
 
-Informational, with a short assessment at the end. This records what the app does today; it is not a decision to
-change anything.
+Informational, with a short assessment and the decisions at the end. It records what the app does today and what is
+worth changing; each change is filed as its own issue.
 
 ## TL;DR
 
@@ -180,8 +180,17 @@ Sections 3 and 4 are different problems. Section 3 is "no switch": the app made 
 The line to hold: a feature that generates, such as the context rewrite or the sentence rewriter, should stay
 invisible; content the user owns, such as rules, chats and harvested sentences, is what deserves a surface.
 
-## Open questions
+## Decisions (2026-11-02)
 
-- Does the rules index belong inside the Drills hub, or on its own screen reached from a word or a drill?
-- Should the all-chats list sit where Ask-AI already lives, or in Settings?
-- Is "fetch now" a normal row action like AI practice's, or a debug-only gesture?
+Each item in section 6 is filed as its own issue. The placement questions above are settled:
+
+- **Rules index (#792):** it lives inside the Drills hub, as a "Grammar rules" entry. No separate screen, and no link
+  from the miss help card.
+- **All-chats list (#793):** it opens from a button in the Words screen header, next to the Drills button. That is the
+  on-demand entry the Ask-AI design lacks; the exact placement and shape are settled by a mock
+  (`german-surfaces-mock.html`) before the code lands.
+- **Fetch now (#794):** a normal row action, not a debug gesture — a visible trailing chip on the News sentences row,
+  mirroring AI practice's "Generate now". The AI practice row takes the same shape: with no key it shows "Add API
+  key"; with a key, "Generate now" is prominent and the key management moves behind the ⋮ menu.
+- **Harvest network (#795):** the background run stays Wi-Fi only; a manual "Fetch now" is not gated by the network,
+  because the user asked for it.
