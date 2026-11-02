@@ -1018,7 +1018,10 @@
     <string name="ai_error_server">Provider error — try again later</string>
     <string name="ai_practice_generate_now">Generate now</string>
     <string name="ai_practice_generate_queued">%1$d words queued</string>
+    <string name="ai_practice_add_key">Add API key</string>
+    <string name="ai_practice_update_key">Update key</string>
     <string name="ai_practice_remove_key">Remove key</string>
+    <string name="ai_practice_more_actions">⋮</string>
     <string name="ai_practice_advanced">Advanced</string>
     <string name="ai_practice_base_url">Base URL</string>
     <string name="ai_practice_model">Model</string>
@@ -1026,6 +1029,14 @@
     <string name="ai_practice_key_save_failed">Could not save the key — try again</string>
     <string name="news_sentences">News sentences</string>
     <string name="news_sentences_subtitle">Collect example sentences from German news sites on Wi-Fi</string>
+
+    <!-- News sentences "Fetch now" (#794): the manual harvest action and its feedback lines -->
+    <string name="news_sentences_fetch_now">Fetch now</string>
+    <string name="news_fetch_now_off">News sentences are off</string>
+    <string name="news_fetch_now_queued">Harvest queued · up to %1$d articles</string>
+    <string name="news_fetch_now_cap_used">Daily cap reached — up to %1$d articles a day. New articles come tomorrow.</string>
+    <string name="news_fetch_now_fetched">%1$d articles fetched</string>
+    <string name="news_fetch_now_nothing_new">Nothing new — no fresh articles</string>
 
     <!-- Ask-AI chat screen (#699, docs/design/ask-ai-chat.md §Chat screen, §Reliability) -->
     <string name="chat_new_conversation">New conversation</string>

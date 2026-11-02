@@ -168,6 +168,7 @@ class NewsHarvestWorker(
         private const val TAG = "NewsHarvestWorker"
         const val WORK_NAME_PERIODIC = "news_sentences"
         const val WORK_NAME_NOW = "news_sentences_now"
+        const val WORK_NAME_FETCH_NOW = "news_sentences_fetch_now"
         const val PERIODIC_INTERVAL_HOURS = 12L
 
         /** Process-wide: the periodic and the one-off work must not harvest at the same time. */
@@ -202,10 +203,27 @@ class NewsHarvestWorker(
             )
         }
 
+        /**
+         * The manual "Fetch now" run (#794): the same worker without the unmetered
+         * network constraint — the user asked for it, so it runs on any connection.
+         * Its own unique name, so a pending Wi-Fi-gated [runOnce] (the automatic run
+         * after switching the feature on) cannot swallow the tap through KEEP. The
+         * result is read back through [getWorkInfosForUniqueWorkLiveData].
+         */
+        fun fetchNow(context: Context) {
+            val request = OneTimeWorkRequestBuilder<NewsHarvestWorker>().build()
+            WorkManager.getInstance(context).enqueueUniqueWork(
+                WORK_NAME_FETCH_NOW,
+                ExistingWorkPolicy.KEEP,
+                request,
+            )
+        }
+
         fun cancel(context: Context) {
             val wm = WorkManager.getInstance(context)
             wm.cancelUniqueWork(WORK_NAME_PERIODIC)
             wm.cancelUniqueWork(WORK_NAME_NOW)
+            wm.cancelUniqueWork(WORK_NAME_FETCH_NOW)
         }
     }
 }

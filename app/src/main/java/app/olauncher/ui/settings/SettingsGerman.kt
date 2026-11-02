@@ -74,6 +74,7 @@ import app.olauncher.wellbeing.NudgeScheduler
 import app.olauncher.wellbeing.Nudges
 import app.olauncher.wellbeing.NotificationPermission
 import androidx.work.ExistingWorkPolicy
+import androidx.work.WorkManager
 import app.olauncher.quiet.QuietRelease
 import app.olauncher.quiet.ReleaseWorker
 import app.olauncher.data.store.AutoBackupStatus
@@ -100,7 +101,10 @@ import app.olauncher.data.store.PracticeItemsStore
 import app.olauncher.data.store.PracticeQueue
 import app.olauncher.data.store.WordsStore
 import app.olauncher.helper.AiPracticeToggle
+import app.olauncher.helper.NewsFetchNow
+import app.olauncher.helper.NewsHarvestPolicy
 import app.olauncher.helper.NewsHarvestToggle
+import app.olauncher.helper.NewsHarvestWorker
 import app.olauncher.helper.NewsHarvestWorkerScheduler
 import app.olauncher.helper.PracticeWorker
 import app.olauncher.helper.PracticeWorkerScheduler
@@ -280,6 +284,14 @@ internal fun SettingsFragment.toggleNewsSentences() {
 
 internal fun SettingsFragment.populateAiPractice() {
     binding.aiPracticeOnOff.text = getString(if (prefs.aiPracticeEnabled) R.string.on else R.string.off)
+    // #794: the trailing chip leads with the key state — "Add API key" until one is
+    // saved, "Generate now" after; the ⋮ chip (and the row long-press) holds key
+    // management. isSet() is the cheap file check, no decrypt on every populate.
+    val hasKey = KeyVault(requireContext()).isSet()
+    binding.aiPracticeActionKey.text = getString(
+        if (hasKey) R.string.ai_practice_generate_now else R.string.ai_practice_add_key
+    )
+    binding.aiPracticeActionMore.isVisible = hasKey
     val subtitleRes = AiPracticeMessages.subtitleRes(
         prefs.aiPracticeEnabled, prefs.aiBillingBlocked, prefs.aiKeyRejected, prefs.aiModel,
     )
@@ -287,13 +299,20 @@ internal fun SettingsFragment.populateAiPractice() {
         ?: getString(R.string.ai_practice_subtitle, AiPracticeMessages.providerLabel(prefs.aiProvider))
 }
 
+/**
+ * The key-management menu (#794): "Update key" / "Remove key" behind the ⋮ chip or
+ * the row long-press, once a key is set. With no key it offers "Add API key" only.
+ */
 internal fun SettingsFragment.showAiPracticeMenu(anchor: View) {
-    val hasKey = !KeyVault(requireContext()).read().isNullOrBlank()
+    val hasKey = KeyVault(requireContext()).isSet()
     anchor.showPopupMenu(
         configure = { menu ->
-            menu.add(Menu.NONE, 0, 0, R.string.ai_practice_api_key)
-            if (hasKey) menu.add(Menu.NONE, 1, 1, R.string.ai_practice_remove_key)
-            menu.add(Menu.NONE, 2, 2, R.string.ai_practice_generate_now)
+            if (hasKey) {
+                menu.add(Menu.NONE, 0, 0, R.string.ai_practice_update_key)
+                menu.add(Menu.NONE, 1, 1, R.string.ai_practice_remove_key)
+            } else {
+                menu.add(Menu.NONE, 0, 0, R.string.ai_practice_add_key)
+            }
         }
     ) { item ->
         when (item.itemId) {
@@ -303,7 +322,6 @@ internal fun SettingsFragment.showAiPracticeMenu(anchor: View) {
                 requireContext().showToast(getString(R.string.ai_practice_key_removed))
                 populateAiPractice()
             }
-            2 -> generateAiPracticeNow()
         }
     }
 }
@@ -323,6 +341,58 @@ internal fun SettingsFragment.generateAiPracticeNow() {
             )
         }
         context.showToast(getString(R.string.ai_practice_generate_queued, queued.size))
+    }
+}
+
+/**
+ * "Fetch now" (#794): one immediate [NewsHarvestWorker] run. The tap is the user's
+ * ask, so [NewsHarvestWorker.fetchNow] drops the Wi-Fi gate the periodic run keeps;
+ * the run itself still obeys [NewsHarvestPolicy.mayRun], the daily cap and the run
+ * guard, all decided Context-free in [NewsFetchNow]. A follow-up toast reports what
+ * the harvest fetched.
+ */
+internal fun SettingsFragment.fetchNewsSentencesNow() {
+    val context = requireContext()
+    val today = LocalDate.now().toEpochDay()
+    val articlesLeft = NewsHarvestPolicy.articlesLeftToday(
+        Prefs.NEWS_DAILY_ARTICLE_CAP, prefs.newsArticlesFetchedToday(today),
+    )
+    when (val plan = NewsFetchNow.plan(prefs.germanEnabled, prefs.newsSentencesEnabled, articlesLeft)) {
+        NewsFetchNow.Plan.Off -> context.showToast(getString(R.string.news_fetch_now_off))
+        NewsFetchNow.Plan.CapUsed -> context.showToast(
+            getString(R.string.news_fetch_now_cap_used, Prefs.NEWS_DAILY_ARTICLE_CAP)
+        )
+        is NewsFetchNow.Plan.Run -> {
+            val fetchedBefore = prefs.newsArticlesFetchedToday(today)
+            NewsHarvestWorker.fetchNow(context)
+            context.showToast(getString(R.string.news_fetch_now_queued, plan.articles))
+            toastNewsFetchResult(context, fetchedBefore, today)
+        }
+    }
+}
+
+/**
+ * Toasts what the manual harvest fetched once its work finishes — every "fetch now"
+ * work of the unique name is terminal, the same wait the word lookup refresh uses
+ * (WordDialogs). When KEEP kept an already-pending run, that is the run whose finish
+ * this waits for.
+ */
+private fun SettingsFragment.toastNewsFetchResult(
+    context: Context,
+    articlesFetchedBefore: Int,
+    todayEpochDay: Long,
+) {
+    val liveData = WorkManager.getInstance(context)
+        .getWorkInfosForUniqueWorkLiveData(NewsHarvestWorker.WORK_NAME_FETCH_NOW)
+    liveData.observe(viewLifecycleOwner) { infos ->
+        if (infos.isEmpty() || !infos.all { it.state.isFinished }) return@observe
+        liveData.removeObservers(viewLifecycleOwner)
+        when (val finished = NewsFetchNow.finished(prefs.newsArticlesFetchedToday(todayEpochDay) - articlesFetchedBefore)) {
+            is NewsFetchNow.Finished.Fetched ->
+                context.showToast(getString(R.string.news_fetch_now_fetched, finished.articles))
+            NewsFetchNow.Finished.NothingNew ->
+                context.showToast(getString(R.string.news_fetch_now_nothing_new))
+        }
     }
 }
 
@@ -532,6 +602,9 @@ internal fun SettingsFragment.populateGerman() {
     populateAiPractice()
     binding.newsSentencesLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
     binding.newsSentencesOnOff.text = getString(if (prefs.newsSentencesEnabled) R.string.on else R.string.off)
+    // #794: the trailing "Fetch now" chip shows only while the feature runs; the row
+    // itself is hidden while German is off.
+    binding.newsSentencesActions.isVisible = prefs.newsSentencesEnabled
 }
 
 internal fun SettingsFragment.showDictionaryAppMenu(anchor: View) {
