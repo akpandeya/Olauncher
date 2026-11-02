@@ -79,6 +79,8 @@ class GrammarRuleFragment : BaseFragment() {
                 firstExposure = card.tvHelpFirstExposure,
                 table = card.helpTable,
                 example = card.tvHelpExample,
+                commonMistakesLabel = card.tvHelpMistakesLabel,
+                commonMistakes = card.tvHelpMistakes,
                 miss = card.tvHelpMiss,
             ),
             DrillHelpCard.ruleIndexState(rule),

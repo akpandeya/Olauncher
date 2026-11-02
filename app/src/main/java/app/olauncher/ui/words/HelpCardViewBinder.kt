@@ -21,9 +21,9 @@ import app.olauncher.data.store.DrillHelpCard
 /**
  * Binds a [DrillHelpCard.State] to the shared help-card views of
  * `view_help_card.xml` (#651 design §3): chips, rule text, first-exposure line,
- * forms table, example and miss line. The drill screen's help slot and the
- * rules-index detail (#792) render through this one path, so a rule looks the
- * same wherever it is opened.
+ * forms table, example, common mistakes (#811) and miss line. The drill screen's
+ * help slot and the rules-index detail (#792) render through this one path, so a
+ * rule looks the same wherever it is opened.
  */
 object HelpCardViewBinder {
 
@@ -35,6 +35,10 @@ object HelpCardViewBinder {
         val firstExposure: TextView,
         val table: GridLayout,
         val example: TextView,
+        /** The "Common mistakes" label (#811); hidden with the mistakes line. */
+        val commonMistakesLabel: TextView,
+        /** The rule's common mistakes lines (#811); hidden when the state has none. */
+        val commonMistakes: TextView,
         val miss: TextView,
     )
 
@@ -103,6 +107,20 @@ object HelpCardViewBinder {
             views.example.isVisible = true
         } else {
             views.example.isVisible = false
+        }
+
+        // Common mistakes (#811): 1–3 typical learner errors with the correct form,
+        // shown only where no unanswered item is attached (flashcard, rules-index
+        // detail — DrillHelpCard.State carries them nowhere else). One line each,
+        // hidden with their label when the rule authors none.
+        val mistakes = state.commonMistakes
+        if (mistakes.isNotEmpty()) {
+            views.commonMistakes.text = mistakes.joinToString("\n") { "• $it" }
+            views.commonMistakes.isVisible = true
+            views.commonMistakesLabel.isVisible = true
+        } else {
+            views.commonMistakes.isVisible = false
+            views.commonMistakesLabel.isVisible = false
         }
 
         // Miss line: rose ✗ mark, then the wrong choice and why it is wrong, in ink.

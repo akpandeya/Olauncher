@@ -50,6 +50,28 @@
         android:textStyle="italic"
         tools:text="Das Kind, das dort spielt, ist fünf Jahre alt." />
 
+    <!-- Common mistakes (#811): 1–3 typical learner errors with the correct form,
+         shown only where no unanswered item is attached — the flashcard and the
+         rules-index detail. Hidden on the Why? state, after a miss, on later rungs
+         and whenever the rule authors none. -->
+    <TextView
+        android:id="@+id/tvHelpMistakesLabel"
+        style="@style/TodayCardBody"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:text="@string/drill_help_common_mistakes"
+        android:textStyle="bold"
+        tools:text="Common mistakes" />
+
+    <TextView
+        android:id="@+id/tvHelpMistakes"
+        style="@style/TodayCardBodyLight"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        tools:text="• der Wohnung: nouns in -ung are die — die Wohnung, die Zeitung." />
+
     <TextView
         android:id="@+id/tvHelpMiss"
         style="@style/TodayCardBody"

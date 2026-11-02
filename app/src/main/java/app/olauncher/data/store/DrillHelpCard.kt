@@ -43,6 +43,13 @@ object DrillHelpCard {
          * recaps, in word-order states, and for rules that author no line.
          */
         val firstExposureRule: String? = null,
+        /**
+         * The rule's common mistakes (#811), shown only where no unanswered item is
+         * attached: the flashcard state and [DrillHelpCard.ruleIndexState]. Empty in
+         * every pre-answer state (Why?), after a miss, on later rungs and in
+         * word-order states — guarded by DrillHelpContentTest.
+         */
+        val commonMistakes: List<String> = emptyList(),
     )
 
     /**
@@ -76,6 +83,7 @@ object DrillHelpCard {
                 example = filledExample(question),
                 miss = null,
                 firstExposureRule = rule.firstExposureRule,
+                commonMistakes = rule.commonMistakes,
             )
             answeredWrong -> State(
                 rule = rule,
@@ -143,6 +151,7 @@ object DrillHelpCard {
         example = rule.example,
         miss = null,
         firstExposureRule = rule.firstExposureRule,
+        commonMistakes = rule.commonMistakes,
     )
 
     /**
