@@ -349,6 +349,55 @@ class DrillHelpCardCellTest {
         assertNull(DrillHelpCard.ruleIndexState(rule).firstExposureRule)
     }
 
+    // -------------------------------------------------------------------
+    // The common mistakes (#811): 1–3 typical learner errors per rule, shown
+    // only where no unanswered item is attached — the rules-index detail and
+    // the flashcard (a reading step). Never in a pre-answer state or on later
+    // rungs; DrillHelpContentTest covers every item and word-order state.
+    // -------------------------------------------------------------------
+
+    /** The prep-fixed-acc rule authors a mistake line; a distinguishing non-empty case. */
+    private val mistakesRule = DrillHelpContent.rule("prep-fixed-acc")!!
+
+    @Test
+    fun commonMistakesShowOnTheIndexDetailAndFlashcard() {
+        assertTrue("expected authored mistakes for prep-fixed-acc", mistakesRule.commonMistakes.isNotEmpty())
+        assertEquals(
+            mistakesRule.commonMistakes,
+            DrillHelpCard.ruleIndexState(mistakesRule).commonMistakes,
+        )
+        val flashcard = DrillQuizQuestion(accItem, DrillFormat.FLASHCARD, accItem.choices)
+        assertEquals(
+            mistakesRule.commonMistakes,
+            DrillHelpCard.state(flashcard, whyOpen = false, answeredWrong = false)!!
+                .commonMistakes,
+        )
+        // A rule with no mistakes stays empty on both — the default empty list
+        // cannot stand in for authored content.
+        val bareRule = DrillHelpContent.rule("art-gender-fixed")!!
+        assertEquals(emptyList<String>(), DrillHelpCard.ruleIndexState(bareRule).commonMistakes)
+    }
+
+    @Test
+    fun commonMistakesNeverShowOnWhyOrAfterAMiss() {
+        val tap = DrillQuizQuestion(accItem, DrillFormat.TAP, accItem.choices)
+        val why = DrillHelpCard.state(
+            tap,
+            whyOpen = true,
+            answeredWrong = false,
+            firstExposure = true,
+        )!!
+        assertTrue(why.commonMistakes.isEmpty())
+        val miss = DrillHelpCard.state(
+            tap,
+            whyOpen = false,
+            answeredWrong = true,
+            wrongChoice = "dem",
+            firstExposure = true,
+        )!!
+        assertTrue(miss.commonMistakes.isEmpty())
+    }
+
     private fun assertNotEquals(a: Any?, b: Any?) {
         org.junit.Assert.assertNotEquals(a, b)
     }

@@ -374,6 +374,76 @@ class DrillHelpContentTest {
     }
 
     @Test
+    fun commonMistakesStayWithinTheCaps() {
+        // #811: at most 3 short lines per rule, each a typical learner error and the
+        // correct form — blank or overlong lines would bloat the card.
+        for (id in DrillHelpContent.ids()) {
+            val rule = DrillHelpContent.rule(id)!!
+            assertTrue(
+                "$id: at most 3 common mistakes (found ${rule.commonMistakes.size})",
+                rule.commonMistakes.size <= 3,
+            )
+            for (mistake in rule.commonMistakes) {
+                assertTrue("$id: mistake must not be blank", mistake.isNotBlank())
+                assertTrue(
+                    "$id: mistake must stay short (found ${mistake.length} chars): $mistake",
+                    mistake.length <= 140,
+                )
+            }
+        }
+    }
+
+    @Test
+    fun commonMistakesNeverAppearInAPreAnswerState() {
+        // #811 sibling of preAnswerProseNamesNoItemSpecificAnswer: the common mistakes
+        // name forms and answers freely, so they must be attached to no state with an
+        // unanswered item — the Why? state and the after-a-miss state are the card's
+        // pre-answer openings. (The flashcard is a reading step and the rules-index
+        // detail attaches no item; DrillHelpCardCellTest pins those two explicitly.)
+        for ((item, rule) in itemRules()) {
+            val tap = DrillQuizQuestion(item, DrillFormat.TAP, item.choices)
+            val why = DrillHelpCard.state(
+                tap,
+                whyOpen = true,
+                answeredWrong = false,
+                firstExposure = true,
+            )
+            if (why != null) {
+                assertTrue(
+                    "${rule.id}: the Why? state carries no common mistakes",
+                    why.commonMistakes.isEmpty(),
+                )
+            }
+            val miss = DrillHelpCard.state(
+                tap,
+                whyOpen = false,
+                answeredWrong = true,
+                wrongChoice = item.choices.firstOrNull { it != item.answer },
+                firstExposure = true,
+            )
+            if (miss != null) {
+                assertTrue(
+                    "${rule.id}: the after-a-miss state carries no common mistakes",
+                    miss.commonMistakes.isEmpty(),
+                )
+            }
+        }
+        for (wordOrderItem in wordOrderItems().filter { it.ruleId != null }) {
+            for (state in listOf(
+                DrillHelpCard.wordOrderState(wordOrderItem, whyOpen = true, answeredWrong = false),
+                DrillHelpCard.wordOrderState(wordOrderItem, whyOpen = false, answeredWrong = true),
+            )) {
+                if (state != null) {
+                    assertTrue(
+                        "${wordOrderItem.ruleId}: word-order states carry no common mistakes",
+                        state.commonMistakes.isEmpty(),
+                    )
+                }
+            }
+        }
+    }
+
+    @Test
     fun firstExposureRuleIsOnlyWhereTheDesignAllowsIt() {
         // Design §2: a first-exposure rule exists only where the design author allows a
         // case name before an answer: one-case prepositions, the two-way prepositions
