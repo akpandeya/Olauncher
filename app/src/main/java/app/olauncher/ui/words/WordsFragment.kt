@@ -64,6 +64,7 @@ class WordsFragment : BaseFragment() {
         binding.btnClearSearch.setOnClickListener { binding.etSearch.text?.clear() }
         binding.tvTitle.setOnClickListener { openDrillsHub() }
         binding.btnDrills.setOnClickListener { openDrillsHub() }
+        binding.btnChats.setOnClickListener { openConversations() }
 
         // The activity is edge-to-edge, so the window is not resized for the keyboard.
         // Pad the page by the IME inset so the search field stays just above the keyboard.
@@ -85,6 +86,9 @@ class WordsFragment : BaseFragment() {
 
     override fun onResume() {
         super.onResume()
+        // The gate is read once per resume (a keystore decrypt), not per render —
+        // render also fires on every search keystroke.
+        askAiVisible = AskAiEntryPoints.environment(requireContext()).visible
         render()
     }
 
@@ -121,6 +125,9 @@ class WordsFragment : BaseFragment() {
             }
         }
         b.btnDrills.isVisible = WordsCardLogic.showDrillsButton(Prefs(context).germanEnabled)
+        // The all-conversations list (#793): same gate as every chat entry —
+        // hidden, never greyed, when the practice switch or key is missing.
+        b.btnChats.isVisible = askAiVisible
         renderStats(b, context, today)
         b.tvMatchCount.isVisible = searching
         b.tvMatchCount.text = context.getString(R.string.words_search_count, shown.size, words.size)
@@ -221,6 +228,19 @@ class WordsFragment : BaseFragment() {
         }
     }
 
+    /**
+     * Opens the all-conversations list (#793) on demand — no drill or review
+     * needed. The button is already gate-hidden in render; this only navigates.
+     */
+    private fun openConversations() {
+        Haptics.tick(binding.root)
+        val navController = findNavController()
+        // Ignore a second tap delivered before the first navigation lands.
+        if (navController.currentDestination?.id == R.id.wordsFragment) {
+            navController.navigate(R.id.action_wordsFragment_to_askAiConversationsFragment)
+        }
+    }
+
     /** The drill handles non-verbs itself with a graceful one-liner, so this stays unconditional. */
     private fun openConjugation(word: Word) {
         val context = context ?: return
@@ -239,6 +259,9 @@ class WordsFragment : BaseFragment() {
 
     /** Null once the view is gone, so the lookup-finished observer stops with the screen. */
     private fun liveViewLifecycleOwner(): LifecycleOwner? = _binding?.let { viewLifecycleOwner }
+
+    /** The chat gate cached per resume; see [onResume]. */
+    private var askAiVisible = false
 
     private companion object {
         const val KEYBOARD_GAP_DP = 12

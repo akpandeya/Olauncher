@@ -1116,4 +1116,13 @@
     <string name="ask_ai_sheet_new">＋ New conversation</string>
     <string name="ask_ai_sheet_row_meta">%1$d turns · %2$s</string>
     <string name="ask_ai_sheet_today">today</string>
+    <!-- The all-conversations list (#793): the Chats button in the Words screen
+         header, the list screen it opens, and its rows (mock frames 4-5 of
+         german-surfaces-mock.html). -->
+    <string name="ask_ai_conversations_button">Chats</string>
+    <string name="ask_ai_conversations_title">Conversations</string>
+    <string name="ask_ai_conversations_kind_word">Word</string>
+    <string name="ask_ai_conversations_kind_rule">Rule</string>
+    <string name="ask_ai_conversations_kind_topic">Topic</string>
+    <string name="ask_ai_conversations_row_meta">Chat · %1$d turns · %2$s</string>
 </resources>

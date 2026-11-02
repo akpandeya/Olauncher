@@ -4,8 +4,10 @@ import androidx.annotation.StringRes
 import app.olauncher.R
 import app.olauncher.data.store.AiChatMessage
 import app.olauncher.data.store.AiPracticeGate
+import app.olauncher.data.store.AiChatSubject
 import app.olauncher.data.store.AiChatThread
 import app.olauncher.data.store.AiChatThreads
+import app.olauncher.data.store.AiResult
 
 /**
  * Context-free decisions for the Ask-AI entry points (docs/design/ask-ai-chat.md
@@ -103,4 +105,68 @@ object AskAiEntries {
      * with fewer, the long-press has nothing beyond the latest thread to list.
      */
     fun showOlderThreadsHint(threadCount: Int): Boolean = threadCount >= 2
+
+    // --- all-conversations list (#793) ------------------------------------------
+
+    /**
+     * One row of the all-conversations list (docs/design/german-hidden-surfaces.md
+     * §4.2, mock frame 5): the thread's identity and subject, its delivered-turn
+     * count, its last activity, and the one-line preview of its last message.
+     * [previewFailed] renders the persisted "Not sent · …" tail — with
+     * [previewErrorKind]'s message — in the danger colour, exactly as the chat
+     * screen does.
+     */
+    data class ConversationRow(
+        val threadId: String,
+        val subject: AiChatSubject,
+        val turns: Int,
+        val updatedAt: Long,
+        val preview: String,
+        val previewFailed: Boolean,
+        val previewErrorKind: AiResult.ErrorKind?,
+    )
+
+    /**
+     * Every stored thread as all-conversations rows, newest first, across word,
+     * rule and topic subjects. Delivered turns use [AiChatThreads.deliveredTurns]
+     * — summarised turns count, failed and in-flight questions do not. The
+     * preview is the LAST message (the list continues a chat, so the tail is what
+     * the learner would pick up), and a failed newest send keeps its error kind
+     * so the row reads "Not sent · …" like the chat screen's tail.
+     */
+    fun conversationRows(threads: List<AiChatThread>): List<ConversationRow> {
+        return threads
+            .sortedByDescending { it.updatedAt }
+            .map { thread ->
+                val last = thread.messages.lastOrNull()
+                ConversationRow(
+                    threadId = thread.id,
+                    subject = thread.subject,
+                    turns = AiChatThreads.deliveredTurns(thread),
+                    updatedAt = thread.updatedAt,
+                    preview = last?.text.orEmpty(),
+                    previewFailed = last?.failed == true,
+                    previewErrorKind = last?.errorKind,
+                )
+            }
+    }
+
+    /**
+     * The subject the list's screen-level "New conversation" affordance starts
+     * a fresh thread for: the newest thread's — the sheet's button reuses the
+     * sheet's one subject, and the all-conversations list has none of its own, so
+     * it resolves to the subject of the newest conversation. Null when no thread
+     * exists: a fresh thread must be filed under a subject (design §Threads),
+     * so the affordance hides rather than guessing one.
+     */
+    fun newConversationSubject(threads: List<AiChatThread>): AiChatSubject? =
+        threads.maxByOrNull { it.updatedAt }?.subject
+
+    /** The row's kind label ("Word", "Rule", "Topic") as a string resource. */
+    @StringRes
+    fun conversationKindLabelRes(kind: AiChatSubject.Kind): Int = when (kind) {
+        AiChatSubject.Kind.WORD -> R.string.ask_ai_conversations_kind_word
+        AiChatSubject.Kind.RULE -> R.string.ask_ai_conversations_kind_rule
+        AiChatSubject.Kind.TOPIC -> R.string.ask_ai_conversations_kind_topic
+    }
 }
