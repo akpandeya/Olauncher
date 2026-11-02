@@ -2,12 +2,40 @@ name: Build APK
 
 on:
   workflow_dispatch:
+    inputs:
+      number:
+        description: "Release number N (version code is 113 + N). Blank = last build tag + 1."
+        required: false
+        type: string
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      number: ${{ steps.num.outputs.n }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Resolve release number
+        id: num
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT: ${{ inputs.number }}
+        run: |
+          if [ -n "$INPUT" ]; then
+            N="$INPUT"
+          else
+            LAST=$(gh release list --limit 200 --json tagName --jq '.[].tagName' \
+              | sed -n 's/^build-\([0-9][0-9]*\)$/\1/p' | sort -n | tail -n 1)
+            N=$(( ${LAST:-0} + 1 ))
+          fi
+          case "$N" in
+            ''|*[!0-9]*) echo "Invalid release number: $N"; exit 1 ;;
+          esac
+          echo "Release number: $N (version code $((113 + N)))"
+          echo "n=$N" >> "$GITHUB_OUTPUT"
 
       - name: Verify debug keystore checksum
         run: |
@@ -29,6 +57,8 @@ jobs:
         run: python3 -m unittest discover -s tools/tests -v
 
       - name: Build debug APK, run unit tests and lint
+        env:
+          GITHUB_RUN_NUMBER: ${{ steps.num.outputs.n }}
         run: ./gradlew assembleRelease testDebugUnitTest lintDebug --no-daemon
 
       - uses: actions/upload-artifact@v4
@@ -54,10 +84,11 @@ jobs:
       - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
+          NUMBER: ${{ needs.build.outputs.number }}
         run: |
           cp apk/*.apk thumbline.apk
-          gh release create "build-${{ github.run_number }}" thumbline.apk \
-            --title "build-${{ github.run_number }}" \
+          gh release create "build-$NUMBER" thumbline.apk \
+            --title "build-$NUMBER" \
             --generate-notes \
             --latest
 
