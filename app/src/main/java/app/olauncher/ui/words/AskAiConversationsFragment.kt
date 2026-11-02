@@ -81,7 +81,14 @@ class AskAiConversationsFragment : BaseFragment() {
         newSubject?.let { subject ->
             b.btnNewConversation.setOnClickListener { view ->
                 Haptics.tick(view)
-                AskAiEntryPoints.open(this, R.id.askAiConversationsFragment, subject, threadId = null)
+                // A fresh word thread carries the word's grounding, as every
+                // other word entry's "New conversation" does.
+                val groundings = AskAiEntryPoints.wordForSubject(savedWords, subject)
+                    ?.let { listOf(AskAiEntryPoints.wordGrounding(it)) }
+                    .orEmpty()
+                AskAiEntryPoints.open(
+                    this, R.id.askAiConversationsFragment, subject, threadId = null, groundings = groundings,
+                )
             }
         }
 
