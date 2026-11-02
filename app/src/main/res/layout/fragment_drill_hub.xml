@@ -10,7 +10,7 @@
     android:orientation="vertical"
     tools:context=".ui.words.DrillHubFragment">
 
-    <!-- Pinned header: title and the two suggestion buttons -->
+    <!-- Pinned header: title and the three entry buttons -->
     <LinearLayout
         android:id="@+id/hubHeader"
         android:layout_width="match_parent"
@@ -46,6 +46,16 @@
             android:clickable="true"
             android:focusable="true"
             tools:text="Practise weakest: Pronouns" />
+
+        <TextView
+            android:id="@+id/btnGrammarRules"
+            style="@style/TodayButton.Secondary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:clickable="true"
+            android:focusable="true"
+            tools:text="Grammar rules · 106" />
 
     </LinearLayout>
 
