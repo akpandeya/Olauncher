@@ -4,6 +4,7 @@
 
 Conventions (author notes, not learner-facing):
 
+- `common_mistakes` (#811): 1–3 short lines, each a typical learner error and the correct form. The card shows them only where no unanswered item is attached — the flashcard and the rules-index detail — never in a pre-answer state or on a later rung. Omitted where no frequent, real mistake exists.
 - Layout follows `articles.md`: id, items, rule, first_exposure_rule, forms table, example,
   miss lines, flashcard_and_miss_hint, later_rung_cue.
 - No existing ID fits: no item uses a preposition (so `prep-fixed-gen` does not apply).
@@ -61,6 +62,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: Wessen? The owner's article follows its gender.
 
+**common_mistakes**:
+- des for a feminine or plural owner: die Tür der Küche, der Bücher — des is only for masculine and neuter owners.
+
 ---
 
 ## gen-noun-s
@@ -101,6 +105,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: After des the noun adds -s — or the fuller -es when the word is short.
 
+**common_mistakes**:
+- leaving the noun unchanged: des Mannes, des Buches — after des the owner noun adds -s or -es.
+
 ---
 
 ## gen-noun-weak
@@ -135,6 +142,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: Junge is a weak noun: in the genitive it takes -n/-en (des Jungen), never -s.
 
 **later_rung_cue**: Is the noun weak? Weak nouns never take the -s owner ending.
+
+**common_mistakes**:
+- adding -s to a weak noun: des Menschen, des Bären — weak nouns take -(e)n, never -s.
 
 ---
 
@@ -172,6 +182,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: A fixed time phrase: recall it as a whole, article included.
 
+**common_mistakes**:
+- ein for the whole phrase: eines Morgens — the time phrase keeps its genitive article.
+
 ---
 
 ## gen-question-whose
@@ -206,6 +219,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: Wessen is the genitive question word "whose" — the owner form of wer.
 
 **later_rung_cue**: "Whose" has its own question word — not wer, wen or wem.
+
+**common_mistakes**:
+- wer or wem for whose: Wessen Jacke hängt hier? — whose has its own word.
 
 ---
 
@@ -242,6 +258,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: No article: the owner works like a name and takes bare -s.
 
+**common_mistakes**:
+- an English apostrophe: Onkels neues Haus — German writes the bare -s with no 's.
+
 ---
 
 ## gen-noun-zero
@@ -276,6 +295,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: Plural nouns take no ending in the genitive; only the article becomes der.
 
 **later_rung_cue**: Plural owners stay unchanged; only the article changes.
+
+**common_mistakes**:
+- adding -s to a plural owner: die Fahrräder der Kinder — a plural owner noun stays unchanged.
 
 ---
 

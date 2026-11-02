@@ -4,6 +4,7 @@
 
 Conventions (author notes, not learner-facing):
 
+- `common_mistakes` (#811): 1–3 short lines, each a typical learner error and the correct form. The card shows them only where no unanswered item is attached — the flashcard and the rules-index detail — never in a pre-answer state or on a later rung. Omitted where no frequent, real mistake exists.
 - Layout follows `articles.md`: id, items, rule, first_exposure_rule, forms table, example,
   miss lines, flashcard_and_miss_hint, later_rung_cue.
 - No existing ID is reused: `prep-fixed-dat` and `prep-fixed-gen` cover article forms after
@@ -72,6 +73,10 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: Gender and number come from the noun; the case comes from the pronoun's own role in the clause.
 
+**common_mistakes**:
+- matching the pronoun to the main clause: its gender and number copy the noun — das Kind, das; die Kinder, die.
+- the main clause's case for the pronoun: its case follows its own job in the relative clause — den ich sehe, dem ich helfe.
+
 ---
 
 ## rel-after-prep
@@ -119,6 +124,10 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: After a preposition, the preposition — not the clause — decides the pronoun's form.
 
+**common_mistakes**:
+- moving the preposition out of the clause: die Freundin, mit der ich reise — the preposition stays right before the pronoun.
+- dem for every gender after mit: the dative form follows the noun's gender — mit der Sängerin, mit dem Kollegen.
+
 ---
 
 ## rel-genitive
@@ -158,6 +167,10 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: dessen is "his" for a masculine or neuter noun; deren is "her" for a feminine or plural noun.
 
 **later_rung_cue**: When a noun without its own article follows the pronoun and belongs to the noun it refers to, the clause shows possession: use the special possessive form.
+
+**common_mistakes**:
+- sein or ihr for the possessed noun: German uses dessen/deren — der Junge, dessen Hund.
+- dessen for every owner: dessen for masculine and neuter owners, deren for feminine and plural — die Lehrerin, deren Kurs.
 
 ---
 

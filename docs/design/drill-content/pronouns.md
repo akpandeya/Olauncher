@@ -112,6 +112,9 @@ recall, so no case is named before the answer.
 Wem? after that verb.
 
 **later_rung_cue**: Find the doer. If the pronoun is not the doer, ask Wen? or Wem? after the
+
+**common_mistakes**:
+- mich/mir and dich/dir mixed up: the receiver forms are mir and dir — Zeig mir den Weg, ich frage dich.
 verb.
 
 ---
@@ -213,6 +216,10 @@ doing, affected or receiving.
 
 **later_rung_cue**: Take the pronoun for the noun's gender, then pick the row for its job.
 
+**common_mistakes**:
+- ihn and ihm swapped: the directly affected form is ihn — wir besuchen ihn; the receiver form is ihm — wir helfen ihm.
+- es for the receiver: the dative of es is ihm — Ich schreibe ihm.
+
 ---
 
 ## pron-formal
@@ -260,6 +267,9 @@ word; only the receiver form is different. Decide its job first.
 job changes to Ihnen.
 
 **later_rung_cue**: Two of the three jobs share one word; only the receiver form is
+
+**common_mistakes**:
+- ihnen with a small i: the formal receiver form is Ihnen — capital I always, even mid-sentence.
 different.
 
 ---
@@ -405,6 +415,10 @@ already in the sentence → the Wem? form.
 
 **later_rung_cue**: Look for a second affected thing: none → Wen? form, one → Wem? form.
 
+**common_mistakes**:
+- mich where mir belongs: ich koche mir einen Kaffee — a second affected thing takes the Wem? form.
+- mir where mich belongs: with nothing else affected the Wen? form stands — er wäscht sich.
+
 ---
 
 ## pron-reflex-person
@@ -495,6 +509,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 euch, er/sie/es → sich.
 
 **later_rung_cue**: Find the doer in the verb ending; the reflexive pronoun takes that
+
+**common_mistakes**:
+- sich for every person: only er, sie, es, sie (they) and Sie take sich — ich erinnere mich.
 person's object form.
 
 ---
@@ -710,6 +727,10 @@ Equal weight before an answer. The same endings go on every possessor stem (dein
 
 **later_rung_cue**: Which ending would ein or kein take here? The possessive takes the same one.
 
+**common_mistakes**:
+- meine for a masculine object: the accusative masculine takes -en — meinen Schlüssel, meinen Vater.
+- der/die-style endings on the possessive: it declines like ein — mein Mann, meinen Mann, meinem Mann.
+
 ---
 
 ## pron-poss-edrop
@@ -786,6 +807,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 euer its stem e.
 
 **later_rung_cue**: Does the form carry an ending? If yes, drop the stem e first, then add it
+
+**common_mistakes**:
+- eueren: an ending shortens the stem first — euren, eurem, eures; without an ending the stem stays whole: euer.
 like ein.
 
 ---

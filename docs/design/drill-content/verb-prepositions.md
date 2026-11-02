@@ -323,6 +323,9 @@ gap must fit the pair.
 
 **later_rung_cue**: Verb and preposition are one unit — recall the whole pair.
 
+**common_mistakes**:
+- swapping the preposition by meaning: sich streiten um, sich fürchten vor — each verb owns its preposition.
+
 ---
 
 ## verb-prep-gap-meaning
@@ -424,6 +427,9 @@ The example verb is not part of this drill, so the table never shows an item's a
 meaning picks which one.
 
 **later_rung_cue**: Two pairs, two meanings — pick the one the sentence means.
+
+**common_mistakes**:
+- bei and für swapped: sich entschuldigen beim Lehrer für die Verspätung.
 
 ---
 
@@ -528,6 +534,9 @@ Dative pairs (wrong choice: Akkusativ — the preposition never takes the accusa
 
 **later_rung_cue**: Fixed case. Recall which one the preposition takes.
 
+**common_mistakes**:
+- picking the case from the noun's meaning: the preposition fixes the case, then the noun's gender picks the form.
+
 ---
 
 ## verb-prep-case-pair
@@ -628,3 +637,6 @@ rows on purpose — that is the point of the rule):
 **flashcard_and_miss_hint**: The preposition alone does not decide here — the verb pair does.
 
 **later_rung_cue**: Same preposition, different verb — the verb decides. Recall the whole trio.
+
+**common_mistakes**:
+- the preposition's usual case: hinweisen auf + accusative, beruhen auf + dative — the verb fixes it.

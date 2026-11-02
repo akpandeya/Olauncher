@@ -4,6 +4,7 @@
 
 Conventions (author notes, not learner-facing):
 
+- `common_mistakes` (#811): 1–3 short lines, each a typical learner error and the correct form. The card shows them only where no unanswered item is attached — the flashcard and the rules-index detail — never in a pre-answer state or on a later rung. Omitted where no frequent, real mistake exists.
 - Layout follows `articles.md`: id, items, rule, first_exposure_rule, forms table, example,
   miss lines, flashcard_and_miss_hint, later_rung_cue.
 - No existing ID is reused. `werden-subjunctive-ii` (werden.md) contrasts werde and würde for
@@ -55,6 +56,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: Imagined wenn-clause → Konjunktiv II, not the real present or past.
 
+**common_mistakes**:
+- the real present in an unreal wenn-clause: Wenn wir ein Auto hätten, not haben.
+
 ---
 
 ## konj2-subject-agreement
@@ -96,6 +100,10 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: Check who the subject is, then take that person's unreal form.
 
+**common_mistakes**:
+- hätte and wäre for every person: the ending still matches — du hättest, wir hätten.
+- du wäre: the du forms are du hättest and du wärst.
+
 ---
 
 ## konj2-helper-infinitive
@@ -136,6 +144,10 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: Other verb → two-word unreal form: helper plus dictionary form.
 
+**common_mistakes**:
+- conjugating the second verb: wenn du anrufen würdest — not anrufst.
+- hätte or wäre with an ordinary verb: most verbs take würde + infinitive.
+
 ---
 
 ## konj2-past-wish
@@ -172,6 +184,10 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: For a past wish, use wäre or hätte plus the participle: wäre gern mitgekommen.
 
 **later_rung_cue**: A past that did not happen → unreal form plus participle, not the real past.
+
+**common_mistakes**:
+- the real past for a wish about the past: wir wären gern geblieben, not wir waren.
+- würde + infinitive for the past: it takes hätte or wäre + participle.
 
 ---
 
@@ -215,6 +231,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: Wish with gern → the verb's own single unreal form, not present or past.
 
+**common_mistakes**:
+- the real present in a wish: ich bräuchte mehr Zeit, not ich brauche mehr Zeit.
+
 ---
 
 ## konj2-polite-request
@@ -251,6 +270,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: hätte gern is the standard polite order: Ich hätte gern einen Kaffee, bitte.
 
 **later_rung_cue**: Polite order → unreal form plus gern, not the real present or past.
+
+**common_mistakes**:
+- the real present in a polite order: wir hätten gern die Rechnung, not wir haben.
 
 ---
 

@@ -5,6 +5,7 @@
 
 Conventions (author notes, not learner-facing):
 
+- `common_mistakes` (#811): 1–3 short lines, each a typical learner error and the correct form. The card shows them only where no unanswered item is attached — the flashcard and the rules-index detail — never in a pre-answer state or on a later rung. Omitted where no frequent, real mistake exists.
 - Layout follows `articles.md`: id, items, rule, first_exposure_rule, forms table, example,
   miss lines, flashcard_and_miss_hint, later_rung_cue.
 - No existing ID is reused: no other rule covers reported speech.
@@ -82,6 +83,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: Reported after sagt or meint, the verb takes Konjunktiv I instead of the normal present.
 
+**common_mistakes**:
+- the normal present in reported speech: Sie sagt, sie arbeite heute — stem + -e in Konjunktiv I.
+
 ---
 
 ## konj1-switch
@@ -118,6 +122,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: If the Konjunktiv I would look like the normal present, reported speech uses Konjunktiv II.
 
+**common_mistakes**:
+- keeping Konjunktiv I where it equals the present: sie haben — the reported form falls back to Konjunktiv II.
+
 ---
 
 ## konj1-perfect
@@ -153,6 +160,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: A reported perfect puts its helper into Konjunktiv I and keeps the participle.
 
+**common_mistakes**:
+- hat in the reported perfect: er sei gekommen — the helper takes Konjunktiv I, the participle stays.
+
 ---
 
 ## konj1-future
@@ -187,6 +197,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: werden moves into Konjunktiv I, er werde; the infinitive stays, so the report is er werde anrufen.
 
 **later_rung_cue**: A reported future puts its helper into Konjunktiv I and keeps the infinitive at the end.
+
+**common_mistakes**:
+- wird in the reported future: the helper werde, the infinitive stays at the end.
 
 ---
 

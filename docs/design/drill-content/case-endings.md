@@ -68,6 +68,9 @@ Equal weight before an answer; every choice in these items (der, die, das, den, 
 
 **later_rung_cue**: Ask Wer?, Wen? or Wem? for the noun, then recall its gender.
 
+**common_mistakes**:
+- den for the doer: Wer? takes the nominative — der Vogel singt.
+
 ---
 
 ## case-sein-nom
@@ -105,6 +108,9 @@ Equal weight before an answer; every choice in these items (der, die, das, den, 
 **flashcard_and_miss_hint**: sein links two names for the same thing, so the noun after sein takes the nominative, like the subject.
 
 **later_rung_cue**: Ask what the noun after sein refers to, then recall its gender.
+
+**common_mistakes**:
+- den or dem after sein: the noun after sein stays nominative — Mein Bruder ist der neue Chef.
 
 ---
 
@@ -162,6 +168,9 @@ Equal weight before an answer; every choice in these items (der, die, das, den, 
 **flashcard_and_miss_hint**: The thing the verb acts on is the direct object, and it takes the accusative (Wen?).
 
 **later_rung_cue**: Ask Wer?, Wen? or Wem? for the noun, then recall its gender.
+
+**common_mistakes**:
+- the nominative for the thing acted on: Wen? takes the accusative — der Bruder becomes den Bruder.
 
 ---
 
@@ -223,6 +232,9 @@ Equal weight before an answer; every choice in these items (der, die, das, den, 
 
 **later_rung_cue**: Ask Wer?, Wen? or Wem? for the noun, then recall its gender.
 
+**common_mistakes**:
+- the accusative for the receiver: helfen, glauben and gehören take the dative — Ich vertraue dem Kind.
+
 ---
 
 ## prep-fixed-acc
@@ -279,6 +291,9 @@ Equal weight before an answer. After the answer (flashcard, after a miss), highl
 **flashcard_and_miss_hint**: These prepositions always take the accusative: den, die, das, die.
 
 **later_rung_cue**: The preposition keeps one case. Recall which one, then the noun's gender.
+
+**common_mistakes**:
+- the dative after durch, für, gegen, ohne or um: they always take the accusative — durch den Wald, ohne dich.
 
 ---
 
@@ -339,6 +354,11 @@ Equal weight before an answer. After the answer (flashcard, after a miss), highl
 
 **later_rung_cue**: The preposition keeps one case. Recall which one, then the noun's gender.
 
+**common_mistakes**:
+- the accusative after a dative preposition: sie spielt mit dem Ball, not mit den Ball.
+- die for a feminine dative noun: mit der Lehrerin, not mit die Lehrerin.
+- die for the dative plural: mit den Freunden, not mit die Freunde.
+
 ---
 
 ## prep-fixed-gen
@@ -398,3 +418,6 @@ Equal weight before an answer. After the answer (flashcard, after a miss), highl
 **flashcard_and_miss_hint**: These prepositions take the genitive: des for masculine and neuter nouns, der for feminine and plural nouns.
 
 **later_rung_cue**: The preposition keeps one case. Recall which one, then the noun's gender.
+
+**common_mistakes**:
+- the dative after wegen or trotz: they take the genitive — wegen des Staus, trotz des Lärms.

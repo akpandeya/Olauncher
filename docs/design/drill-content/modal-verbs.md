@@ -4,6 +4,7 @@
 
 Conventions (author notes, not learner-facing):
 
+- `common_mistakes` (#811): 1–3 short lines, each a typical learner error and the correct form. The card shows them only where no unanswered item is attached — the flashcard and the rules-index detail — never in a pre-answer state or on a later rung. Omitted where no frequent, real mistake exists.
 - Layout follows `articles.md`: id, items, rule, first_exposure_rule, forms table, example,
   miss lines, flashcard_and_miss_hint, later_rung_cue.
 - Regrouped in review: the earlier version had one rule per modal (`modal-duerfen`,
@@ -82,6 +83,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: What does the sentence mean: allowed, able, has to, or likes? Then match the subject.
 
+**common_mistakes**:
+- können for permission: Darf ich gehen? — dürfen is allowed, können is able.
+
 ---
 
 ## modal-person-form
@@ -133,6 +137,10 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: ich and er share the short form with no ending; du adds -st; ihr adds -t; wir and Sie use the infinitive.
 
 **later_rung_cue**: Find the subject, then take that person's form.
+
+**common_mistakes**:
+- an ending for ich and er: ich mag, er mag — they share one short form with no ending.
+- conjugating wir: wir, sie (they) and Sie use the infinitive — wir wollen, Sie müssen.
 
 ---
 

@@ -48,6 +48,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: Recall the noun's plural pattern: the ending, and any vowel change.
 
+**common_mistakes**:
+- die Wegs: many masculine nouns take -e — der Beruf → die Berufe.
+
 ---
 
 ## plural-umlaut-e
@@ -82,6 +85,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: The vowel changes too: a→ä, o→ö, u→ü (die Hand → die Hände). Many one-syllable feminines do this.
 
 **later_rung_cue**: Recall the noun's plural pattern: the ending, and any vowel change.
+
+**common_mistakes**:
+- forgetting the umlaut: der Fuß → die Füße — this -e plural comes with the vowel change.
 
 ---
 
@@ -118,6 +124,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: Recall the noun's plural pattern: the ending, and any vowel change.
 
+**common_mistakes**:
+- die Neste: many neuter nouns take -er — das Nest → die Nester.
+
 ---
 
 ## plural-umlaut-er
@@ -152,6 +161,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: Add -er and change the vowel: das Haus → die Häuser, das Buch → die Bücher.
 
 **later_rung_cue**: Recall the noun's plural pattern: the ending, and any vowel change.
+
+**common_mistakes**:
+- die Lammer: the -er plural here comes with the umlaut — das Lamm → die Lämmer.
 
 ---
 
@@ -189,6 +201,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: Look at how the singular ends.
 
+**common_mistakes**:
+- die Blumes: feminine nouns in -e take -n — die Blume → die Blumen.
+
 ---
 
 ## plural-en
@@ -224,6 +239,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: Many feminine nouns and all -ung nouns take -en; so do das Bett, das Hemd, das Ohr and der Mensch.
 
 **later_rung_cue**: Recall the noun's plural pattern: the ending, and any vowel change.
+
+**common_mistakes**:
+- die Übunge: -ung, -heit and -keit nouns take -en — die Übungen, die Möglichkeiten.
 
 ---
 
@@ -261,6 +279,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: Think about where the word comes from.
 
+**common_mistakes**:
+- die Büro: many nouns ending in -i, -o or -u take -s — das Büro → die Büros.
+
 ---
 
 ## plural-no-change
@@ -297,3 +318,6 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: Masculine and neuter nouns ending in -er, -el, -en or -chen often stay the same; so does das Gebäude.
 
 **later_rung_cue**: Recall the noun's plural pattern: the ending, and any vowel change.
+
+**common_mistakes**:
+- die Messern: masculine and neuter nouns in -el, -en and -er take no ending — das Messer → die Messer.

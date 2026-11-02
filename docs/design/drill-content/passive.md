@@ -5,6 +5,7 @@ exactly once · 0 `UNSURE:` marks.
 
 Conventions (author notes, not learner-facing):
 
+- `common_mistakes` (#811): 1–3 short lines, each a typical learner error and the correct form. The card shows them only where no unanswered item is attached — the flashcard and the rules-index detail — never in a pre-answer state or on a later rung. Omitted where no frequent, real mistake exists.
 - Layout follows `articles.md`: id, items, rule, first_exposure_rule, forms table, example,
   miss lines, flashcard_and_miss_hint, later_rung_cue.
 - `passiv-aux-form` and `passiv-perfekt-partizip` are shared with `werden.md` (its passive
@@ -73,6 +74,10 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: The helper matches the subject in number and the time word in tense, like any verb.
 
+**common_mistakes**:
+- ist or war with a participle describes a state only; an ongoing action needs werden: der Zaun wird gestrichen.
+- wurde for one subject, wurden for several: der Zaun wurde gestrichen, die Zäune wurden gestrichen.
+
 ---
 
 ## passiv-perfekt-sein
@@ -114,6 +119,10 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: Perfect passive: a form of sein + Partizip II + worden. haben never appears.
 
+**common_mistakes**:
+- haben in the perfect passive: it is always sein + Partizip II + worden — das Fenster ist geöffnet worden.
+- sind for several subjects: die Briefe sind geschickt worden.
+
 ---
 
 ## passiv-perfekt-partizip
@@ -149,6 +158,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 
 **later_rung_cue**: Perfect passive: sein + Partizip II + the helper's special participle, not its full-verb form.
 
+**common_mistakes**:
+- geworden inside the passive: the participle there is worden — geworden only with werden as a full verb (ist müde geworden).
+
 ---
 
 ## passiv-agent
@@ -183,6 +195,10 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: The doer takes von + dative; dem Lehrer already shows the dative.
 
 **later_rung_cue**: Is the noun the doer, the means, the tool or the circumstance? Each role takes its own preposition.
+
+**common_mistakes**:
+- mit for the doer: a person doing the action takes von — von der Ärztin; mit names the tool.
+- durch for a person as doer: durch names the means or cause, von the doer.
 
 ---
 
@@ -223,6 +239,11 @@ Equal weight before an answer. After the answer (flashcard, after a miss), highl
 
 **later_rung_cue**: The preposition keeps one case. Recall which one, then the noun's gender.
 
+**common_mistakes**:
+- the accusative after a dative preposition: sie spielt mit dem Ball, not mit den Ball.
+- die for a feminine dative noun: mit der Lehrerin, not mit die Lehrerin.
+- die for the dative plural: mit den Freunden, not mit die Freunde.
+
 ---
 
 ## passiv-partizip-ii
@@ -258,6 +279,9 @@ Equal weight before an answer. After the answer only (flashcard, after a miss): 
 **flashcard_and_miss_hint**: After the helper the action word is the Partizip II, the same form the perfect uses: hat gewaschen, wird gewaschen.
 
 **later_rung_cue**: The helper carries person and tense; the action word after it stays the Partizip II.
+
+**common_mistakes**:
+- conjugating the second verb: der Rasen wird gemäht — not mäht, and not the infinitive mähen.
 
 ---
 
