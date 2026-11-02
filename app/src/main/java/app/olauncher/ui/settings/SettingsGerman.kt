@@ -74,6 +74,7 @@ import app.olauncher.wellbeing.NudgeScheduler
 import app.olauncher.wellbeing.Nudges
 import app.olauncher.wellbeing.NotificationPermission
 import androidx.work.ExistingWorkPolicy
+import androidx.work.Operation
 import androidx.work.WorkManager
 import app.olauncher.quiet.QuietRelease
 import app.olauncher.quiet.ReleaseWorker
@@ -364,9 +365,16 @@ internal fun SettingsFragment.fetchNewsSentencesNow() {
         )
         is NewsFetchNow.Plan.Run -> {
             val fetchedBefore = prefs.newsArticlesFetchedToday(today)
-            NewsHarvestWorker.fetchNow(context)
+            val enqueue = NewsHarvestWorker.fetchNow(context)
             context.showToast(getString(R.string.news_fetch_now_queued, plan.articles))
-            toastNewsFetchResult(context, fetchedBefore, today)
+            // Wait for the enqueue to land: before it does, the unique name can still
+            // show the previous, finished fetch and the toast would report that run.
+            val enqueueState = enqueue.state
+            enqueueState.observe(viewLifecycleOwner) { state ->
+                if (state is Operation.State.IN_PROGRESS) return@observe
+                enqueueState.removeObservers(viewLifecycleOwner)
+                if (state is Operation.State.SUCCESS) toastNewsFetchResult(context, fetchedBefore, today)
+            }
         }
     }
 }

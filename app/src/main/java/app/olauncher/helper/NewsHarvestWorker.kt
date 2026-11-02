@@ -8,6 +8,7 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.Operation
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -208,11 +209,12 @@ class NewsHarvestWorker(
          * network constraint — the user asked for it, so it runs on any connection.
          * Its own unique name, so a pending Wi-Fi-gated [runOnce] (the automatic run
          * after switching the feature on) cannot swallow the tap through KEEP. The
-         * result is read back through [getWorkInfosForUniqueWorkLiveData].
+         * result is read back through [getWorkInfosForUniqueWorkLiveData] once the
+         * returned [Operation] has succeeded, so a finished earlier run is not read.
          */
-        fun fetchNow(context: Context) {
+        fun fetchNow(context: Context): Operation {
             val request = OneTimeWorkRequestBuilder<NewsHarvestWorker>().build()
-            WorkManager.getInstance(context).enqueueUniqueWork(
+            return WorkManager.getInstance(context).enqueueUniqueWork(
                 WORK_NAME_FETCH_NOW,
                 ExistingWorkPolicy.KEEP,
                 request,
