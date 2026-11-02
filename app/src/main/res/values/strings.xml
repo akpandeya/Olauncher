@@ -650,6 +650,10 @@
     <string name="grammar_rules_group_passive" tools:ignore="MissingTranslation">Passive</string>
     <string name="grammar_rules_group_moods" tools:ignore="MissingTranslation">Moods</string>
     <string name="grammar_rule_back" tools:ignore="MissingTranslation">‹ Grammar rules</string>
+    <!-- Further reading on a rule's topic (#810): section label and the quiet
+         failure message when no browser is installed to open a link. -->
+    <string name="grammar_further_reading_title" tools:ignore="MissingTranslation">Further reading</string>
+    <string name="grammar_further_reading_no_browser" tools:ignore="MissingTranslation">No browser found to open the link</string>
     <plurals name="grammar_rules_count" tools:ignore="MissingTranslation">
         <item quantity="one">%d rule</item>
         <item quantity="other">%d rules</item>

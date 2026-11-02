@@ -1,6 +1,9 @@
 package app.olauncher.ui.words
 
+import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -12,8 +15,11 @@ import app.olauncher.data.store.AiChatSubject
 import app.olauncher.data.store.DrillHelpCard
 import app.olauncher.data.store.DrillHelpContent
 import app.olauncher.data.store.DrillHelpRule
+import app.olauncher.data.store.GrammarFurtherReading
 import app.olauncher.databinding.FragmentGrammarRuleBinding
+import app.olauncher.databinding.ItemFurtherReadingLinkBinding
 import app.olauncher.helper.Haptics
+import app.olauncher.helper.showToast
 import app.olauncher.ui.BaseFragment
 
 /**
@@ -26,7 +32,9 @@ import app.olauncher.ui.BaseFragment
  * this rule" row is an ordinary chat entry (docs/design/ask-ai-chat.md
  * §Entry points): visible iff the practice gate is open and the provider
  * config valid — hidden, never greyed — and it opens the chat on the rule
- * subject, exactly like every other entry.
+ * subject, exactly like every other entry. Below it, the "Further reading"
+ * section lists the hand-checked links of the rule's topic group (#810,
+ * [GrammarFurtherReading]), hidden when the group has none.
  */
 class GrammarRuleFragment : BaseFragment() {
 
@@ -78,6 +86,7 @@ class GrammarRuleFragment : BaseFragment() {
         )
 
         bindAskAiRow(b, context, rule)
+        bindFurtherReading(b, context, rule)
     }
 
     /**
@@ -107,6 +116,45 @@ class GrammarRuleFragment : BaseFragment() {
                 AskAiEntryPoints.open(this, R.id.grammarRuleFragment, subject, threadId)
             }
             true
+        }
+    }
+
+    /**
+     * Binds the further-reading section under the Ask-AI row (#810): one row
+     * per hand-checked link of the rule's topic group ([GrammarFurtherReading],
+     * keyed on the group key). Hidden entirely when the group has no links —
+     * never an empty section. A row tap opens the link's https URL with
+     * [Intent.ACTION_VIEW] and fails quietly when no browser is installed.
+     */
+    private fun bindFurtherReading(b: FragmentGrammarRuleBinding, context: Context, rule: DrillHelpRule) {
+        val links = GrammarFurtherReading.forRule(rule.id)
+        if (links.isEmpty()) {
+            b.furtherReadingPanel.isVisible = false
+            return
+        }
+        b.furtherReadingLinks.removeAllViews()
+        for (link in links) {
+            val row = ItemFurtherReadingLinkBinding.inflate(layoutInflater, b.furtherReadingLinks, false)
+            row.tvLinkSource.text = link.source
+            row.tvLinkAngle.text = link.angle
+            row.root.setOnClickListener { view ->
+                Haptics.tick(view)
+                openFurtherReading(context, link.url)
+            }
+            b.furtherReadingLinks.addView(row.root)
+        }
+        b.furtherReadingPanel.isVisible = true
+    }
+
+    /**
+     * Opens a further-reading link in the browser (#810). Fails quietly: with
+     * no browser app a short message says so instead of a crash.
+     */
+    private fun openFurtherReading(context: Context, url: String) {
+        try {
+            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        } catch (e: ActivityNotFoundException) {
+            context.showToast(R.string.grammar_further_reading_no_browser)
         }
     }
 
