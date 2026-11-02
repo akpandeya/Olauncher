@@ -108,7 +108,7 @@ object AskAiThreadSheet {
     }
 
     /** "today" for today's threads, otherwise the short date ("12 Oct"). */
-    private fun dateLabel(context: Context, at: Long): String {
+    fun dateLabel(context: Context, at: Long): String {
         if (DateUtils.isToday(at)) return context.getString(R.string.ask_ai_sheet_today)
         return DateUtils.formatDateTime(context, at, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_ABBREV_MONTH)
     }

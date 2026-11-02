@@ -515,16 +515,7 @@ class AiChatFragment : BaseFragment() {
         binding.btnSend.alpha = if (binding.btnSend.isEnabled) 1f else SEND_DISABLED_ALPHA
     }
 
-    private fun errorText(kind: AiResult.ErrorKind): String = getString(
-        when (kind) {
-            AiResult.ErrorKind.RATE_LIMIT -> R.string.chat_error_rate_limit
-            AiResult.ErrorKind.NETWORK -> R.string.chat_error_network
-            AiResult.ErrorKind.SERVER -> R.string.chat_error_server
-            AiResult.ErrorKind.BAD_RESPONSE -> R.string.chat_error_bad_response
-            AiResult.ErrorKind.AUTH -> R.string.chat_error_auth
-            AiResult.ErrorKind.BILLING -> R.string.chat_error_billing
-        }
-    )
+    private fun errorText(kind: AiResult.ErrorKind): String = getString(AiChatUiLogic.errorTextRes(kind))
 
     // ---- grounding card block builders ---------------------------------------------
 

@@ -4,8 +4,10 @@ import app.olauncher.R
 import app.olauncher.data.store.AiChatMessage
 import app.olauncher.data.store.AiChatSubject
 import app.olauncher.data.store.AiChatThread
+import app.olauncher.data.store.AiResult
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -153,5 +155,112 @@ class AskAiEntriesTest {
         assertFalse(AskAiEntries.showOlderThreadsHint(1))
         assertTrue(AskAiEntries.showOlderThreadsHint(2))
         assertTrue(AskAiEntries.showOlderThreadsHint(5))
+    }
+
+    // --- all-conversations list (#793) ----------------------------------------------
+
+    private fun wordSubject(ref: String = "brücke") = AiChatSubject(AiChatSubject.Kind.WORD, ref)
+    private fun ruleSubject(ref: String = "prep-two-way") = AiChatSubject(AiChatSubject.Kind.RULE, ref)
+    private fun topicSubject(ref: String = "conjugation") = AiChatSubject(AiChatSubject.Kind.TOPIC, ref)
+
+    private fun threadOf(
+        id: String,
+        subject: AiChatSubject,
+        updatedAt: Long,
+        messages: List<AiChatMessage> = emptyList(),
+    ) = AiChatThread(
+        id = id,
+        subject = subject,
+        createdAt = 1L,
+        updatedAt = updatedAt,
+        messages = messages,
+    )
+
+    @Test
+    fun `conversation rows are newest first across word, rule and topic subjects`() {
+        val rows = AskAiEntries.conversationRows(
+            listOf(
+                threadOf("oldest", topicSubject(), updatedAt = 100, messages = deliveredTurn(3)),
+                threadOf("newest", wordSubject(), updatedAt = 300, messages = deliveredTurn(2)),
+                threadOf("middle", ruleSubject(), updatedAt = 200, messages = deliveredTurn(5)),
+            ),
+        )
+        assertEquals(listOf("newest", "middle", "oldest"), rows.map { it.threadId })
+        assertEquals(listOf(wordSubject(), ruleSubject(), topicSubject()), rows.map { it.subject })
+        assertEquals(listOf(2, 5, 3), rows.map { it.turns })
+        assertEquals(listOf(300L, 200L, 100L), rows.map { it.updatedAt })
+    }
+
+    @Test
+    fun `conversation preview is the last message`() {
+        val rows = AskAiEntries.conversationRows(
+            listOf(
+                threadOf(
+                    "t",
+                    ruleSubject(),
+                    updatedAt = 1,
+                    messages = deliveredTurn(2) + listOf(
+                        AiChatMessage(AiChatMessage.Role.USER, "Nochmal: wohin oder wo?", 30),
+                    ),
+                ),
+            ),
+        )
+        assertEquals("Nochmal: wohin oder wo?", rows.single().preview)
+        assertFalse(rows.single().previewFailed)
+        // The unanswered question is not a delivered turn yet.
+        assertEquals(2, rows.single().turns)
+    }
+
+    @Test
+    fun `conversation preview flags a failed newest send with its error kind`() {
+        val rows = AskAiEntries.conversationRows(
+            listOf(
+                threadOf(
+                    "t",
+                    ruleSubject(),
+                    updatedAt = 1,
+                    messages = deliveredTurn(1) + listOf(
+                        AiChatMessage(
+                            AiChatMessage.Role.USER,
+                            "Wohin?",
+                            20,
+                            failed = true,
+                            errorKind = AiResult.ErrorKind.NETWORK,
+                        ),
+                    ),
+                ),
+            ),
+        )
+        assertEquals("Wohin?", rows.single().preview)
+        assertTrue(rows.single().previewFailed)
+        assertEquals(AiResult.ErrorKind.NETWORK, rows.single().previewErrorKind)
+        // The failed question never reached the model: still not a delivered turn.
+        assertEquals(1, rows.single().turns)
+    }
+
+    @Test
+    fun `conversation rows are empty without threads`() {
+        assertTrue(AskAiEntries.conversationRows(emptyList()).isEmpty())
+    }
+
+    @Test
+    fun `new conversation subject is the newest thread's subject, null without threads`() {
+        assertEquals(
+            wordSubject(),
+            AskAiEntries.newConversationSubject(
+                listOf(
+                    threadOf("old", ruleSubject(), updatedAt = 100),
+                    threadOf("new", wordSubject(), updatedAt = 200),
+                ),
+            ),
+        )
+        assertNull(AskAiEntries.newConversationSubject(emptyList()))
+    }
+
+    @Test
+    fun `conversation kind labels map one resource per subject kind`() {
+        assertEquals(R.string.ask_ai_conversations_kind_word, AskAiEntries.conversationKindLabelRes(AiChatSubject.Kind.WORD))
+        assertEquals(R.string.ask_ai_conversations_kind_rule, AskAiEntries.conversationKindLabelRes(AiChatSubject.Kind.RULE))
+        assertEquals(R.string.ask_ai_conversations_kind_topic, AskAiEntries.conversationKindLabelRes(AiChatSubject.Kind.TOPIC))
     }
 }

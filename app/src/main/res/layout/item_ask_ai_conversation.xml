@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One all-conversations row (#793, mock frame 5): the subject kind as a
+     small uppercase label, the subject title with the "Chat · n turns · date"
+     meta beside it, and the one-line preview of the last message — a failed
+     newest send renders its "Not sent · …" tail in the danger colour from code. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="6dp"
+    android:background="@drawable/today_tile"
+    android:clickable="true"
+    android:focusable="true"
+    android:minHeight="@dimen/today_touch_min_height"
+    android:orientation="vertical"
+    android:paddingHorizontal="12dp"
+    android:paddingVertical="10dp">
+
+    <TextView
+        android:id="@+id/tvKind"
+        style="@style/TodayCardLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:text="Rule" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:gravity="bottom"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/tvSubjectTitle"
+            style="@style/TodayCardBodyBold"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:singleLine="true"
+            tools:text="Two-way prepositions" />
+
+        <TextView
+            android:id="@+id/tvMeta"
+            style="@style/TodayCardBodyLight"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:ellipsize="end"
+            android:fontFeatureSettings="tnum"
+            android:singleLine="true"
+            tools:text="Chat · 7 turns · yesterday" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/tvPreview"
+        style="@style/TodayCardBody"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="3dp"
+        android:ellipsize="end"
+        android:singleLine="true"
+        tools:text="The pair is warten auf — the preposition belongs to the verb, not the sentence." />
+
+</LinearLayout>

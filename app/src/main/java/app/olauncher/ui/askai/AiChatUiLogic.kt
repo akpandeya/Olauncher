@@ -1,5 +1,6 @@
 package app.olauncher.ui.askai
 
+import app.olauncher.R
 import app.olauncher.data.store.AiChatGrounding
 import app.olauncher.data.store.AiChatGroundingPayload
 import app.olauncher.data.store.AiChatMessage
@@ -205,6 +206,23 @@ object AiChatUiLogic {
                 ?.let { Header.Topic(DrillTables.labelRes(it)) }
                 ?: Header.Rule(subject.ref)
         }
+
+    // ---- error line ------------------------------------------------------------
+
+    /**
+     * The error message resource of a failed turn's kind (§Reliability error
+     * table): the chat screen's inline error line and the all-conversations
+     * list's "Not sent · …" preview (#793) render the same message.
+     */
+    @androidx.annotation.StringRes
+    fun errorTextRes(kind: AiResult.ErrorKind): Int = when (kind) {
+        AiResult.ErrorKind.RATE_LIMIT -> R.string.chat_error_rate_limit
+        AiResult.ErrorKind.NETWORK -> R.string.chat_error_network
+        AiResult.ErrorKind.SERVER -> R.string.chat_error_server
+        AiResult.ErrorKind.BAD_RESPONSE -> R.string.chat_error_bad_response
+        AiResult.ErrorKind.AUTH -> R.string.chat_error_auth
+        AiResult.ErrorKind.BILLING -> R.string.chat_error_billing
+    }
 
     // ---- usage line -----------------------------------------------------------
 

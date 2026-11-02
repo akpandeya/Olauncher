@@ -235,6 +235,13 @@
             app:exitAnim="@animator/fade_exit"
             app:popEnterAnim="@animator/fade_enter"
             app:popExitAnim="@animator/fade_exit" />
+        <action
+            android:id="@+id/action_wordsFragment_to_askAiConversationsFragment"
+            app:destination="@id/askAiConversationsFragment"
+            app:enterAnim="@animator/fade_enter"
+            app:exitAnim="@animator/fade_exit"
+            app:popEnterAnim="@animator/fade_enter"
+            app:popExitAnim="@animator/fade_exit" />
     </fragment>
 
     <fragment
@@ -379,6 +386,14 @@
             android:name="ruleId"
             app:argType="string" />
     </fragment>
+
+    <!-- The all-conversations list (#793): every stored Ask-AI thread, newest
+         first; a row tap resumes that thread in the chat screen. -->
+    <fragment
+        android:id="@+id/askAiConversationsFragment"
+        android:name="app.olauncher.ui.words.AskAiConversationsFragment"
+        android:label="AskAiConversationsFragment"
+        tools:layout="@layout/fragment_ask_ai_conversations" />
 
     <fragment
         android:id="@+id/aiChatFragment"
