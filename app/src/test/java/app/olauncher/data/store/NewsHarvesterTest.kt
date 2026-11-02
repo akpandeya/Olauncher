@@ -447,7 +447,7 @@ class NewsHarvesterTest {
                 requested.add(url)
                 if (url == source.feedUrl) return NewsFetch.Ok(feed)
                 countsSeenAtFetch.add(counted)
-                // The second article request is interrupted (charger unplugged).
+                // The second article request is interrupted (Wi-Fi lost).
                 if (url == urls[1]) throw CancellationException("stopped")
                 return NewsFetch.Ok(articleHtml("Dies ist ein vollständiger Satz aus dem Artikel $url."))
             }

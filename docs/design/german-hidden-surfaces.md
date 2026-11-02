@@ -87,8 +87,8 @@ editable anywhere.
 
 ### 3.4 News sentence harvesting
 
-The only control is the News sentences switch. The harvest runs every twelve hours, on unmetered network and while
-charging, and caps itself at 10 articles per run and 30 a day (`Prefs.NEWS_DAILY_ARTICLE_CAP`). Which sentences match
+The only control is the News sentences switch. The harvest runs every twelve hours on unmetered network (Wi-Fi), and caps
+itself at 10 articles per run and 30 a day (`Prefs.NEWS_DAILY_ARTICLE_CAP`). Which sentences match
 a saved word is decided by the lemma matcher in `NewsHarvester`; no screen exposes the feeds or the matching.
 
 ### 3.5 Filling thin word contexts
