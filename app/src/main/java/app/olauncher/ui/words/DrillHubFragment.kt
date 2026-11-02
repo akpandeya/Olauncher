@@ -8,6 +8,7 @@ import androidx.core.view.isVisible
 import androidx.navigation.fragment.findNavController
 import app.olauncher.R
 import app.olauncher.data.Prefs
+import app.olauncher.data.store.DrillHelpContent
 import app.olauncher.data.store.DrillHubLogic
 import app.olauncher.data.store.DrillHubStat
 import app.olauncher.data.store.DrillScores
@@ -16,6 +17,7 @@ import app.olauncher.data.store.DrillType
 import app.olauncher.databinding.FragmentDrillHubBinding
 import app.olauncher.databinding.ItemDrillHubNewLabelBinding
 import app.olauncher.databinding.ItemDrillHubRowBinding
+import app.olauncher.databinding.ItemDrillHubSeparatorBinding
 import app.olauncher.helper.Haptics
 import app.olauncher.ui.BaseFragment
 
@@ -99,6 +101,35 @@ class DrillHubFragment : BaseFragment() {
             item.root.setOnClickListener { startRound(row.type) }
             b.hubRowsPanel.addView(item.root)
         }
+
+        renderGrammarRulesEntry()
+    }
+
+    /**
+     * The Grammar rules entry after the drill rows (#792,
+     * docs/design/german-hidden-surfaces.md §6.1): the rule count in the stat
+     * position, no score bar, separated by a hairline. It opens the rules
+     * index — no separate screen carries it.
+     */
+    private fun renderGrammarRulesEntry() {
+        val b = _binding ?: return
+        b.hubRowsPanel.addView(
+            ItemDrillHubSeparatorBinding.inflate(layoutInflater, b.hubRowsPanel, false).root
+        )
+        val item = ItemDrillHubRowBinding.inflate(layoutInflater, b.hubRowsPanel, false)
+        val ruleCount = DrillHelpContent.allRules().size
+        item.tvName.text = getString(R.string.grammar_rules_title)
+        item.tvStat.text = resources.getQuantityString(R.plurals.grammar_rules_count, ruleCount, ruleCount)
+        item.scoreBar.isVisible = false
+        item.root.setOnClickListener { view ->
+            Haptics.tick(view)
+            val navController = findNavController()
+            // Ignore a second tap delivered before the first navigation lands.
+            if (navController.currentDestination?.id == R.id.drillHubFragment) {
+                navController.navigate(R.id.action_drillHubFragment_to_grammarRulesFragment)
+            }
+        }
+        b.hubRowsPanel.addView(item.root)
     }
 
     /** A tap starts a round of the type and makes it the new last type. */

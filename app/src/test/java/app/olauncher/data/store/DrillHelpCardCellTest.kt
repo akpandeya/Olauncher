@@ -179,6 +179,21 @@ class DrillHelpCardCellTest {
         )
     }
 
+    @Test
+    fun ruleIndexStateShowsTheWholeCardWithoutAnItem() {
+        // The rules-index detail (#792) browses a rule, not an item: the card is
+        // the full authored content — rule, table, the rule's own example — with
+        // no answer highlight and no miss line, so no item's answer can leak.
+        for (rule in DrillHelpContent.allRules()) {
+            val state = DrillHelpCard.ruleIndexState(rule)
+            assertEquals(rule, state.rule)
+            assertEquals(rule.example, state.example)
+            assertEquals(false, state.showAnswer)
+            assertNull(state.answerCell)
+            assertNull(state.miss)
+        }
+    }
+
     private fun assertNotEquals(a: Any?, b: Any?) {
         org.junit.Assert.assertNotEquals(a, b)
     }
