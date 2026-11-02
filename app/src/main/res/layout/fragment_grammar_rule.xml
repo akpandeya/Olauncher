@@ -93,6 +93,36 @@
                 android:visibility="gone"
                 tools:visibility="visible" />
 
+            <!-- Further reading (#810): the hand-checked links of the rule's
+                 topic group (GrammarFurtherReading), one row per source;
+                 hidden entirely when the group has no links. -->
+            <LinearLayout
+                android:id="@+id/furtherReadingPanel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/today_panel"
+                android:orientation="vertical"
+                android:paddingHorizontal="20dp"
+                android:paddingVertical="16dp"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <TextView
+                    android:id="@+id/tvFurtherReadingTitle"
+                    style="@style/TodayCardLabel"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/grammar_further_reading_title" />
+
+                <LinearLayout
+                    android:id="@+id/furtherReadingLinks"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+
+            </LinearLayout>
+
         </LinearLayout>
 
     </ScrollView>
