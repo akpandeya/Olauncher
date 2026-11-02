@@ -633,6 +633,22 @@
     <string name="grammar_rules_title" tools:ignore="MissingTranslation">Grammar rules</string>
     <string name="grammar_rules_search_hint" tools:ignore="MissingTranslation">Search rules</string>
     <string name="grammar_rules_search_no_match" tools:ignore="MissingTranslation">No rule matches “%s”</string>
+    <string name="grammar_rules_learning_order" tools:ignore="MissingTranslation">Grouped in a suggested learning order</string>
+    <!-- Group labels of the index (#809). The names are topic names, never a case
+         name — the case is the answer of the which-case items. The suffixes are
+         the stable group keys of GrammarRuleGroups; Task-05 keys further-reading
+         links on them. -->
+    <string name="grammar_rules_group_articles" tools:ignore="MissingTranslation">Articles</string>
+    <string name="grammar_rules_group_plurals" tools:ignore="MissingTranslation">Plurals</string>
+    <string name="grammar_rules_group_pronouns" tools:ignore="MissingTranslation">Pronouns</string>
+    <string name="grammar_rules_group_word_order" tools:ignore="MissingTranslation">Word order</string>
+    <string name="grammar_rules_group_cases" tools:ignore="MissingTranslation">Cases</string>
+    <string name="grammar_rules_group_prepositions" tools:ignore="MissingTranslation">Prepositions</string>
+    <string name="grammar_rules_group_verbs" tools:ignore="MissingTranslation">Verbs</string>
+    <string name="grammar_rules_group_tenses" tools:ignore="MissingTranslation">Tenses</string>
+    <string name="grammar_rules_group_adjectives" tools:ignore="MissingTranslation">Adjectives</string>
+    <string name="grammar_rules_group_passive" tools:ignore="MissingTranslation">Passive</string>
+    <string name="grammar_rules_group_moods" tools:ignore="MissingTranslation">Moods</string>
     <string name="grammar_rule_back" tools:ignore="MissingTranslation">‹ Grammar rules</string>
     <plurals name="grammar_rules_count" tools:ignore="MissingTranslation">
         <item quantity="one">%d rule</item>

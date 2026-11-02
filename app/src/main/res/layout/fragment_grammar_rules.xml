@@ -89,9 +89,18 @@
 
         </LinearLayout>
 
+        <!-- One line pointing out the groups' suggested learning order (#809) -->
+        <TextView
+            android:id="@+id/tvLearningOrder"
+            style="@style/TodayCardBodyLight"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/grammar_rules_learning_order" />
+
     </LinearLayout>
 
-    <!-- Scrolling body: the rules in one panel, in authored order -->
+    <!-- Scrolling body: the rules grouped by topic, in a suggested learning order -->
     <ScrollView
         android:id="@+id/rulesScrollView"
         android:layout_width="match_parent"
