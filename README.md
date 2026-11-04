@@ -108,6 +108,14 @@ scripts/build-release.sh --publish  # also creates a build-<n> GitHub release
 
 The Gradle JVM heap is capped at 3 GB in `gradle.properties` (`org.gradle.jvmargs=-Xmx3g`). On machines with 8 GB of RAM a larger heap can push the build past what the OS will give it, and the Gradle process gets killed (`Killed: 9`, exit 137) during the test/lint stage. If you raise it, make sure your machine has the headroom. Build and release configuration details are in `CLAUDE.md`.
 
+The same 8 GB limit bites when running the app on an emulator. An AVD created from a Pixel system image defaults to `hw.ramSize=8192` — an 8 GB guest on an 8 GB host — and the two then fight for memory: System UI and the app throw ANR dialogs and the UI freezes. Launch the AVD with a cap instead (this also happened on the Pixel 9 Pro API 36 AVD used for testing):
+
+```
+emulator -avd <name> -memory 2048 -cores 2 -no-snapshot
+```
+
+or lower `hw.ramSize` permanently in `~/.android/avd/<name>.avd/config.ini`. On a Play Store image the emulator may also loop on Google sign-in setup; skipping it and disabling `com.google.android.gms` for the session (`adb shell pm disable-user --user 0 com.google.android.gms`) keeps the launcher usable — Thumbline itself does not need Play services.
+
 ## License
 
 [GNU GPLv3](https://www.gnu.org/licenses/gpl-3.0.en.html)
