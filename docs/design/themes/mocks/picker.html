@@ -214,6 +214,8 @@
         <button class="btn ghost" data-close type="button">Close</button>
       </div>
       <div class="alert ok" id="copy-ok" hidden>Copied to the clipboard.</div>
+      <div class="alert err" id="copy-fail" hidden>Couldn't reach the clipboard (plain-HTTP pages
+      can't use the async Clipboard API). The JSON is selected below — copy it manually.</div>
     </div>
   </div>
 
@@ -960,13 +962,40 @@ $('reset').addEventListener('click', () => { state.accentOverride = null; applyP
 $('export-btn').addEventListener('click', () => {
   $('export-json').textContent = exportJSON();
   $('copy-ok').hidden = true;
+  $('copy-fail').hidden = true;
   $('export-sheet').hidden = false;
 });
+// execCommand fallback for insecure origins (e.g. the LAN http:// link), where
+// navigator.clipboard doesn't exist. Must run inside the tap gesture to work.
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.setAttribute('readonly', '');
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  let ok = false;
+  try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+  document.body.removeChild(ta);
+  return ok;
+}
 $('copy-export').addEventListener('click', () => {
   const text = exportJSON();
-  const done = () => { $('copy-ok').hidden = false; };
-  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, done);
-  else done();
+  const attempt = (!window.isSecureContext || !navigator.clipboard || !navigator.clipboard.writeText)
+    ? Promise.resolve(fallbackCopy(text))
+    : navigator.clipboard.writeText(text).then(() => true, () => fallbackCopy(text));
+  attempt.then(ok => {
+    $('copy-ok').hidden = !ok;
+    $('copy-fail').hidden = ok;
+    if (!ok) {
+      const range = document.createRange();
+      range.selectNodeContents($('export-json'));
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+  });
 });
 
 // ---- import ----
