@@ -3,14 +3,13 @@ package app.olauncher.helper
 import java.time.LocalDate
 import java.time.ZonedDateTime
 
-/** What the Add note sheet holds before Save. [showFrom] is the optional "Remind me on" date; [lists] are list ids. */
+/** What the Add note sheet holds before Save. [showFrom] is the optional "Remind me on" date. */
 data class NoteDraft(
     val title: String = "",
     val body: String = "",
     val checklist: Boolean = false,
     val showFrom: LocalDate? = null,
     val pinned: Boolean = false,
-    val lists: List<String> = emptyList(),
 )
 
 /** Outcome of [NoteDraftRules.add]. */
@@ -87,7 +86,7 @@ object NoteDraftRules {
                 }
             }
         }
-        val note = base.copy(showFrom = date?.toEpochDay(), pinned = draft.pinned, lists = draft.lists.distinct())
+        val note = base.copy(showFrom = date?.toEpochDay(), pinned = draft.pinned)
         return DraftResult.Added(Notes.prune(notes + note), note)
     }
 }

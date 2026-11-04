@@ -20,9 +20,7 @@ import app.olauncher.helper.Notes
 import app.olauncher.helper.OlDialog
 import app.olauncher.helper.createDialog
 import app.olauncher.helper.showToast
-import app.olauncher.ui.today.TodayChips
 import app.olauncher.ui.today.cards.NotesCard
-import app.olauncher.ui.today.cards.WordsCard
 import app.olauncher.ui.today.ImeInset
 import java.time.LocalDate
 import java.time.ZonedDateTime
@@ -35,7 +33,6 @@ object AddNoteSheet {
         val dialog = OlDialog(context)
         val b = DialogAddNoteBinding.inflate(LayoutInflater.from(dialog.context))
         var date: LocalDate? = null
-        val selectedLists = LinkedHashSet<String>()
 
         fun draft() = NoteDraft(
             title = b.etNoteTitle.text?.toString().orEmpty(),
@@ -43,7 +40,6 @@ object AddNoteSheet {
             checklist = b.switchChecklist.isChecked,
             showFrom = date,
             pinned = b.switchPin.isChecked,
-            lists = selectedLists.toList(),
         )
 
         fun renderDate() {
@@ -71,7 +67,6 @@ object AddNoteSheet {
         }
         b.rowRemind.setOnClickListener { pickDate(context, date) { date = it; renderDate() } }
         renderDate()
-        bindListChips(context, b, selectedLists)
         b.btnNoteCancel.setOnClickListener { cancel() }
         b.btnNoteSave.setOnClickListener {
             when (val result = NotesCard.store(context).addDraft(draft(), System.currentTimeMillis(), ZonedDateTime.now())) {
@@ -97,28 +92,39 @@ object AddNoteSheet {
         // a listener on the sheet's own view never sees the IME inset (the window
         // decor consumes it first). Read the raw insets on the decor view, pass them
         // on unchanged, and raise the bottom-anchored window by the keyboard height.
+        // The reported keyboard overlap is measured against this window, which the
+        // lift itself moves — recomputing the lift on every dispatch oscillates
+        // (partial lifts, or an overshoot that parks the sheet off screen). So the
+        // ride is applied once per keyboard visibility change: the first dispatch
+        // after the keyboard appears still sees the un-lifted window, and later
+        // dispatches for the same keyboard state are ignored.
+        var imeShown = false
         dialog.window?.apply {
             setGravity(Gravity.BOTTOM)
             setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
             setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING)
             decorView.setOnApplyWindowInsetsListener { decor, insets ->
                 val imeVisible = insets.isVisible(WindowInsets.Type.ime())
-                val imeBottom = insets.getInsets(WindowInsets.Type.ime()).bottom
-                val navBottom = insets.getInsets(WindowInsets.Type.navigationBars()).bottom
-                val statusTop = insets.getInsets(WindowInsets.Type.statusBars()).top
-                val lift = ImeInset.windowLift(imeVisible, imeBottom, navBottom)
-
-                val screenHeight = decor.rootView.height.takeIf { it > 0 }
-                    ?: context.resources.displayMetrics.heightPixels
-                val nonScrollPx = (context.resources.displayMetrics.density * 180).toInt()
-                val availableForScroll = (screenHeight - imeBottom - statusTop - nonScrollPx)
-                    .coerceAtLeast((context.resources.displayMetrics.density * 100).toInt())
-                b.scrollNote.maxHeightPx = if (imeVisible) availableForScroll else 0
-
-                val params = attributes
-                if (params.y != lift) {
-                    params.y = lift
-                    attributes = params
+                if (imeVisible != imeShown) {
+                    imeShown = imeVisible
+                    val density = context.resources.displayMetrics.density
+                    // The screen size must come from the display: the decor root's
+                    // height is the sheet window's own (wrap-content) height, which
+                    // would collapse the scroll cap to its minimum.
+                    val ride = ImeInset.ride(
+                        imeVisible = imeVisible,
+                        imeBottomPx = insets.getInsets(WindowInsets.Type.ime()).bottom,
+                        navBottomPx = insets.getInsets(WindowInsets.Type.navigationBars()).bottom,
+                        statusTopPx = insets.getInsets(WindowInsets.Type.statusBars()).top,
+                        screenHeightPx = context.resources.displayMetrics.heightPixels,
+                        density = density,
+                    )
+                    b.scrollNote.maxHeightPx = ride.scrollCap
+                    val params = attributes
+                    if (params.y != ride.lift) {
+                        params.y = ride.lift
+                        attributes = params
+                    }
                 }
                 decor.onApplyWindowInsets(insets)
             }
@@ -141,21 +147,5 @@ object AddNoteSheet {
         )
         picker.setButton(DatePickerDialog.BUTTON_NEUTRAL, context.getString(R.string.note_add_remind_none)) { _, _ -> onPicked(null) }
         picker.show()
-    }
-
-    /** One tickable chip per existing list; the whole block stays hidden when there are none. */
-    private fun bindListChips(context: Context, b: DialogAddNoteBinding, selected: MutableSet<String>) {
-        val lists = WordsCard.getStore(context).lists()
-        val visible = if (lists.isEmpty()) android.view.View.GONE else android.view.View.VISIBLE
-        b.tvListsHeading.visibility = visible
-        b.noteListChips.visibility = visible
-        for (list in lists) {
-            val chip = TodayChips.newSelectableChip(context, list.name)
-            chip.setOnClickListener {
-                it.isSelected = !it.isSelected
-                if (it.isSelected) selected.add(list.id) else selected.remove(list.id)
-            }
-            b.noteListChips.addView(chip)
-        }
     }
 }

@@ -132,7 +132,6 @@ class NotesDesignLanguageTest {
             "etNoteTitle" to "@style/TodayCardBodyBold",
             "etNoteBody" to "@style/TodayCardBody",
             "tvRemindDate" to "@style/TodayChip",
-            "tvListsHeading" to "@style/TodayCardLabel",
             "btnNoteCancel" to "@style/TodayCardBody",
             "btnNoteSave" to "@style/TodayCardBodyBold",
         )
@@ -222,25 +221,31 @@ class NotesDesignLanguageTest {
     }
 
     @Test
-    fun `AddNoteSheet references TodayChips newSelectableChip and no longer declares fun newChip`() {
-        val file = resolveFile("src/main/java/app/olauncher/ui/notes/AddNoteSheet.kt")
-        val text = file.readText()
+    fun `AddNoteSheet has no list chips and no hand-styled chip code`() {
+        // The sheet no longer offers word-list chips: lists are chosen in the note
+        // editor ("Move to list"), the only place a note's lists are shown.
+        val sheet = resolveFile("src/main/java/app/olauncher/ui/notes/AddNoteSheet.kt").readText()
+        val layout = resolveFile("src/main/res/layout/dialog_add_note.xml").readText()
 
-        assertTrue(
-            "AddNoteSheet.kt must reference TodayChips.newSelectableChip",
-            text.contains("TodayChips.newSelectableChip"),
+        assertFalse(
+            "AddNoteSheet.kt must not reference list chips (TodayChips.newSelectableChip)",
+            sheet.contains("TodayChips"),
         )
         assertFalse(
             "AddNoteSheet.kt must no longer declare fun newChip",
-            text.contains("fun newChip"),
+            sheet.contains("fun newChip"),
         )
         assertFalse(
             "AddNoteSheet.kt must not use TypedValue for chip styling",
-            text.contains("TypedValue"),
+            sheet.contains("TypedValue"),
         )
         assertFalse(
             "AddNoteSheet.kt must not use dpToPx for chip styling",
-            text.contains("dpToPx"),
+            sheet.contains("dpToPx"),
+        )
+        assertFalse(
+            "dialog_add_note.xml must not contain the lists block",
+            layout.contains("tvListsHeading") || layout.contains("noteListChips"),
         )
     }
 }

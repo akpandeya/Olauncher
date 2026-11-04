@@ -104,12 +104,13 @@ class NoteDraftTest {
     }
 
     @Test
-    fun dateRowPinAndListsAreStored() {
+    fun dateRowAndPinAreStoredAndNotesStartWithoutLists() {
         val day = LocalDate.of(2026, 10, 27)
-        val note = added(emptyList(), NoteDraft(title = "Renew card", showFrom = day, pinned = true, lists = listOf("home", "home", "work")))
+        val note = added(emptyList(), NoteDraft(title = "Renew card", showFrom = day, pinned = true))
         assertEquals(day.toEpochDay(), note.showFrom)
         assertTrue(note.pinned)
-        assertEquals(listOf("home", "work"), note.lists)
+        // Lists come from the note editor's "Move to list", not from the sheet.
+        assertTrue(note.lists.isEmpty())
     }
 
     @Test
