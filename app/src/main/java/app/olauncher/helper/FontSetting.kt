@@ -17,6 +17,8 @@ fun Prefs.applyFontOverlay(theme: Resources.Theme) {
             theme.applyStyle(if (boldFont) R.style.FontInterBoldOverlay else R.style.FontInterOverlay, true)
         Constants.FontFamily.PLEX ->
             theme.applyStyle(if (boldFont) R.style.FontPlexBoldOverlay else R.style.FontPlexOverlay, true)
+        Constants.FontFamily.NUNITO ->
+            theme.applyStyle(if (boldFont) R.style.FontNunitoBoldOverlay else R.style.FontNunitoOverlay, true)
         else -> if (boldFont) theme.applyStyle(R.style.BoldFontOverlay, true)
     }
 }

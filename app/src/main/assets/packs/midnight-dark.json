@@ -1,0 +1,12 @@
+{
+  "name": "Midnight",
+  "mode": "dark",
+  "background": "#0A1428",
+  "surface": "#14213D",
+  "ink": "#EAF1FB",
+  "inkMuted": "#9DB0CC",
+  "accent": "#5CC8FF",
+  "accentSecondary": "#FF8A65",
+  "font": "Inter",
+  "bold": false
+}

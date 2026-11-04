@@ -16,6 +16,22 @@ import app.olauncher.helper.dpToPx
 
 internal fun HomeFragment.applyTextContrast() {
     if (_binding == null) return
+    // A theme pack colours the home screen through the theme, so the wallpaper contrast
+    // pass must not fight it: no wash, and the packed colours from XML show through
+    // untouched. Restoring the cached originals (captured from the packed theme) undoes
+    // any earlier override from this pass.
+    if (prefs.themePackId.isNotEmpty()) {
+        binding.homeWash.isVisible = false
+        val views = originalTextColors.keys + originalShadows.keys
+        views.forEach { view ->
+            originalTextColors[view]?.let { view.setTextColor(it) }
+            originalShadows[view]?.let { original ->
+                val originalShadowColor = originalShadowColors[view] ?: view.shadowColor
+                view.setShadowLayer(original[0], original[1], original[2], originalShadowColor)
+            }
+        }
+        return
+    }
     val context = context ?: return
     val themeIsDark = (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) ==
         Configuration.UI_MODE_NIGHT_YES

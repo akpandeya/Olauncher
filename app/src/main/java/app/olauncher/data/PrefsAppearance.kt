@@ -12,6 +12,7 @@ import app.olauncher.data.Prefs.Companion.FONT_FAMILY
 import app.olauncher.data.Prefs.Companion.HAPTICS
 import app.olauncher.data.Prefs.Companion.HAPTIC_DURATION_MS
 import app.olauncher.data.Prefs.Companion.HAPTIC_STRENGTH
+import app.olauncher.data.Prefs.Companion.THEME_PACK_ID
 
 /** Settings group: Appearance (see [Prefs]). */
 interface AppearancePrefs {
@@ -22,6 +23,9 @@ interface AppearancePrefs {
     var fontFamily: Int
 
     var boldFont: Boolean
+
+    /** Id of the selected bundled theme pack (file name without `.json`), empty for no pack. */
+    var themePackId: String
 
     var accent: Int
 
@@ -59,7 +63,8 @@ internal class AppearancePrefsStore(private val prefs: SharedPreferences) : Appe
             val value = prefs.getInt(FONT_FAMILY, Constants.FontFamily.SYSTEM)
             return when (value) {
                 Constants.FontFamily.INTER,
-                Constants.FontFamily.PLEX -> value
+                Constants.FontFamily.PLEX,
+                Constants.FontFamily.NUNITO -> value
                 else -> Constants.FontFamily.SYSTEM
             }
         }
@@ -68,6 +73,10 @@ internal class AppearancePrefsStore(private val prefs: SharedPreferences) : Appe
     override var boldFont: Boolean
         get() = prefs.getBoolean(BOLD_FONT, false)
         set(value) = prefs.edit { putBoolean(BOLD_FONT, value).apply() }
+
+    override var themePackId: String
+        get() = prefs.getString(THEME_PACK_ID, "") ?: ""
+        set(value) = prefs.edit { putString(THEME_PACK_ID, value).apply() }
 
     override var accentCustomColor: Int
         get() = prefs.getInt(ACCENT_CUSTOM_COLOR, 0)

@@ -137,6 +137,7 @@ private fun SettingsFragment.handleHomeAndShortcutsClick(view: View): Boolean {
 private fun SettingsFragment.handleAppearanceClick(view: View): Boolean {
     when (view.id) {
         R.id.appThemeText -> showAppThemeMenu(view, showSystem = false)
+        R.id.themePack -> showThemePackDialog()
         R.id.accent -> showAccentMenu(view)
         R.id.fontFamily -> showFontDialog()
         R.id.textSizeValue -> showTextSizeDialog()

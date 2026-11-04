@@ -11,7 +11,8 @@ is applied. Nothing in this file may set or override them, and the pack picker m
 
 - Bundled packs live in `docs/design/themes/packs/` as `<name>-<mode>.json` (base) and
   `<name>-bold-<mode>.json` (bold version), all lowercase, for example `thumbline-light.json` and
-  `thumbline-bold-light.json`.
+  `thumbline-bold-light.json`. The app bundles a byte-identical mirror of this folder at
+  `app/src/main/assets/packs/` (kept in sync by `ThemePackAssetsTest`).
 - Every pack has a **bold version**: a separate pack with the same colours and `"bold": true`, so it
   can be picked from the list in one step (for example "Diwali Bold"). A pack whose base already
   ships bold (Halloween, Diwali, Christmas) has a Bold version with identical colours.

@@ -26,8 +26,8 @@ class SettingsCatalogTest {
     fun `every setting of the old layout is present in its section`() {
         val actual = SettingsSections.all.associate { it.key to SettingsCatalog.rowsFor(it.key).map { row -> row.key } }
         assertEquals(INVENTORY, actual)
-        assertEquals(93, SettingsCatalog.rows.size)
-        assertEquals(91, SettingsCatalog.rows.count { it.searchable })
+        assertEquals(94, SettingsCatalog.rows.size)
+        assertEquals(92, SettingsCatalog.rows.count { it.searchable })
     }
 
     @Test
@@ -347,6 +347,7 @@ class SettingsCatalogTest {
             "newsSentencesOnOff",
         ),
         SettingsSections.KEY_APPEARANCE to listOf(
+            "themePack",
             "photoWallpaper",
             "statusBar",
             "appThemeText",

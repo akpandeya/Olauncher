@@ -51,6 +51,7 @@ object Constants {
         const val SYSTEM = 0
         const val INTER = 1
         const val PLEX = 2
+        const val NUNITO = 3
     }
 
     val CLOCK_APP_PACKAGES = arrayOf(

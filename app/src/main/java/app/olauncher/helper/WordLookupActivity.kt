@@ -27,6 +27,7 @@ class WordLookupActivity : AppCompatActivity() {
         val prefs = Prefs(this)
         AppCompatDelegate.setDefaultNightMode(prefs.appTheme)
         prefs.applyFontOverlay(theme)
+        prefs.applyThemePackOverlay(theme)
         super.onCreate(savedInstanceState)
 
         val word = WordLookupShare.parse(readIncomingText())

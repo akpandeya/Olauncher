@@ -288,6 +288,8 @@ object SettingsCatalog {
     )
 
     private val appearance: List<SettingsItem> = listOf(
+    row(key = "themePack", sectionKey = SettingsSections.KEY_APPEARANCE, titleRes = R.string.theme_pack, type = SettingsRowType.CHOICE,
+        primaryId = R.id.themePack, valueId = R.id.themePack),
     row(key = "photoWallpaper", sectionKey = SettingsSections.KEY_APPEARANCE, titleRes = R.string.wallpaper_photos, type = SettingsRowType.CHOICE,
         primaryId = R.id.photoWallpaper, layoutId = R.id.photoWallpaperLayout, titleId = R.id.photoWallpaperTitle, valueId = R.id.photoWallpaper),
     row(key = "statusBar", sectionKey = SettingsSections.KEY_APPEARANCE, titleRes = R.string.notification_bar, type = SettingsRowType.TOGGLE,

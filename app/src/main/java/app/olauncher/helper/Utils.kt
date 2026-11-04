@@ -533,7 +533,10 @@ fun Context.getColorFromAttr(
 ): Int {
     if (attrColor == R.attr.accentColor) {
         val prefs = Prefs(this)
-        if (prefs.accent == Accent.WALLPAPER.id && prefs.accentCustomColor != 0) return prefs.accentCustomColor
+        // An active theme pack owns the accent: its overlay style already applied after the
+        // accent overlay, so the wallpaper accent must not bypass the theme here.
+        val packActive = prefs.themePackId.isNotEmpty()
+        if (!packActive && prefs.accent == Accent.WALLPAPER.id && prefs.accentCustomColor != 0) return prefs.accentCustomColor
     }
     theme.resolveAttribute(attrColor, typedValue, resolveRefs)
     return typedValue.data

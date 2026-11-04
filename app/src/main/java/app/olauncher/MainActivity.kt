@@ -64,6 +64,7 @@ import app.olauncher.helper.WordCaptureActivity
 import app.olauncher.helper.WordScreenService
 import app.olauncher.helper.applyFontOverlay
 import app.olauncher.helper.applyAccentOverlay
+import app.olauncher.helper.applyThemePackOverlay
 import app.olauncher.helper.getColorFromAttr
 import app.olauncher.helper.hasBeenDays
 import app.olauncher.helper.hasBeenHours
@@ -185,6 +186,7 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         prefs.applyFontOverlay(theme)
         prefs.applyAccentOverlay(theme)
+        prefs.applyThemePackOverlay(theme)
         if (isEinkDisplay() || isSystemAnimationsDisabled()) theme.applyStyle(R.style.NoAnimationOverlay, true)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)

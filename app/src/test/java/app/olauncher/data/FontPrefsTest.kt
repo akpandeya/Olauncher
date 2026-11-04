@@ -13,6 +13,7 @@ class FontPrefsTest {
         assertEquals(0, Constants.FontFamily.SYSTEM)
         assertEquals(1, Constants.FontFamily.INTER)
         assertEquals(2, Constants.FontFamily.PLEX)
+        assertEquals(3, Constants.FontFamily.NUNITO)
     }
 
     @Test
@@ -37,6 +38,10 @@ class FontPrefsTest {
         assertEquals(Constants.FontFamily.PLEX, prefs.fontFamily)
         assertEquals(2, map[Prefs.FONT_FAMILY])
 
+        prefs.fontFamily = Constants.FontFamily.NUNITO
+        assertEquals(Constants.FontFamily.NUNITO, prefs.fontFamily)
+        assertEquals(3, map[Prefs.FONT_FAMILY])
+
         prefs.fontFamily = Constants.FontFamily.SYSTEM
         assertEquals(Constants.FontFamily.SYSTEM, prefs.fontFamily)
         assertEquals(0, map[Prefs.FONT_FAMILY])
@@ -47,7 +52,7 @@ class FontPrefsTest {
         val map = mutableMapOf<String, Any?>()
         val prefs = Prefs(FakeContext(FakeSharedPreferences(map)))
 
-        listOf(-1, 3, 4, 99, 999, Int.MIN_VALUE, Int.MAX_VALUE).forEach { unknownValue ->
+        listOf(-1, 4, 99, 999, Int.MIN_VALUE, Int.MAX_VALUE).forEach { unknownValue ->
             map[Prefs.FONT_FAMILY] = unknownValue
             assertEquals(
                 "Value $unknownValue must fall back to System default",

@@ -33,8 +33,16 @@ class FontFamilyResourcesTest {
     }
 
     @Test
+    fun `forId returns NUNITO resource for NUNITO id`() {
+        val result = FontFamilyResources.forId(Constants.FontFamily.NUNITO)
+        assertEquals(Constants.FontFamily.NUNITO, result.id)
+        assertEquals(R.font.nunito, result.fontRes)
+        assertEquals(R.string.font_nunito, result.labelRes)
+    }
+
+    @Test
     fun `unknown ids map to System`() {
-        val unknownIds = listOf(-100, -1, 3, 4, 10, 42, 99, 999, Int.MIN_VALUE, Int.MAX_VALUE)
+        val unknownIds = listOf(-100, -1, 4, 10, 42, 99, 999, Int.MIN_VALUE, Int.MAX_VALUE)
         for (id in unknownIds) {
             val result = FontFamilyResources.forId(id)
             assertEquals("Id $id must map to SYSTEM", FontFamilyResources.SYSTEM, result)
@@ -55,9 +63,10 @@ class FontFamilyResourcesTest {
     @Test
     fun `all font family options are registered in expected order`() {
         val all = FontFamilyResources.ALL
-        assertEquals(3, all.size)
+        assertEquals(4, all.size)
         assertEquals(FontFamilyResources.SYSTEM, all[0])
         assertEquals(FontFamilyResources.INTER, all[1])
         assertEquals(FontFamilyResources.PLEX, all[2])
+        assertEquals(FontFamilyResources.NUNITO, all[3])
     }
 }

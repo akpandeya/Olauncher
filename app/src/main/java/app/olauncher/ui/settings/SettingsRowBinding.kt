@@ -86,6 +86,7 @@ internal fun SettingsFragment.populateAllRows() {
     populateLockSettings()
     populateAppThemeText()
     populateAccent()
+    populateThemePack()
     populateFontFamily()
     populateTextSize()
     populateBoldFont()

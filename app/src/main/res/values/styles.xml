@@ -36,6 +36,20 @@
         <item name="quoteFontFamily">@font/ibm_plex_sans_bold</item>
     </style>
 
+    <style name="FontNunitoOverlay">
+        <item name="mainFontFamily">@font/nunito</item>
+        <item name="displayFontFamily">@font/nunito_bold</item>
+        <item name="labelFontFamily">@font/nunito</item>
+        <item name="quoteFontFamily">@font/nunito</item>
+    </style>
+
+    <style name="FontNunitoBoldOverlay">
+        <item name="mainFontFamily">@font/nunito_bold</item>
+        <item name="displayFontFamily">@font/nunito_bold</item>
+        <item name="labelFontFamily">@font/nunito_bold</item>
+        <item name="quoteFontFamily">@font/nunito_bold</item>
+    </style>
+
     <!-- Accent theme overlays applied over AppTheme -->
     <style name="AccentSystemOverlay">
         <item name="accentColor">@color/accentSystem</item>

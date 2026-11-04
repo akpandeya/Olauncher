@@ -262,6 +262,7 @@
     <item name="textContrastLayout" type="id" />
     <item name="textContrastTitle" type="id" />
     <item name="textSizeValue" type="id" />
+    <item name="themePack" type="id" />
     <item name="todayCards" type="id" />
     <item name="todayCardsLayout" type="id" />
     <item name="todayCardsTitle" type="id" />

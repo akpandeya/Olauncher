@@ -221,6 +221,7 @@ class Prefs(context: Context) :
         const val QUIET_RELEASE_TIMES = "QUIET_RELEASE_TIMES"
         const val DEFAULT_QUIET_RELEASE_TIMES = "750,1110"
         const val FONT_FAMILY = "FONT_FAMILY"
+        const val THEME_PACK_ID = "THEME_PACK_ID"
         const val ACCENT = "ACCENT"
         const val ACCENT_CUSTOM_COLOR = "ACCENT_CUSTOM_COLOR"
         const val CLOCK_FROM_WALLPAPER = "CLOCK_FROM_WALLPAPER"

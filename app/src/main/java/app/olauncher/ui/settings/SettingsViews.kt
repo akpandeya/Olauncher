@@ -175,6 +175,7 @@ internal class SettingsViews(private val frame: FragmentSettingsBinding) {
     val textBrightness: TextView get() = textView(R.id.textBrightness)
     val textContrast: TextView get() = textView(R.id.textContrast)
     val textSizeValue: TextView get() = textView(R.id.textSizeValue)
+    val themePack: TextView get() = textView(R.id.themePack)
     val todayCards: TextView get() = textView(R.id.todayCards)
     val todayOrder: TextView get() = textView(R.id.todayOrder)
     val toggleLock: TextView get() = textView(R.id.toggleLock)

@@ -36,7 +36,13 @@ object FontFamilyResources {
         labelRes = R.string.font_plex,
     )
 
-    val ALL: List<FontFamilyResource> = listOf(SYSTEM, INTER, PLEX)
+    val NUNITO = FontFamilyResource(
+        id = Constants.FontFamily.NUNITO,
+        fontRes = R.font.nunito,
+        labelRes = R.string.font_nunito,
+    )
+
+    val ALL: List<FontFamilyResource> = listOf(SYSTEM, INTER, PLEX, NUNITO)
 
     /**
      * Maps a font family id to its corresponding [FontFamilyResource].
@@ -45,6 +51,7 @@ object FontFamilyResources {
     fun forId(id: Int): FontFamilyResource = when (id) {
         Constants.FontFamily.INTER -> INTER
         Constants.FontFamily.PLEX -> PLEX
+        Constants.FontFamily.NUNITO -> NUNITO
         else -> SYSTEM
     }
 }

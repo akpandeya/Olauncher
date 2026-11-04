@@ -48,4 +48,18 @@
         android:textColor="?attr/primaryColor"
         tools:text="Plex" />
 
+    <TextView
+        android:id="@+id/fontOptionNunito"
+        style="@style/TextMedium"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackground"
+        android:focusable="true"
+        android:includeFontPadding="false"
+        android:paddingHorizontal="8dp"
+        android:paddingVertical="12dp"
+        android:text="@string/font_nunito"
+        android:textColor="?attr/primaryColor"
+        tools:text="Nunito" />
+
 </LinearLayout>

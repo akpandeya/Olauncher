@@ -1,0 +1,12 @@
+{
+  "name": "Thumbline",
+  "mode": "dark",
+  "background": "#0B0B0C",
+  "surface": "#1A1A1C",
+  "ink": "#FFFFFF",
+  "inkMuted": "#A9A9AF",
+  "accent": "#D9F24B",
+  "accentSecondary": "#FF6B9D",
+  "font": "Inter",
+  "bold": false
+}

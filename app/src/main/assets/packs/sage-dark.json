@@ -1,0 +1,12 @@
+{
+  "name": "Sage",
+  "mode": "dark",
+  "background": "#151915",
+  "surface": "#1F251F",
+  "ink": "#ECEFE8",
+  "inkMuted": "#A3AB9E",
+  "accent": "#9CAF88",
+  "accentSecondary": "#E58F7A",
+  "font": "IBM Plex Sans",
+  "bold": false
+}

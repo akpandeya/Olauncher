@@ -93,11 +93,14 @@ import app.olauncher.data.Constants
 import app.olauncher.data.FontFamilyResources
 import app.olauncher.data.Prefs
 import app.olauncher.data.SearchEngine
+import app.olauncher.data.ThemePack
+import app.olauncher.data.ThemePackCodec
 import app.olauncher.helper.RatesWorker
 import app.olauncher.data.SlotCount
 import app.olauncher.data.ShortcutOffset
 import app.olauncher.data.ShortcutIconStyle
 import app.olauncher.data.ShortcutSize
+import app.olauncher.helper.ThemePacks
 import app.olauncher.ui.today.TodayCards
 import app.olauncher.databinding.DialogFontFamilyBinding
 import app.olauncher.databinding.DialogTextSizeBinding
@@ -323,6 +326,53 @@ internal fun SettingsFragment.showAccentMenu(anchor: View) {
     }
 }
 
+internal fun SettingsFragment.populateThemePack() {
+    val pack = ThemePacks.load(requireContext(), prefs.themePackId)
+    binding.themePack.text = pack?.displayName() ?: getString(R.string.off)
+}
+
+/** Pack names repeat across light/dark variants, so both surfaces show the mode. */
+private fun ThemePack.displayName(): String = "$name (${mode})"
+
+/** "Default" first, then every bundled pack; each pack row shows its accent as the bullet colour. */
+internal fun SettingsFragment.showThemePackDialog() {
+    val context = requireContext()
+    val packs = ThemePacks.list(context)
+    val items = mutableListOf<CharSequence>(getString(R.string.off))
+    items.addAll(packs.map { pack ->
+        SpannableString("\u25CF  ${pack.displayName()}").apply {
+            setSpan(
+                android.text.style.ForegroundColorSpan(ThemePackCodec.parseHex(pack.accent)),
+                0, 1, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE,
+            )
+        }
+    })
+    val currentIndex = packs.indexOfFirst { it.id == prefs.themePackId }
+    val checkedIndex = when {
+        prefs.themePackId.isEmpty() -> 0
+        currentIndex == -1 -> -1
+        else -> currentIndex + 1
+    }
+    context.createChoiceDialog(title = R.string.theme_pack, items = items, checkedIndex = checkedIndex) { which ->
+        selectThemePack(if (which == 0) "" else packs[which - 1].id)
+    }.showRespectingStatusBar()
+}
+
+/** A pack brings its own colours, font and bold flag; the wallpaper and text size stay untouched. */
+internal fun SettingsFragment.selectThemePack(id: String) {
+    if (prefs.themePackId == id) return
+    prefs.themePackId = id
+    if (id.isNotEmpty()) {
+        val pack = ThemePacks.load(requireContext(), id)
+        if (pack != null) {
+            prefs.fontFamily = ThemePacks.packFontToId(pack.font)
+            prefs.boldFont = pack.bold
+        }
+    }
+    populateThemePack()
+    requireActivity().recreate()
+}
+
 internal fun SettingsFragment.populateFontFamily() {
     val resource = FontFamilyResources.forId(prefs.fontFamily)
     binding.fontFamily.text = getString(resource.labelRes)
@@ -338,6 +388,7 @@ internal fun SettingsFragment.selectFontFamily(family: Int) {
 internal fun SettingsFragment.showFontDialog() {
     val interTypeface = loadFontOrNull(FontFamilyResources.INTER.fontRes)
     val plexTypeface = loadFontOrNull(FontFamilyResources.PLEX.fontRes)
+    val nunitoTypeface = loadFontOrNull(FontFamilyResources.NUNITO.fontRes)
 
     var fontDialog: OlDialog? = null
     val dialog = requireContext().createDialog(
@@ -348,6 +399,7 @@ internal fun SettingsFragment.showFontDialog() {
         fontBinding.fontOptionSystem.typeface = Typeface.DEFAULT
         fontBinding.fontOptionInter.typeface = interTypeface ?: Typeface.DEFAULT
         fontBinding.fontOptionPlex.typeface = plexTypeface ?: Typeface.DEFAULT
+        fontBinding.fontOptionNunito.typeface = nunitoTypeface ?: Typeface.DEFAULT
 
         fontBinding.fontOptionSystem.setOnClickListener {
             fontDialog?.dismiss()
@@ -360,6 +412,10 @@ internal fun SettingsFragment.showFontDialog() {
         fontBinding.fontOptionPlex.setOnClickListener {
             fontDialog?.dismiss()
             selectFontFamily(Constants.FontFamily.PLEX)
+        }
+        fontBinding.fontOptionNunito.setOnClickListener {
+            fontDialog?.dismiss()
+            selectFontFamily(Constants.FontFamily.NUNITO)
         }
         fontBinding.root
     }

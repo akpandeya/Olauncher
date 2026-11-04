@@ -1,0 +1,12 @@
+{
+  "name": "Rose Bold",
+  "mode": "light",
+  "background": "#FFF6F9",
+  "surface": "#FBE4EE",
+  "ink": "#2A1228",
+  "inkMuted": "#6E4A66",
+  "accent": "#B8174F",
+  "accentSecondary": "#9A5600",
+  "font": "Nunito",
+  "bold": true
+}
