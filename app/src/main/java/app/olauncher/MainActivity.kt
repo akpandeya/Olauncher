@@ -958,6 +958,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkTheme() {
+        // A theme pack intentionally replaces primaryColor with its own ink, so the stock
+        // dark/light sanity check below would see a "broken" theme on every start and
+        // recreate forever (#530). Packs bypass the check; the 4-hour restart does not.
+        if (prefs.themePackId.isNotEmpty()) return
         timerJob?.cancel()
         timerJob = lifecycleScope.launch {
             delay(200)
