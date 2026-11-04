@@ -816,7 +816,18 @@ $('do-import').addEventListener('click', () => {
   $('tweak').insertBefore(b, $('tweak').querySelector('.sw:nth-of-type(1)'));
 })();
 
+// Deep links: ?screen=appearance|picker and ?sheet=export|import jump straight into the flow
+// (for screenshots); &bad=1 pre-fills the failing pack in the import sheet.
 applyPackVars();
+const params = new URLSearchParams(location.search);
+const screen = params.get('screen');
+if (screen === 'appearance' || screen === 'picker') goto(screen === 'picker' ? 'screen-picker' : 'screen-appearance');
+const sheet = params.get('sheet');
+if (sheet === 'export') { $('export-json').textContent = exportJSON(); $('export-sheet').hidden = false; }
+if (sheet === 'import') {
+  $('import-json').value = params.get('bad') ? FAILING_PACK : '';
+  $('import-sheet').hidden = false;
+}
 </script>
 </body>
 </html>
