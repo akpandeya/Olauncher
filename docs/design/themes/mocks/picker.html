@@ -828,6 +828,10 @@ if (sheet === 'import') {
   $('import-json').value = params.get('bad') ? FAILING_PACK : '';
   $('import-sheet').hidden = false;
 }
+// &custom=1 pre-applies an accent tweak (the Custom label state); &do=import runs the import
+// after the sheet opens, which shows the validation result without tapping.
+if (params.get('custom') === '1') { state.accentOverride = '#FF7AA8'; applyPackVars(); }
+if (params.get('do') === 'import') { $('do-import').click(); }
 </script>
 </body>
 </html>
