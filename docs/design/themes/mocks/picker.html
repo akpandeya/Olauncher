@@ -677,7 +677,7 @@ function currentPack() {
   if (state.imported) return state.imported;
   const base = PACKS.find(v => v.id === state.packId);
   const accent = state.accentOverride || base.accent;
-  return { ...base, accent, name: state.accentOverride ? 'Custom' : base.name, custom: !!state.accentOverride };
+  return { ...base, accent, name: state.accentOverride ? 'Custom' : base.pack, custom: !!state.accentOverride };
 }
 
 function applyPackVars() {
@@ -742,7 +742,7 @@ function renderPicker() {
     b.className = 'row';
     b.innerHTML = `
       <span class="swatches"><i style="background:${p.background};width:18px"></i><i style="background:${p.surface}"></i><i style="background:${p.accent}"></i><i style="background:${p.accentSecondary}"></i></span>
-      <span class="name">${p.name}<span class="tag">${p.mode}</span>${p.bold ? '<span class="tag bold">BOLD</span>' : ''}</span>
+      <span class="name">${p.pack}<span class="tag">${p.mode}</span>${p.bold ? '<span class="tag bold">BOLD</span>' : ''}</span>
       ${active ? '<span class="check">✓</span>' : ''}`;
     b.addEventListener('click', () => {
       state.packId = p.id; state.accentOverride = null; state.imported = null;
