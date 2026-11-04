@@ -1,0 +1,822 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Theme packs — picker mock (issue #530)</title>
+<style>
+  :root {
+    --page-bg: #e9ebef; --text: #141821; --muted: #55607a;
+    --btn-bg: #ffffff; --btn-border: #c3c9d4; --btn-active-bg: #141821; --btn-active-text: #ffffff;
+    --ok: #1d7a46; --err: #b3261e;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--page-bg); color: var(--text);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 28px 16px 48px; gap: 16px;
+  }
+  .intro, .note, .steps { width: 100%; max-width: 780px; }
+  .intro h1 { font-size: 20px; margin: 0 0 4px; }
+  .intro p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--muted); }
+  .note { font-size: 12.5px; line-height: 1.55; color: var(--muted); }
+  .steps { display: flex; flex-wrap: wrap; gap: 8px; font-size: 12.5px; color: var(--muted); }
+  .steps span { border: 1px solid var(--btn-border); border-radius: 999px; padding: 3px 10px; background: var(--btn-bg); }
+  .steps b { color: var(--text); }
+
+  .phone {
+    width: 340px; height: 720px; border-radius: 40px; overflow: hidden; position: relative; flex: none;
+    box-shadow: 0 0 0 7px #0b0d12, 0 0 0 8px #2a2f3a, 0 22px 55px rgba(0,0,0,.28);
+    background: var(--background); color: var(--ink);
+    font-family: var(--font-stack);
+  }
+  .screen { position: absolute; inset: 0; display: flex; flex-direction: column; }
+  .screen[hidden] { display: none; }
+  .topbar { display: flex; align-items: center; gap: 8px; padding: 26px 18px 10px; font-size: 17px; font-weight: 700; }
+  .topbar .back { border: 0; background: none; color: var(--accent); font-size: 15px; font-weight: 600; cursor: pointer; padding: 2px 4px; font-family: inherit; }
+  .scroll { flex: 1; overflow-y: auto; padding: 4px 12px 20px; }
+  .row {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    padding: 13px 10px; border: 0; border-radius: 12px; background: none; color: var(--ink);
+    font-size: 15px; text-align: left; cursor: pointer; font-family: inherit;
+  }
+  .row[data-static] { cursor: default; opacity: .55; }
+  .row .grow { flex: 1; }
+  .row .value { font-size: 13px; color: var(--inkMuted); display: flex; align-items: center; gap: 6px; }
+  .row .chev { color: var(--inkMuted); }
+  .section { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--inkMuted); padding: 14px 10px 6px; }
+  .divider { height: 1px; background: color-mix(in srgb, var(--inkMuted) 25%, transparent); margin: 2px 10px; }
+
+  /* mini home preview inside appearance */
+  .preview { border-radius: 16px; margin: 6px 6px 10px; padding: 16px 14px 14px; background: var(--background); border: 1px solid color-mix(in srgb, var(--inkMuted) 25%, transparent); position: relative; overflow: hidden; }
+  .preview .clock { font-size: 34px; font-weight: var(--clock-weight, 200); line-height: 1; font-variant-numeric: tabular-nums; }
+  .preview .meta { font-size: 9px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--inkMuted); margin-top: 4px; display: flex; gap: 5px; align-items: center; }
+  .preview .meta i { width: 3px; height: 3px; border-radius: 50%; background: var(--accentSecondary); }
+  .preview .next { display: inline-block; margin-top: 8px; padding: 3px 9px; border-radius: 999px; background: var(--accent); color: var(--on-accent); font-size: 10px; font-weight: 600; }
+  .preview .apps { font-size: 11px; margin-top: 10px; display: grid; gap: 5px; }
+
+  .swatches { display: inline-flex; border-radius: 6px; overflow: hidden; box-shadow: inset 0 0 0 1px rgba(0,0,0,.15); }
+  .swatches i { width: 14px; height: 14px; display: block; }
+
+  .seg { display: inline-flex; border: 1px solid color-mix(in srgb, var(--inkMuted) 40%, transparent); border-radius: 10px; overflow: hidden; }
+  .seg button { border: 0; background: none; color: var(--ink); padding: 6px 12px; font-size: 12.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--background); }
+  .picker-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; }
+  .pack-item { display: flex; align-items: center; gap: 10px; }
+  .pack-item .name { flex: 1; display: flex; align-items: center; gap: 6px; font-size: 15px; }
+  .tag { font-size: 9.5px; font-weight: 700; letter-spacing: .06em; padding: 2px 6px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--inkMuted) 45%, transparent); color: var(--inkMuted); }
+  .tag.bold { border-color: var(--accent); color: var(--ink); background: var(--accent); }
+  .check { color: var(--accent); font-weight: 700; }
+
+  /* accent tweak (Custom demo) */
+  .tweak { display: flex; align-items: center; gap: 8px; padding: 6px 10px 2px; font-size: 13px; color: var(--inkMuted); flex-wrap: wrap; }
+  .tweak .sw { width: 24px; height: 24px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
+  .tweak .sw[aria-pressed="true"] { border-color: var(--ink); }
+  .custom-note { padding: 6px 10px; font-size: 12px; color: var(--inkMuted); }
+  .reset { border: 1px solid color-mix(in srgb, var(--inkMuted) 45%, transparent); background: none; color: var(--ink); border-radius: 999px; padding: 5px 12px; font-size: 12.5px; cursor: pointer; font-family: inherit; margin: 4px 10px; }
+
+  /* sheets */
+  .sheet-back { position: absolute; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: flex-end; z-index: 5; }
+  .sheet-back[hidden] { display: none; }
+  .sheet { background: var(--surface); color: var(--ink); width: 100%; border-radius: 22px 22px 0 0; padding: 18px 16px 22px; max-height: 86%; overflow-y: auto; }
+  .sheet h3 { margin: 0 0 6px; font-size: 16px; }
+  .sheet p { margin: 0 0 12px; font-size: 13px; color: var(--inkMuted); line-height: 1.5; }
+  .sheet textarea {
+    width: 100%; min-height: 150px; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--inkMuted) 45%, transparent);
+    background: var(--background); color: var(--ink); font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; padding: 10px; resize: vertical;
+  }
+  .sheet .actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .btn { border: 0; border-radius: 999px; padding: 9px 16px; font-size: 13.5px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .btn.primary { background: var(--accent); color: var(--on-accent); }
+  .btn.ghost { background: none; color: var(--accent); border: 1px solid color-mix(in srgb, var(--inkMuted) 45%, transparent); }
+  .alert { border-radius: 12px; padding: 10px 12px; font-size: 13px; line-height: 1.5; margin-top: 10px; }
+  .alert.err { background: color-mix(in srgb, var(--err) 14%, var(--surface)); color: var(--err); border: 1px solid color-mix(in srgb, var(--err) 40%, transparent); }
+  .alert.ok { background: color-mix(in srgb, var(--ok) 14%, var(--surface)); color: var(--ok); border: 1px solid color-mix(in srgb, var(--ok) 40%, transparent); }
+  pre.json { background: var(--background); border: 1px solid color-mix(in srgb, var(--inkMuted) 45%, transparent); border-radius: 10px; padding: 10px; font: 11.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-x: auto; }
+  .home-bar { position: absolute; left: 50%; bottom: 8px; width: 100px; height: 4px; margin-left: -50px; border-radius: 2px; background: var(--ink); opacity: .4; }
+</style>
+</head>
+<body>
+
+<header class="intro">
+  <h1>Theme packs — picker mock</h1>
+  <p>Issue #530, artifact 5. The whole flow: the Appearance row, the pack picker (28 packs,
+  light and dark, including the Bold versions), the <b>Custom</b> label after one manual change,
+  and export / import with validation. Every screen is clickable — start with
+  <b>Settings → Appearance</b>.</p>
+</header>
+
+<div class="steps">
+  <span><b>1</b> Appearance row</span>
+  <span><b>2</b> Pick a pack</span>
+  <span><b>3</b> Tweak accent → Custom</span>
+  <span><b>4</b> Export</span>
+  <span><b>5</b> Import (try the failing pack)</span>
+</div>
+
+<main class="phone" id="phone">
+  <!-- Screen 1: settings -->
+  <div class="screen" id="screen-settings">
+    <div class="topbar">Settings</div>
+    <div class="scroll">
+      <div class="section">Look</div>
+      <button class="row" id="open-appearance" type="button">
+        <span class="grow">Appearance</span>
+        <span class="value" id="appearance-label">Thumbline (dark)
+          <span class="swatches" id="appearance-swatch"></span>
+        </span>
+        <span class="chev">›</span>
+      </button>
+      <div class="divider"></div>
+      <div class="row" data-static><span class="grow">Wallpaper</span><span class="value">separate setting — not in a pack</span></div>
+      <div class="row" data-static><span class="grow">Text size</span><span class="value">separate setting — not in a pack</span></div>
+      <div class="section">Other</div>
+      <div class="row" data-static><span class="grow">Gestures</span><span class="chev">›</span></div>
+      <div class="row" data-static><span class="grow">About</span><span class="chev">›</span></div>
+    </div>
+  </div>
+
+  <!-- Screen 2: appearance -->
+  <div class="screen" id="screen-appearance" hidden>
+    <div class="topbar"><button class="back" data-goto="screen-settings" type="button">‹ Settings</button> Appearance</div>
+    <div class="scroll">
+      <div class="preview" id="preview">
+        <div class="clock">10:24</div>
+        <div class="meta"><span>Sun, 25 Oct</span><i></i><span>9° Clear</span></div>
+        <div class="next">14:30 · Dentist</div>
+        <div class="apps"><span>Phone</span><span>Messages</span><span>Browser</span></div>
+      </div>
+      <button class="row" id="current-row" type="button" data-goto="screen-picker">
+        <span class="grow">Theme pack</span>
+        <span class="value" id="current-label">Thumbline (dark)</span>
+        <span class="chev">›</span>
+      </button>
+      <div class="divider"></div>
+      <div class="tweak" id="tweak">
+        Tweak accent:
+        <button class="sw" type="button" data-swatch="pack" aria-pressed="true" title="Pack accent"></button>
+        <button class="sw" type="button" data-swatch="#5CC8FF" title="Sky"></button>
+        <button class="sw" type="button" data-swatch="#FF7AA8" title="Rose"></button>
+        <button class="sw" type="button" data-swatch="#9CAF88" title="Sage"></button>
+        <button class="sw" type="button" data-swatch="#FFB547" title="Amber"></button>
+      </div>
+      <div class="custom-note" id="custom-note">Pick a pack, then change the accent once — the label becomes <b>Custom</b>.</div>
+      <button class="reset" id="reset" type="button" hidden>Reset to pack</button>
+      <div class="section">Move this look</div>
+      <button class="row" id="export-btn" type="button"><span class="grow">Export pack</span><span class="chev">›</span></button>
+      <button class="row" id="import-btn" type="button"><span class="grow">Import pack</span><span class="chev">›</span></button>
+    </div>
+  </div>
+
+  <!-- Screen 3: picker -->
+  <div class="screen" id="screen-picker" hidden>
+    <div class="topbar"><button class="back" data-goto="screen-appearance" type="button">‹ Appearance</button> Theme packs</div>
+    <div class="scroll">
+      <div class="picker-head">
+        <div class="seg" id="picker-mode">
+          <button type="button" data-mode="dark" aria-pressed="true">Dark</button>
+          <button type="button" data-mode="light" aria-pressed="false">Light</button>
+          <button type="button" data-mode="all" aria-pressed="false">All 28</button>
+        </div>
+        <span class="tag" id="picker-count"></span>
+      </div>
+      <div id="pack-list"></div>
+    </div>
+  </div>
+
+  <!-- Export sheet -->
+  <div class="sheet-back" id="export-sheet" hidden>
+    <div class="sheet">
+      <h3>Export pack</h3>
+      <p>The same format the app imports. Copy it anywhere; it contains colours, font and bold —
+      never wallpaper or text size.</p>
+      <pre class="json" id="export-json"></pre>
+      <div class="actions">
+        <button class="btn primary" id="copy-export" type="button">Copy</button>
+        <button class="btn ghost" data-close type="button">Close</button>
+      </div>
+      <div class="alert ok" id="copy-ok" hidden>Copied to the clipboard.</div>
+    </div>
+  </div>
+
+  <!-- Import sheet -->
+  <div class="sheet-back" id="import-sheet" hidden>
+    <div class="sheet">
+      <h3>Import pack</h3>
+      <p>Paste a pack JSON. It is checked against the format and the AA contrast rules before
+      anything changes.</p>
+      <textarea id="import-json" spellcheck="false" placeholder='{"name": "…", "mode": "dark", …}'></textarea>
+      <div class="actions">
+        <button class="btn primary" id="do-import" type="button">Import</button>
+        <button class="btn ghost" id="fill-bad" type="button">Fill a pack that fails contrast</button>
+        <button class="btn ghost" data-close type="button">Close</button>
+      </div>
+      <div id="import-result"></div>
+    </div>
+  </div>
+
+  <div class="home-bar"></div>
+</main>
+
+<p class="note">
+  <strong>Not pack settings:</strong> wallpaper and text size stay in their own places (shown greyed
+  on the Settings screen here) — a pack never sets them and the picker never offers them.
+  <strong>Validation order</strong> on import: JSON parse → required fields → hex format → known
+  <code>mode</code> → AA contrast (4.5:1 body text; accent passes as accent-only at 3:1 vs the
+  background or as a fill with a readable text colour on it — which is what lets Thumbline light
+  ship <code>#D9F24B</code>). A rejected pack changes nothing. Fonts are approximated with system
+  stacks in this mock; the app bundles the real TTFs.
+</p>
+
+<script>
+'use strict';
+const PACKS = [
+  {
+    "id": "thumbline-dark",
+    "pack": "Thumbline",
+    "bold": false,
+    "mode": "dark",
+    "font": "Inter",
+    "background": "#0B0B0C",
+    "surface": "#1A1A1C",
+    "ink": "#FFFFFF",
+    "inkMuted": "#A9A9AF",
+    "accent": "#D9F24B",
+    "accentSecondary": "#FF6B9D"
+  },
+  {
+    "id": "thumbline-light",
+    "pack": "Thumbline",
+    "bold": false,
+    "mode": "light",
+    "font": "Inter",
+    "background": "#FFFFFF",
+    "surface": "#F1F1EF",
+    "ink": "#0E0E0F",
+    "inkMuted": "#5A5A60",
+    "accent": "#D9F24B",
+    "accentSecondary": "#C2185B"
+  },
+  {
+    "id": "thumbline-bold-dark",
+    "pack": "Thumbline Bold",
+    "bold": true,
+    "mode": "dark",
+    "font": "Inter",
+    "background": "#0B0B0C",
+    "surface": "#1A1A1C",
+    "ink": "#FFFFFF",
+    "inkMuted": "#A9A9AF",
+    "accent": "#D9F24B",
+    "accentSecondary": "#FF6B9D"
+  },
+  {
+    "id": "thumbline-bold-light",
+    "pack": "Thumbline Bold",
+    "bold": true,
+    "mode": "light",
+    "font": "Inter",
+    "background": "#FFFFFF",
+    "surface": "#F1F1EF",
+    "ink": "#0E0E0F",
+    "inkMuted": "#5A5A60",
+    "accent": "#D9F24B",
+    "accentSecondary": "#C2185B"
+  },
+  {
+    "id": "sage-dark",
+    "pack": "Sage",
+    "bold": false,
+    "mode": "dark",
+    "font": "IBM Plex Sans",
+    "background": "#151915",
+    "surface": "#1F251F",
+    "ink": "#ECEFE8",
+    "inkMuted": "#A3AB9E",
+    "accent": "#9CAF88",
+    "accentSecondary": "#E58F7A"
+  },
+  {
+    "id": "sage-light",
+    "pack": "Sage",
+    "bold": false,
+    "mode": "light",
+    "font": "IBM Plex Sans",
+    "background": "#F6F5F0",
+    "surface": "#E9E8DF",
+    "ink": "#1F241E",
+    "inkMuted": "#566055",
+    "accent": "#4D6653",
+    "accentSecondary": "#A83E27"
+  },
+  {
+    "id": "sage-bold-dark",
+    "pack": "Sage Bold",
+    "bold": true,
+    "mode": "dark",
+    "font": "IBM Plex Sans",
+    "background": "#151915",
+    "surface": "#1F251F",
+    "ink": "#ECEFE8",
+    "inkMuted": "#A3AB9E",
+    "accent": "#9CAF88",
+    "accentSecondary": "#E58F7A"
+  },
+  {
+    "id": "sage-bold-light",
+    "pack": "Sage Bold",
+    "bold": true,
+    "mode": "light",
+    "font": "IBM Plex Sans",
+    "background": "#F6F5F0",
+    "surface": "#E9E8DF",
+    "ink": "#1F241E",
+    "inkMuted": "#566055",
+    "accent": "#4D6653",
+    "accentSecondary": "#A83E27"
+  },
+  {
+    "id": "midnight-dark",
+    "pack": "Midnight",
+    "bold": false,
+    "mode": "dark",
+    "font": "Inter",
+    "background": "#0A1428",
+    "surface": "#14213D",
+    "ink": "#EAF1FB",
+    "inkMuted": "#9DB0CC",
+    "accent": "#5CC8FF",
+    "accentSecondary": "#FF8A65"
+  },
+  {
+    "id": "midnight-light",
+    "pack": "Midnight",
+    "bold": false,
+    "mode": "light",
+    "font": "Inter",
+    "background": "#F4F8FD",
+    "surface": "#E1EAF6",
+    "ink": "#0C1B33",
+    "inkMuted": "#4A5C78",
+    "accent": "#0B6FA8",
+    "accentSecondary": "#B03A08"
+  },
+  {
+    "id": "midnight-bold-dark",
+    "pack": "Midnight Bold",
+    "bold": true,
+    "mode": "dark",
+    "font": "Inter",
+    "background": "#0A1428",
+    "surface": "#14213D",
+    "ink": "#EAF1FB",
+    "inkMuted": "#9DB0CC",
+    "accent": "#5CC8FF",
+    "accentSecondary": "#FF8A65"
+  },
+  {
+    "id": "midnight-bold-light",
+    "pack": "Midnight Bold",
+    "bold": true,
+    "mode": "light",
+    "font": "Inter",
+    "background": "#F4F8FD",
+    "surface": "#E1EAF6",
+    "ink": "#0C1B33",
+    "inkMuted": "#4A5C78",
+    "accent": "#0B6FA8",
+    "accentSecondary": "#B03A08"
+  },
+  {
+    "id": "rose-dark",
+    "pack": "Rose",
+    "bold": false,
+    "mode": "dark",
+    "font": "Nunito",
+    "background": "#1E0F1F",
+    "surface": "#2E1A30",
+    "ink": "#F8EAF1",
+    "inkMuted": "#C9AABD",
+    "accent": "#FF7AA8",
+    "accentSecondary": "#FFB547"
+  },
+  {
+    "id": "rose-light",
+    "pack": "Rose",
+    "bold": false,
+    "mode": "light",
+    "font": "Nunito",
+    "background": "#FFF6F9",
+    "surface": "#FBE4EE",
+    "ink": "#2A1228",
+    "inkMuted": "#6E4A66",
+    "accent": "#B8174F",
+    "accentSecondary": "#9A5600"
+  },
+  {
+    "id": "rose-bold-dark",
+    "pack": "Rose Bold",
+    "bold": true,
+    "mode": "dark",
+    "font": "Nunito",
+    "background": "#1E0F1F",
+    "surface": "#2E1A30",
+    "ink": "#F8EAF1",
+    "inkMuted": "#C9AABD",
+    "accent": "#FF7AA8",
+    "accentSecondary": "#FFB547"
+  },
+  {
+    "id": "rose-bold-light",
+    "pack": "Rose Bold",
+    "bold": true,
+    "mode": "light",
+    "font": "Nunito",
+    "background": "#FFF6F9",
+    "surface": "#FBE4EE",
+    "ink": "#2A1228",
+    "inkMuted": "#6E4A66",
+    "accent": "#B8174F",
+    "accentSecondary": "#9A5600"
+  },
+  {
+    "id": "halloween-dark",
+    "pack": "Halloween",
+    "bold": true,
+    "mode": "dark",
+    "font": "Nunito",
+    "background": "#140B1A",
+    "surface": "#22142B",
+    "ink": "#F3E9DC",
+    "inkMuted": "#B8A6C4",
+    "accent": "#FF7A1A",
+    "accentSecondary": "#B48CF0"
+  },
+  {
+    "id": "halloween-light",
+    "pack": "Halloween",
+    "bold": true,
+    "mode": "light",
+    "font": "Nunito",
+    "background": "#F3E6CC",
+    "surface": "#FBF3E0",
+    "ink": "#2A1233",
+    "inkMuted": "#65506D",
+    "accent": "#F08A24",
+    "accentSecondary": "#6B3FA0"
+  },
+  {
+    "id": "halloween-bold-dark",
+    "pack": "Halloween Bold",
+    "bold": true,
+    "mode": "dark",
+    "font": "Nunito",
+    "background": "#140B1A",
+    "surface": "#22142B",
+    "ink": "#F3E9DC",
+    "inkMuted": "#B8A6C4",
+    "accent": "#FF7A1A",
+    "accentSecondary": "#B48CF0"
+  },
+  {
+    "id": "halloween-bold-light",
+    "pack": "Halloween Bold",
+    "bold": true,
+    "mode": "light",
+    "font": "Nunito",
+    "background": "#F3E6CC",
+    "surface": "#FBF3E0",
+    "ink": "#2A1233",
+    "inkMuted": "#65506D",
+    "accent": "#F08A24",
+    "accentSecondary": "#6B3FA0"
+  },
+  {
+    "id": "diwali-dark",
+    "pack": "Diwali",
+    "bold": true,
+    "mode": "dark",
+    "font": "Nunito",
+    "background": "#2A0A14",
+    "surface": "#3D1220",
+    "ink": "#FBEED5",
+    "inkMuted": "#D3B3A0",
+    "accent": "#FFA21F",
+    "accentSecondary": "#FF5A3C"
+  },
+  {
+    "id": "diwali-light",
+    "pack": "Diwali",
+    "bold": true,
+    "mode": "light",
+    "font": "Nunito",
+    "background": "#FFF6E3",
+    "surface": "#FFFDF6",
+    "ink": "#5A0F1F",
+    "inkMuted": "#7D4A40",
+    "accent": "#F29A1F",
+    "accentSecondary": "#B8321A"
+  },
+  {
+    "id": "diwali-bold-dark",
+    "pack": "Diwali Bold",
+    "bold": true,
+    "mode": "dark",
+    "font": "Nunito",
+    "background": "#2A0A14",
+    "surface": "#3D1220",
+    "ink": "#FBEED5",
+    "inkMuted": "#D3B3A0",
+    "accent": "#FFA21F",
+    "accentSecondary": "#FF5A3C"
+  },
+  {
+    "id": "diwali-bold-light",
+    "pack": "Diwali Bold",
+    "bold": true,
+    "mode": "light",
+    "font": "Nunito",
+    "background": "#FFF6E3",
+    "surface": "#FFFDF6",
+    "ink": "#5A0F1F",
+    "inkMuted": "#7D4A40",
+    "accent": "#F29A1F",
+    "accentSecondary": "#B8321A"
+  },
+  {
+    "id": "christmas-dark",
+    "pack": "Christmas",
+    "bold": true,
+    "mode": "dark",
+    "font": "Nunito",
+    "background": "#0C2218",
+    "surface": "#153325",
+    "ink": "#F4F1E8",
+    "inkMuted": "#A9C4B4",
+    "accent": "#FF6459",
+    "accentSecondary": "#F0CF6A",
+    "snow": "#E6F6EE"
+  },
+  {
+    "id": "christmas-light",
+    "pack": "Christmas",
+    "bold": true,
+    "mode": "light",
+    "font": "Nunito",
+    "background": "#F8FBF9",
+    "surface": "#FFFFFF",
+    "ink": "#12402A",
+    "inkMuted": "#4F6E5D",
+    "accent": "#C62A2F",
+    "accentSecondary": "#8A6500",
+    "snow": "#6FB594"
+  },
+  {
+    "id": "christmas-bold-dark",
+    "pack": "Christmas Bold",
+    "bold": true,
+    "mode": "dark",
+    "font": "Nunito",
+    "background": "#0C2218",
+    "surface": "#153325",
+    "ink": "#F4F1E8",
+    "inkMuted": "#A9C4B4",
+    "accent": "#FF6459",
+    "accentSecondary": "#F0CF6A",
+    "snow": "#E6F6EE"
+  },
+  {
+    "id": "christmas-bold-light",
+    "pack": "Christmas Bold",
+    "bold": true,
+    "mode": "light",
+    "font": "Nunito",
+    "background": "#F8FBF9",
+    "surface": "#FFFFFF",
+    "ink": "#12402A",
+    "inkMuted": "#4F6E5D",
+    "accent": "#C62A2F",
+    "accentSecondary": "#8A6500",
+    "snow": "#6FB594"
+  }
+];
+
+
+const FAILING_PACK = `{
+  "name": "Fog Grey",
+  "mode": "light",
+  "background": "#FFFFFF",
+  "surface": "#F1F1EF",
+  "ink": "#999999",
+  "inkMuted": "#AAAAAA",
+  "accent": "#D9D9D9",
+  "accentSecondary": "#CCCCCC",
+  "font": "Inter",
+  "bold": false
+}`;
+
+// ---- contrast (WCAG 2.x relative luminance), same formula as CONTRAST.md ----
+function lin(c) { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
+function luminance(hex) {
+  const n = parseInt(hex.replace('#', ''), 16);
+  return 0.2126 * lin((n >> 16) & 255) + 0.7152 * lin((n >> 8) & 255) + 0.0722 * lin(n & 255);
+}
+function contrast(a, b) {
+  const la = luminance(a), lb = luminance(b);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+function onAccent(hex) { return luminance(hex) > 0.35 ? '#0B0B0C' : '#FFFFFF'; }
+
+function validatePack(data) {
+  const REQUIRED = ['name', 'mode', 'background', 'surface', 'ink', 'inkMuted', 'accent', 'accentSecondary', 'font', 'bold'];
+  const HEX = /^#[0-9A-Fa-f]{6}$/;
+  for (const f of REQUIRED) {
+    if (data[f] === undefined) return { ok: false, error: `Missing required field "${f}".` };
+  }
+  for (const f of ['background', 'surface', 'ink', 'inkMuted', 'accent', 'accentSecondary']) {
+    if (typeof data[f] !== 'string' || !HEX.test(data[f])) return { ok: false, error: `Bad hex for "${f}": ${JSON.stringify(data[f])} — expected #RRGGBB.` };
+  }
+  if (data.mode !== 'light' && data.mode !== 'dark') return { ok: false, error: `Unknown mode ${JSON.stringify(data.mode)} — must be "light" or "dark".` };
+  if (!['Inter', 'IBM Plex Sans', 'Nunito'].includes(data.font)) return { ok: false, error: `Unknown font ${JSON.stringify(data.font)} — must be Inter, IBM Plex Sans or Nunito.` };
+  if (typeof data.bold !== 'boolean') return { ok: false, error: '"bold" must be true or false.' };
+  const checks = [
+    ['ink / background', data.ink, data.background, 4.5],
+    ['ink / surface', data.ink, data.surface, 4.5],
+    ['inkMuted / surface', data.inkMuted, data.surface, 4.5]
+  ];
+  for (const [label, fg, bg, min] of checks) {
+    const r = contrast(fg, bg);
+    if (r < min) return { ok: false, error: `Contrast fail: ${label} is ${r.toFixed(2)}:1 — needs ${min}:1 (WCAG AA). Fix ${fg} on ${bg}.` };
+  }
+  // Accent passes as accent-only colour (3:1 vs background) or as a pill fill with a readable
+  // text colour on it (4.5:1, dark or white) — this is what lets Thumbline light ship #D9F24B.
+  for (const f of ['accent', 'accentSecondary']) {
+    const r = contrast(data[f], data.background);
+    if (r >= 3.0) continue;
+    const dark = contrast('#0B0B0C', data[f]), white = contrast('#FFFFFF', data[f]);
+    if (Math.max(dark, white) >= 4.5) continue;
+    return { ok: false, error: `Contrast fail: ${f} is ${r.toFixed(2)}:1 against the background — needs 3:1 as an accent-only colour, or 4.5:1 with a text colour on it as a fill (best here ${Math.max(dark, white).toFixed(2)}:1).` };
+  }
+  return { ok: true };
+}
+
+// ---- state ----
+const FONT_STACKS = {
+  'Inter': "'Inter', system-ui, 'Helvetica Neue', Arial, sans-serif",
+  'IBM Plex Sans': "'IBM Plex Sans', system-ui, 'Helvetica Neue', Arial, sans-serif",
+  'Nunito': "'Nunito', ui-rounded, 'Hiragino Maru Gothic ProN', 'Arial Rounded MT Bold', 'Quicksand', sans-serif"
+};
+const state = { packId: 'thumbline-dark', accentOverride: null, imported: null };
+let pickerMode = 'dark';
+
+const $ = id => document.getElementById(id);
+
+function currentPack() {
+  if (state.imported) return state.imported;
+  const base = PACKS.find(v => v.id === state.packId);
+  const accent = state.accentOverride || base.accent;
+  return { ...base, accent, name: state.accentOverride ? 'Custom' : base.name, custom: !!state.accentOverride };
+}
+
+function applyPackVars() {
+  const p = currentPack();
+  const s = $('phone').style;
+  s.setProperty('--background', p.background);
+  s.setProperty('--surface', p.surface);
+  s.setProperty('--ink', p.ink);
+  s.setProperty('--inkMuted', p.inkMuted);
+  s.setProperty('--accent', p.accent);
+  s.setProperty('--accentSecondary', p.accentSecondary);
+  s.setProperty('--on-accent', onAccent(p.accent));
+  s.setProperty('--font-stack', FONT_STACKS[p.font]);
+  s.setProperty('--clock-weight', p.bold ? '700' : '200');
+  $('phone').style.background = p.background;
+  $('phone').style.color = p.ink;
+  const label = p.custom ? 'Custom' : `${p.name} (${p.mode})`;
+  $('appearance-label').firstChild.textContent = label + ' ';
+  $('current-label').textContent = label;
+  $('appearance-swatch').innerHTML = ['background', 'surface', 'accent', 'accentSecondary']
+    .map(k => `<i style="background:${p[k]}"></i>`).join('');
+  $('pack-accent-swatch').style.background = PACKS.find(v => v.id === state.packId).accent;
+  document.querySelectorAll('.tweak .sw').forEach(b => {
+    const v = b.dataset.swatch;
+    b.setAttribute('aria-pressed', String(v === 'pack' ? !state.accentOverride : v === state.accentOverride));
+  });
+  $('reset').hidden = !state.accentOverride;
+  $('custom-note').hidden = !state.accentOverride;
+}
+
+function exportJSON() {
+  const p = currentPack();
+  const out = {
+    name: p.name, mode: p.mode, background: p.background, surface: p.surface,
+    ink: p.ink, inkMuted: p.inkMuted, accent: p.accent, accentSecondary: p.accentSecondary,
+    ...(p.snow ? { snow: p.snow } : {}), font: p.font, bold: p.bold
+  };
+  return JSON.stringify(out, null, 2);
+}
+
+// ---- navigation ----
+function goto(id) {
+  ['screen-settings', 'screen-appearance', 'screen-picker'].forEach(s => { $(s).hidden = s !== id; });
+  if (id === 'screen-picker') renderPicker();
+}
+document.querySelectorAll('[data-goto]').forEach(b => b.addEventListener('click', () => goto(b.dataset.goto)));
+document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => {
+  $('export-sheet').hidden = true; $('import-sheet').hidden = true;
+}));
+$('open-appearance').addEventListener('click', () => goto('screen-appearance'));
+
+// ---- picker ----
+function renderPicker() {
+  const list = $('pack-list');
+  list.innerHTML = '';
+  const shown = PACKS.filter(v => pickerMode === 'all' || v.mode === pickerMode);
+  $('picker-count').textContent = `${shown.length} packs`;
+  shown.forEach(p => {
+    const active = p.id === state.packId && !state.imported;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'row';
+    b.innerHTML = `
+      <span class="swatches"><i style="background:${p.background};width:18px"></i><i style="background:${p.surface}"></i><i style="background:${p.accent}"></i><i style="background:${p.accentSecondary}"></i></span>
+      <span class="name">${p.name}<span class="tag">${p.mode}</span>${p.bold ? '<span class="tag bold">BOLD</span>' : ''}</span>
+      ${active ? '<span class="check">✓</span>' : ''}`;
+    b.addEventListener('click', () => {
+      state.packId = p.id; state.accentOverride = null; state.imported = null;
+      applyPackVars(); goto('screen-appearance');
+    });
+    list.appendChild(b);
+  });
+}
+$('picker-mode').addEventListener('click', e => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  pickerMode = btn.dataset.mode;
+  document.querySelectorAll('#picker-mode button').forEach(x => x.setAttribute('aria-pressed', String(x === btn)));
+  renderPicker();
+});
+
+// ---- custom: tweak accent ----
+$('tweak').addEventListener('click', e => {
+  const btn = e.target.closest('.sw');
+  if (!btn) return;
+  state.accentOverride = btn.dataset.swatch === 'pack' ? null : btn.dataset.swatch;
+  applyPackVars();
+});
+$('reset').addEventListener('click', () => { state.accentOverride = null; applyPackVars(); });
+
+// ---- export ----
+$('export-btn').addEventListener('click', () => {
+  $('export-json').textContent = exportJSON();
+  $('copy-ok').hidden = true;
+  $('export-sheet').hidden = false;
+});
+$('copy-export').addEventListener('click', () => {
+  const text = exportJSON();
+  const done = () => { $('copy-ok').hidden = false; };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, done);
+  else done();
+});
+
+// ---- import ----
+$('import-btn').addEventListener('click', () => {
+  $('import-json').value = '';
+  $('import-result').innerHTML = '';
+  $('import-sheet').hidden = false;
+});
+$('fill-bad').addEventListener('click', () => { $('import-json').value = FAILING_PACK; $('import-result').innerHTML = ''; });
+$('do-import').addEventListener('click', () => {
+  let data;
+  try { data = JSON.parse($('import-json').value); }
+  catch (err) {
+    $('import-result').innerHTML = `<div class="alert err">Not valid JSON: ${err.message}</div>`;
+    return;
+  }
+  const res = validatePack(data);
+  if (!res.ok) {
+    $('import-result').innerHTML = `<div class="alert err"><b>Rejected — nothing changed.</b><br>${res.error}</div>`;
+    return;
+  }
+  state.imported = { ...data, custom: false };
+  state.accentOverride = null;
+  applyPackVars();
+  $('import-sheet').hidden = true;
+  goto('screen-appearance');
+});
+
+// extra swatch button for the pack accent (created here so it can be restyled per pack)
+(() => {
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'sw'; b.dataset.swatch = 'pack';
+  b.id = 'pack-accent-swatch';
+  b.title = 'Pack accent';
+  $('tweak').insertBefore(b, $('tweak').querySelector('.sw:nth-of-type(1)'));
+})();
+
+applyPackVars();
+</script>
+</body>
+</html>
