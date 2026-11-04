@@ -85,3 +85,13 @@ The Bold version of the same pack, `thumbline-bold-light.json`, is identical exc
 "name": "Thumbline Bold",
 "bold": true
 ```
+
+## Decorative dressing (future idea, not in this format)
+
+The mocks explore seasonal decoration keyed to a pack family — Halloween (web, bats, ghost,
+jack-o'-lantern), Diwali (diyas, fireworks, lotus) and Christmas (string lights, Santa hat, tree,
+gifts, `snow`). This is intentionally **not** pack data: the JSON above stays colours + font +
+bold, decoration never carries meaning the user configures, and non-seasonal packs (Thumbline,
+Sage, Midnight, Rose) stay flat. If the app later wants it, it should be an app-side presentation
+choice derived from the pack name or an additive optional field in a format version bump — not a
+required field, and never something the importer rejects over.
