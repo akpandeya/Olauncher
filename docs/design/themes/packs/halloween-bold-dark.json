@@ -1,0 +1,12 @@
+{
+  "name": "Halloween Bold",
+  "mode": "dark",
+  "background": "#140B1A",
+  "surface": "#22142B",
+  "ink": "#F3E9DC",
+  "inkMuted": "#B8A6C4",
+  "accent": "#FF7A1A",
+  "accentSecondary": "#B48CF0",
+  "font": "Nunito",
+  "bold": true
+}

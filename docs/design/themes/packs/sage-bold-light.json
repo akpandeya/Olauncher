@@ -1,0 +1,12 @@
+{
+  "name": "Sage Bold",
+  "mode": "light",
+  "background": "#F6F5F0",
+  "surface": "#E9E8DF",
+  "ink": "#1F241E",
+  "inkMuted": "#566055",
+  "accent": "#4D6653",
+  "accentSecondary": "#A83E27",
+  "font": "IBM Plex Sans",
+  "bold": true
+}

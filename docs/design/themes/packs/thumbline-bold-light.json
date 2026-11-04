@@ -1,0 +1,12 @@
+{
+  "name": "Thumbline Bold",
+  "mode": "light",
+  "background": "#FFFFFF",
+  "surface": "#F1F1EF",
+  "ink": "#0E0E0F",
+  "inkMuted": "#5A5A60",
+  "accent": "#D9F24B",
+  "accentSecondary": "#C2185B",
+  "font": "Inter",
+  "bold": true
+}

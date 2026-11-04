@@ -1,0 +1,13 @@
+{
+  "name": "Christmas Bold",
+  "mode": "dark",
+  "background": "#0C2218",
+  "surface": "#153325",
+  "ink": "#F4F1E8",
+  "inkMuted": "#A9C4B4",
+  "accent": "#FF6459",
+  "accentSecondary": "#F0CF6A",
+  "font": "Nunito",
+  "bold": true,
+  "snow": "#E6F6EE"
+}

@@ -1,0 +1,12 @@
+{
+  "name": "Diwali Bold",
+  "mode": "dark",
+  "background": "#2A0A14",
+  "surface": "#3D1220",
+  "ink": "#FBEED5",
+  "inkMuted": "#D3B3A0",
+  "accent": "#FFA21F",
+  "accentSecondary": "#FF5A3C",
+  "font": "Nunito",
+  "bold": true
+}
