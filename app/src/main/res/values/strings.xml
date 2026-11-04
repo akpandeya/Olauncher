@@ -431,8 +431,8 @@
     <string name="german_screen_pick">Pick words from the screen</string>
     <string name="german_screen_pick_subtitle">Uses the accessibility button. Reads the screen only when you press it</string>
     <string name="german_screen_pick_message">Turn on \"Thumbline: pick words\" in accessibility settings. Then press the accessibility button to pick words from any screen.</string>
-    <string name="german_screen_pick_screenshot_hint">Turn the Thumbline word service off and on once to allow screenshots</string>
-    <string name="german_screen_pick_screenshot_title">Screenshots</string>
+    <string name="german_screen_pick_screenshot_hint" tools:ignore="MissingTranslation">Turn the Thumbline word service off and on once to allow screenshots</string>
+    <string name="german_screen_pick_screenshot_title" tools:ignore="MissingTranslation">Screenshots</string>
     <string name="word_screen_service_label">Thumbline: pick words</string>
     <string name="word_screen_service_description">Reads the text on screen only when you press the accessibility button, and shows it so you can save German words. Nothing is stored or sent.</string>
     <string name="nothing_to_pick_here">Nothing to pick here</string>
@@ -760,6 +760,8 @@
     <string name="font">Font</string>
     <string name="font_inter">Inter</string>
     <string name="font_plex">Plex</string>
+    <string name="font_nunito" tools:ignore="MissingTranslation">Nunito</string>
+    <string name="theme_pack" tools:ignore="MissingTranslation">Theme pack</string>
     <string name="accent_color">Accent colour</string>
     <string name="accent_system">System</string>
     <string name="accent_sage">Sage</string>
@@ -892,17 +894,17 @@
     <string name="word_picker_save_n">Save %1$d</string>
     <string name="reader_title" tools:ignore="MissingTranslation">Lesen</string>
     <string name="reader_close" translatable="false">✕</string>
-    <string name="capture_hint">Tap or circle words</string>
-    <string name="capture_reader_view">Reader view</string>
-    <string name="capture_join_split">%1$s … %2$s → %3$s</string>
-    <string name="capture_join_split_desc">Show the joined form of this split verb</string>
-    <string name="capture_saved_count">%1$d saved</string>
-    <string name="capture_save_token">Save „%1$s“</string>
-    <string name="capture_saved_token">Saved „%1$s“</string>
+    <string name="capture_hint" tools:ignore="MissingTranslation">Tap or circle words</string>
+    <string name="capture_reader_view" tools:ignore="MissingTranslation">Reader view</string>
+    <string name="capture_join_split" tools:ignore="MissingTranslation">%1$s … %2$s → %3$s</string>
+    <string name="capture_join_split_desc" tools:ignore="MissingTranslation">Show the joined form of this split verb</string>
+    <string name="capture_saved_count" tools:ignore="MissingTranslation">%1$d saved</string>
+    <string name="capture_save_token" tools:ignore="MissingTranslation">Save „%1$s“</string>
+    <string name="capture_saved_token" tools:ignore="MissingTranslation">Saved „%1$s“</string>
     <string name="capture_menu" translatable="false">⋮</string>
-    <string name="capture_menu_desc">More options</string>
-    <string name="capture_loading_desc">Loading the captured screen</string>
-    <string name="capture_overlay_desc">Frozen screen. Tap or circle words to look them up. With a screen reader, open More options, then Reader view.</string>
+    <string name="capture_menu_desc" tools:ignore="MissingTranslation">More options</string>
+    <string name="capture_loading_desc" tools:ignore="MissingTranslation">Loading the captured screen</string>
+    <string name="capture_overlay_desc" tools:ignore="MissingTranslation">Frozen screen. Tap or circle words to look them up. With a screen reader, open More options, then Reader view.</string>
     <string name="privacy_intro" tools:ignore="MissingTranslation">Thumbline does not send your data to any analytics or ads service. Some features fetch data from the internet (weather, dictionary, currency, now-playing artwork), listed below.</string>
     <string name="privacy_state_granted" tools:ignore="MissingTranslation">Granted</string>
     <string name="privacy_state_not_granted" tools:ignore="MissingTranslation">Not granted</string>
@@ -1031,95 +1033,95 @@
     <string name="wellbeing_week_bars_description">Distracting time for each of the last 7 days. %1$s</string>
     <string name="wellbeing_allowance_meter_description">Daily allowance progress: %1$d%%</string>
     <string name="wellbeing_heat_row_description">Distracting apps hourly usage today</string>
-    <string name="ai_practice">AI practice</string>
-    <string name="ai_practice_subtitle">Sends saved words and their sentences to %1$s with your own key. Off works fine.</string>
-    <string name="ai_practice_api_key">API key</string>
-    <string name="ai_practice_key_hint">Paste your key (sk-…)</string>
-    <string name="ai_practice_key_saved">Key saved</string>
-    <string name="ai_practice_key_removed">Key removed</string>
-    <string name="ai_practice_key_required">Paste a key first</string>
-    <string name="ai_practice_test">Test</string>
-    <string name="ai_practice_testing">Testing…</string>
-    <string name="ai_practice_turned_off">AI practice is off</string>
-    <string name="ai_practice_provider">Provider: %1$s</string>
-    <string name="ai_practice_test_works">Works (%1$s, %2$s s)</string>
-    <string name="ai_practice_key_rejected">Key rejected</string>
-    <string name="ai_practice_billing_blocked">Out of credits — top up your Melious credits</string>
-    <string name="ai_error_rate_limit">Rate limited — try again in a minute</string>
-    <string name="ai_error_network">No network</string>
-    <string name="ai_error_bad_response">Bad response — check model and base URL</string>
-    <string name="ai_error_server">Provider error — try again later</string>
-    <string name="ai_practice_generate_now">Generate now</string>
-    <string name="ai_practice_generate_queued">%1$d words queued</string>
-    <string name="ai_practice_add_key">Add API key</string>
-    <string name="ai_practice_update_key">Update key</string>
-    <string name="ai_practice_remove_key">Remove key</string>
-    <string name="ai_practice_more_actions">⋮</string>
-    <string name="ai_practice_advanced">Advanced</string>
-    <string name="ai_practice_base_url">Base URL</string>
-    <string name="ai_practice_model">Model</string>
-    <string name="ai_practice_model_required">Set a model first</string>
-    <string name="ai_practice_key_save_failed">Could not save the key — try again</string>
-    <string name="news_sentences">News sentences</string>
-    <string name="news_sentences_subtitle">Collect example sentences from German news sites on Wi-Fi</string>
+    <string name="ai_practice" tools:ignore="MissingTranslation">AI practice</string>
+    <string name="ai_practice_subtitle" tools:ignore="MissingTranslation">Sends saved words and their sentences to %1$s with your own key. Off works fine.</string>
+    <string name="ai_practice_api_key" tools:ignore="MissingTranslation">API key</string>
+    <string name="ai_practice_key_hint" tools:ignore="MissingTranslation">Paste your key (sk-…)</string>
+    <string name="ai_practice_key_saved" tools:ignore="MissingTranslation">Key saved</string>
+    <string name="ai_practice_key_removed" tools:ignore="MissingTranslation">Key removed</string>
+    <string name="ai_practice_key_required" tools:ignore="MissingTranslation">Paste a key first</string>
+    <string name="ai_practice_test" tools:ignore="MissingTranslation">Test</string>
+    <string name="ai_practice_testing" tools:ignore="MissingTranslation">Testing…</string>
+    <string name="ai_practice_turned_off" tools:ignore="MissingTranslation">AI practice is off</string>
+    <string name="ai_practice_provider" tools:ignore="MissingTranslation">Provider: %1$s</string>
+    <string name="ai_practice_test_works" tools:ignore="MissingTranslation">Works (%1$s, %2$s s)</string>
+    <string name="ai_practice_key_rejected" tools:ignore="MissingTranslation">Key rejected</string>
+    <string name="ai_practice_billing_blocked" tools:ignore="MissingTranslation">Out of credits — top up your Melious credits</string>
+    <string name="ai_error_rate_limit" tools:ignore="MissingTranslation">Rate limited — try again in a minute</string>
+    <string name="ai_error_network" tools:ignore="MissingTranslation">No network</string>
+    <string name="ai_error_bad_response" tools:ignore="MissingTranslation">Bad response — check model and base URL</string>
+    <string name="ai_error_server" tools:ignore="MissingTranslation">Provider error — try again later</string>
+    <string name="ai_practice_generate_now" tools:ignore="MissingTranslation">Generate now</string>
+    <string name="ai_practice_generate_queued" tools:ignore="MissingTranslation">%1$d words queued</string>
+    <string name="ai_practice_add_key" tools:ignore="MissingTranslation">Add API key</string>
+    <string name="ai_practice_update_key" tools:ignore="MissingTranslation">Update key</string>
+    <string name="ai_practice_remove_key" tools:ignore="MissingTranslation">Remove key</string>
+    <string name="ai_practice_more_actions" tools:ignore="MissingTranslation">⋮</string>
+    <string name="ai_practice_advanced" tools:ignore="MissingTranslation">Advanced</string>
+    <string name="ai_practice_base_url" tools:ignore="MissingTranslation">Base URL</string>
+    <string name="ai_practice_model" tools:ignore="MissingTranslation">Model</string>
+    <string name="ai_practice_model_required" tools:ignore="MissingTranslation">Set a model first</string>
+    <string name="ai_practice_key_save_failed" tools:ignore="MissingTranslation">Could not save the key — try again</string>
+    <string name="news_sentences" tools:ignore="MissingTranslation">News sentences</string>
+    <string name="news_sentences_subtitle" tools:ignore="MissingTranslation">Collect example sentences from German news sites on Wi-Fi</string>
 
     <!-- News sentences "Fetch now" (#794): the manual harvest action and its feedback lines -->
-    <string name="news_sentences_fetch_now">Fetch now</string>
-    <string name="news_fetch_now_off">News sentences are off</string>
-    <string name="news_fetch_now_queued">Harvest queued · up to %1$d articles</string>
-    <string name="news_fetch_now_cap_used">Daily cap reached — up to %1$d articles a day. New articles come tomorrow.</string>
-    <string name="news_fetch_now_fetched">%1$d articles fetched</string>
-    <string name="news_fetch_now_nothing_new">Nothing new — no fresh articles</string>
+    <string name="news_sentences_fetch_now" tools:ignore="MissingTranslation">Fetch now</string>
+    <string name="news_fetch_now_off" tools:ignore="MissingTranslation">News sentences are off</string>
+    <string name="news_fetch_now_queued" tools:ignore="MissingTranslation">Harvest queued · up to %1$d articles</string>
+    <string name="news_fetch_now_cap_used" tools:ignore="MissingTranslation">Daily cap reached — up to %1$d articles a day. New articles come tomorrow.</string>
+    <string name="news_fetch_now_fetched" tools:ignore="MissingTranslation">%1$d articles fetched</string>
+    <string name="news_fetch_now_nothing_new" tools:ignore="MissingTranslation">Nothing new — no fresh articles</string>
 
     <!-- Ask-AI chat screen (#699, docs/design/ask-ai-chat.md §Chat screen, §Reliability) -->
-    <string name="chat_new_conversation">New conversation</string>
-    <string name="chat_close">Close</string>
-    <string name="chat_close_glyph">✕</string>
-    <string name="chat_send">Send</string>
-    <string name="chat_send_glyph">↑</string>
-    <string name="chat_chevron_expanded">▾</string>
-    <string name="chat_chevron_collapsed">▸</string>
-    <string name="chat_composer_hint">Ask a follow-up…</string>
-    <string name="chat_grounding_label">What the AI sees</string>
-    <string name="chat_grounding_word_chip">Word · %1$s (%2$s)</string>
-    <string name="chat_grounding_word_chip_no_meaning">Word · %1$s</string>
-    <string name="chat_grounding_word_context">Saved context: %1$s</string>
-    <string name="chat_grounding_miss_prompt">✗ %1$s</string>
-    <string name="chat_grounding_miss_line">You picked %1$s · correct: %2$s</string>
-    <string name="chat_grounding_practice_chip">Practice</string>
-    <string name="chat_grounding_practice_answer">Answer: %1$s</string>
-    <string name="chat_rule_chip">Rule · %1$s</string>
-    <string name="chat_thinking">Thinking…</string>
-    <string name="chat_cancel">Cancel</string>
-    <string name="chat_not_sent">Not sent</string>
-    <string name="chat_not_sent_line">Not sent · %1$s</string>
-    <string name="chat_retry">Retry</string>
-    <string name="chat_ask_again">Ask again</string>
-    <string name="chat_open_ai_settings">Open AI settings</string>
+    <string name="chat_new_conversation" tools:ignore="MissingTranslation">New conversation</string>
+    <string name="chat_close" tools:ignore="MissingTranslation">Close</string>
+    <string name="chat_close_glyph" tools:ignore="MissingTranslation">✕</string>
+    <string name="chat_send" tools:ignore="MissingTranslation">Send</string>
+    <string name="chat_send_glyph" tools:ignore="MissingTranslation">↑</string>
+    <string name="chat_chevron_expanded" tools:ignore="MissingTranslation">▾</string>
+    <string name="chat_chevron_collapsed" tools:ignore="MissingTranslation">▸</string>
+    <string name="chat_composer_hint" tools:ignore="MissingTranslation">Ask a follow-up…</string>
+    <string name="chat_grounding_label" tools:ignore="MissingTranslation">What the AI sees</string>
+    <string name="chat_grounding_word_chip" tools:ignore="MissingTranslation">Word · %1$s (%2$s)</string>
+    <string name="chat_grounding_word_chip_no_meaning" tools:ignore="MissingTranslation">Word · %1$s</string>
+    <string name="chat_grounding_word_context" tools:ignore="MissingTranslation">Saved context: %1$s</string>
+    <string name="chat_grounding_miss_prompt" tools:ignore="MissingTranslation">✗ %1$s</string>
+    <string name="chat_grounding_miss_line" tools:ignore="MissingTranslation">You picked %1$s · correct: %2$s</string>
+    <string name="chat_grounding_practice_chip" tools:ignore="MissingTranslation">Practice</string>
+    <string name="chat_grounding_practice_answer" tools:ignore="MissingTranslation">Answer: %1$s</string>
+    <string name="chat_rule_chip" tools:ignore="MissingTranslation">Rule · %1$s</string>
+    <string name="chat_thinking" tools:ignore="MissingTranslation">Thinking…</string>
+    <string name="chat_cancel" tools:ignore="MissingTranslation">Cancel</string>
+    <string name="chat_not_sent" tools:ignore="MissingTranslation">Not sent</string>
+    <string name="chat_not_sent_line" tools:ignore="MissingTranslation">Not sent · %1$s</string>
+    <string name="chat_retry" tools:ignore="MissingTranslation">Retry</string>
+    <string name="chat_ask_again" tools:ignore="MissingTranslation">Ask again</string>
+    <string name="chat_open_ai_settings" tools:ignore="MissingTranslation">Open AI settings</string>
     <!-- The six error strings are the design table's copy, verbatim. -->
-    <string name="chat_error_rate_limit">The AI is busy. Try again in a moment.</string>
-    <string name="chat_error_network">Couldn\'t reach the AI. Check your connection.</string>
-    <string name="chat_error_server">The AI service had a problem. Try again.</string>
-    <string name="chat_error_bad_response">The AI sent something unreadable. Try again.</string>
-    <string name="chat_error_auth">Your AI key was rejected. Check your AI settings.</string>
-    <string name="chat_error_billing">The AI account is out of credits. Top up to continue.</string>
-    <string name="chat_store_error">Couldn\'t save this conversation</string>
-    <string name="chat_marker_summarised">Earlier turns summarised · see what it kept</string>
-    <string name="chat_marker_omitted">Earlier turns omitted</string>
-    <string name="chat_marker_summary_heading">What the AI was given</string>
-    <string name="chat_original_asked">You said: %1$s</string>
-    <string name="chat_original_replied">AI replied: %1$s</string>
-    <string name="chat_usage_line">≈ %1$s · %2$s · %3$s</string>
-    <plurals name="chat_turns">
+    <string name="chat_error_rate_limit" tools:ignore="MissingTranslation">The AI is busy. Try again in a moment.</string>
+    <string name="chat_error_network" tools:ignore="MissingTranslation">Couldn\'t reach the AI. Check your connection.</string>
+    <string name="chat_error_server" tools:ignore="MissingTranslation">The AI service had a problem. Try again.</string>
+    <string name="chat_error_bad_response" tools:ignore="MissingTranslation">The AI sent something unreadable. Try again.</string>
+    <string name="chat_error_auth" tools:ignore="MissingTranslation">Your AI key was rejected. Check your AI settings.</string>
+    <string name="chat_error_billing" tools:ignore="MissingTranslation">The AI account is out of credits. Top up to continue.</string>
+    <string name="chat_store_error" tools:ignore="MissingTranslation">Couldn\'t save this conversation</string>
+    <string name="chat_marker_summarised" tools:ignore="MissingTranslation">Earlier turns summarised · see what it kept</string>
+    <string name="chat_marker_omitted" tools:ignore="MissingTranslation">Earlier turns omitted</string>
+    <string name="chat_marker_summary_heading" tools:ignore="MissingTranslation">What the AI was given</string>
+    <string name="chat_original_asked" tools:ignore="MissingTranslation">You said: %1$s</string>
+    <string name="chat_original_replied" tools:ignore="MissingTranslation">AI replied: %1$s</string>
+    <string name="chat_usage_line" tools:ignore="MissingTranslation">≈ %1$s · %2$s · %3$s</string>
+    <plurals name="chat_turns" tools:ignore="MissingTranslation">
         <item quantity="one">%1$d turn</item>
         <item quantity="other">%1$d turns</item>
     </plurals>
-    <string name="chat_usage_hint">tap for detail</string>
-    <string name="chat_usage_tokens_thousands">%1$s tokens</string>
-    <string name="chat_usage_tokens">%1$d tokens</string>
-    <string name="chat_usage_detail_title">Token use</string>
-    <string name="chat_usage_detail">Latest request: %1$d input · %2$d output tokens</string>
-    <plurals name="chat_a11y_announce">
+    <string name="chat_usage_hint" tools:ignore="MissingTranslation">tap for detail</string>
+    <string name="chat_usage_tokens_thousands" tools:ignore="MissingTranslation">%1$s tokens</string>
+    <string name="chat_usage_tokens" tools:ignore="MissingTranslation">%1$d tokens</string>
+    <string name="chat_usage_detail_title" tools:ignore="MissingTranslation">Token use</string>
+    <string name="chat_usage_detail" tools:ignore="MissingTranslation">Latest request: %1$d input · %2$d output tokens</string>
+    <plurals name="chat_a11y_announce" tools:ignore="MissingTranslation">
         <item quantity="one">Chat, %1$d turn</item>
         <item quantity="other">Chat, %1$d turns</item>
     </plurals>
@@ -1127,25 +1129,25 @@
     <!-- Ask-AI entry points (#699, docs/design/ask-ai-chat.md §Entry points):
          one shape per surface — a chip reads "Ask AI" or "Chat · n", a full-width
          row reads "Ask AI about this word" and appends "n turns". -->
-    <string name="ask_ai_chip">Ask AI</string>
-    <string name="ask_ai_chip_turns">Chat · %1$d</string>
-    <string name="ask_ai_word_row">Ask AI about this word</string>
-    <string name="ask_ai_word_row_turns">%1$s · %2$d turns</string>
-    <string name="ask_ai_word_row_older_hint">Long-press for older threads (%1$d)</string>
-    <string name="ask_ai_rule_row">Ask AI about this rule</string>
-    <string name="ask_ai_rule_row_turns">%1$s · %2$d turns</string>
-    <string name="ask_ai_sheet_title_count">%1$s · %2$d conversations</string>
-    <string name="ask_ai_sheet_empty">No conversations yet</string>
-    <string name="ask_ai_sheet_new">＋ New conversation</string>
-    <string name="ask_ai_sheet_row_meta">%1$d turns · %2$s</string>
-    <string name="ask_ai_sheet_today">today</string>
+    <string name="ask_ai_chip" tools:ignore="MissingTranslation">Ask AI</string>
+    <string name="ask_ai_chip_turns" tools:ignore="MissingTranslation">Chat · %1$d</string>
+    <string name="ask_ai_word_row" tools:ignore="MissingTranslation">Ask AI about this word</string>
+    <string name="ask_ai_word_row_turns" tools:ignore="MissingTranslation">%1$s · %2$d turns</string>
+    <string name="ask_ai_word_row_older_hint" tools:ignore="MissingTranslation">Long-press for older threads (%1$d)</string>
+    <string name="ask_ai_rule_row" tools:ignore="MissingTranslation">Ask AI about this rule</string>
+    <string name="ask_ai_rule_row_turns" tools:ignore="MissingTranslation">%1$s · %2$d turns</string>
+    <string name="ask_ai_sheet_title_count" tools:ignore="MissingTranslation">%1$s · %2$d conversations</string>
+    <string name="ask_ai_sheet_empty" tools:ignore="MissingTranslation">No conversations yet</string>
+    <string name="ask_ai_sheet_new" tools:ignore="MissingTranslation">＋ New conversation</string>
+    <string name="ask_ai_sheet_row_meta" tools:ignore="MissingTranslation">%1$d turns · %2$s</string>
+    <string name="ask_ai_sheet_today" tools:ignore="MissingTranslation">today</string>
     <!-- The all-conversations list (#793): the Chats button in the Words screen
          header, the list screen it opens, and its rows (mock frames 4-5 of
          german-surfaces-mock.html). -->
-    <string name="ask_ai_conversations_button">Chats</string>
-    <string name="ask_ai_conversations_title">Conversations</string>
-    <string name="ask_ai_conversations_kind_word">Word</string>
-    <string name="ask_ai_conversations_kind_rule">Rule</string>
-    <string name="ask_ai_conversations_kind_topic">Topic</string>
-    <string name="ask_ai_conversations_row_meta">Chat · %1$d turns · %2$s</string>
+    <string name="ask_ai_conversations_button" tools:ignore="MissingTranslation">Chats</string>
+    <string name="ask_ai_conversations_title" tools:ignore="MissingTranslation">Conversations</string>
+    <string name="ask_ai_conversations_kind_word" tools:ignore="MissingTranslation">Word</string>
+    <string name="ask_ai_conversations_kind_rule" tools:ignore="MissingTranslation">Rule</string>
+    <string name="ask_ai_conversations_kind_topic" tools:ignore="MissingTranslation">Topic</string>
+    <string name="ask_ai_conversations_row_meta" tools:ignore="MissingTranslation">Chat · %1$d turns · %2$s</string>
 </resources>
