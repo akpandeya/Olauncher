@@ -96,6 +96,21 @@
   .alert.ok { background: color-mix(in srgb, var(--ok) 14%, var(--surface)); color: var(--ok); border: 1px solid color-mix(in srgb, var(--ok) 40%, transparent); }
   pre.json { background: var(--background); border: 1px solid color-mix(in srgb, var(--inkMuted) 45%, transparent); border-radius: 10px; padding: 10px; font: 11.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; overflow-x: auto; }
   .home-bar { position: absolute; left: 50%; bottom: 8px; width: 100px; height: 4px; margin-left: -50px; border-radius: 2px; background: var(--ink); opacity: .4; }
+
+  /* Thematic dressing (seasonal packs only — mock-only decoration, never part of the pack JSON) */
+  .decor { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 1; }
+  .decor svg { position: absolute; display: block; }
+  .decor .soft { filter: drop-shadow(0 2px 4px rgba(0,0,0,.30)); }
+  .decor .floaty { animation: floaty 7s ease-in-out infinite; }
+  .decor .drift  { animation: drift 9s ease-in-out infinite; }
+  .decor .flame  { transform-box: fill-box; transform-origin: 50% 100%; animation: flicker 1.5s ease-in-out infinite; }
+  .decor .tw     { animation: twinkle 2.6s ease-in-out infinite; }
+  @keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  @keyframes drift  { 0%,100% { transform: translate(0,0); } 50% { transform: translate(-7px,4px); } }
+  @keyframes flicker { 0%,100% { transform: scaleY(1); opacity: 1; } 50% { transform: scaleY(1.22); opacity: .8; } }
+  @keyframes twinkle { 0%,100% { opacity: .2; } 50% { opacity: 1; } }
+  .row .glyph { display: inline-flex; flex: none; }
+  .row .glyph svg { display: block; }
 </style>
 </head>
 <body>
@@ -147,6 +162,7 @@
         <div class="meta"><span>Sun, 25 Oct</span><i></i><span>9° Clear</span></div>
         <div class="next">14:30 · Dentist</div>
         <div class="apps"><span>Phone</span><span>Messages</span><span>Browser</span></div>
+        <div class="decor" id="preview-decor" aria-hidden="true"></div>
       </div>
       <button class="row" id="current-row" type="button" data-goto="screen-picker">
         <span class="grow">Theme pack</span>
@@ -228,6 +244,13 @@
   background or as a fill with a readable text colour on it — which is what lets Thumbline light
   ship <code>#D9F24B</code>). A rejected pack changes nothing. Fonts are approximated with system
   stacks in this mock; the app bundles the real TTFs.
+</p>
+<p class="note">
+  <strong>Thematic dressing (design exploration):</strong> seasonal packs get decoration that is
+  <em>not</em> in the pack JSON — the Appearance preview and the picker rows (pumpkin, diya, tree
+  glyphs) dress Halloween, Diwali and Christmas; the Diwali lotus is a nod to Lakshmi, with deity
+  figures deliberately not drawn. It would be an app-side presentation choice keyed to the pack
+  family, never imported data.
 </p>
 
 <script>
@@ -671,6 +694,168 @@ const FONT_STACKS = {
 const state = { packId: 'thumbline-dark', accentOverride: null, imported: null };
 let pickerMode = 'dark';
 
+// ---- thematic dressing (seasonal packs only; pure decoration, not pack data) ----
+function packFamily(p) {
+  const s = (p.pack || p.name || '').toLowerCase();
+  if (s.includes('halloween')) return 'halloween';
+  if (s.includes('diwali')) return 'diwali';
+  if (s.includes('christmas')) return 'christmas';
+  return null;
+}
+
+// Small single-motif glyphs for the picker rows.
+const GLYPHS = {
+  halloween: `<svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true">
+    <path d="M9.5 3.6 C9.2 2.2 10 1 11.4 .6 C10.7 1.8 10.7 2.7 10.9 3.7 Z" fill="#7A4A21"/>
+    <ellipse cx="10" cy="12" rx="8.2" ry="6" fill="#F08A24"/>
+    <g fill="#3A1408">
+      <path d="M5.8 10.8 L8.1 10.8 L6.9 8.4 Z"/>
+      <path d="M11.9 10.8 L14.2 10.8 L13.1 8.4 Z"/>
+      <path d="M5.5 13.8 L7.2 12.6 L8.6 14.1 L10 12.6 L11.4 14.1 L12.8 12.6 L14.5 13.8 L13.7 15.4 L6.3 15.4 Z"/>
+    </g>
+  </svg>`,
+  diwali: `<svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true">
+    <path d="M10 .8 C8.3 3 8 5 10 6.9 C12 5 11.7 3 10 .8 Z" fill="#F29A1F"/>
+    <path d="M2.8 12.2 C2.8 15.8 5.9 18 10 18 C14.1 18 17.2 15.8 17.2 12.2 Q13.6 13.7 10 13.7 Q6.4 13.7 2.8 12.2 Z" fill="#8A3B1E"/>
+    <ellipse cx="10" cy="12.2" rx="7.2" ry="1.7" fill="#C96A2E"/>
+  </svg>`,
+  christmas: `<svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true">
+    <path d="M10 2 L14.6 9 H5.4 Z" fill="#2F7D46"/>
+    <path d="M10 6 L16.2 14.5 H3.8 Z" fill="#2F7D46"/>
+    <rect x="8.6" y="14.5" width="2.8" height="4" rx=".8" fill="#7A4A21"/>
+    <path d="M10 0 L11 2.1 L13.3 2.4 L11.6 4 L12 6.2 L10 5.1 L8 6.2 L8.4 4 L6.7 2.4 L9 2.1 Z" fill="#F0CF6A"/>
+  </svg>`
+};
+
+function decorHTML(p, mini) {
+  const fam = packFamily(p);
+  if (!fam) return '';
+  const light = p.mode === 'light';
+
+  if (fam === 'halloween') {
+    const web = `<svg class="floaty" style="top:0;right:0;width:${mini ? 44 : 82}px;height:${mini ? 44 : 82}px;animation-duration:11s" viewBox="0 0 86 86" aria-hidden="true">
+      <g stroke="${p.ink}" stroke-width="1.1" opacity=".38" fill="none">
+        <path d="M86 0 V86 M86 0 H0 M86 0 L40 46"/>
+        <path d="M86 22 Q77 9 64 0 M86 44 Q67 19 42 0 M86 66 Q58 28 20 0"/>
+      </g>
+      <path d="M56 30 V52" stroke="${p.ink}" stroke-width="1" opacity=".5" fill="none"/>
+      <g fill="${p.ink}" opacity=".62">
+        <circle cx="56" cy="54" r="3"/>
+        <circle cx="56" cy="49.5" r="1.8"/>
+        <path d="M53.5 52 L49 49 M53.5 55 L49 58 M58.5 52 L63 49 M58.5 55 L63 58" stroke="${p.ink}" stroke-width=".9" fill="none"/>
+      </g>
+    </svg>`;
+    const bat = (x, y, w, dur) => `<svg class="drift" style="top:${y}px;left:${x}px;width:${w}px;height:${w / 2}px;animation-duration:${dur}s" viewBox="0 0 40 20" aria-hidden="true">
+      <g fill="${p.accentSecondary}">
+        <ellipse cx="20" cy="10" rx="3" ry="4.6"/>
+        <path d="M17.6 8 C13 3 7 3 2 7 C5 7 6 9 5 11 C8 11 9 13 8.5 15 C12.5 15.5 16 13 17.6 10.5 Z"/>
+        <path d="M22.4 8 C27 3 33 3 38 7 C35 7 34 9 35 11 C32 11 31 13 31.5 15 C27.5 15.5 24 13 22.4 10.5 Z"/>
+        <path d="M18.4 5.4 L17.6 1.8 L20.4 3.8 L23.6 1.8 L21.6 5.4 Z"/>
+      </g>
+      <circle cx="18.6" cy="8.6" r=".8" fill="${p.background}"/>
+      <circle cx="21.4" cy="8.6" r=".8" fill="${p.background}"/>
+    </svg>`;
+    const ghost = `<svg class="floaty soft" style="right:${mini ? 8 : 118}px;top:${mini ? 64 : 320}px;width:${mini ? 20 : 46}px;animation-duration:6s" viewBox="0 0 36 42" aria-hidden="true">
+      <path d="M18 3 C10 3 5 10 5 18 V35 Q7.5 31 10 35 Q12.5 39 15 35 Q17.5 31 20 35 Q22.5 39 25 35 Q27.5 31 31 35 V18 C31 10 26 3 18 3 Z" fill="#FFFFFF"/>
+      <circle cx="13" cy="15" r="2.1" fill="#2A1233"/>
+      <circle cx="23" cy="15" r="2.1" fill="#2A1233"/>
+      <ellipse cx="18" cy="21.5" rx="1.6" ry="2.2" fill="#2A1233"/>
+    </svg>`;
+    const face = light ? '#5C2A10' : '#FFD54A';
+    const pumpkin = (b, r, w) => `<svg class="floaty" style="bottom:${b}px;right:${r}px;width:${w}px;height:${w * .82}px;animation:none" viewBox="0 0 46 38" aria-hidden="true">
+      <path d="M21.5 7.5 C21 4.5 22.5 2 25.5 1 C24 3.5 24 5.5 24.5 8 Z" fill="#7A4A21"/>
+      <ellipse cx="23" cy="22.5" rx="19" ry="13.5" fill="${p.accent}"/>
+      <ellipse cx="23" cy="22.5" rx="11.5" ry="13.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.4"/>
+      <ellipse cx="23" cy="22.5" rx="4.5" ry="13.5" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.4"/>
+      <g fill="${face}">
+        <path d="M13 20.5 L17.5 20.5 L15.2 15.5 Z"/>
+        <path d="M28.5 20.5 L33 20.5 L30.8 15.5 Z"/>
+        <path d="M12 27.5 L15.5 25 L18.5 28 L21.5 24.5 L24.5 28 L27.5 25 L31 27.5 L29.5 30.5 L13.5 30.5 Z"/>
+      </g>
+    </svg>`;
+    return mini
+      ? web + bat(12, 40, 24, 8) + ghost + pumpkin(6, 8, 30)
+      : web + bat(226, 58, 36, 9) + bat(118, 36, 26, 7) + ghost + pumpkin(22, 14, 56);
+  }
+
+  if (fam === 'diwali') {
+    const burst = (x, y, s, dur, delay) => `<svg class="tw" style="top:${y}px;left:${x}px;width:${s}px;height:${s}px;animation-duration:${dur}s;animation-delay:-${delay}s" viewBox="0 0 60 60" aria-hidden="true">
+      <g stroke="${p.accent}" stroke-width="1.4" stroke-linecap="round" fill="none" opacity=".85">
+        <path d="M38 30 L54 30 M35.7 35.7 L47 47 M30 38 L30 54 M24.3 35.7 L13 47 M22 30 L6 30 M24.3 24.3 L13 13 M30 22 L30 6 M35.7 24.3 L47 13"/>
+      </g>
+      <g fill="${p.accentSecondary}">
+        <circle class="tw" cx="55" cy="30" r="1.6" style="animation-delay:-.3s"/>
+        <circle class="tw" cx="48.5" cy="48.5" r="1.6" style="animation-delay:-.9s"/>
+        <circle class="tw" cx="30" cy="55" r="1.6" style="animation-delay:-1.5s"/>
+        <circle class="tw" cx="11.5" cy="48.5" r="1.6" style="animation-delay:-2.1s"/>
+        <circle class="tw" cx="5" cy="30" r="1.6" style="animation-delay:-1.2s"/>
+        <circle class="tw" cx="11.5" cy="11.5" r="1.6" style="animation-delay:-.6s"/>
+        <circle class="tw" cx="30" cy="5" r="1.6" style="animation-delay:-1.8s"/>
+        <circle class="tw" cx="48.5" cy="11.5" r="1.6" style="animation-delay:-2.4s"/>
+      </g>
+      <circle cx="30" cy="30" r="2" fill="${p.accent}"/>
+    </svg>`;
+    const lotus = `<svg class="floaty" style="right:${mini ? 8 : 18}px;top:${mini ? 62 : 214}px;width:${mini ? 20 : 42}px;animation:none" viewBox="0 0 40 24" aria-hidden="true">
+      <g fill="${p.accentSecondary}" opacity=".9">
+        <path d="M20 3 C16.5 8 16.5 13 20 17.5 C23.5 13 23.5 8 20 3 Z"/>
+        <path d="M11 7 C12.5 12 15.5 15.5 19.5 17.5 C13.5 18 9.5 14.5 9 9.5 Z"/>
+        <path d="M29 7 C27.5 12 24.5 15.5 20.5 17.5 C26.5 18 30.5 14.5 31 9.5 Z"/>
+        <path d="M3 12.5 C7.5 12.5 13 14.5 18 17.5 C11 19 5.5 17 3 12.5 Z"/>
+        <path d="M37 12.5 C32.5 12.5 27 14.5 22 17.5 C29 19 34.5 17 37 12.5 Z"/>
+      </g>
+      <path d="M8 20.5 Q20 24 32 20.5" stroke="${p.accent}" stroke-width="1.2" fill="none" opacity=".7"/>
+    </svg>`;
+    const diya = (x, w) => `<svg class="floaty" style="bottom:${mini ? 4 : 20}px;left:${x}px;width:${w}px;height:${w * .72}px;animation:none" viewBox="0 0 36 26" aria-hidden="true">
+      <circle cx="18" cy="7" r="6" fill="${p.accent}" opacity=".22"/>
+      <path class="flame" d="M18 1 C14.8 4.8 14.5 7.8 18 10.5 C21.5 7.8 21.2 4.8 18 1 Z" fill="${p.accent}"/>
+      <path class="flame" d="M18 4.5 C16.6 6.2 16.5 7.6 18 8.9 C19.5 7.6 19.4 6.2 18 4.5 Z" fill="#FFE9A8" opacity="${light ? .35 : .95}"/>
+      <path d="M6 14 C6 19.5 11 23 18 23 C25 23 30 19.5 30 14 Q24 16.4 18 16.4 Q12 16.4 6 14 Z" fill="#8A3B1E"/>
+      <ellipse cx="18" cy="14" rx="12" ry="2.6" fill="#C96A2E"/>
+    </svg>`;
+    return mini
+      ? burst(170, 10, 30, 2.8, 0) + lotus + diya(150, 30) + diya(196, 24)
+      : burst(238, 62, 66, 3, 0) + burst(58, 118, 44, 3.6, 1.3) + burst(292, 178, 30, 2.6, .7) + lotus + diya(26, 42) + diya(108, 36) + diya(188, 42) + diya(268, 36);
+  }
+
+  if (fam === 'christmas') {
+    const lights = `<svg style="top:0;left:0;width:100%;height:${mini ? 20 : 34}px" viewBox="0 0 340 34" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0 6 Q85 26 170 12 Q255 26 340 6" stroke="${p.inkMuted}" stroke-width="1.2" fill="none" opacity=".55"/>
+      ${[[42, 13, 0], [85, 17.5, 1], [127, 16.5, 2], [212, 16.5, 3], [255, 17.5, 4], [297, 13, 5]].map(([x, y, i]) => {
+        const c = [p.accent, p.accentSecondary, p.snow || p.ink][i % 3];
+        return `<circle class="tw" cx="${x}" cy="${y}" r="${mini ? 2.4 : 3.4}" fill="${c}" style="animation-delay:-${i * .8}s"/>
+          <circle cx="${x}" cy="${y}" r="${mini ? 4.6 : 6.5}" fill="${c}" opacity=".22"/>`;
+      }).join('')}
+    </svg>`;
+    const hat = mini ? '' : `<svg class="soft" style="left:8px;top:32px;width:60px;transform:rotate(-16deg)" viewBox="0 0 60 44" aria-hidden="true">
+      <path d="M9 34 C11 18 23 6 40 4 C50 3 55 8 53 14 C44 13 30 21 25 34 Z" fill="#D0343A"/>
+      <rect x="4" y="31" width="27" height="9" rx="4.5" fill="#FFFFFF"/>
+      <circle cx="53.5" cy="13" r="5" fill="#FFFFFF"/>
+    </svg>`;
+    const tree = `<svg class="floaty" style="right:${mini ? 8 : 12}px;top:${mini ? 68 : 278}px;width:${mini ? 30 : 88}px;height:${mini ? 38 : 112}px;animation:none" viewBox="0 0 44 56" aria-hidden="true">
+      <path d="M22 3 L31 17 H13 Z" fill="#2F7D46"/>
+      <path d="M22 12 L36 32 H8 Z" fill="#2F7D46"/>
+      <path d="M22 23 L40 47 H4 Z" fill="#2F7D46"/>
+      <rect x="19" y="47" width="7" height="8" rx="1.5" fill="#7A4A21"/>
+      <circle cx="17" cy="20" r="2" fill="${p.accent}"/>
+      <circle cx="27" cy="27" r="2" fill="${p.accentSecondary}"/>
+      <circle cx="14" cy="34" r="2" fill="${p.accentSecondary}"/>
+      <circle cx="30" cy="38" r="2" fill="${p.accent}"/>
+      <circle cx="22" cy="43" r="2" fill="${p.accent}"/>
+      <path d="M22 0 L23.4 3.2 L26.8 3.6 L24.3 5.9 L25 9.3 L22 7.6 L19 9.3 L19.7 5.9 L17.2 3.6 L20.6 3.2 Z" fill="${p.accentSecondary}"/>
+    </svg>`;
+    const gifts = mini ? '' : `<svg class="floaty" style="bottom:20px;right:12px;width:56px;height:48px;animation:none" viewBox="0 0 40 34" aria-hidden="true">
+      <rect x="2" y="14" width="18" height="16" rx="2" fill="${p.accent}"/>
+      <rect x="0" y="10" width="22" height="6" rx="2" fill="${p.accent}" stroke="rgba(0,0,0,.18)"/>
+      <rect x="9.5" y="10" width="3" height="20" fill="${p.accentSecondary}"/>
+      <rect x="22" y="22" width="14" height="8" rx="1.5" fill="${p.accentSecondary}"/>
+      <rect x="20.5" y="19.5" width="17" height="4" rx="1.5" fill="${p.accentSecondary}" stroke="rgba(0,0,0,.15)"/>
+      <rect x="27.5" y="19.5" width="2.6" height="10.5" fill="${p.accent}"/>
+    </svg>`;
+    return lights + hat + tree + gifts;
+  }
+  return '';
+}
+
 const $ = id => document.getElementById(id);
 
 function currentPack() {
@@ -694,6 +879,7 @@ function applyPackVars() {
   s.setProperty('--clock-weight', p.bold ? '700' : '200');
   $('phone').style.background = p.background;
   $('phone').style.color = p.ink;
+  $('preview-decor').innerHTML = decorHTML(p, true);
   const label = p.custom ? 'Custom' : `${p.name} (${p.mode})`;
   $('appearance-label').firstChild.textContent = label + ' ';
   $('current-label').textContent = label;
@@ -740,9 +926,11 @@ function renderPicker() {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'row';
+    const fam = packFamily(p);
+    const glyph = fam && GLYPHS[fam] ? `<span class="glyph">${GLYPHS[fam]}</span>` : '';
     b.innerHTML = `
       <span class="swatches"><i style="background:${p.background};width:18px"></i><i style="background:${p.surface}"></i><i style="background:${p.accent}"></i><i style="background:${p.accentSecondary}"></i></span>
-      <span class="name">${p.pack}<span class="tag">${p.mode}</span>${p.bold ? '<span class="tag bold">BOLD</span>' : ''}</span>
+      <span class="name">${glyph}${p.pack}<span class="tag">${p.mode}</span>${p.bold ? '<span class="tag bold">BOLD</span>' : ''}</span>
       ${active ? '<span class="check">✓</span>' : ''}`;
     b.addEventListener('click', () => {
       state.packId = p.id; state.accentOverride = null; state.imported = null;
@@ -817,9 +1005,12 @@ $('do-import').addEventListener('click', () => {
 })();
 
 // Deep links: ?screen=appearance|picker and ?sheet=export|import jump straight into the flow
-// (for screenshots); &bad=1 pre-fills the failing pack in the import sheet.
-applyPackVars();
+// (for screenshots); &bad=1 pre-fills the failing pack in the import sheet; &pack=<id> applies
+// that bundled pack first.
 const params = new URLSearchParams(location.search);
+const packParam = params.get('pack');
+if (packParam && PACKS.some(v => v.id === packParam)) state.packId = packParam;
+applyPackVars();
 const screen = params.get('screen');
 if (screen === 'appearance' || screen === 'picker') goto(screen === 'picker' ? 'screen-picker' : 'screen-appearance');
 const sheet = params.get('sheet');
