@@ -32,6 +32,7 @@ import app.olauncher.R
 import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
 import app.olauncher.data.ProfileScheduleResolver
+import app.olauncher.data.ThemePack
 import app.olauncher.helper.Haptics
 import app.olauncher.helper.OlDialog
 import app.olauncher.helper.hapticLongClick
@@ -111,6 +112,11 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     internal var homeAppsPaddingEnd = 0
     internal var _binding: FragmentHomeBinding? = null
     internal val binding get() = _binding!!
+
+    // Seasonal dressing cache (applyHomeDecor): the pack for the current themePackId, reloaded
+    // only when the id changes so resume/alignment updates stay cheap.
+    internal var decorPackId: String? = null
+    internal var decorPack: ThemePack? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
@@ -440,6 +446,8 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         binding.homeApp7.gravity = horizontalGravity
         binding.homeApp8.gravity = horizontalGravity
         populateScreenTime()
+        // The dressing mirrors with the text alignment (mock layout assumes left-aligned text).
+        applyHomeDecor()
     }
 
 
@@ -901,6 +909,9 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         glowShownStrength = null
         _binding?.root?.removeCallbacks(musicTick)
         _binding?.mediaProgress?.setRunning(false)
+        _binding?.homeDecor?.stop()
+        decorPack = null
+        decorPackId = null
         originalShadows.clear()
         originalShadowColors.clear()
         unregisterTimeTickReceiver()

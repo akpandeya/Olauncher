@@ -32,6 +32,15 @@
         android:importantForAccessibility="no"
         android:visibility="gone" />
 
+    <!-- Seasonal dressing for decorated theme packs (Halloween, Diwali, Christmas); shown only
+         with a pack active (HomeFragment). Draws below the text layer and never takes touches. -->
+    <app.olauncher.ui.HomeDecorView
+        android:id="@+id/homeDecor"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:importantForAccessibility="no"
+        android:visibility="gone" />
+
     <!-- Animated weather over the wallpaper; shown only with Weather effects on (HomeFragment) -->
     <app.olauncher.ui.WeatherEffectView
         android:id="@+id/weatherEffects"

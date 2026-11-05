@@ -9,10 +9,15 @@ import androidx.core.view.isVisible
 import app.olauncher.R
 import app.olauncher.data.Accent
 import app.olauncher.data.Prefs
+import app.olauncher.data.ThemePack
 import app.olauncher.helper.HomeWash
 import app.olauncher.helper.TextBrightness
 import app.olauncher.helper.ContrastPolicy
+import app.olauncher.helper.ThemePacks
 import app.olauncher.helper.dpToPx
+import app.olauncher.helper.isEinkDisplay
+import app.olauncher.helper.isSystemAnimationsDisabled
+import android.view.Gravity
 
 internal fun HomeFragment.applyTextContrast() {
     if (_binding == null) return
@@ -91,4 +96,37 @@ internal fun HomeFragment.applyTextContrast() {
         val alpha = (Color.alpha(base) * textOpacity).toInt()
         view.setTextColor(Color.argb(alpha, Color.red(base), Color.green(base), Color.blue(base)))
     }
+}
+
+/**
+ * Shows the seasonal dressing for the active theme pack (HomeDecorView); with no pack, an
+ * unknown pack or a plain (non-seasonal) pack the view hides. The pack parse is cached on the
+ * fragment, so calling this on every resume and alignment change only re-reads prefs.
+ */
+internal fun HomeFragment.applyHomeDecor() {
+    val binding = _binding ?: return
+    val id = prefs.themePackId
+    val pack = when {
+        id.isEmpty() -> {
+            decorPack = null
+            decorPackId = null
+            null
+        }
+        id == decorPackId -> decorPack
+        else -> ThemePacks.load(requireContext(), id).also {
+            decorPack = it
+            decorPackId = id
+        }
+    }
+    if (pack == null) {
+        binding.homeDecor.stop()
+        return
+    }
+    val context = context ?: return
+    binding.homeDecor.configure(
+        pack = pack,
+        alignmentRight = prefs.homeAlignment == Gravity.END,
+        // The dressing is decoration: keep the home still on e-ink or with animations off.
+        animate = !context.isEinkDisplay() && !context.isSystemAnimationsDisabled(),
+    )
 }

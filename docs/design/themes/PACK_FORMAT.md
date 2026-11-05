@@ -87,12 +87,15 @@ The Bold version of the same pack, `thumbline-bold-light.json`, is identical exc
 "bold": true
 ```
 
-## Decorative dressing (future idea, not in this format)
+## Decorative dressing (app-side, derived from the family name)
 
-The mocks explore seasonal decoration keyed to a pack family — Halloween (web, bats, ghost,
-jack-o'-lantern), Diwali (diyas, fireworks, lotus) and Christmas (string lights, Santa hat, tree,
-gifts, `snow`). This is intentionally **not** pack data: the JSON above stays colours + font +
-bold, decoration never carries meaning the user configures, and non-seasonal packs (Thumbline,
-Sage, Midnight, Rose) stay flat. If the app later wants it, it should be an app-side presentation
-choice derived from the pack name or an additive optional field in a format version bump — not a
-required field, and never something the importer rejects over.
+The seasonal packs show decorative dressing on the home screen — Halloween (spider web, bats,
+ghost, jack-o'-lantern), Diwali (diyas, firework bursts, lotus) and Christmas (string lights,
+Santa hat, tree, gifts, `snow` snowfall). This is **not** pack data: the JSON above stays
+colours + font + bold. Decoration is an app-side presentation choice, drawn by
+`HomeDecorView` when the pack id's family prefix (the part before the first `-`) is
+`halloween`, `diwali` or `christmas`; non-seasonal packs (Thumbline, Sage, Midnight, Rose)
+stay flat, and unknown families simply draw nothing. The geometry and motion come from the
+home mock (`mocks/index.html`, `decorHTML`); right-aligned home text mirrors the layout. The
+format rules are unchanged: an importer must never reject a pack over decoration, and a
+missing or unknown family is not an error.
