@@ -28,8 +28,8 @@ interface AppearancePrefs {
     /** Id of the selected bundled theme pack (file name without `.json`), empty for no pack. */
     var themePackId: String
 
-    /** Seasonal decor overlay opacity in percent, 0 to 100. 100 is fully opaque. */
-    var decorOpacity: Int
+    /** Pack background scrim opacity in percent, 0 to 100. 100 is the solid pack colour. */
+    var backgroundOpacity: Int
 
     var accent: Int
 
@@ -53,7 +53,7 @@ internal class AppearancePrefsStore(private val prefs: SharedPreferences) : Appe
     private val APP_THEME = "APP_THEME"
     private val TEXT_SIZE_SCALE = "TEXT_SIZE_SCALE"
     private val BOLD_FONT = "BOLD_FONT"
-    private val DECOR_OPACITY = "DECOR_OPACITY"
+    private val BACKGROUND_OPACITY = "BACKGROUND_OPACITY"
 
     override var appTheme: Int
         get() = prefs.getInt(APP_THEME, AppCompatDelegate.MODE_NIGHT_YES)
@@ -83,10 +83,10 @@ internal class AppearancePrefsStore(private val prefs: SharedPreferences) : Appe
         get() = prefs.getString(THEME_PACK_ID, "") ?: ""
         set(value) = prefs.edit { putString(THEME_PACK_ID, value).apply() }
 
-    /** Seasonal decor overlay opacity in percent, 0 to 100. 100 is fully opaque. */
-    override var decorOpacity: Int
-        get() = ThemePackDecor.clampOpacity(prefs.getInt(DECOR_OPACITY, ThemePackDecor.DECOR_OPACITY_DEFAULT))
-        set(value) = prefs.edit { putInt(DECOR_OPACITY, ThemePackDecor.clampOpacity(value)).apply() }
+    /** Pack background scrim opacity in percent, 0 to 100. 100 is the solid pack colour. */
+    override var backgroundOpacity: Int
+        get() = ThemePackDecor.clampBackgroundOpacity(prefs.getInt(BACKGROUND_OPACITY, ThemePackDecor.BACKGROUND_OPACITY_DEFAULT))
+        set(value) = prefs.edit { putInt(BACKGROUND_OPACITY, ThemePackDecor.clampBackgroundOpacity(value)).apply() }
 
     override var accentCustomColor: Int
         get() = prefs.getInt(ACCENT_CUSTOM_COLOR, 0)

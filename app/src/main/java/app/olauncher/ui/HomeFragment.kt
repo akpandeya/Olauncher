@@ -755,9 +755,20 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
     }
 
 
-    /** Stretches the wash from the top of the screen to just under the top text, then fades it out. Strong covers the whole screen. */
+    /**
+     * Stretches the wash from the top of the screen to just under the top text, then fades it out. Strong covers the whole screen.
+     * With a theme pack active, homeWash is the full-screen pack colour scrim instead.
+     */
     internal fun sizeHomeWash() {
         val binding = _binding ?: return
+        if (prefs.themePackId.isNotEmpty()) {
+            val lp = binding.homeWash.layoutParams
+            if (lp.height != ViewGroup.LayoutParams.MATCH_PARENT) {
+                lp.height = ViewGroup.LayoutParams.MATCH_PARENT
+                binding.homeWash.layoutParams = lp
+            }
+            return
+        }
         val bottom = if (binding.dateTimeLayout.isVisible) binding.dateTimeLayout.bottom else 0
         val height = when {
             prefs.homeWashLevel == Prefs.WASH_STRONG -> ViewGroup.LayoutParams.MATCH_PARENT

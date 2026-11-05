@@ -44,12 +44,6 @@ class HomeDecorView @JvmOverloads constructor(
     private var animating = false
     private var animStartMs = 0L
 
-    /**
-     * Dressing strength (0f..1f), composited at draw time via a save layer instead of
-     * [setAlpha] so no LayoutTransition can overwrite it; 1f draws direct with no layer.
-     */
-    private var opacityFraction = 1f
-
     // Pack colours as ARGB ints; 0 snow means the pack has none.
     private var accent = 0
     private var accentSecondary = 0
@@ -113,13 +107,16 @@ class HomeDecorView @JvmOverloads constructor(
     private var flameGlowShader: Shader? = null
     private var lightStripShader: Shader? = null
 
-    // Diya row across the 360-wide mock: lefts evenly over the width, widths alternating
-    // 42/36, one flame phase per diya.
-    private val diyaLefts = floatArrayOf(16f, 76f, 136f, 196f, 256f, 316f)
+    // Diya row spread across the real view width (dp): an edge margin at each side, widths
+    // alternating 42/36, the remaining width split into equal gaps. [diyaLayoutWidth]
+    // remembers the width the current lefts (and rangoli dot centres) were computed for.
+    private val diyaLefts = FloatArray(DIYA_COUNT)
     private val diyaWidths = floatArrayOf(42f, 36f, 42f, 36f, 42f, 36f)
+    private var diyaLayoutWidth = 0f
 
     // Rangoli dots: a tiny arc of three dots in each of the five gaps between adjacent diyas.
-    // X spans the 360-wide mock (mirrored with [mirror]); Y is an offset from the baseline.
+    // X spans the view width (laid out with the diyas, mirrored with [mirror]); Y is an
+    // offset from the baseline.
     private val rangoliDotXs = FloatArray(RANGOLI_GAP_COUNT * 3)
     private val rangoliDotYs = FloatArray(RANGOLI_GAP_COUNT * 3)
     private val rangoliDotDelays = FloatArray(RANGOLI_GAP_COUNT * 3)
@@ -176,14 +173,6 @@ class HomeDecorView @JvmOverloads constructor(
         invalidate()
     }
 
-    /** Sets the dressing strength (clamped 0f..1f); 0 hides the drawing entirely. */
-    fun setOpacity(fraction: Float) {
-        val clamped = fraction.coerceIn(0f, 1f)
-        if (opacityFraction == clamped) return
-        opacityFraction = clamped
-        invalidate()
-    }
-
     /** Tears the dressing down: stops the loop and hides the view. */
     fun stop() {
         if (family == null && configKey == null && isGone) return
@@ -230,19 +219,11 @@ class HomeDecorView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         val fam = family ?: return
-        if (opacityFraction <= 0f) return
         val density = resources.displayMetrics.density.coerceAtLeast(0.1f)
         val viewW = width / density
         val viewH = height / density
         if (viewW <= 0f || viewH <= 0f) return
         val t = if (animating) (SystemClock.uptimeMillis() - animStartMs) / 1000f else 0f
-        // The dressing strength is composited here rather than via View.alpha: the root
-        // fragment layout runs a LayoutTransition whose default appear animation writes
-        // View.alpha back to 1.0 when the view flips from gone to visible (e.g. returning
-        // to a recreated home after changing settings), silently resetting the setting.
-        val layer = if (opacityFraction < 1f) {
-            canvas.saveLayerAlpha(0f, 0f, width.toFloat(), height.toFloat(), (opacityFraction * 255).toInt())
-        } else -1
         canvas.withScale(density, density) {
             when (fam) {
                 ThemePackDecor.FAMILY_HALLOWEEN -> drawHalloween(canvas, viewW, viewH, t)
@@ -250,7 +231,6 @@ class HomeDecorView @JvmOverloads constructor(
                 ThemePackDecor.FAMILY_CHRISTMAS -> drawChristmas(canvas, viewW, viewH, t)
             }
         }
-        if (layer != -1) canvas.restoreToCount(layer)
     }
 
     /**
@@ -369,6 +349,9 @@ class HomeDecorView @JvmOverloads constructor(
     // ---- Diwali ----
 
     private fun drawDiwali(canvas: Canvas, viewW: Float, viewH: Float, t: Float) {
+        // The diya row spreads across the actual screen width; rebuild only when it changes.
+        if (diyaLayoutWidth != viewW) buildDiyaLayout(viewW)
+
         // Light pooling along the bottom edge from the diya row (Diwali-only).
         lightStripShader?.let {
             gradientPaint.shader = it
@@ -407,6 +390,32 @@ class HomeDecorView @JvmOverloads constructor(
         // per-flame phase).
         for (i in diyaLefts.indices) {
             drawDiya(canvas, viewW, viewH, left = diyaLefts[i], width = diyaWidths[i], flameIndex = i, t)
+        }
+    }
+
+    /**
+     * Spreads the six diyas over the actual view width: a [DIYA_EDGE_MARGIN_DP] margin at
+     * each edge, widths alternating 42/36, the remaining width split into equal gaps. The
+     * rangoli dot arcs sit centred in each gap, so their X centres follow the same layout.
+     * Mirroring swaps the 42/36 alternation via [edgeX]; the layout itself is symmetric.
+     */
+    private fun buildDiyaLayout(viewW: Float) {
+        diyaLayoutWidth = viewW
+        var used = 2f * DIYA_EDGE_MARGIN_DP
+        for (w in diyaWidths) used += w
+        val gap = ((viewW - used) / (DIYA_COUNT - 1)).coerceAtLeast(0f)
+        var left = DIYA_EDGE_MARGIN_DP
+        for (i in diyaLefts.indices) {
+            diyaLefts[i] = left
+            left += diyaWidths[i] + gap
+        }
+        var dot = 0
+        for (gapIndex in 0 until RANGOLI_GAP_COUNT) {
+            val gapCentre = (diyaLefts[gapIndex] + diyaWidths[gapIndex] + diyaLefts[gapIndex + 1]) / 2f
+            for (d in 0 until 3) {
+                rangoliDotXs[dot] = gapCentre + (d - 1) * RANGOLI_DOT_SPACING_DP
+                dot++
+            }
         }
     }
 
@@ -833,13 +842,11 @@ class HomeDecorView @JvmOverloads constructor(
             )
         }
 
-        // Rangoli dot arcs: three dots per gap between adjacent diyas, on a shallow arc,
-        // twinkle delays staggered dot by dot.
+        // Rangoli dot arcs: shallow arc shape and twinkle delays, staggered dot by dot.
+        // The X centres follow the diya layout and are set in [buildDiyaLayout].
         var dot = 0
         for (gap in 0 until RANGOLI_GAP_COUNT) {
-            val gapCentre = (diyaLefts[gap] + diyaWidths[gap] + diyaLefts[gap + 1]) / 2f
             for (d in 0 until 3) {
-                rangoliDotXs[dot] = gapCentre + (d - 1) * RANGOLI_DOT_SPACING_DP
                 rangoliDotYs[dot] = if (d == 1) -RANGOLI_DOT_RISE_DP else 0f
                 rangoliDotDelays[dot] = -dot * RANGOLI_TWINKLE_STAGGER_S
                 dot++
@@ -914,7 +921,9 @@ class HomeDecorView @JvmOverloads constructor(
         private const val FLICKER_PERIOD_S = 1.5f
         private const val FLAME_PHASE_STEP_S = 0.37f
 
-        // Diwali dressing extras: flame halo, bottom light strip, rangoli dots.
+        // Diwali dressing extras: flame halo, bottom light strip, rangoli dots, diya row.
+        private const val DIYA_COUNT = 6
+        private const val DIYA_EDGE_MARGIN_DP = 16f
         private const val FLAME_GLOW_RADIUS_DP = 11f
         private const val FLAME_GLOW_ALPHA = 0.18f
         private const val LIGHT_STRIP_HEIGHT_DP = 26f

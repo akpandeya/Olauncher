@@ -79,7 +79,12 @@ class ThemePackAssetsTest {
             val node = style.childNodes.item(i) as? org.w3c.dom.Element ?: continue
             items[node.getAttribute("name")] = node.textContent.trim()
         }
-        assertEquals(opaque(pack.background), items["android:windowBackground"])
+        // The pack colour is a scrim Home draws over the system wallpaper (homeWash, at
+        // the user's Background opacity), so the window itself stays transparent and shows
+        // the wallpaper. The pack background still feeds the theme's inverse colour.
+        assertEquals("true", items["android:windowShowWallpaper"])
+        assertEquals("@android:color/transparent", items["android:windowBackground"])
+        assertEquals(opaque(pack.background), items["primaryInverseColor"])
         assertEquals(opaque(pack.ink), items["ink"])
         assertEquals(opaque(pack.accent), items["accentColor"])
         assertEquals(opaque(pack.surface), items["surface"])

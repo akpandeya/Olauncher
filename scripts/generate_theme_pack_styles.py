@@ -42,8 +42,10 @@ def overlay_items(pack: dict) -> list[tuple[str, str]]:
     accent, muted = pack["accent"], pack["inkMuted"]
     light = mode == "light"
     items = [
-        ("android:windowShowWallpaper", "false"),
-        ("android:windowBackground", argb(bg)),
+        # The pack colour is a scrim over the system wallpaper (HomeFragment draws it on
+        # homeWash at the user's Background opacity), so the window itself stays transparent.
+        ("android:windowShowWallpaper", "true"),
+        ("android:windowBackground", "@android:color/transparent"),
         ("android:windowLightStatusBar", "true" if light else "false"),
         ("android:windowLightNavigationBar", "true" if light else "false"),
         ("colorPrimary", argb(ink)),
@@ -57,8 +59,12 @@ def overlay_items(pack: dict) -> list[tuple[str, str]]:
         ("primaryColorInverseTrans80", argb(bg, "CC")),
         ("primaryColorInverseTrans90", argb(bg, "E6")),
         ("primaryShadeColor", argb(bg, "1A")),
-        ("primaryShadeDarkColor", argb(bg, "40")),
-        ("todayScrimColor", argb(bg, "B3" if light else "99")),
+        # Full-screen backdrops (Settings, drawer, Today and the German screens) must stay
+        # OPAQUE: the pack window is transparent over the wallpaper now, and these shades
+        # used to sit on the solid pack windowBackground. bg@alpha over bg == bg, so the
+        # opaque colour is pixel-identical to the pre-scrim look and keeps text contrast.
+        ("primaryShadeDarkColor", argb(bg)),
+        ("todayScrimColor", argb(bg)),
         ("todayPanelColor", argb(ink, "0F") if light else argb(ink, "12")),
         ("todayChipColor", argb(ink, "1F") if light else argb(ink, "24")),
         ("dialogShadeColor", argb(bg, "80")),

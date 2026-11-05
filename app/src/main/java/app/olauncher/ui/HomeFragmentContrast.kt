@@ -5,11 +5,13 @@ import android.app.WallpaperColors
 import android.app.WallpaperManager
 import android.content.res.Configuration
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import androidx.core.view.isVisible
 import app.olauncher.R
 import app.olauncher.data.Accent
 import app.olauncher.data.Prefs
 import app.olauncher.data.ThemePack
+import app.olauncher.data.ThemePackCodec
 import app.olauncher.helper.HomeWash
 import app.olauncher.helper.TextBrightness
 import app.olauncher.helper.ContrastPolicy
@@ -22,12 +24,11 @@ import android.view.Gravity
 
 internal fun HomeFragment.applyTextContrast() {
     if (_binding == null) return
-    // A theme pack colours the home screen through the theme, so the wallpaper contrast
-    // pass must not fight it: no wash, and the packed colours from XML show through
-    // untouched. Restoring the cached originals (captured from the packed theme) undoes
-    // any earlier override from this pass.
+    // A theme pack colours the home screen through the theme (its scrim is drawn by
+    // applyHomeDecor), so the wallpaper contrast pass must not fight it: only the packed
+    // text colours from XML show through untouched. Restoring the cached originals
+    // (captured from the packed theme) undoes any earlier override from this pass.
     if (prefs.themePackId.isNotEmpty()) {
-        binding.homeWash.isVisible = false
         val views = originalTextColors.keys + originalShadows.keys
         views.forEach { view ->
             originalTextColors[view]?.let { view.setTextColor(it) }
@@ -100,13 +101,18 @@ internal fun HomeFragment.applyTextContrast() {
 }
 
 /**
- * Shows the seasonal dressing for the active theme pack (HomeDecorView); with no pack, an
- * unknown pack or a plain (non-seasonal) pack the view hides. The pack parse is cached on the
- * fragment, so calling this on every resume and alignment change only re-reads prefs.
+ * Shows the seasonal dressing for the active theme pack (HomeDecorView) and draws the pack
+ * background as a scrim over the system wallpaper (homeWash, at the user's Background
+ * opacity). With no pack, an unknown pack or a plain (non-seasonal) pack the dressing view
+ * hides. The pack parse is cached on the fragment, so calling this on every resume and
+ * alignment change only re-reads prefs.
  */
 internal fun HomeFragment.applyHomeDecor() {
     val binding = _binding ?: return
     val id = prefs.themePackId
+    // Whether a pack was active on the previous pass: only then does homeWash still hold
+    // the pack scrim that must be handed back to the contrast pass.
+    val hadPack = decorPackId != null
     val pack = when {
         id.isEmpty() -> {
             decorPack = null
@@ -116,18 +122,30 @@ internal fun HomeFragment.applyHomeDecor() {
         id == decorPackId -> decorPack
         else -> ThemePacks.load(requireContext(), id).also {
             decorPack = it
-            decorPackId = id
+            // Only remember ids that actually resolve: a stale id (pack removed from
+            // assets) must not count as "a pack scrim is on screen", or the contrast
+            // wash would be hidden on alignment-only passes that never reload it.
+            decorPackId = if (it != null) id else null
         }
     }
-    // Decor strength is a user setting; the view itself stays pref-free. Set on both
-    // paths so a plain pack also resets it before the view hides. Draw-time compositing
-    // (setOpacity) rather than View.alpha, which the root LayoutTransition would reset.
-    binding.homeDecor.setOpacity(ThemePackDecor.opacityFraction(prefs.decorOpacity))
     if (pack == null) {
         binding.homeDecor.stop()
+        // After a pack scrim the contrast pass owns homeWash again; hide the scrim so the
+        // next non-pack applyTextContrast pass can re-establish its wash cleanly. In steady
+        // non-pack mode (e.g. an alignment change) the contrast wash must survive untouched.
+        if (hadPack) binding.homeWash.isVisible = false
         return
     }
     val context = context ?: return
+    // The pack colour is a scrim over the system wallpaper: alpha 100% is the solid colour
+    // the windowBackground used to paint, lower shows the user's photo through. Per-resume
+    // work only, never per frame.
+    val scrimAlpha = (ThemePackDecor.backgroundAlphaFraction(prefs.backgroundOpacity) * 255).toInt()
+    val scrimColor = (ThemePackCodec.parseHex(pack.background) and 0x00FFFFFF) or (scrimAlpha shl 24)
+    binding.homeWash.background = ColorDrawable(scrimColor)
+    binding.homeWash.isVisible = true
+    // The scrim covers the whole screen, whatever the top text does.
+    sizeHomeWash()
     binding.homeDecor.configure(
         pack = pack,
         alignmentRight = prefs.homeAlignment == Gravity.END,

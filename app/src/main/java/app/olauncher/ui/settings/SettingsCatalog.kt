@@ -290,8 +290,8 @@ object SettingsCatalog {
     private val appearance: List<SettingsItem> = listOf(
     row(key = "themePack", sectionKey = SettingsSections.KEY_APPEARANCE, titleRes = R.string.theme_pack, type = SettingsRowType.CHOICE,
         primaryId = R.id.themePack, valueId = R.id.themePack),
-    row(key = "decorOpacity", sectionKey = SettingsSections.KEY_APPEARANCE, titleRes = R.string.decor_opacity, type = SettingsRowType.SLIDER, shape = SettingsRowShape.SLIDER,
-        primaryId = R.id.decorOpacity, layoutId = R.id.decorOpacityLayout, titleId = R.id.decorOpacityTitle, valueId = R.id.decorOpacity, seekBarId = R.id.decorOpacitySeekBar),
+    row(key = "backgroundOpacity", sectionKey = SettingsSections.KEY_APPEARANCE, titleRes = R.string.background_opacity, type = SettingsRowType.SLIDER, shape = SettingsRowShape.SLIDER,
+        primaryId = R.id.backgroundOpacity, layoutId = R.id.backgroundOpacityLayout, titleId = R.id.backgroundOpacityTitle, valueId = R.id.backgroundOpacity, seekBarId = R.id.backgroundOpacitySeekBar),
     row(key = "photoWallpaper", sectionKey = SettingsSections.KEY_APPEARANCE, titleRes = R.string.wallpaper_photos, type = SettingsRowType.CHOICE,
         primaryId = R.id.photoWallpaper, layoutId = R.id.photoWallpaperLayout, titleId = R.id.photoWallpaperTitle, valueId = R.id.photoWallpaper),
     row(key = "statusBar", sectionKey = SettingsSections.KEY_APPEARANCE, titleRes = R.string.notification_bar, type = SettingsRowType.TOGGLE,

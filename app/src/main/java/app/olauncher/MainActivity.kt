@@ -630,10 +630,15 @@ class MainActivity : AppCompatActivity() {
         super.onConfigurationChanged(newConfig)
         AppCompatDelegate.setDefaultNightMode(prefs.appTheme)
         if (AppCompatDelegate.getDefaultNightMode() == AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM) {
-            if (prefs.photoWallpaperCount > 0) {
-                PhotoWallpaper.applyCurrent(this, prefs)
-            } else {
-                setPlainWallpaper()
+            // A theme pack shows the system wallpaper through its scrim, so it does not own
+            // the wallpaper: never clobber the user's photo (or flatten it to a plain colour)
+            // over a config change while a pack is active.
+            if (prefs.themePackId.isEmpty()) {
+                if (prefs.photoWallpaperCount > 0) {
+                    PhotoWallpaper.applyCurrent(this, prefs)
+                } else {
+                    setPlainWallpaper()
+                }
             }
             recreate()
         }

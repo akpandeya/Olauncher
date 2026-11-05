@@ -97,10 +97,12 @@ colours + font + bold. Decoration is an app-side presentation choice, drawn by
 `halloween`, `diwali` or `christmas`; non-seasonal packs (Thumbline, Sage, Midnight, Rose)
 stay flat, and unknown families simply draw nothing. The geometry and motion come from the
 home mock (`mocks/index.html`, `decorHTML`); right-aligned home text mirrors the layout.
-Diwali lays six diyas along the bottom edge with flame glows, a soft light strip and
-rangoli dot accents. The dressing's strength is a user setting (Settings → Appearance →
-Decor opacity, 0–100%, shown while a seasonal pack is active); it composites at draw
-time and is never pack data.
+Diwali lays six diyas evenly across the full screen width along the bottom edge, with flame
+glows, a soft light strip and rangoli dot accents. The pack background colour itself is a
+scrim over the system wallpaper: Settings → Appearance → Background opacity (0–100%, shown
+while any pack is active) sets how much of the user's photo shows through — 100% is the
+solid pack colour, lower lets more photo through (text contrast over the photo is the
+user's trade-off). The setting is never pack data.
 The
 format rules are unchanged: an importer must never reject a pack over decoration, and a
 missing or unknown family is not an error.

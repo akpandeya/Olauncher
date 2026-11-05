@@ -28,15 +28,18 @@ object ThemePackDecor {
         }
     }
 
-    /** Decor overlay opacity: stored as a percent, 0 (hidden) to [DECOR_OPACITY_MAX]. */
-    const val DECOR_OPACITY_MAX = 100
-    const val DECOR_OPACITY_DEFAULT = DECOR_OPACITY_MAX
+    /**
+     * Pack background scrim opacity: stored as a percent, 0 (wallpaper only) to
+     * [BACKGROUND_OPACITY_MAX] (solid pack colour).
+     */
+    const val BACKGROUND_OPACITY_MAX = 100
+    const val BACKGROUND_OPACITY_DEFAULT = BACKGROUND_OPACITY_MAX
 
-    /** Keeps the stored percent inside [0]..[DECOR_OPACITY_MAX]. */
-    fun clampOpacity(percent: Int): Int = percent.coerceIn(0, DECOR_OPACITY_MAX)
+    /** Keeps the stored percent inside [0]..[BACKGROUND_OPACITY_MAX]. */
+    fun clampBackgroundOpacity(percent: Int): Int = percent.coerceIn(0, BACKGROUND_OPACITY_MAX)
 
-    /** The stored percent as the 0..1 view alpha Home applies to the decor overlay. */
-    fun opacityFraction(percent: Int): Float = clampOpacity(percent) / 100f
+    /** The stored percent as the 0..1 scrim alpha Home draws the pack background with. */
+    fun backgroundAlphaFraction(percent: Int): Float = clampBackgroundOpacity(percent) / 100f
 
     /** Frames per second cap of the dressing loop; the motion is slow, so 30 reads as smooth. */
     const val MAX_FPS = 30

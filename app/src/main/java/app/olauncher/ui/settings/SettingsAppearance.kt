@@ -234,10 +234,14 @@ internal fun SettingsFragment.updateTheme(appTheme: Int) {
 
 internal fun SettingsFragment.setAppTheme(theme: Int) {
     if (AppCompatDelegate.getDefaultNightMode() == theme) return
-    if (prefs.photoWallpaperCount > 0) {
-        PhotoWallpaper.applyCurrent(requireContext(), prefs)
-    } else {
-        setPlainWallpaperByTheme(requireContext(), theme)
+    // A theme pack shows the system wallpaper through its scrim, so it does not own the
+    // wallpaper: leave the user's photo (or plain colour) alone while a pack is active.
+    if (prefs.themePackId.isEmpty()) {
+        if (prefs.photoWallpaperCount > 0) {
+            PhotoWallpaper.applyCurrent(requireContext(), prefs)
+        } else {
+            setPlainWallpaperByTheme(requireContext(), theme)
+        }
     }
     requireActivity().recreate()
 }
@@ -533,16 +537,16 @@ internal fun SettingsFragment.populateGlowStrength(percent: Int) {
     binding.glowStrength.text = getString(R.string.glow_strength_percent, percent)
 }
 
-/** Slider for the seasonal decor opacity. Saves on every change; Home applies it on its next resume. */
-internal fun SettingsFragment.setupDecorOpacity() {
-    binding.decorOpacitySeekBar.max = ThemePackDecor.DECOR_OPACITY_MAX
-    binding.decorOpacitySeekBar.progress = prefs.decorOpacity
-    populateDecorOpacity(prefs.decorOpacity)
-    binding.decorOpacitySeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+/** Slider for the pack background scrim opacity. Saves on every change; Home applies it on its next resume. */
+internal fun SettingsFragment.setupBackgroundOpacity() {
+    binding.backgroundOpacitySeekBar.max = ThemePackDecor.BACKGROUND_OPACITY_MAX
+    binding.backgroundOpacitySeekBar.progress = prefs.backgroundOpacity
+    populateBackgroundOpacity(prefs.backgroundOpacity)
+    binding.backgroundOpacitySeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
         override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
             if (!fromUser) return
-            prefs.decorOpacity = progress
-            populateDecorOpacity(prefs.decorOpacity)
+            prefs.backgroundOpacity = progress
+            populateBackgroundOpacity(prefs.backgroundOpacity)
         }
 
         override fun onStartTrackingTouch(seekBar: SeekBar) = Unit
@@ -551,8 +555,8 @@ internal fun SettingsFragment.setupDecorOpacity() {
     })
 }
 
-internal fun SettingsFragment.populateDecorOpacity(percent: Int) {
-    binding.decorOpacity.text = getString(R.string.decor_opacity_percent, percent)
+internal fun SettingsFragment.populateBackgroundOpacity(percent: Int) {
+    binding.backgroundOpacity.text = getString(R.string.background_opacity_percent, percent)
 }
 
 internal fun SettingsFragment.toggleWeatherEffects() {

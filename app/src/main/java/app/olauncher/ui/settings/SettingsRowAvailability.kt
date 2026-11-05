@@ -39,9 +39,9 @@ object SettingsRowAvailability {
         R.id.quietReleaseTimes,
     )
 
-    /** Rows that only make sense while a decorated (seasonal) theme pack is active. */
-    private val decorDependentRows = setOf(
-        R.id.decorOpacity,
+    /** Rows that only make sense while a theme pack is active. */
+    private val packDependentRows = setOf(
+        R.id.backgroundOpacity,
     )
 
     fun isAvailable(
@@ -50,13 +50,13 @@ object SettingsRowAvailability {
         germanOn: Boolean,
         windDownOn: Boolean = true,
         holdOn: Boolean = true,
-        decorOn: Boolean = false,
+        packOn: Boolean = false,
     ): Boolean = when (viewId) {
         in shortcutDependentRows -> shortcutsOn
         in germanDependentRows -> germanOn
         in windDownDependentRows -> windDownOn
         in holdDependentRows -> holdOn
-        in decorDependentRows -> decorOn
+        in packDependentRows -> packOn
         else -> true
     }
 }

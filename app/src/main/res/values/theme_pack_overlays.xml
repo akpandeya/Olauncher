@@ -12,8 +12,8 @@
     <style name="Pack" />
     <!-- Christmas Bold (dark, Nunito, bold=true) -->
     <style name="Pack.ChristmasBoldDark">
-        <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackground">#FF0C2218</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
         <item name="colorPrimary">#FFF4F1E8</item>
@@ -27,8 +27,8 @@
         <item name="primaryColorInverseTrans80">#CC0C2218</item>
         <item name="primaryColorInverseTrans90">#E60C2218</item>
         <item name="primaryShadeColor">#1A0C2218</item>
-        <item name="primaryShadeDarkColor">#400C2218</item>
-        <item name="todayScrimColor">#990C2218</item>
+        <item name="primaryShadeDarkColor">#FF0C2218</item>
+        <item name="todayScrimColor">#FF0C2218</item>
         <item name="todayPanelColor">#12F4F1E8</item>
         <item name="todayChipColor">#24F4F1E8</item>
         <item name="dialogShadeColor">#800C2218</item>
@@ -41,8 +41,8 @@
 
     <!-- Christmas Bold (light, Nunito, bold=true) -->
     <style name="Pack.ChristmasBoldLight">
-        <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackground">#FFF8FBF9</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
         <item name="colorPrimary">#FF12402A</item>
@@ -56,8 +56,8 @@
         <item name="primaryColorInverseTrans80">#CCF8FBF9</item>
         <item name="primaryColorInverseTrans90">#E6F8FBF9</item>
         <item name="primaryShadeColor">#1AF8FBF9</item>
-        <item name="primaryShadeDarkColor">#40F8FBF9</item>
-        <item name="todayScrimColor">#B3F8FBF9</item>
+        <item name="primaryShadeDarkColor">#FFF8FBF9</item>
+        <item name="todayScrimColor">#FFF8FBF9</item>
         <item name="todayPanelColor">#0F12402A</item>
         <item name="todayChipColor">#1F12402A</item>
         <item name="dialogShadeColor">#80F8FBF9</item>
@@ -70,8 +70,8 @@
 
     <!-- Christmas (dark, Nunito, bold=true) -->
     <style name="Pack.ChristmasDark">
-        <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackground">#FF0C2218</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
         <item name="colorPrimary">#FFF4F1E8</item>
@@ -85,8 +85,8 @@
         <item name="primaryColorInverseTrans80">#CC0C2218</item>
         <item name="primaryColorInverseTrans90">#E60C2218</item>
         <item name="primaryShadeColor">#1A0C2218</item>
-        <item name="primaryShadeDarkColor">#400C2218</item>
-        <item name="todayScrimColor">#990C2218</item>
+        <item name="primaryShadeDarkColor">#FF0C2218</item>
+        <item name="todayScrimColor">#FF0C2218</item>
         <item name="todayPanelColor">#12F4F1E8</item>
         <item name="todayChipColor">#24F4F1E8</item>
         <item name="dialogShadeColor">#800C2218</item>
@@ -99,8 +99,8 @@
 
     <!-- Christmas (light, Nunito, bold=true) -->
     <style name="Pack.ChristmasLight">
-        <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackground">#FFF8FBF9</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
         <item name="colorPrimary">#FF12402A</item>
@@ -114,8 +114,8 @@
         <item name="primaryColorInverseTrans80">#CCF8FBF9</item>
         <item name="primaryColorInverseTrans90">#E6F8FBF9</item>
         <item name="primaryShadeColor">#1AF8FBF9</item>
-        <item name="primaryShadeDarkColor">#40F8FBF9</item>
-        <item name="todayScrimColor">#B3F8FBF9</item>
+        <item name="primaryShadeDarkColor">#FFF8FBF9</item>
+        <item name="todayScrimColor">#FFF8FBF9</item>
         <item name="todayPanelColor">#0F12402A</item>
         <item name="todayChipColor">#1F12402A</item>
         <item name="dialogShadeColor">#80F8FBF9</item>
@@ -128,8 +128,8 @@
 
     <!-- Diwali Bold (dark, Nunito, bold=true) -->
     <style name="Pack.DiwaliBoldDark">
-        <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackground">#FF2A0A14</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
         <item name="colorPrimary">#FFFBEED5</item>
@@ -143,8 +143,8 @@
         <item name="primaryColorInverseTrans80">#CC2A0A14</item>
         <item name="primaryColorInverseTrans90">#E62A0A14</item>
         <item name="primaryShadeColor">#1A2A0A14</item>
-        <item name="primaryShadeDarkColor">#402A0A14</item>
-        <item name="todayScrimColor">#992A0A14</item>
+        <item name="primaryShadeDarkColor">#FF2A0A14</item>
+        <item name="todayScrimColor">#FF2A0A14</item>
         <item name="todayPanelColor">#12FBEED5</item>
         <item name="todayChipColor">#24FBEED5</item>
         <item name="dialogShadeColor">#802A0A14</item>
@@ -157,8 +157,8 @@
 
     <!-- Diwali Bold (light, Nunito, bold=true) -->
     <style name="Pack.DiwaliBoldLight">
-        <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackground">#FFFFF6E3</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
         <item name="colorPrimary">#FF5A0F1F</item>
@@ -172,8 +172,8 @@
         <item name="primaryColorInverseTrans80">#CCFFF6E3</item>
         <item name="primaryColorInverseTrans90">#E6FFF6E3</item>
         <item name="primaryShadeColor">#1AFFF6E3</item>
-        <item name="primaryShadeDarkColor">#40FFF6E3</item>
-        <item name="todayScrimColor">#B3FFF6E3</item>
+        <item name="primaryShadeDarkColor">#FFFFF6E3</item>
+        <item name="todayScrimColor">#FFFFF6E3</item>
         <item name="todayPanelColor">#0F5A0F1F</item>
         <item name="todayChipColor">#1F5A0F1F</item>
         <item name="dialogShadeColor">#80FFF6E3</item>
@@ -186,8 +186,8 @@
 
     <!-- Diwali (dark, Nunito, bold=true) -->
     <style name="Pack.DiwaliDark">
-        <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackground">#FF2A0A14</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
         <item name="colorPrimary">#FFFBEED5</item>
@@ -201,8 +201,8 @@
         <item name="primaryColorInverseTrans80">#CC2A0A14</item>
         <item name="primaryColorInverseTrans90">#E62A0A14</item>
         <item name="primaryShadeColor">#1A2A0A14</item>
-        <item name="primaryShadeDarkColor">#402A0A14</item>
-        <item name="todayScrimColor">#992A0A14</item>
+        <item name="primaryShadeDarkColor">#FF2A0A14</item>
+        <item name="todayScrimColor">#FF2A0A14</item>
         <item name="todayPanelColor">#12FBEED5</item>
         <item name="todayChipColor">#24FBEED5</item>
         <item name="dialogShadeColor">#802A0A14</item>
@@ -215,8 +215,8 @@
 
     <!-- Diwali (light, Nunito, bold=true) -->
     <style name="Pack.DiwaliLight">
-        <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackground">#FFFFF6E3</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
         <item name="colorPrimary">#FF5A0F1F</item>
@@ -230,8 +230,8 @@
         <item name="primaryColorInverseTrans80">#CCFFF6E3</item>
         <item name="primaryColorInverseTrans90">#E6FFF6E3</item>
         <item name="primaryShadeColor">#1AFFF6E3</item>
-        <item name="primaryShadeDarkColor">#40FFF6E3</item>
-        <item name="todayScrimColor">#B3FFF6E3</item>
+        <item name="primaryShadeDarkColor">#FFFFF6E3</item>
+        <item name="todayScrimColor">#FFFFF6E3</item>
         <item name="todayPanelColor">#0F5A0F1F</item>
         <item name="todayChipColor">#1F5A0F1F</item>
         <item name="dialogShadeColor">#80FFF6E3</item>
@@ -244,8 +244,8 @@
 
     <!-- Halloween Bold (dark, Nunito, bold=true) -->
     <style name="Pack.HalloweenBoldDark">
-        <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackground">#FF140B1A</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
         <item name="colorPrimary">#FFF3E9DC</item>
@@ -259,8 +259,8 @@
         <item name="primaryColorInverseTrans80">#CC140B1A</item>
         <item name="primaryColorInverseTrans90">#E6140B1A</item>
         <item name="primaryShadeColor">#1A140B1A</item>
-        <item name="primaryShadeDarkColor">#40140B1A</item>
-        <item name="todayScrimColor">#99140B1A</item>
+        <item name="primaryShadeDarkColor">#FF140B1A</item>
+        <item name="todayScrimColor">#FF140B1A</item>
         <item name="todayPanelColor">#12F3E9DC</item>
         <item name="todayChipColor">#24F3E9DC</item>
         <item name="dialogShadeColor">#80140B1A</item>
@@ -273,8 +273,8 @@
 
     <!-- Halloween Bold (light, Nunito, bold=true) -->
     <style name="Pack.HalloweenBoldLight">
-        <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackground">#FFF3E6CC</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
         <item name="colorPrimary">#FF2A1233</item>
@@ -288,8 +288,8 @@
         <item name="primaryColorInverseTrans80">#CCF3E6CC</item>
         <item name="primaryColorInverseTrans90">#E6F3E6CC</item>
         <item name="primaryShadeColor">#1AF3E6CC</item>
-        <item name="primaryShadeDarkColor">#40F3E6CC</item>
-        <item name="todayScrimColor">#B3F3E6CC</item>
+        <item name="primaryShadeDarkColor">#FFF3E6CC</item>
+        <item name="todayScrimColor">#FFF3E6CC</item>
         <item name="todayPanelColor">#0F2A1233</item>
         <item name="todayChipColor">#1F2A1233</item>
         <item name="dialogShadeColor">#80F3E6CC</item>
@@ -302,8 +302,8 @@
 
     <!-- Halloween (dark, Nunito, bold=true) -->
     <style name="Pack.HalloweenDark">
-        <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackground">#FF140B1A</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
         <item name="colorPrimary">#FFF3E9DC</item>
@@ -317,8 +317,8 @@
         <item name="primaryColorInverseTrans80">#CC140B1A</item>
         <item name="primaryColorInverseTrans90">#E6140B1A</item>
         <item name="primaryShadeColor">#1A140B1A</item>
-        <item name="primaryShadeDarkColor">#40140B1A</item>
-        <item name="todayScrimColor">#99140B1A</item>
+        <item name="primaryShadeDarkColor">#FF140B1A</item>
+        <item name="todayScrimColor">#FF140B1A</item>
         <item name="todayPanelColor">#12F3E9DC</item>
         <item name="todayChipColor">#24F3E9DC</item>
         <item name="dialogShadeColor">#80140B1A</item>
@@ -331,8 +331,8 @@
 
     <!-- Halloween (light, Nunito, bold=true) -->
     <style name="Pack.HalloweenLight">
-        <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackground">#FFF3E6CC</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
         <item name="colorPrimary">#FF2A1233</item>
@@ -346,8 +346,8 @@
         <item name="primaryColorInverseTrans80">#CCF3E6CC</item>
         <item name="primaryColorInverseTrans90">#E6F3E6CC</item>
         <item name="primaryShadeColor">#1AF3E6CC</item>
-        <item name="primaryShadeDarkColor">#40F3E6CC</item>
-        <item name="todayScrimColor">#B3F3E6CC</item>
+        <item name="primaryShadeDarkColor">#FFF3E6CC</item>
+        <item name="todayScrimColor">#FFF3E6CC</item>
         <item name="todayPanelColor">#0F2A1233</item>
         <item name="todayChipColor">#1F2A1233</item>
         <item name="dialogShadeColor">#80F3E6CC</item>
@@ -360,8 +360,8 @@
 
     <!-- Midnight Bold (dark, Inter, bold=true) -->
     <style name="Pack.MidnightBoldDark">
-        <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackground">#FF0A1428</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
         <item name="colorPrimary">#FFEAF1FB</item>
@@ -375,8 +375,8 @@
         <item name="primaryColorInverseTrans80">#CC0A1428</item>
         <item name="primaryColorInverseTrans90">#E60A1428</item>
         <item name="primaryShadeColor">#1A0A1428</item>
-        <item name="primaryShadeDarkColor">#400A1428</item>
-        <item name="todayScrimColor">#990A1428</item>
+        <item name="primaryShadeDarkColor">#FF0A1428</item>
+        <item name="todayScrimColor">#FF0A1428</item>
         <item name="todayPanelColor">#12EAF1FB</item>
         <item name="todayChipColor">#24EAF1FB</item>
         <item name="dialogShadeColor">#800A1428</item>
@@ -389,8 +389,8 @@
 
     <!-- Midnight Bold (light, Inter, bold=true) -->
     <style name="Pack.MidnightBoldLight">
-        <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackground">#FFF4F8FD</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
         <item name="colorPrimary">#FF0C1B33</item>
@@ -404,8 +404,8 @@
         <item name="primaryColorInverseTrans80">#CCF4F8FD</item>
         <item name="primaryColorInverseTrans90">#E6F4F8FD</item>
         <item name="primaryShadeColor">#1AF4F8FD</item>
-        <item name="primaryShadeDarkColor">#40F4F8FD</item>
-        <item name="todayScrimColor">#B3F4F8FD</item>
+        <item name="primaryShadeDarkColor">#FFF4F8FD</item>
+        <item name="todayScrimColor">#FFF4F8FD</item>
         <item name="todayPanelColor">#0F0C1B33</item>
         <item name="todayChipColor">#1F0C1B33</item>
         <item name="dialogShadeColor">#80F4F8FD</item>
@@ -418,8 +418,8 @@
 
     <!-- Midnight (dark, Inter, bold=false) -->
     <style name="Pack.MidnightDark">
-        <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackground">#FF0A1428</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
         <item name="colorPrimary">#FFEAF1FB</item>
@@ -433,8 +433,8 @@
         <item name="primaryColorInverseTrans80">#CC0A1428</item>
         <item name="primaryColorInverseTrans90">#E60A1428</item>
         <item name="primaryShadeColor">#1A0A1428</item>
-        <item name="primaryShadeDarkColor">#400A1428</item>
-        <item name="todayScrimColor">#990A1428</item>
+        <item name="primaryShadeDarkColor">#FF0A1428</item>
+        <item name="todayScrimColor">#FF0A1428</item>
         <item name="todayPanelColor">#12EAF1FB</item>
         <item name="todayChipColor">#24EAF1FB</item>
         <item name="dialogShadeColor">#800A1428</item>
@@ -447,8 +447,8 @@
 
     <!-- Midnight (light, Inter, bold=false) -->
     <style name="Pack.MidnightLight">
-        <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackground">#FFF4F8FD</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
         <item name="colorPrimary">#FF0C1B33</item>
@@ -462,8 +462,8 @@
         <item name="primaryColorInverseTrans80">#CCF4F8FD</item>
         <item name="primaryColorInverseTrans90">#E6F4F8FD</item>
         <item name="primaryShadeColor">#1AF4F8FD</item>
-        <item name="primaryShadeDarkColor">#40F4F8FD</item>
-        <item name="todayScrimColor">#B3F4F8FD</item>
+        <item name="primaryShadeDarkColor">#FFF4F8FD</item>
+        <item name="todayScrimColor">#FFF4F8FD</item>
         <item name="todayPanelColor">#0F0C1B33</item>
         <item name="todayChipColor">#1F0C1B33</item>
         <item name="dialogShadeColor">#80F4F8FD</item>
@@ -476,8 +476,8 @@
 
     <!-- Rose Bold (dark, Nunito, bold=true) -->
     <style name="Pack.RoseBoldDark">
-        <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackground">#FF1E0F1F</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
         <item name="colorPrimary">#FFF8EAF1</item>
@@ -491,8 +491,8 @@
         <item name="primaryColorInverseTrans80">#CC1E0F1F</item>
         <item name="primaryColorInverseTrans90">#E61E0F1F</item>
         <item name="primaryShadeColor">#1A1E0F1F</item>
-        <item name="primaryShadeDarkColor">#401E0F1F</item>
-        <item name="todayScrimColor">#991E0F1F</item>
+        <item name="primaryShadeDarkColor">#FF1E0F1F</item>
+        <item name="todayScrimColor">#FF1E0F1F</item>
         <item name="todayPanelColor">#12F8EAF1</item>
         <item name="todayChipColor">#24F8EAF1</item>
         <item name="dialogShadeColor">#801E0F1F</item>
@@ -505,8 +505,8 @@
 
     <!-- Rose Bold (light, Nunito, bold=true) -->
     <style name="Pack.RoseBoldLight">
-        <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackground">#FFFFF6F9</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
         <item name="colorPrimary">#FF2A1228</item>
@@ -520,8 +520,8 @@
         <item name="primaryColorInverseTrans80">#CCFFF6F9</item>
         <item name="primaryColorInverseTrans90">#E6FFF6F9</item>
         <item name="primaryShadeColor">#1AFFF6F9</item>
-        <item name="primaryShadeDarkColor">#40FFF6F9</item>
-        <item name="todayScrimColor">#B3FFF6F9</item>
+        <item name="primaryShadeDarkColor">#FFFFF6F9</item>
+        <item name="todayScrimColor">#FFFFF6F9</item>
         <item name="todayPanelColor">#0F2A1228</item>
         <item name="todayChipColor">#1F2A1228</item>
         <item name="dialogShadeColor">#80FFF6F9</item>
@@ -534,8 +534,8 @@
 
     <!-- Rose (dark, Nunito, bold=false) -->
     <style name="Pack.RoseDark">
-        <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackground">#FF1E0F1F</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
         <item name="colorPrimary">#FFF8EAF1</item>
@@ -549,8 +549,8 @@
         <item name="primaryColorInverseTrans80">#CC1E0F1F</item>
         <item name="primaryColorInverseTrans90">#E61E0F1F</item>
         <item name="primaryShadeColor">#1A1E0F1F</item>
-        <item name="primaryShadeDarkColor">#401E0F1F</item>
-        <item name="todayScrimColor">#991E0F1F</item>
+        <item name="primaryShadeDarkColor">#FF1E0F1F</item>
+        <item name="todayScrimColor">#FF1E0F1F</item>
         <item name="todayPanelColor">#12F8EAF1</item>
         <item name="todayChipColor">#24F8EAF1</item>
         <item name="dialogShadeColor">#801E0F1F</item>
@@ -563,8 +563,8 @@
 
     <!-- Rose (light, Nunito, bold=false) -->
     <style name="Pack.RoseLight">
-        <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackground">#FFFFF6F9</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
         <item name="colorPrimary">#FF2A1228</item>
@@ -578,8 +578,8 @@
         <item name="primaryColorInverseTrans80">#CCFFF6F9</item>
         <item name="primaryColorInverseTrans90">#E6FFF6F9</item>
         <item name="primaryShadeColor">#1AFFF6F9</item>
-        <item name="primaryShadeDarkColor">#40FFF6F9</item>
-        <item name="todayScrimColor">#B3FFF6F9</item>
+        <item name="primaryShadeDarkColor">#FFFFF6F9</item>
+        <item name="todayScrimColor">#FFFFF6F9</item>
         <item name="todayPanelColor">#0F2A1228</item>
         <item name="todayChipColor">#1F2A1228</item>
         <item name="dialogShadeColor">#80FFF6F9</item>
@@ -592,8 +592,8 @@
 
     <!-- Sage Bold (dark, IBM Plex Sans, bold=true) -->
     <style name="Pack.SageBoldDark">
-        <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackground">#FF151915</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
         <item name="colorPrimary">#FFECEFE8</item>
@@ -607,8 +607,8 @@
         <item name="primaryColorInverseTrans80">#CC151915</item>
         <item name="primaryColorInverseTrans90">#E6151915</item>
         <item name="primaryShadeColor">#1A151915</item>
-        <item name="primaryShadeDarkColor">#40151915</item>
-        <item name="todayScrimColor">#99151915</item>
+        <item name="primaryShadeDarkColor">#FF151915</item>
+        <item name="todayScrimColor">#FF151915</item>
         <item name="todayPanelColor">#12ECEFE8</item>
         <item name="todayChipColor">#24ECEFE8</item>
         <item name="dialogShadeColor">#80151915</item>
@@ -621,8 +621,8 @@
 
     <!-- Sage Bold (light, IBM Plex Sans, bold=true) -->
     <style name="Pack.SageBoldLight">
-        <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackground">#FFF6F5F0</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
         <item name="colorPrimary">#FF1F241E</item>
@@ -636,8 +636,8 @@
         <item name="primaryColorInverseTrans80">#CCF6F5F0</item>
         <item name="primaryColorInverseTrans90">#E6F6F5F0</item>
         <item name="primaryShadeColor">#1AF6F5F0</item>
-        <item name="primaryShadeDarkColor">#40F6F5F0</item>
-        <item name="todayScrimColor">#B3F6F5F0</item>
+        <item name="primaryShadeDarkColor">#FFF6F5F0</item>
+        <item name="todayScrimColor">#FFF6F5F0</item>
         <item name="todayPanelColor">#0F1F241E</item>
         <item name="todayChipColor">#1F1F241E</item>
         <item name="dialogShadeColor">#80F6F5F0</item>
@@ -650,8 +650,8 @@
 
     <!-- Sage (dark, IBM Plex Sans, bold=false) -->
     <style name="Pack.SageDark">
-        <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackground">#FF151915</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
         <item name="colorPrimary">#FFECEFE8</item>
@@ -665,8 +665,8 @@
         <item name="primaryColorInverseTrans80">#CC151915</item>
         <item name="primaryColorInverseTrans90">#E6151915</item>
         <item name="primaryShadeColor">#1A151915</item>
-        <item name="primaryShadeDarkColor">#40151915</item>
-        <item name="todayScrimColor">#99151915</item>
+        <item name="primaryShadeDarkColor">#FF151915</item>
+        <item name="todayScrimColor">#FF151915</item>
         <item name="todayPanelColor">#12ECEFE8</item>
         <item name="todayChipColor">#24ECEFE8</item>
         <item name="dialogShadeColor">#80151915</item>
@@ -679,8 +679,8 @@
 
     <!-- Sage (light, IBM Plex Sans, bold=false) -->
     <style name="Pack.SageLight">
-        <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackground">#FFF6F5F0</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
         <item name="colorPrimary">#FF1F241E</item>
@@ -694,8 +694,8 @@
         <item name="primaryColorInverseTrans80">#CCF6F5F0</item>
         <item name="primaryColorInverseTrans90">#E6F6F5F0</item>
         <item name="primaryShadeColor">#1AF6F5F0</item>
-        <item name="primaryShadeDarkColor">#40F6F5F0</item>
-        <item name="todayScrimColor">#B3F6F5F0</item>
+        <item name="primaryShadeDarkColor">#FFF6F5F0</item>
+        <item name="todayScrimColor">#FFF6F5F0</item>
         <item name="todayPanelColor">#0F1F241E</item>
         <item name="todayChipColor">#1F1F241E</item>
         <item name="dialogShadeColor">#80F6F5F0</item>
@@ -708,8 +708,8 @@
 
     <!-- Thumbline Bold (dark, Inter, bold=true) -->
     <style name="Pack.ThumblineBoldDark">
-        <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackground">#FF0B0B0C</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
         <item name="colorPrimary">#FFFFFFFF</item>
@@ -723,8 +723,8 @@
         <item name="primaryColorInverseTrans80">#CC0B0B0C</item>
         <item name="primaryColorInverseTrans90">#E60B0B0C</item>
         <item name="primaryShadeColor">#1A0B0B0C</item>
-        <item name="primaryShadeDarkColor">#400B0B0C</item>
-        <item name="todayScrimColor">#990B0B0C</item>
+        <item name="primaryShadeDarkColor">#FF0B0B0C</item>
+        <item name="todayScrimColor">#FF0B0B0C</item>
         <item name="todayPanelColor">#12FFFFFF</item>
         <item name="todayChipColor">#24FFFFFF</item>
         <item name="dialogShadeColor">#800B0B0C</item>
@@ -737,8 +737,8 @@
 
     <!-- Thumbline Bold (light, Inter, bold=true) -->
     <style name="Pack.ThumblineBoldLight">
-        <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackground">#FFFFFFFF</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
         <item name="colorPrimary">#FF0E0E0F</item>
@@ -752,8 +752,8 @@
         <item name="primaryColorInverseTrans80">#CCFFFFFF</item>
         <item name="primaryColorInverseTrans90">#E6FFFFFF</item>
         <item name="primaryShadeColor">#1AFFFFFF</item>
-        <item name="primaryShadeDarkColor">#40FFFFFF</item>
-        <item name="todayScrimColor">#B3FFFFFF</item>
+        <item name="primaryShadeDarkColor">#FFFFFFFF</item>
+        <item name="todayScrimColor">#FFFFFFFF</item>
         <item name="todayPanelColor">#0F0E0E0F</item>
         <item name="todayChipColor">#1F0E0E0F</item>
         <item name="dialogShadeColor">#80FFFFFF</item>
@@ -766,8 +766,8 @@
 
     <!-- Thumbline (dark, Inter, bold=false) -->
     <style name="Pack.ThumblineDark">
-        <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackground">#FF0B0B0C</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
         <item name="colorPrimary">#FFFFFFFF</item>
@@ -781,8 +781,8 @@
         <item name="primaryColorInverseTrans80">#CC0B0B0C</item>
         <item name="primaryColorInverseTrans90">#E60B0B0C</item>
         <item name="primaryShadeColor">#1A0B0B0C</item>
-        <item name="primaryShadeDarkColor">#400B0B0C</item>
-        <item name="todayScrimColor">#990B0B0C</item>
+        <item name="primaryShadeDarkColor">#FF0B0B0C</item>
+        <item name="todayScrimColor">#FF0B0B0C</item>
         <item name="todayPanelColor">#12FFFFFF</item>
         <item name="todayChipColor">#24FFFFFF</item>
         <item name="dialogShadeColor">#800B0B0C</item>
@@ -795,8 +795,8 @@
 
     <!-- Thumbline (light, Inter, bold=false) -->
     <style name="Pack.ThumblineLight">
-        <item name="android:windowShowWallpaper">false</item>
-        <item name="android:windowBackground">#FFFFFFFF</item>
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
         <item name="colorPrimary">#FF0E0E0F</item>
@@ -810,8 +810,8 @@
         <item name="primaryColorInverseTrans80">#CCFFFFFF</item>
         <item name="primaryColorInverseTrans90">#E6FFFFFF</item>
         <item name="primaryShadeColor">#1AFFFFFF</item>
-        <item name="primaryShadeDarkColor">#40FFFFFF</item>
-        <item name="todayScrimColor">#B3FFFFFF</item>
+        <item name="primaryShadeDarkColor">#FFFFFFFF</item>
+        <item name="todayScrimColor">#FFFFFFFF</item>
         <item name="todayPanelColor">#0F0E0E0F</item>
         <item name="todayChipColor">#1F0E0E0F</item>
         <item name="dialogShadeColor">#80FFFFFF</item>

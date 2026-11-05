@@ -120,10 +120,10 @@
     <item name="glowStrengthLayout" type="id" />
     <item name="glowStrengthSeekBar" type="id" />
     <item name="glowStrengthTitle" type="id" />
-    <item name="decorOpacity" type="id" />
-    <item name="decorOpacityLayout" type="id" />
-    <item name="decorOpacitySeekBar" type="id" />
-    <item name="decorOpacityTitle" type="id" />
+    <item name="backgroundOpacity" type="id" />
+    <item name="backgroundOpacityLayout" type="id" />
+    <item name="backgroundOpacitySeekBar" type="id" />
+    <item name="backgroundOpacityTitle" type="id" />
     <item name="hapticDuration" type="id" />
     <item name="hapticDurationLayout" type="id" />
     <item name="hapticDurationSeekBar" type="id" />

@@ -96,7 +96,7 @@ internal fun SettingsFragment.populateAllRows() {
     populateTextBrightness()
     populateMusicPulse()
     setupGlowStrength()
-    setupDecorOpacity()
+    setupBackgroundOpacity()
     populateWeatherEffects()
     populateWeatherIcons()
     populateAlignment()
