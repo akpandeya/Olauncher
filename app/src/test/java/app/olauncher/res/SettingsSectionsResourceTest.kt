@@ -151,6 +151,9 @@ class SettingsSectionsResourceTest {
             setOf(
                 "germanScreenPickScreenshot", "germanScreenPickScreenshotAction", "germanScreenPickScreenshotActions",
                 "germanScreenPickScreenshotLayout", "germanScreenPickScreenshotSubtitle", "germanScreenPickScreenshotTitle",
+            ) -
+            setOf(
+                "decorOpacity", "decorOpacityLayout", "decorOpacityTitle", "decorOpacitySeekBar",
             )
         assertTrue("Ids added to Settings: $added", added.isEmpty())
     }

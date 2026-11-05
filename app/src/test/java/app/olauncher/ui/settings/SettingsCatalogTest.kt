@@ -26,8 +26,8 @@ class SettingsCatalogTest {
     fun `every setting of the old layout is present in its section`() {
         val actual = SettingsSections.all.associate { it.key to SettingsCatalog.rowsFor(it.key).map { row -> row.key } }
         assertEquals(INVENTORY, actual)
-        assertEquals(94, SettingsCatalog.rows.size)
-        assertEquals(92, SettingsCatalog.rows.count { it.searchable })
+        assertEquals(95, SettingsCatalog.rows.size)
+        assertEquals(93, SettingsCatalog.rows.count { it.searchable })
     }
 
     @Test
@@ -131,11 +131,12 @@ class SettingsCatalogTest {
         assertEquals(
             setOf(
                 "shortcutCount", "shortcutSize", "shortcutSide", "shortcutHeight", "shortcutIconStyle",
-                "germanClock", "dictionaryApp", "germanOfflineDictionaryOnOff", "germanLookupOnOff", "germanSpellSuggestOnOff", "germanScreenPickScreenshot", "germanPauseWordOnOff", "germanUiOnOff", "aiPracticeOnOff", "newsSentencesOnOff"
+                "germanClock", "dictionaryApp", "germanOfflineDictionaryOnOff", "germanLookupOnOff", "germanSpellSuggestOnOff", "germanScreenPickScreenshot", "germanPauseWordOnOff", "germanUiOnOff", "aiPracticeOnOff", "newsSentencesOnOff",
+                "decorOpacity",
             ),
             hiddenWhenOff.map { it.key }.toSet(),
         )
-        assertTrue(SettingsCatalog.rows.all { SettingsRowAvailability.isAvailable(it.primaryId, shortcutsOn = true, germanOn = true) })
+        assertTrue(SettingsCatalog.rows.all { SettingsRowAvailability.isAvailable(it.primaryId, shortcutsOn = true, germanOn = true, decorOn = true) })
     }
 
     @Test
@@ -348,6 +349,7 @@ class SettingsCatalogTest {
         ),
         SettingsSections.KEY_APPEARANCE to listOf(
             "themePack",
+            "decorOpacity",
             "photoWallpaper",
             "statusBar",
             "appThemeText",

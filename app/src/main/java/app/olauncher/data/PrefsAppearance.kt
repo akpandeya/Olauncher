@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.content.edit
 import app.olauncher.helper.HapticTuning
+import app.olauncher.helper.ThemePackDecor
 import app.olauncher.data.Prefs.Companion.ACCENT
 import app.olauncher.data.Prefs.Companion.ACCENT_CUSTOM_COLOR
 import app.olauncher.data.Prefs.Companion.CLOCK_FROM_WALLPAPER
@@ -27,6 +28,9 @@ interface AppearancePrefs {
     /** Id of the selected bundled theme pack (file name without `.json`), empty for no pack. */
     var themePackId: String
 
+    /** Seasonal decor overlay opacity in percent, 0 to 100. 100 is fully opaque. */
+    var decorOpacity: Int
+
     var accent: Int
 
     /** ARGB of the accent picked from the wallpaper; used when [accent] is [Accent.WALLPAPER]. */
@@ -49,6 +53,7 @@ internal class AppearancePrefsStore(private val prefs: SharedPreferences) : Appe
     private val APP_THEME = "APP_THEME"
     private val TEXT_SIZE_SCALE = "TEXT_SIZE_SCALE"
     private val BOLD_FONT = "BOLD_FONT"
+    private val DECOR_OPACITY = "DECOR_OPACITY"
 
     override var appTheme: Int
         get() = prefs.getInt(APP_THEME, AppCompatDelegate.MODE_NIGHT_YES)
@@ -77,6 +82,11 @@ internal class AppearancePrefsStore(private val prefs: SharedPreferences) : Appe
     override var themePackId: String
         get() = prefs.getString(THEME_PACK_ID, "") ?: ""
         set(value) = prefs.edit { putString(THEME_PACK_ID, value).apply() }
+
+    /** Seasonal decor overlay opacity in percent, 0 to 100. 100 is fully opaque. */
+    override var decorOpacity: Int
+        get() = ThemePackDecor.clampOpacity(prefs.getInt(DECOR_OPACITY, ThemePackDecor.DECOR_OPACITY_DEFAULT))
+        set(value) = prefs.edit { putInt(DECOR_OPACITY, ThemePackDecor.clampOpacity(value)).apply() }
 
     override var accentCustomColor: Int
         get() = prefs.getInt(ACCENT_CUSTOM_COLOR, 0)

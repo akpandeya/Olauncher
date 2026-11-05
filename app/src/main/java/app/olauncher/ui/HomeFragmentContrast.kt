@@ -14,6 +14,7 @@ import app.olauncher.helper.HomeWash
 import app.olauncher.helper.TextBrightness
 import app.olauncher.helper.ContrastPolicy
 import app.olauncher.helper.ThemePacks
+import app.olauncher.helper.ThemePackDecor
 import app.olauncher.helper.dpToPx
 import app.olauncher.helper.isEinkDisplay
 import app.olauncher.helper.isSystemAnimationsDisabled
@@ -118,6 +119,10 @@ internal fun HomeFragment.applyHomeDecor() {
             decorPackId = id
         }
     }
+    // Decor strength is a user setting; the view itself stays pref-free. Set on both
+    // paths so a plain pack also resets it before the view hides. Draw-time compositing
+    // (setOpacity) rather than View.alpha, which the root LayoutTransition would reset.
+    binding.homeDecor.setOpacity(ThemePackDecor.opacityFraction(prefs.decorOpacity))
     if (pack == null) {
         binding.homeDecor.stop()
         return

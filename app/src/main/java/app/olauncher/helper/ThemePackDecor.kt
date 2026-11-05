@@ -28,6 +28,16 @@ object ThemePackDecor {
         }
     }
 
+    /** Decor overlay opacity: stored as a percent, 0 (hidden) to [DECOR_OPACITY_MAX]. */
+    const val DECOR_OPACITY_MAX = 100
+    const val DECOR_OPACITY_DEFAULT = DECOR_OPACITY_MAX
+
+    /** Keeps the stored percent inside [0]..[DECOR_OPACITY_MAX]. */
+    fun clampOpacity(percent: Int): Int = percent.coerceIn(0, DECOR_OPACITY_MAX)
+
+    /** The stored percent as the 0..1 view alpha Home applies to the decor overlay. */
+    fun opacityFraction(percent: Int): Float = clampOpacity(percent) / 100f
+
     /** Frames per second cap of the dressing loop; the motion is slow, so 30 reads as smooth. */
     const val MAX_FPS = 30
     const val FRAME_INTERVAL_MS = 1000L / MAX_FPS

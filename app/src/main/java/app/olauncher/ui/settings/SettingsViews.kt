@@ -118,6 +118,8 @@ internal class SettingsViews(private val frame: FragmentSettingsBinding) {
     val newsSentencesFetchNow: TextView get() = textView(R.id.newsSentencesFetchNow)
     val glowStrength: TextView get() = textView(R.id.glowStrength)
     val glowStrengthSeekBar: SeekBar get() = seekBar(R.id.glowStrengthSeekBar)
+    val decorOpacity: TextView get() = textView(R.id.decorOpacity)
+    val decorOpacitySeekBar: SeekBar get() = seekBar(R.id.decorOpacitySeekBar)
     val hapticDuration: TextView get() = textView(R.id.hapticDuration)
     val hapticDurationSeekBar: SeekBar get() = seekBar(R.id.hapticDurationSeekBar)
     val hapticStrength: TextView get() = textView(R.id.hapticStrength)

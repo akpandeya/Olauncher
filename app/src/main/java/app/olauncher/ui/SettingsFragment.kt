@@ -25,6 +25,7 @@ import app.olauncher.data.Constants
 import app.olauncher.data.Prefs
 import app.olauncher.databinding.FragmentSettingsBinding
 import app.olauncher.helper.RotationInterval
+import app.olauncher.helper.ThemePackDecor
 import app.olauncher.helper.isAccessServiceEnabled
 import app.olauncher.helper.DefaultLauncherCheck
 import app.olauncher.helper.isOlauncherDefault
@@ -293,6 +294,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         germanOn = prefs.germanEnabled,
         windDownOn = prefs.windDown,
         holdOn = prefs.quietEnabled && isNotificationAccessGranted(),
+        decorOn = ThemePackDecor.familyFor(prefs.themePackId) != null,
     )
 
     /** Searchable rows that are not switched off by a parent setting, labelled as the user sees them. */

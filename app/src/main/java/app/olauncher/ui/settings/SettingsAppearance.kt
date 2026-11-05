@@ -2,6 +2,7 @@ package app.olauncher.ui.settings
 
 import app.olauncher.helper.HapticTuning
 import app.olauncher.helper.Haptics
+import app.olauncher.helper.ThemePackDecor
 import app.olauncher.ui.*
 import app.olauncher.ui.SettingsFragment
 import android.app.TimePickerDialog
@@ -530,6 +531,28 @@ internal fun SettingsFragment.setupGlowStrength() {
 
 internal fun SettingsFragment.populateGlowStrength(percent: Int) {
     binding.glowStrength.text = getString(R.string.glow_strength_percent, percent)
+}
+
+/** Slider for the seasonal decor opacity. Saves on every change; Home applies it on its next resume. */
+internal fun SettingsFragment.setupDecorOpacity() {
+    binding.decorOpacitySeekBar.max = ThemePackDecor.DECOR_OPACITY_MAX
+    binding.decorOpacitySeekBar.progress = prefs.decorOpacity
+    populateDecorOpacity(prefs.decorOpacity)
+    binding.decorOpacitySeekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+        override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
+            if (!fromUser) return
+            prefs.decorOpacity = progress
+            populateDecorOpacity(prefs.decorOpacity)
+        }
+
+        override fun onStartTrackingTouch(seekBar: SeekBar) = Unit
+
+        override fun onStopTrackingTouch(seekBar: SeekBar) = Unit
+    })
+}
+
+internal fun SettingsFragment.populateDecorOpacity(percent: Int) {
+    binding.decorOpacity.text = getString(R.string.decor_opacity_percent, percent)
 }
 
 internal fun SettingsFragment.toggleWeatherEffects() {
