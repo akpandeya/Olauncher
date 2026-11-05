@@ -180,4 +180,147 @@ class HomeDecorFamilyTest {
         assertEquals(5, ThemePackDecor.MAX_LIVE_BOOMS)
         assertEquals(7000L, ThemePackDecor.ROCKET_SALVO_PERIOD_MS)
     }
+
+    // ---- diwali shockwave physics ----
+
+    @Test
+    fun `ring radius grows linearly from the spawn radius`() {
+        // Exact at birth and mid-life (mock: rad = 40 + age * 620).
+        assertEquals(40f, ThemePackDecor.ringRadiusAt(0), 1e-4f)
+        assertEquals(40f + 620f * 0.7f, ThemePackDecor.ringRadiusAt(700), 1e-2f)
+    }
+
+    @Test
+    fun `ring stroke fades and thins over its life`() {
+        assertEquals(0.5f, ThemePackDecor.ringStrokeAlphaAt(0), 1e-4f)
+        assertEquals(0f, ThemePackDecor.ringStrokeAlphaAt(ThemePackDecor.SHOCKWAVE_LIFE_MS), 1e-4f)
+        assertEquals(2.5f, ThemePackDecor.ringStrokeWidthAt(0), 1e-4f)
+        assertEquals(1f, ThemePackDecor.ringStrokeWidthAt(ThemePackDecor.SHOCKWAVE_LIFE_MS), 1e-4f)
+    }
+
+    @Test
+    fun `front crossing hits only the band swept this frame`() {
+        val radNow = 474f
+        val radPrev = 454f
+        // Exactly on the new front: hit.
+        assertTrue(ThemePackDecor.hitBetween(474f, radNow, radPrev))
+        // Just behind the previous front (already passed on an earlier frame): no hit.
+        assertFalse(ThemePackDecor.hitBetween(454f, radNow, radPrev))
+        // Behind the spawn radius (inside the ring from birth): no hit.
+        assertFalse(ThemePackDecor.hitBetween(10f, 60f, 40f))
+        // Ahead of the front: no hit.
+        assertFalse(ThemePackDecor.hitBetween(500f, radNow, radPrev))
+    }
+
+    @Test
+    fun `diya flare decays exponentially and lifts the glow`() {
+        assertEquals(1f, ThemePackDecor.flareDecay(1f, 0f), 1e-6f)
+        assertEquals(kotlin.math.exp(-3.2f), ThemePackDecor.flareDecay(1f, 1f), 1e-4f)
+        // Glow alpha rises from the idle base toward ~0.72 at full flare.
+        assertEquals(0.18f, ThemePackDecor.flareGlowAlpha(0.18f, 0f), 1e-6f)
+        assertEquals(0.68f, ThemePackDecor.flareGlowAlpha(0.18f, 1f), 1e-6f)
+        // Glow radius scales with the idle flicker plus the flare boost (mock: 1 + 1.1 flare).
+        assertEquals(1f, ThemePackDecor.flareGlowScale(1f, 0f), 1e-6f)
+        assertEquals(2.1f, ThemePackDecor.flareGlowScale(1f, 1f), 1e-6f)
+        assertEquals(1.296f, ThemePackDecor.flareGlowScale(0.9f, 0.4f), 1e-4f)
+    }
+
+    @Test
+    fun `rangoli scatter springs home and settles`() {
+        // An impulse-scattered dot springs back: five simulated seconds land it at rest at home.
+        var state = ThemePackDecor.ScatterState(10f, -6f, 80f, -50f)
+        val dt = 1f / 30f
+        repeat(150) {
+            state = ThemePackDecor.scatterSpringStep(state.offsetX, state.offsetY, state.vx, state.vy, dt)
+        }
+        assertEquals(0f, state.offsetX, 0.1f)
+        assertEquals(0f, state.offsetY, 0.1f)
+        assertEquals(0f, state.vx, 0.1f)
+        assertEquals(0f, state.vy, 0.1f)
+    }
+
+    @Test
+    fun `rangoli scatter offset never leaves the clamp`() {
+        // A violent impulse must stay clamped (belt-and-braces guard against runaway state).
+        var state = ThemePackDecor.scatterSpringStep(0f, 0f, 5000f, -5000f, 1f / 30f)
+        val offset = kotlin.math.hypot(state.offsetX, state.offsetY)
+        assertTrue("offset $offset exceeded the clamp", offset <= ThemePackDecor.RANGOLI_SCATTER_MAX_DP + 1e-4f)
+    }
+
+    @Test
+    fun `clock spring settles from a kick and never exceeds the clamp`() {
+        // Kick of 120 deg/s, stepped at 30fps for five simulated seconds.
+        var angle = 0f
+        var vel = 120f
+        var maxAbs = 0f
+        val dt = 1f / 30f
+        repeat(150) {
+            val state = ThemePackDecor.clockSpringStep(angle, vel, dt)
+            angle = state.angleDeg
+            vel = state.angularVelDegS
+            maxAbs = maxOf(maxAbs, kotlin.math.abs(angle))
+            assertTrue("angle $angle exceeded the clamp", kotlin.math.abs(angle) <= ThemePackDecor.CLOCK_WOBBLE_MAX_DEG + 1e-4f)
+        }
+        assertTrue("did not settle, angle $angle", kotlin.math.abs(angle) < 0.1f)
+        assertTrue("spring never moved (max $maxAbs)", maxAbs > 0.5f)
+    }
+
+    @Test
+    fun `clock kick direction follows the blast side and lands in 70 to 120`() {
+        // Clock left of the blast kicks negative (mock: cx < r.x ? -1 : 1).
+        assertEquals(-100f, ThemePackDecor.clockKickDegS(100f, 200f, 0.6f), 1e-4f)
+        assertEquals(100f, ThemePackDecor.clockKickDegS(200f, 100f, 0.6f), 1e-4f)
+        // Roll 0..1 maps to magnitude 70..120, either sign.
+        assertEquals(-70f, ThemePackDecor.clockKickDegS(0f, 10f, 0f), 1e-4f)
+        assertEquals(-120f, ThemePackDecor.clockKickDegS(0f, 10f, 1f), 1e-4f)
+        assertEquals(70f, ThemePackDecor.clockKickDegS(10f, 0f, 0f), 1e-4f)
+        assertEquals(120f, ThemePackDecor.clockKickDegS(10f, 0f, 1f), 1e-4f)
+    }
+
+    @Test
+    fun `ember gains gravity over one step`() {
+        // From rest, 100ms of gravity 300dp/s^2: vy 30, y 3.
+        val state = ThemePackDecor.emberStep(10f, 5f, 0f, 0f, 0.1f, floorY = 1000f)
+        assertEquals(10f, state.x, 1e-4f)
+        assertEquals(5f + 3f, state.y, 1e-4f)
+        assertEquals(30f, state.vy, 1e-4f)
+        assertEquals(0f, state.vx, 1e-4f)
+    }
+
+    @Test
+    fun `ember bounces off the floor with restitution`() {
+        // Fast fall: clamped to the floor, vy negated * 0.45, vx damped (mock stepEmbers).
+        val state = ThemePackDecor.emberStep(0f, 1010f, 10f, 40f, 0.1f, floorY = 1000f)
+        assertEquals(1000f, state.y, 1e-4f)
+        assertEquals(-(40f + 300f * 0.1f) * 0.45f, state.vy, 1e-4f)
+        assertEquals(8f, state.vx, 1e-4f)
+    }
+
+    @Test
+    fun `slow embers settle on the floor instead of bouncing`() {
+        // A bounce slower than the settle threshold parks the ember (vy 0) to roll out its life.
+        val state = ThemePackDecor.emberStep(0f, 1000.5f, 10f, 5f, 0.1f, floorY = 1000f)
+        assertEquals(1000f, state.y, 1e-4f)
+        assertEquals(0f, state.vy, 1e-6f)
+        assertEquals(8f, state.vx, 1e-4f)
+    }
+
+    @Test
+    fun `ember alpha twinkles while fading out`() {
+        // Born twinkling between 0.2 and 1, gone at end of life.
+        val alpha = ThemePackDecor.emberAlpha(lifeS = 0f, ttlS = 3f, timeS = 0.1f, phase = 0f)
+        assertTrue("alpha $alpha out of the twinkle band", alpha in 0.2f..1f)
+        assertEquals(0f, ThemePackDecor.emberAlpha(3f, 3f, 0.1f, 0f), 1e-6f)
+        assertEquals(0f, ThemePackDecor.emberAlpha(1f, 0f, 0.1f, 0f), 1e-6f)
+    }
+
+    @Test
+    fun `ember count per detonation is 12 to 18 and capped stock is 90`() {
+        assertEquals(12, ThemePackDecor.emberCountFor(0f))
+        assertEquals(15, ThemePackDecor.emberCountFor(0.5f))
+        assertEquals(18, ThemePackDecor.emberCountFor(1f))
+        assertEquals(12, ThemePackDecor.emberCountFor(-2f))
+        assertEquals(18, ThemePackDecor.emberCountFor(2f))
+        assertEquals(90, ThemePackDecor.EMBER_CAP)
+    }
 }

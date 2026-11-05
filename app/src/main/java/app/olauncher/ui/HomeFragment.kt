@@ -141,6 +141,9 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         initInfoLineTouchTargets()
         initAccessibilityActions()
         initWeatherListener()
+        // The dressing wobbles the clock on detonation shockwaves; the decor view drives the
+        // spring on its own frame loop and always returns the rotation to zero.
+        binding.homeDecor.attachClockView(binding.clock)
         binding.dateTimeLayout.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
             if (bottom - top != oldBottom - oldTop) {
                 capClockSize()
@@ -920,6 +923,8 @@ class HomeFragment : BaseFragment(), View.OnClickListener, View.OnLongClickListe
         glowShownStrength = null
         _binding?.root?.removeCallbacks(musicTick)
         _binding?.mediaProgress?.setRunning(false)
+        // Detach the clock first, so the dressing's final reset happens before teardown.
+        _binding?.homeDecor?.attachClockView(null)
         _binding?.homeDecor?.stop()
         decorPack = null
         decorPackId = null
