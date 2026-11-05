@@ -1,9 +1,11 @@
 package app.olauncher.helper
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.random.Random
 
 /**
  * Family detection and animation phase maths for the seasonal home dressing
@@ -109,5 +111,73 @@ class HomeDecorFamilyTest {
         assertEquals(0.5f, ThemePackDecor.snowProgress(3.5f, 7f, 0f), 1e-6f)
         // A flake delayed by half a period starts half way down.
         assertEquals(0.5f, ThemePackDecor.snowProgress(0f, 7f, -3.5f), 1e-6f)
+    }
+
+    // ---- diwali rockets ----
+
+    @Test
+    fun `auto salvo roll split matches the mock`() {
+        // 55% one rocket, 30% two, 15% three (mock: roll < 0.55 ? 1 : roll < 0.85 ? 2 : 3).
+        assertEquals(1, ThemePackDecor.salvoSizeFor(0.0f))
+        assertEquals(1, ThemePackDecor.salvoSizeFor(0.54f))
+        assertEquals(2, ThemePackDecor.salvoSizeFor(0.55f))
+        assertEquals(2, ThemePackDecor.salvoSizeFor(0.56f))
+        // The mock's second cut is 0.85, so 0.86 already rolls into the three-rocket salvo.
+        assertEquals(3, ThemePackDecor.salvoSizeFor(0.86f))
+        assertEquals(3, ThemePackDecor.salvoSizeFor(0.87f))
+        assertEquals(3, ThemePackDecor.salvoSizeFor(1.0f))
+    }
+
+    @Test
+    fun `auto salvo rolls outside 0 until 1 clamp to the ends`() {
+        assertEquals(1, ThemePackDecor.salvoSizeFor(-0.7f))
+        assertEquals(1, ThemePackDecor.salvoSizeFor(Float.NEGATIVE_INFINITY))
+        assertEquals(3, ThemePackDecor.salvoSizeFor(1.2f))
+        assertEquals(3, ThemePackDecor.salvoSizeFor(Float.POSITIVE_INFINITY))
+    }
+
+    @Test
+    fun `evening salvo bands skew bigger than daytime`() {
+        // Evening: 25% one, 40% two, 35% three.
+        assertEquals(1, ThemePackDecor.salvoSizeFor(0.0f, evening = true))
+        assertEquals(1, ThemePackDecor.salvoSizeFor(0.24f, evening = true))
+        assertEquals(2, ThemePackDecor.salvoSizeFor(0.25f, evening = true))
+        assertEquals(2, ThemePackDecor.salvoSizeFor(0.64f, evening = true))
+        assertEquals(3, ThemePackDecor.salvoSizeFor(0.65f, evening = true))
+        assertEquals(3, ThemePackDecor.salvoSizeFor(1.0f, evening = true))
+        // The same roll that gives one rocket by day gives two in the evening.
+        assertEquals(1, ThemePackDecor.salvoSizeFor(0.30f))
+        assertEquals(2, ThemePackDecor.salvoSizeFor(0.30f, evening = true))
+        // Clamps still hold in the evening branch.
+        assertEquals(1, ThemePackDecor.salvoSizeFor(-1f, evening = true))
+        assertEquals(3, ThemePackDecor.salvoSizeFor(2f, evening = true))
+    }
+
+    @Test
+    fun `evening hours are 19 to 23 inclusive`() {
+        assertTrue(ThemePackDecor.isEveningHour(19))
+        assertTrue(ThemePackDecor.isEveningHour(21))
+        assertTrue(ThemePackDecor.isEveningHour(23))
+        assertFalse(ThemePackDecor.isEveningHour(18))
+        assertFalse(ThemePackDecor.isEveningHour(0))
+        assertFalse(ThemePackDecor.isEveningHour(6))
+        assertFalse(ThemePackDecor.isEveningHour(12))
+    }
+
+    @Test
+    fun `celebration salvo is always 3 to 5 rockets`() {
+        val rng = Random(42)
+        repeat(200) {
+            val size = ThemePackDecor.celebrationSalvoSize(rng)
+            assertTrue("salvo size $size not in 3..5", size in 3..5)
+        }
+        // Deterministic given the seed, so a regression is caught exactly.
+        assertEquals(3, ThemePackDecor.celebrationSalvoSize(Random(0)))
+    }
+
+    @Test
+    fun `rocket sky cap and salvo cadence constants`() {
+        assertEquals(5, ThemePackDecor.MAX_LIVE_BOOMS)
+        assertEquals(7000L, ThemePackDecor.ROCKET_SALVO_PERIOD_MS)
     }
 }

@@ -31,6 +31,7 @@ private fun gestureActionTitle(action: GestureAction): Int = when (action) {
     GestureAction.NEXT_TRACK -> R.string.gesture_action_next_track
     GestureAction.PREVIOUS_TRACK -> R.string.gesture_action_previous_track
     GestureAction.OPEN_APP -> R.string.gesture_action_open_app
+    GestureAction.FIREWORKS -> R.string.gesture_action_fireworks
     GestureAction.NOTHING -> R.string.gesture_action_nothing
 }
 

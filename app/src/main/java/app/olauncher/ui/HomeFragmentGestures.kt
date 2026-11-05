@@ -22,6 +22,7 @@ import app.olauncher.helper.GestureActions
 import app.olauncher.helper.GestureHints
 import app.olauncher.helper.GestureSlot
 import app.olauncher.helper.MediaKeys
+import app.olauncher.helper.ThemePackDecor
 import app.olauncher.helper.Torch
 import app.olauncher.helper.showToast
 import app.olauncher.helper.Haptics
@@ -93,7 +94,17 @@ internal fun HomeFragment.runGesture(slot: GestureSlot, default: () -> Unit) {
         GestureAction.OPEN_APP -> prefs.gestureApp(slot)?.let {
             launchApp(it.label, it.packageName, it.className, it.user)
         }
-        GestureAction.NOTHING -> {}
+        GestureAction.FIREWORKS -> binding.homeDecor.fireSalvo()
+        GestureAction.NOTHING -> {
+            // Rockets fill only the empty double-tap: any chosen action takes precedence, and
+            // fireSalvo itself no-ops unless the Diwali dressing is animating. Double-tap on an
+            // app label never reaches here: the label views run their own touch listener.
+            if (slot == GestureSlot.DOUBLE_TAP &&
+                ThemePackDecor.familyFor(prefs.themePackId) == ThemePackDecor.FAMILY_DIWALI
+            ) {
+                binding.homeDecor.fireSalvo()
+            }
+        }
     }
 }
 

@@ -15,6 +15,7 @@ enum class GestureAction(val key: String) {
     NEXT_TRACK("next_track"),
     PREVIOUS_TRACK("previous_track"),
     OPEN_APP("open_app"),
+    FIREWORKS("fireworks"),
     NOTHING("nothing"),
 }
 

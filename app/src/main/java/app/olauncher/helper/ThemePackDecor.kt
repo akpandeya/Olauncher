@@ -2,6 +2,7 @@ package app.olauncher.helper
 
 import kotlin.math.PI
 import kotlin.math.cos
+import kotlin.random.Random
 
 /**
  * Pure logic for the seasonal home dressing (docs/design/themes/mocks/index.html, `decorHTML`):
@@ -100,4 +101,33 @@ object ThemePackDecor {
      */
     fun snowProgress(elapsedS: Float, periodS: Float, delayS: Float): Float =
         phase(elapsedS, periodS, delayS)
+
+    // ---- Diwali rockets (diwali-rockets-mock.html) ----
+
+    /** Sky cap: at most this many rocket bursts live at once; extras are skipped, not queued. */
+    const val MAX_LIVE_BOOMS = 5
+
+    /** Auto salvo cadence: one roll this many milliseconds of animation time (mock: every 7s). */
+    const val ROCKET_SALVO_PERIOD_MS = 7000L
+
+    /**
+     * Auto-tick salvo size from a 0..1 roll (mock: 55% one rocket, 30% two, 15% three).
+     * Rolls outside [0, 1] clamp to the ends, so 0.54 -> 1, 0.56 -> 2, 0.84 -> 2, 0.86 -> 3.
+     * In evening hours ([isEveningHour]) the bands shift toward bigger salvos
+     * (25% one, 40% two, 35% three) so the show builds after dark.
+     */
+    fun salvoSizeFor(roll: Float, evening: Boolean = false): Int {
+        val r = roll.coerceIn(0f, 1f)
+        return when {
+            r < (if (evening) 0.25f else 0.55f) -> 1
+            r < (if (evening) 0.65f else 0.85f) -> 2
+            else -> 3
+        }
+    }
+
+    /** Evening show time: salvos skew bigger from 19:00 to 23:59 local. */
+    fun isEveningHour(hourOfDay: Int): Boolean = hourOfDay in 19..23
+
+    /** Celebration salvo size for the double-tap fireworks: 3 to 5 rockets. */
+    fun celebrationSalvoSize(rng: Random = Random): Int = 3 + rng.nextInt(3)
 }

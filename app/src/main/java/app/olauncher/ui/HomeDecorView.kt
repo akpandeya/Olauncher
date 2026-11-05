@@ -20,6 +20,67 @@ import androidx.core.view.isVisible
 import app.olauncher.data.ThemePack
 import app.olauncher.data.ThemePackCodec
 import app.olauncher.helper.ThemePackDecor
+import java.util.Calendar
+import kotlin.math.PI
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.pow
+import kotlin.math.sin
+import kotlin.random.Random
+
+/**
+ * A Diwali rocket: launch geometry and timing in animation-time ms, in mock-dp space.
+ */
+private class RocketLaunch(
+    @JvmField val x: Float,
+    @JvmField val startY: Float,
+    @JvmField val apexY: Float,
+    @JvmField val startMs: Long,
+    @JvmField val durationMs: Long,
+    @JvmField val patternIndex: Int,
+)
+
+/**
+ * One dot of a burst, with its twinkle phase (mock: `.twk`, 1.1s alternating).
+ */
+private class BoomDot(
+    @JvmField val x: Float,
+    @JvmField val y: Float,
+    @JvmField val radius: Float,
+    @JvmField val color: Int,
+    @JvmField val twinkleDelayS: Float,
+)
+
+/**
+ * A willow spark tip that falls away after the boom (mock: `.spark`): start point in dp,
+ * total fall in dp and ms.
+ */
+private class WillowSpark(
+    @JvmField val x: Float,
+    @JvmField val y: Float,
+    @JvmField val radius: Float,
+    @JvmField val dxFall: Float,
+    @JvmField val dyFall: Float,
+    @JvmField val fallMs: Float,
+)
+
+/**
+ * A detonated burst. Geometry (paths, dot positions) is built once at detonation — a rare
+ * event — so drawing is transform and alpha only, like the rest of the view.
+ */
+private class LiveBoom(
+    @JvmField val x: Float,
+    @JvmField val y: Float,
+    @JvmField val startMs: Long,
+    @JvmField val fadeMs: Long,
+    @JvmField val raysPath: Path?,
+    @JvmField val rayStrokeWidth: Float,
+    @JvmField val rayColor: Int,
+    @JvmField val dots: List<BoomDot>,
+    @JvmField val centreRadius: Float,
+    @JvmField val centreColor: Int,
+    @JvmField val sparks: List<WillowSpark>?,
+)
 
 /**
  * Seasonal dressing over the home screen for decorated theme packs (Halloween, Diwali,
@@ -29,7 +90,8 @@ import app.olauncher.helper.ThemePackDecor
  *
  * Animation is one self-rescheduling frame loop capped at [ThemePackDecor.MAX_FPS]; with
  * [configure] `animate = false` (e-ink, system animations off) a single static frame is drawn.
- * All paths are built in [configure]; per-frame work is transform and alpha only.
+ * All paths are built in [configure] (rocket bursts at detonation); per-frame work is transform
+ * and alpha only.
  */
 class HomeDecorView @JvmOverloads constructor(
     context: Context,
@@ -103,9 +165,13 @@ class HomeDecorView @JvmOverloads constructor(
 
     // Pre-built Diwali shaders. The flame glow lives in the diya's mock units, so the draw-time
     // canvas scale (density x diya width) sizes it for every diya. The light strip spans the
-    // view, so it is rebuilt when the view size changes (see [onSizeChanged]).
+    // view, so it is rebuilt when the view size changes (see [onSizeChanged]). The rocket
+    // trail, head glow and muzzle flash are built in dp at fixed sizes (diwali-rockets-mock).
     private var flameGlowShader: Shader? = null
     private var lightStripShader: Shader? = null
+    private var rocketTrailShader: Shader? = null
+    private var rocketGlowShader: Shader? = null
+    private var rocketFlashShader: Shader? = null
 
     // Diya row spread across the real view width (dp): an edge margin at each side, widths
     // alternating 42/36, the remaining width split into equal gaps. [diyaLayoutWidth]
@@ -125,6 +191,14 @@ class HomeDecorView @JvmOverloads constructor(
     private val burstDotXs = floatArrayOf(55f, 48.5f, 30f, 11.5f, 5f, 11.5f, 30f, 48.5f)
     private val burstDotYs = floatArrayOf(30f, 48.5f, 55f, 48.5f, 30f, 11.5f, 5f, 11.5f)
     private val burstDotDelays = floatArrayOf(-0.3f, -0.9f, -1.5f, -2.1f, -1.2f, -0.6f, -1.8f, -2.4f)
+
+    // Diwali rockets: queued launches, rockets in flight, and live bursts. All times are
+    // animation-time ms since [animStartMs]; state is cleared whenever the loop starts or
+    // stops, so a restart begins with an empty sky.
+    private val pendingRockets = ArrayList<RocketLaunch>()
+    private val risingRockets = ArrayList<RocketLaunch>()
+    private val liveBooms = ArrayList<LiveBoom>()
+    private var lastSalvoMs = 0L
 
     // Christmas bulb positions in the 340-wide mock (y in the 34-tall band) and delays.
     private val bulbXs = floatArrayOf(42f, 85f, 127f, 212f, 255f, 297f)
@@ -158,6 +232,8 @@ class HomeDecorView @JvmOverloads constructor(
         family = nextFamily
         mirror = alignmentRight
         animateRequested = animate
+        // The pack changed: the sky starts empty (stale launch times would misfire).
+        clearRockets()
         lightPack = pack.mode == ThemePackCodec.MODE_LIGHT
         accent = ThemePackCodec.parseHex(pack.accent)
         accentSecondary = ThemePackCodec.parseHex(pack.accentSecondary)
@@ -211,10 +287,57 @@ class HomeDecorView @JvmOverloads constructor(
         if (animating == shouldRun) return
         animating = shouldRun
         removeCallbacks(frameRunnable)
+        // Rocket times are offsets from animStartMs, so a loop restart empties the sky.
+        clearRockets()
         if (shouldRun) {
             animStartMs = SystemClock.uptimeMillis()
             postOnAnimationDelayed(frameRunnable, ThemePackDecor.FRAME_INTERVAL_MS)
         }
+    }
+
+    /** Empties the sky: queued and rising rockets and live bursts all go. */
+    private fun clearRockets() {
+        pendingRockets.clear()
+        risingRockets.clear()
+        liveBooms.clear()
+        lastSalvoMs = 0L
+    }
+
+    /**
+     * Fires a celebration salvo of 3-5 rockets (the double-tap fireworks). Ignored unless the
+     * Diwali dressing is animating: other packs, e-ink and animations-off see nothing.
+     */
+    fun fireSalvo() {
+        if (!animating || family != ThemePackDecor.FAMILY_DIWALI) return
+        queueSalvo(ThemePackDecor.celebrationSalvoSize(), SystemClock.uptimeMillis() - animStartMs)
+    }
+
+    /** Queues [count] rockets staggered 180-430ms apart, starting at [nowMs] (mock: salvo). */
+    private fun queueSalvo(count: Int, nowMs: Long) {
+        var startMs = nowMs
+        for (k in 0 until count) {
+            if (k > 0) {
+                startMs += ROCKET_STAGGER_MIN_MS + Random.nextLong(ROCKET_STAGGER_JITTER_MS)
+            }
+            pendingRockets.add(newRocket(startMs))
+        }
+    }
+
+    /** One rocket: random spot in the right-hand sky, apex and flight time jittered per launch. */
+    private fun newRocket(startMs: Long): RocketLaunch {
+        val density = resources.displayMetrics.density.coerceAtLeast(0.1f)
+        val viewW = width / density
+        val viewH = height / density
+        return RocketLaunch(
+            x = viewW * (ROCKET_MIN_X_FRACTION +
+                Random.nextFloat() * (ROCKET_MAX_X_FRACTION - ROCKET_MIN_X_FRACTION)),
+            startY = viewH * ROCKET_START_Y_FRACTION,
+            apexY = viewH * (ROCKET_MIN_APEX_FRACTION +
+                Random.nextFloat() * (ROCKET_MAX_APEX_FRACTION - ROCKET_MIN_APEX_FRACTION)),
+            startMs = startMs,
+            durationMs = ROCKET_RISE_MIN_MS + Random.nextLong(ROCKET_RISE_JITTER_MS),
+            patternIndex = Random.nextInt(ROCKET_PATTERN_COUNT),
+        )
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -352,6 +475,11 @@ class HomeDecorView @JvmOverloads constructor(
         // The diya row spreads across the actual screen width; rebuild only when it changes.
         if (diyaLayoutWidth != viewW) buildDiyaLayout(viewW)
 
+        // Rockets are time-based animation state: no salvo, flight or burst in the static
+        // frame (e-ink, animations off), and their times run on the animation clock.
+        val animMs = if (animating) (t * 1000f).toLong() else 0L
+        if (animating) updateRockets(animMs)
+
         // Light pooling along the bottom edge from the diya row (Diwali-only).
         lightStripShader?.let {
             gradientPaint.shader = it
@@ -391,6 +519,9 @@ class HomeDecorView @JvmOverloads constructor(
         for (i in diyaLefts.indices) {
             drawDiya(canvas, viewW, viewH, left = diyaLefts[i], width = diyaWidths[i], flameIndex = i, t)
         }
+
+        // Rockets and bursts draw last, so trails and sparks sit over the static dressing.
+        if (animating) drawRockets(canvas, animMs)
     }
 
     /**
@@ -521,6 +652,290 @@ class HomeDecorView @JvmOverloads constructor(
                 canvas.drawOval(diyaRim, fillPaint)
             }
         }
+    }
+
+    // ---- Diwali rockets (diwali-rockets-mock.html) ----
+
+    /**
+     * Advances the rocket state machine in animation time: rolls the auto salvo every
+     * [ThemePackDecor.ROCKET_SALVO_PERIOD_MS], launches queued rockets whose start time has
+     * arrived, detonates finished flights and expires old bursts. Called from the frame loop
+     * only; rockets never post their own callbacks.
+     */
+    private fun updateRockets(animMs: Long) {
+        if (animMs - lastSalvoMs >= ThemePackDecor.ROCKET_SALVO_PERIOD_MS) {
+            lastSalvoMs = animMs
+            val evening = ThemePackDecor.isEveningHour(Calendar.getInstance().get(Calendar.HOUR_OF_DAY))
+            queueSalvo(ThemePackDecor.salvoSizeFor(Random.nextFloat(), evening), animMs)
+        }
+        // Launches whose start time has arrived begin rising.
+        val queued = pendingRockets.iterator()
+        while (queued.hasNext()) {
+            val rocket = queued.next()
+            if (rocket.startMs <= animMs) {
+                queued.remove()
+                risingRockets.add(rocket)
+            }
+        }
+        // A finished flight detonates — unless the sky is already at the burst cap, in which
+        // case the rocket is skipped rather than queued (mock: boomLive() < MAX_LIVE).
+        // Unlike the mock we let an over-cap rocket finish its climb before fizzling
+        // without bursting (the mock skips the launch itself); visual-only difference,
+        // kept because aborting a rising trail looks like a glitch.
+        var flight = 0
+        while (flight < risingRockets.size) {
+            val rocket = risingRockets[flight]
+            if (animMs >= rocket.startMs + rocket.durationMs) {
+                risingRockets.removeAt(flight)
+                if (liveBooms.size < ThemePackDecor.MAX_LIVE_BOOMS) {
+                    liveBooms.add(buildBoom(rocket, animMs))
+                }
+            } else flight++
+        }
+        var burst = 0
+        while (burst < liveBooms.size) {
+            val boom = liveBooms[burst]
+            if (animMs >= boom.startMs + boom.fadeMs) liveBooms.removeAt(burst) else burst++
+        }
+    }
+
+    /**
+     * Builds one burst's geometry once at detonation (rare, so allocations are fine here):
+     * a random pattern from five, sized [ROCKET_BURST_SIZE_DP] with per-launch jitter. All
+     * coordinates end up in absolute dp, so drawing is transform and alpha only.
+     */
+    private fun buildBoom(rocket: RocketLaunch, startMs: Long): LiveBoom {
+        val burstSize = ROCKET_BURST_SIZE_DP * (0.85f + Random.nextFloat() * 0.3f)
+        val u = burstSize / BOOM_BOX_UNITS // dp per mock unit (the mock viewBox is 60x60)
+        val cx = rocket.x
+        val cy = rocket.apexY
+        return when (rocket.patternIndex % ROCKET_PATTERN_COUNT) {
+            PATTERN_RING -> ringBoom(cx, cy, u, startMs)
+            PATTERN_WILLOW -> willowBoom(cx, cy, u, startMs)
+            PATTERN_PALM -> palmBoom(cx, cy, u, startMs)
+            PATTERN_DOUBLE_RING -> doubleRingBoom(cx, cy, u, startMs)
+            else -> chrysanthemumBoom(cx, cy, u, startMs)
+        }
+    }
+
+    /** Chrysanthemum: 8-12 radial accent rays, twinkle dots at alternating tips, centre dot. */
+    private fun chrysanthemumBoom(cx: Float, cy: Float, u: Float, startMs: Long): LiveBoom {
+        val rays = Path()
+        val dots = ArrayList<BoomDot>(6)
+        val n = 8 + Random.nextInt(5)
+        for (k in 0 until n) {
+            val a = k * TWO_PI_F / n
+            val j = 0.9f + Random.nextFloat() * 0.25f
+            val innerX = cx + 7f * u * cos(a)
+            val innerY = cy + 7f * u * sin(a)
+            val tipX = cx + 25f * j * u * cos(a)
+            val tipY = cy + 25f * j * u * sin(a)
+            rays.moveTo(innerX, innerY)
+            rays.lineTo(tipX, tipY)
+            if (k % 2 == 1) {
+                dots.add(BoomDot(tipX, tipY, 1.7f * u, accentSecondary, -Random.nextFloat() * BOOM_TWINKLE_PERIOD_S))
+            }
+        }
+        return LiveBoom(cx, cy, startMs, fadeMs = 1500, rays, 1.5f * u, accent, dots, 2.1f * u, accent, null)
+    }
+
+    /** Ring: 11-14 glowing dots on a loose circle, every third accentSecondary, cream centre. */
+    private fun ringBoom(cx: Float, cy: Float, u: Float, startMs: Long): LiveBoom {
+        val n = 11 + Random.nextInt(4)
+        val radius = (21f + Random.nextFloat() * 4f) * u
+        val dots = ArrayList<BoomDot>(n)
+        for (k in 0 until n) {
+            val a = k * TWO_PI_F / n
+            dots.add(
+                BoomDot(
+                    cx + radius * cos(a), cy + radius * sin(a),
+                    (1.5f + Random.nextFloat() * 1.3f) * u,
+                    if (k % 3 == 0) accentSecondary else accent,
+                    -Random.nextFloat() * BOOM_TWINKLE_PERIOD_S,
+                )
+            )
+        }
+        return LiveBoom(cx, cy, startMs, fadeMs = 1600, null, 0f, 0, dots, 1.8f * u, ROCKET_CREAM, null)
+    }
+
+    /**
+     * Willow: 6-8 drooping cream arcs; spark dots at the tips fall 20-42dp over 1.5-2.4s,
+     * drifting up to ±7dp sideways, outliving the main boom.
+     */
+    private fun willowBoom(cx: Float, cy: Float, u: Float, startMs: Long): LiveBoom {
+        val arcs = Path()
+        val sparks = ArrayList<WillowSpark>(8)
+        val n = 6 + Random.nextInt(3)
+        for (k in 0 until n) {
+            val a = k * TWO_PI_F / n + Random.nextFloat() * 0.2f
+            val tipX = cx + 24f * u * cos(a)
+            val tipY = cy + (18f * abs(sin(a)) + 4f) * u
+            val midA = k * TWO_PI_F / n + 0.1f
+            arcs.moveTo(cx, cy)
+            arcs.quadTo(cx + 20f * u * cos(midA), cy + 6f * u * sin(midA), tipX, tipY)
+            sparks.add(
+                WillowSpark(
+                    tipX, tipY, 1.6f * u,
+                    (Random.nextFloat() - 0.5f) * 2f * WILLOW_DRIFT_DP,
+                    WILLOW_FALL_MIN_DP + Random.nextFloat() * (WILLOW_FALL_MAX_DP - WILLOW_FALL_MIN_DP),
+                    WILLOW_FALL_MIN_MS + Random.nextFloat() * (WILLOW_FALL_MAX_MS - WILLOW_FALL_MIN_MS),
+                )
+            )
+        }
+        return LiveBoom(cx, cy, startMs, fadeMs = 2200, arcs, 1.2f * u, ROCKET_CREAM, emptyList(), 0f, 0, sparks)
+    }
+
+    /** Palm: 5-6 thick curved accent fronds with accentSecondary crackle tips. */
+    private fun palmBoom(cx: Float, cy: Float, u: Float, startMs: Long): LiveBoom {
+        val fronds = Path()
+        val dots = ArrayList<BoomDot>(6)
+        val n = 5 + Random.nextInt(2)
+        for (k in 0 until n) {
+            val a = k * TWO_PI_F / n + Random.nextFloat() * 0.3f
+            val midX = cx + 14f * u * cos(a)
+            val midY = cy + 14f * u * sin(a)
+            val tipX = cx + 26f * u * cos(a)
+            val tipY = cy + 26f * u * sin(a)
+            fronds.moveTo(cx, cy)
+            fronds.quadTo(midX, midY, tipX, tipY)
+            dots.add(BoomDot(tipX, tipY, 2.1f * u, accentSecondary, -Random.nextFloat() * BOOM_TWINKLE_PERIOD_S))
+        }
+        return LiveBoom(cx, cy, startMs, fadeMs = 1400, fronds, 2.4f * u, accent, dots, 2.4f * u, accentSecondary, null)
+    }
+
+    /** Double-ring: 8 inner accent dots and 14 outer accentSecondary dots in opposite phase. */
+    private fun doubleRingBoom(cx: Float, cy: Float, u: Float, startMs: Long): LiveBoom {
+        val outerRadius = (24f + Random.nextFloat() * 2f) * u
+        val dots = ArrayList<BoomDot>(22)
+        for (k in 0 until 8) {
+            val a = k * TWO_PI_F / 8f
+            dots.add(BoomDot(cx + 11f * u * cos(a), cy + 11f * u * sin(a), 1.8f * u, accent, 0f))
+        }
+        // Half a twinkle period apart twirls the rings in opposite phase (mock: delay -.55s).
+        for (k in 0 until 14) {
+            val a = k * TWO_PI_F / 14f + 0.2f
+            dots.add(
+                BoomDot(
+                    cx + outerRadius * cos(a), cy + outerRadius * sin(a), 1.4f * u,
+                    accentSecondary, -BOOM_TWINKLE_PERIOD_S / 2f,
+                )
+            )
+        }
+        return LiveBoom(cx, cy, startMs, fadeMs = 1700, null, 0f, 0, dots, 1.6f * u, ROCKET_CREAM, null)
+    }
+
+    /** Draws the rising trails and the live bursts over the static dressing. */
+    private fun drawRockets(canvas: Canvas, animMs: Long) {
+        for (rocket in risingRockets) drawRocketTrail(canvas, rocket, animMs)
+        for (boom in liveBooms) drawBoom(canvas, boom, animMs)
+    }
+
+    /** Cream trail bar and warm glow dot riding the head of a rising rocket. */
+    private fun drawRocketTrail(canvas: Canvas, rocket: RocketLaunch, animMs: Long) {
+        val p = (animMs - rocket.startMs).toFloat() / rocket.durationMs
+        if (p <= 0f || p >= 1f) return
+        // Decelerating rise (mock: cubic ease-out).
+        val eased = 1f - (1f - p).pow(3)
+        val headY = rocket.startY + (rocket.apexY - rocket.startY) * eased
+        // Mock opacity keyframes: in by 10%, held to 75%, then fading away.
+        val alpha = when {
+            p < 0.10f -> p / 0.10f
+            p < 0.75f -> 1f
+            p < 0.92f -> 1f - 0.45f * ((p - 0.75f) / 0.17f)
+            else -> 0.55f * (1f - (p - 0.92f) / 0.08f)
+        }
+        val widthScale = if (p < 0.92f) 1f else 0.55f * (1f - (p - 0.92f) / 0.08f)
+        val trailShader = rocketTrailShader ?: return
+        val glowShader = rocketGlowShader ?: return
+        gradientPaint.shader = trailShader
+        gradientPaint.alpha = (alpha * 255).toInt()
+        val halfWidth = ROCKET_TRAIL_WIDTH_DP / 2f * widthScale
+        canvas.withTranslation(rocket.x, headY) {
+            canvas.drawRect(-halfWidth, 0f, halfWidth, ROCKET_TRAIL_LENGTH_DP, gradientPaint)
+        }
+        gradientPaint.shader = glowShader
+        canvas.drawCircle(rocket.x, headY, ROCKET_GLOW_RADIUS_DP, gradientPaint)
+        gradientPaint.shader = null
+        // The shared paint is reused by the static light strip and diya glow, which
+        // expect full alpha; leave no fading trail alpha behind for them to inherit.
+        gradientPaint.alpha = 255
+    }
+
+    /** One burst: mock `@keyframes boom` envelope over the pre-built geometry. */
+    private fun drawBoom(canvas: Canvas, boom: LiveBoom, animMs: Long) {
+        val p = (animMs - boom.startMs).toFloat() / boom.fadeMs
+        if (p <= 0f || p >= 1f) return
+        // Pop in fast, hold, then swell slightly as it fades.
+        val scale = when {
+            p < 0.12f -> 0.15f + 0.40f * (p / 0.12f)
+            p < 0.30f -> 0.55f + 0.45f * ((p - 0.12f) / 0.18f)
+            else -> 1f + 0.22f * ((p - 0.30f) / 0.70f)
+        }
+        val alpha = when {
+            p < 0.12f -> p / 0.12f
+            p < 0.30f -> 1f - 0.05f * ((p - 0.12f) / 0.18f)
+            else -> 0.95f * (1f - (p - 0.30f) / 0.70f)
+        }
+        canvas.save()
+        canvas.scale(scale, scale, boom.x, boom.y)
+
+        // Muzzle flash for the first half second (mock: .flash).
+        val flashP = (animMs - boom.startMs).toFloat() / ROCKET_FLASH_MS
+        rocketFlashShader?.takeIf { flashP in 0f..1f }?.let {
+            gradientPaint.shader = it
+            gradientPaint.alpha = ((0.95f * (1f - flashP)) * 255).toInt()
+            val flashScale = 0.2f + 1.4f * flashP
+            canvas.save()
+            canvas.scale(flashScale, flashScale, boom.x, boom.y)
+            canvas.drawCircle(boom.x, boom.y, ROCKET_FLASH_RADIUS_DP, gradientPaint)
+            canvas.restore()
+            gradientPaint.shader = null
+            // Same shared paint: restore full alpha for the strip/diya glow draws.
+            gradientPaint.alpha = 255
+        }
+
+        boom.raysPath?.let {
+            strokePaint.color = boom.rayColor
+            strokePaint.strokeWidth = boom.rayStrokeWidth
+            strokePaint.alpha = (alpha * 255).toInt()
+            canvas.drawPath(it, strokePaint)
+        }
+        if (boom.centreRadius > 0f) {
+            fillPaint.color = boom.centreColor
+            fillPaint.alpha = (alpha * 255).toInt()
+            canvas.drawCircle(boom.x, boom.y, boom.centreRadius, fillPaint)
+        }
+        val twinkleT = animMs / 1000f
+        for (dot in boom.dots) {
+            fillPaint.color = dot.color
+            fillPaint.alpha = (
+                alpha * ThemePackDecor.twinkleAlpha(
+                    ThemePackDecor.phase(twinkleT, BOOM_TWINKLE_PERIOD_S, dot.twinkleDelayS),
+                    )
+                * 255
+                ).toInt()
+            canvas.drawCircle(dot.x, dot.y, dot.radius, fillPaint)
+        }
+        // Willow sparks fall from the tips and fade with their own clock.
+        boom.sparks?.let { sparks ->
+            fillPaint.color = ROCKET_CREAM
+            for (spark in sparks) {
+                val f = ((animMs - boom.startMs).toFloat() / spark.fallMs).coerceIn(0f, 1f)
+                val sparkAlpha = if (f < 0.7f) {
+                    0.95f - 0.25f * (f / 0.7f)
+                } else {
+                    0.70f * (1f - (f - 0.7f) / 0.3f)
+                }
+                fillPaint.alpha = (alpha * sparkAlpha * 255).toInt()
+                canvas.drawCircle(
+                    spark.x + spark.dxFall * f,
+                    spark.y + spark.dyFall * f,
+                    spark.radius,
+                    fillPaint,
+                )
+            }
+        }
+        canvas.restore()
     }
 
     // ---- Christmas ----
@@ -842,6 +1257,42 @@ class HomeDecorView @JvmOverloads constructor(
             )
         }
 
+        // Rockets: cream trail fading tail-wards, warm head glow, muzzle flash. Diwali-only,
+        // like the flame halo: nothing else reads them.
+        if (family == ThemePackDecor.FAMILY_DIWALI) {
+            val creamR = Color.red(ROCKET_CREAM)
+            val creamG = Color.green(ROCKET_CREAM)
+            val creamB = Color.blue(ROCKET_CREAM)
+            rocketTrailShader = LinearGradient(
+                0f, 0f, 0f, ROCKET_TRAIL_LENGTH_DP,
+                ROCKET_CREAM,
+                Color.argb(0, creamR, creamG, creamB),
+                Shader.TileMode.CLAMP,
+            )
+            val accentR = Color.red(accent)
+            val accentG = Color.green(accent)
+            val accentB = Color.blue(accent)
+            rocketGlowShader = RadialGradient(
+                0f, 0f, ROCKET_GLOW_RADIUS_DP,
+                Color.argb((ROCKET_GLOW_ALPHA * 255).toInt(), accentR, accentG, accentB),
+                Color.argb(0, accentR, accentG, accentB),
+                Shader.TileMode.CLAMP,
+            )
+            val flashR = Color.red(ROCKET_FLASH)
+            val flashG = Color.green(ROCKET_FLASH)
+            val flashB = Color.blue(ROCKET_FLASH)
+            rocketFlashShader = RadialGradient(
+                0f, 0f, ROCKET_FLASH_RADIUS_DP,
+                Color.argb((ROCKET_FLASH_ALPHA * 255).toInt(), flashR, flashG, flashB),
+                Color.argb(0, flashR, flashG, flashB),
+                Shader.TileMode.CLAMP,
+            )
+        } else {
+            rocketTrailShader = null
+            rocketGlowShader = null
+            rocketFlashShader = null
+        }
+
         // Rangoli dot arcs: shallow arc shape and twinkle delays, staggered dot by dot.
         // The X centres follow the diya layout and are set in [buildDiyaLayout].
         var dot = 0
@@ -936,6 +1387,41 @@ class HomeDecorView @JvmOverloads constructor(
         private const val RANGOLI_DOT_ALPHA = 0.30f
         private const val RANGOLI_TWINKLE_PERIOD_S = 2.6f
         private const val RANGOLI_TWINKLE_STAGGER_S = 0.5f
+
+        // Diwali rockets (diwali-rockets-mock.html): flight area, timing, trail and bursts.
+        // Positions are fractions of the view in mock-dp; sizes are dp in the mock's space.
+        private const val ROCKET_CREAM = 0xFFFFD9A0.toInt()
+        private const val ROCKET_FLASH = 0xFFFFE9A8.toInt()
+        private const val ROCKET_START_Y_FRACTION = 0.86f
+        private const val ROCKET_MIN_X_FRACTION = 0.35f
+        private const val ROCKET_MAX_X_FRACTION = 0.88f
+        private const val ROCKET_MIN_APEX_FRACTION = 0.12f
+        private const val ROCKET_MAX_APEX_FRACTION = 0.33f
+        private const val ROCKET_RISE_MIN_MS = 1500L
+        private const val ROCKET_RISE_JITTER_MS = 500L
+        private const val ROCKET_STAGGER_MIN_MS = 180L
+        private const val ROCKET_STAGGER_JITTER_MS = 250L
+        private const val ROCKET_TRAIL_WIDTH_DP = 3f
+        private const val ROCKET_TRAIL_LENGTH_DP = 44f
+        private const val ROCKET_GLOW_RADIUS_DP = 5f
+        private const val ROCKET_GLOW_ALPHA = 0.5f
+        private const val ROCKET_BURST_SIZE_DP = 54f
+        private const val BOOM_BOX_UNITS = 60f
+        private const val BOOM_TWINKLE_PERIOD_S = 1.1f
+        private const val ROCKET_FLASH_MS = 500f
+        private const val ROCKET_FLASH_RADIUS_DP = 10f
+        private const val ROCKET_FLASH_ALPHA = 0.95f
+        private const val WILLOW_FALL_MIN_DP = 20f
+        private const val WILLOW_FALL_MAX_DP = 42f
+        private const val WILLOW_DRIFT_DP = 7f
+        private const val WILLOW_FALL_MIN_MS = 1500f
+        private const val WILLOW_FALL_MAX_MS = 2400f
+        private const val ROCKET_PATTERN_COUNT = 5
+        private const val PATTERN_RING = 1
+        private const val PATTERN_WILLOW = 2
+        private const val PATTERN_PALM = 3
+        private const val PATTERN_DOUBLE_RING = 4
+        private const val TWO_PI_F = (2.0 * PI).toFloat()
 
         private const val SNOWFLAKE_COUNT = 8
         private const val SNOW_FALL_BASE_S = 7f

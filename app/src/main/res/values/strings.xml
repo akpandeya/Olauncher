@@ -841,6 +841,7 @@
     <string name="gesture_action_next_track" tools:ignore="MissingTranslation">Next track</string>
     <string name="gesture_action_previous_track" tools:ignore="MissingTranslation">Previous track</string>
     <string name="gesture_action_open_app" tools:ignore="MissingTranslation">Open app</string>
+    <string name="gesture_action_fireworks" tools:ignore="MissingTranslation">Rockets</string>
     <string name="gesture_action_nothing" tools:ignore="MissingTranslation">Nothing</string>
     <string name="gesture_no_torch" tools:ignore="MissingTranslation">No torch on this phone</string>
     <string name="a11y_word_capture_sheet">Save a word</string>
