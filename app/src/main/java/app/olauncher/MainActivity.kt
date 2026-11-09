@@ -39,6 +39,7 @@ import app.olauncher.data.ProfilePermission
 import app.olauncher.data.ProfilePermissionRules
 import app.olauncher.data.ProfilePicker
 import app.olauncher.data.ProfilePickerOption
+import app.olauncher.data.store.GermanWebOutbox
 import app.olauncher.glance.WeatherLocation
 import app.olauncher.glance.WeatherWorker
 import app.olauncher.wellbeing.NotificationPermission
@@ -48,6 +49,7 @@ import app.olauncher.wellbeing.UsageSnapshotWorker
 import app.olauncher.databinding.ActivityMainBinding
 import app.olauncher.helper.AppListReloadPolicy
 import app.olauncher.helper.AppListReloadTrigger
+import app.olauncher.helper.GermanSyncWorker
 import app.olauncher.helper.NewsHarvestWorker
 import app.olauncher.helper.PracticeWorker
 import app.olauncher.databinding.DialogOnboardingDefaultBinding
@@ -181,6 +183,8 @@ class MainActivity : AppCompatActivity() {
         if (prefs.quietEnabled && QuietAccess.isNotificationAccessGranted(this)) {
             ReleaseWorker.schedule(this, ExistingWorkPolicy.KEEP)
         }
+        // Captures queued for the German web app go out once the phone is online (#835).
+        if (GermanWebOutbox(noBackupFilesDir).pendingCount() > 0) GermanSyncWorker.schedule(this)
         if (isEinkDisplay()) prefs.appTheme = AppCompatDelegate.MODE_NIGHT_NO
         AppCompatDelegate.setDefaultNightMode(prefs.appTheme)
         super.onCreate(savedInstanceState)

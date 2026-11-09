@@ -37,4 +37,19 @@ object GermanWebAccountRow {
             GermanWebSessionState.Lapsed ->
                 GermanWebAccountRowText(R.string.german_web_lapsed, emptyList())
         }
+
+    /**
+     * The sync-count lines (task 03) appended to the value line when non-zero:
+     * "· N waiting to sync" while the outbox is non-empty, "· N failed" once
+     * entries were dropped. Both use distinguishing counts, so swapped or
+     * missing lines cannot pass.
+     */
+    fun countLines(waitingCount: Int, failedCount: Int): List<GermanWebAccountRowText> = buildList {
+        if (waitingCount > 0) {
+            add(GermanWebAccountRowText(R.string.german_web_waiting_to_sync, listOf(waitingCount.toString())))
+        }
+        if (failedCount > 0) {
+            add(GermanWebAccountRowText(R.string.german_web_failed_count, listOf(failedCount.toString())))
+        }
+    }
 }
