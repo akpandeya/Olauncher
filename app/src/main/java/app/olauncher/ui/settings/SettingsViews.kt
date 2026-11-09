@@ -116,6 +116,8 @@ internal class SettingsViews(private val frame: FragmentSettingsBinding) {
     val aiPracticeSubtitle: TextView get() = textView(R.id.aiPracticeSubtitle)
     val aiPracticeActionKey: TextView get() = textView(R.id.aiPracticeActionKey)
     val aiPracticeActionMore: TextView get() = textView(R.id.aiPracticeActionMore)
+    val askAiConversations: TextView get() = textView(R.id.askAiConversations)
+    val askAiConversationsLayout: ViewGroup get() = viewGroup(R.id.askAiConversationsLayout)
     val newsSentencesLayout: ViewGroup get() = viewGroup(R.id.newsSentencesLayout)
     val newsSentencesOnOff: TextView get() = textView(R.id.newsSentencesOnOff)
     val newsSentencesActions: ViewGroup get() = viewGroup(R.id.newsSentencesActions)

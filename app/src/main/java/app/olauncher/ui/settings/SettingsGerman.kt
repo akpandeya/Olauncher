@@ -49,6 +49,7 @@ import app.olauncher.helper.DrawerScrollHelper
 import app.olauncher.helper.DictionaryApps
 import app.olauncher.helper.GermanDueRefreshWorker
 import app.olauncher.helper.GermanSyncWorker
+import app.olauncher.helper.Haptics
 import app.olauncher.helper.MusicPulse
 import app.olauncher.helper.HandSide
 import app.olauncher.helper.HomeSet
@@ -86,7 +87,9 @@ import app.olauncher.data.store.AutoBackupStatus
 import app.olauncher.data.store.AutoBackupWorker
 import app.olauncher.data.store.Backup
 import app.olauncher.data.store.BackupData
+import app.olauncher.data.store.AiChatStore
 import app.olauncher.data.store.WordLookup
+import app.olauncher.ui.words.AskAiEntryPoints
 import app.olauncher.BuildConfig
 import app.olauncher.MainViewModel
 import app.olauncher.R
@@ -294,6 +297,23 @@ internal fun SettingsFragment.toggleNewsSentences() {
     populateGerman()
 }
 
+/**
+ * The Ask-AI conversations row (#835, task 06): the all-conversations list's
+ * re-homed entry after the Words screen was removed. The row shows while the
+ * chat gate is open ([AskAiEntryPoints.environment], the same condition the
+ * Words header button used); a tap navigates to the list.
+ */
+internal fun SettingsFragment.openAskAiConversations(view: View) {
+    // Hidden, never greyed: a stale tap on a row the gate has since closed
+    // navigates nowhere instead of opening a screen that pops right back.
+    if (!AskAiEntryPoints.environment(requireContext()).visible) return
+    Haptics.tick(view)
+    val navController = findNavController()
+    if (navController.currentDestination?.id == R.id.settingsFragment) {
+        navController.navigate(R.id.action_settingsFragment_to_askAiConversationsFragment)
+    }
+}
+
 internal fun SettingsFragment.populateAiPractice() {
     binding.aiPracticeOnOff.text = getString(if (prefs.aiPracticeEnabled) R.string.on else R.string.off)
     // #794: the trailing chip leads with the key state — "Add API key" until one is
@@ -392,8 +412,8 @@ internal fun SettingsFragment.fetchNewsSentencesNow() {
 
 /**
  * Toasts what the manual harvest fetched once its work finishes — every "fetch now"
- * work of the unique name is terminal, the same wait the word lookup refresh uses
- * (WordDialogs). When KEEP kept an already-pending run, that is the run whose finish
+ * work of the unique name is terminal, the same wait the word lookup refresh uses.
+ * When KEEP kept an already-pending run, that is the run whose finish
  * this waits for.
  */
 private fun SettingsFragment.toastNewsFetchResult(
@@ -876,6 +896,12 @@ internal fun SettingsFragment.populateGerman() {
     binding.germanUiOnOff.text = getString(if (prefs.germanUi) R.string.on else R.string.off)
     binding.aiPracticeLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
     populateAiPractice()
+    // The Ask-AI conversations row (#835, task 06): the same gate as every chat
+    // entry — hidden, never greyed, when the practice switch is off or the key is
+    // missing. The value line says how many conversations exist.
+    binding.askAiConversationsLayout.visibility =
+        if (prefs.germanEnabled && AskAiEntryPoints.environment(requireContext()).visible) View.VISIBLE else View.GONE
+    binding.askAiConversations.text = AiChatStore(requireContext()).threads().size.toString()
     binding.newsSentencesLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
     binding.newsSentencesOnOff.text = getString(if (prefs.newsSentencesEnabled) R.string.on else R.string.off)
     // #794: the trailing "Fetch now" chip shows only while the feature runs; the row

@@ -23,6 +23,9 @@
     <item name="aiPracticeSubtitle" type="id" />
     <item name="aiPracticeTest" type="id" />
     <item name="aiPracticeTitle" type="id" />
+    <item name="askAiConversations" type="id" />
+    <item name="askAiConversationsLayout" type="id" />
+    <item name="askAiConversationsTitle" type="id" />
     <item name="alignment" type="id" />
     <item name="appThemeText" type="id" />
     <item name="appearanceSection" type="id" />

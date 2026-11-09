@@ -199,6 +199,9 @@ private fun SettingsFragment.handleGermanBackupFooterClick(view: View): Boolean 
         R.id.aiPracticeActionKey ->
             if (KeyVault(requireContext()).isSet()) generateAiPracticeNow() else showAiKeyDialog()
         R.id.aiPracticeActionMore -> showAiPracticeMenu(view)
+        // The Ask-AI conversations row (#835, task 06): the chat gate is
+        // re-checked on tap, so a stale shown row navigates nowhere.
+        R.id.askAiConversations, R.id.askAiConversationsTitle, R.id.askAiConversationsLayout -> openAskAiConversations(view)
         R.id.newsSentencesOnOff, R.id.newsSentencesTitle, R.id.newsSentencesSubtitle, R.id.newsSentencesLayout -> tickOnChange(view) { toggleNewsSentences() }
         R.id.newsSentencesFetchNow -> fetchNewsSentencesNow()
         // The web-account row (#835): the tap depends on the session state

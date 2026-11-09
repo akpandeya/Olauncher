@@ -16,6 +16,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
 import androidx.navigation.fragment.findNavController
 import app.olauncher.R
+import app.olauncher.data.store.WordsStore
 import app.olauncher.databinding.FragmentNoteViewBinding
 import app.olauncher.databinding.ItemNoteViewItemBinding
 import app.olauncher.helper.Haptics
@@ -32,7 +33,6 @@ import app.olauncher.helper.showToast
 import app.olauncher.ui.BaseFragment
 import app.olauncher.ui.today.ImeInset
 import app.olauncher.ui.today.cards.NotesCard
-import app.olauncher.ui.today.cards.WordsCard
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -183,7 +183,7 @@ class NoteViewFragment : BaseFragment() {
 
     private fun showMoveDialog() {
         val context = requireContext()
-        val lists = WordsCard.getStore(context).lists()
+        val lists = WordsStore(context).lists()
         if (lists.isEmpty()) return context.showToast(getString(R.string.note_view_no_lists))
         val note = store.get(noteId) ?: return
         val labels = listOf<CharSequence>(getString(R.string.note_view_move_none)) + lists.map { it.name }
@@ -260,7 +260,7 @@ class NoteViewFragment : BaseFragment() {
 
     private fun renderListChips(b: FragmentNoteViewBinding, note: Note) {
         val context = requireContext()
-        val lists = WordsCard.getStore(context).lists()
+        val lists = WordsStore(context).lists()
         b.viewListChips.removeAllViews()
         b.viewListChips.isVisible = lists.isNotEmpty()
         for (list in lists) {

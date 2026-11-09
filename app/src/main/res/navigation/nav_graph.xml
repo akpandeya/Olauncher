@@ -86,6 +86,16 @@
             app:exitAnim="@animator/fade_exit"
             app:popEnterAnim="@animator/fade_enter"
             app:popExitAnim="@animator/fade_exit" />
+        <!-- The Ask-AI conversations row (#835, task 06): the re-homed list entry
+             after the Words screen was removed; every other entry goes through
+             [AskAiEntryPoints.open] and action_global_aiChatFragment. -->
+        <action
+            android:id="@+id/action_settingsFragment_to_askAiConversationsFragment"
+            app:destination="@id/askAiConversationsFragment"
+            app:enterAnim="@animator/fade_enter"
+            app:exitAnim="@animator/fade_exit"
+            app:popEnterAnim="@animator/fade_enter"
+            app:popExitAnim="@animator/fade_exit" />
     </fragment>
 
     <fragment
@@ -120,27 +130,6 @@
         android:label="TodayFragment"
         tools:layout="@layout/fragment_today">
         <action
-            android:id="@+id/action_todayFragment_to_wordsFragment"
-            app:destination="@id/wordsFragment"
-            app:enterAnim="@animator/fade_enter"
-            app:exitAnim="@animator/fade_exit"
-            app:popEnterAnim="@animator/fade_enter"
-            app:popExitAnim="@animator/fade_exit" />
-        <action
-            android:id="@+id/action_todayFragment_to_wordListsFragment"
-            app:destination="@id/wordListsFragment"
-            app:enterAnim="@animator/fade_enter"
-            app:exitAnim="@animator/fade_exit"
-            app:popEnterAnim="@animator/fade_enter"
-            app:popExitAnim="@animator/fade_exit" />
-        <action
-            android:id="@+id/action_todayFragment_to_reviewFragment"
-            app:destination="@id/reviewFragment"
-            app:enterAnim="@animator/fade_enter"
-            app:exitAnim="@animator/fade_exit"
-            app:popEnterAnim="@animator/fade_enter"
-            app:popExitAnim="@animator/fade_exit" />
-        <action
             android:id="@+id/action_todayFragment_to_appListFragment"
             app:destination="@id/appListFragment"
             app:enterAnim="@animator/drawer_enter"
@@ -173,90 +162,6 @@
         android:name="app.olauncher.ui.notes.NoteViewFragment"
         android:label="NoteViewFragment"
         tools:layout="@layout/fragment_note_view" />
-
-    <fragment
-        android:id="@+id/wordsFragment"
-        android:name="app.olauncher.ui.words.WordsFragment"
-        android:label="WordsFragment"
-        tools:layout="@layout/fragment_words">
-        <action
-            android:id="@+id/action_wordsFragment_to_reviewFragment"
-            app:destination="@id/reviewFragment"
-            app:enterAnim="@animator/fade_enter"
-            app:exitAnim="@animator/fade_exit"
-            app:popEnterAnim="@animator/fade_enter"
-            app:popExitAnim="@animator/fade_exit" />
-        <action
-            android:id="@+id/action_wordsFragment_to_wordListsFragment"
-            app:destination="@id/wordListsFragment"
-            app:enterAnim="@animator/fade_enter"
-            app:exitAnim="@animator/fade_exit"
-            app:popEnterAnim="@animator/fade_enter"
-            app:popExitAnim="@animator/fade_exit" />
-        <action
-            android:id="@+id/action_wordsFragment_to_askAiConversationsFragment"
-            app:destination="@id/askAiConversationsFragment"
-            app:enterAnim="@animator/fade_enter"
-            app:exitAnim="@animator/fade_exit"
-            app:popEnterAnim="@animator/fade_enter"
-            app:popExitAnim="@animator/fade_exit" />
-    </fragment>
-
-    <fragment
-        android:id="@+id/wordListsFragment"
-        android:name="app.olauncher.ui.words.WordListsFragment"
-        android:label="WordListsFragment"
-        tools:layout="@layout/fragment_word_lists">
-        <action
-            android:id="@+id/action_wordListsFragment_to_wordListFragment"
-            app:destination="@id/wordListFragment"
-            app:enterAnim="@animator/fade_enter"
-            app:exitAnim="@animator/fade_exit"
-            app:popEnterAnim="@animator/fade_enter"
-            app:popExitAnim="@animator/fade_exit" />
-        <action
-            android:id="@+id/action_wordListsFragment_to_wordsFragment"
-            app:destination="@id/wordsFragment"
-            app:enterAnim="@animator/fade_enter"
-            app:exitAnim="@animator/fade_exit"
-            app:popEnterAnim="@animator/fade_enter"
-            app:popExitAnim="@animator/fade_exit"
-            app:popUpTo="@id/wordsFragment"
-            app:popUpToInclusive="true" />
-    </fragment>
-
-    <fragment
-        android:id="@+id/wordListFragment"
-        android:name="app.olauncher.ui.words.WordListFragment"
-        android:label="WordListFragment"
-        tools:layout="@layout/fragment_word_list">
-        <argument
-            android:name="listId"
-            app:argType="string"
-            app:nullable="true"
-            android:defaultValue="@null" />
-        <argument
-            android:name="sourceBucket"
-            app:argType="string"
-            app:nullable="true"
-            android:defaultValue="@null" />
-    </fragment>
-
-    <fragment
-        android:id="@+id/reviewFragment"
-        android:name="app.olauncher.ui.words.ReviewFragment"
-        android:label="ReviewFragment"
-        tools:layout="@layout/fragment_review">
-        <action
-            android:id="@+id/action_reviewFragment_to_wordsFragment"
-            app:destination="@id/wordsFragment"
-            app:enterAnim="@animator/fade_enter"
-            app:exitAnim="@animator/fade_exit"
-            app:popEnterAnim="@animator/fade_enter"
-            app:popExitAnim="@animator/fade_exit"
-            app:popUpTo="@id/reviewFragment"
-            app:popUpToInclusive="true" />
-    </fragment>
 
     <fragment
         android:id="@+id/privacyFragment"

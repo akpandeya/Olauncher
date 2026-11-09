@@ -9,7 +9,6 @@ import app.olauncher.ui.today.cards.SavedCard
 import app.olauncher.ui.today.cards.WeatherCard
 import app.olauncher.ui.today.TodayOrder
 import app.olauncher.ui.today.cards.WellbeingCard
-import app.olauncher.ui.today.cards.WordsCard
 import org.json.JSONArray
 import org.json.JSONException
 import org.json.JSONObject
@@ -164,9 +163,13 @@ data class ProfileSettings(
          *  app), but stored profiles may still list it, so it stays a known key. */
         private const val LEGACY_DRILLS_CARD_KEY = "drills"
 
+        /** The words card's key. The card itself is gone (its screens moved to the web
+         *  app, #835 task 06), but stored profiles may still list it, so it stays a known key. */
+        private const val LEGACY_WORDS_CARD_KEY = "words"
+
         val KNOWN_CARDS: List<String> = listOf(
             WeatherCard.KEY, NextUpCard.KEY, SavedCard.KEY, HeldCard.KEY,
-            WellbeingCard.KEY, WordsCard.KEY, NotesCard.KEY, LEGACY_DRILLS_CARD_KEY,
+            WellbeingCard.KEY, NotesCard.KEY, LEGACY_DRILLS_CARD_KEY, LEGACY_WORDS_CARD_KEY,
         )
 
         private const val F_HOME_APPS_COUNT = "homeAppsCount"

@@ -23,7 +23,6 @@ import app.olauncher.helper.OlDialog
 import app.olauncher.helper.createDialog
 import app.olauncher.helper.showMessageDialog
 import app.olauncher.helper.showPopupMenu
-import app.olauncher.ui.today.cards.WordsCardLogic
 import app.olauncher.ui.words.NounArticle
 
 class WordReveal(
@@ -118,9 +117,9 @@ class WordReveal(
             }
         }
         binding.tvMeaning.text = if (promptOverride != null) {
-            revealMeaningWithAnswer(answerOverride, WordsCardLogic.formatMeaning(context, word.meaning, word.meaningSource))
+            revealMeaningWithAnswer(answerOverride, formatMeaning(context, word.meaning, word.meaningSource))
         } else {
-            WordsCardLogic.formatMeaning(context, word.meaning, word.meaningSource)
+            formatMeaning(context, word.meaning, word.meaningSource)
         }
         binding.tvContext.text = word.context
         setRevealed(keepReveal)
@@ -193,6 +192,22 @@ class WordReveal(
         ) {
             onWordDeleted?.invoke(word)
         }
+    }
+}
+
+/**
+ * The meaning line of a saved word (from the removed Words card, its last
+ * remaining caller): the stored meaning, or "No meaning yet" when blank, and a
+ * Wiktionary source suffix on Wiktionary-fetched meanings.
+ */
+internal fun formatMeaning(context: Context, meaning: String, meaningSource: String): String {
+    if (meaning.isBlank()) {
+        return context.getString(R.string.word_row_no_meaning_yet)
+    }
+    return if (meaningSource.equals("wiktionary", ignoreCase = true)) {
+        "$meaning${context.getString(R.string.words_wiktionary_suffix)}"
+    } else {
+        meaning
     }
 }
 

@@ -29,6 +29,7 @@ object SettingsRowAvailability {
         R.id.germanWebAccount,
         R.id.germanWebProgress,
         R.id.aiPracticeOnOff,
+        R.id.askAiConversations,
         R.id.newsSentencesOnOff,
     )
 

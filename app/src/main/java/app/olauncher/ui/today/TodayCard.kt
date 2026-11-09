@@ -18,7 +18,6 @@ import app.olauncher.ui.today.cards.NotesCard
 import app.olauncher.ui.today.cards.SavedCard
 import app.olauncher.ui.today.cards.WeatherCard
 import app.olauncher.ui.today.cards.WellbeingCard
-import app.olauncher.ui.today.cards.WordsCard
 
 /**
  * Shrinks the view slightly on press and restores to full size on release or cancel.
@@ -112,5 +111,5 @@ interface TodayCard {
 }
 
 object TodayCards {
-    val all: List<TodayCard> = listOf(WeatherCard, WordsCard, GermanWebCard, NotesCard, WellbeingCard, SavedCard, NextUpCard, HeldCard)
+    val all: List<TodayCard> = listOf(WeatherCard, GermanWebCard, NotesCard, WellbeingCard, SavedCard, NextUpCard, HeldCard)
 }

@@ -160,6 +160,9 @@ class SettingsSectionsResourceTest {
             ) -
             setOf(
                 "germanWebProgress", "germanWebProgressLayout", "germanWebProgressTitle",
+            ) -
+            setOf(
+                "askAiConversations", "askAiConversationsLayout", "askAiConversationsTitle",
             )
         assertTrue("Ids added to Settings: $added", added.isEmpty())
     }

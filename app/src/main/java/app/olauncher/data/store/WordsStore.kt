@@ -548,9 +548,10 @@ class WordsStore(
     companion object {
         /**
          * One lock for every instance: the app builds a new WordsStore per call site
-         * (WordsCard.getStore, the workers, the dialogs), so an instance-level monitor
-         * would not stop a review's load-modify-save from interleaving with a rewrite's
-         * and losing the box/dueDay change (same idea as PracticeItemsStore).
+         * (the workers, the capture and lookup activities, the settings screens), so
+         * an instance-level monitor would not stop a review's load-modify-save from
+         * interleaving with a rewrite's and losing the box/dueDay change (same idea
+         * as PracticeItemsStore).
          */
         private val LOCK = Any()
     }

@@ -9,6 +9,7 @@ import androidx.core.view.isVisible
 import androidx.navigation.fragment.findNavController
 import app.olauncher.R
 import app.olauncher.data.store.AiChatStore
+import app.olauncher.data.store.WordsStore
 import app.olauncher.databinding.FragmentAskAiConversationsBinding
 import app.olauncher.databinding.ItemAskAiConversationBinding
 import app.olauncher.helper.Haptics
@@ -16,7 +17,6 @@ import app.olauncher.helper.getColorFromAttr
 import app.olauncher.ui.BaseFragment
 import app.olauncher.ui.askai.AiChatUiLogic
 import app.olauncher.ui.askai.AskAiEntries
-import app.olauncher.ui.today.cards.WordsCard
 
 /**
  * The all-conversations list (#793, docs/design/german-hidden-surfaces.md §4.2,
@@ -25,10 +25,11 @@ import app.olauncher.ui.today.cards.WordsCard
  * and a one-line preview of the last message. A row tap resumes that thread in
  * [AiChatFragment]; the "＋ New conversation" pill starts a fresh one for the
  * newest thread's subject (the list itself has no single subject to reuse — the
- * thread sheet's button reuses its sheet's). Reached from the Chats button in
- * the Words screen header — the on-demand entry the Ask-AI
- * design lacked. All ordering and labelling decisions live in [AskAiEntries]
- * (Context-free, JVM tested); this fragment only reads the store and navigates.
+ * thread sheet's button reuses its sheet's). Reached from the "Ask AI
+ * conversations" row of the German settings section — its list entry after the
+ * Words screen was removed (#835, task 06). All ordering and labelling
+ * decisions live in [AskAiEntries] (Context-free, JVM tested); this fragment
+ * only reads the store and navigates.
  */
 class AskAiConversationsFragment : BaseFragment() {
 
@@ -55,9 +56,9 @@ class AskAiConversationsFragment : BaseFragment() {
         val context = context ?: return
 
         // The same gate as every chat entry ([AskAiEntries.visible] via
-        // [AskAiEntryPoints.environment]): hidden, never greyed. The Words
-        // header button is already gated, so this only guards a stale screen —
-        // the key was removed or the switch turned off while it sat in back stack.
+        // [AskAiEntryPoints.environment]): hidden, never greyed. The settings row
+        // is already gated, so this only guards a stale screen — the key was
+        // removed or the switch turned off while it sat in back stack.
         if (!AskAiEntryPoints.environment(context).visible) {
             findNavController().popBackStack()
             return
@@ -65,7 +66,7 @@ class AskAiConversationsFragment : BaseFragment() {
 
         val threads = AiChatStore(context).threads()
         val rows = AskAiEntries.conversationRows(threads)
-        val savedWords = WordsCard.getStore(context).all()
+        val savedWords = WordsStore(context).all()
 
         b.tvCount.text = rows.size.toString()
         b.conversationsList.isVisible = rows.isNotEmpty()
