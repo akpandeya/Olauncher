@@ -1,0 +1,739 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson flow mock — L14 (course · read · drill · done)</title>
+<style>
+  /* =========================================================
+     Tokens mirrored from docs/design/drills-round-mock.html
+     (app tokens: todayScrim/Panel/Tile/Chip, ink, accents) plus
+     the three gender hues defined in docs/design/drill-help-card.md §4.
+     System font stack only — no remote assets.
+     ========================================================= */
+  :root {
+    --page: #dfe1e6;
+    --scrim: #f0f1f4;
+    --panel: rgba(0, 0, 0, .06);
+    --tile: #fafafc;
+    --tile-stroke: rgba(0, 0, 0, .08);
+    --chip: rgba(0, 0, 0, .12);
+    --ink: rgba(0, 0, 0, .87);
+    --ink-muted: rgba(0, 0, 0, .7);
+    --sage: #4d6653;
+    --sage-soft: rgba(77, 102, 83, .14);
+    --rose: #82444e;
+    --rose-soft: rgba(130, 68, 78, .12);
+    --sand: #765b3b;
+    --gm: #2F5D8A;   /* gender masculine */
+    --gf: #A23B3B;   /* gender feminine */
+    --gn: #2F6B45;   /* gender neuter */
+  }
+  :root[data-theme="dark"] {
+    --page: #0c0d10;
+    --scrim: #16171a;
+    --panel: rgba(255, 255, 255, .07);
+    --tile: rgba(255, 255, 255, .16);
+    --tile-stroke: rgba(255, 255, 255, .12);
+    --chip: rgba(255, 255, 255, .14);
+    --ink: rgba(255, 255, 255, .92);
+    --ink-muted: rgba(255, 255, 255, .70);
+    --sage: #9caf88;
+    --sage-soft: rgba(156, 175, 136, .18);
+    --rose: #de9fa7;
+    --rose-soft: rgba(222, 159, 167, .14);
+    --sand: #d4c4a8;
+    --gm: #8FB3DC;
+    --gf: #EC948A;
+    --gn: #8CC79A;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page: #0c0d10;
+      --scrim: #16171a;
+      --panel: rgba(255, 255, 255, .07);
+      --tile: rgba(255, 255, 255, .16);
+      --tile-stroke: rgba(255, 255, 255, .12);
+      --chip: rgba(255, 255, 255, .14);
+      --ink: rgba(255, 255, 255, .92);
+      --ink-muted: rgba(255, 255, 255, .70);
+      --sage: #9caf88;
+      --sage-soft: rgba(156, 175, 136, .18);
+      --rose: #de9fa7;
+      --rose-soft: rgba(222, 159, 167, .14);
+      --sand: #d4c4a8;
+      --gm: #8FB3DC;
+      --gf: #EC948A;
+      --gn: #8CC79A;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 28px 16px 60px;
+    background: var(--page); color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; }
+
+  .pagehead h1 { font-size: 18px; font-weight: 700; margin: 0 0 4px; }
+  .pagehead p { margin: 0 0 10px; font-size: 13px; line-height: 1.55; color: var(--ink-muted); }
+  .pagehead b { color: var(--ink); }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 20px; }
+  .controls .spacer { flex: 1; }
+  a.pill, button.pill {
+    font: 600 12px/1 system-ui, sans-serif; color: var(--ink-muted); text-decoration: none;
+    background: var(--panel); border: 1px solid var(--tile-stroke);
+    padding: 8px 12px; border-radius: 999px; cursor: pointer; min-height: 32px; display: inline-block;
+  }
+  button.pill.on { background: var(--ink); color: var(--scrim); border-color: var(--ink); }
+  a.pill:hover, button.pill:hover { color: var(--ink); }
+
+  .section { margin-bottom: 30px; }
+  .section-label {
+    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+    border-bottom: 1px solid var(--tile-stroke); padding-bottom: 8px; margin-bottom: 14px;
+  }
+  .section-label h2 { margin: 0; font-size: 15px; font-weight: 700; }
+  .section-label span { font-size: 12px; color: var(--ink-muted); }
+
+  .phones { display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start; }
+  .phone-slot { max-width: 100%; }
+  .phone-slot figcaption { font-size: 12px; font-weight: 600; color: var(--ink-muted); margin: 0 0 8px; }
+
+  /* ---------- phone frame (matches drills-round-mock) ---------- */
+  .phone {
+    width: 390px; max-width: 100%; height: 760px; margin: 0 auto;
+    background: var(--scrim); border-radius: 28px;
+    border: 1px solid var(--tile-stroke);
+    padding: 52px 24px 20px; position: relative; overflow: hidden;
+    display: flex; flex-direction: column;
+  }
+  .pin { position: absolute; top: 18px; left: 24px; right: 24px; }
+  .pin .notch { width: 86px; height: 5px; border-radius: 4px; background: var(--chip); margin: 0 auto; }
+  .body-lock { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+  .scrolly { flex: 1; overflow-y: auto; min-height: 0; display: flex; flex-direction: column; gap: 10px; padding: 2px 2px 8px; }
+
+  /* course-screen header: expanded + minimized */
+  .chead { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+  .chead .title { font-size: 14px; font-weight: 600; letter-spacing: .02em; }
+  .chead .chev { font-size: 12px; color: var(--ink-muted); cursor: pointer; }
+  .cbar { height: 5px; border-radius: 4px; background: var(--chip); position: relative; overflow: hidden; }
+  .cbar i { position: absolute; inset: 0 auto 0 0; border-radius: 4px; background: var(--sage); }
+  .cmeta { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-top: 5px; }
+  .cmeta .line { font-size: 12.5px; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+  .cmeta .unit { font-size: 12.5px; color: var(--ink); font-weight: 600; }
+  .chead-min { display: flex; align-items: center; gap: 10px; }
+  .chead-min .cbar { flex: 1; }
+  .chead-min .l { font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* next-up card */
+  .nextup { background: var(--panel); border-radius: 20px; padding: 16px 16px 14px; }
+  .kicker { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-muted); }
+  .nextup .title { font-size: 19px; font-weight: 700; margin: 5px 0 2px; letter-spacing: -.01em; }
+  .nextup .sub { font-size: 13px; color: var(--ink-muted); margin: 0 0 10px; }
+  .mini { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+  .mchip {
+    font-size: 11px; font-weight: 600; letter-spacing: .04em;
+    background: var(--chip); border-radius: 999px; padding: 4px 10px; color: var(--ink-muted);
+  }
+  .mchip.lvl { color: var(--ink); }
+
+  .btn {
+    min-height: 48px; width: 100%; border-radius: 999px; border: 1px solid var(--tile-stroke);
+    background: var(--tile); color: var(--ink); cursor: pointer;
+    font: 600 15px system-ui, sans-serif; padding: 12px 18px;
+  }
+  .btn.primary { background: var(--ink); color: var(--scrim); border-color: var(--ink); }
+  .btn.quiet { background: transparent; color: var(--ink-muted); border-color: transparent; }
+
+  /* unit list */
+  .units { display: flex; flex-direction: column; gap: 6px; }
+  .u-row {
+    display: flex; align-items: center; gap: 10px; min-height: 44px;
+    background: var(--panel); border-radius: 12px; padding: 8px 12px;
+  }
+  .u-row .mark { flex: none; width: 18px; text-align: center; font-weight: 700; }
+  .u-row.done .mark { color: var(--sage); }
+  .u-row.now .mark { color: var(--ink); }
+  .u-row .t { flex: 1; min-width: 0; }
+  .u-row .t .n { font-size: 14px; font-weight: 600; }
+  .u-row .t .d { font-size: 11.5px; color: var(--ink-muted); margin-top: 1px; }
+  .u-row .notches { display: flex; gap: 3px; flex: none; }
+  .u-row .notches i { width: 9px; height: 5px; border-radius: 2px; background: var(--chip); }
+  .u-row .notches i.f { background: var(--sage); }
+  .u-row .frac { font-size: 11.5px; color: var(--ink-muted); font-variant-numeric: tabular-nums; flex: none; }
+  .u-sub { display: flex; flex-direction: column; gap: 5px; margin: 0 0 0 28px; }
+  .u-sub .l-row {
+    display: flex; align-items: center; gap: 8px; min-height: 34px;
+    border-radius: 10px; padding: 4px 10px; font-size: 13px;
+  }
+  .l-row .mark { flex: none; width: 16px; text-align: center; font-weight: 700; }
+  .l-row.done .mark { color: var(--sage); }
+  .l-row.now { background: var(--sage-soft); }
+  .l-row.now .mark { color: var(--ink); }
+  .l-row .score {
+    flex: none; font-size: 11px; font-weight: 600; color: var(--sage);
+    background: var(--sage-soft); border-radius: 999px; padding: 3px 8px;
+  }
+  .l-row .tag {
+    flex: none; margin-left: auto; font-size: 10.5px; font-weight: 600; letter-spacing: .04em;
+    color: var(--ink-muted); background: var(--chip); border-radius: 999px; padding: 3px 8px;
+  }
+  .l-row .tag.review { color: var(--sand); background: var(--sage-soft); }
+  .u-summarized .t .d { font-style: normal; }
+
+  /* read page */
+  .lhead-title { font-size: 17px; font-weight: 700; margin-top: 8px; }
+  .lhead-sub { font-size: 12px; color: var(--ink-muted); margin: 2px 0 0; }
+  .outline { display: flex; flex-wrap: wrap; gap: 5px; }
+  .outline .o-chip {
+    font-size: 11px; font-weight: 600; letter-spacing: .03em;
+    background: var(--chip); border-radius: 999px; padding: 5px 9px; color: var(--ink-muted);
+  }
+  .outline .o-chip b { font-weight: 700; color: var(--ink); }
+  .rulecard { background: var(--panel); border-radius: 14px; padding: 13px 14px; }
+  .rulecard .rc-head { display: flex; gap: 8px; align-items: baseline; justify-content: space-between; flex-wrap: wrap; }
+  .rulecard .rc-name { font-size: 14px; font-weight: 700; }
+  .rulecard .rc-id { font-size: 10.5px; color: var(--ink-muted); font-family: ui-monospace, Menlo, monospace; }
+  .rulecard .rc-rule { font-size: 13px; line-height: 1.5; color: var(--ink); margin: 7px 0 9px; }
+  .rulecard .rc-note { font-size: 11.5px; line-height: 1.45; color: var(--ink-muted); margin: 8px 0 0; }
+  .ex { font-size: 13px; line-height: 1.6; margin: 8px 0 0; color: var(--ink); }
+  .gm { color: var(--gm); } .gf { color: var(--gf); } .gn { color: var(--gn); }
+  .legend { font-size: 11.5px; color: var(--ink-muted); background: var(--panel); border-radius: 12px; padding: 9px 12px; line-height: 1.5; }
+  .legend .sw { font-weight: 700; }
+
+  table.ft { border-collapse: collapse; width: 100%; margin: 4px 0 0; font-size: 13px; }
+  table.ft th, table.ft td {
+    border: 1px solid var(--tile-stroke); padding: 5px 8px; text-align: center; font-weight: 500;
+  }
+  table.ft th { color: var(--ink-muted); font-size: 11.5px; font-weight: 600; letter-spacing: .03em; background: var(--chip); }
+  table.ft td.case { color: var(--ink-muted); font-size: 11.5px; width: 64px; }
+  table.ft tr.hi td { background: var(--chip); }
+  table.ft tr.hi td.art { font-weight: 700; }
+  table.ft tr.hi td.case { color: var(--ink); font-weight: 700; }
+  table.ft td .u { text-decoration: underline; text-underline-offset: 2px; font-weight: 700; }
+
+  .readbtn-slot { padding-top: 10px; }
+
+  /* drill state */
+  .drillhead { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .drillhead .title { font-size: 14px; font-weight: 600; letter-spacing: .02em; }
+  .drillhead .prog { font-size: 13px; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+  .segments { display: flex; gap: 4px; margin-top: 10px; height: 5px; }
+  .segments i { flex: 1; border-radius: 4px; background: var(--chip); }
+  .segments i.done { background: var(--sage); }
+  .segments i.now { background: var(--ink); }
+  .format-chip { display: inline-block; margin-top: 8px; font-size: 11px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-muted); background: var(--chip); border-radius: 999px; padding: 4px 10px; }
+  .d-stage { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; gap: 10px; min-height: 0; padding: 12px 0; }
+  .helpslot { background: var(--panel); border-radius: 18px; padding: 14px 15px; max-height: 40%; overflow-y: auto; }
+  .helpslot .hs-top { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+  .helpslot .why {
+    margin-left: auto; font-size: 12px; font-weight: 600; cursor: pointer;
+    background: var(--tile); border: 1px solid var(--tile-stroke); border-radius: 999px; padding: 6px 12px; color: var(--ink);
+  }
+  .helpslot .hrule { font-size: 13px; line-height: 1.5; color: var(--ink); margin: 0 0 8px; }
+  .missline { display: flex; gap: 8px; align-items: flex-start; margin-top: 10px; font-size: 13px; line-height: 1.45; }
+  .missline .x { color: var(--rose); font-weight: 700; flex: none; }
+  .prompt { font-size: 27px; font-weight: 700; text-align: center; letter-spacing: -.01em; margin: 4px 0 0; }
+  .prompt .gap { border-bottom: 2px solid var(--ink-muted); padding: 0 14px; }
+  .tiles { display: flex; gap: 8px; }
+  .tile {
+    flex: 1; min-height: 56px; display: flex; align-items: center; justify-content: center;
+    background: var(--tile); border: 1px solid var(--tile-stroke);
+    border-radius: 12px; padding: 10px 4px; font-size: 16px; font-weight: 600; color: var(--ink);
+  }
+  .tile.wrong { background: var(--rose-soft); border-color: var(--rose); color: var(--rose); }
+
+  /* completion summary */
+  .counts { display: flex; gap: 14px; justify-content: center; font-size: 14px; font-weight: 600; }
+  .counts .sage { color: var(--sage); } .counts .rose { color: var(--rose); }
+  .srow {
+    display: flex; gap: 10px; align-items: flex-start; min-height: 44px;
+    background: var(--panel); border-radius: 12px; padding: 9px 12px; font-size: 13.5px; line-height: 1.45;
+  }
+  .srow .mark { flex: none; width: 18px; text-align: center; font-weight: 700; margin-top: 1px; }
+  .srow.ok .mark { color: var(--sage); } .srow.miss .mark { color: var(--rose); }
+  .srow .ans { color: var(--ink-muted); }
+  .srow .hintline { display: block; margin-top: 3px; font-size: 12.5px; color: var(--rose); }
+  .done-at { font-size: 11px; color: var(--ink-muted); text-align: center; padding-top: 4px; }
+
+  .footnote { font-size: 11px; color: var(--ink-muted); text-align: center; padding-top: 6px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="pagehead">
+    <h1>Lesson flow mock — German course lesson L14</h1>
+    <p>Static mock of the course flow around lesson <b>L14 — Artikel: definit, indefinit, kein Artikel</b>,
+    per <b>course-screen.md</b>, the <b>L14 lesson spec</b> and <b>drill-help-card.md</b>. Four states are laid out
+    as separate labelled sections (works with JavaScript off); the pill top right only toggles light/dark.
+    No screen work yet — this illustrates the course-screen draft's behaviour rules:
+    next-up advances in place, no scrolling needed, collapsible header, ✓/▶/blank progress marks.</p>
+  </div>
+
+  <div class="controls">
+    <a class="pill" href="#sec-course">1 · Course screen</a>
+    <a class="pill" href="#sec-read">2 · Lesson read page</a>
+    <a class="pill" href="#sec-drill">3 · Drill round</a>
+    <a class="pill" href="#sec-done">4 · Completion</a>
+    <span class="spacer"></span>
+    <button class="pill" id="themeBtn">Theme: auto</button>
+  </div>
+
+  <!-- ============================================================
+       1 · COURSE SCREEN — two header states side by side
+       ============================================================ -->
+  <div class="section" id="sec-course">
+    <div class="section-label">
+      <h2>1 · Course screen — expanded and minimized header, next-up card, collapsed unit list</h2>
+      <span>course-screen.md: "The daily loop needs no scrolling"</span>
+    </div>
+    <div class="phones">
+
+      <figure class="phone-slot" style="margin:0">
+        <figcaption>(a) Header expanded — course progress, level band, current unit</figcaption>
+        <div class="phone">
+          <div class="pin"><div class="notch"></div></div>
+          <div class="body-lock">
+            <div class="chead">
+              <span class="title">Grammatik</span>
+              <span class="chev">minimieren ⌄</span>
+            </div>
+            <div class="cbar"><i style="width:14%"></i></div>
+            <div class="cmeta">
+              <span class="line">L14 of 91 · A1→B1</span>
+              <span class="unit">Pronomen, Nomen und Artikel</span>
+            </div>
+
+            <div style="margin-top:14px" class="nextup">
+              <div class="kicker">Next up</div>
+              <div class="title">Artikel: definit, indefinit, kein Artikel</div>
+              <p class="sub">Der, das, die – ein, ein, eine · S. 38–39</p>
+              <div class="mini">
+                <span class="mchip lvl">A1</span>
+                <span class="mchip">7 Regeln</span>
+                <span class="mchip">Drills: articles</span>
+              </div>
+              <button class="btn primary">Start</button>
+            </div>
+
+            <div class="scrolly" style="margin-top:12px">
+              <div class="units">
+
+                <div class="u-row done u-summarized">
+                  <span class="mark">✓</span>
+                  <span class="t"><span class="n">Verben 1</span><span class="d">L01–L08 · P01 ✓ 28.10.2026</span></span>
+                  <span class="notches"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i></span>
+                  <span class="frac">9/9</span>
+                </div>
+
+                <div class="u-row done u-summarized">
+                  <span class="mark">✓</span>
+                  <span class="t"><span class="n">Sätze und Fragen</span><span class="d">L09–L12 · P02 ✓ 31.10.2026</span></span>
+                  <span class="notches"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i></span>
+                  <span class="frac">5/5</span>
+                </div>
+
+                <div class="u-row now">
+                  <span class="mark">▶</span>
+                  <span class="t"><span class="n">Pronomen, Nomen und Artikel</span></span>
+                  <span class="notches"><i class="f"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+                  <span class="frac">1/11</span>
+                </div>
+                <div class="u-sub">
+                  <div class="l-row done"><span class="mark">✓</span><span>L13 · Die Männer, die Frauen, die Babys</span></div>
+                  <div class="l-row now"><span class="mark">▶</span><span><b>L14 · Artikel: definit, indefinit, kein Artikel</b></span></div>
+                  <div class="l-row"><span class="mark"></span><span>L15 · Kein, nicht, nie — Negation</span></div>
+                  <div class="l-row"><span class="mark"></span><span>L16 · Ich liebe meinen Mann — Akkusativ</span></div>
+                  <div class="l-row"><span class="mark"></span><span>L17 · Ich fahre mit dem Auto — Dativ</span></div>
+                  <div class="l-row"><span class="mark"></span><span>L18 · Mein, dein, unser — Possessivartikel</span></div>
+                  <div class="l-row"><span class="mark"></span><span>L19 · Welcher? – Dieser</span></div>
+                  <div class="l-row"><span class="mark"></span><span>L20 · Nur mit dir – nie ohne dich</span></div>
+                  <div class="l-row"><span class="mark"></span><span>L21 · Ich kaufe meinem Sohn einen Ball</span><span class="tag">A2</span></div>
+                  <div class="l-row"><span class="mark"></span><span>L22 · Ich helfe dir, du dankst mir</span><span class="tag">A2</span></div>
+                  <div class="l-row"><span class="mark"></span><span>Partnersite 3: Akkusativ und Dativ review</span><span class="tag review">Review-Checkpoint</span></div>
+                </div>
+
+                <div class="u-row">
+                  <span class="mark"></span>
+                  <span class="t"><span class="n">Verben 2</span><span class="d">L23–L29 · P04</span></span>
+                  <span class="notches"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+                  <span class="frac">0/8</span>
+                </div>
+
+              </div>
+              <p class="footnote">Units are collapsed; the active unit shows its rows.
+                 Fully done units summarize to one row and can re-expand.
+                 ↑ scroll is only for browsing — the daily loop (Start → round) needs none.</p>
+            </div>
+          </div>
+        </div>
+      </figure>
+
+      <figure class="phone-slot" style="margin:0">
+        <figcaption>(b) Header minimized — one line: progress bar + "L14" (tap to re-expand)</figcaption>
+        <div class="phone">
+          <div class="pin"><div class="notch"></div></div>
+          <div class="body-lock">
+            <div class="chead-min">
+              <div class="cbar"><i style="width:14%"></i></div>
+              <span class="l">L14</span>
+              <span class="chev">⌃</span>
+            </div>
+
+            <div style="margin-top:14px" class="nextup">
+              <div class="kicker">Next up</div>
+              <div class="title">Artikel: definit, indefinit, kein Artikel</div>
+              <p class="sub">Der, das, die – ein, ein, eine · S. 38–39</p>
+              <div class="mini">
+                <span class="mchip lvl">A1</span>
+                <span class="mchip">7 Regeln</span>
+                <span class="mchip">Drills: articles</span>
+              </div>
+              <button class="btn primary">Start</button>
+            </div>
+
+            <div class="scrolly" style="margin-top:12px">
+              <div class="units">
+                <div class="u-row done u-summarized">
+                  <span class="mark">✓</span>
+                  <span class="t"><span class="n">Sätze und Fragen</span></span>
+                  <span class="notches"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i></span>
+                  <span class="frac">5/5</span>
+                </div>
+                <div class="u-row now">
+                  <span class="mark">▶</span>
+                  <span class="t"><span class="n">Pronomen, Nomen und Artikel</span></span>
+                  <span class="notches"><i class="f"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+                  <span class="frac">1/11</span>
+                </div>
+              </div>
+              <p class="footnote">Header auto-minimizes on scroll down; the state persists per app start.
+              The next-up card keeps its place — the only tap needed is Start.</p>
+            </div>
+          </div>
+        </div>
+      </figure>
+
+    </div>
+  </div>
+
+  <!-- ============================================================
+       2 · LESSON READ PAGE (the "final lesson" view)
+       ============================================================ -->
+  <div class="section" id="sec-read">
+    <div class="section-label">
+      <h2>2 · Lesson read page — pinned header, outline, per-rule sections (main focus)</h2>
+      <span>opened via Start on the next-up card · footer chains to the drills</span>
+    </div>
+    <div class="phones">
+      <figure class="phone-slot" style="margin:0">
+        <figcaption>L14 read mode · scroll inside the phone body</figcaption>
+        <div class="phone">
+          <div class="pin"><div class="notch"></div></div>
+          <div class="body-lock">
+
+            <!-- pinned header: minimized course line + lesson title -->
+            <div class="chead-min">
+              <span class="chev">‹</span>
+              <div class="cbar"><i style="width:14%"></i></div>
+              <span class="l">L14</span>
+            </div>
+            <div class="lhead-title">Der, das, die – ein, ein, eine</div>
+            <div class="lhead-sub">Artikel: definit, indefinit, kein Artikel · S. 38–39</div>
+
+            <div class="scrolly" style="margin-top:12px">
+              <div class="outline">
+                <span class="o-chip"><b>1</b> Presentation</span>
+                <span class="o-chip"><b>2</b> Recognition</span>
+                <span class="o-chip"><b>3</b> Guided practice</span>
+                <span class="o-chip"><b>4</b> Use</span>
+                <span class="o-chip"><b>5</b> Summary</span>
+              </div>
+
+              <div class="legend">Colour is the noun's gender, not the case:
+                <span class="sw gm">m</span> · <span class="sw gf">f</span> · <span class="sw gn">n</span> —
+                plural stays plain ink. The article is always written, so colour is never the only signal.</div>
+
+              <!-- Rule 1 -->
+              <div class="rulecard">
+                <div class="rc-head"><span class="rc-name">Definite article — specific, known noun</span><span class="rc-id">art-gender-*</span></div>
+                <p class="rc-rule">Every noun has one gender, and the definite article follows it. Use the definite article when the listener already knows which one.</p>
+                <table class="ft">
+                  <tr><th></th><th>m</th><th>f</th><th>n</th><th>pl</th></tr>
+                  <tr><td class="case">Nom</td><td><span class="gm">der</span></td><td><span class="gf">die</span></td><td><span class="gn">das</span></td><td>die</td></tr>
+                </table>
+                <p class="ex"><span class="gn">Das</span> Haus ist groß. · <span class="gm">Der</span> Freund ist hier. · <span class="gf">Die</span> Lampe ist neu.</p>
+                <p class="rc-note">The gender choice itself is the existing <span style="font-family:ui-monospace">articles</span> drill topic; this lesson only frames it as definite-article usage.</p>
+              </div>
+
+              <!-- Rule 2 -->
+              <div class="rulecard">
+                <div class="rc-head"><span class="rc-name">Indefinite article — first mention</span><span class="rc-id">art-indefinite-nom</span></div>
+                <p class="rc-rule">The indefinite article says one of something, or introduces it for the first time. There is no indefinite article for plurals.</p>
+                <table class="ft">
+                  <tr><th></th><th>m</th><th>f</th><th>n</th><th>pl</th></tr>
+                  <tr><td class="case">Nom</td><td><span class="gm">ein</span></td><td><span class="gf">eine</span></td><td><span class="gn">ein</span></td><td>–</td></tr>
+                </table>
+                <p class="ex"><span class="gn">Das</span> ist <span class="gm">ein</span> Pullover. · <span class="gf">Eine</span> Tasche ist leer. · <span class="gn">Das</span> sind Fotos.</p>
+                <p class="rc-note">The dash is the point: plural nouns stand bare when they are first mentioned.</p>
+              </div>
+
+              <!-- Rule 3 -->
+              <div class="rulecard">
+                <div class="rc-head"><span class="rc-name">First mention, then again</span><span class="rc-id">art-first-mention</span></div>
+                <p class="rc-rule">In a short story, introduce a person or thing with the indefinite article; from then on, the definite article refers to it.</p>
+                <table class="ft">
+                  <tr><th></th><th>m</th><th>f</th><th>n</th><th>pl</th></tr>
+                  <tr><td class="case">first</td><td><span class="gm">ein</span></td><td><span class="gf">eine</span></td><td><span class="gn">ein</span></td><td>–</td></tr>
+                  <tr><td class="case">after</td><td><span class="gm">der</span></td><td><span class="gf">die</span></td><td><span class="gn">das</span></td><td>die</td></tr>
+                </table>
+                <p class="ex"><span class="gm">Ein</span> Junge spielt draußen. <span class="gm">Der</span> Junge wohnt hier.<br>Wir sehen <span class="gf">eine</span> Katze. <span class="gf">Die</span> Katze folgt uns.</p>
+              </div>
+
+              <!-- Rule 4 -->
+              <div class="rulecard">
+                <div class="rc-head"><span class="rc-name">Definite article in the Akkusativ</span><span class="rc-id">art-definite-akk</span></div>
+                <p class="rc-rule">A direct object noun stands in the Akkusativ. The definite article keeps its Nominativ shape here except for nouns of one gender.</p>
+                <table class="ft">
+                  <tr><th></th><th>m</th><th>f</th><th>n</th><th>pl</th></tr>
+                  <tr><td class="case">Nom</td><td><span class="gm">der</span></td><td><span class="gf">die</span></td><td><span class="gn">das</span></td><td>die</td></tr>
+                  <tr class="hi"><td class="case">Akk</td><td class="art"><span class="gm">de<span class="u">n</span></span></td><td><span class="gf">die</span></td><td><span class="gn">das</span></td><td>die</td></tr>
+                  <tr><td class="case">Dat</td><td><span class="gm">dem</span></td><td><span class="gf">der</span></td><td><span class="gn">dem</span></td><td>den</td></tr>
+                </table>
+                <p class="ex">Ich suche <span class="gm">den</span> Schlüssel. · Er kauft <span class="gf">die</span> Lampe. · Ich repariere <span class="gn">das</span> Fahrrad. · Ich wasche die Schuhe.</p>
+                <p class="rc-note">The Dativ row is shown on the spread for the overview; Dativ forms are drilled at L17.</p>
+              </div>
+
+              <!-- Rule 5 -->
+              <div class="rulecard">
+                <div class="rc-head"><span class="rc-name">Indefinite article in the Akkusativ</span><span class="rc-id">art-indefinite-akk</span></div>
+                <p class="rc-rule">Before a direct object noun, the indefinite article takes an ending on one gender and stays the same on the others.</p>
+                <table class="ft">
+                  <tr><th></th><th>m</th><th>f</th><th>n</th><th>pl</th></tr>
+                  <tr><td class="case">Nom</td><td><span class="gm">ein</span></td><td><span class="gf">eine</span></td><td><span class="gn">ein</span></td><td>–</td></tr>
+                  <tr><td class="case">Akk</td><td><span class="gm">eine<span class="u">n</span></span></td><td><span class="gf">eine</span></td><td><span class="gn">ein</span></td><td>–</td></tr>
+                  <tr><td class="case">Dat</td><td><span class="gm">einem</span></td><td><span class="gf">einer</span></td><td><span class="gn">einem</span></td><td>–</td></tr>
+                </table>
+                <p class="ex">Hast du <span class="gm">einen</span> Rucksack? · Er möchte <span class="gm">einen</span> Pullover. · Ich brauche <span class="gf">eine</span> Tasche. · Wir kaufen <span class="gn">ein</span> Fahrrad.</p>
+                <p class="rc-note">The Dativ row is shown on the spread for the overview; drilled at L17.</p>
+              </div>
+
+              <!-- Rules 6 & 7: the kein-Artikel block -->
+              <div class="rulecard">
+                <div class="rc-head"><span class="rc-name">Kein Artikel</span><span class="rc-id">art-null-uncountable · art-null-beruf</span></div>
+
+                <div class="rc-name" style="font-size:12.5px;color:var(--ink)">1 · Things you cannot count</div>
+                <p class="rc-rule">Some nouns name things you cannot count, like time, money or weather. Ask whether the noun is countable in this sentence before choosing an article.</p>
+                <table class="ft">
+                  <tr><th></th><th>m</th><th>f</th><th>n</th><th>pl</th></tr>
+                  <tr><td class="case">Nom</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+                </table>
+                <p class="ex">Menschen brauchen Zeit. · Am Ende haben wir Glück. · Geld ist nicht alles.</p>
+
+                <div class="rc-name" style="font-size:12.5px;color:var(--ink);margin:12px 0 0">2 · Profession after sein</div>
+                <p class="rc-rule">A profession after sein describes a role, not a specific person. Decide whether this sentence needs an article as a result.</p>
+                <table class="ft">
+                  <tr><th></th><th>m</th><th>f</th><th>n</th><th>pl</th></tr>
+                  <tr><td class="case">Nom</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+                </table>
+                <p class="ex">Er ist Koch von Beruf. · Frau Berger ist Ärztin. · Wir sind Studenten.</p>
+              </div>
+
+            </div>
+
+            <div class="readbtn-slot"><button class="btn primary">Üben</button></div>
+          </div>
+        </div>
+      </figure>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       3 · DRILL ROUND STATE — one question card mid-round
+       ============================================================ -->
+  <div class="section" id="sec-drill">
+    <div class="section-label">
+      <h2>3 · Drill round — question card with the help slot open</h2>
+      <span>drill-help-card.md anatomy: chips · rule · forms table · miss line, help grows above a fixed prompt</span>
+    </div>
+    <div class="phones">
+      <figure class="phone-slot" style="margin:0">
+        <figcaption>The frame is fixed; the help slot grows upward, capped at ~40% of the body.
+        Shown just after a wrong tap on „der" — the ✗ miss line is the last line, directly above the prompt.</figcaption>
+        <div class="phone">
+          <div class="pin"><div class="notch"></div></div>
+          <div class="body-lock">
+            <div class="drillhead"><span class="title">L14 · Drills</span><span class="prog">3 of 8</span></div>
+            <div class="segments"><i class="done"></i><i class="done"></i><i class="now"></i><i></i><i></i><i></i><i></i><i></i></div>
+            <span class="format-chip">Articles · Akkusativ · tap</span>
+
+            <div class="d-stage">
+              <!-- help slot -->
+              <div class="helpslot">
+                <div class="hs-top">
+                  <span class="mchip">Wen? — direct object</span>
+                  <span class="mchip">Akk</span>
+                  <span class="why">Why?</span>
+                </div>
+                <p class="hrule">A direct object noun stands in the Akkusativ. The definite article keeps its Nominativ shape here except for nouns of one gender.</p>
+                <table class="ft">
+                  <tr><th></th><th>m</th><th>f</th><th>n</th><th>pl</th></tr>
+                  <tr><td class="case">Nom</td><td><span class="gm">der</span></td><td><span class="gf">die</span></td><td><span class="gn">das</span></td><td>die</td></tr>
+                  <tr class="hi"><td class="case">Akk</td><td class="art"><span class="gm">de<span class="u">n</span></span></td><td><span class="gf">die</span></td><td><span class="gn">das</span></td><td>die</td></tr>
+                  <tr><td class="case">Dat</td><td><span class="gm">dem</span></td><td><span class="gf">der</span></td><td><span class="gn">dem</span></td><td>den</td></tr>
+                </table>
+                <div class="missline">
+                  <span class="x">✗</span>
+                  <span>der: the article changes its shape here, so <b>den</b>.</span>
+                </div>
+              </div>
+
+              <!-- prompt + answer tiles, fixed above the footer -->
+              <div class="prompt">Ich suche <span class="gap">___</span> Schlüssel.</div>
+            </div>
+
+            <div class="tiles">
+              <div class="tile wrong">der</div>
+              <div class="tile">die</div>
+              <div class="tile">das</div>
+              <div class="tile">den</div>
+              <div class="tile">dem</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+              <button class="btn primary">Continue</button>
+            </div>
+            <p class="footnote">Gender colour never touches the tile fills or borders — here the tiles stay ink
+            (German words in the miss line carry no colour either). The help chips and rule are the collapsed-state
+            content: on later rungs only one cue line plus the „Why?" button shows.</p>
+          </div>
+        </div>
+      </figure>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       4 · COMPLETION — round summary, then the course screen advanced
+       ============================================================ -->
+  <div class="section" id="sec-done">
+    <div class="section-label">
+      <h2>4 · Completion — round summary, then the course screen with the card advanced</h2>
+      <span>course-screen.md: the card advances in place — no scroll, no navigation</span>
+    </div>
+    <div class="phones">
+
+      <figure class="phone-slot" style="margin:0">
+        <figcaption>(a) Round summary</figcaption>
+        <div class="phone">
+          <div class="pin"><div class="notch"></div></div>
+          <div class="body-lock">
+            <div class="drillhead"><span class="title">Round complete</span><span class="prog">6 items · 2 min</span></div>
+            <div class="segments"><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="done"></i></div>
+            <div class="d-stage" style="justify-content:flex-start">
+              <div class="counts"><span class="sage">5 right</span><span class="rose">1 wrong</span></div>
+              <div class="scrolly">
+                <div class="srow miss"><span class="mark">✕</span><span><span>Ich suche <b>___</b> Schlüssel</span><span class="ans"> — you: der → den</span><span class="hintline">der: the article changes its shape here, so den.</span></span></div>
+                <div class="srow ok"><span class="mark">✓</span><span class="what">Er kauft <b>die</b> Lampe</span></div>
+                <div class="srow ok"><span class="mark">✓</span><span><span>Hast du <b>___</b> Rucksack?</span><span class="ans"> — you: einen</span></span></div>
+                <div class="srow ok"><span class="mark">✓</span><span>Menschen brauchen <b>Zeit</b> — kein Artikel</span></div>
+                <div class="srow ok"><span class="mark">✓</span><span>Er ist <b>Koch</b> von Beruf — kein Artikel</span></div>
+                <div class="srow ok"><span class="mark">✓</span><span class="what">Wir sehen <b>eine</b> Katze. Die Katze folgt uns.</span></div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <button class="btn primary">Fertig</button>
+                <button class="btn quiet">Nochmal üben</button>
+              </div>
+            </div>
+            <p class="done-at">Back on the course screen, the next-up card is already advanced.</p>
+          </div>
+        </div>
+      </figure>
+
+      <figure class="phone-slot" style="margin:0">
+        <figcaption>(b) Course screen again — L14 marked ✓ with its score, card advanced to L15 (Negation)</figcaption>
+        <div class="phone">
+          <div class="pin"><div class="notch"></div></div>
+          <div class="body-lock">
+            <div class="chead">
+              <span class="title">Grammatik</span>
+              <span class="chev">minimieren ⌄</span>
+            </div>
+            <div class="cbar"><i style="width:15%"></i></div>
+            <div class="cmeta">
+              <span class="line">L14 of 91 done · A1→B1</span>
+              <span class="unit">Pronomen, Nomen und Artikel</span>
+            </div>
+
+            <!-- next-up advanced in place to the first not-done lesson, L15 · Negation -->
+            <div style="margin-top:14px" class="nextup">
+              <div class="kicker">Next up</div>
+              <div class="title">Kein, nicht, nie</div>
+              <p class="sub">Negation · S. 40</p>
+              <div class="mini">
+                <span class="mchip lvl">A1</span>
+                <span class="mchip">Negation</span>
+              </div>
+              <button class="btn primary">Start</button>
+            </div>
+
+            <div class="scrolly" style="margin-top:12px">
+              <div class="units">
+                <div class="u-row done u-summarized">
+                  <span class="mark">✓</span>
+                  <span class="t"><span class="n">Verben 1</span></span>
+                  <span class="notches"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i></span>
+                  <span class="frac">9/9</span>
+                </div>
+                <div class="u-row done u-summarized">
+                  <span class="mark">✓</span>
+                  <span class="t"><span class="n">Sätze und Fragen</span></span>
+                  <span class="notches"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i></span>
+                  <span class="frac">5/5</span>
+                </div>
+                <div class="u-row now">
+                  <span class="mark">▶</span>
+                  <span class="t"><span class="n">Pronomen, Nomen und Artikel</span></span>
+                  <span class="notches"><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+                  <span class="frac">2/11</span>
+                </div>
+                <div class="u-sub">
+                  <div class="l-row done"><span class="mark">✓</span><span>L13 · Die Männer, die Frauen, die Babys</span></div>
+                  <div class="l-row done"><span class="mark">✓</span><span><b>L14 · Artikel: definit, indefinit, kein Artikel</b></span><span class="score">92 % · 02.11.2026</span></div>
+                  <div class="l-row now"><span class="mark">▶</span><span><b>L15 · Kein, nicht, nie — Negation</b></span></div>
+                  <div class="l-row"><span class="mark"></span><span>L16 · Ich liebe meinen Mann — Akkusativ</span></div>
+                  <div class="l-row"><span class="mark"></span><span>L17 · Ich fahre mit dem Auto — Dativ</span></div>
+                  <div class="l-row"><span class="mark"></span><span>L18 · Mein, dein, unser — Possessivartikel</span></div>
+                  <div class="l-row"><span class="mark"></span><span>Partnersite 3: Akkusativ und Dativ review</span><span class="tag review">Review-Checkpoint</span></div>
+                </div>
+              </div>
+              <p class="footnote">Done lessons stay reachable in read mode; their drills remain linked for review.</p>
+            </div>
+          </div>
+        </div>
+      </figure>
+
+    </div>
+  </div>
+
+  <p class="footnote">Static mock · self-contained HTML · system font stack only · tokens from values/colors.xml
+  (sage 4D6653/9CAF88, sand 765B3B/D4C4A8, rose 82444E/DE9FA7) · gender hues per drill-help-card.md §4 (2F5D8A · A23B3B · 2F6B45, dark 8FB3DC · EC948A · 8CC79A).
+  All German content from docs/design/course/lessons/L14-artikel-definit-indefinit-kein.md and docs/design/course/lessons.tsv.</p>
+</div>
+
+<script>
+  // Optional light/dark override only. The static layout needs no JS.
+  var themeBtn = document.getElementById("themeBtn");
+  themeBtn.addEventListener("click", function () {
+    var r = document.documentElement;
+    var label = themeBtn.textContent;
+    var next = label.indexOf("auto") > -1 ? "light" : label.indexOf("light") > -1 ? "dark" : "auto";
+    if (next === "auto") { r.removeAttribute("data-theme"); } else { r.dataset.theme = next; }
+    themeBtn.textContent = "Theme: " + next;
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+id	level	unit	title	grammar	page	slug	drill_topics	status
+L01	-	Verben 1	Ich, du, er, sie, es, wir, ihr, sie und Sie	Personalpronomen	8	personalpronomen	pronouns	todo
+L02	-	Verben 1	Ich komme, du kommst	Konjugation Präsens	10	konjugation-praesens	NEW	todo
+L03	-	Verben 1	Ich bin, du hast, er möchte	sein, haben und besondere Verben	12	sein-haben-besondere	NEW	todo
+L04	-	Verben 1	Ich esse wenig, aber du isst viel!	Verben mit Vokalwechsel	14	vokalwechsel	NEW	todo
+L05	-	Verben 1	Ich muss, ich kann, ich will	Modalverben: Konjugation und Position im Satz	16	modalverben-konjugation	modal-verbs+word-order	todo
+L06	-	Verben 1	Kann ich oder muss ich?	Modalverben: Gebrauch	18	modalverben-gebrauch	modal-verbs	todo
+L07	-	Verben 1	Ich kaufe im Supermarkt ein	Trennbare Verben	20	trennbare-verben	separable-verbs	todo
+L08	-	Verben 1	Helfen Sie mir!	Imperativ	22	imperativ	imperative	todo
+P01	-	Verben 1	Partnersite 1: Konjugation review	—	24	konjugation-review	-	todo
+L09	-	Sätze und Fragen	Wer? Wie? Wo? Was?	Fragen mit Fragewort	26	fragen-fragewort	NEW	todo
+L10	-	Sätze und Fragen	Lernen Sie Deutsch?	Ja/Nein-Fragen	28	ja-nein-fragen	NEW	todo
+L11	-	Sätze und Fragen	Wo steht was?	Wörter im Satz 1	30	woerter-im-satz-1	word-order	todo
+L12	-	Sätze und Fragen	Ich kaufe ... ein	Wörter im Satz 2	32	woerter-im-satz-2	word-order	todo
+P02	-	Sätze und Fragen	Partnersite 2: Fragen review	—	34	fragen-review	-	todo
+L13	-	Pronomen, Nomen und Artikel	Die Männer, die Frauen, die Babys	Nomen: Plural	36	nomen-plural	plurals	todo
+L14	-	Pronomen, Nomen und Artikel	Der, das, die – ein, ein, eine	Artikel: definit, indefinit, kein Artikel	38	artikel-definit-indefinit-kein	articles	ingested
+L15	-	Pronomen, Nomen und Artikel	Kein, nicht, nie	Negation	40	negation	NEW	todo
+L16	-	Pronomen, Nomen und Artikel	Ich liebe meinen Mann	Akkusativ	42	akkusativ	case-endings	todo
+L17	-	Pronomen, Nomen und Artikel	Ich fahre mit dem Auto	Dativ	44	dativ	case-endings	todo
+L18	-	Pronomen, Nomen und Artikel	Mein, dein, unser	Possessivartikel	46	possessivartikel	NEW	todo
+L19	-	Pronomen, Nomen und Artikel	Welcher? – Dieser	Artikel: interrogativ und demonstrativ	48	artikel-interrogativ-demonstrativ	NEW	todo
+L20	-	Pronomen, Nomen und Artikel	Nur mit dir – nie ohne dich	Personalpronomen: Akkusativ und Dativ	50	personalpronomen-akk-dat	pronouns	todo
+L21	A2	Pronomen, Nomen und Artikel	Ich kaufe meinem Sohn einen Ball	Verben mit Akkusativ und Dativ	52	verben-mit-akk-dat	verb-prepositions	todo
+L22	A2	Pronomen, Nomen und Artikel	Ich helfe dir, du dankst mir	Verben mit Dativ	54	verben-mit-dativ	verb-prepositions	todo
+P03	A2	Pronomen, Nomen und Artikel	Partnersite 3: Akkusativ und Dativ review	—	56	akk-dat-review	-	todo
+L23	-	Verben 2	Es war, ich hatte	Präteritum: sein und haben	58	praeteritum-sein-haben	praeteritum	todo
+L24	-	Verben 2	Was hast du gestern gemacht?	Perfekt mit haben	60	perfekt-haben	NEW	todo
+L25	A2	Verben 2	Ich bin gekommen, ich habe gelacht	Perfekt mit sein	62	perfekt-sein	NEW	todo
+L26	A2	Verben 2	Gesehen – eingekauft – bezahlt	Partizip Perfekt	64	partizip-perfekt	NEW	todo
+L27	A2	Verben 2	Ich könnte, ich müsste, ich wollte	Präteritum: Modalverben	66	praeteritum-modalverben	praeteritum+modal-verbs	todo
+L28	A2	Verben 2	Gestern hatte ich Durst und habe Saft getrunken	Zeitengebrauch	68	zeitengebrauch	praeteritum	todo
+L29	A2	Verben 2	Sie wäscht sich	Reflexive (und reziproke) Verben	70	reflexive-verben	NEW	todo
+P04	A2	Verben 2	Partnersite 4: Perfekt review	—	72	perfekt-review	-	todo
+L30	-	Präpositionen 1	Im, am, um, von ... bis, nach und vor	Temporale Präpositionen	74	temporale-praepositionen	prepositions	todo
+L31	-	Präpositionen 1	Aus, bei, mit, nach, seit, von oder zu	Präpositionen mit Dativ	76	praepositionen-dativ	prepositions	todo
+L32	-	Präpositionen 1	Für, um, durch, ohne und gegen	Präpositionen mit Akkusativ	78	praepositionen-akkusativ	prepositions	todo
+L33	-	Präpositionen 1	Wo? Im Kino	Wechselpräpositionen mit Dativ	80	wechselpraepositionen-dativ	prepositions	todo
+L34	A2	Präpositionen 1	Im Kino oder ins Kino?	Wechselpräpositionen mit Dativ und Akkusativ	82	wechselpraepositionen-akk	prepositions	todo
+L35	A2	Präpositionen 1	Beim Bäcker, zum Friseur, auf den Sportplatz	Lokale Präpositionen	84	lokale-praepositionen	prepositions	todo
+P05	A2	Präpositionen 1	Partnersite 5: Wechselpräpositionen review	—	86	wechselpraepositionen-review	-	todo
+L36	A2	Adjektive 1	Ein netter Mann! Ich liebe den netten Mann	Nominativ und Akkusativ	88	adjektive-nom-akk	adjective-endings	todo
+L37	A2	Adjektive 1	Am ersten Mai	Nominativ, Akkusativ und Dativ	90	adjektive-nom-akk-dat	adjective-endings	todo
+L38	B1	Adjektive 1	Schneller als ...	Komparativ und Vergleichssätze	92	komparativ	adjective-endings+NEW	todo
+L39	B1	Adjektive 1	Der kleinste Mann läuft am schnellsten	Superlativ	94	superlativ	NEW	todo
+P06	A2	Adjektive 1	Partnersite 6: Adjektive review	—	96	adjektive-review	-	todo
+L40	A2	Sätze und Satzverbindungen 1	Und, aber, oder, denn	Hauptsätze verbinden (Position 0)	98	hauptsatz-position-0	word-order	todo
+L41	A2	Sätze und Satzverbindungen 1	Deshalb, sonst, dann, danach	Hauptsätze verbinden (Position 1)	100	hauptsatz-position-1	word-order	todo
+L42	A2	Sätze und Satzverbindungen 1	Weil, dass und wenn	Nebensätze	102	nebensaetze-weil-dass-wenn	NEW	todo
+L43	A2	Sätze und Satzverbindungen 1	Ich bin da. Kommst du auch dahin?	Positionsadverbien und Direktionaladverbien	104	positionsadverbien	NEW	todo
+L44	A2	Sätze und Satzverbindungen 1	Was heißt das denn?	Partikeln	106	partikeln	NEW	todo
+P07	A2	Sätze und Satzverbindungen 1	Partnersite 7: Nebensätze review	—	108	nebensaetze-review	-	todo
+L45	A2	Wortbildung	Kinderarzt oder Arzt Kinder?	Komposita	110	komposita	NEW	todo
+L46	A2	Wortbildung	-chen, -lein, -er, -in, -ung	Aus Wörtern neue Wörter machen	112	wortbildung-suffixe	articles	todo
+L47	A2	Wortbildung	Ich bin dann mal weg	Zusammengesetzte Verben	114	zusammengesetzte-verben	separable-verbs	todo
+L48	A2	Wortbildung	Der, die oder das?	Genusregeln	116	genusregeln	articles	todo
+L49	B1	Verben 3	Er kam, sah und sagte	Präteritum	118	praeteritum	praeteritum	todo
+L50	B1	Verben 3	Ich hatte zu lange geschlafen	Plusquamperfekt	120	plusquamperfekt	NEW	todo
+L51	B1	Verben 3	Ich wasche mir die Hände	Reflexivpronomen im Dativ	122	reflexiv-dativ	NEW	todo
+L52	B1	Verben 3	Kaufe ich ein oder bestelle ich Pizza?	Trennbare und untrennbare Verben	124	trennbare-untrennbare	separable-verbs	todo
+L53	B1	Verben 3	Sie freut sich über die Blumen	Verben mit Präpositionen	126	verben-mit-praepositionen	verb-prepositions	todo
+L54	B1	Verben 3	Daneben, danach, dafür ...	Präpositionaladverbien und -pronomen	128	praepositionaladverbien	NEW	todo
+L55	B1	Verben 3	War, hätte, würde ...	Konjunktiv 2: Formen	130	konjunktiv2-formen	konjunktiv-ii	todo
+L56	B1	Verben 3	Wenn ich viel Geld hätte, ...	Konjunktiv 2: Gebrauch	132	konjunktiv2-gebrauch	konjunktiv-ii	todo
+L57	B1	Verben 3	Das Auto wird gebaut	Passiv Teil 1	134	passiv-1	passive	todo
+L58	B1	Verben 3	Wann wurde der Kölner Dom gebaut?	Passiv Teil 2	136	passiv-2	passive	todo
+L59	B1	Verben 3	Der Präsident wird kommen	Vermutung und Zukunft mit Futur 1	138	futur1-vermutung	werden+NEW	todo
+L60	B1	Verben 3	Werden, werden, werden ...	Funktionen von werden	140	werden-funktionen	werden	todo
+L61	B1	Verben 3	Leben und leben lassen	Das Verb lassen	142	verb-lassen	NEW	todo
+L62	B1	Verben 3	Sitzen/Setzen, stehen/stellen, liegen/legen und hängen	Positions- und Richtungsverben	144	positions-richtungsverben	NEW	todo
+P08	B1	Verben 3	Partnersite 8: Passiv-Bingo review	—	146	passiv-bingo	-	todo
+L63	B1	Nomen 2	Das Auto seines Vaters	Genitiv	148	genitiv	genitive	todo
+L64	B1	Nomen 2	Kennen Sie den Herrn?	N-Deklination	150	n-deklination	n-declension	todo
+L65	B1	Nomen 2	Der Jugendliche – ein Jugendlicher	Adjektive für Personen als Nomen	152	adjektiv-nomen-personen	NEW	todo
+L66	B1	Nomen 2	Alles Gute!	Adjektive als neutrale Nomen	154	adjektiv-nomen-neutral	NEW	todo
+P09	B1	Nomen 2	Partnersite 9: Genitiv review	—	156	genitiv-review	-	todo
+L67	B1	Sätze und Satzverbindungen 2	Wissen Sie, ob ...?	Indirekte Fragen	158	indirekte-fragen	NEW	todo
+L68	B1	Sätze und Satzverbindungen 2	Es ist schön, zu feiern.	Infinitiv mit zu	160	infinitiv-mit-zu	infinitiv-zu	todo
+L69	B1	Sätze und Satzverbindungen 2	Ich will singen, lass mich singen!	Infinitiv ohne zu	162	infinitiv-ohne-zu	infinitiv-zu	todo
+L70	B1	Sätze und Satzverbindungen 2	Das ist der Mann, der immer meine Nachbarin besucht	Relativsätze 1	164	relativsaetze-1	relative-pronouns	todo
+L71	B1	Sätze und Satzverbindungen 2	Wie heißt das Ding, mit dem man ...?	Relativsätze 2	166	relativsaetze-2	relative-pronouns	todo
+L72	B1	Sätze und Satzverbindungen 2	Ich gehe, wenn ... / Ich ging, als ...	Temporale Nebensätze mit wenn und als	168	nebensaetze-wenn-als	NEW	todo
+L73	B1	Sätze und Satzverbindungen 2	Während, bevor, nachdem und seit	Temporale Nebensätze	170	nebensaetze-temporal	NEW	todo
+L74	B1	Sätze und Satzverbindungen 2	Um ... zu und damit	Finalsätze	172	finalsaetze	NEW	todo
+L75	B1	Sätze und Satzverbindungen 2	Entweder ... oder, weder ... noch, sowohl ... als auch	Doppelkonnektoren	174	doppelkonnektoren	NEW	todo
+L76	B1	Sätze und Satzverbindungen 2	Je größer, desto besser!	Vergleichssätze	176	vergleichssaetze-je-desto	NEW	todo
+P10	B1	Sätze und Satzverbindungen 2	Partnersite 10: Relativsatz-Bingo review	—	178	relativsatz-bingo	-	todo
+L77	B1	Präpositionen 2	Während, wegen, trotz, innerhalb, außerhalb	Präpositionen mit Genitiv	180	praepositionen-genitiv	prepositions+genitive	todo
+L78	B1	Präpositionen 2	Innerhalb, außerhalb, in, nach, vor, seit, bei und während	Temporale Präpositionen 2	182	temporale-praepositionen-2	prepositions	todo
+L79	B1	Adjektive 2	Deutsches Bier.	Adjektivdeklination mit und ohne Artikel	184	adjektivdeklination-artikel	adjective-endings	todo
+L80	B1	Adjektive 2	Singende Vögel und fliegende Fische	Partizip 1 als Adjektiv	186	partizip1-adjektiv	NEW	todo
+P11	B1	Adjektive 2	Partnersite 11: Partizip 1 review	—	188	partizip1-review	-	todo

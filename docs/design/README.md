@@ -21,5 +21,6 @@ All mock-ups show example data. Real values come from the app.
 | [ask-ai-chat.md](ask-ai-chat.md) | Ask AI chat threads from drill misses and the word card: routing, thread model, error states, flows (#699) | [`ask-ai-chat-mock.html`](ask-ai-chat-mock.html) (standalone page) |
 | [german-hidden-surfaces.md](german-hidden-surfaces.md) | German behaviour and content with no surface: review schedule, drill rounds, AI budgets, news harvest, context rewrite, Ask-AI chat, grammar rules, all-chats list | [`german-surfaces-mock.html`](german-surfaces-mock.html) (standalone page) |
 | [TEMPLATE.md](TEMPLATE.md) | The standard shape for design docs in this folder: problem, design, rejected ideas, open questions | — |
+| [course/](course/) | German course from the source book: lesson manifest, spec template, three-stage ingestion guide, course screen draft | — |
 
 Where text and a mock-up disagree, the text doc wins.
