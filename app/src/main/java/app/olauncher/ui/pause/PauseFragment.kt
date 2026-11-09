@@ -19,6 +19,12 @@ import app.olauncher.MainViewModel
 import app.olauncher.R
 import app.olauncher.data.AppModel
 import app.olauncher.data.Prefs
+import app.olauncher.data.store.GermanDueCache
+import app.olauncher.data.store.GermanDueWord
+import app.olauncher.data.store.GermanWebOutbox
+import app.olauncher.data.store.GermanWebReview
+import app.olauncher.data.store.GermanWebSession
+import app.olauncher.data.store.GermanWebSessionState
 import app.olauncher.data.store.PauseWordPicker
 import app.olauncher.data.store.PracticeItemsStore
 import app.olauncher.data.store.PracticeRotation
@@ -26,8 +32,11 @@ import app.olauncher.data.store.PracticeVisibleItems
 import app.olauncher.data.store.ReviewEvent
 import app.olauncher.data.store.ReviewEventsStore
 import app.olauncher.data.store.ReviewSessionLogic
+import app.olauncher.data.store.Word
 import app.olauncher.data.store.WordsStore
 import app.olauncher.databinding.FragmentPauseBinding
+import app.olauncher.helper.GermanDueRefreshWorker
+import app.olauncher.helper.GermanSyncWorker
 import app.olauncher.helper.Haptics
 import app.olauncher.helper.hapticLongClick
 import app.olauncher.helper.OlDialog
@@ -488,8 +497,21 @@ class PauseFragment : Fragment() {
         }
 
         val context = context ?: return
-        val store = getStore(context)
         val today = epochDaySupplier()
+
+        // Signed in to the German web app (epic #835, task 04): the pause
+        // word comes from the locally cached server due set. Nothing on this
+        // path does network IO, so it works in airplane mode; a cache older
+        // than an hour asks for one background refresh. Signed out or
+        // lapsed keeps today's local behaviour unchanged.
+        val webSessionState = GermanWebSession(context).state()
+        if (webSessionState is GermanWebSessionState.SignedIn) {
+            GermanDueRefreshWorker.refreshIfStale(context, webSessionState)
+            setupWebPauseWord(webSessionState.username, today)
+            return
+        }
+
+        val store = getStore(context)
         val dueWords = store.due(today)
         val pickedWord = PauseWordPicker.pick(dueWords, prefs.germanPauseLastWordId)
 
@@ -553,6 +575,73 @@ class PauseFragment : Fragment() {
         helper.promptOverride = practiceItem?.prompt
         helper.answerOverride = practiceItem?.answer?.ifBlank { pickedWord.text } ?: pickedWord.text
         helper.bind(pickedWord)
+    }
+
+    /**
+     * The pause word for a signed-in session (epic #835, task 04): picked
+     * from the locally cached server due set, so it shows with no network.
+     * Grading goes to the web outbox only — never the local [WordsStore] or
+     * [ReviewEventsStore] — and edit/delete stay off because the word is the
+     * server's. The local AI practice-item override is skipped for web words.
+     */
+    private fun setupWebPauseWord(username: String, today: Long) {
+        val context = context ?: return
+        val cache = GermanDueCache(context.noBackupFilesDir)
+        val pickedWord = PauseWordPicker.pick(cache.dueWords(username, today), prefs.germanPauseLastWebWordId, GermanDueWord::id)
+        if (pickedWord == null) {
+            binding.wordReveal.root.isVisible = false
+            return
+        }
+
+        prefs.germanPauseLastWebWordId = pickedWord.id
+        binding.wordReveal.root.isVisible = true
+
+        // The cached word binds as a transient local Word: the reveal shows
+        // text, meaning and context only; its id is never used (the server's
+        // text id travels in [pickedWord], which grading closes over).
+        val transientWord = Word(
+            id = 0L,
+            text = pickedWord.text,
+            context = pickedWord.context,
+            meaning = pickedWord.meaning,
+            box = pickedWord.box,
+            dueDay = pickedWord.dueDay,
+            addedAt = 0L,
+        )
+
+        wordReveal = WordReveal(
+            binding = binding.wordReveal,
+            onAnswer = { _, knewIt ->
+                gradeWebPauseWord(username, pickedWord, knewIt)
+                if (_binding != null) {
+                    binding.wordReveal.root.isVisible = false
+                }
+            },
+            // Web words are the server's: no local edit or delete.
+            onWordUpdated = null,
+            onWordDeleted = null,
+        ).also { helper ->
+            helper.wordPopupEnabled = false
+            helper.bind(transientWord)
+        }
+    }
+
+    /**
+     * One pause rating of a web word: queued through [GermanWebOutbox] (one
+     * idempotency key per tap, replayed unchanged by task 03) and marked
+     * locally rated so it does not come back before the next refresh.
+     */
+    private fun gradeWebPauseWord(username: String, word: GermanDueWord, knewIt: Boolean) {
+        val context = context ?: return
+        val today = epochDaySupplier()
+        GermanWebReview.enqueueRating(
+            outbox = GermanWebOutbox(context.noBackupFilesDir),
+            wordId = word.id,
+            knewIt = knewIt,
+            today = today,
+        )
+        GermanDueCache(context.noBackupFilesDir).markRated(username, word.id)
+        GermanSyncWorker.schedule(context)
     }
 
     private fun updateNotice() {

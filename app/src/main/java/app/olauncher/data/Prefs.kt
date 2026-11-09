@@ -131,6 +131,13 @@ class Prefs(context: Context) :
         const val GERMAN_SPELL_SUGGEST = "GERMAN_SPELL_SUGGEST"
         const val GERMAN_PAUSE_WORD = "GERMAN_PAUSE_WORD"
         const val GERMAN_PAUSE_LAST_WORD_ID = "GERMAN_PAUSE_LAST_WORD_ID"
+
+        /**
+         * The last web word shown on the pause screen (epic #835, task 04) — a
+         * server text id, so it has its own key and never mixes with the Long
+         * [GERMAN_PAUSE_LAST_WORD_ID] of local words.
+         */
+        const val GERMAN_PAUSE_LAST_WEB_WORD_ID = "GERMAN_PAUSE_LAST_WEB_WORD_ID"
         const val GERMAN_CLOCK = "GERMAN_CLOCK"
         const val GERMAN_CLOCK_SYSTEM = 0
         const val GERMAN_CLOCK_DEUTSCH = 1
