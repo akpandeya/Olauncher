@@ -497,6 +497,13 @@
     <string name="german_web_connected_toast" tools:ignore="MissingTranslation">Connected as %1$s</string>
     <string name="german_web_save_failed" tools:ignore="MissingTranslation">Could not save the connection — try again</string>
     <string name="german_web_open" tools:ignore="MissingTranslation">Open web app</string>
+    <string name="german_web_move_progress" tools:ignore="MissingTranslation">Move progress to the web app</string>
+    <string name="german_web_move_progress_message" tools:ignore="MissingTranslation">Save a backup file.\nOpen Konto in the web app and choose it under phone-data import.\nCheck the word count.</string>
+    <string name="german_web_move_progress_message_saved" tools:ignore="MissingTranslation">Save a new backup file (the last one is from %1$s).\nOpen Konto in the web app and choose it under phone-data import.\nCheck the word count.</string>
+    <string name="german_web_move_progress_save" tools:ignore="MissingTranslation">Save backup</string>
+    <string name="german_web_move_progress_saved_on" tools:ignore="MissingTranslation">Saved on %1$s</string>
+    <string name="german_web_move_progress_offer" tools:ignore="MissingTranslation">Backup saved. Open Konto in the web app and choose it under phone-data import, then check the word count</string>
+    <string name="german_web_move_progress_open_konto" tools:ignore="MissingTranslation">Open Konto</string>
     <string name="german_web_sign_out" tools:ignore="MissingTranslation">Sign out</string>
     <string name="german_web_sign_out_title" tools:ignore="MissingTranslation">Sign out of the web app?</string>
     <string name="german_web_sign_out_message" tools:ignore="MissingTranslation">Sign out forgets this device only on this phone. To revoke it, use Konto in the web app</string>

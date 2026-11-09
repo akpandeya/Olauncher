@@ -33,7 +33,10 @@ object Backup {
         // belong to this device only — the credential itself is in the Keystore vault,
         // never in prefs, so there is nothing else to exclude here.
         Prefs.GERMAN_WEB_LAPSED,
-        Prefs.GERMAN_WEB_BASE_URL
+        Prefs.GERMAN_WEB_BASE_URL,
+        // The day of the last "Move progress to the web app" export (task 05): says
+        // this phone already imported its progress, which another device has not.
+        Prefs.GERMAN_WEB_PROGRESS_EXPORTED_DAY
     )
     const val OWN_OPENS_PREFIX = "OWN_OPENS_"
 

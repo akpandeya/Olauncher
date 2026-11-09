@@ -204,6 +204,8 @@ private fun SettingsFragment.handleGermanBackupFooterClick(view: View): Boolean 
         // The web-account row (#835): the tap depends on the session state
         // (onGermanWebAccountTap decides dialog or menu).
         R.id.germanWebAccount, R.id.germanWebAccountTitle, R.id.germanWebAccountLayout -> onGermanWebAccountTap(view)
+        // The web-progress row (#835, task 05): the three-step dialog to the web import.
+        R.id.germanWebProgress, R.id.germanWebProgressTitle, R.id.germanWebProgressLayout -> showGermanWebProgressDialog()
         R.id.exportBackup, R.id.exportBackupLayout -> launchExportBackup()
         R.id.importBackup, R.id.importBackupLayout -> launchImportBackup()
         R.id.autoBackup, R.id.autoBackupTitle, R.id.autoBackupLayout -> tickOnChange(view) { toggleAutoBackup() }

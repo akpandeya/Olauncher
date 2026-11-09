@@ -151,6 +151,13 @@ class Prefs(context: Context) :
          */
         const val GERMAN_WEB_LAPSED = "GERMAN_WEB_LAPSED"
         const val GERMAN_WEB_BASE_URL = "GERMAN_WEB_BASE_URL"
+
+        /**
+         * The day (epoch day, local time) the last "Move progress to the web app"
+         * export landed (epic #835, task 05). Guidance only — nothing is gated on
+         * it. Device-specific, so it is one of [Backup.VOLATILE_KEYS].
+         */
+        const val GERMAN_WEB_PROGRESS_EXPORTED_DAY = "GERMAN_WEB_PROGRESS_EXPORTED_DAY"
         const val AI_PROVIDER = "AI_PROVIDER"
         const val AI_PROVIDER_MELIOUS = "melious"
         const val AI_BASE_URL = "AI_BASE_URL"

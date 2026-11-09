@@ -646,6 +646,48 @@ internal fun SettingsFragment.confirmGermanWebSignOut() {
 }
 
 /**
+ * The "Move progress to the web app" row (#835, task 05): the guided path to the
+ * web import (gambitflow #859 converts the launcher's own backup file in the
+ * browser, so the launcher writes no new format). The dialog walks the three
+ * steps; "Save backup" reuses the export from the backup section, and a
+ * successful export records the day and offers Konto ([onGermanWebProgressExported]).
+ * The texts come from [GermanWebProgressRow].
+ */
+internal fun SettingsFragment.showGermanWebProgressDialog() {
+    val message = GermanWebProgressRow.dialogMessageFor(prefs.germanWebProgressExportedDay)
+    dialog?.dismiss()
+    dialog = requireContext().showMessageDialog(
+        title = R.string.german_web_move_progress,
+        message = getString(message.stringRes, *message.formatArgs.toTypedArray()),
+        action = R.string.german_web_move_progress_save,
+    ) {
+        germanWebProgressExportRequested = true
+        launchExportBackup()
+    }
+}
+
+/**
+ * A successful export started from the "Move progress to the web app" row: the
+ * day is recorded (guidance only — nothing in the app is gated on it) and the
+ * user is offered the import page. Without a paired server the action becomes
+ * "Connect" and opens pairing instead; the export itself already landed.
+ */
+internal fun SettingsFragment.onGermanWebProgressExported() {
+    if (!isAdded || _binding == null) return
+    prefs.germanWebProgressExportedDay = LocalDate.now().toEpochDay()
+    populateGerman()
+    val base = GermanWebSession(requireContext()).baseUrl()
+    dialog?.dismiss()
+    dialog = requireContext().showMessageDialog(
+        title = R.string.german_web_move_progress,
+        message = R.string.german_web_move_progress_offer,
+        action = if (base != null) R.string.german_web_move_progress_open_konto else R.string.german_web_connect,
+    ) {
+        if (base != null) openGermanWebApp() else showGermanWebPairDialog()
+    }
+}
+
+/**
  * The pairing dialog (#835): the server address (nothing is hardcoded — the
  * launcher pairs with whatever server the user types here) and the one-time
  * 8-character code from the web app (Konto → Gerät hinzufügen). Connect stays
@@ -853,6 +895,12 @@ internal fun SettingsFragment.populateGerman() {
             append(' ').append(getString(line.stringRes, *line.formatArgs.toTypedArray()))
         }
     }
+    // The web-progress row (#835, task 05): the value line says when the guided
+    // export last landed ("Saved on <date>"); blank until then.
+    binding.germanWebProgressLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
+    binding.germanWebProgress.text = GermanWebProgressRow.valueFor(prefs.germanWebProgressExportedDay)
+        ?.let { getString(it.stringRes, *it.formatArgs.toTypedArray()) }
+        .orEmpty()
 }
 
 internal fun SettingsFragment.showDictionaryAppMenu(anchor: View) {

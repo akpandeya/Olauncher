@@ -291,6 +291,11 @@ object SettingsCatalog {
     // signed in.
     row(key = "germanWebAccount", sectionKey = SettingsSections.KEY_DEUTSCH, titleRes = R.string.german_web_account, type = SettingsRowType.CHOICE,
         primaryId = R.id.germanWebAccount, layoutId = R.id.germanWebAccountLayout, titleId = R.id.germanWebAccountTitle, valueId = R.id.germanWebAccount),
+    // The web-progress row (#835, task 05): the guided path from local progress
+    // to the web import. Tapping it opens the three-step dialog (SettingsGerman);
+    // the value line says when the last guided export landed ("Saved on <date>").
+    row(key = "germanWebProgress", sectionKey = SettingsSections.KEY_DEUTSCH, titleRes = R.string.german_web_move_progress, type = SettingsRowType.CHOICE,
+        primaryId = R.id.germanWebProgress, layoutId = R.id.germanWebProgressLayout, titleId = R.id.germanWebProgressTitle, valueId = R.id.germanWebProgress),
     )
 
     private val appearance: List<SettingsItem> = listOf(

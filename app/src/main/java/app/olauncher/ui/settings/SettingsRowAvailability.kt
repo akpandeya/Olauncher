@@ -27,6 +27,7 @@ object SettingsRowAvailability {
         R.id.germanPauseWordOnOff,
         R.id.germanUiOnOff,
         R.id.germanWebAccount,
+        R.id.germanWebProgress,
         R.id.aiPracticeOnOff,
         R.id.newsSentencesOnOff,
     )
