@@ -134,6 +134,27 @@ class TodayOrderTest {
     }
 
     @Test
+    fun newCardKeysMissingFromTheSavedOrderKeepTheirListOrderAfterTheSavedOnes() {
+        // A stored order from before the card existed must accept the new key
+        // without a migration: the saved keys keep their positions and the new
+        // one keeps its TodayCards.all position, after the saved ones.
+        val split = TodayOrder.arrange(
+            cards = listOf(
+                Ranked("weather", 50),
+                Ranked("words", 49),
+                Ranked("german_web", 48),
+                Ranked("notes", 47),
+                Ranked("saved", 46),
+            ),
+            savedOrder = listOf("notes", "saved", "words", "weather"),
+            pinnedKeys = emptySet(),
+            smart = false,
+        )
+
+        assertEquals(listOf("notes", "saved", "words", "weather", "german_web"), split.stacked)
+    }
+
+    @Test
     fun smartWidgetOrderUsesPriorityAfterSavedOrderAndKeepsPinnedKeysAtTop() {
         val pinnedWidget = TodayOrder.widgetKey(12)
         val lowerWidget = TodayOrder.widgetKey(34)
