@@ -201,6 +201,9 @@ private fun SettingsFragment.handleGermanBackupFooterClick(view: View): Boolean 
         R.id.aiPracticeActionMore -> showAiPracticeMenu(view)
         R.id.newsSentencesOnOff, R.id.newsSentencesTitle, R.id.newsSentencesSubtitle, R.id.newsSentencesLayout -> tickOnChange(view) { toggleNewsSentences() }
         R.id.newsSentencesFetchNow -> fetchNewsSentencesNow()
+        // The web-account row (#835): the tap depends on the session state
+        // (onGermanWebAccountTap decides dialog or menu).
+        R.id.germanWebAccount, R.id.germanWebAccountTitle, R.id.germanWebAccountLayout -> onGermanWebAccountTap(view)
         R.id.exportBackup, R.id.exportBackupLayout -> launchExportBackup()
         R.id.importBackup, R.id.importBackupLayout -> launchImportBackup()
         R.id.autoBackup, R.id.autoBackupTitle, R.id.autoBackupLayout -> tickOnChange(view) { toggleAutoBackup() }

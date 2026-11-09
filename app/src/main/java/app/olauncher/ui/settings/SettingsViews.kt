@@ -107,6 +107,8 @@ internal class SettingsViews(private val frame: FragmentSettingsBinding) {
     val germanSpellSuggestOnOff: TextView get() = textView(R.id.germanSpellSuggestOnOff)
     val germanUiLayout: ViewGroup get() = viewGroup(R.id.germanUiLayout)
     val germanUiOnOff: TextView get() = textView(R.id.germanUiOnOff)
+    val germanWebAccount: TextView get() = textView(R.id.germanWebAccount)
+    val germanWebAccountLayout: ViewGroup get() = viewGroup(R.id.germanWebAccountLayout)
     val aiPracticeLayout: ViewGroup get() = viewGroup(R.id.aiPracticeLayout)
     val aiPracticeOnOff: TextView get() = textView(R.id.aiPracticeOnOff)
     val aiPracticeSubtitle: TextView get() = textView(R.id.aiPracticeSubtitle)

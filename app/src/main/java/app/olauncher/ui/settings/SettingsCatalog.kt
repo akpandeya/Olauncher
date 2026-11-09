@@ -285,6 +285,12 @@ object SettingsCatalog {
         trailingActionIds = intArrayOf(R.id.newsSentencesFetchNow),
         trailingActionLabelRes = intArrayOf(R.string.news_sentences_fetch_now),
         trailingActionsContainerId = R.id.newsSentencesActions),
+    // The web-account row (#835): pairing with the German web app. The value line
+    // is the session state (GermanWebAccountRow); tapping it opens the pairing
+    // dialog while signed out or lapsed, and the web app / sign-out menu while
+    // signed in.
+    row(key = "germanWebAccount", sectionKey = SettingsSections.KEY_DEUTSCH, titleRes = R.string.german_web_account, type = SettingsRowType.CHOICE,
+        primaryId = R.id.germanWebAccount, layoutId = R.id.germanWebAccountLayout, titleId = R.id.germanWebAccountTitle, valueId = R.id.germanWebAccount),
     )
 
     private val appearance: List<SettingsItem> = listOf(

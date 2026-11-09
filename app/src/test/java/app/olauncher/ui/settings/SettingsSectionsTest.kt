@@ -151,6 +151,7 @@ class SettingsSectionsTest {
 
         assertEquals(SettingsSections.DEUTSCH, SettingsSections.findSectionByViewId(R.id.deutschSection))
         assertEquals(SettingsSections.DEUTSCH, SettingsSections.findSectionByViewId(R.id.germanLayout))
+        assertEquals(SettingsSections.DEUTSCH, SettingsSections.findSectionByViewId(R.id.germanWebAccountLayout))
 
         assertEquals(SettingsSections.APPEARANCE, SettingsSections.findSectionByViewId(R.id.appearanceSection))
         assertEquals(SettingsSections.APPEARANCE, SettingsSections.findSectionByViewId(R.id.photoWallpaper))

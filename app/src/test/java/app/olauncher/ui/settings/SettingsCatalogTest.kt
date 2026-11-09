@@ -26,8 +26,8 @@ class SettingsCatalogTest {
     fun `every setting of the old layout is present in its section`() {
         val actual = SettingsSections.all.associate { it.key to SettingsCatalog.rowsFor(it.key).map { row -> row.key } }
         assertEquals(INVENTORY, actual)
-        assertEquals(95, SettingsCatalog.rows.size)
-        assertEquals(93, SettingsCatalog.rows.count { it.searchable })
+        assertEquals(96, SettingsCatalog.rows.size)
+        assertEquals(94, SettingsCatalog.rows.count { it.searchable })
     }
 
     @Test
@@ -131,7 +131,7 @@ class SettingsCatalogTest {
         assertEquals(
             setOf(
                 "shortcutCount", "shortcutSize", "shortcutSide", "shortcutHeight", "shortcutIconStyle",
-                "germanClock", "dictionaryApp", "germanOfflineDictionaryOnOff", "germanLookupOnOff", "germanSpellSuggestOnOff", "germanScreenPickScreenshot", "germanPauseWordOnOff", "germanUiOnOff", "aiPracticeOnOff", "newsSentencesOnOff",
+                "germanClock", "dictionaryApp", "germanOfflineDictionaryOnOff", "germanLookupOnOff", "germanSpellSuggestOnOff", "germanScreenPickScreenshot", "germanPauseWordOnOff", "germanUiOnOff", "aiPracticeOnOff", "newsSentencesOnOff", "germanWebAccount",
                 "backgroundOpacity",
             ),
             hiddenWhenOff.map { it.key }.toSet(),
@@ -346,6 +346,7 @@ class SettingsCatalogTest {
             "germanUiOnOff",
             "aiPracticeOnOff",
             "newsSentencesOnOff",
+            "germanWebAccount",
         ),
         SettingsSections.KEY_APPEARANCE to listOf(
             "themePack",
