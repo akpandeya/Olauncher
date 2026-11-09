@@ -475,6 +475,29 @@
     <string name="german_setup_progress">Step %1$d of %2$d</string>
     <string name="german_offline_dictionary">Offline dictionary</string>
     <string name="german_offline_dictionary_subtitle">Meanings bundled in the app. Nothing leaves your phone</string>
+    <string name="german_web_account" tools:ignore="MissingTranslation">Web app</string>
+    <string name="german_web_not_connected" tools:ignore="MissingTranslation">Not connected</string>
+    <string name="german_web_connected_as" tools:ignore="MissingTranslation">Connected as %1$s</string>
+    <string name="german_web_connected_as_host" tools:ignore="MissingTranslation">Connected as %1$s · %2$s</string>
+    <string name="german_web_lapsed" tools:ignore="MissingTranslation">Signed out. Enter a new code</string>
+    <string name="german_web_pair_title" tools:ignore="MissingTranslation">Connect to the web app</string>
+    <string name="german_web_pair_hint" tools:ignore="MissingTranslation">Open Konto → Gerät hinzufügen in the web app and type the code</string>
+    <string name="german_web_server_hint" tools:ignore="MissingTranslation">your-server.example.com</string>
+    <string name="german_web_server_invalid" tools:ignore="MissingTranslation">Enter an https address</string>
+    <string name="german_web_code_hint" tools:ignore="MissingTranslation">Pairing code</string>
+    <string name="german_web_code_length" tools:ignore="MissingTranslation">The code is 8 characters</string>
+    <string name="german_web_connect" tools:ignore="MissingTranslation">Connect</string>
+    <string name="german_web_connecting" tools:ignore="MissingTranslation">Connecting…</string>
+    <string name="german_web_invalid_code" tools:ignore="MissingTranslation">That code is unknown, expired or used</string>
+    <string name="german_web_too_many_attempts" tools:ignore="MissingTranslation">Too many attempts — wait a few minutes and try again</string>
+    <string name="german_web_network_error" tools:ignore="MissingTranslation">Could not reach the server</string>
+    <string name="german_web_server_error" tools:ignore="MissingTranslation">The server had a problem — try again later</string>
+    <string name="german_web_connected_toast" tools:ignore="MissingTranslation">Connected as %1$s</string>
+    <string name="german_web_save_failed" tools:ignore="MissingTranslation">Could not save the connection — try again</string>
+    <string name="german_web_open" tools:ignore="MissingTranslation">Open web app</string>
+    <string name="german_web_sign_out" tools:ignore="MissingTranslation">Sign out</string>
+    <string name="german_web_sign_out_title" tools:ignore="MissingTranslation">Sign out of the web app?</string>
+    <string name="german_web_sign_out_message" tools:ignore="MissingTranslation">Sign out forgets this device only on this phone. To revoke it, use Konto in the web app</string>
     <string name="nudge_water_notification_de" translatable="false">Zeit für ein Glas Wasser · heute %d</string>
     <string name="nudge_walk_notification_de" translatable="false">Steh auf und geh ein paar Minuten · heute %d</string>
     <string name="nudge_social_notification_de" translatable="false">Heute %1$d Min. auf %2$s. Leg es weg?</string>

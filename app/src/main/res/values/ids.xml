@@ -114,6 +114,9 @@
     <item name="germanUiLayout" type="id" />
     <item name="germanUiOnOff" type="id" />
     <item name="germanUiTitle" type="id" />
+    <item name="germanWebAccount" type="id" />
+    <item name="germanWebAccountLayout" type="id" />
+    <item name="germanWebAccountTitle" type="id" />
     <item name="gesturesSection" type="id" />
     <item name="glanceSection" type="id" />
     <item name="glowStrength" type="id" />

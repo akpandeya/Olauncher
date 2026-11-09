@@ -154,6 +154,9 @@ class SettingsSectionsResourceTest {
             ) -
             setOf(
                 "backgroundOpacity", "backgroundOpacityLayout", "backgroundOpacityTitle", "backgroundOpacitySeekBar",
+            ) -
+            setOf(
+                "germanWebAccount", "germanWebAccountLayout", "germanWebAccountTitle",
             )
         assertTrue("Ids added to Settings: $added", added.isEmpty())
     }
