@@ -62,8 +62,6 @@ class WordsFragment : BaseFragment() {
             true
         }
         binding.btnClearSearch.setOnClickListener { binding.etSearch.text?.clear() }
-        binding.tvTitle.setOnClickListener { openDrillsHub() }
-        binding.btnDrills.setOnClickListener { openDrillsHub() }
         binding.btnChats.setOnClickListener { openConversations() }
 
         // The activity is edge-to-edge, so the window is not resized for the keyboard.
@@ -124,7 +122,6 @@ class WordsFragment : BaseFragment() {
                 findNavController().navigate(R.id.action_wordsFragment_to_wordListsFragment)
             }
         }
-        b.btnDrills.isVisible = WordsCardLogic.showDrillsButton(Prefs(context).germanEnabled)
         // The all-conversations list (#793): same gate as every chat entry —
         // hidden, never greyed, when the practice switch or key is missing.
         b.btnChats.isVisible = askAiVisible
@@ -200,8 +197,6 @@ class WordsFragment : BaseFragment() {
         anchor.showPopupMenu(
             configure = { menu ->
                 menu.add(Menu.NONE, 1, Menu.NONE, R.string.words_edit)
-                menu.add(Menu.NONE, 5, Menu.NONE, R.string.words_conjugate)
-                menu.add(Menu.NONE, 6, Menu.NONE, R.string.drills)
                 menu.add(Menu.NONE, 2, Menu.NONE, DictionaryApps.actionLabel(context, Prefs(context).germanDictionaryApp))
                 menu.add(Menu.NONE, 4, Menu.NONE, R.string.word_lists_popup_lists)
                 menu.add(Menu.NONE, 3, Menu.NONE, R.string.words_delete)
@@ -209,22 +204,10 @@ class WordsFragment : BaseFragment() {
         ) { item ->
             when (item.itemId) {
                 1 -> WordDialogs.showEditDialog(context, word, ::liveViewLifecycleOwner) { render() }
-                5 -> openConjugation(word)
-                6 -> openDrillsHub()
                 2 -> DictionaryApps.open(context, word.text)
                 4 -> WordDialogs.showListsDialog(context, word) { render() }
                 3 -> WordDialogs.showDeleteDialog(context, word) { render() }
             }
-        }
-    }
-
-    /** Opens the full-screen drills hub; a row tap there starts a round of a type. */
-    private fun openDrillsHub() {
-        Haptics.tick(binding.root)
-        val navController = findNavController()
-        // Ignore a second tap delivered before the first navigation lands.
-        if (navController.currentDestination?.id == R.id.wordsFragment) {
-            navController.navigate(R.id.action_wordsFragment_to_drillHubFragment)
         }
     }
 
@@ -238,22 +221,6 @@ class WordsFragment : BaseFragment() {
         // Ignore a second tap delivered before the first navigation lands.
         if (navController.currentDestination?.id == R.id.wordsFragment) {
             navController.navigate(R.id.action_wordsFragment_to_askAiConversationsFragment)
-        }
-    }
-
-    /** The drill handles non-verbs itself with a graceful one-liner, so this stays unconditional. */
-    private fun openConjugation(word: Word) {
-        val context = context ?: return
-        Haptics.tick(binding.root)
-        // Re-read so a word edited since this row rendered drills the current text.
-        val current = WordsCard.getStore(context).get(word.id) ?: word
-        val navController = findNavController()
-        // Ignore a second tap delivered before the first navigation lands.
-        if (navController.currentDestination?.id == R.id.wordsFragment) {
-            navController.navigate(
-                R.id.action_wordsFragment_to_conjugationFragment,
-                Bundle().apply { putString("word", current.text) },
-            )
         }
     }
 

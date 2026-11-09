@@ -155,6 +155,27 @@ class TodayOrderTest {
     }
 
     @Test
+    fun aStoredOrderThatStillListsTheRemovedDrillsCardKeepsTheRemainingOrder() {
+        // "drills" was a Today card until its screens moved to the web app (#835);
+        // a stored panel order may still contain the key. It must load without a
+        // migration: the surviving cards keep their saved positions, and the stale
+        // key simply renders no panel.
+        val split = TodayOrder.arrange(
+            cards = listOf(
+                Ranked("weather", 50),
+                Ranked("words", 49),
+                Ranked("german_web", 48),
+                Ranked("notes", 47),
+            ),
+            savedOrder = listOf("notes", "drills", "words", "weather"),
+            pinnedKeys = emptySet(),
+            smart = false,
+        )
+
+        assertEquals(listOf("notes", "words", "weather", "german_web"), split.stacked)
+    }
+
+    @Test
     fun smartWidgetOrderUsesPriorityAfterSavedOrderAndKeepsPinnedKeysAtTop() {
         val pinnedWidget = TodayOrder.widgetKey(12)
         val lowerWidget = TodayOrder.widgetKey(34)

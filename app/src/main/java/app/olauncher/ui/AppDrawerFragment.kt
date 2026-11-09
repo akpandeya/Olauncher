@@ -25,7 +25,6 @@ import app.olauncher.helper.DrawerOrdering
 import app.olauncher.helper.DrawerScrollHelper
 import app.olauncher.helper.LetterPos
 import app.olauncher.helper.hideKeyboard
-import app.olauncher.data.store.VerbParadigm
 import app.olauncher.data.store.WiktionaryApi
 import kotlinx.coroutines.Job
 import app.olauncher.helper.showKeyboard
@@ -46,9 +45,6 @@ class AppDrawerFragment : BaseFragment() {
     /** Text being looked up and its result; a null result means still loading. */
     @Volatile
     internal var lookupState: Pair<String, WiktionaryApi.LookupResult?>? = null
-    /** Verb paradigm for the current `:w` text, when the offline dictionary has one. */
-    @Volatile
-    internal var paradigmState: Pair<String, VerbParadigm>? = null
     internal val SUGGEST_MAX_ONLINE_ITEMS = 5
     internal var suggestJob: Job? = null
     /** Saved German words; loaded when the drawer opens and after each save. */
@@ -284,7 +280,6 @@ class AppDrawerFragment : BaseFragment() {
         lookupJob?.cancel()
         lookupJob = null
         lookupState = null
-        paradigmState = null
         searchTextView = null
         lastSelectedLetter = null
         lastScaledStripIndex = -1

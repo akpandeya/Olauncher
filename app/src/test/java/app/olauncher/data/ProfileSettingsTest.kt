@@ -203,6 +203,26 @@ class ProfileSettingsTest {
     }
 
     @Test
+    fun `a stored profile still listing the removed drills card loads and applies`() {
+        // "drills" was a Today card until its screens moved to the web app (#835);
+        // a stored profile may still list it. The key stays known, so the profile
+        // loads without crashing and every other card keeps its stored choice.
+        val json = BuiltInProfiles.richSettings.toJson()
+            .put("todayCards", org.json.JSONArray(listOf("drills", "words", "notes")))
+        val settings = ProfileSettings.fromJson(json)
+        assertEquals(setOf("drills", "words", "notes"), settings.todayCards)
+
+        val t = FakeTarget()
+        settings.apply(t)
+        assertTrue(t.cards.getValue("drills"))
+        assertTrue(t.cards.getValue("words"))
+        assertTrue(t.cards.getValue("notes"))
+        assertFalse(t.cards.getValue("weather"))
+        // Round trip: the stored key survives a re-save.
+        assertEquals(settings, ProfileSettings.fromJson(JSONObject(settings.toJson().toString())))
+    }
+
+    @Test
     fun `missing field, wrong type and bad values are rejected`() {
         val base = BuiltInProfiles.focusSettings.toJson()
         fun rejects(json: JSONObject) = try {

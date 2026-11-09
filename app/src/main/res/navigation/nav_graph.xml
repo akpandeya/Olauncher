@@ -59,27 +59,6 @@
             app:popExitAnim="@animator/fade_exit"
             app:popUpTo="@+id/appListFragment"
             app:popUpToInclusive="true" />
-        <action
-            android:id="@+id/action_appListFragment_to_conjugationFragment"
-            app:destination="@id/conjugationFragment"
-            app:enterAnim="@animator/fade_enter"
-            app:exitAnim="@animator/fade_exit"
-            app:popEnterAnim="@animator/fade_enter"
-            app:popExitAnim="@animator/fade_exit" />
-        <action
-            android:id="@+id/action_appListFragment_to_drillFragment"
-            app:destination="@id/drillFragment"
-            app:enterAnim="@animator/fade_enter"
-            app:exitAnim="@animator/fade_exit"
-            app:popEnterAnim="@animator/fade_enter"
-            app:popExitAnim="@animator/fade_exit" />
-        <action
-            android:id="@+id/action_appListFragment_to_drillHubFragment"
-            app:destination="@id/drillHubFragment"
-            app:enterAnim="@animator/fade_enter"
-            app:exitAnim="@animator/fade_exit"
-            app:popEnterAnim="@animator/fade_enter"
-            app:popExitAnim="@animator/fade_exit" />
     </fragment>
     <fragment
         android:id="@+id/settingsFragment"
@@ -162,13 +141,6 @@
             app:popEnterAnim="@animator/fade_enter"
             app:popExitAnim="@animator/fade_exit" />
         <action
-            android:id="@+id/action_todayFragment_to_drillFragment"
-            app:destination="@id/drillFragment"
-            app:enterAnim="@animator/fade_enter"
-            app:exitAnim="@animator/fade_exit"
-            app:popEnterAnim="@animator/fade_enter"
-            app:popExitAnim="@animator/fade_exit" />
-        <action
             android:id="@+id/action_todayFragment_to_appListFragment"
             app:destination="@id/appListFragment"
             app:enterAnim="@animator/drawer_enter"
@@ -222,20 +194,6 @@
             app:popEnterAnim="@animator/fade_enter"
             app:popExitAnim="@animator/fade_exit" />
         <action
-            android:id="@+id/action_wordsFragment_to_conjugationFragment"
-            app:destination="@id/conjugationFragment"
-            app:enterAnim="@animator/fade_enter"
-            app:exitAnim="@animator/fade_exit"
-            app:popEnterAnim="@animator/fade_enter"
-            app:popExitAnim="@animator/fade_exit" />
-        <action
-            android:id="@+id/action_wordsFragment_to_drillHubFragment"
-            app:destination="@id/drillHubFragment"
-            app:enterAnim="@animator/fade_enter"
-            app:exitAnim="@animator/fade_exit"
-            app:popEnterAnim="@animator/fade_enter"
-            app:popExitAnim="@animator/fade_exit" />
-        <action
             android:id="@+id/action_wordsFragment_to_askAiConversationsFragment"
             app:destination="@id/askAiConversationsFragment"
             app:enterAnim="@animator/fade_enter"
@@ -282,13 +240,6 @@
             app:argType="string"
             app:nullable="true"
             android:defaultValue="@null" />
-        <action
-            android:id="@+id/action_wordListFragment_to_conjugationFragment"
-            app:destination="@id/conjugationFragment"
-            app:enterAnim="@animator/fade_enter"
-            app:exitAnim="@animator/fade_exit"
-            app:popEnterAnim="@animator/fade_enter"
-            app:popExitAnim="@animator/fade_exit" />
     </fragment>
 
     <fragment
@@ -308,16 +259,6 @@
     </fragment>
 
     <fragment
-        android:id="@+id/conjugationFragment"
-        android:name="app.olauncher.ui.words.ConjugationFragment"
-        android:label="ConjugationFragment"
-        tools:layout="@layout/fragment_conjugation">
-        <argument
-            android:name="word"
-            app:argType="string" />
-    </fragment>
-
-    <fragment
         android:id="@+id/privacyFragment"
         android:name="app.olauncher.ui.privacy.PrivacyFragment"
         android:label="PrivacyFragment"
@@ -328,64 +269,6 @@
         android:name="app.olauncher.ui.german.GermanSetupFragment"
         android:label="GermanSetupFragment"
         tools:layout="@layout/fragment_german_setup" />
-
-    <fragment
-        android:id="@+id/drillFragment"
-        android:name="app.olauncher.ui.words.DrillFragment"
-        android:label="DrillFragment"
-        tools:layout="@layout/fragment_drill">
-        <argument
-            android:name="drillType"
-            app:argType="string" />
-    </fragment>
-
-    <fragment
-        android:id="@+id/drillHubFragment"
-        android:name="app.olauncher.ui.words.DrillHubFragment"
-        android:label="DrillHubFragment"
-        tools:layout="@layout/fragment_drill_hub">
-        <action
-            android:id="@+id/action_drillHubFragment_to_drillFragment"
-            app:destination="@id/drillFragment"
-            app:enterAnim="@animator/fade_enter"
-            app:exitAnim="@animator/fade_exit"
-            app:popEnterAnim="@animator/fade_enter"
-            app:popExitAnim="@animator/fade_exit" />
-        <action
-            android:id="@+id/action_drillHubFragment_to_grammarRulesFragment"
-            app:destination="@id/grammarRulesFragment"
-            app:enterAnim="@animator/fade_enter"
-            app:exitAnim="@animator/fade_exit"
-            app:popEnterAnim="@animator/fade_enter"
-            app:popExitAnim="@animator/fade_exit" />
-    </fragment>
-
-    <!-- The grammar-rules index (#792): every authored help-card rule, with a
-         title search; a row tap opens the rule's full help card. -->
-    <fragment
-        android:id="@+id/grammarRulesFragment"
-        android:name="app.olauncher.ui.words.GrammarRulesFragment"
-        android:label="GrammarRulesFragment"
-        tools:layout="@layout/fragment_grammar_rules">
-        <action
-            android:id="@+id/action_grammarRulesFragment_to_grammarRuleFragment"
-            app:destination="@id/grammarRuleFragment"
-            app:enterAnim="@animator/fade_enter"
-            app:exitAnim="@animator/fade_exit"
-            app:popEnterAnim="@animator/fade_enter"
-            app:popExitAnim="@animator/fade_exit" />
-    </fragment>
-
-    <!-- One rule's full help card, with its Ask-AI entry (#792). -->
-    <fragment
-        android:id="@+id/grammarRuleFragment"
-        android:name="app.olauncher.ui.words.GrammarRuleFragment"
-        android:label="GrammarRuleFragment"
-        tools:layout="@layout/fragment_grammar_rule">
-        <argument
-            android:name="ruleId"
-            app:argType="string" />
-    </fragment>
 
     <!-- The all-conversations list (#793): every stored Ask-AI thread, newest
          first; a row tap resumes that thread in the chat screen. -->

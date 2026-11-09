@@ -13,8 +13,8 @@ import javax.xml.parsers.DocumentBuilderFactory
 
 /**
  * The shared summary-row skin (#623, owner decision 2026-10-28): one row layout and
- * mark styling serve both the drill round summary and the review summary, each with
- * its own thin adapter. These tests pin the shared skin and block per-feature forks.
+ * mark styling serve every summary screen, each with its own thin adapter. These
+ * tests pin the shared skin and block per-feature forks.
  */
 class SummaryRowSkinTest {
 
@@ -122,17 +122,15 @@ class SummaryRowSkinTest {
 
     @Test
     fun `both summary screens inflate the one shared row binding`() {
-        for (source in listOf(
-            "src/main/java/app/olauncher/ui/words/DrillFragment.kt",
-            "src/main/java/app/olauncher/ui/words/ReviewFragment.kt",
-        )) {
-            val text = moduleFile(source).readText()
-            assertTrue("$source must inflate the shared ItemSummaryRowBinding", text.contains("ItemSummaryRowBinding"))
-            assertFalse(
-                "$source must not inflate a per-feature row binding",
-                text.contains("ItemDrillSummaryBinding") || text.contains("ItemReviewSummaryBinding"),
-            )
-        }
+        // The drill summary screen is gone (drills moved to the web app); the
+        // review summary still inflates the one shared row.
+        val source = "src/main/java/app/olauncher/ui/words/ReviewFragment.kt"
+        val text = moduleFile(source).readText()
+        assertTrue("$source must inflate the shared ItemSummaryRowBinding", text.contains("ItemSummaryRowBinding"))
+        assertFalse(
+            "$source must not inflate a per-feature row binding",
+            text.contains("ItemDrillSummaryBinding") || text.contains("ItemReviewSummaryBinding"),
+        )
     }
 
     @Test
@@ -161,24 +159,21 @@ class SummaryRowSkinTest {
     }
 
     @Test
-    fun `the header is pinned outside the scrolling view in both summary screens`() {
-        for ((layout, scrollView) in listOf(
-            "fragment_drill.xml" to "drillScrollView",
-            "fragment_review.xml" to "reviewScrollView",
-        )) {
-            val doc = parseXml(moduleFile("src/main/res/layout/$layout"))
+    fun `the header is pinned outside the scrolling view in the review summary`() {
+        // The drill summary screen is gone (drills moved to the web app); the
+        // pinned-header rule now pins the review screen alone.
+        val doc = parseXml(moduleFile("src/main/res/layout/fragment_review.xml"))
 
-            val header = checkNotNull(findElementById(doc, "summaryHeader")) { "$layout must keep the pinned summaryHeader" }
-            val list = checkNotNull(findElementById(doc, "summaryList")) { "$layout must keep the scrollable summaryList" }
-            val scroller = checkNotNull(findElementById(doc, scrollView)) { "$layout must keep its scroll container $scrollView" }
+        val header = checkNotNull(findElementById(doc, "summaryHeader")) { "fragment_review.xml must keep the pinned summaryHeader" }
+        val list = checkNotNull(findElementById(doc, "summaryList")) { "fragment_review.xml must keep the scrollable summaryList" }
+        val scroller = checkNotNull(findElementById(doc, "reviewScrollView")) { "fragment_review.xml must keep its scroll container reviewScrollView" }
 
-            assertTrue("$layout: summaryList must scroll inside $scrollView", isDescendantOf(list, scroller))
-            assertFalse(
-                "$layout: summaryHeader must sit outside $scrollView — the pinned header " +
-                    "must not scroll away with the list",
-                isDescendantOf(header, scroller),
-            )
-        }
+        assertTrue("fragment_review.xml: summaryList must scroll inside reviewScrollView", isDescendantOf(list, scroller))
+        assertFalse(
+            "fragment_review.xml: summaryHeader must sit outside reviewScrollView — the pinned header " +
+                "must not scroll away with the list",
+            isDescendantOf(header, scroller),
+        )
     }
 
     private companion object {

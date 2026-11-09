@@ -84,6 +84,11 @@ class TodayCardTest {
     }
 
     @Test
+    fun `drills card is no longer listed after the drills moved to the web app`() {
+        assertNull(TodayCards.all.firstOrNull { it.key == "drills" })
+    }
+
+    @Test
     fun `all other today cards default to enabled true`() {
         val otherCards = TodayCards.all.filter { it.key != app.olauncher.ui.today.cards.NextUpCard.KEY }
         assertTrue(otherCards.isNotEmpty())

@@ -839,7 +839,7 @@ class Prefs(context: Context) :
         get() = prefs.getInt(AI_DIGEST_NEW, 0)
         set(value) = prefs.edit { putInt(AI_DIGEST_NEW, value).apply() }
 
-    /** JSON of the most recent drill round, shown on the Today Drills card; see [DrillLastRound]. */
+    /** JSON of the most recent drill round, kept for the web-app import; see [DrillLastRound]. */
     var drillLastRound: String
         get() = prefs.getString(DRILL_LAST_ROUND, "") ?: ""
         set(value) = prefs.edit { putString(DRILL_LAST_ROUND, value).apply() }

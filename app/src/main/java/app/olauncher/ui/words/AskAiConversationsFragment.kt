@@ -26,7 +26,7 @@ import app.olauncher.ui.today.cards.WordsCard
  * [AiChatFragment]; the "＋ New conversation" pill starts a fresh one for the
  * newest thread's subject (the list itself has no single subject to reuse — the
  * thread sheet's button reuses its sheet's). Reached from the Chats button in
- * the Words screen header, next to Drills — the on-demand entry the Ask-AI
+ * the Words screen header — the on-demand entry the Ask-AI
  * design lacked. All ordering and labelling decisions live in [AskAiEntries]
  * (Context-free, JVM tested); this fragment only reads the store and navigates.
  */
