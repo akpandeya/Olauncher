@@ -500,6 +500,12 @@
     <string name="german_web_sign_out" tools:ignore="MissingTranslation">Sign out</string>
     <string name="german_web_sign_out_title" tools:ignore="MissingTranslation">Sign out of the web app?</string>
     <string name="german_web_sign_out_message" tools:ignore="MissingTranslation">Sign out forgets this device only on this phone. To revoke it, use Konto in the web app</string>
+    <string name="german_web_card_title" tools:ignore="MissingTranslation">German · Web</string>
+    <string name="german_web_card_due" tools:ignore="MissingTranslation">due</string>
+    <string name="german_web_card_due_line" tools:ignore="MissingTranslation">Due on the web</string>
+    <string name="german_web_card_due_line_stale" tools:ignore="MissingTranslation">Due on the web · Not synced yet</string>
+    <string name="german_web_card_lapsed" tools:ignore="MissingTranslation">Signed out. Reconnect in Settings</string>
+    <string name="german_web_card_open" tools:ignore="MissingTranslation">Open ›</string>
     <string name="nudge_water_notification_de" translatable="false">Zeit für ein Glas Wasser · heute %d</string>
     <string name="nudge_walk_notification_de" translatable="false">Steh auf und geh ein paar Minuten · heute %d</string>
     <string name="nudge_social_notification_de" translatable="false">Heute %1$d Min. auf %2$s. Leg es weg?</string>

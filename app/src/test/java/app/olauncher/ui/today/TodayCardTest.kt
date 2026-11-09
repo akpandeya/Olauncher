@@ -71,6 +71,14 @@ class TodayCardTest {
     }
 
     @Test
+    fun `today cards list contains german web card`() {
+        val germanWeb = TodayCards.all.firstOrNull { it.key == app.olauncher.ui.today.cards.GermanWebCard.KEY }
+        assertNotNull(germanWeb)
+        assertEquals("german_web", germanWeb?.key)
+        assertEquals(R.string.german_web_card_title, germanWeb?.titleRes)
+    }
+
+    @Test
     fun `week card is merged into wellbeing and no longer listed`() {
         assertNull(TodayCards.all.firstOrNull { it.key == app.olauncher.ui.today.cards.WeekCard.KEY })
     }

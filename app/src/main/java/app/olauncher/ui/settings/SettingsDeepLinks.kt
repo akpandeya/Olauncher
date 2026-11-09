@@ -29,11 +29,21 @@ object SettingsDeepLinks {
         rowViewId = R.id.pauseBeforeAppsOnOff,
     )
 
+    /** The German web-app account row (#835): where a lapsed card's tap reconnects. */
+    val GERMAN_WEB_ACCOUNT = SettingsDeepLink(
+        sectionKey = SettingsSections.KEY_DEUTSCH,
+        rowViewId = R.id.germanWebAccount,
+    )
+
     fun pause(): SettingsDeepLink = PAUSE
 
     fun forPause(): SettingsDeepLink = PAUSE
 
     fun pauseBundle(): Bundle = PAUSE.toBundle()
+
+    fun germanWebAccount(): SettingsDeepLink = GERMAN_WEB_ACCOUNT
+
+    fun germanWebAccountBundle(): Bundle = GERMAN_WEB_ACCOUNT.toBundle()
 
     fun createBundle(target: SettingsDeepLink): Bundle = target.toBundle()
 }
