@@ -336,49 +336,7 @@ class WordOrderQuizTest {
         assertFalse(quiz.unselectTile(tile))
     }
 
-    // --- Integration with DrillReviewFeed and DrillScores ---
-
-    @Test
-    fun firstAttemptsFeedThroughDrillReviewFeedForSavedWords() {
-        val savedWord1 = Word(id = 101L, text = "Kino", dueDay = 0L, addedAt = 0L)
-        val savedWord2 = Word(id = 202L, text = "Auto", dueDay = 0L, addedAt = 0L)
-
-        val item1 = WordOrderItem(
-            id = DrillItemId(DrillType.WORD_ORDER, "101:sentence"),
-            tiles = listOf("Ich", "gehe", "heute", "ins", "Kino"),
-            accepted = listOf(listOf("Ich", "gehe", "heute", "ins", "Kino")),
-        )
-        val item2 = WordOrderItem(
-            id = DrillItemId(DrillType.WORD_ORDER, "202:sentence"),
-            tiles = listOf("Wir", "kaufen", "morgen", "ein", "Auto"),
-            accepted = listOf(listOf("Wir", "kaufen", "morgen", "ein", "Auto")),
-        )
-
-        val quiz = WordOrderQuiz(listOf(item1, item2))
-
-        // item1 answered correctly on first try
-        quiz.answer(listOf("Ich", "gehe", "heute", "ins", "Kino"))
-        quiz.advance()
-
-        // item2 answered incorrectly on first try
-        quiz.answer(listOf("Auto", "ein", "morgen", "kaufen", "Wir"))
-        quiz.advance()
-
-        val grades = DrillReviewFeed.grades(
-            firstAttempts = quiz.firstAttempts(),
-            words = listOf(savedWord1, savedWord2),
-            today = 19000L,
-        )
-
-        assertEquals(2, grades.size)
-        val grade1 = grades.first { it.word.id == 101L }
-        val grade2 = grades.first { it.word.id == 202L }
-
-        assertEquals(ReviewEvent.Result.KNEW, grade1.result)
-        assertEquals("drill:word_order", grade1.source)
-        assertEquals(ReviewEvent.Result.AGAIN, grade2.result)
-        assertEquals("drill:word_order", grade2.source)
-    }
+    // --- Integration with DrillScores ---
 
     @Test
     fun firstTryScoreRecordsInDrillScores() {

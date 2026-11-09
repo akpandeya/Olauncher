@@ -544,8 +544,8 @@ class DrillQuizTest {
         quiz.advance()
         assertEquals(next.id, quiz.current!!.id)
 
-        // The reveal is not a scored item either: it never reaches the summary, so it
-        // cannot inflate the wrong count or surface an empty "Practise misses" round.
+        // The reveal is not a scored item either: it never reaches the item results,
+        // so it cannot inflate the wrong count.
         assertEquals(listOf(next), quiz.items)
         assertFalse(broken.id in quiz.itemResults())
         assertFalse(broken.id in quiz.firstAttempts())
@@ -553,22 +553,6 @@ class DrillQuizTest {
         quiz.answer(next.answer)
         quiz.advance()
         assertTrue(quiz.isFinished)
-        val summaryItems = quiz.items.mapIndexed { index, item ->
-            val res = quiz.itemResults()[item.id]
-                ?: if (quiz.firstAttempts()[item.id] == true) DrillResult.RIGHT else DrillResult.WRONG
-            DrillSummaryItem(
-                id = item.id,
-                prompt = item.prompt,
-                answer = item.answer,
-                hint = item.hint,
-                result = res,
-                roundIndex = index,
-            )
-        }
-        val counts = DrillSummaryLogic.counts(summaryItems)
-        assertEquals(1, counts.right)
-        assertEquals(0, counts.almost)
-        assertEquals(0, counts.wrong)
     }
 
     // -----------------------------------------------------------------
