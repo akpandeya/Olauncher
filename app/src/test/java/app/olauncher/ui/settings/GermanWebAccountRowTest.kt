@@ -90,4 +90,12 @@ class GermanWebAccountRowTest {
         assertEquals(R.string.german_web_failed_count, lines[1].stringRes)
         assertEquals(listOf("2"), lines[1].formatArgs)
     }
+
+    @Test
+    fun `connect is disabled while a pairing request is in flight`() {
+        assertTrue(GermanWebPairConnect.enabled(addressValid = true, codeLength = 8, requestInFlight = false))
+        assertEquals(false, GermanWebPairConnect.enabled(addressValid = true, codeLength = 8, requestInFlight = true))
+        assertEquals(false, GermanWebPairConnect.enabled(addressValid = false, codeLength = 8, requestInFlight = false))
+        assertEquals(false, GermanWebPairConnect.enabled(addressValid = true, codeLength = 7, requestInFlight = false))
+    }
 }

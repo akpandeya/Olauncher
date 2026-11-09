@@ -2,6 +2,7 @@ package app.olauncher.ui.settings
 
 import androidx.annotation.StringRes
 import app.olauncher.R
+import app.olauncher.data.store.GermanWebApi
 import app.olauncher.data.store.GermanWebSessionState
 
 /**
@@ -52,4 +53,16 @@ object GermanWebAccountRow {
             add(GermanWebAccountRowText(R.string.german_web_failed_count, listOf(failedCount.toString())))
         }
     }
+}
+
+/**
+ * When the pairing dialog's Connect button is enabled (#835, task 02): a
+ * normalised server address, a full-length code and no exchange already in
+ * flight — a second tap would spend the one-time code twice, and the losing
+ * request would overwrite the dialog with "invalid code".
+ */
+object GermanWebPairConnect {
+
+    fun enabled(addressValid: Boolean, codeLength: Int, requestInFlight: Boolean): Boolean =
+        addressValid && codeLength == GermanWebApi.PAIRING_CODE_LENGTH && !requestInFlight
 }
