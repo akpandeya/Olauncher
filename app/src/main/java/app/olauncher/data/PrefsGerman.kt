@@ -13,6 +13,8 @@ import app.olauncher.data.Prefs.Companion.GERMAN_PAUSE_WORD
 import app.olauncher.data.Prefs.Companion.GERMAN_SCREEN_PICK
 import app.olauncher.data.Prefs.Companion.GERMAN_SPELL_SUGGEST
 import app.olauncher.data.Prefs.Companion.GERMAN_UI
+import app.olauncher.data.Prefs.Companion.GERMAN_WEB_BASE_URL
+import app.olauncher.data.Prefs.Companion.GERMAN_WEB_LAPSED
 
 /** Settings group: German (see [Prefs]). */
 interface GermanPrefs {
@@ -51,6 +53,18 @@ interface GermanPrefs {
     var germanUi: Boolean
 
     val isGermanUi: Boolean
+
+    /**
+     * True when a German web device token that used to work got 401 (revoked on
+     * the web or the account removed). Key: [Prefs.Companion.GERMAN_WEB_LAPSED].
+     */
+    var germanWebLapsed: Boolean
+
+    /**
+     * The normalized gambitflow server address the user paired with (epic #835);
+     * empty = not set. Key: [Prefs.Companion.GERMAN_WEB_BASE_URL].
+     */
+    var germanWebBaseUrl: String
 }
 
 internal class GermanPrefsStore(private val prefs: SharedPreferences) : GermanPrefs {
@@ -109,6 +123,14 @@ internal class GermanPrefsStore(private val prefs: SharedPreferences) : GermanPr
     override var germanUi: Boolean
         get() = prefs.getBoolean(GERMAN_UI, false)
         set(value) = prefs.edit { putBoolean(GERMAN_UI, value).apply() }
+
+    override var germanWebLapsed: Boolean
+        get() = prefs.getBoolean(GERMAN_WEB_LAPSED, false)
+        set(value) = prefs.edit { putBoolean(GERMAN_WEB_LAPSED, value).apply() }
+
+    override var germanWebBaseUrl: String
+        get() = prefs.getString(GERMAN_WEB_BASE_URL, "") ?: ""
+        set(value) = prefs.edit { putString(GERMAN_WEB_BASE_URL, value).apply() }
 
     override val isGermanUi: Boolean
         get() = germanEnabled && germanUi

@@ -255,6 +255,8 @@ class BackupCodecTest {
         assertTrue(Backup.isVolatileKey("OWN_OPENS_DAY"))
         assertTrue(Backup.isVolatileKey("OWN_OPENS_com.example.test"))
         assertTrue(Backup.isVolatileKey("OWN_OPENS_"))
+        assertTrue(Backup.isVolatileKey("GERMAN_WEB_LAPSED"))
+        assertTrue(Backup.isVolatileKey("GERMAN_WEB_BASE_URL"))
 
         assertFalse(Backup.isVolatileKey("HOME_APPS_NUM"))
         assertFalse(Backup.isVolatileKey("DRAWER_BOTTOM_SEARCH"))
