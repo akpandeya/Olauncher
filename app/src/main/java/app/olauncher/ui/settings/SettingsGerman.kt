@@ -723,6 +723,7 @@ internal fun SettingsFragment.showGermanWebPairDialog() {
     var status: TextView? = null
     var connectButton: TextView? = null
     var dialogRef: OlDialog? = null
+    var requestInFlight = false
 
     fun showDialogError(message: CharSequence) {
         status?.text = message
@@ -731,18 +732,25 @@ internal fun SettingsFragment.showGermanWebPairDialog() {
     fun serverAddress(): String? =
         GermanWebBaseUrl.normalize(serverInput?.text?.toString().orEmpty())
 
-    fun connectReady(): Boolean =
-        serverAddress() != null &&
-            codeInput?.text?.toString()?.trim()?.length == GermanWebApi.PAIRING_CODE_LENGTH
+    fun fieldsReady(): Boolean =
+        GermanWebPairConnect.enabled(
+            addressValid = serverAddress() != null,
+            codeLength = codeInput?.text?.toString()?.trim()?.length ?: 0,
+            requestInFlight = false,
+        )
 
     /** Connect follows the fields; the one-line hint names the first thing to fix. */
     fun refreshConnectState() {
-        val ready = connectReady()
+        val enabled = GermanWebPairConnect.enabled(
+            addressValid = serverAddress() != null,
+            codeLength = codeInput?.text?.toString()?.trim()?.length ?: 0,
+            requestInFlight = requestInFlight,
+        )
         connectButton?.apply {
-            isEnabled = ready
-            alpha = if (ready) 1f else 0.5f
+            isEnabled = enabled
+            alpha = if (enabled) 1f else 0.5f
         }
-        if (!ready) {
+        if (!fieldsReady()) {
             status?.text = if (serverAddress() == null) {
                 context.getString(R.string.german_web_server_invalid)
             } else {
@@ -752,13 +760,22 @@ internal fun SettingsFragment.showGermanWebPairDialog() {
     }
 
     fun connect() {
+        // One exchange at a time: a double tap must not spend the code twice.
+        if (requestInFlight) return
         val address = serverAddress() ?: return
         val code = codeInput?.text?.toString().orEmpty()
+        requestInFlight = true
+        refreshConnectState()
         showDialogError(context.getString(R.string.german_web_connecting))
         lifecycleScope.launch {
             val api = GermanWebApi(address)
             val label = "Thumbline (${Build.MODEL})".take(GermanWebApi.MAX_LABEL_LENGTH)
-            val result = withContext(Dispatchers.IO) { api.exchangePairingCode(code, label) }
+            val result = try {
+                withContext(Dispatchers.IO) { api.exchangePairingCode(code, label) }
+            } finally {
+                requestInFlight = false
+                refreshConnectState()
+            }
             when (result) {
                 is PairingResult.Paired -> {
                     // The Keystore can be temporarily unavailable; a failed save

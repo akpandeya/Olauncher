@@ -145,9 +145,21 @@ class GermanDueCache(private val dir: File) {
         load()?.takeIf { it.username == username }
     }
 
-    /** Replaces the whole snapshot with a successful fetch. Local ratings reset with it. */
-    fun save(username: String, fetchedAt: Long, fetchedDay: Long, dueCount: Int, words: List<GermanDueWord>) {
+    /**
+     * Replaces the whole snapshot with a successful fetch. Local ratings reset
+     * with it, except [stillRatedIds]: ratings still queued in the outbox, which
+     * the server has not applied yet, so the fetch still lists them as due.
+     */
+    fun save(
+        username: String,
+        fetchedAt: Long,
+        fetchedDay: Long,
+        dueCount: Int,
+        words: List<GermanDueWord>,
+        stillRatedIds: Collection<String> = emptyList(),
+    ) {
         if (username.isBlank()) return
+        val fetchedIds = words.mapTo(HashSet()) { it.id }
         synchronized(LOCK) {
             store(
                 GermanDueCacheState(
@@ -156,6 +168,7 @@ class GermanDueCache(private val dir: File) {
                     fetchedDay = fetchedDay,
                     dueCount = dueCount,
                     words = words,
+                    ratedIds = stillRatedIds.filter { it in fetchedIds }.distinct(),
                 )
             )
         }

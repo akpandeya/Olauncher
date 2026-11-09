@@ -531,7 +531,6 @@
     <string name="words_delete_confirm">Delete “%s”?</string>
     <string name="words_meaning_hint">Meaning</string>
     <string name="words_open_wiktionary">Open on Wiktionary</string>
-    <string name="word_lists_name_hint" tools:ignore="MissingTranslation">List name</string>
     <string name="word_lists_row_subtitle" tools:ignore="MissingTranslation">%1$s · %2$d due</string>
     <string name="drills" tools:ignore="MissingTranslation">Drills</string>
     <string name="drill_type_prepositions" tools:ignore="MissingTranslation">Prepositions</string>

@@ -287,6 +287,52 @@ class GermanDueRefreshTest {
         assertEquals("GET", api.connections[1].requestMethod)
     }
 
+    @Test
+    fun `a rating still queued after a refresh keeps its word hidden`() = runBlocking {
+        cache.save(USERNAME, 1_000L, 20401L, 3, listOf(
+            GermanDueWord("w-9f3", "Fernweh", box = 3, dueDay = 20400L),
+            GermanDueWord("w-9f4", "Heimweh", box = 2, dueDay = 20400L),
+        ))
+        GermanWebReview.enqueueRating(outbox, "w-9f3", knewIt = true, today = 20401L)
+        cache.markRated(USERNAME, "w-9f3")
+        // A rating whose word the fetch no longer lists is not carried over.
+        GermanWebReview.enqueueRating(outbox, "w-gone", knewIt = false, today = 20401L)
+        val api = queuedApi(
+            // The replay hits a 5xx, so both ratings stay queued and the server
+            // still lists w-9f3 as due.
+            replay = 503 to """{"error":"unavailable"}""",
+            status = 200 to dueBody(dueWord("w-9f3"), dueWord("w-9f4"), dueWord("w-a01")),
+            summary = 200 to """{"dueCount":3}""",
+        )
+
+        val outcome = GermanDueRefresh.refresh(
+            cache = cache,
+            outbox = outbox,
+            api = api,
+            token = TEST_TOKEN,
+            username = USERNAME,
+            today = 20401L,
+            nowMillis = 2_000L,
+            onUnauthorized = {},
+        )
+
+        assertEquals(GermanDueRefreshOutcome.Refreshed, outcome)
+        assertEquals(2, outbox.pendingCount())
+        assertEquals(listOf("w-9f3"), cache.read(USERNAME)?.ratedIds)
+        assertEquals(listOf("w-9f4", "w-a01"), cache.dueWords(USERNAME, 20401L).map { it.id })
+        assertEquals(2, cache.dueCount(USERNAME, 20401L))
+    }
+
+    @Test
+    fun `pending rated ids read only queued review posts`() {
+        outbox.enqueue("POST", "/api/german/words", """{"text":"Fernweh","today":20401}""")
+        GermanWebReview.enqueueRating(outbox, "w-b2", knewIt = true, today = 20401L)
+        GermanWebReview.enqueueRating(outbox, "w-a1", knewIt = false, today = 20401L)
+        GermanWebReview.enqueueRating(outbox, "w-b2", knewIt = false, today = 20402L)
+
+        assertEquals(listOf("w-b2", "w-a1"), GermanWebReview.pendingRatedIds(outbox))
+    }
+
     // --- fake exchange ------------------------------------------------------
 
     private class Canned(val status: Int, val body: String, val failWith: IOException?)

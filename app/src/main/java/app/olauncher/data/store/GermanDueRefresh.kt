@@ -131,7 +131,16 @@ object GermanDueRefresh {
             is GermanWebResponse.NetworkFailure -> {}
         }
 
-        cache.save(username = username, fetchedAt = nowMillis, fetchedDay = today, dueCount = dueCount, words = dueWords)
+        // A rating left in the outbox (replay cap, 429, 5xx) is not on the server
+        // yet, so the fetch still lists its word as due: keep hiding it.
+        cache.save(
+            username = username,
+            fetchedAt = nowMillis,
+            fetchedDay = today,
+            dueCount = dueCount,
+            words = dueWords,
+            stillRatedIds = GermanWebReview.pendingRatedIds(outbox),
+        )
         return GermanDueRefreshOutcome.Refreshed
     }
 }
@@ -158,6 +167,14 @@ object GermanWebReview {
     /** The replay-exact body: `result` and `today`, nothing else. */
     fun ratingBody(knewIt: Boolean, today: Long): String =
         JSONObject().put("result", result(knewIt)).put("today", today).toString()
+
+    /** Server word ids with a rating still queued in [outbox], oldest first. */
+    fun pendingRatedIds(outbox: GermanWebOutbox): List<String> =
+        outbox.entries()
+            .filter { it.method == "POST" && it.path.startsWith(REVIEW_PATH_PREFIX) }
+            .map { it.path.removePrefix(REVIEW_PATH_PREFIX) }
+            .filter { it.isNotBlank() }
+            .distinct()
 
     /** Queues one rating write; each tap enqueues its own entry. */
     fun enqueueRating(
