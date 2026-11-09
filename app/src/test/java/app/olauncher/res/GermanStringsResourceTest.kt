@@ -8,7 +8,7 @@ import java.io.File
 import javax.xml.parsers.DocumentBuilderFactory
 
 /**
- * Checks the real strings.xml values used by the German nudges, pause screen and Words card,
+ * Checks the real strings.xml values used by the German nudges, pause screen and word reveal,
  * so a wording change in the resources is caught here (there is no second hardcoded copy).
  */
 class GermanStringsResourceTest {
@@ -64,11 +64,9 @@ class GermanStringsResourceTest {
     }
 
     @Test
-    fun `words card strings`() {
-        assertEquals("1 word", string("words_count_single"))
-        assertEquals("12 words", format("words_count_plural", 12))
-        assertEquals("12 words · 3 due · 4 learned", format("words_footer", "12 words", 3, 4))
-        assertEquals("All done for today · 3 words", format("words_all_done", "3 words"))
+    fun `word meaning line strings`() {
+        // The Words card and its count/footer strings were removed (#835); the
+        // meaning line of the pause-screen reveal still uses these two.
         assertEquals("No meaning yet", string("word_row_no_meaning_yet"))
         assertEquals(" · Wiktionary", string("words_wiktionary_suffix"))
     }
