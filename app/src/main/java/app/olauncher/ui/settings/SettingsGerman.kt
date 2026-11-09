@@ -47,6 +47,7 @@ import android.view.accessibility.AccessibilityManager
 import android.widget.TextView
 import app.olauncher.helper.DrawerScrollHelper
 import app.olauncher.helper.DictionaryApps
+import app.olauncher.helper.GermanSyncWorker
 import app.olauncher.helper.MusicPulse
 import app.olauncher.helper.HandSide
 import app.olauncher.helper.HomeSet
@@ -102,6 +103,7 @@ import app.olauncher.data.store.AiTestCall
 import app.olauncher.data.store.GermanDeviceCredential
 import app.olauncher.data.store.GermanWebApi
 import app.olauncher.data.store.GermanWebBaseUrl
+import app.olauncher.data.store.GermanWebOutbox
 import app.olauncher.data.store.GermanWebSession
 import app.olauncher.data.store.GermanWebSessionState
 import app.olauncher.data.store.KeyVault
@@ -706,6 +708,9 @@ internal fun SettingsFragment.showGermanWebPairDialog() {
                         showDialogError(context.getString(R.string.german_web_save_failed))
                         return@launch
                     }
+                    // Captures queued while lapsed (and kept for after re-pairing)
+                    // can go out now: one unique replay run.
+                    GermanSyncWorker.schedule(context)
                     dialogRef?.dismiss()
                     // A cancelled dialog or a destroyed fragment must not crash.
                     if (isAdded && _binding != null) {
@@ -830,12 +835,19 @@ internal fun SettingsFragment.populateGerman() {
     // itself is hidden while German is off.
     binding.newsSentencesActions.isVisible = prefs.newsSentencesEnabled
     // The web-account row (#835): the value line is the session state; the
-    // signed-in line also names the server host.
+    // signed-in line also names the server host, and the sync counts (task 03)
+    // are appended while captures wait or were dropped.
     binding.germanWebAccountLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
     val webSession = GermanWebSession(requireContext())
     val webHost = webSession.baseUrl()?.let { Uri.parse(it).host }
-    binding.germanWebAccount.text = GermanWebAccountRow.valueFor(webSession.state(), webHost)
-        .let { getString(it.stringRes, *it.formatArgs.toTypedArray()) }
+    val webOutbox = GermanWebOutbox(requireContext().noBackupFilesDir)
+    val webValue = GermanWebAccountRow.valueFor(webSession.state(), webHost)
+    binding.germanWebAccount.text = buildString {
+        append(getString(webValue.stringRes, *webValue.formatArgs.toTypedArray()))
+        GermanWebAccountRow.countLines(webOutbox.pendingCount(), webOutbox.failedCount()).forEach { line ->
+            append(' ').append(getString(line.stringRes, *line.formatArgs.toTypedArray()))
+        }
+    }
 }
 
 internal fun SettingsFragment.showDictionaryAppMenu(anchor: View) {

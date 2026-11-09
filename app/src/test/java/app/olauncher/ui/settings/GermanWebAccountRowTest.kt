@@ -66,4 +66,28 @@ class GermanWebAccountRowTest {
         )
         assertEquals(3, resources.size)
     }
+
+    @Test
+    fun `count lines appear only when their count is non-zero`() {
+        assertTrue(GermanWebAccountRow.countLines(waitingCount = 0, failedCount = 0).isEmpty())
+
+        val waiting = GermanWebAccountRow.countLines(waitingCount = 7, failedCount = 0).single()
+        assertEquals(R.string.german_web_waiting_to_sync, waiting.stringRes)
+        assertEquals(listOf("7"), waiting.formatArgs)
+
+        val failed = GermanWebAccountRow.countLines(waitingCount = 0, failedCount = 2).single()
+        assertEquals(R.string.german_web_failed_count, failed.stringRes)
+        assertEquals(listOf("2"), failed.formatArgs)
+    }
+
+    @Test
+    fun `both counts appear, waiting first, when both are non-zero`() {
+        val lines = GermanWebAccountRow.countLines(waitingCount = 7, failedCount = 2)
+
+        assertEquals(2, lines.size)
+        assertEquals(R.string.german_web_waiting_to_sync, lines[0].stringRes)
+        assertEquals(listOf("7"), lines[0].formatArgs)
+        assertEquals(R.string.german_web_failed_count, lines[1].stringRes)
+        assertEquals(listOf("2"), lines[1].formatArgs)
+    }
 }

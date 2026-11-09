@@ -480,6 +480,8 @@
     <string name="german_web_connected_as" tools:ignore="MissingTranslation">Connected as %1$s</string>
     <string name="german_web_connected_as_host" tools:ignore="MissingTranslation">Connected as %1$s · %2$s</string>
     <string name="german_web_lapsed" tools:ignore="MissingTranslation">Signed out. Enter a new code</string>
+    <string name="german_web_waiting_to_sync" tools:ignore="MissingTranslation">· %1$d waiting to sync</string>
+    <string name="german_web_failed_count" tools:ignore="MissingTranslation">· %1$d failed</string>
     <string name="german_web_pair_title" tools:ignore="MissingTranslation">Connect to the web app</string>
     <string name="german_web_pair_hint" tools:ignore="MissingTranslation">Open Konto → Gerät hinzufügen in the web app and type the code</string>
     <string name="german_web_server_hint" tools:ignore="MissingTranslation">your-server.example.com</string>

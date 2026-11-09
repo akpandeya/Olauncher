@@ -1,6 +1,7 @@
 package app.olauncher.data.store
 
 import android.content.Context
+import app.olauncher.helper.GermanWordSync
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -212,84 +213,108 @@ object WordsCodec {
 }
 
 class WordsStore(
-    private val filesDir: File
+    private val filesDir: File,
+    /**
+     * Fires with the words `add`/`addAll` actually created — never for an
+     * existing word or a context-only update — after the lock is released, so
+     * the hook may read the store again (or queue a web sync) without
+     * deadlocking. The Context constructor wires it to [app.olauncher.helper.GermanWordSync],
+     * so every capture path is covered without editing each call site; the
+     * plain-file constructor leaves it null.
+     */
+    private val onWordsCreated: ((List<Word>) -> Unit)? = null,
 ) {
-    constructor(context: Context) : this(context.filesDir)
+    constructor(context: Context) : this(
+        context.filesDir,
+        onWordsCreated = { words -> GermanWordSync.enqueue(context, words) },
+    )
 
     private val file = File(filesDir, "words.json")
 
     internal var epochDaySupplier: () -> Long = { LocalDate.now().toEpochDay() }
     internal var clockSupplier: () -> Long = { System.currentTimeMillis() }
 
-    fun add(text: String, context: String = ""): Word = synchronized(LOCK) {
-        val cleanText = text.trim()
-        val cleanContext = context.trim()
-        val data = loadData()
-        val all = data.words.toMutableList()
-        val existingIndex = all.indexOfFirst { it.text.equals(cleanText, ignoreCase = true) }
-        val word = if (existingIndex != -1) {
-            val existing = all[existingIndex]
-            if (cleanContext.isNotBlank() && cleanContext != existing.context) {
-                // A new captured context supersedes the old one, so the source resets too:
-                // what is stored after this is again a fresh capture, not the user's text.
-                val updated = existing.copy(context = cleanContext, contextSource = ContextSource.CAPTURED)
-                all[existingIndex] = updated
-                saveData(data.copy(words = all))
-                updated
+    fun add(text: String, context: String = ""): Word {
+        var created: Word? = null
+        val word = synchronized(LOCK) {
+            val cleanText = text.trim()
+            val cleanContext = context.trim()
+            val data = loadData()
+            val all = data.words.toMutableList()
+            val existingIndex = all.indexOfFirst { it.text.equals(cleanText, ignoreCase = true) }
+            val word = if (existingIndex != -1) {
+                val existing = all[existingIndex]
+                if (cleanContext.isNotBlank() && cleanContext != existing.context) {
+                    // A new captured context supersedes the old one, so the source resets too:
+                    // what is stored after this is again a fresh capture, not the user's text.
+                    val updated = existing.copy(context = cleanContext, contextSource = ContextSource.CAPTURED)
+                    all[existingIndex] = updated
+                    saveData(data.copy(words = all))
+                    updated
+                } else {
+                    existing
+                }
             } else {
-                existing
+                val now = clockSupplier()
+                val today = epochDaySupplier()
+                val id = generateId(all, now)
+                val newWord = Word(
+                    id = id,
+                    text = cleanText,
+                    context = cleanContext,
+                    box = 1,
+                    dueDay = Leitner.newWordDueDay(today),
+                    addedAt = now
+                )
+                all.add(0, newWord)
+                saveData(data.copy(words = all))
+                created = newWord
+                newWord
             }
-        } else {
-            val now = clockSupplier()
-            val today = epochDaySupplier()
-            val id = generateId(all, now)
-            val newWord = Word(
-                id = id,
-                text = cleanText,
-                context = cleanContext,
-                box = 1,
-                dueDay = Leitner.newWordDueDay(today),
-                addedAt = now
-            )
-            all.add(0, newWord)
-            saveData(data.copy(words = all))
-            newWord
+            word
         }
-        word
+        // After the lock is released: only a word this call created is reported.
+        created?.let { onWordsCreated?.invoke(listOf(it)) }
+        return word
     }
 
     /** Saves each text not already stored (case-insensitive). Existing words are left untouched. */
-    fun addAll(texts: List<String>, context: String = ""): AddAllResult = synchronized(LOCK) {
-        val cleanContext = context.trim()
-        val data = loadData()
-        val all = data.words.toMutableList()
-        val added = mutableListOf<Word>()
-        val alreadySaved = mutableListOf<Word>()
-        val now = clockSupplier()
-        val today = epochDaySupplier()
-        for (raw in texts) {
-            val cleanText = raw.trim()
-            if (cleanText.isEmpty()) continue
-            val existing = all.firstOrNull { it.text.equals(cleanText, ignoreCase = true) }
-            if (existing != null) {
-                if (added.none { it.id == existing.id } && alreadySaved.none { it.id == existing.id }) {
-                    alreadySaved.add(existing)
+    fun addAll(texts: List<String>, context: String = ""): AddAllResult {
+        val result = synchronized(LOCK) {
+            val cleanContext = context.trim()
+            val data = loadData()
+            val all = data.words.toMutableList()
+            val added = mutableListOf<Word>()
+            val alreadySaved = mutableListOf<Word>()
+            val now = clockSupplier()
+            val today = epochDaySupplier()
+            for (raw in texts) {
+                val cleanText = raw.trim()
+                if (cleanText.isEmpty()) continue
+                val existing = all.firstOrNull { it.text.equals(cleanText, ignoreCase = true) }
+                if (existing != null) {
+                    if (added.none { it.id == existing.id } && alreadySaved.none { it.id == existing.id }) {
+                        alreadySaved.add(existing)
+                    }
+                    continue
                 }
-                continue
+                val newWord = Word(
+                    id = generateId(all, now),
+                    text = cleanText,
+                    context = cleanContext,
+                    box = 1,
+                    dueDay = Leitner.newWordDueDay(today),
+                    addedAt = now
+                )
+                all.add(0, newWord)
+                added.add(newWord)
             }
-            val newWord = Word(
-                id = generateId(all, now),
-                text = cleanText,
-                context = cleanContext,
-                box = 1,
-                dueDay = Leitner.newWordDueDay(today),
-                addedAt = now
-            )
-            all.add(0, newWord)
-            added.add(newWord)
+            if (added.isNotEmpty()) saveData(data.copy(words = all))
+            AddAllResult(added, alreadySaved)
         }
-        if (added.isNotEmpty()) saveData(data.copy(words = all))
-        AddAllResult(added, alreadySaved)
+        // After the lock is released: only the words this call created are reported.
+        if (result.added.isNotEmpty()) onWordsCreated?.invoke(result.added)
+        return result
     }
 
     fun update(word: Word) = synchronized(LOCK) {
