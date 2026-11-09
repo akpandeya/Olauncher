@@ -279,6 +279,11 @@ object SettingsCatalog {
         trailingActionIds = intArrayOf(R.id.aiPracticeActionKey, R.id.aiPracticeActionMore),
         trailingActionLabelRes = intArrayOf(R.string.ai_practice_generate_now, R.string.ai_practice_more_actions),
         trailingActionsContainerId = R.id.aiPracticeActions),
+    // The Ask-AI conversations row (#835, task 06): the all-conversations list's
+    // home after the Words screen was removed. Visible while German is on and the
+    // chat gate is open (populateGerman hides it, never greys it).
+    row(key = "askAiConversations", sectionKey = SettingsSections.KEY_DEUTSCH, titleRes = R.string.ask_ai_conversations_setting, type = SettingsRowType.CHOICE,
+        primaryId = R.id.askAiConversations, layoutId = R.id.askAiConversationsLayout, titleId = R.id.askAiConversationsTitle, valueId = R.id.askAiConversations),
     // The News sentences row gets the "Fetch now" chip (#794); populateGerman hides it
     // while the switch is off.
     row(key = "newsSentencesOnOff", sectionKey = SettingsSections.KEY_DEUTSCH, titleRes = R.string.news_sentences, type = SettingsRowType.TOGGLE, shape = SettingsRowShape.SUBTITLE, primaryId = R.id.newsSentencesOnOff, layoutId = R.id.newsSentencesLayout, titleId = R.id.newsSentencesTitle, valueId = R.id.newsSentencesOnOff, subtitleRes = R.string.news_sentences_subtitle, subtitleId = R.id.newsSentencesSubtitle,

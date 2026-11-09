@@ -7,7 +7,6 @@ import app.olauncher.ui.today.cards.NotesCard
 import app.olauncher.ui.today.cards.SavedCard
 import app.olauncher.ui.today.cards.WeatherCard
 import app.olauncher.ui.today.cards.WellbeingCard
-import app.olauncher.ui.today.cards.WordsCard
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -19,7 +18,7 @@ class TodayBentoOrderTest {
     fun `built-in cards follow the design order`() {
         assertEquals(
             listOf(
-                WeatherCard.KEY, WordsCard.KEY, GermanWebCard.KEY, NotesCard.KEY,
+                WeatherCard.KEY, GermanWebCard.KEY, NotesCard.KEY,
                 WellbeingCard.KEY, SavedCard.KEY, NextUpCard.KEY, HeldCard.KEY,
             ),
             TodayCards.all.map { it.key },
@@ -36,6 +35,6 @@ class TodayBentoOrderTest {
     fun `only Held is tinted`() {
         assertEquals(listOf(HeldCard.KEY), TodayCards.all.filter { it.tinted }.map { it.key })
         assertTrue(HeldCard.tinted)
-        assertFalse(WordsCard.tinted)
+        assertFalse(WeatherCard.tinted)
     }
 }

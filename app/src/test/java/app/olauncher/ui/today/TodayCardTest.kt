@@ -45,11 +45,11 @@ class TodayCardTest {
     }
 
     @Test
-    fun `today cards list contains words card`() {
-        val words = TodayCards.all.firstOrNull { it.key == app.olauncher.ui.today.cards.WordsCard.KEY }
-        assertNotNull(words)
-        assertEquals("words", words?.key)
-        assertEquals(R.string.words, words?.titleRes)
+    fun `words card is no longer listed after the words screens moved to the web app`() {
+        // "words" was a Today card until its screens moved to the web app (#835);
+        // stored order and profile data may still contain the key (TodayOrder,
+        // ProfileSettings), but no card is registered for it.
+        assertNull(TodayCards.all.firstOrNull { it.key == "words" })
     }
 
     @Test
@@ -86,6 +86,14 @@ class TodayCardTest {
     @Test
     fun `drills card is no longer listed after the drills moved to the web app`() {
         assertNull(TodayCards.all.firstOrNull { it.key == "drills" })
+    }
+
+    @Test
+    fun `the german web card is the german card on today`() {
+        // The words card is gone (#835, task 06); the German card on Today is
+        // the web card (task 05).
+        val germanCards = TodayCards.all.filter { it.key == app.olauncher.ui.today.cards.GermanWebCard.KEY }
+        assertEquals(1, germanCards.size)
     }
 
     @Test

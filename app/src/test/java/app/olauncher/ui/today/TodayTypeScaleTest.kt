@@ -137,10 +137,9 @@ class TodayTypeScaleTest {
     }
 
     @Test
-    fun `all eight today card layouts use TodayCard text styles and have no raw sp sizes`() {
+    fun `all seven today card layouts use TodayCard text styles and have no raw sp sizes`() {
         val cardLayouts = listOf(
             "src/main/res/layout/card_wellbeing.xml",
-            "src/main/res/layout/card_words.xml",
             "src/main/res/layout/card_weather.xml",
             "src/main/res/layout/card_notes.xml",
             "src/main/res/layout/card_week.xml",
@@ -180,7 +179,6 @@ class TodayTypeScaleTest {
             Pair("src/main/res/layout/card_wellbeing.xml", "@+id/tvWater"),
             Pair("src/main/res/layout/card_wellbeing.xml", "@+id/tvWalk"),
             Pair("src/main/res/layout/card_wellbeing.xml", "@+id/tvNotNow"),
-            Pair("src/main/res/layout/card_words.xml", "@+id/tvDue"),
             Pair("src/main/res/layout/card_week.xml", "@+id/tvWeekTotal"),
             Pair("src/main/res/layout/card_week.xml", "@+id/tvWeekNotNow"),
             Pair("src/main/res/layout/card_week.xml", "@+id/tvWeekWaterWalk"),

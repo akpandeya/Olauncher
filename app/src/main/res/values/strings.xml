@@ -1182,9 +1182,9 @@
     <string name="ask_ai_sheet_new" tools:ignore="MissingTranslation">＋ New conversation</string>
     <string name="ask_ai_sheet_row_meta" tools:ignore="MissingTranslation">%1$d turns · %2$s</string>
     <string name="ask_ai_sheet_today" tools:ignore="MissingTranslation">today</string>
-    <!-- The all-conversations list (#793): the Chats button in the Words screen
-         header, the list screen it opens, and its rows (mock frames 4-5 of
-         german-surfaces-mock.html). -->
+    <!-- The all-conversations list (#793): its settings entry after the Words
+         screen was removed (#835 task 06), the list screen it opens, and its rows. -->
+    <string name="ask_ai_conversations_setting" tools:ignore="MissingTranslation">Ask AI conversations</string>
     <string name="ask_ai_conversations_button" tools:ignore="MissingTranslation">Chats</string>
     <string name="ask_ai_conversations_title" tools:ignore="MissingTranslation">Conversations</string>
     <string name="ask_ai_conversations_kind_word" tools:ignore="MissingTranslation">Word</string>

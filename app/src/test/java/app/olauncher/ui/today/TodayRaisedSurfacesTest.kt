@@ -9,7 +9,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import app.olauncher.ui.today.cards.HeldCard
 import app.olauncher.ui.today.cards.WeatherCard
-import app.olauncher.ui.today.cards.WordsCard
 
 class TodayRaisedSurfacesTest {
 
@@ -91,7 +90,6 @@ class TodayRaisedSurfacesTest {
     @Test
     fun `every today card uses raised panel and only held is tinted`() {
         assertTrue("HeldCard must be tinted", HeldCard.tinted)
-        assertFalse("WordsCard must not be tinted", WordsCard.tinted)
         assertFalse("WeatherCard must not be tinted", WeatherCard.tinted)
         val tintedCards = TodayCards.all.filter { it.tinted }
         assertTrue("Only one card should be tinted", tintedCards.size == 1)

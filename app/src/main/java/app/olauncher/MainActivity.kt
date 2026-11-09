@@ -516,14 +516,6 @@ class MainActivity : AppCompatActivity() {
             popEnterAnim = fadeEnter,
             popExitAnim = fadeExit,
         )
-        updateActionAnimations(
-            destinationId = R.id.todayFragment,
-            actionId = R.id.action_todayFragment_to_wordsFragment,
-            enterAnim = fadeEnter,
-            exitAnim = fadeExit,
-            popEnterAnim = fadeEnter,
-            popExitAnim = fadeExit,
-        )
     }
 
     private fun updateActionAnimations(
