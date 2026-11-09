@@ -53,6 +53,16 @@ class GestureActionsTest {
     }
 
     @Test
+    fun `fireworks resolves as chosen on any slot and needs no accessibility service`() {
+        for (slot in GestureSlot.values()) {
+            assertEquals(GestureAction.FIREWORKS, resolve(slot, GestureAction.FIREWORKS, lockModeOn = true))
+            assertEquals(GestureAction.FIREWORKS, resolve(slot, GestureAction.FIREWORKS, lockModeOn = false))
+        }
+        assertFalse(GestureActions.needsAccessibilityService(GestureAction.FIREWORKS))
+        assertTrue(GestureActions.options(GestureSlot.DOUBLE_TAP).contains(GestureAction.FIREWORKS))
+    }
+
+    @Test
     fun `every action round-trips through its key and keys are unique`() {
         for (action in GestureAction.values()) assertEquals(action, GestureActions.fromKey(action.key))
         assertEquals(GestureAction.values().size, GestureAction.values().map { it.key }.toSet().size)

@@ -98,7 +98,25 @@ colours + font + bold. Decoration is an app-side presentation choice, drawn by
 stay flat, and unknown families simply draw nothing. The geometry and motion come from the
 home mock (`mocks/index.html`, `decorHTML`); right-aligned home text mirrors the layout.
 Diwali lays six diyas evenly across the full screen width along the bottom edge, with flame
-glows, a soft light strip and rangoli dot accents. The pack background colour itself is a
+glows, a soft light strip and rangoli dot accents. While animations are on it also launches
+rockets from just above the diya row (diwali-rockets-mock): one bursts into one of five
+patterns (chrysanthemum, ring, willow, palm, double-ring), randomised per launch; an auto
+salvo every 7s is usually a single rocket and sometimes two or three (the bands skew
+bigger after dark — 19:00-23:59 local gives 25% one, 40% two, 35% three), and a double-tap on
+the home screen with the gesture unset (and lock mode off — otherwise it locks) fires a
+3-5 rocket celebration (or pick
+"Rockets" as the double-tap action to fire it with any pack). The sky is capped at five
+live bursts; excess rockets are skipped, not queued. Each burst also emits a visible
+shockwave ring — a circle expanding from the boom point over about 1.4s — and as its front
+passes, the home clock wobbles on a damped spring (rotation hard-clamped and always
+returned to exactly zero), the diya flames flare and settle back to their flicker, and the
+rangoli dots scatter away from the blast and spring home. Bursts also shed embers that
+rain down under gravity and bounce off the bottom light strip until they fade. All of this
+runs only while the Diwali dressing is animating: with animations off, on e-ink, or on
+non-Diwali packs there are no rings, embers, flares or clock rotation, and a reconfigure
+or loop restart clears every trace of it. None of this is pack data, and the
+static frame (e-ink, animations off) draws no rockets at all. The pack background colour
+itself is a
 scrim over the system wallpaper: Settings → Appearance → Background opacity (0–100%, shown
 while any pack is active) sets how much of the user's photo shows through — 100% is the
 solid pack colour, lower lets more photo through (text contrast over the photo is the

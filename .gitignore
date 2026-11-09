@@ -26,3 +26,6 @@ __pycache__/
 
 # Kotlin build sessions (created by Gradle runs, never shipped).
 .kotlin/
+
+# Course ingestion drop folder: scans of the source book, never committed.
+/.course-pages/

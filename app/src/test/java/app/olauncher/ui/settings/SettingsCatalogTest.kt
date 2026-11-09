@@ -132,11 +132,11 @@ class SettingsCatalogTest {
             setOf(
                 "shortcutCount", "shortcutSize", "shortcutSide", "shortcutHeight", "shortcutIconStyle",
                 "germanClock", "dictionaryApp", "germanOfflineDictionaryOnOff", "germanLookupOnOff", "germanSpellSuggestOnOff", "germanScreenPickScreenshot", "germanPauseWordOnOff", "germanUiOnOff", "aiPracticeOnOff", "newsSentencesOnOff",
-                "decorOpacity",
+                "backgroundOpacity",
             ),
             hiddenWhenOff.map { it.key }.toSet(),
         )
-        assertTrue(SettingsCatalog.rows.all { SettingsRowAvailability.isAvailable(it.primaryId, shortcutsOn = true, germanOn = true, decorOn = true) })
+        assertTrue(SettingsCatalog.rows.all { SettingsRowAvailability.isAvailable(it.primaryId, shortcutsOn = true, germanOn = true, packOn = true) })
     }
 
     @Test
@@ -349,7 +349,7 @@ class SettingsCatalogTest {
         ),
         SettingsSections.KEY_APPEARANCE to listOf(
             "themePack",
-            "decorOpacity",
+            "backgroundOpacity",
             "photoWallpaper",
             "statusBar",
             "appThemeText",
