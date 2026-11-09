@@ -134,8 +134,15 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
     ) { uri ->
         if (uri != null) {
             exportBackup(uri)
+        } else {
+            // A cancelled picker must not leave the next plain export marked as
+            // the web-progress one (#835, task 05).
+            germanWebProgressExportRequested = false
         }
     }
+
+    /** True while the export the user started is the "Move progress to the web app" one (#835, task 05). */
+    internal var germanWebProgressExportRequested = false
 
     internal val autoBackupFolderLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocumentTree()

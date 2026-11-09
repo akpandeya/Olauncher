@@ -151,6 +151,10 @@ internal fun SettingsFragment.launchExportBackup() {
 
 internal fun SettingsFragment.exportBackup(uri: Uri) {
     val appContext = context?.applicationContext ?: return
+    // The web-progress path (#835, task 05) rides the same export; the flag says
+    // which row started it. Consumed here so only this one export gets the follow-up.
+    val forGermanWebProgress = germanWebProgressExportRequested
+    germanWebProgressExportRequested = false
     viewLifecycleOwner.lifecycleScope.launch(Dispatchers.IO) {
         val success = try {
             Backup.export(appContext, uri)
@@ -161,6 +165,7 @@ internal fun SettingsFragment.exportBackup(uri: Uri) {
         }
         withContext(Dispatchers.Main) {
             appContext.showToast(if (success) R.string.backup_exported else R.string.backup_export_failed)
+            if (success && forGermanWebProgress) onGermanWebProgressExported()
         }
     }
 }

@@ -117,6 +117,9 @@
     <item name="germanWebAccount" type="id" />
     <item name="germanWebAccountLayout" type="id" />
     <item name="germanWebAccountTitle" type="id" />
+    <item name="germanWebProgress" type="id" />
+    <item name="germanWebProgressLayout" type="id" />
+    <item name="germanWebProgressTitle" type="id" />
     <item name="gesturesSection" type="id" />
     <item name="glanceSection" type="id" />
     <item name="glowStrength" type="id" />
