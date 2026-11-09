@@ -521,102 +521,18 @@
     <string name="pause_open_de" translatable="false">Öffnen</string>
     <string name="pause_open_countdown_de" translatable="false">Öffnen (%d)</string>
     <string name="not_now_de" translatable="false">Jetzt nicht</string>
-    <string name="words">Words</string>
-    <string name="words_empty_state">Select a word in any app, then Save word</string>
-    <string name="words_all_done">All done for today · %1$s</string>
-    <string name="words_footer">%1$s · %2$d due · %3$d learned</string>
-    <string name="words_count_single">1 word</string>
-    <string name="words_count_plural">%d words</string>
     <string name="words_wiktionary_suffix">" · Wiktionary"</string>
-    <string name="words_review">Review %d</string>
     <string name="words_know_it">Know it</string>
     <string name="words_again">Again</string>
     <string name="words_almost" tools:ignore="MissingTranslation">Almost</string>
-    <string name="words_review_title" tools:ignore="MissingTranslation">Review</string>
     <string name="words_review_remaining" tools:ignore="MissingTranslation">%1$d remaining</string>
-    <string name="words_review_summary" tools:ignore="MissingTranslation">Done · %1$d knew · %2$d almost · %3$d again</string>
-    <string name="words_review_comeback" tools:ignore="MissingTranslation">Welcome back — comeback #%1$d</string>
-    <string name="words_review_done" tools:ignore="MissingTranslation">Done</string>
-    <string name="words_stats_title" tools:ignore="MissingTranslation">📚  Study</string>
-    <string name="words_stats_grid" tools:ignore="MissingTranslation">Days studied in the last 12 weeks</string>
-    <string name="words_stats_grid_summary" tools:ignore="MissingTranslation">Studied on %1$d of the last %2$d days</string>
-    <string name="words_stats_comebacks" tools:ignore="MissingTranslation">%1$d comebacks · %2$d days studied</string>
-    <string name="words_review_back" tools:ignore="MissingTranslation">‹ Back</string>
-    <string name="words_review_progress" tools:ignore="MissingTranslation">%1$d left · %2$d today</string>
-    <string name="words_review_show_answer" tools:ignore="MissingTranslation">Show answer</string>
-    <string name="words_digest_announcement" tools:ignore="MissingTranslation">New practice for %1$d weak spots</string>
-    <string name="words_review_meaning_label" tools:ignore="MissingTranslation">Meaning</string>
-    <string name="words_review_example_label" tools:ignore="MissingTranslation">Example</string>
-    <string name="words_review_no_meaning" tools:ignore="MissingTranslation">No meaning saved yet. Long-press the word to add one.</string>
-    <string name="words_grade_no" tools:ignore="MissingTranslation">No</string>
-    <string name="words_grade_knew" tools:ignore="MissingTranslation">Knew it</string>
-    <string name="words_interval_again" tools:ignore="MissingTranslation">Again tomorrow</string>
-    <string name="words_interval_same" tools:ignore="MissingTranslation">Same box</string>
-    <string name="words_interval_box_tomorrow" tools:ignore="MissingTranslation">Box %1$d · tomorrow</string>
-    <string name="words_interval_box_days" tools:ignore="MissingTranslation">Box %1$d · in %2$d days</string>
-    <string name="words_interval_learned" tools:ignore="MissingTranslation">Learned</string>
-    <string name="words_add_to_list" tools:ignore="MissingTranslation">Add to list</string>
-    <string name="words_review_all_done_title" tools:ignore="MissingTranslation">All done</string>
-    <string name="words_review_open_words" tools:ignore="MissingTranslation">Open Words</string>
-    <string name="words_example_hint" tools:ignore="MissingTranslation">Example</string>
-    <string name="words_edit_lists_heading" tools:ignore="MissingTranslation">Lists</string>
-    <string name="words_edit_new_list_chip" tools:ignore="MissingTranslation">+ name</string>
-    <string name="words_edit_delete_word" tools:ignore="MissingTranslation">Delete word</string>
-    <string name="words_progress_line" tools:ignore="MissingTranslation">Box %1$d · next review %2$s · %3$s</string>
-    <string name="words_progress_learned" tools:ignore="MissingTranslation">Learned · %1$s</string>
-    <string name="words_progress_reviews_single" tools:ignore="MissingTranslation">1 review</string>
-    <string name="words_progress_reviews_plural" tools:ignore="MissingTranslation">%d reviews</string>
-    <string name="word_lists_count_line" tools:ignore="MissingTranslation">%1$s · %2$s</string>
-    <string name="word_lists_count_single" tools:ignore="MissingTranslation">1 list</string>
-    <string name="word_lists_count_plural" tools:ignore="MissingTranslation">%d lists</string>
-    <string name="word_lists_new_short" tools:ignore="MissingTranslation">+ New</string>
-    <string name="word_lists_add_short" tools:ignore="MissingTranslation">+ Add</string>
-    <string name="word_lists_all_words" tools:ignore="MissingTranslation">All words</string>
-    <string name="word_lists_all_words_subtitle" tools:ignore="MissingTranslation">%1$s · %2$d due today</string>
-    <string name="word_lists_all_words_subtitle_done" tools:ignore="MissingTranslation">%1$s · all done</string>
-    <string name="word_lists_card_due" tools:ignore="MissingTranslation">%1$d due</string>
-    <string name="word_lists_card_all_done" tools:ignore="MissingTranslation">all done</string>
-    <string name="word_lists_sources_heading" tools:ignore="MissingTranslation">From screen picks</string>
     <string name="words_edit_meaning">Edit meaning</string>
     <string name="words_delete">Delete</string>
     <string name="words_delete_confirm">Delete “%s”?</string>
     <string name="words_meaning_hint">Meaning</string>
-    <string name="words_edit">Edit word</string>
-    <string name="words_word_hint">Word</string>
-    <string name="words_look_up_again">Look up again</string>
-    <string name="words_already_saved">“%s” is already saved</string>
-    <string name="words_looking_up">Looking it up on Wiktionary</string>
     <string name="words_open_wiktionary">Open on Wiktionary</string>
-    <string name="words_status_due">Due today</string>
-    <string name="words_status_due_in">Due in %d d</string>
-    <string name="words_status_learned">Learned</string>
-    <string name="words_source_wiktionary">From Wiktionary. Edit it to make it yours.</string>
-    <string name="words_source_user">Your own meaning. Clear it to look it up again.</string>
-    <string name="words_search_hint">Search words or meanings</string>
-    <string name="words_search_clear">Clear search</string>
-    <string name="words_search_no_match">No word matches “%s”</string>
-    <string name="words_search_count">%1$d of %2$d</string>
-    <string name="word_lists_title" tools:ignore="MissingTranslation">Word lists</string>
-    <string name="word_lists_new_list" tools:ignore="MissingTranslation">New list</string>
     <string name="word_lists_name_hint" tools:ignore="MissingTranslation">List name</string>
-    <string name="word_lists_duplicate" tools:ignore="MissingTranslation">“%s” is already a list</string>
-    <string name="word_lists_delete_confirm" tools:ignore="MissingTranslation">Delete the list “%s”? The words stay saved.</string>
     <string name="word_lists_row_subtitle" tools:ignore="MissingTranslation">%1$s · %2$d due</string>
-    <string name="word_lists_source_wiktionary" tools:ignore="MissingTranslation">Wiktionary</string>
-    <string name="word_lists_source_manual" tools:ignore="MissingTranslation">Manual</string>
-    <string name="word_lists_empty_state" tools:ignore="MissingTranslation">Lists keep your words in groups. A word can sit in more than one list.</string>
-    <string name="word_lists_popup_lists" tools:ignore="MissingTranslation">Lists…</string>
-    <string name="word_lists_none_yet" tools:ignore="MissingTranslation">No lists yet</string>
-    <string name="word_list_title_fallback" tools:ignore="MissingTranslation">List</string>
-    <string name="word_list_remove_from_list" tools:ignore="MissingTranslation">Remove from list</string>
-    <string name="word_list_add_words" tools:ignore="MissingTranslation">Add words</string>
-    <string name="word_list_add_search_hint" tools:ignore="MissingTranslation">Search words</string>
-    <plurals name="word_list_add_count" tools:ignore="MissingTranslation">
-        <item quantity="one">Add %d word</item>
-        <item quantity="other">Add %d words</item>
-    </plurals>
-    <string name="word_list_empty_state" tools:ignore="MissingTranslation">No words in this list yet</string>
-    <string name="words_conjugate" tools:ignore="MissingTranslation">Conjugate</string>
     <string name="drills" tools:ignore="MissingTranslation">Drills</string>
     <string name="drill_type_prepositions" tools:ignore="MissingTranslation">Prepositions</string>
     <string name="drill_type_pronouns" tools:ignore="MissingTranslation">Pronouns</string>
@@ -640,99 +556,6 @@
     <string name="drill_type_konjunktiv_i" tools:ignore="MissingTranslation">Konjunktiv I</string>
     <string name="drill_type_cloze" tools:ignore="MissingTranslation">Cloze</string>
     <string name="drill_type_conjugation" tools:ignore="MissingTranslation">Conjugation</string>
-    <string name="drill_help_why" tools:ignore="MissingTranslation">Why?</string>
-    <string name="drill_help_miss_line" tools:ignore="MissingTranslation">✗ %1$s — %2$s</string>
-    <string name="drill_help_common_mistakes" tools:ignore="MissingTranslation">Common mistakes</string>
-    <!-- Header button label (#812): the rule count next to the title. -->
-    <string name="drill_hub_grammar_rules" tools:ignore="MissingTranslation">Grammar rules · %1$d</string>
-    <string name="drill_round_choice" tools:ignore="MissingTranslation">Multiple choice</string>
-    <string name="drill_round_typed" tools:ignore="MissingTranslation">Type the answer</string>
-    <string name="drill_round_true_false" tools:ignore="MissingTranslation">True or false</string>
-    <string name="drill_round_flashcard" tools:ignore="MissingTranslation">New · take a look</string>
-    <string name="drill_round_recap" tools:ignore="MissingTranslation">Rule recap</string>
-    <string name="drill_flashcard_reveal" tools:ignore="MissingTranslation">Tap the card to reveal</string>
-    <string name="drill_round_word_order" tools:ignore="MissingTranslation">Word order</string>
-    <string name="drill_round_word_tiles" tools:ignore="MissingTranslation">Arrange the sentence</string>
-    <string name="drill_word_order_empty_hint" tools:ignore="MissingTranslation">Tap words below to arrange</string>
-    <string name="drill_progress" tools:ignore="MissingTranslation">%1$s · %2$d of %3$d</string>
-    <string name="drill_empty_state" tools:ignore="MissingTranslation">No drill items found</string>
-    <string name="drill_near_miss" tools:ignore="MissingTranslation">Very close. Check the spelling and try once more.</string>
-    <string name="drill_show_hint" tools:ignore="MissingTranslation">Show hint</string>
-    <string name="drill_true" tools:ignore="MissingTranslation">True</string>
-    <string name="drill_false" tools:ignore="MissingTranslation">False</string>
-    <string name="drill_mixed_title" tools:ignore="MissingTranslation">Mixed drills</string>
-    <string name="drill_summary_counts" tools:ignore="MissingTranslation">%1$d right · %2$d almost · %3$d wrong</string>
-    <string name="drill_summary_another" tools:ignore="MissingTranslation">Another 5</string>
-    <string name="drill_summary_near_miss" tools:ignore="MissingTranslation">near miss, one retry used</string>
-    <string name="drill_summary_practise_misses" tools:ignore="MissingTranslation">Practise misses</string>
-    <string name="drill_summary_done" tools:ignore="MissingTranslation">Done</string>
-    <string name="drill_hub_continue" tools:ignore="MissingTranslation">Continue: %1$s</string>
-    <string name="drill_hub_practise_weakest" tools:ignore="MissingTranslation">Practise weakest: %1$s</string>
-    <string name="drill_hub_stat" tools:ignore="MissingTranslation">%1$d%% · %2$d rounds</string>
-    <string name="drill_hub_one_round" tools:ignore="MissingTranslation">1 round</string>
-    <string name="drill_hub_new" tools:ignore="MissingTranslation">New</string>
-
-    <!-- Grammar-rules index (#792, docs/design/german-hidden-surfaces.md §4.1) -->
-    <string name="grammar_rules_title" tools:ignore="MissingTranslation">Grammar rules</string>
-    <string name="grammar_rules_search_hint" tools:ignore="MissingTranslation">Search rules</string>
-    <string name="grammar_rules_search_no_match" tools:ignore="MissingTranslation">No rule matches “%s”</string>
-    <string name="grammar_rules_learning_order" tools:ignore="MissingTranslation">Grouped in a suggested learning order</string>
-    <!-- Group labels of the index (#809). The names are topic names, never a case
-         name — the case is the answer of the which-case items. The suffixes are
-         the stable group keys of GrammarRuleGroups; Task-05 keys further-reading
-         links on them. -->
-    <string name="grammar_rules_group_articles" tools:ignore="MissingTranslation">Articles</string>
-    <string name="grammar_rules_group_plurals" tools:ignore="MissingTranslation">Plurals</string>
-    <string name="grammar_rules_group_pronouns" tools:ignore="MissingTranslation">Pronouns</string>
-    <string name="grammar_rules_group_word_order" tools:ignore="MissingTranslation">Word order</string>
-    <string name="grammar_rules_group_cases" tools:ignore="MissingTranslation">Cases</string>
-    <string name="grammar_rules_group_prepositions" tools:ignore="MissingTranslation">Prepositions</string>
-    <string name="grammar_rules_group_verbs" tools:ignore="MissingTranslation">Verbs</string>
-    <string name="grammar_rules_group_tenses" tools:ignore="MissingTranslation">Tenses</string>
-    <string name="grammar_rules_group_adjectives" tools:ignore="MissingTranslation">Adjectives</string>
-    <string name="grammar_rules_group_passive" tools:ignore="MissingTranslation">Passive</string>
-    <string name="grammar_rules_group_moods" tools:ignore="MissingTranslation">Moods</string>
-    <string name="grammar_rule_back" tools:ignore="MissingTranslation">‹ Grammar rules</string>
-    <!-- Further reading on a rule's topic (#810): section label and the quiet
-         failure message when no browser is installed to open a link. -->
-    <string name="grammar_further_reading_title" tools:ignore="MissingTranslation">Further reading</string>
-    <string name="grammar_further_reading_no_browser" tools:ignore="MissingTranslation">No browser found to open the link</string>
-    <plurals name="grammar_rules_count" tools:ignore="MissingTranslation">
-        <item quantity="one">%d rule</item>
-        <item quantity="other">%d rules</item>
-    </plurals>
-    <string name="drills_card_suggested" tools:ignore="MissingTranslation">Suggested: %1$s · Start %2$d</string>
-    <string name="drills_card_last_round" tools:ignore="MissingTranslation">Last round: %1$s · %2$d of %3$d</string>
-    <string name="drills_card_open" tools:ignore="MissingTranslation">Start ›</string>
-    <string name="drills_drawer_all" tools:ignore="MissingTranslation">All drills…</string>
-    <string name="conjugation_not_in_dictionary" tools:ignore="MissingTranslation">“%1$s” isn\'t a verb in the offline dictionary</string>
-    <string name="conjugation_progress" tools:ignore="MissingTranslation">%1$s · %2$d of %3$d</string>
-    <string name="conjugation_tense_present" tools:ignore="MissingTranslation">Präsens</string>
-    <string name="conjugation_tense_preterite" tools:ignore="MissingTranslation">Präteritum</string>
-    <string name="conjugation_tense_perfekt" tools:ignore="MissingTranslation">Perfekt</string>
-    <string name="conjugation_tense_subjunctive_ii" tools:ignore="MissingTranslation">Konjunktiv II</string>
-    <string name="conjugation_tense_imperative" tools:ignore="MissingTranslation">Imperativ</string>
-    <string name="conjugation_tense_stammformen" tools:ignore="MissingTranslation">Stammformen</string>
-    <string name="conjugation_prompt" tools:ignore="MissingTranslation">Conjugate “%1$s”</string>
-    <string name="conjugation_check" tools:ignore="MissingTranslation">Check</string>
-    <string name="conjugation_continue" tools:ignore="MissingTranslation">Continue</string>
-    <string name="conjugation_first_try" tools:ignore="MissingTranslation">First try</string>
-    <string name="conjugation_score" tools:ignore="MissingTranslation">%1$d of %2$d</string>
-    <string name="conjugation_summary_note" tools:ignore="MissingTranslation">Missed forms come back until you get them right.</string>
-    <string name="conjugation_practise_again" tools:ignore="MissingTranslation">Practise %1$s again</string>
-    <string name="conjugation_practise_misses" tools:ignore="MissingTranslation">Practise missed forms again</string>
-    <string name="conjugation_type_them" tools:ignore="MissingTranslation">Type them</string>
-    <string name="conjugation_done" tools:ignore="MissingTranslation">Done</string>
-    <string name="conjugation_cell_right" tools:ignore="MissingTranslation">%1$s  %2$s</string>
-    <string name="conjugation_cell_missed" tools:ignore="MissingTranslation">%1$s  %2$s  %3$d miss</string>
-    <string name="conjugation_meaning_ich" tools:ignore="MissingTranslation">I</string>
-    <string name="conjugation_meaning_du" tools:ignore="MissingTranslation">you (one person)</string>
-    <string name="conjugation_meaning_er" tools:ignore="MissingTranslation">he, she, it</string>
-    <string name="conjugation_meaning_wir" tools:ignore="MissingTranslation">we</string>
-    <string name="conjugation_meaning_ihr" tools:ignore="MissingTranslation">you (several people)</string>
-    <string name="conjugation_meaning_sie" tools:ignore="MissingTranslation">they, you (formal)</string>
-    <string name="conjugation_meaning_preterite" tools:ignore="MissingTranslation">past</string>
-    <string name="conjugation_meaning_participle" tools:ignore="MissingTranslation">past participle</string>
     <string name="save">Save</string>
     <string name="glance">Glance</string>
     <string name="weather">Weather</string>
@@ -922,7 +745,6 @@
     <string name="word_row_no_meaning_found">No meaning found</string>
     <string name="word_row_unreachable">Couldn\'t reach Wiktionary</string>
     <string name="word_row_open_wiktionary">Open “%1$s” on Wiktionary</string>
-    <string name="word_row_conjugation" tools:ignore="MissingTranslation">Conjugation drill: %1$s</string>
     <string name="dictionary_website_verbformen" tools:ignore="MissingTranslation">verbformen.de</string>
     <string name="dictionary_website_dwds" tools:ignore="MissingTranslation">DWDS</string>
     <string name="dictionary_website_duden" tools:ignore="MissingTranslation">Duden</string>
@@ -999,18 +821,7 @@
     <!-- Today page, Bento layout -->
     <string name="intention_field_hint">Tap and write one line</string>
     <string name="weather_unavailable_hint">Weather is not available yet. Tap to try again.</string>
-    <string name="words_card_title">Words · DE</string>
-    <string name="words_card_due">due</string>
-    <string name="words_card_line">%1$s · %2$d learned</string>
-    <string name="words_card_none">no words yet</string>
-    <string name="words_card_next" tools:ignore="MissingTranslation">Next: %1$s</string>
-    <string name="words_card_hint" tools:ignore="MissingTranslation">Save words from your reading</string>
-    <string name="words_card_all_done" tools:ignore="MissingTranslation">All done</string>
-    <string name="words_card_box_bar_description" tools:ignore="MissingTranslation">Leitner box distribution</string>
-    <string name="words_card_day_strip_description" tools:ignore="MissingTranslation">7-day review activity</string>
-    <string name="words_card_day_strip_summary" tools:ignore="MissingTranslation">%1$d of 7 days reviewed this week</string>
     <string name="notes_card_next_dated" tools:ignore="MissingTranslation">Next: %1$s · %2$s</string>
-    <string name="words_card_open" tools:ignore="MissingTranslation">Open ›</string>
     <string name="notes_card_count_title">Notes · %1$d</string>
     <string name="notes_card_empty">No notes yet</string>
     <string name="notes_card_progress" tools:ignore="MissingTranslation">%1$d of %2$d done</string>
@@ -1174,7 +985,6 @@
     <string name="ask_ai_chip_turns" tools:ignore="MissingTranslation">Chat · %1$d</string>
     <string name="ask_ai_word_row" tools:ignore="MissingTranslation">Ask AI about this word</string>
     <string name="ask_ai_word_row_turns" tools:ignore="MissingTranslation">%1$s · %2$d turns</string>
-    <string name="ask_ai_word_row_older_hint" tools:ignore="MissingTranslation">Long-press for older threads (%1$d)</string>
     <string name="ask_ai_rule_row" tools:ignore="MissingTranslation">Ask AI about this rule</string>
     <string name="ask_ai_rule_row_turns" tools:ignore="MissingTranslation">%1$s · %2$d turns</string>
     <string name="ask_ai_sheet_title_count" tools:ignore="MissingTranslation">%1$s · %2$d conversations</string>
@@ -1185,7 +995,6 @@
     <!-- The all-conversations list (#793): its settings entry after the Words
          screen was removed (#835 task 06), the list screen it opens, and its rows. -->
     <string name="ask_ai_conversations_setting" tools:ignore="MissingTranslation">Ask AI conversations</string>
-    <string name="ask_ai_conversations_button" tools:ignore="MissingTranslation">Chats</string>
     <string name="ask_ai_conversations_title" tools:ignore="MissingTranslation">Conversations</string>
     <string name="ask_ai_conversations_kind_word" tools:ignore="MissingTranslation">Word</string>
     <string name="ask_ai_conversations_kind_rule" tools:ignore="MissingTranslation">Rule</string>
