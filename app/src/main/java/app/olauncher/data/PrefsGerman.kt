@@ -8,6 +8,7 @@ import app.olauncher.data.Prefs.Companion.GERMAN_ENABLED
 import app.olauncher.data.Prefs.Companion.GERMAN_LOOKUP
 import app.olauncher.data.Prefs.Companion.GERMAN_OFFLINE_DICTIONARY
 import app.olauncher.data.Prefs.Companion.GERMAN_DICTIONARY_APP
+import app.olauncher.data.Prefs.Companion.GERMAN_PAUSE_LAST_WEB_WORD_ID
 import app.olauncher.data.Prefs.Companion.GERMAN_PAUSE_LAST_WORD_ID
 import app.olauncher.data.Prefs.Companion.GERMAN_PAUSE_WORD
 import app.olauncher.data.Prefs.Companion.GERMAN_SCREEN_PICK
@@ -49,6 +50,13 @@ interface GermanPrefs {
     var germanPauseWord: Boolean
 
     var germanPauseLastWordId: Long?
+
+    /**
+     * The last web word id shown on the pause screen (epic #835, task 04) —
+     * a server text id. Key: [Prefs.Companion.GERMAN_PAUSE_LAST_WEB_WORD_ID];
+     * never the Long [GERMAN_PAUSE_LAST_WORD_ID].
+     */
+    var germanPauseLastWebWordId: String?
 
     var germanUi: Boolean
 
@@ -116,6 +124,22 @@ internal class GermanPrefsStore(private val prefs: SharedPreferences) : GermanPr
                     remove(GERMAN_PAUSE_LAST_WORD_ID).apply()
                 } else {
                     putLong(GERMAN_PAUSE_LAST_WORD_ID, value).apply()
+                }
+            }
+        }
+
+    override var germanPauseLastWebWordId: String?
+        get() = if (prefs.contains(GERMAN_PAUSE_LAST_WEB_WORD_ID)) {
+            prefs.getString(GERMAN_PAUSE_LAST_WEB_WORD_ID, null)
+        } else {
+            null
+        }
+        set(value) {
+            prefs.edit {
+                if (value == null) {
+                    remove(GERMAN_PAUSE_LAST_WEB_WORD_ID).apply()
+                } else {
+                    putString(GERMAN_PAUSE_LAST_WEB_WORD_ID, value).apply()
                 }
             }
         }

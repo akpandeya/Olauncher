@@ -47,7 +47,12 @@ class GermanSyncWorker(
             outbox = outbox,
             api = GermanWebApi(base),
             token = credential.token,
-            onUnauthorized = { session.onUnauthorized() },
+            onUnauthorized = {
+                session.onUnauthorized()
+                // A lapsed session ends the due-set refresh too (#835, task 04):
+                // the cached due set is dropped and the periodic work stops.
+                GermanDueRefreshWorker.onSessionEnded(applicationContext)
+            },
         )
         // Unauthorized: the session is lapsed now; pairing again re-schedules.
         // Anything else still pending (backoff, Retry-After or the 15-per-run

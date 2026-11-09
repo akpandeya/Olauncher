@@ -40,6 +40,8 @@ import app.olauncher.data.ProfilePermissionRules
 import app.olauncher.data.ProfilePicker
 import app.olauncher.data.ProfilePickerOption
 import app.olauncher.data.store.GermanWebOutbox
+import app.olauncher.data.store.GermanWebSession
+import app.olauncher.data.store.GermanWebSessionState
 import app.olauncher.glance.WeatherLocation
 import app.olauncher.glance.WeatherWorker
 import app.olauncher.wellbeing.NotificationPermission
@@ -49,6 +51,7 @@ import app.olauncher.wellbeing.UsageSnapshotWorker
 import app.olauncher.databinding.ActivityMainBinding
 import app.olauncher.helper.AppListReloadPolicy
 import app.olauncher.helper.AppListReloadTrigger
+import app.olauncher.helper.GermanDueRefreshWorker
 import app.olauncher.helper.GermanSyncWorker
 import app.olauncher.helper.NewsHarvestWorker
 import app.olauncher.helper.PracticeWorker
@@ -185,6 +188,14 @@ class MainActivity : AppCompatActivity() {
         }
         // Captures queued for the German web app go out once the phone is online (#835).
         if (GermanWebOutbox(noBackupFilesDir).pendingCount() > 0) GermanSyncWorker.schedule(this)
+        // The cached web due set stays fresh while signed in (#835, task 04):
+        // the periodic refresh is kept alive, and a cache older than an hour
+        // is refreshed once.
+        val germanWebSessionState = GermanWebSession(this).state()
+        if (germanWebSessionState is GermanWebSessionState.SignedIn) {
+            GermanDueRefreshWorker.schedulePeriodic(this)
+            GermanDueRefreshWorker.refreshIfStale(this, germanWebSessionState)
+        }
         if (isEinkDisplay()) prefs.appTheme = AppCompatDelegate.MODE_NIGHT_NO
         AppCompatDelegate.setDefaultNightMode(prefs.appTheme)
         super.onCreate(savedInstanceState)

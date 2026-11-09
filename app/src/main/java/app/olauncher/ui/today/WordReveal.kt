@@ -51,6 +51,12 @@ class WordReveal(
      */
     var answerOverride: String? = null
 
+    /**
+     * Web words (pause screen, #835 task 04) belong to the server: no local
+     * edit or delete, so their long-press popup stays off.
+     */
+    var wordPopupEnabled: Boolean = true
+
     var currentWord: Word? = null
         private set
 
@@ -65,6 +71,7 @@ class WordReveal(
         }
 
         binding.tvWord.setOnLongClickListener {
+            if (!wordPopupEnabled) return@setOnLongClickListener false
             val word = currentWord ?: return@setOnLongClickListener false
             showWordPopup(binding.tvWord, word)
             true

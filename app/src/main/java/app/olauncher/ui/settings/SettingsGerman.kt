@@ -47,6 +47,7 @@ import android.view.accessibility.AccessibilityManager
 import android.widget.TextView
 import app.olauncher.helper.DrawerScrollHelper
 import app.olauncher.helper.DictionaryApps
+import app.olauncher.helper.GermanDueRefreshWorker
 import app.olauncher.helper.GermanSyncWorker
 import app.olauncher.helper.MusicPulse
 import app.olauncher.helper.HandSide
@@ -638,6 +639,8 @@ internal fun SettingsFragment.confirmGermanWebSignOut() {
         action = R.string.confirm,
     ) {
         GermanWebSession(requireContext()).signOut()
+        // The cached web due set belongs to the signed-in session (#835, task 04).
+        GermanDueRefreshWorker.onSessionEnded(requireContext())
         populateGerman()
     }
 }
@@ -711,6 +714,8 @@ internal fun SettingsFragment.showGermanWebPairDialog() {
                     // Captures queued while lapsed (and kept for after re-pairing)
                     // can go out now: one unique replay run.
                     GermanSyncWorker.schedule(context)
+                    // The due-set cache starts filling and stays fresh (#835, task 04).
+                    GermanDueRefreshWorker.schedulePeriodic(context)
                     dialogRef?.dismiss()
                     // A cancelled dialog or a destroyed fragment must not crash.
                     if (isAdded && _binding != null) {
