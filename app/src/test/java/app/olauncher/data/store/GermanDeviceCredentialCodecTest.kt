@@ -1,7 +1,9 @@
 package app.olauncher.data.store
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.json.JSONObject
 
@@ -39,6 +41,14 @@ class GermanDeviceCredentialCodecTest {
         assertNull(GermanDeviceCredentialCodec.decode("12"))
         assertNull(GermanDeviceCredentialCodec.decode("not json"))
         assertNull(GermanDeviceCredentialCodec.decode(""))
+    }
+
+    @Test
+    fun `toString redacts the token but keeps device and user`() {
+        val text = GermanDeviceCredential(TEST_TOKEN, DEVICE_ID, USERNAME).toString()
+        assertFalse(text.contains(TEST_TOKEN))
+        assertTrue(text.contains(DEVICE_ID))
+        assertTrue(text.contains(USERNAME))
     }
 
     private fun payload(token: String?, deviceId: String?, username: String?): String {
