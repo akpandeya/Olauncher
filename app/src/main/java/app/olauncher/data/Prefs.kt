@@ -135,6 +135,15 @@ class Prefs(context: Context) :
         const val GERMAN_CLOCK_SYSTEM = 0
         const val GERMAN_CLOCK_DEUTSCH = 1
         const val GERMAN_CLOCK_IN_WORTEN = 2
+
+        /**
+         * The German web session state that lives in prefs (epic #835). Only these two
+         * are prefs: the token, username and device id live in the encrypted
+         * `GermanDeviceCredentialStore` payload. Both are device-specific
+         * ([Backup.VOLATILE_KEYS]).
+         */
+        const val GERMAN_WEB_LAPSED = "GERMAN_WEB_LAPSED"
+        const val GERMAN_WEB_BASE_URL = "GERMAN_WEB_BASE_URL"
         const val AI_PROVIDER = "AI_PROVIDER"
         const val AI_PROVIDER_MELIOUS = "melious"
         const val AI_BASE_URL = "AI_BASE_URL"

@@ -24,8 +24,16 @@ import javax.crypto.spec.GCMParameterSpec
  * only when it is provably stale — [KeyVaultReadPolicy]: a missing Keystore alias
  * or an authenticated-decryption failure — never on a temporary Keystore error
  * such as the store not being ready early after boot (review R1 #8).
+ *
+ * One vault per secret: [keyAlias] and [fileName] name the Keystore entry and the
+ * `noBackupFilesDir` file, so each feature keeps its own key (the AI key defaults
+ * to [KEY_ALIAS]/[FILE_NAME]; the German device token uses its own vault).
  */
-class KeyVault(private val context: Context) {
+class KeyVault(
+    private val context: Context,
+    private val keyAlias: String = KEY_ALIAS,
+    private val fileName: String = FILE_NAME,
+) {
 
     /** Encrypts [key] with a fresh IV and stores it at `noBackupFilesDir/ai_key.bin`. */
     fun save(key: String) {
@@ -36,7 +44,7 @@ class KeyVault(private val context: Context) {
         if (!dir.exists()) {
             dir.mkdirs()
         }
-        val tempFile = File(dir, "$FILE_NAME.tmp")
+        val tempFile = File(dir, "$fileName.tmp")
         tempFile.writeBytes(packed)
         val file = file()
         if (!tempFile.renameTo(file)) {
@@ -68,7 +76,7 @@ class KeyVault(private val context: Context) {
             return null
         }
         val key = try {
-            (keyStore.getEntry(KEY_ALIAS, null) as? KeyStore.SecretKeyEntry)?.secretKey
+            (keyStore.getEntry(keyAlias, null) as? KeyStore.SecretKeyEntry)?.secretKey
         } catch (e: Exception) {
             null
         }
@@ -78,7 +86,7 @@ class KeyVault(private val context: Context) {
             // unknown, not absent — so the file is kept (review R2 A: the
             // not-ready-after-boot case makes both calls throw).
             val aliasPresent = try {
-                keyStore.containsAlias(KEY_ALIAS)
+                keyStore.containsAlias(keyAlias)
             } catch (e: Exception) {
                 null
             }
@@ -101,8 +109,8 @@ class KeyVault(private val context: Context) {
         try {
             val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
             keyStore.load(null)
-            if (keyStore.containsAlias(KEY_ALIAS)) {
-                keyStore.deleteEntry(KEY_ALIAS)
+            if (keyStore.containsAlias(keyAlias)) {
+                keyStore.deleteEntry(keyAlias)
             }
         } catch (e: Exception) {
             // The Keystore key is gone or unreachable; the file still gets deleted.
@@ -110,16 +118,16 @@ class KeyVault(private val context: Context) {
         file().delete()
     }
 
-    private fun file(): File = File(context.noBackupFilesDir, FILE_NAME)
+    private fun file(): File = File(context.noBackupFilesDir, fileName)
 
     private fun getOrCreateKey(): SecretKey {
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE)
         keyStore.load(null)
-        (keyStore.getEntry(KEY_ALIAS, null) as? KeyStore.SecretKeyEntry)?.secretKey?.let { return it }
+        (keyStore.getEntry(keyAlias, null) as? KeyStore.SecretKeyEntry)?.secretKey?.let { return it }
         val generator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
         generator.init(
             KeyGenParameterSpec.Builder(
-                KEY_ALIAS,
+                keyAlias,
                 KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT,
             )
                 .setBlockModes(KeyProperties.BLOCK_MODE_GCM)

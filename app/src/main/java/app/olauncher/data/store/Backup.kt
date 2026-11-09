@@ -28,7 +28,12 @@ object Backup {
         "TODAY_WIDGET_HEIGHTS",
         // News daily fetch counter: ephemeral runtime state, never reset or lowered on restore.
         Prefs.NEWS_FETCH_DAY,
-        Prefs.NEWS_FETCH_COUNT
+        Prefs.NEWS_FETCH_COUNT,
+        // German web session (epic #835): the lapsed flag and the paired server address
+        // belong to this device only — the credential itself is in the Keystore vault,
+        // never in prefs, so there is nothing else to exclude here.
+        Prefs.GERMAN_WEB_LAPSED,
+        Prefs.GERMAN_WEB_BASE_URL
     )
     const val OWN_OPENS_PREFIX = "OWN_OPENS_"
 
