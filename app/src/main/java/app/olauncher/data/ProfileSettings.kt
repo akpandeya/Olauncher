@@ -2,7 +2,6 @@ package app.olauncher.data
 
 import app.olauncher.helper.HomeSets
 import app.olauncher.helper.MusicPulse
-import app.olauncher.ui.today.cards.DrillsCard
 import app.olauncher.ui.today.cards.HeldCard
 import app.olauncher.ui.today.cards.NextUpCard
 import app.olauncher.ui.today.cards.NotesCard
@@ -161,9 +160,13 @@ data class ProfileSettings(
     }
 
     companion object {
+        /** The drills card's key. The card itself is gone (its drills moved to the web
+         *  app), but stored profiles may still list it, so it stays a known key. */
+        private const val LEGACY_DRILLS_CARD_KEY = "drills"
+
         val KNOWN_CARDS: List<String> = listOf(
             WeatherCard.KEY, NextUpCard.KEY, SavedCard.KEY, HeldCard.KEY,
-            WellbeingCard.KEY, WordsCard.KEY, NotesCard.KEY, DrillsCard.KEY,
+            WellbeingCard.KEY, WordsCard.KEY, NotesCard.KEY, LEGACY_DRILLS_CARD_KEY,
         )
 
         private const val F_HOME_APPS_COUNT = "homeAppsCount"

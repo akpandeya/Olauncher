@@ -79,7 +79,6 @@ class AppDrawerAdapter(
     var germanEnabledProvider: (() -> Boolean)? = null,
     var spellRowsProvider: ((List<String>) -> List<AppModel.Result>)? = null,
     var lookUpRowsProvider: ((String) -> List<AppModel.Result>)? = null,
-    var drillRowsProvider: ((String) -> List<AppModel.Result>)? = null,
     var profileChoicesProvider: (() -> List<app.olauncher.data.ProfileChoice>)? = null,
     var dictionaryLongClickListener: ((AppModel.Result) -> Unit)? = null,
 ) : ListAdapter<AppModel, RecyclerView.ViewHolder>(DIFF_CALLBACK), Filterable {
@@ -326,7 +325,6 @@ class AppDrawerAdapter(
                         currencyRows = { currencyRowsProvider?.invoke(it) ?: emptyList() },
                         spellRows = { spellRowsProvider?.invoke(it) ?: emptyList() },
                         lookUpRows = { lookUpRowsProvider?.invoke(it) ?: emptyList() },
-                        drillRows = { drillRowsProvider?.invoke(it) ?: emptyList() },
                     )
                 )
                 return FilterResults().apply {

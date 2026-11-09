@@ -117,25 +117,9 @@
                 android:layout_weight="1"
                 android:text="@string/words" />
 
-            <TextView
-                android:id="@+id/btnDrills"
-                style="@style/TextSmallBold"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="4dp"
-                android:background="?android:attr/selectableItemBackground"
-                android:clickable="true"
-                android:focusable="true"
-                android:gravity="center_vertical"
-                android:minHeight="48dp"
-                android:paddingHorizontal="4dp"
-                android:text="@string/drills"
-                android:visibility="gone"
-                tools:visibility="visible" />
-
             <!-- The all-conversations entry (#793, mock frame 4): the same small
-                 bold text-button shape and 48dp touch target as Drills, right
-                 next to it. Gated by the chat's own gate, hidden never greyed. -->
+                 bold text-button shape and 48dp touch target, right
+                 next to the title. Gated by the chat's own gate, hidden never greyed. -->
             <TextView
                 android:id="@+id/btnChats"
                 style="@style/TextSmallBold"

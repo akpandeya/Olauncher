@@ -11,7 +11,6 @@ import androidx.fragment.app.Fragment
 import java.time.ZonedDateTime
 import app.olauncher.helper.MotionPolicy
 import app.olauncher.helper.SystemMotion
-import app.olauncher.ui.today.cards.DrillsCard
 import app.olauncher.ui.today.cards.GermanWebCard
 import app.olauncher.ui.today.cards.HeldCard
 import app.olauncher.ui.today.cards.NextUpCard
@@ -113,5 +112,5 @@ interface TodayCard {
 }
 
 object TodayCards {
-    val all: List<TodayCard> = listOf(WeatherCard, WordsCard, DrillsCard, GermanWebCard, NotesCard, WellbeingCard, SavedCard, NextUpCard, HeldCard)
+    val all: List<TodayCard> = listOf(WeatherCard, WordsCard, GermanWebCard, NotesCard, WellbeingCard, SavedCard, NextUpCard, HeldCard)
 }

@@ -46,11 +46,6 @@ import app.olauncher.data.store.OfflineGermanStore
 import app.olauncher.helper.WordSuggest
 import app.olauncher.helper.WordLookupRows
 import app.olauncher.helper.DictionaryApps
-import app.olauncher.helper.DrawerDrills
-import app.olauncher.data.store.DrillRoundPlanner
-import app.olauncher.data.store.DrillScores
-import app.olauncher.data.store.DrillTables
-import app.olauncher.ui.today.cards.DrillsCardLogic
 import app.olauncher.data.store.WordLookup
 import app.olauncher.data.store.WordsStore
 import kotlinx.coroutines.delay
@@ -92,7 +87,6 @@ internal fun AppDrawerFragment.initSearch() {
                 if (lookUpText == null || !lookUpText.equals(lookupState?.first, ignoreCase = true)) {
                     lookupJob?.cancel()
                     lookupState = null
-                    paradigmState = null
                 }
                 scheduleLookup(newText, LOOKUP_DEBOUNCE_MS)
                 scheduleSuggest(newText, LOOKUP_DEBOUNCE_MS)
@@ -128,16 +122,12 @@ internal fun AppDrawerFragment.scheduleLookup(query: String, delayMs: Long) {
     lookupJob = viewLifecycleOwner.lifecycleScope.launch {
         if (delayMs > 0) delay(delayMs)
         lookupState = text to null
-        paradigmState = null
-        val offlineOn = prefs.germanOfflineDictionary
-        val (result, paradigm) = withContext(Dispatchers.IO) {
+        val result = withContext(Dispatchers.IO) {
+            val offlineOn = prefs.germanOfflineDictionary
             val store = OfflineGermanStore(ctx)
-            // Cheap indexed query next to the meaning fetch; it must also run for
-            // saved words, whose meaning fetch below returns without looking up.
-            val paradigm = if (offlineOn) store.paradigm(text) else null
             val saved = savedWord(ctx, text)
             val cache = WiktionaryCache(ctx)
-            val result = when {
+            when {
                 // A stored meaning is already on screen; nothing to fetch.
                 saved != null && saved.meaning.isNotBlank() -> null
                 // Saved words never touch the network; only the offline dictionary may fill a blank meaning.
@@ -150,15 +140,9 @@ internal fun AppDrawerFragment.scheduleLookup(query: String, delayMs: Long) {
                     cache::get, { WiktionaryApi.lookup(it) }, cache::put
                 )
             }
-            result to paradigm
         }
-        paradigmState = paradigm?.let { text to it }
         if (!isAdded || _binding == null) return@launch
-        if (result == null) {
-            // The stored meaning needed no fetch, but the drill row may still be new.
-            if (paradigm != null) adapter.filter.filter(binding.search.query)
-            return@launch
-        }
+        if (result == null) return@launch
         lookupState = text to result
         scheduleSuggest(query, 0)
         adapter.filter.filter(binding.search.query)
@@ -182,35 +166,6 @@ internal fun AppDrawerFragment.suggestItems(query: String): List<String> =
     }
 
 internal fun AppDrawerFragment.suggestOnlineAllowed(): Boolean = prefs.germanEnabled && prefs.germanSpellSuggest
-
-/**
- * Drill rows for the drawer search: typing "drill" offers the suggested round and the
- * hub; nothing shows when German is off or the query is not a drill query.
- */
-internal fun AppDrawerFragment.drillRows(query: String): List<AppModel.Result> {
-    if (!prefs.germanEnabled || !DrawerDrills.matches(query)) return emptyList()
-    val ctx = context ?: return emptyList()
-    val suggested = DrillsCardLogic.suggestedType(
-        DrillTables.available(),
-        DrillScores.decode(prefs.drillScores),
-        prefs.drillLastType,
-    ) ?: return emptyList()
-    val suggestedText = ctx.getString(
-        R.string.drills_card_suggested,
-        ctx.getString(DrillTables.labelRes(suggested)),
-        DrillRoundPlanner.MIN_ROUND_SIZE,
-    )
-    return DrawerDrills.rows(
-        query = query,
-        germanEnabled = prefs.germanEnabled,
-        suggestedTypeId = suggested.id,
-        suggestedRowText = suggestedText,
-        allDrillsText = ctx.getString(R.string.drills_drawer_all),
-    ).map { row ->
-        if (row.typeId == null) AppModel.Result(row.text, AppModel.Result.Action.OpenDrills)
-        else AppModel.Result(row.text, AppModel.Result.Action.StartDrill(row.typeId))
-    }
-}
 
 /** Cancels any pending online suggestion and, when allowed, starts one for the unmatched `:sw` items. */
 internal fun AppDrawerFragment.scheduleSuggest(query: String, delayMs: Long) {
@@ -283,21 +238,9 @@ internal fun AppDrawerFragment.lookUpSuggestionRows(ctx: Context, text: String):
 
 internal fun AppDrawerFragment.lookUpRows(text: String): List<AppModel.Result> {
     val ctx = context ?: return emptyList()
-    val main = lookUpMainRows(ctx, text)
-    // The drill row sits before the dictionary row, which lookUpMainRows always trails with.
-    val rows = conjugationRow(ctx, text)?.let { main.dropLast(1) + it + main.last() } ?: main
+    val rows = lookUpMainRows(ctx, text)
     if (savedWord(ctx, text) != null) return rows
     return rows + lookUpSuggestionRows(ctx, text)
-}
-
-/** Drill row for the current lookup; null when the offline store has no verb paradigm for it. */
-private fun AppDrawerFragment.conjugationRow(ctx: Context, text: String): AppModel.Result? {
-    val lemma = paradigmState?.takeIf { it.first.equals(text, ignoreCase = true) }?.second?.lemma
-        ?: return null
-    return AppModel.Result(
-        text = ctx.getString(R.string.word_row_conjugation, lemma),
-        action = AppModel.Result.Action.ConjugateWord(lemma),
-    )
 }
 
 internal fun AppDrawerFragment.lookUpMainRows(ctx: Context, text: String): List<AppModel.Result> {

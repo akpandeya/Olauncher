@@ -6,7 +6,6 @@ import android.provider.AlarmClock
 import android.provider.CalendarContract
 import android.content.Intent
 import android.net.Uri
-import android.os.Bundle
 import android.os.Process
 import android.view.View
 import android.view.animation.AnimationUtils
@@ -175,40 +174,6 @@ internal fun AppDrawerFragment.initAdapter() {
                             }
                         }
 
-                        is AppModel.Result.Action.ConjugateWord -> {
-                            Haptics.tick(binding.root)
-                            val navController = findNavController()
-                            // Ignore a second tap delivered before the first navigation lands.
-                            if (navController.currentDestination?.id == R.id.appListFragment) {
-                                navController.navigate(
-                                    R.id.action_appListFragment_to_conjugationFragment,
-                                    Bundle().apply { putString("word", action.text) },
-                                )
-                            }
-                        }
-
-                        is AppModel.Result.Action.StartDrill -> {
-                            Haptics.tick(binding.root)
-                            prefs.drillLastType = action.typeId
-                            val navController = findNavController()
-                            // Ignore a second tap delivered before the first navigation lands.
-                            if (navController.currentDestination?.id == R.id.appListFragment) {
-                                navController.navigate(
-                                    R.id.action_appListFragment_to_drillFragment,
-                                    Bundle().apply { putString("drillType", action.typeId) },
-                                )
-                            }
-                        }
-
-                        is AppModel.Result.Action.OpenDrills -> {
-                            Haptics.tick(binding.root)
-                            val navController = findNavController()
-                            // Ignore a second tap delivered before the first navigation lands.
-                            if (navController.currentDestination?.id == R.id.appListFragment) {
-                                navController.navigate(R.id.action_appListFragment_to_drillHubFragment)
-                            }
-                        }
-
                         is AppModel.Result.Action.Dial -> {
                             try {
                                 val intent = Intent(Intent.ACTION_DIAL).apply {
@@ -327,7 +292,6 @@ internal fun AppDrawerFragment.initAdapter() {
         germanEnabledProvider = { prefs.germanEnabled },
         spellRowsProvider = { items -> spellRows(items) },
         lookUpRowsProvider = { text -> lookUpRows(text) },
-        drillRowsProvider = { query -> drillRows(query) },
         profileChoicesProvider = { context?.let { prefs.profileChoices(it) }.orEmpty() },
         dictionaryLongClickListener = { result ->
             val text = when (val action = result.action) {
