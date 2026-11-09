@@ -15,7 +15,10 @@ data class GermanDeviceCredential(
     val token: String,
     val deviceId: String,
     val username: String,
-)
+) {
+    /** Redacts the token: a stray `"$credential"` in a log or error must not leak it. */
+    override fun toString(): String = "GermanDeviceCredential(token=[redacted], deviceId=$deviceId, username=$username)"
+}
 
 /**
  * Packs one [GermanDeviceCredential] into the JSON payload of the encrypted
