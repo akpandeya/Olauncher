@@ -2,6 +2,7 @@ package app.olauncher.ui.settings
 
 import app.olauncher.R
 import app.olauncher.data.store.GermanWebSessionState
+import java.io.File
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -89,6 +90,33 @@ class GermanWebAccountRowTest {
         assertEquals(listOf("7"), lines[0].formatArgs)
         assertEquals(R.string.german_web_failed_count, lines[1].stringRes)
         assertEquals(listOf("2"), lines[1].formatArgs)
+    }
+
+    /**
+     * Regression test for the overnight AVD crash (#858): the count lines pass
+     * String args, so their format strings must use `%s` — a `%d` specifier
+     * crashed Settings with IllegalFormatConversionException the moment the
+     * row bound while captures were queued. The unit tests above only see the
+     * arg values, never the resource, so the XML is parsed directly.
+     */
+    @Test
+    fun `count line format strings take string args`() {
+        val stringsXml = File("src/main/res/values/strings.xml")
+        assertTrue("strings.xml not found at ${stringsXml.absolutePath}", stringsXml.isFile)
+        val xml = stringsXml.readText()
+
+        for (name in listOf("german_web_waiting_to_sync", "german_web_failed_count")) {
+            val line = xml.lines().firstOrNull { it.contains("name=\"$name\"") }
+            assertTrue("string $name missing from strings.xml", line != null)
+
+            val specifiers = Regex("%[0-9$]*[sd]").findAll(line!!).map { it.value }.toList()
+            assertTrue("string $name should take exactly one argument", specifiers.size == 1)
+            assertEquals(
+                "string $name takes String args (GermanWebAccountRowText.formatArgs); its specifier must be %1\$s",
+                "%1\$s",
+                specifiers.single(),
+            )
+        }
     }
 
     @Test
