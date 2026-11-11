@@ -78,6 +78,7 @@ import app.olauncher.ui.settings.setupSearchInsets
 import app.olauncher.ui.settings.showAccessibilityDialog
 import app.olauncher.ui.settings.showAppThemeMenu
 import app.olauncher.ui.settings.showPhotoWallpaperMenu
+import app.olauncher.ui.settings.showScreenPickScreenshotHint
 import app.olauncher.ui.settings.showToast
 import app.olauncher.ui.settings.showWeatherMenu
 import app.olauncher.ui.settings.tickOnChange
@@ -301,6 +302,7 @@ class SettingsFragment : BaseFragment(), View.OnClickListener, View.OnLongClickL
         windDownOn = prefs.windDown,
         holdOn = prefs.quietEnabled && isNotificationAccessGranted(),
         packOn = prefs.themePackId.isNotEmpty(),
+        germanScreenPickHintOn = showScreenPickScreenshotHint(),
     )
 
     /** Searchable rows that are not switched off by a parent setting, labelled as the user sees them. */

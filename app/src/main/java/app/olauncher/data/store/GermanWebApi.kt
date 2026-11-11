@@ -37,7 +37,8 @@ object GermanWebBaseUrl {
 
 /**
  * Thin HTTP client for the gambitflow web app (docs/design/german-api.md,
- * "Device tokens"): the one-time pairing-code exchange plus one generic
+ * "Device tokens"): the one-time pairing-code exchange, the sign-in-with-
+ * password pairing alternative ([signIn] + [registerDevice]) and one generic
  * authenticated call ([send]) that the outbox (task 03) and due-word refresh
  * (task 04) build on. Platform APIs only (`HttpURLConnection`, `org.json`);
  * every blocking call runs on `Dispatchers.IO` through `runInterruptible`.
@@ -93,6 +94,86 @@ open class GermanWebApi(baseUrl: String) {
             connection.setRequestProperty("Accept", "application/json")
             connection.outputStream.use { it.write(bodyJson.toByteArray(Charsets.UTF_8)) }
             return decodePairingResponse(connection.responseCode, readBody(connection))
+        } finally {
+            connection?.disconnect()
+        }
+    }
+
+    /**
+     * Signs in with the web app account (`POST {base}/api/auth/login`, no
+     * auth): the body is `{username, password}`; 200 returns `{token}` — a
+     * 30-day session token the caller keeps in memory only (it never reaches
+     * a store, a pref or a log). 401 maps to [SignInResult.InvalidCredentials].
+     * The password is sent as typed; the username is only trimmed.
+     */
+    suspend fun signIn(username: String, password: String): SignInResult {
+        val body = JSONObject().put("username", username.trim()).put("password", password)
+        return try {
+            runInterruptible(Dispatchers.IO) { signInBlocking(body.toString()) }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // Exception text can embed connection details; report the type only.
+            SignInResult.NetworkError(e.javaClass.simpleName)
+        }
+    }
+
+    private fun signInBlocking(bodyJson: String): SignInResult {
+        var connection: HttpURLConnection? = null
+        try {
+            connection = openConnection(URL(base + LOGIN_PATH))
+            connection.requestMethod = "POST"
+            connection.connectTimeout = CONNECT_TIMEOUT_MS
+            connection.readTimeout = READ_TIMEOUT_MS
+            connection.doOutput = true
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.setRequestProperty("Accept", "application/json")
+            connection.outputStream.use { it.write(bodyJson.toByteArray(Charsets.UTF_8)) }
+            return decodeSignInResponse(connection.responseCode, readBody(connection))
+        } finally {
+            connection?.disconnect()
+        }
+    }
+
+    /**
+     * Registers this device for an already signed-in session
+     * (`POST {base}/api/auth/devices/register`, `Authorization: Bearer
+     * <session token>`, body `{label}` — the label is required, 1..60 chars).
+     * 200 returns `{token, deviceId, username}` with the raw `gfd_…` device
+     * token, mapped to [PairingResult.Paired] so the caller can feed it into
+     * the same post-pairing path the code exchange uses. The session token
+     * exists only as this call's header; it never enters a body, a result or
+     * a log, and a failing register is surfaced once — never retried.
+     */
+    suspend fun registerDevice(sessionToken: String, label: String): PairingResult {
+        val normalizedLabel = label.trim().take(MAX_LABEL_LENGTH)
+        val body = JSONObject().put("label", normalizedLabel)
+        return try {
+            runInterruptible(Dispatchers.IO) { registerDeviceBlocking(sessionToken, body.toString()) }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // Exception text can embed connection details; report the type only.
+            PairingResult.NetworkError(e.javaClass.simpleName)
+        }
+    }
+
+    private fun registerDeviceBlocking(sessionToken: String, bodyJson: String): PairingResult {
+        var connection: HttpURLConnection? = null
+        try {
+            connection = openConnection(URL(base + REGISTER_PATH))
+            connection.requestMethod = "POST"
+            connection.connectTimeout = CONNECT_TIMEOUT_MS
+            connection.readTimeout = READ_TIMEOUT_MS
+            connection.doOutput = true
+            connection.setRequestProperty("Authorization", "Bearer $sessionToken")
+            connection.setRequestProperty("Content-Type", "application/json")
+            connection.setRequestProperty("Accept", "application/json")
+            connection.outputStream.use { it.write(bodyJson.toByteArray(Charsets.UTF_8)) }
+            val status = connection.responseCode
+            // Last line of defense: the session token must never surface in a body.
+            val body = readBody(connection)?.let { scrub(it, sessionToken) }
+            return decodeRegisterResponse(status, body)
         } finally {
             connection?.disconnect()
         }
@@ -155,12 +236,43 @@ open class GermanWebApi(baseUrl: String) {
         else -> pairedFrom(body, status)
     }
 
+    /**
+     * Maps one sign-in to a [SignInResult], context-free so tests can drive
+     * it directly: 401 is wrong credentials, other non-2xx statuses the
+     * server's problem, and a 2xx body counts as [SignInResult.SignedIn]
+     * only with a non-blank `token` — anything else (non-JSON, missing
+     * token) is [SignInResult.ServerError] with the actual status.
+     */
+    fun decodeSignInResponse(status: Int, body: String?): SignInResult = when {
+        status == 401 -> SignInResult.InvalidCredentials
+        status !in 200..299 -> SignInResult.ServerError(status)
+        else -> {
+            val token = body?.takeIf { it.isNotBlank() }?.let { jsonOrNull(it) }?.optString("token").orEmpty()
+            if (token.isBlank()) SignInResult.ServerError(status) else SignInResult.SignedIn(token)
+        }
+    }
+
+    /**
+     * Maps one device registration to a [PairingResult]: like the exchange,
+     * a complete 2xx body becomes [PairingResult.Paired]; 400 (label invalid)
+     * and 401 (session rejected) are the server's problem here — the dialog
+     * shows the generic server text — and 429 the rate limit.
+     */
+    fun decodeRegisterResponse(status: Int, body: String?): PairingResult = when {
+        status == 429 -> PairingResult.TooManyAttempts
+        status !in 200..299 -> PairingResult.ServerError(status)
+        else -> pairedFrom(body, status)
+    }
+
+    private fun jsonOrNull(text: String): JSONObject? = try {
+        JSONObject(text)
+    } catch (e: JSONException) {
+        null
+    }
+
     private fun pairedFrom(body: String?, status: Int): PairingResult {
-        val root = try {
-            body?.takeIf { it.isNotBlank() }?.let { JSONObject(it) }
-        } catch (e: JSONException) {
-            null
-        } ?: return PairingResult.ServerError(status)
+        val root = body?.takeIf { it.isNotBlank() }?.let(::jsonOrNull)
+            ?: return PairingResult.ServerError(status)
         val token = root.optString("token")
         val deviceId = root.optString("deviceId")
         val username = root.optString("username")
@@ -191,6 +303,12 @@ open class GermanWebApi(baseUrl: String) {
     companion object {
         /** The pairing exchange path under the base URL, per docs/design/german-api.md. */
         const val EXCHANGE_PATH = "/api/auth/devices/exchange"
+
+        /** The account sign-in path (password pairing alternative). */
+        const val LOGIN_PATH = "/api/auth/login"
+
+        /** The device registration path, called with a session token. */
+        const val REGISTER_PATH = "/api/auth/devices/register"
 
         /** Device tokens (`gfd_…`) are only ever accepted under `/api/german`. */
         const val TOKEN_PREFIX = "gfd_"
@@ -247,4 +365,40 @@ sealed class PairingResult {
     private companion object {
         const val REDACTED = "[redacted]"
     }
+}
+
+/**
+ * The outcome of one [GermanWebApi.signIn]. The session token appears exactly
+ * once, in [SignedIn] — and even there it is redacted from `toString()`, so a
+ * stray log line can never carry it. The caller keeps it in memory only,
+ * spends it on [GermanWebApi.registerDevice] and drops it.
+ */
+sealed class SignInResult {
+
+    data class SignedIn(val sessionToken: String) : SignInResult() {
+        override fun toString(): String = "SignedIn(sessionToken=$REDACTED)"
+    }
+
+    /** The username or password is wrong (HTTP 401). */
+    object InvalidCredentials : SignInResult()
+
+    /** Any other failure, including a 2xx body without a usable token. */
+    data class ServerError(val status: Int) : SignInResult()
+
+    /** Exception text can embed connection details; only the class name is carried. */
+    data class NetworkError(val exceptionClass: String) : SignInResult()
+
+    private companion object {
+        const val REDACTED = "[redacted]"
+    }
+}
+
+/**
+ * The device label both pairing paths send — the code exchange and the
+ * sign-in register call: `"Thumbline (<model>)"`, truncated to the server's
+ * 1..60-char limit. One source, so one device never shows two names in the
+ * web app's device list.
+ */
+object GermanWebDeviceLabel {
+    fun forModel(model: String): String = "Thumbline ($model)".take(GermanWebApi.MAX_LABEL_LENGTH)
 }

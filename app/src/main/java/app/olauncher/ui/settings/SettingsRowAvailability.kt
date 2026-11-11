@@ -22,7 +22,6 @@ object SettingsRowAvailability {
         R.id.germanClock,
         R.id.germanOfflineDictionaryOnOff,
         R.id.germanLookupOnOff,
-        R.id.germanScreenPickScreenshot,
         R.id.germanSpellSuggestOnOff,
         R.id.germanPauseWordOnOff,
         R.id.germanUiOnOff,
@@ -31,6 +30,17 @@ object SettingsRowAvailability {
         R.id.aiPracticeOnOff,
         R.id.askAiConversations,
         R.id.newsSentencesOnOff,
+    )
+
+    /**
+     * The screen-pick re-enable hint (#590): it follows the hint state the fragment
+     * computes ([SettingsFragment.showScreenPickScreenshotHint]), not just a switch, so
+     * the row binds with its final visibility. populateGerman used to hide it after the
+     * bind, which changed a child's visibility in the middle of the list's layout pass —
+     * the one visibility decision in Settings that the adapter did not make at bind time.
+     */
+    private val germanScreenPickHintRows = setOf(
+        R.id.germanScreenPickScreenshot,
     )
 
     private val windDownDependentRows = setOf(
@@ -54,9 +64,11 @@ object SettingsRowAvailability {
         windDownOn: Boolean = true,
         holdOn: Boolean = true,
         packOn: Boolean = false,
+        germanScreenPickHintOn: Boolean = false,
     ): Boolean = when (viewId) {
         in shortcutDependentRows -> shortcutsOn
         in germanDependentRows -> germanOn
+        in germanScreenPickHintRows -> germanOn && germanScreenPickHintOn
         in windDownDependentRows -> windDownOn
         in holdDependentRows -> holdOn
         in packDependentRows -> packOn

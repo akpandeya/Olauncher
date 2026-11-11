@@ -107,6 +107,7 @@ import app.olauncher.data.store.AiTestCall
 import app.olauncher.data.store.GermanDeviceCredential
 import app.olauncher.data.store.GermanWebApi
 import app.olauncher.data.store.GermanWebBaseUrl
+import app.olauncher.data.store.GermanWebDeviceLabel
 import app.olauncher.data.store.GermanWebOutbox
 import app.olauncher.data.store.GermanWebSession
 import app.olauncher.data.store.GermanWebSessionState
@@ -114,6 +115,7 @@ import app.olauncher.data.store.KeyVault
 import app.olauncher.data.store.PracticeItemsStore
 import app.olauncher.data.store.PracticeQueue
 import app.olauncher.data.store.PairingResult
+import app.olauncher.data.store.SignInResult
 import app.olauncher.data.store.WordsStore
 import app.olauncher.helper.AiPracticeToggle
 import app.olauncher.helper.NewsFetchNow
@@ -708,22 +710,35 @@ internal fun SettingsFragment.onGermanWebProgressExported() {
 }
 
 /**
- * The pairing dialog (#835): the server address (nothing is hardcoded — the
- * launcher pairs with whatever server the user types here) and the one-time
- * 8-character code from the web app (Konto → Gerät hinzufügen). Connect stays
- * disabled until the address normalises and the code has 8 characters; every
- * failure keeps the dialog open with its own one-line message. The code and
- * the device token never appear in an error, a toast or a log.
+ * The pairing dialog (#835): two ways to connect. The original one pairs with
+ * a one-time 8-character code from the web app (Konto → Gerät hinzufügen);
+ * the "Sign in instead" toggle (#835 lineage, password pairing) takes the
+ * web app account's username and password directly — the launcher signs in
+ * (`POST /api/auth/login`), registers this device with the session token
+ * (`POST /api/auth/devices/register`, same label as the code path) and drops
+ * the session token: it lives only in memory between the two calls, never in
+ * a pref, a file, the outbox, a log or the credential store. Both methods
+ * share the server address (nothing is hardcoded — the launcher pairs with
+ * whatever server the user types), the one-request-at-a-time guard and the
+ * post-pairing path ([finishPairing] below); every failure keeps the dialog
+ * open with its own one-line message, and neither the code, the password,
+ * the session token nor the device token appears in an error, a toast or a log.
  */
 internal fun SettingsFragment.showGermanWebPairDialog() {
     val context = requireContext()
     val session = GermanWebSession(context)
     var serverInput: AppCompatEditText? = null
     var codeInput: AppCompatEditText? = null
+    var usernameInput: AppCompatEditText? = null
+    var passwordInput: AppCompatEditText? = null
     var status: TextView? = null
     var connectButton: TextView? = null
+    var methodToggle: TextView? = null
+    var codeModeViews: List<View> = emptyList()
+    var signInModeViews: List<View> = emptyList()
     var dialogRef: OlDialog? = null
     var requestInFlight = false
+    var signInMode = false
 
     fun showDialogError(message: CharSequence) {
         status?.text = message
@@ -732,34 +747,91 @@ internal fun SettingsFragment.showGermanWebPairDialog() {
     fun serverAddress(): String? =
         GermanWebBaseUrl.normalize(serverInput?.text?.toString().orEmpty())
 
-    fun fieldsReady(): Boolean =
-        GermanWebPairConnect.enabled(
-            addressValid = serverAddress() != null,
-            codeLength = codeInput?.text?.toString()?.trim()?.length ?: 0,
-            requestInFlight = false,
-        )
-
     /** Connect follows the fields; the one-line hint names the first thing to fix. */
     fun refreshConnectState() {
-        val enabled = GermanWebPairConnect.enabled(
-            addressValid = serverAddress() != null,
-            codeLength = codeInput?.text?.toString()?.trim()?.length ?: 0,
-            requestInFlight = requestInFlight,
-        )
+        val address = serverAddress()
+        val enabled = if (signInMode) {
+            GermanWebPairConnect.signInEnabled(
+                addressValid = address != null,
+                username = usernameInput?.text?.toString().orEmpty(),
+                password = passwordInput?.text?.toString().orEmpty(),
+                requestInFlight = requestInFlight,
+            )
+        } else {
+            GermanWebPairConnect.enabled(
+                addressValid = address != null,
+                codeLength = codeInput?.text?.toString()?.trim()?.length ?: 0,
+                requestInFlight = requestInFlight,
+            )
+        }
         connectButton?.apply {
             isEnabled = enabled
             alpha = if (enabled) 1f else 0.5f
         }
-        if (!fieldsReady()) {
-            status?.text = if (serverAddress() == null) {
-                context.getString(R.string.german_web_server_invalid)
-            } else {
-                context.getString(R.string.german_web_code_length)
+        if (!enabled && !requestInFlight) {
+            status?.text = when {
+                address == null -> context.getString(R.string.german_web_server_invalid)
+                signInMode -> context.getString(R.string.german_web_credentials_required)
+                else -> context.getString(R.string.german_web_code_length)
             }
         }
     }
 
-    fun connect() {
+    /** Flips between the pairing-code and the sign-in sections, hint included. */
+    fun setSignInMode(on: Boolean) {
+        signInMode = on
+        codeModeViews.forEach { it.isVisible = !on }
+        signInModeViews.forEach { it.isVisible = on }
+        methodToggle?.setText(
+            if (on) R.string.german_web_pair_code_toggle else R.string.german_web_pair_sign_in_toggle
+        )
+        status?.text = ""
+        refreshConnectState()
+    }
+
+    /**
+     * The post-pairing path both methods share: save the device credential
+     * (and only that — token, deviceId, username, host), schedule the sync
+     * and the due refresh, close the dialog and confirm. The Keystore can be
+     * temporarily unavailable; a failed save surfaces in the dialog instead
+     * of half-pairing (AI key pattern).
+     */
+    fun finishPairing(paired: PairingResult.Paired, address: String) {
+        val saved = runCatching {
+            session.onPaired(
+                GermanDeviceCredential(paired.token, paired.deviceId, paired.username),
+                address,
+            )
+        }
+        if (saved.isFailure) {
+            showDialogError(context.getString(R.string.german_web_save_failed))
+            return
+        }
+        // Captures queued while lapsed (and kept for after re-pairing)
+        // can go out now: one unique replay run.
+        GermanSyncWorker.schedule(context)
+        // The due-set cache starts filling and stays fresh (#835, task 04).
+        GermanDueRefreshWorker.schedulePeriodic(context)
+        dialogRef?.dismiss()
+        // A cancelled dialog or a destroyed fragment must not crash.
+        if (isAdded && _binding != null) {
+            context.showToast(getString(R.string.german_web_connected_toast, paired.username))
+            populateGerman()
+        }
+    }
+
+    /** Every exchange/registration failure maps to its one-line dialog text. */
+    fun showPairingError(result: PairingResult) {
+        when (result) {
+            is PairingResult.Paired -> Unit
+            PairingResult.InvalidCode -> showDialogError(context.getString(R.string.german_web_invalid_code))
+            PairingResult.TooManyAttempts -> showDialogError(context.getString(R.string.german_web_too_many_attempts))
+            is PairingResult.NetworkError -> showDialogError(context.getString(R.string.german_web_network_error))
+            is PairingResult.ServerError -> showDialogError(context.getString(R.string.german_web_server_error))
+        }
+    }
+
+    fun connectWithCode() {
         // One exchange at a time: a double tap must not spend the code twice.
         if (requestInFlight) return
         val address = serverAddress() ?: return
@@ -769,45 +841,64 @@ internal fun SettingsFragment.showGermanWebPairDialog() {
         showDialogError(context.getString(R.string.german_web_connecting))
         lifecycleScope.launch {
             val api = GermanWebApi(address)
-            val label = "Thumbline (${Build.MODEL})".take(GermanWebApi.MAX_LABEL_LENGTH)
+            val label = GermanWebDeviceLabel.forModel(Build.MODEL)
             val result = try {
                 withContext(Dispatchers.IO) { api.exchangePairingCode(code, label) }
             } finally {
                 requestInFlight = false
                 refreshConnectState()
             }
-            when (result) {
-                is PairingResult.Paired -> {
-                    // The Keystore can be temporarily unavailable; a failed save
-                    // surfaces in the dialog instead of half-pairing (AI key pattern).
-                    val saved = runCatching {
-                        session.onPaired(
-                            GermanDeviceCredential(result.token, result.deviceId, result.username),
-                            address,
-                        )
-                    }
-                    if (saved.isFailure) {
-                        showDialogError(context.getString(R.string.german_web_save_failed))
-                        return@launch
-                    }
-                    // Captures queued while lapsed (and kept for after re-pairing)
-                    // can go out now: one unique replay run.
-                    GermanSyncWorker.schedule(context)
-                    // The due-set cache starts filling and stays fresh (#835, task 04).
-                    GermanDueRefreshWorker.schedulePeriodic(context)
-                    dialogRef?.dismiss()
-                    // A cancelled dialog or a destroyed fragment must not crash.
-                    if (isAdded && _binding != null) {
-                        context.showToast(getString(R.string.german_web_connected_toast, result.username))
-                        populateGerman()
+            if (result is PairingResult.Paired) finishPairing(result, address)
+            else showPairingError(result)
+        }
+    }
+
+    fun connectWithPassword() {
+        // One attempt at a time — and no retry loop: a failed register after a
+        // successful login drops the session token and surfaces the error.
+        if (requestInFlight) return
+        val address = serverAddress() ?: return
+        val username = usernameInput?.text?.toString().orEmpty()
+        val password = passwordInput?.text?.toString().orEmpty()
+        requestInFlight = true
+        refreshConnectState()
+        showDialogError(context.getString(R.string.german_web_connecting))
+        lifecycleScope.launch {
+            val api = GermanWebApi(address)
+            val label = GermanWebDeviceLabel.forModel(Build.MODEL)
+            var signInResult: SignInResult? = null
+            var registered: PairingResult? = null
+            try {
+                val signedIn = withContext(Dispatchers.IO) { api.signIn(username, password) }
+                signInResult = signedIn
+                if (signedIn is SignInResult.SignedIn) {
+                    // The session token exists only in this block: header of the
+                    // register call, then gone — never stored, never logged.
+                    registered = withContext(Dispatchers.IO) {
+                        api.registerDevice(signedIn.sessionToken, label)
                     }
                 }
-                PairingResult.InvalidCode -> showDialogError(context.getString(R.string.german_web_invalid_code))
-                PairingResult.TooManyAttempts -> showDialogError(context.getString(R.string.german_web_too_many_attempts))
-                is PairingResult.NetworkError -> showDialogError(context.getString(R.string.german_web_network_error))
-                is PairingResult.ServerError -> showDialogError(context.getString(R.string.german_web_server_error))
+            } finally {
+                requestInFlight = false
+                refreshConnectState()
+            }
+            when {
+                signInResult is SignInResult.SignedIn -> {
+                    val pairing = registered
+                    if (pairing is PairingResult.Paired) finishPairing(pairing, address)
+                    else if (pairing != null) showPairingError(pairing)
+                }
+                signInResult is SignInResult.InvalidCredentials ->
+                    showDialogError(context.getString(R.string.german_web_wrong_credentials))
+                signInResult is SignInResult.NetworkError ->
+                    showDialogError(context.getString(R.string.german_web_network_error))
+                else -> showDialogError(context.getString(R.string.german_web_server_error))
             }
         }
+    }
+
+    fun connect() {
+        if (signInMode) connectWithPassword() else connectWithCode()
     }
 
     dialogRef = context.createDialog(
@@ -858,6 +949,47 @@ internal fun SettingsFragment.showGermanWebPairDialog() {
         }
         codeInput = codeField
 
+        val signInHint = TextView(dialogContext).apply {
+            setTextColor(dialogContext.getColorFromAttr(R.attr.primaryColor))
+            setText(R.string.german_web_pair_sign_in_hint)
+            visibility = View.GONE
+        }
+
+        val usernameField = AppCompatEditText(dialogContext).apply {
+            hint = dialogContext.getString(R.string.german_web_username_hint)
+            setSingleLine(true)
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+            setTextColor(dialogContext.getColorFromAttr(R.attr.primaryColor))
+            setHintTextColor(dialogContext.getColorFromAttr(R.attr.primaryColorTrans80))
+            background = null
+            visibility = View.GONE
+        }
+        usernameInput = usernameField
+
+        val passwordField = AppCompatEditText(dialogContext).apply {
+            hint = dialogContext.getString(R.string.german_web_password_hint)
+            setSingleLine(true)
+            // Masked: the password is never shown, and the keyboard never learns it.
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD or
+                InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
+            setTextColor(dialogContext.getColorFromAttr(R.attr.primaryColor))
+            setHintTextColor(dialogContext.getColorFromAttr(R.attr.primaryColorTrans80))
+            background = null
+            visibility = View.GONE
+        }
+        passwordInput = passwordField
+
+        val methodToggleView = TextView(dialogContext).apply {
+            setText(R.string.german_web_pair_sign_in_toggle)
+            setTextColor(dialogContext.getColorFromAttr(R.attr.primaryColor))
+            background = null
+            setOnClickListener {
+                Haptics.tick(it)
+                setSignInMode(!signInMode)
+            }
+        }
+        methodToggle = methodToggleView
+
         val connectView = TextView(dialogContext).apply {
             setText(R.string.german_web_connect)
             setTextColor(dialogContext.getColorFromAttr(R.attr.primaryColor))
@@ -866,8 +998,13 @@ internal fun SettingsFragment.showGermanWebPairDialog() {
         }
         connectButton = connectView
 
+        codeModeViews = listOf(hintView, codeField)
+        signInModeViews = listOf(signInHint, usernameField, passwordField)
+
         serverField.doAfterTextChanged { refreshConnectState() }
         codeField.doAfterTextChanged { refreshConnectState() }
+        usernameField.doAfterTextChanged { refreshConnectState() }
+        passwordField.doAfterTextChanged { refreshConnectState() }
 
         LinearLayout(dialogContext).apply {
             orientation = LinearLayout.VERTICAL
@@ -879,6 +1016,10 @@ internal fun SettingsFragment.showGermanWebPairDialog() {
             addView(serverField)
             addView(statusView)
             addView(codeField)
+            addView(signInHint)
+            addView(usernameField)
+            addView(passwordField)
+            addView(methodToggleView)
             addView(connectView)
         }
     }
@@ -905,6 +1046,10 @@ internal fun SettingsFragment.populateGerman() {
     binding.germanSpellSuggestLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
     binding.germanSpellSuggestOnOff.text = getString(if (prefs.germanSpellSuggest) R.string.on else R.string.off)
     binding.germanScreenPickLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE
+    // #590: the hint's bind-time visibility is the availability gate
+    // (SettingsRowAvailability, fed by showScreenPickScreenshotHint), so the row is
+    // bound GONE instead of being hidden after the bind, mid layout pass. This write
+    // stays as the refresher when the hint state changes while the list is open.
     binding.germanScreenPickScreenshotLayout.isVisible = showScreenPickScreenshotHint()
     binding.germanScreenPickOnOff.text = getString(if (prefs.germanScreenPick) R.string.on else R.string.off)
     binding.germanPauseWordLayout.visibility = if (prefs.germanEnabled) View.VISIBLE else View.GONE

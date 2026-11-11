@@ -136,7 +136,14 @@ class SettingsCatalogTest {
             ),
             hiddenWhenOff.map { it.key }.toSet(),
         )
-        assertTrue(SettingsCatalog.rows.all { SettingsRowAvailability.isAvailable(it.primaryId, shortcutsOn = true, germanOn = true, packOn = true) })
+        assertTrue(
+            SettingsCatalog.rows.all {
+                SettingsRowAvailability.isAvailable(
+                    it.primaryId, shortcutsOn = true, germanOn = true, packOn = true,
+                    germanScreenPickHintOn = true,
+                )
+            },
+        )
     }
 
     @Test

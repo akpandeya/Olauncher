@@ -30,6 +30,33 @@ class SettingsRowAvailabilityTest {
         }
     }
 
+    /**
+     * The screen-pick hint row (#590) is gated by the hint state, not by the German
+     * switch alone. The flag is what the adapter binds the row with, so the row's
+     * visibility never changes after the bind (the regression behind the Deutsch
+     * section rendering only the rows above the hint row).
+     */
+    @Test
+    fun `the screen-pick hint row follows the hint flag while German is on`() {
+        val id = R.id.germanScreenPickScreenshot
+        assertFalse(SettingsRowAvailability.isAvailable(id, shortcutsOn = true, germanOn = true))
+        assertTrue(
+            SettingsRowAvailability.isAvailable(
+                id, shortcutsOn = true, germanOn = true, germanScreenPickHintOn = true,
+            ),
+        )
+    }
+
+    @Test
+    fun `the screen-pick hint row stays hidden while German is off`() {
+        assertFalse(
+            SettingsRowAvailability.isAvailable(
+                R.id.germanScreenPickScreenshot, shortcutsOn = true, germanOn = false,
+                germanScreenPickHintOn = true,
+            ),
+        )
+    }
+
     @Test
     fun `parent switches and other rows are always available`() {
         for (id in listOf(R.id.shortcutIconsOnOff, R.id.germanOnOff, R.id.photoWallpaper, R.id.textSizeValue)) {

@@ -186,6 +186,122 @@ class GermanWebApiTest {
     }
 
     @Test
+    fun `sign in posts the credentials and keeps the token out of every error`() = runBlocking {
+        val signIn = exchange(status = 200, body = """{"token":"$SESSION_TOKEN"}""")
+        val result = signIn.api.signIn(" anna-hh ", "s3cret-pass")
+        result as SignInResult.SignedIn
+        assertEquals(SESSION_TOKEN, result.sessionToken)
+        val connection = signIn.connections.single()
+        assertEquals("$BASE/api/auth/login", connection.url.toString())
+        assertEquals("POST", connection.requestMethod)
+        assertNull("login must not send a token", connection.getRequestProperty("Authorization"))
+        assertEquals("application/json", connection.getRequestProperty("Content-Type"))
+        assertEquals("application/json", connection.getRequestProperty("Accept"))
+        val sent = JSONObject(connection.writtenBody())
+        assertEquals("anna-hh", sent.getString("username"))
+        assertEquals("s3cret-pass", sent.getString("password"))
+        assertEquals(1, connection.disconnects)
+    }
+
+    @Test
+    fun `sign in maps 401 to InvalidCredentials and other failures to their kinds`() = runBlocking {
+        assertEquals(
+            SignInResult.InvalidCredentials,
+            exchange(status = 401, body = """{"error":"bad credentials"}""").api.signIn("anna-hh", "nope"),
+        )
+        listOf(500, 503).forEach { status ->
+            assertEquals(
+                "HTTP $status",
+                SignInResult.ServerError(status),
+                exchange(status = status, body = "boom").api.signIn("anna-hh", "nope"),
+            )
+        }
+        val failed = exchange(failResponseCodeWith = IOException("unreachable"))
+        val result = failed.api.signIn("anna-hh", "nope")
+        result as SignInResult.NetworkError
+        assertEquals("IOException", result.exceptionClass)
+    }
+
+    @Test
+    fun `a sign in body without a usable token is a ServerError and the token never surfaces`() = runBlocking {
+        listOf("""{"error":"no token"}""", "", "not json").forEach { body ->
+            assertEquals(
+                "body '$body'",
+                SignInResult.ServerError(200),
+                exchange(status = 200, body = body).api.signIn("anna-hh", "nope"),
+            )
+        }
+        val signedIn = exchange(status = 200, body = """{"token":"$SESSION_TOKEN"}""")
+            .api.signIn("anna-hh", "nope") as SignInResult.SignedIn
+        assertTrue(signedIn.toString(), !signedIn.toString().contains(SESSION_TOKEN))
+        assertTrue(signedIn.toString(), signedIn.toString().contains("[redacted]"))
+        listOf<SignInResult>(
+            SignInResult.InvalidCredentials,
+            SignInResult.ServerError(500),
+            SignInResult.NetworkError("IOException"),
+        ).forEach { error ->
+            assertTrue(error.toString(), !error.toString().contains(SESSION_TOKEN))
+        }
+    }
+
+    @Test
+    fun `register posts only the label under the session bearer token`() = runBlocking {
+        val register = exchange(status = 200, body = pairingBody(TEST_TOKEN, DEVICE_ID, USERNAME))
+        val result = register.api.registerDevice(SESSION_TOKEN, " Thumbline phone ")
+        result as PairingResult.Paired
+        assertEquals(TEST_TOKEN, result.token)
+        assertEquals(DEVICE_ID, result.deviceId)
+        assertEquals(USERNAME, result.username)
+        val connection = register.connections.single()
+        assertEquals("$BASE/api/auth/devices/register", connection.url.toString())
+        assertEquals("POST", connection.requestMethod)
+        assertEquals("Bearer $SESSION_TOKEN", connection.getRequestProperty("Authorization"))
+        // The register body carries the label only — never the password or the session token.
+        val sent = JSONObject(connection.writtenBody())
+        assertEquals("Thumbline phone", sent.getString("label"))
+        assertEquals(1, sent.length())
+        assertEquals(1, connection.disconnects)
+    }
+
+    @Test
+    fun `register maps failures like the exchange and scrubs an echoing body`() = runBlocking {
+        assertEquals(
+            PairingResult.TooManyAttempts,
+            exchange(status = 429, body = "slow down").api.registerDevice(SESSION_TOKEN, "Thumbline phone"),
+        )
+        listOf(400, 401, 500).forEach { status ->
+            assertEquals(
+                "HTTP $status",
+                PairingResult.ServerError(status),
+                exchange(status = status, body = """{"error":"nope"}""").api.registerDevice(SESSION_TOKEN, "Thumbline phone"),
+            )
+        }
+        // A body echoing the session token is scrubbed before it is decoded.
+        val echoing = exchange(status = 401, body = "Session $SESSION_TOKEN rejected")
+        val response = echoing.api.send(GermanWebRequest("GET", "/api/german/words"), SESSION_TOKEN)
+        response as GermanWebResponse.Http
+        assertTrue(response.body ?: "", !(response.body ?: "").contains(SESSION_TOKEN))
+    }
+
+    @Test
+    fun `register rejects an incomplete 200 body instead of half-registering`() = runBlocking {
+        val incompleteBodies = listOf(
+            pairingBody("plain_token", DEVICE_ID, USERNAME),
+            pairingBody(TEST_TOKEN, null, USERNAME),
+            pairingBody(TEST_TOKEN, DEVICE_ID, null),
+            "Service Unavailable",
+            "",
+        )
+        incompleteBodies.forEach { body ->
+            assertEquals(
+                "body '$body'",
+                PairingResult.ServerError(200),
+                exchange(status = 200, body = body).api.registerDevice(SESSION_TOKEN, "Thumbline phone"),
+            )
+        }
+    }
+
+    @Test
     fun `base URLs are normalised and invalid ones are rejected`() {
         assertEquals("https://pair.example.com", GermanWebBaseUrl.normalize("pair.example.com"))
         assertEquals("https://app.example.com", GermanWebBaseUrl.normalize("https://app.example.com/de/login?x=1#top"))
@@ -238,6 +354,9 @@ class GermanWebApiTest {
         private const val TEST_TOKEN = "gfd_test_token_0001"
         private const val DEVICE_ID = "dev-42"
         private const val USERNAME = "ola-test-user-7"
+
+        /** Obviously synthetic in-memory-only session token (login response). */
+        private const val SESSION_TOKEN = "gst_test_session_token_0001"
     }
 }
 

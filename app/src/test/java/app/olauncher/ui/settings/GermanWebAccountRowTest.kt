@@ -126,4 +126,37 @@ class GermanWebAccountRowTest {
         assertEquals(false, GermanWebPairConnect.enabled(addressValid = false, codeLength = 8, requestInFlight = false))
         assertEquals(false, GermanWebPairConnect.enabled(addressValid = true, codeLength = 7, requestInFlight = false))
     }
+
+    @Test
+    fun `sign in connect needs the address, both credentials and no request in flight`() {
+        assertTrue(
+            GermanWebPairConnect.signInEnabled(
+                addressValid = true, username = "anna-hh", password = "s3cret", requestInFlight = false,
+            )
+        )
+        assertEquals(
+            false,
+            GermanWebPairConnect.signInEnabled(
+                addressValid = true, username = "anna-hh", password = "s3cret", requestInFlight = true,
+            ),
+        )
+        assertEquals(
+            false,
+            GermanWebPairConnect.signInEnabled(
+                addressValid = false, username = "anna-hh", password = "s3cret", requestInFlight = false,
+            ),
+        )
+        assertEquals(
+            false,
+            GermanWebPairConnect.signInEnabled(
+                addressValid = true, username = "  ", password = "s3cret", requestInFlight = false,
+            ),
+        )
+        assertEquals(
+            false,
+            GermanWebPairConnect.signInEnabled(
+                addressValid = true, username = "anna-hh", password = "", requestInFlight = false,
+            ),
+        )
+    }
 }

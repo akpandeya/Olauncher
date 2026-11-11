@@ -65,4 +65,15 @@ object GermanWebPairConnect {
 
     fun enabled(addressValid: Boolean, codeLength: Int, requestInFlight: Boolean): Boolean =
         addressValid && codeLength == GermanWebApi.PAIRING_CODE_LENGTH && !requestInFlight
+
+    /**
+     * The "Sign in instead" path's Connect rule: a normalised server address,
+     * a non-blank username and password, and no request already in flight.
+     */
+    fun signInEnabled(
+        addressValid: Boolean,
+        username: String,
+        password: String,
+        requestInFlight: Boolean,
+    ): Boolean = addressValid && username.isNotBlank() && password.isNotBlank() && !requestInFlight
 }

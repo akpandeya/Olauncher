@@ -492,6 +492,13 @@
     <string name="german_web_server_invalid" tools:ignore="MissingTranslation">Enter an https address</string>
     <string name="german_web_code_hint" tools:ignore="MissingTranslation">Pairing code</string>
     <string name="german_web_code_length" tools:ignore="MissingTranslation">The code is 8 characters</string>
+    <string name="german_web_pair_sign_in_toggle" tools:ignore="MissingTranslation">Sign in with username instead</string>
+    <string name="german_web_pair_code_toggle" tools:ignore="MissingTranslation">Use a pairing code instead</string>
+    <string name="german_web_pair_sign_in_hint" tools:ignore="MissingTranslation">Enter your web app account and this device is connected directly</string>
+    <string name="german_web_username_hint" tools:ignore="MissingTranslation">Username</string>
+    <string name="german_web_password_hint" tools:ignore="MissingTranslation">Password</string>
+    <string name="german_web_credentials_required" tools:ignore="MissingTranslation">Enter your username and password</string>
+    <string name="german_web_wrong_credentials" tools:ignore="MissingTranslation">Wrong username or password</string>
     <string name="german_web_connect" tools:ignore="MissingTranslation">Connect</string>
     <string name="german_web_connecting" tools:ignore="MissingTranslation">Connecting…</string>
     <string name="german_web_invalid_code" tools:ignore="MissingTranslation">That code is unknown, expired or used</string>
