@@ -42,7 +42,19 @@ internal fun SettingsFragment.bindRow(spec: SettingsRowSpec, holder: SettingsRow
         view.setOnLongClickListener(if (view.id in LONG_CLICK_IDS) this else null)
     }
     populateRow(spec)
-    populateAllRows()
+    // RecyclerView binds rows in the middle of its own layout pass. populateAllRows
+    // writes to every row's views, and with recycling those ids live on whichever
+    // holder last bound that row — so a write here invalidates views RecyclerView has
+    // already laid out. Inside the wrap_content-in-ScrollView list that corrupted the
+    // measurement (the list sized to the viewport and cut off everything past the
+    // first screenful). Post the cross-row pass past the layout pass instead; the
+    // populate functions are idempotent and read the prefs at run time, so every row
+    // still shows its value from the first frame the deferred pass completes in.
+    // This file has no unit-test seam for post timing (plain-JVM tests cannot drive
+    // Android layout), so the deferral is verified on device.
+    holder.itemView.post {
+        if (_binding != null && holder.itemView.isAttachedToWindow) populateAllRows()
+    }
 }
 
 internal fun SettingsFragment.unbindRow(spec: SettingsRowSpec, holder: SettingsRowHolder) {
@@ -56,9 +68,10 @@ internal fun SettingsFragment.populateRow(spec: SettingsRowSpec) {
 }
 
 /**
- * Writes every row's value and wires every slider. Runs each time a row binds, so a row shows
- * its value and works from the first frame. Rows that are not on screen write to stand-in
- * views, which is harmless.
+ * Writes every row's value and wires every slider. Runs after a row binds, posted
+ * past the layout pass (see [bindRow]): a row shows its value and works from the
+ * first frame, without invalidating views mid-layout. Rows that are not on screen
+ * write to stand-in views, which is harmless.
  */
 internal fun SettingsFragment.populateAllRows() {
     populateHomeSets()

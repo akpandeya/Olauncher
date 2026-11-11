@@ -276,7 +276,7 @@
 
             </LinearLayout>
 
-            <androidx.recyclerview.widget.RecyclerView
+            <app.olauncher.ui.settings.FullHeightRecyclerView
                 android:id="@+id/settingsRows"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

@@ -321,7 +321,9 @@ class SettingsSectionsResourceTest {
     @Test
     fun `settings rows are drawn by one list and there is no landscape copy`() {
         val layout = parseXml(resolveFile("src/main/res/layout/fragment_settings.xml"))
-        val recyclers = layout.getElementsByTagName("androidx.recyclerview.widget.RecyclerView")
+        // The one list is FullHeightRecyclerView (a RecyclerView that measures to its full
+        // content so long sections scroll in the outer ScrollView — see the class doc).
+        val recyclers = layout.getElementsByTagName("app.olauncher.ui.settings.FullHeightRecyclerView")
         assertEquals("one list holds every row", 1, recyclers.length)
         assertEquals("@+id/settingsRows", (recyclers.item(0) as Element).getAttribute("android:id"))
 
