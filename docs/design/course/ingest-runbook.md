@@ -39,15 +39,14 @@ the user approval have both passed.
 > your output file and (on instruction) the manifest row.
 >
 > **Read first**: docs/design/course/ingestion.md (pipeline, privacy rules),
-> TEMPLATE.md (output shape), LESSON row in lessons.tsv
+> TEMPLATE.md (output shape), LESSON row in <manifest>
 > (`<ID>`: grammar "<display>", pages <pages>, slug <slug>, map to <topics>),
 > and the existing drill-topic spec(s) listed in its row under
 > docs/design/drill-content/ for rule-ID conventions.
 >
-> **Source**: .course-pages/grammatik-aktiv.pdf. Calibrate the printed↔PDF
-> offset before the first read (L14 calibration was PDF index + 3 = printed
-> page; re-verify, don't inherit). Read only what you need: the lesson spread,
-> one re-read for verification, ToC pages only if recalibrating.
+> **Source**: <source-pdf>. Calibrate the printed↔PDF offset before the first
+> read (<offset>; re-verify, don't inherit). Read only what you need: the
+> lesson spread, one re-read for verification, ToC pages only if recalibrating.
 >
 > **Two-pass rule**: after distilling, re-read the same spread and verify every
 > grammar fact character by character: table cells, endings, umlauts, example

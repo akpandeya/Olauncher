@@ -75,15 +75,17 @@ Präpositionen, Zeiten, Negation). Rules:
 
 ## Drill engine impact (smaller than assumed)
 
-`Drill.kt` on main already has 21 drill types, including most of this book's
+`Drill.kt` on main already has 22 drill types, including most of this book's
 core grammar: `passive`, `konjunktiv_ii`, `konjunktiv_i`, `genitive`,
 `n_declension`, `werden`, `praeteritum`, `infinitiv_zu`, `modal_verbs`,
 `relative_pronouns` — plus the A1–B1 basics. Consequences:
 
-- **Map to existing types first.** Use the enum's exact ids (underscores:
-  `konjunktiv_ii`, not `konjunktiv-ii`). The ids are stored in persistent
-  data (scores, item history), so a near-duplicate spelling cannot be renamed
-  away later.
+- **Map to existing types first.** `drill_topics` in the manifests holds
+  drill-content spec slugs (hyphens: `konjunktiv-ii`, `infinitiv-zu`); each
+  maps 1:1 to a `Drill.kt` enum id (`konjunktiv-ii` → `konjunktiv_ii`). In
+  code, use the enum's exact underscore ids — the ids are stored in
+  persistent data (scores, item history), so a near-duplicate spelling cannot
+  be renamed away later.
 - **Actually NEW** (expected, confirm per lesson): `funktionsverbgefuege`,
   `nominalisierung`, `modalpartikeln`, plus deepenings of existing topics
   (Passiv alternatives, indirekte Rede past forms, Genitiv prepositions).
