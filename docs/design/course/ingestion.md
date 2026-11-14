@@ -5,21 +5,40 @@ app's own lesson library: one rewritten lesson spec per book topic, mapped onto 
 drill system, one PR per topic. The book and any verbatim transcription never enter
 the repo.
 
+Two books, one pipeline and one lesson-id namespace:
+
+- **Book 1 — Grammatik aktiv A1–B1**: source `.course-pages/grammatik-aktiv.pdf`,
+  manifest `lessons.tsv` (L01–L80, P01–P11). Offset: PDF index + 3 = printed
+  page (re-verify per run).
+- **Book 2 — Grammatik aktiv B2–C1**: source
+  `.course-pages/grammatik-aktiv-b2c1.pdf`, manifest `lessons-b2c1.tsv`
+  (L81–L168, P12–P20). Offset: printed page = PDF page (calibrated 2026-11-14
+  on the ToC; re-verify per run). See `b2c1-ingestion-strategy.md` for the
+  per-rule level badges, drill-type reuse and scope boundaries.
+
 Decision record: the appendix (Anhang, verb tables, Lösungen, Register) is not
-ingested. The old drill-content topic specs are superseded and are retired as
-course lessons replace them; until then they serve as reference for rule splits
-and item pools.
+ingested in either book. The old drill-content topic specs are superseded and
+are retired as course lessons replace them — but only by book-1 lessons;
+book-2 lessons deepen the same topics (passive, Konjunktiv, Genitiv) and must
+not retire specs book 1 still depends on.
 
 ## Layout
 
-- `lessons.tsv` — the course manifest, transcribed from the book's table of
-  contents. One row per topic lesson and per Partnerseite. The plan of record:
-  `status` is content-production state (`todo` → `ingested` → `linked`).
+- `lessons.tsv` — book 1 manifest (Grammatik aktiv A1–B1), transcribed from
+  the book's table of contents. One row per topic lesson and per Partnerseite.
+  The plan of record: `status` is content-production state
+  (`todo` → `ingested` → `linked`).
+- `lessons-b2c1.tsv` — book 2 manifest (Grammatik aktiv B2–C1), same columns;
+  ids continue the namespace (L81–L168, P12–P20). Level column carries the
+  book's per-chapter badge (`B2`, `C1`, `B2+C1`).
+- `b2c1-ingestion-strategy.md` — book 2 strategy (consulted): identity,
+  sequencing, drill reuse, scope boundaries.
 - `TEMPLATE.md` — the shape of a lesson spec.
 - `lessons/` — committed lesson specs (`L14-<slug>.md`).
-- `.course-pages/` at the repo root — gitignored. Holds the source PDF
-  (`grammatik-aktiv.pdf`) and any standalone page photos; optional transcript
-  cache under `md/` (see stage 1). Nothing here is ever committed or shipped.
+- `.course-pages/` at the repo root — gitignored. Holds the source PDFs
+  (`grammatik-aktiv.pdf`, `grammatik-aktiv-b2c1.pdf`) and any standalone page
+  photos; optional transcript cache under `md/` (see stage 1). Nothing here is
+  ever committed or shipped.
 - `course-screen.md` — the learner-facing course screen draft.
 
 ## Pipeline (three stages)

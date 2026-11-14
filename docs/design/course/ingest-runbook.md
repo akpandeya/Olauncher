@@ -17,9 +17,20 @@ the user approval have both passed.
 ## Slot
 
 - **id**: the lesson to ingest, filled by the orchestrator (`L15`, `P03`, …)
-- **row fields** (read from `lessons.tsv` at launch): title, `grammar` (this is
-  the display name), printed pages, slug, drill topic list
+- **book**: source PDF and printed↔PDF offset, filled by the orchestrator from
+  the book's manifest — book 1: `.course-pages/grammatik-aktiv.pdf`
+  (offset: PDF index + 3 = printed page, re-verify); book 2:
+  `.course-pages/grammatik-aktiv-b2c1.pdf` (offset: printed page = PDF page,
+  calibrated 2026-11-14 on its ToC; re-verify, don't inherit)
+- **page budget**: the orchestrator sets a max page-read count for the spread;
+  the report must state actual pages read so gate 1 can check it. Spreads over
+  3 pages must use a transcript cache (see `ingestion.md` stage 1).
+- **row fields** (read from the book's `lessons.tsv` / `lessons-b2c1.tsv` at
+  launch): title, `grammar` (this is the display name), printed pages, slug,
+  drill topic list
 - **output file**: `lessons/<id>-<slug>.md`
+- **ordering**: lesson order comes from the manifest row position, never from
+  sorting ids (as text, `L100` sorts before `L81`).
 
 ## Subagent task text (the canned handoff)
 

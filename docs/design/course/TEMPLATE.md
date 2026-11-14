@@ -1,7 +1,12 @@
 # Lesson spec: L<nn> — <display name from manifest grammar column>
 
 - **id**: L<nn> — stable for the life of learner data
+- **level**: B2 | C1 | B2+C1 — the manifest badge. Per-RULE level below
+  overrides it: a B2+C1 chapter mixes B2 and C1 rules, and drill rounds /
+  next-up must hold C1 rules back from a B2 learner.
 - **book reference**: printed page(s); transcript `.course-pages/md/L<nn>-p<ppp>.md` (not in repo)
+- **builds on**: L<nn> of the other book when this deepens an already-ingested
+  lesson (plain-text reference; render as a link only when that lesson exists)
 - **maps to drills**: <existing topic keys> — NEW rules: <list or none>
 - **status**: ingested
 
@@ -18,6 +23,8 @@
 ### <rule name> (<existing topic rule IDs | NEW: proposed id>)
 
 - **rule (pre-answer)**: our short text, no item-specific form named.
+- **level**: B2 or C1 — from the book's per-rule badge; defaults to the
+  manifest level when the badge is chapter-wide.
 - **forms table**: built from our items; caption rules same as drill-content.
 - **examples**: each marked `new` or `pool:<topic>`; at least one `new`.
 - **miss lines**: only where a wrong form has a real reason.

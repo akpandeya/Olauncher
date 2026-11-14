@@ -1,0 +1,98 @@
+id	level	unit	title	grammar	page	slug	drill_topics	status
+L81	B2+C1	Wortpositionen im Satz	Heute möchte ich ins Schwimmbad gehen	Verbposition in einfachen Sätzen	10	verbposition-einfache-saetze	word-order	todo
+L82	B2	Wortpositionen im Satz	Ich gehe ins Schwimmbad, obwohl ich arbeiten müsste	Verbposition in Satzverbindungen	14	verbposition-satzverbindungen	word-order	todo
+L83	B2	Wortpositionen im Satz	Der Kellner holt der Dame den Kaffee und bringt ihn ihr	Position von Dativ- und Akkusativobjekt	16	position-dativ-akkusativobjekt	word-order+case-endings	todo
+L84	B2	Wortpositionen im Satz	wann – warum – wie – wo	Position der Angaben im Satz	18	position-angaben	word-order	todo
+L85	B2	Wortpositionen im Satz	Er hat gestern drei Stunden lang Tennis gespielt	Informationen direkt zum Verb	20	informationen-direkt-zum-verb	word-order	todo
+L86	B2	Wortpositionen im Satz	Das habe ich nicht gesagt	Position von nicht	22	position-nicht	word-order	todo
+L87	C1	Wortpositionen im Satz	Gehst du morgen auch ins Kino?	Position von auch und Fokuspartikeln	24	position-auch-fokuspartikeln	word-order	todo
+L88	C1	Wortpositionen im Satz	Den Ring zeigt sie einem Freund	Informationsverteilung im Satz	26	informationsverteilung	word-order	todo
+P12	-	Wortpositionen im Satz	Partnersite 1: Wortpositionen – gemeinsam eine Rede halten	—	28	partnersite-1-wortpositionen	-	todo
+L89	B2	Konjunktiv II	Wenn ich einen Zauberstab hätte, würde ich …	Konjunktiv 2 der Gegenwart: Formen	30	konjunktiv2-gegenwart-formen	konjunktiv-ii	todo
+L90	B2+C1	Konjunktiv II	Wäre ich doch zu Hause geblieben!	Konjunktiv 2 der Vergangenheit: Formen	32	konjunktiv2-vergangenheit-formen	konjunktiv-ii	todo
+L91	B2	Konjunktiv II	Würden Sie bitte das Fenster schließen?	Höflichkeit, Vorschläge, Ratschläge und Wünsche	34	konjunktiv2-hoeflichkeit-wuensche	konjunktiv-ii	todo
+L92	B2+C1	Konjunktiv II	Wenn ich doch Millionär wäre!	Wünsche, irreale Wünsche und irreale Bedingungen	36	irreale-wuensche-bedingungen	konjunktiv-ii	todo
+L93	C1	Konjunktiv II	Du siehst aus, als ob du müde wärst	Irreale Vergleiche und irreale Folgen	38	irreale-vergleiche-folgen	konjunktiv-ii	todo
+P13	-	Konjunktiv II	Partnersite 2: irreale Bedingungen in Gegenwart und Vergangenheit – Ratespiel	—	40	partnersite-2-irreale-bedingungen	-	todo
+L94	B2+C1	Passiv	Die Reisegruppe wird informiert	Passiv in allen Zeiten	42	passiv-alle-zeiten	passive	todo
+L95	B2+C1	Passiv	Das muss heute noch erledigt werden	Passiv mit Modalverben in allen Zeiten	46	passiv-modalverben	passive+modal-verbs	todo
+L96	C1	Passiv	Das Problem lässt sich lösen	Alternativen zum Passiv	50	alternativen-zum-passiv	passive	todo
+L97	C1	Passiv	Die zu verkaufenden Bücher gehören ins Fenster gestellt	Formen mit Passivbedeutung	54	formen-mit-passivbedeutung	passive	todo
+L98	C1	Passiv	Hier wird gelacht!	Passivsätze ohne Subjekt	56	passivsaetze-ohne-subjekt	passive	todo
+L99	C1	Passiv	Warum ist „Es wird geregnet“ falsch?	Wann ist Passiv möglich, wann nicht?	58	passiv-moeglichkeit	passive	todo
+P14	-	Passiv	Partnersite 3: Passiv – Wechselspiele	—	60	partnersite-3-passiv	-	todo
+L100	B2	Präpositionen	Joggen Sie in den Park oder joggen Sie im Park?	Wechselpräpositionen	62	wechselpraepositionen	prepositions	todo
+L101	B2	Präpositionen	wo – wohin – woher	Oft gebrauchte lokale Präpositionen	64	lokale-praepositionen	prepositions	todo
+L102	B2	Präpositionen	Innerhalb und außerhalb des Dorfes	Weitere lokale Präpositionen	66	weitere-lokale-praepositionen	prepositions+genitive	todo
+L103	B2	Präpositionen	Am Montag um 18 Uhr auf dem Heimweg	Die wichtigsten temporale Präpositionen	68	temporale-praepositionen-1	prepositions	todo
+L104	B2	Präpositionen	Ab Montag und über die Feiertage	Weitere temporale Präpositionen	70	temporale-praepositionen-2	prepositions	todo
+L105	B2	Präpositionen	Vor Wut oder aufgrund eines Fehlers	Kausale Präpositionen	72	kausale-praepositionen	prepositions	todo
+L106	C1	Präpositionen	laut, zufolge, hinsichtlich, entsprechend	Präpositionen der Redewiedergabe und Referenz	74	praepositionen-redewiedergabe-referenz	prepositions+genitive	todo
+L107	B2+C1	Präpositionen	Davor, dahinter und um das Nomen herum	Präpositionen mit verschiedenen Positionen	76	praepositionen-positionen	prepositions	todo
+L108	C1	Präpositionen	zuliebe, mittels, anhand …	„Sprechende“ Präpositionen	78	sprechende-praepositionen	prepositions+genitive	todo
+L109	C1	Präpositionen	am Sonntag, am Strand, an die 100 Leute	Bedeutungen von in, an, auf, über, unter, vor	80	bedeutungen-in-an-auf	prepositions	todo
+L110	C1	Präpositionen	um das Haus, um 8 Uhr, um die Wette	Bedeutungen von um, bei, von, nach, aus, mit, zu	82	bedeutungen-um-bei-von	prepositions	todo
+P15	-	Präpositionen	Partnersite 4: Präpositionen – Spiel: 5 in einer Reihe	—	84	partnersite-4-praepositionen	-	todo
+L111	B2+C1	Verben, Adjektive, Nomen und ihre Ergänzungen	Ich frage dich und antworte dir	Verben mit Nominativ, Akkusativ und Dativ	86	verben-nominativ-akkusativ-dativ	case-endings+verb-prepositions	todo
+L112	C1	Verben, Adjektive, Nomen und ihre Ergänzungen	Man verdächtigte ihn des Mordes	Verben mit Genitiv	88	verben-mit-genitiv	genitive+verb-prepositions	todo
+L113	B2+C1	Verben, Adjektive, Nomen und ihre Ergänzungen	Es kommt darauf an, wann ihr kommt	Verben, Nomen und Adjektive mit Präpositionen	90	verben-nomen-adjektive-praepositionen	verb-prepositions	todo
+L114	B2	Verben, Adjektive, Nomen und ihre Ergänzungen	Danke für das Kompliment	Verben, Adjektive und Nomen mit festen Präpositionen mit Akkusativ	92	feste-praepositionen-akkusativ	verb-prepositions	todo
+L115	B2	Verben, Adjektive, Nomen und ihre Ergänzungen	Ich träume von dir	Verben, Adjektive und Nomen mit festen Präpositionen mit Dativ	96	feste-praepositionen-dativ	verb-prepositions	todo
+L116	B2	Bildung der Zeiten	Das Glas ist zerbrochen, aber wer hat es zerbrochen?	Bildung der Vergangenheitszeiten	98	bildung-vergangenheitszeiten	conjugation+praeteritum	todo
+L117	B2+C1	Bildung der Zeiten	Ich habe gehen müssen	Besondere Perfektformen: Modalverben und sehen, hören, lassen	100	besondere-perfektformen	modal-verbs	todo
+L118	B2	Bildung der Zeiten	Oh, das wusste ich nicht!	Gebrauch von Zeiten der Vergangenheit	102	gebrauch-vergangenheitszeiten	praeteritum	todo
+L119	B2	Bildung der Zeiten	Er wird den Zug verpasst haben	Vermutung und Zukunft mit dem Futur	104	futur-vermutung-zukunft	werden	todo
+L120	C1	Bildung der Zeiten	Plusquamperfekt bis Futur 2	Überblick über die Zeiten im Deutschen	106	zeiten-ueberblick	praeteritum+werden	todo
+P16	-	Bildung der Zeiten	Partnersite 5: Zeiten – Gemeinsam eine Geschichte erzählen	—	108	partnersite-5-zeiten	-	todo
+L121	B2	Modalverben, lassen und (un)trennbare Verben	Ich will, ich kann, ich muss	Modalverben in der Grundbedeutung	110	modalverben-grundbedeutung	modal-verbs	todo
+L122	B2	Modalverben, lassen und (un)trennbare Verben	Er muss gleich da sein	Andere Bedeutung von Modalverben: Vermutungen über die Gegenwart	114	modalverben-vermutung-gegenwart	modal-verbs	todo
+L123	C1	Modalverben, lassen und (un)trennbare Verben	Sie muss wohl zu Fuß gegangen sein	Andere Bedeutung von Modalverben: Vermutungen über die Vergangenheit	116	modalverben-vermutung-vergangenheit	modal-verbs	todo
+L124	B2	Modalverben, lassen und (un)trennbare Verben	Leben und leben lassen	Das Verb lassen	118	das-verb-lassen	NEW	todo
+L125	B2+C1	Modalverben, lassen und (un)trennbare Verben	mitkommen, ankommen, bekommen, entkommen	Trennbare und untrennbare Verben 1	120	trennbare-untrennbare-verben-1	separable-verbs	todo
+L126	C1	Modalverben, lassen und (un)trennbare Verben	Er fährt den Baum an, aber er fährt die Mülltonne um	Trennbare und untrennbare Verben 2	124	trennbare-untrennbare-verben-2	separable-verbs	todo
+L127	B2	Nomen, Artikel und Pronomen	Der, die oder das?	Genusregeln	126	genusregeln	articles	todo
+L128	B2	Nomen, Artikel und Pronomen	Handwerker, der Handwerker oder ein Handwerker?	Artikelgebrauch	128	artikelgebrauch	articles	todo
+L129	B2+C1	Nomen, Artikel und Pronomen	Deutschlands Süden	Genitiv	130	genitiv	genitive	todo
+L130	B2	Nomen, Artikel und Pronomen	An Herrn und Frau Schneider	n-Deklination	134	n-deklination	n-declension	todo
+L131	B2	Nomen, Artikel und Pronomen	des Mannes, des Herrn, des Alten	Drei Deklinationen	136	drei-deklinationen	genitive+n-declension	todo
+L132	B2	Nomen, Artikel und Pronomen	Bringst du mir welche mit?	Deklination der Indefinit- und Possessivpronomen	138	deklination-indefinit-possessiv	pronouns+case-endings	todo
+L133	B2+C1	Nomen, Artikel und Pronomen	man, alle, jeder, jemand, niemand	Indefinitpronomen für Menschen	140	indefinitpronomen-menschen	pronouns	todo
+L134	B2	Nomen, Artikel und Pronomen	Beide trinken beides	Indefinitpronomen für Menschen und Dinge	142	indefinitpronomen-dinge	pronouns	todo
+P17	-	Nomen, Artikel und Pronomen	Partnersite 6: Deklinationen – Würfelspiel	—	144	partnersite-6-deklinationen	-	todo
+L135	B2	Adjektive	Mit dem schnellen Auto steht man oft in einem langen Stau	Adjektivdeklination	146	adjektivdeklination-2	adjective-endings	todo
+L136	C1	Adjektive	alle kleinen Kinder und viele große Kinder mögen Schokolade	Artikelwörter und Adjektivdeklination	148	artikelwoerter-adjektivdeklination	adjective-endings	todo
+L137	B2+C1	Adjektive	Der ältere Mann genießt einen der schönsten Tage des Jahres	Komparation	150	komparation	adjective-endings	todo
+L138	B2	Adjektive	Das malende und das gemalte Mädchen	Partizip I und II als Adjektiv	154	partizip-als-adjektiv	adjective-endings	todo
+P18	-	Adjektive	Partnersite 7: Adjektivendungen – Bildbeschreibung	—	156	partnersite-7-adjektivendungen	-	todo
+L139	B2	Indirekte Rede	Er sagte, er sei fertig und komme gleich	Indirekte Rede und Konjunktiv 1	158	indirekte-rede-konjunktiv1	konjunktiv-i	todo
+L140	B2	Indirekte Rede	Sie wüsste, sie habe Glück gehabt und sei pünktlich gewesen	Indirekte Rede – Vergangenheit	160	indirekte-rede-vergangenheit	konjunktiv-i	todo
+L141	C1	Indirekte Rede	Er will das nie gesagt haben	Wiedergabe von Aufforderungen, Gerüchten und Selbstaussagen	162	wiedergabe-aufforderungen-geruechte	konjunktiv-i	todo
+L142	B2	Nebensätze	Seitdem die Katze kommt, wenn ich koche …	Temporale Nebensätze	164	temporale-nebensaetze	word-order	todo
+L143	B2+C1	Nebensätze	weil, da, obwohl, wobei …	Kausale und konzessive Nebensätze	166	kausale-konzessive-nebensaetze	word-order	todo
+L144	B2+C1	Nebensätze	sodass, weshalb, dermaßen …, dass	Konsekutive Nebensätze	168	konsekutive-nebensaetze	word-order	todo
+L145	B2+C1	Nebensätze	wenn, falls, während, wohingegen …	Konditionale und adversative Nebensätze	170	konditionale-adversative-nebensaetze	word-order	todo
+L146	B2+C1	Nebensätze	indem, dadurch dass, wodurch …	Modale Nebensätze (Methode)	172	modale-nebensaetze	word-order	todo
+L147	B2+C1	Nebensätze	Wir wollen pünktlich kommen, aber fürchten, zu spät losgefahren zu sein	Infinitiv mit und ohne zu	174	infinitiv-mit-ohne-zu	infinitiv-zu	todo
+L148	B2+C1	Nebensätze	Ich hoffe, abzunehmen und dass auch mein Mann abnimmt	Nebensatz mit dass und Infinitiv mit zu	176	dass-und-infinitiv-zu	infinitiv-zu	todo
+L149	B2	Nebensätze	um …, zu, damit, anstatt …, ohne …	Finale und modale Infinitiv- und Nebensätze	178	finale-modale-infinitivsaetze	infinitiv-zu	todo
+L150	B2+C1	Nebensätze	…, denen wir die Idee für dieses Fest verdanken	Relativpronomen im Nominativ, Akkusativ und Dativ	180	relativpronomen-nominativ-akkusativ-dativ	relative-pronouns	todo
+L151	B2+C1	Nebensätze	Die Frau, deren Hund …	Relativpronomen im Genitiv	182	relativpronomen-genitiv	relative-pronouns+genitive	todo
+L152	B2+C1	Nebensätze	etwas, was …, nichts, worüber …	Relativpronomen mit w- und als	184	relativpronomen-w-wo	relative-pronouns	todo
+P19	-	Nebensätze	Partnersite 8: Relativsätze – Gemeinsam einen Kriminalfall lösen	—	186	partnersite-8-relativsaetze	-	todo
+L153	B2	Besondere Wörter und Wortverbindungen	entweder A oder B	Doppelkonnektoren	188	doppelkonnektoren	NEW	todo
+L154	B2	Besondere Wörter und Wortverbindungen	nie, nirgends, nicht mehr	Negationswörter	190	negationswoerter	NEW	todo
+L155	B2	Besondere Wörter und Wortverbindungen	Hat irgendeiner irgendetwas gesehen?	Irgend…	192	irgend-pronomen	NEW	todo
+L156	B2	Besondere Wörter und Wortverbindungen	rauf, runter, stehen, stellen, legen	Position und Direktion	194	position-und-direktion	NEW	todo
+L157	B2	Besondere Wörter und Wortverbindungen	Wann brauchen wir es?	Es	196	das-wort-es	NEW	todo
+L158	B2	Besondere Wörter und Wortverbindungen	Wir müssen jetzt eine Entscheidung treffen	Funktionsverbgefüge 1	198	funktionsverbgefuege-1	NEW	todo
+L159	C1	Besondere Wörter und Wortverbindungen	In Aufregung versetzen oder in Aufregung geraten?	Funktionsverbgefüge 2	200	funktionsverbgefuege-2	NEW	todo
+L160	B2	Besondere Wörter und Wortverbindungen	Dabei wollte ich eigentlich nie in einem Dorf leben	Wörter mit da-	204	woerter-mit-da	NEW	todo
+L161	B2	Besondere Wörter und Wortverbindungen	Im Kino waren wir doch gestern	Modalpartikeln	208	modalpartikeln	NEW	todo
+L162	C1	Umformung von Sätzen	Durch Verwendung von Nomen entsteht Verdichtung	Nominalisierung	212	nominalisierung	NEW	todo
+L163	C1	Umformung von Sätzen	Komplexe Sätze verstehen und umformen	Links- und Rechtsattribute	216	links-rechtsattribute	NEW	todo
+L164	C1	Umformung von Sätzen	temporal: vor, vorher, bevor, nach …	Präposition – Adverb – Konnektor 1	220	praeposition-adverb-konnektor-1	NEW	todo
+L165	C1	Umformung von Sätzen	kausal, konsekutiv, konzessiv, adversativ	Präposition – Adverb – Konnektor 2	222	praeposition-adverb-konnektor-2	NEW	todo
+L166	C1	Umformung von Sätzen	modal, konditional, final	Präposition – Adverb – Konnektor 3	224	praeposition-adverb-konnektor-3	NEW	todo
+P20	-	Umformung von Sätzen	Partnersite 9: Umformung von Sätzen – Wechselspiele	—	226	partnersite-9-umformung	-	todo
+L167	B2	Und noch mehr Wissenswertes	Er ist seine Katze auch???	Kommaregeln	228	kommaregeln	NEW	todo
+L168	C1	Und noch mehr Wissenswertes	Da kommste nich drauf	Besondere Formen der mündlichen Sprache	230	muendliche-sprache	NEW	todo
