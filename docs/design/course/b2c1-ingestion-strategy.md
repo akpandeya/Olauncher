@@ -10,8 +10,9 @@ Grammatik aktiv B2–C1 (Cornelsen 2017, Jin/Voß, ISBN 978-3-06-021482-2).
 PDF lives in Google Drive; working copy goes to `.course-pages/grammatik-aktiv-b2c1.pdf`.
 
 - 313 PDF pages, **no text layer** — same visual-read pipeline as the A1–B1 book.
-- Page offset: **printed page N = PDF page N (offset 0)**, calibrated on the
-  ToC (ToC printed 4–7 = PDF pages 4–7). Re-verify per runbook rule anyway.
+- Page offset: **printed page N = PDF page N − 1 (PDF = printed + 1)**,
+  recalibrated 2026-11-15 on the ToC (ToC printed 4–7 = PDF pages 5–8).
+  Re-verify per runbook rule anyway.
 - **88 chapters + 9 Partnerseiten**, ~30 Sprechtraining items (p232+),
   Anhang reference lists (p245–264), Lösungen (p265), Register (p310).
 - Every chapter is badged **B2, C1, or B2+C1** (per-exercise badges inside).

@@ -20,8 +20,8 @@ the user approval have both passed.
 - **book**: source PDF and printed↔PDF offset, filled by the orchestrator from
   the book's manifest — book 1: `.course-pages/grammatik-aktiv.pdf`
   (offset: PDF index + 3 = printed page, re-verify); book 2:
-  `.course-pages/grammatik-aktiv-b2c1.pdf` (offset: printed page = PDF page,
-  calibrated 2026-11-14 on its ToC; re-verify, don't inherit)
+  `.course-pages/grammatik-aktiv-b2c1.pdf` (offset: printed page = PDF page − 1,
+  recalibrated 2026-11-15 on its ToC; re-verify, don't inherit)
 - **page budget**: the orchestrator sets a max page-read count for the spread;
   the report must state actual pages read so gate 1 can check it. Spreads over
   3 pages must use a transcript cache (see `ingestion.md` stage 1).

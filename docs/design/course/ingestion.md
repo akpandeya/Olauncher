@@ -12,8 +12,9 @@ Two books, one pipeline and one lesson-id namespace:
   page (re-verify per run).
 - **Book 2 — Grammatik aktiv B2–C1**: source
   `.course-pages/grammatik-aktiv-b2c1.pdf`, manifest `lessons-b2c1.tsv`
-  (L81–L168, P12–P20). Offset: printed page = PDF page (calibrated 2026-11-14
-  on the ToC; re-verify per run). See `b2c1-ingestion-strategy.md` for the
+  (L81–L168, P12–P20). Offset: printed page = PDF page − 1, i.e. PDF page =
+  printed + 1 (recalibrated 2026-11-15 on the ToC; re-verify per run). See
+  `b2c1-ingestion-strategy.md` for the
   per-rule level badges, drill-type reuse and scope boundaries.
 
 Decision record: the appendix (Anhang, verb tables, Lösungen, Register) is not
