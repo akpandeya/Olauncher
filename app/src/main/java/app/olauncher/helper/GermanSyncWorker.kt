@@ -53,6 +53,13 @@ class GermanSyncWorker(
                 // the cached due set is dropped and the periodic work stops.
                 GermanDueRefreshWorker.onSessionEnded(applicationContext)
             },
+            onWordCreated = { localId, serverId ->
+                // Record the server row the capture created and catch up on a
+                // meaning that resolved while the POST was still unsent. The
+                // PATCH lands in this run's snapshot only via the pendingCount
+                // check below, which retries the worker.
+                GermanMeaningSync.onWordCreated(applicationContext, localId, serverId)
+            },
         )
         // Unauthorized: the session is lapsed now; pairing again re-schedules.
         // Anything else still pending (backoff, Retry-After or the 15-per-run

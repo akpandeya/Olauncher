@@ -4,10 +4,12 @@ import android.content.Context
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import app.olauncher.data.store.LemmaLink
+import app.olauncher.data.store.Word
 import app.olauncher.data.store.WiktionaryApi
 import app.olauncher.data.store.WiktionaryApi.FetchOutcome
 import app.olauncher.data.store.WiktionaryParser
 import app.olauncher.data.store.WordsStore
+import app.olauncher.helper.GermanMeaningSync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -28,7 +30,8 @@ class WordLookupWorker(
             wordId: Long,
             store: WordsStore,
             runAttemptCount: Int,
-            fetchCandidate: (String) -> FetchOutcome
+            onMeaningSaved: ((Word) -> Unit)? = null,
+            fetchCandidate: (String) -> FetchOutcome,
         ): Result {
             if (wordId == -1L) return Result.success()
             val word = store.get(wordId) ?: return Result.success()
@@ -69,18 +72,20 @@ class WordLookupWorker(
                     val baseTaken = resolved != null && store.all().any {
                         it.id != current.id && it.text.equals(resolved.baseForm, ignoreCase = true)
                     }
-                    store.update(
-                        if (resolved != null && !baseTaken) {
-                            current.copy(
-                                text = resolved.baseForm,
-                                context = current.context.ifBlank { current.text },
-                                meaning = resolved.meaning,
-                                meaningSource = "wiktionary"
-                            )
-                        } else {
-                            current.copy(meaning = resolved?.meaning ?: meaningFound, meaningSource = "wiktionary")
-                        }
-                    )
+                    val updated = if (resolved != null && !baseTaken) {
+                        current.copy(
+                            text = resolved.baseForm,
+                            context = current.context.ifBlank { current.text },
+                            meaning = resolved.meaning,
+                            meaningSource = "wiktionary"
+                        )
+                    } else {
+                        current.copy(meaning = resolved?.meaning ?: meaningFound, meaningSource = "wiktionary")
+                    }
+                    store.update(updated)
+                    // The capture POST carried no meaning (it had none yet); this
+                    // queues the server PATCH that closes the gap.
+                    onMeaningSaved?.invoke(updated)
                 }
             }
 
@@ -95,7 +100,8 @@ class WordLookupWorker(
             wordId = wordId,
             store = store,
             runAttemptCount = runAttemptCount,
-            fetchCandidate = WiktionaryApi::fetch
+            onMeaningSaved = { GermanMeaningSync.push(applicationContext, it) },
+            fetchCandidate = WiktionaryApi::fetch,
         )
     }
 }

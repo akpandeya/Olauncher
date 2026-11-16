@@ -51,7 +51,9 @@ object GermanWordSync {
 
     /**
      * Context-free core: queue [words] unless the session does not queue.
-     * Returns the entries that were queued, in [words] order.
+     * Returns the entries that were queued, in [words] order. Each entry
+     * carries its word's local id, so a successful POST can be mapped to the
+     * server row it created ([GermanWordIdMap]).
      */
     fun queueCaptures(
         outbox: GermanWebOutbox,
@@ -60,7 +62,9 @@ object GermanWordSync {
         words: List<Word>,
     ): List<GermanOutboxEntry> {
         if (!shouldQueue(germanEnabled, state)) return emptyList()
-        return words.map { word -> outbox.enqueue("POST", WORDS_PATH, captureBody(word)) }
+        return words.map { word ->
+            outbox.enqueue("POST", WORDS_PATH, captureBody(word), localWordId = word.id)
+        }
     }
 
     /** The [WordsStore.onWordsCreated] hook: gate, queue, and schedule the replay worker. */

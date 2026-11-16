@@ -25,6 +25,12 @@ data class GermanOutboxEntry(
     val attempts: Int,
     /** Epoch millis before which the entry must not be sent again. */
     val nextAttemptAt: Long,
+    /**
+     * For a word-capture POST: the local [Word.id] the body was built from, so a
+     * 2xx response can record which server row the server minted
+     * ([GermanWordIdMap]). Null for every other entry. Never sent to the server.
+     */
+    val localWordId: Long? = null,
 )
 
 /**
@@ -107,7 +113,7 @@ object GermanOutboxCodec {
         return Decoded(entries, failed, corrupt)
     }
 
-    /** Complete-or-nothing: every field must be present with the right type, or the entry is null. */
+    /** Complete-or-nothing for the original fields; `localWordId` is additive and optional. */
     fun decodeEntry(obj: JSONObject): GermanOutboxEntry? {
         val key = obj.opt("idempotencyKey") as? String ?: return null
         val method = obj.opt("method") as? String ?: return null
@@ -116,6 +122,12 @@ object GermanOutboxCodec {
         val createdAt = obj.optEpochMillis("createdAt") ?: return null
         val attempts = obj.optEpochMillis("attempts")?.takeIf { it in 0..Int.MAX_VALUE.toLong() }?.toInt() ?: return null
         val nextAttemptAt = obj.optEpochMillis("nextAttemptAt") ?: return null
+        // Additive field written by newer versions; absent (or NULL) on older entries.
+        val localWordId = when (val value = obj.opt("localWordId")) {
+            is Long -> value
+            is Int -> value.toLong()
+            else -> null
+        }
         return GermanOutboxEntry(
             idempotencyKey = key,
             method = method,
@@ -124,6 +136,7 @@ object GermanOutboxCodec {
             createdAt = createdAt,
             attempts = attempts,
             nextAttemptAt = nextAttemptAt,
+            localWordId = localWordId,
         )
     }
 
@@ -146,6 +159,7 @@ object GermanOutboxCodec {
             obj.put("createdAt", entry.createdAt)
             obj.put("attempts", entry.attempts)
             obj.put("nextAttemptAt", entry.nextAttemptAt)
+            if (entry.localWordId != null) obj.put("localWordId", entry.localWordId)
             array.put(obj)
         }
         return array
@@ -190,7 +204,7 @@ class GermanWebOutbox(private val dir: File) {
     internal var clockSupplier: () -> Long = { System.currentTimeMillis() }
 
     /** Appends one write to the queue, due immediately. The key is minted here, once. */
-    fun enqueue(method: String, path: String, bodyJson: String?): GermanOutboxEntry = synchronized(LOCK) {
+    fun enqueue(method: String, path: String, bodyJson: String?, localWordId: Long? = null): GermanOutboxEntry = synchronized(LOCK) {
         val now = clockSupplier()
         val entry = GermanOutboxEntry(
             idempotencyKey = KEY_PREFIX + UUID.randomUUID(),
@@ -200,6 +214,7 @@ class GermanWebOutbox(private val dir: File) {
             createdAt = now,
             attempts = 0,
             nextAttemptAt = now,
+            localWordId = localWordId,
         )
         val state = load()
         save(state.copy(entries = state.entries + entry, failed = state.failed))

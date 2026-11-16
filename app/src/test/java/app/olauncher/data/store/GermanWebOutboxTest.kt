@@ -178,6 +178,40 @@ class GermanWebOutboxTest {
     }
 
     @Test
+    fun `a word capture entry keeps its localWordId across a reload`() {
+        val entry = outbox.enqueue("POST", "/api/german/words", """{"text":"Haus"}""", localWordId = 42L)
+        now += 5_000
+
+        val reloaded = GermanWebOutbox(dir).apply { clockSupplier = { now } }
+
+        assertEquals(listOf(entry), reloaded.entries())
+        assertEquals(42L, reloaded.entries().single().localWordId)
+    }
+
+    @Test
+    fun `an old entry file without localWordId decodes with a null one`() {
+        // The exact bytes version 1.0 wrote: no localWordId field at all.
+        val raw = """
+            {"version":1,"entries":[
+              {"idempotencyKey":"ola-1","method":"POST","path":"/api/german/words","bodyJson":"{}","createdAt":1,"attempts":0,"nextAttemptAt":1}
+            ],"failed":[]}
+        """.trimIndent()
+        File(dir, GermanWebOutbox.FILE_NAME).writeText(raw)
+
+        val entry = outbox.entries().single()
+        assertEquals("ola-1", entry.idempotencyKey)
+        assertEquals(null, entry.localWordId)
+    }
+
+    @Test
+    fun `a non-word entry is stored without a localWordId`() {
+        val entry = outbox.enqueue("PATCH", "/api/german/words/x", """{"meaning":"m"}""")
+
+        assertEquals(null, entry.localWordId)
+        assertEquals(entry, GermanWebOutbox(dir).entries().single())
+    }
+
+    @Test
     fun `the failed list keeps the newest 50`() {
         val keys = (0 until 60).map { index ->
             outbox.enqueue("POST", "/p$index", null).idempotencyKey

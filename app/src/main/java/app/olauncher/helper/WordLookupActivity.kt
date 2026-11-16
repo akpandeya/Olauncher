@@ -101,7 +101,9 @@ class WordLookupActivity : AppCompatActivity() {
         val store = WordsStore(this)
         val word = store.add(text, context)
         if (!meaning.isNullOrBlank() && word.meaning.isBlank()) {
-            store.update(word.copy(meaning = meaning, meaningSource = "wiktionary"))
+            val updated = word.copy(meaning = meaning, meaningSource = "wiktionary")
+            store.update(updated)
+            GermanMeaningSync.push(this, updated)
         } else {
             WordLookup.enqueue(this, word.id)
         }

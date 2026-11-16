@@ -58,7 +58,7 @@ class GermanOutboxReplayTest {
 
     private fun run(api: GermanWebApi, onUnauthorized: () -> Unit = {}): GermanOutboxRunResult =
         runBlocking {
-            GermanOutboxReplay.replayAll(outbox, api, TEST_TOKEN, onUnauthorized) { now }
+            GermanOutboxReplay.replayAll(outbox, api, TEST_TOKEN, onUnauthorized, clock = { now })
         }
 
     @Test
@@ -220,6 +220,80 @@ class GermanOutboxReplayTest {
         assertEquals(0, outcome.handledCount)
         assertEquals(0, api.connections.size)
         assertEquals(1, outbox.pendingCount())
+    }
+
+    @Test
+    fun `a successful word POST reports the created server id with the local word id`() {
+        val serverUuid = "9f1c2b3a-1111-4222-8333-444455556666"
+        outbox.enqueue("POST", GermanWordSync.WORDS_PATH, """{"text":"Haus"}""", localWordId = 7L)
+        val api = fakeApi(Canned(201, """{"id":"$serverUuid","text":"Haus"}"""))
+
+        val created = mutableListOf<Pair<Long, String>>()
+        val outcome = runBlocking {
+            GermanOutboxReplay.replayAll(outbox, api, TEST_TOKEN, onUnauthorized = {}, clock = { now }) { local, server ->
+                created.add(local to server)
+            }
+        }
+
+        assertEquals(1, outcome.handledCount)
+        assertEquals(0, outbox.pendingCount())
+        assertEquals(listOf(7L to serverUuid), created)
+    }
+
+    @Test
+    fun `onWordCreated does not fire for an entry without a local word id`() {
+        outbox.enqueue("POST", GermanWordSync.WORDS_PATH, """{"text":"Haus"}""")
+        val api = fakeApi(Canned(201, """{"id":"9f1c2b3a-1111-4222-8333-444455556666"}"""))
+
+        var fired = 0
+        runBlocking {
+            GermanOutboxReplay.replayAll(outbox, api, TEST_TOKEN, onUnauthorized = {}, clock = { now }) { _, _ -> fired++ }
+        }
+
+        assertEquals(0, fired)
+    }
+
+    @Test
+    fun `onWordCreated does not fire when the POST fails and the entry is dropped`() {
+        outbox.enqueue("POST", GermanWordSync.WORDS_PATH, """{"text":"Fernweh"}""", localWordId = 8L)
+        val api = fakeApi(Canned(400, """{"error":"bad"}"""))
+
+        var fired = 0
+        runBlocking {
+            GermanOutboxReplay.replayAll(outbox, api, TEST_TOKEN, onUnauthorized = {}, clock = { now }) { _, _ -> fired++ }
+        }
+
+        assertEquals(0, fired)
+        assertEquals(0, outbox.pendingCount()) // dropped, exactly as before this change
+    }
+
+    @Test
+    fun `onWordCreated does not fire on a 2xx body without a usable id`() {
+        outbox.enqueue("POST", GermanWordSync.WORDS_PATH, """{"text":"Brett"}""", localWordId = 9L)
+        val api = fakeApi(Canned(201, """{"weird":"body"}"""))
+
+        var fired = 0
+        runBlocking {
+            GermanOutboxReplay.replayAll(outbox, api, TEST_TOKEN, onUnauthorized = {}, clock = { now }) { _, _ -> fired++ }
+        }
+
+        assertEquals(0, fired)
+        assertEquals(0, outbox.pendingCount()) // still removed: the write itself made it
+    }
+
+    @Test
+    fun `createdServerId accepts only UUID-shaped ids from 2xx bodies`() {
+        val uuid = "9f1c2b3a-1111-4222-8333-444455556666"
+        assertEquals(
+            uuid,
+            GermanOutboxReplay.createdServerId(GermanWebResponse.Http(201, """{"id":"$uuid"}""", null)),
+        )
+        // A numeric id is not the server's word id format: no mapping.
+        assertEquals(null, GermanOutboxReplay.createdServerId(GermanWebResponse.Http(201, """{"id":42}""", null)))
+        assertEquals(null, GermanOutboxReplay.createdServerId(GermanWebResponse.Http(201, """{"id":"not-a-uuid"}""", null)))
+        assertEquals(null, GermanOutboxReplay.createdServerId(GermanWebResponse.Http(201, "not json", null)))
+        assertEquals(null, GermanOutboxReplay.createdServerId(GermanWebResponse.Http(201, null, null)))
+        assertEquals(null, GermanOutboxReplay.createdServerId(GermanWebResponse.NetworkFailure("IOException")))
     }
 
     @Test

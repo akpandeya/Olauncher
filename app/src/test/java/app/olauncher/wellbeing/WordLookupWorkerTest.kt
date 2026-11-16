@@ -116,6 +116,51 @@ class WordLookupWorkerTest {
     }
 
     @Test
+    fun `a resolved meaning fires onMeaningSaved with the stored word`() {
+        val word = store.add("fernweh")
+
+        val saved = mutableListOf<app.olauncher.data.store.Word>()
+        val result = WordLookupWorker.lookupWord(
+            wordId = word.id,
+            store = store,
+            runAttemptCount = 0,
+            onMeaningSaved = { saved.add(it) },
+        ) { WiktionaryApi.FetchOutcome.Success("wanderlust (desire to travel)") }
+
+        assertEquals(Result.success(), result)
+        val updated = store.get(word.id)
+        assertEquals(listOf(updated), saved)
+        assertEquals("wanderlust (desire to travel)", saved.single().meaning)
+        assertEquals("wiktionary", saved.single().meaningSource)
+    }
+
+    @Test
+    fun `onMeaningSaved does not fire when no meaning was found or the word has a user meaning`() {
+        val lookupWord = store.add("fantasiewortxyz")
+        val saved = mutableListOf<app.olauncher.data.store.Word>()
+
+        WordLookupWorker.lookupWord(
+            wordId = lookupWord.id,
+            store = store,
+            runAttemptCount = 0,
+            fetchCandidate = { WiktionaryApi.FetchOutcome.NotFound },
+            onMeaningSaved = { saved.add(it) },
+        )
+        assertTrue(saved.isEmpty())
+
+        val userWord = store.add("Haus")
+        store.update(userWord.copy(meaning = "Meine Definition", meaningSource = "user"))
+        WordLookupWorker.lookupWord(
+            wordId = userWord.id,
+            store = store,
+            runAttemptCount = 0,
+            fetchCandidate = { WiktionaryApi.FetchOutcome.Success("Wiktionary Definition") },
+            onMeaningSaved = { saved.add(it) },
+        )
+        assertTrue(saved.isEmpty())
+    }
+
+    @Test
     fun `IO error on attempts 0 and 1 returns retry`() {
         val word = store.add("Haus")
 

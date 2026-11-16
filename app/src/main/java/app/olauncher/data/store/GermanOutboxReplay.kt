@@ -1,7 +1,6 @@
 package app.olauncher.data.store
 
 import org.json.JSONObject
-
 /**
  * What one [GermanWebResponse] means for the entry that was sent and the rest
  * of the run (epic #835, task 03), Context-free and unit-tested. The policy
@@ -78,12 +77,26 @@ object GermanOutboxReplay {
      * new key is never minted and `today` is never rewritten. [onUnauthorized]
      * fires once on a 401, before the run stops.
      */
+    /**
+     * Replays the outbox with [api] and its [token]: due entries in FIFO order,
+     * at most [MAX_ENTRIES_PER_RUN] HTTP sends per run, stopping at the first
+     * 401/429/5xx/network failure. The stored key and body are sent as-is — a
+     * new key is never minted and `today` is never rewritten. [onUnauthorized]
+     * fires once on a 401, before the run stops.
+     *
+     * [onWordCreated] fires when a word-capture POST (an entry carrying a
+     * `localWordId`) gets a 2xx whose body names the server row the server
+     * minted, with the entry's local word id and the server's id — the bridge
+     * a later meaning PATCH needs ([GermanWordIdMap]). A 2xx body without a
+     * usable id fires nothing; the entry is removed all the same.
+     */
     suspend fun replayAll(
         outbox: GermanWebOutbox,
         api: GermanWebApi,
         token: String,
         onUnauthorized: () -> Unit,
         clock: () -> Long = { System.currentTimeMillis() },
+        onWordCreated: ((localId: Long, serverId: String) -> Unit)? = null,
     ): GermanOutboxRunResult {
         var handledCount = 0
         for (entry in outbox.due(clock())) {
@@ -94,10 +107,15 @@ object GermanOutboxReplay {
                 bodyJson = entry.bodyJson,
                 idempotencyKey = entry.idempotencyKey,
             )
-            when (val decision = decide(api.send(request, token))) {
+            val response = api.send(request, token)
+            when (val decision = decide(response)) {
                 GermanReplayDecision.RemoveEntry -> {
                     outbox.remove(entry.idempotencyKey)
                     handledCount++
+                    val localId = entry.localWordId
+                    if (localId != null && entry.method == "POST") {
+                        createdServerId(response)?.let { serverId -> onWordCreated?.invoke(localId, serverId) }
+                    }
                 }
                 is GermanReplayDecision.DropToFailed -> {
                     outbox.dropToFailed(entry.idempotencyKey, decision.status.toString(), failedEntryText(entry), clock())
@@ -120,6 +138,27 @@ object GermanOutboxReplay {
             }
         }
         return GermanOutboxRunResult(handledCount, null)
+    }
+
+    /**
+     * The server id a 2xx body carries (`toWordJson`: `{"id": "<uuid>", …}`,
+     * apps/backend/src/lib/germanWordShape.js). Null on anything else — a
+     * non-JSON body, a missing or non-UUID id are all "no mapping this run".
+     */
+    internal fun createdServerId(response: GermanWebResponse): String? {
+        val body = (response as? GermanWebResponse.Http)?.body ?: return null
+        val id = try {
+            JSONObject(body).opt("id")
+        } catch (e: Exception) {
+            return null
+        }
+        val raw = when (id) {
+            is String -> id
+            is Long -> id.toString()
+            is Int -> id.toString()
+            else -> return null
+        }
+        return raw.takeIf { GermanWordIdCodec.isServerWordId(it) }
     }
 
     /**

@@ -155,6 +155,22 @@ class GermanWordSyncTest {
     }
 
     @Test
+    fun `queued capture entries carry their word's local id for the server-id mapping`() {
+        val words = listOf(word("Haus", 20340), word("Tor", 20341))
+
+        GermanWordSync.queueCaptures(
+            outbox,
+            germanEnabled = true,
+            state = GermanWebSessionState.SignedIn(username = "anna-hh", deviceId = "dev-1"),
+            words = words,
+        )
+
+        val entries = outbox.entries()
+        // Wiring checked with distinguishing values: each entry's localWordId is its own word's id.
+        assertEquals(words.map { it.id }, entries.map { it.localWordId })
+    }
+
+    @Test
     fun `shouldQueue is german enabled and not signed out`() {
         assertTrue(GermanWordSync.shouldQueue(true, GermanWebSessionState.SignedIn("u", "d")))
         assertTrue(GermanWordSync.shouldQueue(true, GermanWebSessionState.Lapsed))
